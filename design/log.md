@@ -76,6 +76,12 @@ These changed how the product looks, slightly. All of them are visible at `/desi
 
 ### Taken while building
 
+- **An own answer is one of the choices.** The note field always accepted one, but only a placeholder said so. Options
+  written by an agent do not always apply, so `Something else` sits with them, and the feed quotes the words as the answer.
+- **Postponing moves a decision down and nothing else.** It stays open and counted, an agent waiting on it keeps waiting, and
+  it stays down until someone brings it back or answers. A snooze timer was left out: it would be one more thing bringing
+  decisions back at a moment nobody chose.
+- **Postponing moves on without arming the next card,** the same rule as when a card goes away.
 - **Touch follows the input, not the width.** `pointer: coarse` raises type, gives controls a 44px height and hides key
   hints, so a phone on its side still gets it.
 - **The queue lists five closed decisions beside the feed.** With 25 open, the rows pushed the feed off the screen. The rest

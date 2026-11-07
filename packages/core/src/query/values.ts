@@ -86,6 +86,8 @@ export const QUERY_VALUES: Readonly<Record<string, readonly string[]>> = {
     "decision.resolved",
     "decision.changed",
     "decision.reopened",
+    "decision.postponed",
+    "decision.unpostponed",
     "decision.withdrawn",
     "decision.superseded",
     "pr.opened",

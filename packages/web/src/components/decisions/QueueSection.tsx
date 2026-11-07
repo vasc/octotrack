@@ -55,6 +55,12 @@ export function QueueSection({ query, isDefault, linkToAll = true }: QueueSectio
     setOpenRef(ref);
     setArmedRef(ref);
   };
+  // Moves on without arming the next card: nobody chose it, so a key meant for this one must not answer that one.
+  const moveOn = (ref: string) => {
+    const rest = cards.filter((card) => card.decision.ref !== ref);
+    const next = rest.find((card) => card.decision.postponedAt === null) ?? rest[0];
+    if (next !== undefined) setOpenRef(next.decision.ref);
+  };
   const keys = useMemo((): HotkeyMap => {
     if (inspecting) return {};
     const list = refs === "" ? [] : refs.split(" ");
@@ -95,7 +101,7 @@ export function QueueSection({ query, isDefault, linkToAll = true }: QueueSectio
               {listed.has(card.decision.ref) ? <QueueRest card={card} onOpen={open} /> : null}
               {/* Stays mounted while closed, so that moving away does not throw out a half-typed answer. */}
               <div hidden={!isOpen}>
-                <DecisionCardItem card={card} active={isOpen && armed} />
+                <DecisionCardItem card={card} active={isOpen && armed} onPostponed={moveOn} />
               </div>
             </Fragment>
           );

@@ -14,6 +14,77 @@ beforeEach(() => {
   h.call(c.projectCreate, { key: "OCT", name: "Octotrack" });
 });
 
+describe("an own answer", () => {
+  test("reads as the answer, not as a missing option", () => {
+    const decision = h.call(c.decisionAsk, {
+      title: "Which provider?",
+      options: [{ key: "a", label: "A" }],
+    });
+    h.call(c.decisionResolve, { ref: decision.ref, note: "Neither, use Mollie" });
+    const summary = h.call(c.feedList, { query: "event:decision.resolved" }).events[0]?.summary ?? "";
+    expect(summary).toContain('"Neither, use Mollie"');
+    expect(summary).not.toContain("no listed option");
+  });
+});
+
+describe("postponing a decision", () => {
+  const ask = (title: string, priority: "urgent" | "low" = "low") =>
+    h.call(c.decisionAsk, { title, priority });
+  const order = () => h.call(c.decisionQueue, {}).map((card) => card.decision.title);
+
+  test("sends it below everything still waiting, however important it is", () => {
+    const urgent = ask("Urgent", "urgent");
+    ask("Low");
+    expect(order()).toEqual(["Urgent", "Low"]);
+    const postponed = h.call(c.decisionPostpone, { ref: urgent.ref });
+    expect(postponed.postponedAt).not.toBeNull();
+    expect(postponed.status).toBe("open");
+    expect(order()).toEqual(["Low", "Urgent"]);
+  });
+
+  test("the last one postponed goes to the very bottom", () => {
+    const first = ask("First");
+    const second = ask("Second");
+    ask("Third");
+    h.call(c.decisionPostpone, { ref: first.ref });
+    h.setNow("2026-11-07T12:00:01.000Z");
+    h.call(c.decisionPostpone, { ref: second.ref });
+    expect(order()).toEqual(["Third", "First", "Second"]);
+  });
+
+  test("can be undone", () => {
+    const urgent = ask("Urgent", "urgent");
+    ask("Low");
+    h.call(c.decisionPostpone, { ref: urgent.ref });
+    const back = h.call(c.decisionPostpone, { ref: urgent.ref, undo: true });
+    expect(back.postponedAt).toBeNull();
+    expect(order()).toEqual(["Urgent", "Low"]);
+  });
+
+  test("shows in the feed, and opens no drift, since nothing was decided", () => {
+    const decision = ask("Later");
+    h.call(c.issueCreate, { project: "OCT", title: "Blocked" });
+    h.call(c.linkAdd, { from: decision.ref, rel: "blocks", to: "OCT-1" });
+    const drift = h.call(c.driftList, {}).length;
+    h.call(c.decisionPostpone, { ref: decision.ref });
+    expect(h.call(c.feedList, { query: "event:decision.postponed" }).events).toHaveLength(1);
+    expect(h.call(c.driftList, {})).toHaveLength(drift);
+  });
+
+  test("answering clears it, so a reopened decision ranks normally again", () => {
+    const decision = ask("Later");
+    h.call(c.decisionPostpone, { ref: decision.ref });
+    h.call(c.decisionResolve, { ref: decision.ref, note: "Done" });
+    expect(h.call(c.decisionReopen, { ref: decision.ref }).postponedAt).toBeNull();
+  });
+
+  test("only an open decision can be postponed", () => {
+    const decision = ask("Done already");
+    h.call(c.decisionResolve, { ref: decision.ref, note: "Done" });
+    expect(() => h.call(c.decisionPostpone, { ref: decision.ref })).toThrow(OctoError);
+  });
+});
+
 describe("projects and issues", () => {
   test("refs are per project and sequential", () => {
     h.call(c.projectCreate, { key: "API", name: "API" });

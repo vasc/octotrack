@@ -31,6 +31,7 @@ export function decision(overrides: Partial<Decision> = {}): Decision {
     dueAt: null,
     chosenOption: null,
     resolutionNote: null,
+    postponedAt: null,
     decidedBy: null,
     decidedAt: null,
     channel: null,
@@ -151,12 +152,15 @@ export function drift(overrides: Partial<Drift> = {}): Drift {
 export function decisionForm(overrides: Partial<DecisionForm> = {}): DecisionForm {
   return {
     chosen: null,
+    ownAnswer: false,
     note: "",
     elsewhere: false,
     canSubmit: false,
     submitting: false,
     error: null,
     choose: () => {},
+    chooseOwn: () => {},
+    postpone: () => {},
     setNote: () => {},
     setElsewhere: () => {},
     submit: () => {},

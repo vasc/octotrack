@@ -38,14 +38,16 @@ The loudest thing in the product.
 
 `DecisionCardView` states:
 
-| State         | Looks like                                                             |
-| ------------- | ---------------------------------------------------------------------- |
-| Open          | An amber edge. `Decide` is disabled until there is something to send   |
-| Active        | Also an amber outline. Number keys and `Enter` act on this card        |
-| Option chosen | That option in amber, with `aria-pressed`. Choosing it again clears it |
-| Sending       | `Decide` is disabled                                                   |
-| Refused       | The card stays, with the server's reason underneath                    |
-| Decided       | It leaves the queue                                                    |
+| State         | Looks like                                                              |
+| ------------- | ----------------------------------------------------------------------- |
+| Open          | An amber edge. `Decide` is disabled until there is something to send    |
+| Active        | Also an amber outline. Number keys and `Enter` act on this card         |
+| Option chosen | That option in amber, with `aria-pressed`. Choosing it again clears it  |
+| Own answer    | `Something else` in amber, the note asks for the answer and takes focus |
+| Postponed     | A neutral `postponed` badge, and `Postpone` becomes `Bring back`        |
+| Sending       | `Decide` is disabled                                                    |
+| Refused       | The card stays, with the server's reason underneath                     |
+| Decided       | It leaves the queue                                                     |
 
 ## The feed: `feed/`
 

@@ -80,6 +80,19 @@ describe("DecisionCardView", () => {
     expect(view.queryByRole("button", { name: "OCT-5" })).toBeNull();
   });
 
+  test("offers an own answer only when there are options to step outside of", () => {
+    const withOptions = render(<DecisionCardView form={form()} card={decisionCard()} />);
+    expect(withOptions.queryByRole("button", { name: /Something else/ })).not.toBeNull();
+    withOptions.unmount();
+    const without = render(
+      <DecisionCardView
+        form={form()}
+        card={decisionCard({ decision: decision({ options: [], recommendation: null }) })}
+      />,
+    );
+    expect(without.queryByRole("button", { name: /Something else/ })).toBeNull();
+  });
+
   test("the button stays disabled until there is something to submit", () => {
     const empty = render(<DecisionCardView form={form()} card={decisionCard()} />);
     expect(empty.getByRole("button", { name: "Decide" }).hasAttribute("disabled")).toBe(true);

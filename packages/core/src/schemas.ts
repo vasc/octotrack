@@ -131,6 +131,8 @@ export const Decision = z.object({
   priority: Priority,
   requestedBy: z.string(),
   dueAt: z.string().nullable(),
+  /** Pushed to the bottom of the queue by someone not ready to answer. Still open. */
+  postponedAt: z.string().nullable(),
   chosenOption: z.string().nullable(),
   resolutionNote: z.string().nullable(),
   decidedBy: z.string().nullable(),

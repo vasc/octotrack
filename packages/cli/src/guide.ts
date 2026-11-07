@@ -32,6 +32,10 @@ Do not guess at architecture or product calls. Ask, with options and your recomm
 
 If you have other work to do in the meantime, do not hang: ask without --wait, keep going, check back.
 
+The developer can answer in their own words instead of picking an option, so read the note as well as the
+chosen key. They can also postpone a decision, which only moves it down their queue: it is still open, so keep waiting or
+keep working around it.
+
 Log anything decided in conversation instead, so that it is on the record:
 
   octo decision record "Use SQLite locally" --chosen SQLite -p OCT --kind architecture
