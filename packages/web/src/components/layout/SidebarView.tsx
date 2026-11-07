@@ -19,7 +19,7 @@ export function SidebarView({ path, live, counts, projects }: SidebarViewProps) 
   return (
     <nav className="sidebar" aria-label="Main">
       <div className="brand">
-        <span>Octotrack</span>
+        <span className="brand-name">Octotrack</span>
         <span className="live" data-state={live}>
           {LIVE_LABEL[live]}
         </span>

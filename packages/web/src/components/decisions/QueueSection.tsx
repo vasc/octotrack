@@ -3,10 +3,13 @@ import { Fragment, useMemo, useState } from "react";
 import { useBootstrapSnapshot } from "../../hooks/useBootstrap.ts";
 import { type HotkeyMap, useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
-import { useRoute } from "../../lib/router.ts";
+import { navigate, useRoute } from "../../lib/router.ts";
 import { Section } from "../ui/Section.tsx";
 import { DecisionCardItem } from "./DecisionCardItem.tsx";
 import { QueueRest } from "./QueueRest.tsx";
+
+/** Closed decisions listed beside the feed. More than this pushes the feed off the screen, above all on a phone. */
+const REST_LIMIT = 5;
 
 export interface QueueSectionProps {
   query: string;
@@ -74,19 +77,22 @@ export function QueueSection({ query, isDefault, linkToAll = true }: QueueSectio
   if (cards.length === 0) return null;
   const openCard = cards.filter((card) => card.decision.ref === currentRef);
   const others = cards.filter((card) => card.decision.ref !== currentRef);
+  // The page that links here shows them all, so only a page with somewhere to send you can shorten the list.
+  const listed = new Set((linkToAll ? others.slice(0, REST_LIMIT) : others).map((card) => card.decision.ref));
+  const unlisted = others.length - listed.size;
   return (
     <Section
       title="Needs you"
       note={String(cards.length)}
       {...(linkToAll ? { linkTo: "/decisions", linkLabel: "All decisions" } : {})}
     >
-      {armed || inspecting ? null : <p className="muted">Press j to answer this one.</p>}
+      {armed || inspecting ? null : <p className="muted keyboard-hint">Press j to answer this one.</p>}
       <div className="queue">
         {[...openCard, ...others].map((card) => {
           const isOpen = card.decision.ref === currentRef;
           return (
             <Fragment key={card.decision.ref}>
-              {isOpen ? null : <QueueRest card={card} onOpen={open} />}
+              {listed.has(card.decision.ref) ? <QueueRest card={card} onOpen={open} /> : null}
               {/* Stays mounted while closed, so that moving away does not throw out a half-typed answer. */}
               <div hidden={!isOpen}>
                 <DecisionCardItem card={card} active={isOpen && armed} />
@@ -94,6 +100,11 @@ export function QueueSection({ query, isDefault, linkToAll = true }: QueueSectio
             </Fragment>
           );
         })}
+        {unlisted === 0 ? null : (
+          <button type="button" className="chip" onClick={() => navigate("/decisions")}>
+            {unlisted} more {unlisted === 1 ? "decision" : "decisions"}
+          </button>
+        )}
       </div>
     </Section>
   );

@@ -195,6 +195,13 @@ Auth is out of scope. The server still binds to `127.0.0.1`, rejects unexpected 
 requires a JSON content type with no CORS (blocks drive-by POSTs from web pages). Without this, any website the
 developer visited could approve decisions. It is cheap and does not get in the way of anything.
 
+To use it from a phone, `tailscale serve` proxies the tailnet name to loopback, so the server still binds to `127.0.0.1`.
+That name goes in `~/.octotrack/allowed-hosts`. It is a file rather than an environment variable because any `octo`
+command can start the server, and that command's environment says nothing about how the dashboard is reached.
+
+- **Trade-off:** with no auth, every device the tailnet's access rules let through can read and answer decisions. Funnel
+  must stay off, since it would put this on the public internet.
+
 ### D11. PR status comes from `gh`
 
 `octo pr sync` and a background loop in the local server shell out to `gh`, reuse the developer's existing login and

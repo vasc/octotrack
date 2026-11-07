@@ -23,6 +23,11 @@ export function serverStoppedPath(): string {
   return join(octoHome(), "stopped");
 }
 
+/** Extra names the server answers to, one per line. See hosts.ts. */
+export function allowedHostsPath(): string {
+  return join(octoHome(), "allowed-hosts");
+}
+
 export function serverUrl(): string {
   return (process.env.OCTO_URL ?? `http://127.0.0.1:${DEFAULT_PORT}`).replace(/\/$/, "");
 }
