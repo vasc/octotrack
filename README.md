@@ -90,6 +90,41 @@ octo server stop
 
 Any `octo` command starts it again. Every device your tailnet's access rules allow can then read and answer decisions.
 
+So that the link works after a reboot, have the server start at login on macOS. Put this in
+`~/Library/LaunchAgents/octotrack.server.plist`, with your paths, then load it with
+`launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/octotrack.server.plist`:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>octotrack.server</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/you/.bun/bin/bun</string>
+    <string>/Users/you/.bun/bin/octo</string>
+    <string>serve</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/Users/you/.bun/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+  </dict>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/Users/you/.octotrack/server.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/you/.octotrack/server.log</string>
+</dict>
+</plist>
+```
+
+`gh` has to be on that `PATH` for PR status. Leave `KeepAlive` out: `octo server stop` ends the server with a signal, which
+launchd would treat as a crash and undo, and it would retry forever whenever an on-demand server already holds the port.
+
 ## For agents
 
 Run `octo guide` and put the output in your agents' instructions. It covers everything below in more depth. Have each
