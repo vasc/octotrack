@@ -1,3 +1,4 @@
+import type { DecisionForm } from "../hooks/useDecisionForm.ts";
 import type {
   Decision,
   DecisionCard,
@@ -9,6 +10,7 @@ import type {
   PullRequest,
 } from "@octotrack/core/schemas";
 
+/** Made-up data shared by the /design specimen and the presentational tests, so that both show the same things. */
 const AT = "2026-11-07T10:00:00.000Z";
 
 export function decision(overrides: Partial<Decision> = {}): Decision {
@@ -140,6 +142,22 @@ export function drift(overrides: Partial<Drift> = {}): Drift {
     version: 1,
     createdAt: AT,
     updatedAt: AT,
+    ...overrides,
+  };
+}
+
+export function decisionForm(overrides: Partial<DecisionForm> = {}): DecisionForm {
+  return {
+    chosen: null,
+    note: "",
+    elsewhere: false,
+    canSubmit: false,
+    submitting: false,
+    error: null,
+    choose: () => {},
+    setNote: () => {},
+    setElsewhere: () => {},
+    submit: () => {},
     ...overrides,
   };
 }

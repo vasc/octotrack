@@ -8,3 +8,5 @@
 - Inside `waitFor`, do not use `expect(element).toBeNull()`. See the `gone` helper in
   `packages/web/test/integration.test.tsx` for why.
 - Design decisions and their reasoning live in `docs/DESIGN.md`. Update it when one changes.
+- The design language lives in `design/`. Dashboard styles take values from `design/tokens.css`, and `bun test design`
+  enforces it. Read `design/README.md` before changing how anything looks.

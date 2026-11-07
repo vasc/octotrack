@@ -12,7 +12,7 @@ export function RoadmapPage() {
   const { data: bootstrap } = useBootstrap();
   const roadmap = useOpQuery(contracts.roadmapGenerate, project === null ? {} : { project });
   return (
-    <div className="page" style={{ maxWidth: 1100 }}>
+    <div className="page page--wide">
       <PageHead title="Roadmap">
         <div className="decision-actions">
           <select

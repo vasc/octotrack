@@ -19,25 +19,20 @@ import { ListCapNote } from "../src/components/ui/ListCapNote.tsx";
 import { Progress } from "../src/components/ui/Progress.tsx";
 import { RefText } from "../src/components/ui/RefText.tsx";
 import { EmptyState, ErrorState, LoadingState } from "../src/components/ui/states.tsx";
-import type { DecisionForm } from "../src/hooks/useDecisionForm.ts";
 import type { Tone } from "../src/lib/format.ts";
-import { decision, decisionCard, drift, event, issue, issueCard, pr, prCard } from "./fixtures.ts";
+import {
+  decision,
+  decisionCard,
+  decisionForm,
+  drift,
+  event,
+  issue,
+  issueCard,
+  pr,
+  prCard,
+} from "../src/design/fixtures.ts";
 
-function form(overrides: Partial<DecisionForm> = {}): DecisionForm {
-  return {
-    chosen: null,
-    note: "",
-    elsewhere: false,
-    canSubmit: false,
-    submitting: false,
-    error: null,
-    choose: () => {},
-    setNote: () => {},
-    setElsewhere: () => {},
-    submit: () => {},
-    ...overrides,
-  };
-}
+const form = decisionForm;
 
 describe("DecisionCardView", () => {
   test("shows what is needed to decide: question, context, options, recommendation, reasons, blocked work", () => {

@@ -198,4 +198,5 @@ That runs types, lint and all tests. Casts are a lint error through `scripts/no-
 | `packages/cli`    | The `octo` command                                                                        |
 | `packages/web`    | The dashboard                                                                             |
 
-`docs/DESIGN.md` explains the decisions behind all of this, and their trade-offs.
+`docs/DESIGN.md` explains the technical decisions behind all of this, and their trade-offs. `design/` holds the design
+language, which the dashboard imports, with a live specimen at `/design`.

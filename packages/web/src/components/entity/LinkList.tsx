@@ -35,11 +35,9 @@ export function LinkList({ entityRef, links, linked }: LinkListProps) {
           const summary = linked.find((item) => item.ref === other);
           return (
             <div className="row" key={`${link.fromRef}|${link.rel}|${link.toRef}`}>
-              <span className="muted" style={{ flex: "none" }}>
-                {label}
-              </span>
+              <span className="muted no-shrink">{label}</span>
               <RefLink value={other} />
-              <span className="row-title" style={{ cursor: "default" }} title={summary?.title}>
+              <span className="row-title row-title--static" title={summary?.title}>
                 {summary?.title}
               </span>
               {summary === undefined ? null : <StatusBadge value={summary.status} />}

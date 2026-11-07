@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { AgentsPage } from "./components/agents/AgentsPage.tsx";
 import { DecisionsPage } from "./components/decisions/DecisionsPage.tsx";
 import { DriftPage } from "./components/drift/DriftPage.tsx";
@@ -9,8 +10,13 @@ import { ProjectDetailPage } from "./components/projects/ProjectDetailPage.tsx";
 import { ProjectsPage } from "./components/projects/ProjectsPage.tsx";
 import { PrsPage } from "./components/prs/PrsPage.tsx";
 import { RoadmapPage } from "./components/roadmap/RoadmapPage.tsx";
-import { EmptyState } from "./components/ui/states.tsx";
+import { EmptyState, LoadingState } from "./components/ui/states.tsx";
 import { useRoute } from "./lib/router.ts";
+
+/** Loaded on its own, so that the dashboard's bundle does not carry the specimen. */
+const DesignPage = lazy(() =>
+  import("./design/DesignPage.tsx").then((module) => ({ default: module.DesignPage })),
+);
 
 function Page({ path }: { path: string }) {
   const project = /^\/projects\/([^/]+)$/.exec(path)?.[1];
@@ -45,6 +51,13 @@ function Page({ path }: { path: string }) {
 
 export function App() {
   const { path } = useRoute();
+  if (path === "/design") {
+    return (
+      <Suspense fallback={<LoadingState label="Loading the specimen" />}>
+        <DesignPage />
+      </Suspense>
+    );
+  }
   return (
     <AppShell>
       <Page path={path} />

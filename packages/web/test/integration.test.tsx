@@ -503,6 +503,21 @@ describe("drift", () => {
   });
 });
 
+describe("the design specimen", () => {
+  test("shows real components in both themes, needs no data, and can focus on one theme", async () => {
+    navigate("/design");
+    const view = renderApp(<App />);
+    await view.findAllByRole("heading", { name: "Which queue?" });
+    expect(document.querySelectorAll('[data-theme="light"]')).toHaveLength(1);
+    expect(document.querySelectorAll('[data-theme="dark"]')).toHaveLength(1);
+    expect(server.calls).toEqual([]);
+
+    fireEvent.click(view.getByRole("button", { name: "Dark" }));
+    await waitFor(() => expect(document.querySelectorAll('[data-theme="light"]')).toHaveLength(0));
+    expect(document.querySelectorAll('[data-theme="dark"]')).toHaveLength(1);
+  });
+});
+
 describe("other pages", () => {
   test("issues are grouped by status and status changes reach the server", async () => {
     const issue = server.act(c.issueCreate, { project: "OCT", title: "Thing" });

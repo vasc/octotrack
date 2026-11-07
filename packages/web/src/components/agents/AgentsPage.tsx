@@ -40,7 +40,7 @@ export function AgentsPage() {
         <div className="rows">
           {agents.data?.map((agent) => (
             <div className="row" key={agent.name}>
-              <span style={{ fontWeight: 500 }}>{agent.name}</span>
+              <span className="strong">{agent.name}</span>
               <span className="row-stack muted">{agent.note}</span>
               <TimeAgo iso={agent.lastSeenAt} />
             </div>

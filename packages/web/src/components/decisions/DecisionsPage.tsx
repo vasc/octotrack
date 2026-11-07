@@ -53,7 +53,7 @@ export function DecisionsPage() {
         {history.isPending ? <LoadingState /> : null}
         {history.error === null ? null : <ErrorState error={history.error} />}
         {history.data?.length === 0 ? <EmptyState>No decisions recorded here yet.</EmptyState> : null}
-        <div className="rows" style={{ marginTop: 6 }}>
+        <div className="rows rows--spaced">
           {history.data?.map((decision) => (
             <DecisionRow key={decision.ref} decision={decision} />
           ))}

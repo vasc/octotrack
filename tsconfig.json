@@ -13,6 +13,9 @@
     },
     {
       "path": "packages/web"
+    },
+    {
+      "path": "design"
     }
   ]
 }

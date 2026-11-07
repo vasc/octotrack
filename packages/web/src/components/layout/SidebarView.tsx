@@ -86,12 +86,8 @@ export function SidebarView({ path, live, counts, projects }: SidebarViewProps) 
           ))}
         </div>
       )}
-      <div
-        className="nav-group muted"
-        data-secondary="true"
-        style={{ padding: "0 8px", fontSize: 11, marginTop: "auto" }}
-      >
-        <span>/ filter · j k move · 1-9 pick · Enter decide · Esc close</span>
+      <div className="sidebar-hint" data-secondary="true">
+        / filter · j k move · 1-9 pick · Enter decide · Esc close
       </div>
     </nav>
   );

@@ -13,9 +13,7 @@ export function EntityHeader({ summary }: { summary: EntitySummary }) {
           ✕
         </button>
       </div>
-      <h2 className="detail-title" style={{ marginTop: 6 }}>
-        {summary.title}
-      </h2>
+      <h2 className="detail-title">{summary.title}</h2>
     </header>
   );
 }
