@@ -257,6 +257,79 @@ describe("the feed", () => {
     );
   });
 
+  test("when no offered option applies, you can answer in your own words", async () => {
+    const decision = seedDecision();
+    const view = renderApp(<App />);
+    await view.findByRole("heading", { name: "Which queue?" });
+    const decide = view.getByRole("button", { name: "Decide" });
+
+    fireEvent.click(view.getByRole("button", { name: /Something else/ }));
+    expect(decide.hasAttribute("disabled")).toBe(true);
+    const note = view.getByLabelText(`Note for ${decision.ref}`);
+    expect(note.getAttribute("placeholder")).toBe("Your answer");
+    expect(document.activeElement).toBe(note);
+    fireEvent.change(note, { target: { value: "Neither, use Kafka" } });
+    fireEvent.click(decide);
+
+    await waitFor(() =>
+      expect(server.act(c.decisionList, { query: `ref:${decision.ref}` })[0]).toMatchObject({
+        status: "decided",
+        chosenOption: null,
+        resolutionNote: "Neither, use Kafka",
+      }),
+    );
+  });
+
+  test("choosing an option after Something else answers with that option", async () => {
+    const decision = seedDecision();
+    const view = renderApp(<App />);
+    await view.findByRole("heading", { name: "Which queue?" });
+
+    fireEvent.click(view.getByRole("button", { name: /Something else/ }));
+    fireEvent.click(view.getByRole("button", { name: /SQS/ }));
+    expect(view.getByRole("button", { name: /Something else/ }).getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(view.getByRole("button", { name: "Decide" }));
+    await waitFor(() =>
+      expect(server.act(c.decisionList, { query: `ref:${decision.ref}` })[0]?.chosenOption).toBe("sqs"),
+    );
+  });
+
+  test("postponing moves on to the next decision and leaves the postponed one last, still open", async () => {
+    const first = seedDecision({ title: "Not ready", priority: "urgent" });
+    seedDecision({ title: "Next in line", priority: "low" });
+    const view = renderApp(<App />);
+    await view.findByRole("heading", { name: "Not ready" });
+
+    fireEvent.click(view.getByRole("button", { name: "Postpone" }));
+    await view.findByRole("heading", { name: "Next in line" });
+    await view.findAllByText("postponed");
+    expect(server.act(c.decisionQueue, {}).map((card) => card.decision.title)).toEqual([
+      "Next in line",
+      "Not ready",
+    ]);
+    expect(server.act(c.decisionList, { query: `ref:${first.ref}` })[0]?.status).toBe("open");
+  });
+
+  test("the p key postpones the card the keys are armed for", async () => {
+    seedDecision({ title: "Not ready", priority: "urgent" });
+    seedDecision({ title: "Next in line", priority: "low" });
+    const view = renderApp(<App />);
+    await view.findByRole("heading", { name: "Not ready" });
+    fireEvent.keyDown(window, { key: "p" });
+    await waitFor(() => expect(server.act(c.decisionQueue, {})[0]?.decision.title).toBe("Next in line"));
+  });
+
+  test("a postponed decision can be brought back", async () => {
+    const decision = seedDecision({ title: "Not ready" });
+    server.act(c.decisionPostpone, { ref: decision.ref });
+    const view = renderApp(<App />);
+    await view.findByRole("heading", { name: "Not ready" });
+    fireEvent.click(view.getByRole("button", { name: "Bring back" }));
+    await waitFor(() =>
+      expect(server.act(c.decisionList, { query: `ref:${decision.ref}` })[0]?.postponedAt).toBeNull(),
+    );
+  });
+
   test("a long queue does not push the feed off the screen", async () => {
     for (const index of [1, 2, 3, 4, 5, 6, 7, 8, 9]) seedDecision({ title: `Question ${index}` });
     const view = renderApp(<App />);

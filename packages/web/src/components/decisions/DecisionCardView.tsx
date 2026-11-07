@@ -1,4 +1,5 @@
 import type { DecisionCard } from "@octotrack/core/schemas";
+import { useRef } from "react";
 import type { DecisionForm } from "../../hooks/useDecisionForm.ts";
 import { Badge } from "../ui/Badge.tsx";
 import { RefLink } from "../ui/RefLink.tsx";
@@ -14,13 +15,16 @@ export interface DecisionCardViewProps {
 /** Everything needed to make the call, without leaving the feed. Pure: all state comes in through `form`. */
 export function DecisionCardView({ card, form, selected = false }: DecisionCardViewProps) {
   const { decision } = card;
+  // Tapping "Something else" has to open the keyboard, which only a real focus call inside the tap can do.
+  const noteField = useRef<HTMLInputElement>(null);
   const openWork = card.blocks.filter((item) => item.status !== "done" && item.status !== "cancelled");
   return (
     <article className="decision" data-selected={selected} aria-label={decision.title}>
       <DecisionMeta decision={decision} />
       <h3 className="decision-title">{decision.title}</h3>
-      {card.reasons.length === 0 ? null : (
+      {card.reasons.length === 0 && decision.postponedAt === null ? null : (
         <div className="decision-reasons">
+          {decision.postponedAt === null ? null : <Badge>postponed</Badge>}
           {card.reasons.map((reason) => (
             <Badge key={reason} tone="attention">
               {reason}
@@ -33,7 +37,12 @@ export function DecisionCardView({ card, form, selected = false }: DecisionCardV
         options={decision.options}
         recommendation={decision.recommendation}
         chosen={form.chosen}
+        ownAnswer={form.ownAnswer}
         onChoose={form.choose}
+        onChooseOwn={() => {
+          form.chooseOwn();
+          noteField.current?.focus();
+        }}
       />
       {decision.recommendation !== null &&
       decision.options.every((option) => option.key !== decision.recommendation) ? (
@@ -55,11 +64,10 @@ export function DecisionCardView({ card, form, selected = false }: DecisionCardV
         }}
       >
         <input
+          ref={noteField}
           className="field"
           aria-label={`Note for ${decision.ref}`}
-          placeholder={
-            decision.options.length === 0 ? "Your answer" : "Why, or an answer none of these cover"
-          }
+          placeholder={form.ownAnswer || decision.options.length === 0 ? "Your answer" : "Why (optional)"}
           value={form.note}
           onChange={(event) => form.setNote(event.target.value)}
         />
@@ -78,6 +86,9 @@ export function DecisionCardView({ card, form, selected = false }: DecisionCardV
           disabled={!form.canSubmit || form.submitting}
         >
           Decide
+        </button>
+        <button type="button" className="btn" onClick={form.postpone}>
+          {decision.postponedAt === null ? "Postpone" : "Bring back"}
         </button>
       </form>
       {form.error === null ? null : (

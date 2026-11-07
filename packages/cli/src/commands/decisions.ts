@@ -280,6 +280,20 @@ export const decisionCommands: Command[] = [
     },
   },
   {
+    path: ["decision", "postpone"],
+    usage: "<REF>",
+    summary: "Push a decision to the bottom of the queue without answering it",
+    options: { undo: { type: "boolean", description: "Bring it back to its normal place" } },
+    ops: [c.decisionPostpone.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(
+        c.decisionPostpone,
+        compact({ ref: args.requirePositional(0, "REF"), undo: args.flag("undo") || undefined }),
+      );
+      out.result(outcome, () => r.renderDecisionBlock(outcome.data));
+    },
+  },
+  {
     path: ["decision", "withdraw"],
     usage: "<REF>",
     summary: "Withdraw an open decision that is no longer needed",

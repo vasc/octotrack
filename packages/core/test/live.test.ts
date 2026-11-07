@@ -57,6 +57,7 @@ const EVERY_WRITE: readonly (readonly [string, unknown])[] = [
   ["issue.release", { refs: ["OCT-1"] }],
   ["decision.ask", { title: "New" }],
   ["decision.update", { ref: "D-1", priority: "high" }],
+  ["decision.postpone", { ref: "D-1" }],
   ["decision.resolve", { ref: "D-1", option: "a" }],
   ["decision.resolve_batch", { text: "D-2 - Yes" }],
   ["decision.record", { title: "Old", chosen: "That" }],

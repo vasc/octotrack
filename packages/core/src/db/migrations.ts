@@ -120,6 +120,9 @@ const MIGRATIONS: readonly string[] = [
   ALTER TABLE drifts ADD COLUMN baselineAt TEXT NOT NULL DEFAULT '';
   UPDATE drifts SET baselineAt = createdAt;
   `,
+  `
+  ALTER TABLE decisions ADD COLUMN postponedAt TEXT;
+  `,
 ];
 
 const UserVersion = z.object({ user_version: z.number().int() });

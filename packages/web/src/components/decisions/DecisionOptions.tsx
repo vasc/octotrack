@@ -5,10 +5,19 @@ export interface DecisionOptionsProps {
   options: readonly DecisionOption[];
   recommendation: string | null;
   chosen: string | null;
+  ownAnswer: boolean;
   onChoose(key: string): void;
+  onChooseOwn(): void;
 }
 
-export function DecisionOptions({ options, recommendation, chosen, onChoose }: DecisionOptionsProps) {
+export function DecisionOptions({
+  options,
+  recommendation,
+  chosen,
+  ownAnswer,
+  onChoose,
+  onChooseOwn,
+}: DecisionOptionsProps) {
   if (options.length === 0) return null;
   return (
     <div className="options">
@@ -26,6 +35,11 @@ export function DecisionOptions({ options, recommendation, chosen, onChoose }: D
           {option.key === recommendation ? <Badge tone="attention">recommended</Badge> : null}
         </button>
       ))}
+      <button type="button" className="option" aria-pressed={ownAnswer} onClick={onChooseOwn}>
+        <kbd>{options.length + 1}</kbd>
+        <span className="option-label">Something else</span>
+        <span className="option-desc">None of these. Answer in your own words</span>
+      </button>
     </div>
   );
 }

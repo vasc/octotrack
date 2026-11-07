@@ -297,6 +297,12 @@ export const contracts = {
     z.strictObject({ ref: z.string(), note: z.string().optional() }),
     Decision,
   ),
+  decisionPostpone: write(
+    "decision.postpone",
+    "Push an open decision to the bottom of the queue without answering it, or undo that",
+    z.strictObject({ ref: z.string(), undo: z.boolean().optional() }),
+    Decision,
+  ),
   decisionWithdraw: write(
     "decision.withdraw",
     "Withdraw an open decision that is no longer needed",

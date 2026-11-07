@@ -2,7 +2,15 @@ import { contracts } from "../contracts.ts";
 import { parseDecisionLines } from "../decision-lines.ts";
 import { OctoError } from "../errors.ts";
 import { buildDecisionCard } from "../queue.ts";
-import type { Channel, Decision, DecisionKind, DecisionOption, EventAttrs, Priority } from "../schemas.ts";
+import type {
+  Channel,
+  Decision,
+  DecisionCard,
+  DecisionKind,
+  DecisionOption,
+  EventAttrs,
+  Priority,
+} from "../schemas.ts";
 import { applyPatch, assertVersion, emit, nextNumber } from "../store/common.ts";
 import type { Ctx } from "../store/context.ts";
 import { rows } from "../store/context.ts";
@@ -72,6 +80,10 @@ function insertDecision(ctx: Ctx, input: InsertDecision): Decision {
 
 function describeOutcome(decision: Decision): string {
   const chosen = decision.options.find((option) => option.key === decision.chosenOption);
+  // Without a listed option, the note is the answer rather than a comment on one.
+  if (chosen === undefined && decision.resolutionNote !== null && decision.resolutionNote !== "") {
+    return `"${decision.resolutionNote}"`;
+  }
   const outcome = chosen ? `"${chosen.label}"` : "no listed option";
   const note =
     decision.resolutionNote === null || decision.resolutionNote === "" ? "" : ` (${decision.resolutionNote})`;
@@ -133,6 +145,7 @@ function resolveDecision(ctx: Ctx, input: ResolveInput): Decision {
   const wasDecided = current.status === "decided";
   const changes = applyPatch(ctx, "decisions", current.ref, current, {
     status: "decided",
+    postponedAt: null,
     chosenOption: option,
     resolutionNote: note,
     decidedBy: ctx.actor,
@@ -195,6 +208,15 @@ export function waitersByRef(ctx: Ctx): Map<string, string[]> {
   return waiters;
 }
 
+/** Postponed decisions go below everything else, and the last one postponed goes to the very bottom. */
+function compareCards(a: DecisionCard, b: DecisionCard): number {
+  const [first, second] = [a.decision.postponedAt, b.decision.postponedAt];
+  if (first !== null && second !== null) return first.localeCompare(second);
+  if (first !== null) return 1;
+  if (second !== null) return -1;
+  return b.score - a.score || a.decision.createdAt.localeCompare(b.decision.createdAt);
+}
+
 export function buildQueue(ctx: Ctx, query: string | undefined) {
   const graph = loadGraph(ctx);
   const waiting = waitersByRef(ctx);
@@ -204,7 +226,7 @@ export function buildQueue(ctx: Ctx, query: string | undefined) {
   }));
   return filterEntities(ctx, open, query, graph)
     .map((entity) => buildDecisionCard(ctx, entity.value, graph, waiting))
-    .sort((a, b) => b.score - a.score || a.decision.createdAt.localeCompare(b.decision.createdAt));
+    .sort(compareCards);
 }
 
 export const decisionOps = [
@@ -304,6 +326,7 @@ export const decisionOps = [
       (decision) => `${decision.ref} reopened: ${decision.title}`,
       {
         status: "open",
+        postponedAt: null,
         chosenOption: null,
         decidedBy: null,
         decidedAt: null,
@@ -314,6 +337,24 @@ export const decisionOps = [
     ),
   ),
 
+  bind(contracts.decisionPostpone, (ctx, input) => {
+    const current = requireDecision(ctx, input.ref);
+    if (current.status !== "open") {
+      throw new OctoError(
+        "conflict",
+        `${current.ref} is ${current.status}, only open decisions can be postponed`,
+      );
+    }
+    const undo = input.undo === true;
+    return transition(
+      ctx,
+      input.ref,
+      undo ? "decision.unpostponed" : "decision.postponed",
+      (decision) => `${decision.ref} ${undo ? "brought back" : "postponed"}: ${decision.title}`,
+      { postponedAt: undo ? null : ctx.now },
+      undefined,
+    );
+  }),
   bind(contracts.decisionWithdraw, (ctx, input) => {
     const current = requireDecision(ctx, input.ref);
     if (current.status !== "open") {

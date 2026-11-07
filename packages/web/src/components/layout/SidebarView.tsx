@@ -87,7 +87,7 @@ export function SidebarView({ path, live, counts, projects }: SidebarViewProps) 
         </div>
       )}
       <div className="sidebar-hint" data-secondary="true">
-        / filter · j k move · 1-9 pick · Enter decide · Esc close
+        / filter · j k move · 1-9 pick · Enter decide · p postpone · Esc close
       </div>
     </nav>
   );

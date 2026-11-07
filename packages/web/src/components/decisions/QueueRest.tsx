@@ -16,11 +16,15 @@ export function QueueRest({ card, onOpen }: QueueRestProps) {
       <button type="button" className="queue-more-title" onClick={() => onOpen(decision.ref)}>
         {decision.title}
       </button>
-      {reasons.slice(0, 1).map((reason) => (
-        <Badge key={reason} tone="attention">
-          {reason}
-        </Badge>
-      ))}
+      {decision.postponedAt !== null ? (
+        <Badge>postponed</Badge>
+      ) : (
+        reasons.slice(0, 1).map((reason) => (
+          <Badge key={reason} tone="attention">
+            {reason}
+          </Badge>
+        ))
+      )}
     </div>
   );
 }
