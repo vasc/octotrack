@@ -259,7 +259,11 @@ export const Drift = z.object({
   message: z.string(),
   suggestion: z.string(),
   status: DriftStatus,
+  /** Who it is routed to, by default whoever holds the target. Only a suggestion: `claimedBy` is the commitment. */
   assignee: z.string().nullable(),
+  claimedBy: z.string().nullable(),
+  /** When what it reports last changed. An update only counts if it came after this. */
+  baselineAt: z.string(),
   resolvedBy: z.string().nullable(),
   resolvedAt: z.string().nullable(),
   note: z.string().nullable(),

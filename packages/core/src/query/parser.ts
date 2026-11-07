@@ -153,7 +153,12 @@ function tokenize(input: string): Token[] {
       index += 1;
       continue;
     }
-    if (char === "-" && index + 1 < input.length && !isSpace(input.charAt(index + 1))) {
+    if (
+      char === "-" &&
+      index + 1 < input.length &&
+      !isSpace(input.charAt(index + 1)) &&
+      input.charAt(index + 1) !== ")"
+    ) {
       tokens.push({ type: "not", pos: index });
       index += 1;
       continue;
@@ -267,8 +272,10 @@ class Parser {
       this.index += 1;
       if (token.field !== null) return { type: "field", field: token.field, values: token.values };
       const [value = ""] = token.values;
-      if (!token.quoted && isRefLike(value))
-        return { type: "field", field: "ref", values: [value], bare: true };
+      const words = value.split(",");
+      if (!token.quoted && words.every(isRefLike)) {
+        return { type: "field", field: "ref", values: words, bare: true };
+      }
       return { type: "text", value };
     }
     throw queryError(this.input, token.pos, "Unexpected token");

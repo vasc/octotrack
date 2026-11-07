@@ -7,11 +7,14 @@ import { FeedSection } from "../feed/FeedSection.tsx";
 import { IssueGroups } from "../issues/IssueGroups.tsx";
 import { PrRow } from "../prs/PrRow.tsx";
 import { StatusBadge } from "../ui/Badge.tsx";
+import { ListCapNote } from "../ui/ListCapNote.tsx";
 import { PageHead } from "../ui/PageHead.tsx";
 import { Progress } from "../ui/Progress.tsx";
 import { Section } from "../ui/Section.tsx";
 import { EmptyState } from "../ui/states.tsx";
 import { MilestoneList } from "./MilestoneList.tsx";
+
+const ISSUE_LIMIT = 1000;
 
 /** One project: its decisions, milestones, PRs, issues and activity, all scoped by the same query. */
 export function ProjectDetailPage({ projectKey }: { projectKey: string }) {
@@ -25,7 +28,7 @@ export function ProjectDetailPage({ projectKey }: { projectKey: string }) {
     { enabled: card !== undefined },
   );
   const prs = useOpQuery(contracts.prList, { query: `${scope} state:open,draft` });
-  const issues = useOpQuery(contracts.issueList, { query: scope, limit: 1000 });
+  const issues = useOpQuery(contracts.issueList, { query: scope, limit: ISSUE_LIMIT });
   const update = useOpMutation(contracts.issueUpdate);
 
   if (data !== undefined && card === undefined) {
@@ -67,6 +70,7 @@ export function ProjectDetailPage({ projectKey }: { projectKey: string }) {
             cards={issues.data}
             onStatus={(ref, status) => update.mutate({ refs: [ref], status })}
           />
+          <ListCapNote shown={issues.data.length} cap={ISSUE_LIMIT} />
         </Section>
       )}
       <Section title="Activity">

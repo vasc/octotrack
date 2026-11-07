@@ -1,5 +1,5 @@
 import type { FeedEvent } from "@octotrack/core/schemas";
-import type { Tone } from "../../lib/format.ts";
+import { filterTerm, type Tone } from "../../lib/format.ts";
 import { RefText } from "../ui/RefText.tsx";
 import { TimeAgo } from "../ui/TimeAgo.tsx";
 
@@ -57,7 +57,7 @@ export function FeedItem({ event, onFilter }: FeedItemProps) {
             {event.project}
           </button>
         )}
-        <button type="button" className="chip" onClick={() => onFilter(`actor:${event.actor}`)}>
+        <button type="button" className="chip" onClick={() => onFilter(filterTerm("actor", event.actor))}>
           {event.actor}
         </button>
         <TimeAgo iso={event.ts} />

@@ -413,7 +413,7 @@ describe("what the audit found", () => {
     const note = await octo(["post", "A status", "-p", "OCT"]);
     expect(note.code).toBe(0);
     const dashed = await octo(["idea", "add", "-1 is the wrong index", "--body", "-starts with a dash"]);
-    expect(dashed.code).toBe(2);
+    expect(dashed.code).toBe(0);
     const body = await data(z.object({ body: z.string() }), [
       "idea",
       "add",
@@ -530,6 +530,7 @@ describe("what the audit found", () => {
   });
 
   test("a gh that hangs is given up on instead of blocking every later sync", async () => {
+    await octo(["project", "create", "SLOW", "Slow repo", "--repo", "acme/slow"]);
     const bin = join(home, "slow-bin");
     mkdirSync(bin, { recursive: true });
     writeFileSync(join(bin, "gh"), "#!/bin/sh\nexec sleep 30\n", { mode: 0o755 });
@@ -546,7 +547,90 @@ describe("what the audit found", () => {
     expect(Date.now() - started).toBeLessThan(5000);
     const status = await octo(["status", "--text"]);
     expect(status.stdout).toContain("PR status is stale for acme/slow");
-    await octo(["op", "pr.sync", "--input", JSON.stringify({ prs: [], repos: ["acme/slow"] })]);
+    await octo(["project", "update", "SLOW", "--no-repo"]);
+  }, 15000);
+});
+
+describe("what the re-audit found", () => {
+  test("a stopped server stays stopped when a waiter times out or is interrupted", async () => {
+    const decision = await data(WithRef, ["decision", "ask", "Stop and time out"]);
+    const waiting = start(["watch", "--until", `ref:${decision.ref} status:decided`, "--timeout", "2s"]);
+    await Bun.sleep(400);
+    expect((await octo(["server", "stop"])).code).toBe(0);
+    expect((await finish(waiting)).code).toBe(124);
+    await Bun.sleep(300);
+    let up = true;
+    try {
+      await serverPid();
+    } catch {
+      up = false;
+    }
+    expect(up).toBe(false);
+  }, 20000);
+
+  test("asking about a stopped server does not start it, and stopping it twice is fine", async () => {
+    await octo(["project", "list"]);
+    expect((await octo(["server", "stop"])).code).toBe(0);
+    await Bun.sleep(300);
+    const status = await octo(["server", "status", "--text"]);
+    expect(status.code).toBe(3);
+    expect(status.stdout + status.stderr).toContain("Down");
+    expect((await octo(["server", "stop"])).code).toBe(0);
+    let up = true;
+    try {
+      await serverPid();
+    } catch {
+      up = false;
+    }
+    expect(up).toBe(false);
+    expect((await octo(["project", "list"])).code).toBe(0);
+    expect(await serverPid()).toBeGreaterThan(0);
+  }, 20000);
+
+  test("a bare negated word is a query, and an unquoted query keeps its order", async () => {
+    expect((await octo(["find", "-retry"])).code).toBe(0);
+    expect((await octo(["feed", "-retry", "--limit", "1"])).code).toBe(0);
+    expect((await octo(["find", "-kind:drift", "OR", "kind:pr"])).code).toBe(0);
+  });
+
+  test("--timeout 0 on a follower checks once", async () => {
+    const cursor = z
+      .object({ cursor: z.number() })
+      .parse(parseJson((await octo(["feed", "--limit", "1"])).stdout)).cursor;
+    await octo(["post", "Pending for the follower", "-p", "OCT", "--level", "blocker"]);
+    const result = await octo(["feed", "-f", "level:blocker", "--since", String(cursor), "--timeout", "0"]);
+    expect(result.stdout).toContain("Pending for the follower");
+  });
+
+  test("decision wait takes a lowercase ref and still reports the drift", async () => {
+    const asked = await data(WithRef, ["decision", "ask", "Lowercase wait", "-p", "OCT"]);
+    await octo(["decision", "resolve", asked.ref, "-n", "Yes"], "dev");
+    const result = await octo(["decision", "wait", asked.ref.toLowerCase(), "--timeout", "2s"]);
+    const parsed = z
+      .object({ data: z.object({ driftToClear: z.array(WithRef) }) })
+      .parse(parseJson(result.stdout));
+    expect(parsed.data.driftToClear.length).toBeGreaterThan(0);
+  });
+
+  test("feed --limit above one page still works", async () => {
+    expect((await octo(["feed", "--limit", "600"])).code).toBe(0);
+  });
+
+  test("a gh that ignores termination, or leaves a child holding its output, cannot overrun the deadline", async () => {
+    const bin = join(home, "stubborn-bin");
+    mkdirSync(bin, { recursive: true });
+    writeFileSync(join(bin, "gh"), "#!/bin/sh\ntrap '' TERM\nsleep 30 &\nwait\n", { mode: 0o755 });
+    const proc = Bun.spawn(["bun", MAIN, "pr", "sync", "--repo", "acme/stubborn"], {
+      env: { ...env("agent-a"), PATH: `${bin}:${process.env.PATH ?? ""}`, OCTO_GH_TIMEOUT_MS: "200" },
+      stdin: "ignore",
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+    const started = Date.now();
+    const result = await finish(proc);
+    expect(result.stdout).toContain("did not answer");
+    expect(Date.now() - started).toBeLessThan(4000);
+    await octo(["op", "pr.sync", "--input", JSON.stringify({ prs: [], repos: ["acme/stubborn"] })]);
   }, 15000);
 });
 

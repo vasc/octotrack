@@ -18,6 +18,11 @@ export function dayLabel(iso: string, now: number = Date.now()): string {
   return day;
 }
 
+/** A filter term that survives names with spaces or brackets in them. */
+export function filterTerm(field: string, value: string): string {
+  return /[\s(),"]/.test(value) ? `${field}:"${value.replaceAll('"', '\\"')}"` : `${field}:${value}`;
+}
+
 export function humanize(value: string): string {
   return value.replaceAll("_", " ");
 }

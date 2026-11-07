@@ -76,7 +76,7 @@ export interface OneShotOptions {
 
 async function cancelQuietly(client: OctoClient, ref: string): Promise<void> {
   try {
-    await client.op(contracts.watchCancel.name, { refs: [ref] });
+    await client.opInBackground(contracts.watchCancel.name, { refs: [ref] });
   } catch (error) {
     if (!(error instanceof ConnectionError || error instanceof RemoteError)) throw error;
   }
@@ -123,8 +123,8 @@ export async function runFollow(
   const removeHandler = onInterrupt(() => cancelQuietly(client, ref));
   const deadline = timeoutMs === null ? null : Date.now() + timeoutMs;
   while (true) {
-    const remaining = deadline === null ? null : deadline - Date.now();
-    if (remaining !== null && remaining <= 0) break;
+    // Not stopping at zero before asking: a zero timeout means "whatever is there right now, then stop".
+    const remaining = deadline === null ? null : Math.max(deadline - Date.now(), 0);
     const outcome = await waitForWatches(client, [ref], remaining);
     if (outcome.kind === "timeout") break;
     // One event can match several clauses, and should still print once, in order.

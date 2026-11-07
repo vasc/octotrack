@@ -201,7 +201,7 @@ developer visited could approve decisions. It is cheap and does not get in the w
 push results through the `pr.sync` operation. References like `OCT-12` in a PR's title, branch or body become
 `implements` links automatically.
 
-- **Trade-off:** polling (default 60 seconds) rather than webhooks, since there is no public endpoint on a laptop.
+- **Trade-off:** polling (default 120 seconds, each repo three requests) rather than webhooks, since there is no public endpoint on a laptop.
   `pr.upsert` remains available for anything else that wants to report.
 - **Bounded requests:** up to 50 open, 20 merged and 10 closed PRs, as separate calls. Asking for 100 PRs with their
   check rollups got a 504 from GitHub on a busy repo. A tracked open PR missing from those lists is looked up on its
@@ -234,6 +234,7 @@ The append-only `events` table is the feed and also what event clauses in watche
 - One feed request scans at most 5000 events, so as not to hold up writes. The CLI and dashboard keep asking until they
   have a full page, so a rare filter on a very long log takes several requests.
 - Every waiting agent re-evaluates on every write. With 40 agents hanging, a write takes about 290ms instead of 6ms.
+- PRs are synced for repos that a project names. A PR reported by hand for any other repo is never refreshed.
 - Lists stop at their limit with no paging: the dashboard says so, and the CLI allows `--limit` up to 1000.
 - A decision's `--recommend` may be free text, so a mistyped option key is shown as text rather than refused.
 - PR status is only as fresh as the sync interval.

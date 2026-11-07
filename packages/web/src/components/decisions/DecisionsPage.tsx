@@ -34,7 +34,7 @@ export function DecisionsPage() {
     <div className="page">
       <PageHead title="Decisions" />
       <FilterBox filter={filter} placeholder="Filter: type:architecture project:OCT" />
-      <QueueSection query={filter.query} isDefault={filter.query === ""} allCards />
+      <QueueSection query={filter.query} isDefault={filter.query === ""} linkToAll={false} />
       <BatchPanel />
       <Section title="Decision log" note={String(history.data?.length ?? "")}>
         <nav className="tabs" aria-label="Decision log">

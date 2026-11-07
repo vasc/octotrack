@@ -115,6 +115,11 @@ const MIGRATIONS: readonly string[] = [
   CREATE UNIQUE INDEX watches_name ON watches(agent, name) WHERE name IS NOT NULL AND status = 'active';
   CREATE INDEX watches_status ON watches(status);
   `,
+  `
+  ALTER TABLE drifts ADD COLUMN claimedBy TEXT;
+  ALTER TABLE drifts ADD COLUMN baselineAt TEXT NOT NULL DEFAULT '';
+  UPDATE drifts SET baselineAt = createdAt;
+  `,
 ];
 
 const UserVersion = z.object({ user_version: z.number().int() });

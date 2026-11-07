@@ -64,8 +64,8 @@ function openDrift(
   const assignee = assigneeFor(ctx, target, graph);
   ctx.sql.run(
     `INSERT INTO drifts (ref, rule, dedupeKey, fingerprint, edge, target, cause, viaLink, project, message,
-       suggestion, status, assignee, version, createdAt, updatedAt, position)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, 1, ?, ?, ?)`,
+       suggestion, status, assignee, baselineAt, version, createdAt, updatedAt, position)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, 1, ?, ?, ?)`,
     [
       ref,
       desired.rule,
@@ -79,6 +79,7 @@ function openDrift(
       desired.message,
       desired.suggestion.replaceAll(DRIFT_REF, ref),
       assignee,
+      ctx.now,
       ctx.now,
       ctx.now,
       position,
@@ -169,12 +170,11 @@ function openEdge(ctx: Ctx, item: DesiredDrift, viaLink: boolean, graph: GraphSn
   const latest = latestForKey(ctx, item.dedupeKey);
   if (latest?.status === "open") {
     // Still open, but what it says must follow: an outcome that changed again would otherwise be applied wrongly.
-    ctx.sql.run("UPDATE drifts SET message = ?, fingerprint = ?, updatedAt = ? WHERE ref = ?", [
-      item.message,
-      item.fingerprint,
-      ctx.now,
-      latest.ref,
-    ]);
+    // What it reports changed, so an update made before this no longer answers it.
+    ctx.sql.run(
+      "UPDATE drifts SET message = ?, fingerprint = ?, baselineAt = ?, updatedAt = ? WHERE ref = ?",
+      [item.message, item.fingerprint, ctx.now, ctx.now, latest.ref],
+    );
     return;
   }
   openDrift(ctx, item, true, viaLink, graph);
@@ -200,7 +200,7 @@ function decisionEdges(ctx: Ctx, event: FeedEvent, graph: GraphSnapshot): void {
         cause: event.ref,
         project: event.project,
         message: `Check that ${target} reflects this: ${event.summary}`,
-        suggestion: `Update ${target}, then: octo drift ack --target ${target} --updated "what changed"; or --verified "why nothing needs updating"`,
+        suggestion: `Update ${target}, then: octo drift ack ${DRIFT_REF} --updated "what changed". Or: octo drift ack ${DRIFT_REF} --verified "why nothing needs updating"`,
       },
       true,
       graph,
@@ -217,7 +217,7 @@ function decisionEdges(ctx: Ctx, event: FeedEvent, graph: GraphSnapshot): void {
         cause: event.ref,
         project: event.project,
         message: `Check that project ${event.project} still describes reality: ${event.summary}`,
-        suggestion: `octo project update ${event.project} ..., or: octo drift ack --target ${event.project} --verified "why nothing needs updating"`,
+        suggestion: `octo project update ${event.project} ..., then: octo drift ack ${DRIFT_REF} --updated "what changed". Or: octo drift ack ${DRIFT_REF} --verified "why nothing needs updating"`,
       },
       false,
       graph,
@@ -241,7 +241,7 @@ function dependencyEdges(ctx: Ctx, event: FeedEvent, graph: GraphSnapshot): void
         cause: event.ref,
         project: projectOf(findEntity(ctx, target)),
         message: `${event.ref}, which ${target} is derived from, changed: check that ${target} is still correct. ${event.summary}`,
-        suggestion: `Update ${target}, then: octo drift ack --target ${target} --updated "what changed"; or --verified "why nothing needs updating"`,
+        suggestion: `Update ${target}, then: octo drift ack ${DRIFT_REF} --updated "what changed". Or: octo drift ack ${DRIFT_REF} --verified "why nothing needs updating"`,
       },
       true,
       graph,
@@ -279,14 +279,17 @@ export function reconcileDrift(ctx: Ctx, sinceSeq: number): void {
 function updateWasMade(ctx: Ctx, drift: Drift): boolean {
   const posted = one(ctx, CountRow, "SELECT COUNT(*) AS n FROM updates WHERE target = ? AND createdAt >= ?", [
     drift.target,
-    drift.createdAt,
+    drift.baselineAt,
   ]);
   if ((posted?.n ?? 0) > 0) return true;
   const events = rows(ctx, EventRow, "SELECT * FROM events WHERE ref = ? AND ts >= ?", [
     drift.target,
-    drift.createdAt,
+    drift.baselineAt,
   ]);
-  return events.some((event) => Object.keys(event.changes).some((key) => !NOT_MEANINGFUL.has(key)));
+  // Claiming starts work on something. It does not make it true.
+  return events
+    .filter((event) => event.type !== "issue.claimed" && event.type !== "issue.released")
+    .some((event) => Object.keys(event.changes).some((key) => !NOT_MEANINGFUL.has(key)));
 }
 
 export interface AckInput {
@@ -294,6 +297,7 @@ export interface AckInput {
   target?: string;
   mode: "updated" | "verified";
   note: string;
+  force?: boolean;
 }
 
 export function ackDrift(ctx: Ctx, input: AckInput): Drift[] {
@@ -320,6 +324,15 @@ export function ackDrift(ctx: Ctx, input: AckInput): Drift[] {
   }
   const unique = [...new Map(drifts.map((drift) => [drift.ref, drift])).values()];
   const pending = unique.filter((drift) => drift.status === "open");
+  for (const drift of pending) {
+    if (drift.claimedBy !== null && drift.claimedBy !== ctx.actor && input.force !== true) {
+      throw new OctoError(
+        "conflict",
+        `${drift.ref} is claimed by ${drift.claimedBy}`,
+        "Leave it to them, or pass --force if they have gone away.",
+      );
+    }
+  }
   if (input.mode === "updated") {
     for (const drift of pending) {
       if (!drift.edge) {

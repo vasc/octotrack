@@ -136,6 +136,8 @@ export function drift(overrides: Partial<Drift> = {}): Drift {
     suggestion: "Merge PR-1",
     status: "open",
     assignee: null,
+    claimedBy: null,
+    baselineAt: AT,
     resolvedBy: null,
     resolvedAt: null,
     note: null,

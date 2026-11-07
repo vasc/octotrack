@@ -34,8 +34,13 @@ Keeping one card open is what keeps the feed on screen. Three open cards fill a 
 
 It always takes two steps, which is the protection against a stray key. A number alone does nothing irreversible.
 
-The card that is open stays open until it is answered, whatever the ranking does around it. Then the top of the queue
-opens. Moving away keeps what you typed. Not being optimistic means a refusal can show on the card itself.
+The card that is open stays open, and stays first, until it is answered, whatever the ranking does around it. Staying
+first is what keeps a re-rank from moving the field being typed in. Moving away keeps what you typed, and not being
+optimistic means a refusal can show on the card itself.
+
+The keys answer one decision at a time. With the inspector open on a decision, they answer that one, and the queue stands
+down. When the open card goes away, because it was answered or an agent withdrew it, the next one opens but the keys do
+nothing until you press `j`. A key pressed for one decision must never land on another.
 
 ## Ranking, and showing the reason
 

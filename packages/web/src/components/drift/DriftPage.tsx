@@ -2,13 +2,19 @@ import { contracts } from "@octotrack/core/contracts";
 import { useFilter } from "../../hooks/useFilter.ts";
 import { useOpMutation, useOpQuery } from "../../hooks/useOp.ts";
 import { FilterBox } from "../feed/FilterBox.tsx";
+import { ListCapNote } from "../ui/ListCapNote.tsx";
 import { PageHead } from "../ui/PageHead.tsx";
 import { EmptyState, ErrorState, LoadingState } from "../ui/states.tsx";
 import { DriftItem } from "./DriftItem.tsx";
 
+const DRIFT_LIMIT = 200;
+
 export function DriftPage() {
   const filter = useFilter();
-  const drift = useOpQuery(contracts.driftList, filter.query === "" ? {} : { query: filter.query });
+  const drift = useOpQuery(contracts.driftList, {
+    limit: DRIFT_LIMIT,
+    ...(filter.query === "" ? {} : { query: filter.query }),
+  });
   const ack = useOpMutation(contracts.driftAck);
   return (
     <div className="page">
@@ -31,6 +37,7 @@ export function DriftPage() {
           />
         ))}
       </div>
+      <ListCapNote shown={drift.data?.length ?? 0} cap={DRIFT_LIMIT} />
     </div>
   );
 }

@@ -1,8 +1,9 @@
 import { contracts } from "@octotrack/core/contracts";
 import { Fragment, useMemo, useState } from "react";
 import { useBootstrapSnapshot } from "../../hooks/useBootstrap.ts";
-import { useHotkeys } from "../../hooks/useHotkeys.ts";
+import { type HotkeyMap, useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
+import { useRoute } from "../../lib/router.ts";
 import { Section } from "../ui/Section.tsx";
 import { DecisionCardItem } from "./DecisionCardItem.tsx";
 import { QueueRest } from "./QueueRest.tsx";
@@ -11,57 +12,84 @@ export interface QueueSectionProps {
   query: string;
   /** With no filter applied, the first load can come straight from bootstrap. */
   isDefault: boolean;
-  /** Show every card open. The default opens one at a time, so that the feed stays on screen. */
-  allCards?: boolean;
+  linkToAll?: boolean;
 }
 
-/** The decisions most worth the developer's attention right now. j and k move between them. */
-export function QueueSection({ query, isDefault, allCards = false }: QueueSectionProps) {
+/**
+ * The decisions most worth the developer's attention right now, one open at a time. A keypress here can unblock an agent
+ * on an answer, so it must land where it was aimed:
+ *
+ * - The open card stays open and stays first, whatever the ranking does, so that a re-rank cannot swap it or move the
+ *   field being typed in.
+ * - The keys are armed for one specific card. If it goes away, the next one opens but the keys do nothing until `j`.
+ * - With the inspector open, the keys belong to whatever is inspected, and this stands down.
+ */
+export function QueueSection({ query, isDefault, linkToAll = true }: QueueSectionProps) {
   const bootstrap = useBootstrapSnapshot();
+  const { params } = useRoute();
+  const inspecting = params.get("ref") !== null;
   const queue = useOpQuery(
     contracts.decisionQueue,
     query === "" ? {} : { query },
     isDefault && bootstrap !== undefined ? { initialData: bootstrap.queue } : {},
   );
   const cards = queue.data ?? [];
-  const [chosenRef, setChosenRef] = useState<string | null>(null);
-  // The open card stays open until it is answered. Following the ranking instead would let a live re-rank swap it under
-  // the developer's fingers, and a keypress meant for one decision would land on another that an agent is hanging on.
-  const active = cards.find((card) => card.decision.ref === chosenRef) ?? cards[0];
-  const activeRef = active?.decision.ref ?? null;
-  if (activeRef !== chosenRef && activeRef !== null) setChosenRef(activeRef);
-  const activeIndex = Math.max(
-    0,
-    cards.findIndex((card) => card.decision.ref === activeRef),
-  );
-  const refs = cards.map((card) => card.decision.ref).join(" ");
+  const [openRef, setOpenRef] = useState<string | null>(null);
+  const [armedRef, setArmedRef] = useState<string | null>(null);
 
-  const keys = useMemo(() => {
+  const firstRef = cards[0]?.decision.ref ?? null;
+  const stillThere = cards.some((card) => card.decision.ref === openRef);
+  const currentRef = stillThere ? openRef : firstRef;
+  if (currentRef !== null && currentRef !== openRef) {
+    setOpenRef(currentRef);
+    // Arming on first sight only. A card opened because another went away was not chosen by anyone.
+    if (openRef === null) setArmedRef(currentRef);
+  }
+  const armed = currentRef !== null && armedRef === currentRef && !inspecting;
+
+  const refs = cards.map((card) => card.decision.ref).join(" ");
+  const open = (ref: string) => {
+    setOpenRef(ref);
+    setArmedRef(ref);
+  };
+  const keys = useMemo((): HotkeyMap => {
+    if (inspecting) return {};
     const list = refs === "" ? [] : refs.split(" ");
     const move = (step: number) => () => {
-      const next = list[Math.min(Math.max(activeIndex + step, 0), list.length - 1)];
-      if (next !== undefined) setChosenRef(next);
+      if (currentRef === null) return;
+      if (armedRef !== currentRef) {
+        setArmedRef(currentRef);
+        return;
+      }
+      const next = list[Math.min(Math.max(list.indexOf(currentRef) + step, 0), list.length - 1)];
+      if (next !== undefined) {
+        setOpenRef(next);
+        setArmedRef(next);
+      }
     };
     return { j: move(1), k: move(-1) };
-  }, [refs, activeIndex]);
+  }, [refs, currentRef, armedRef, inspecting]);
   useHotkeys(keys);
 
   if (cards.length === 0) return null;
+  const openCard = cards.filter((card) => card.decision.ref === currentRef);
+  const others = cards.filter((card) => card.decision.ref !== currentRef);
   return (
     <Section
       title="Needs you"
       note={String(cards.length)}
-      {...(allCards ? {} : { linkTo: "/decisions", linkLabel: "All decisions" })}
+      {...(linkToAll ? { linkTo: "/decisions", linkLabel: "All decisions" } : {})}
     >
+      {armed || inspecting ? null : <p className="muted">Press j to answer this one.</p>}
       <div className="queue">
-        {cards.map((card) => {
-          const open = allCards || card.decision.ref === activeRef;
+        {[...openCard, ...others].map((card) => {
+          const isOpen = card.decision.ref === currentRef;
           return (
             <Fragment key={card.decision.ref}>
-              {open ? null : <QueueRest card={card} onOpen={setChosenRef} />}
+              {isOpen ? null : <QueueRest card={card} onOpen={open} />}
               {/* Stays mounted while closed, so that moving away does not throw out a half-typed answer. */}
-              <div hidden={!open}>
-                <DecisionCardItem card={card} active={card.decision.ref === activeRef} />
+              <div hidden={!isOpen}>
+                <DecisionCardItem card={card} active={isOpen && armed} />
               </div>
             </Fragment>
           );

@@ -13,7 +13,8 @@ function OpenDecision({ decision }: { decision: Decision }) {
   const [card] = queue.data ?? [];
   return (
     <>
-      {card === undefined ? null : <DecisionCardItem card={card} />}
+      {/* The decision being inspected is the one the keys answer. The queue stands down while this is open. */}
+      {card === undefined ? null : <DecisionCardItem card={card} active />}
       <div>
         <button type="button" className="btn" onClick={() => withdraw.mutate({ ref: decision.ref })}>
           Withdraw

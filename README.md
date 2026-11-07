@@ -181,7 +181,7 @@ D-5 - None of the options, doing this instead
 | `OCTO_AGENT`           | `agent`                 | Who is acting                                                 |
 | `OCTO_URL`             | `http://127.0.0.1:4747` | The server. Loopback URLs start it on demand                  |
 | `OCTO_HOME`            | `~/.octotrack`          | Where the database and server log live                        |
-| `OCTO_PR_SYNC_SECONDS` | `60`                    | How often the server pulls PR status with `gh`. 0 disables it |
+| `OCTO_PR_SYNC_SECONDS` | `120`                   | How often the server pulls PR status with `gh`. 0 disables it |
 
 ## Development
 

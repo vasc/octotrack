@@ -59,12 +59,11 @@ export class Args {
   }
 }
 
-/** A query term such as -actor:github or -D-3, which is not an option even though it starts with a dash. */
-const NEGATED_QUERY_TERM = /^-(?:[a-zA-Z_]+:|\(|"|[a-zA-Z][a-zA-Z0-9]*-\d+)/;
-
 /**
  * The standard parser takes anything starting with a dash for an option, which would reject the query language's own
- * negation, and any option value that happens to start with one. This makes both unambiguous before it sees them.
+ * negation, and any option value that happens to start with one. This resolves both before it sees them. One dash and a
+ * single letter is an option, and anything longer with one dash is a negated query term. Positionals keep their order,
+ * which matters when a query was not quoted.
  */
 function disambiguate(argv: readonly string[], specs: OptionSpecs): string[] {
   const longNameOf = new Map(
@@ -73,29 +72,30 @@ function disambiguate(argv: readonly string[], specs: OptionSpecs): string[] {
     ),
   );
   const options: string[] = [];
-  const queryTerms: string[] = [];
+  const positionals: string[] = [];
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index] ?? "";
     if (token === "--") {
-      queryTerms.push(...argv.slice(index + 1));
+      positionals.push(...argv.slice(index + 1));
       break;
     }
-    const name = token.startsWith("--")
-      ? token.slice(2)
-      : token.length === 2 && token.startsWith("-")
-        ? longNameOf.get(token.charAt(1))
-        : undefined;
+    const isLong = token.startsWith("--");
+    const isShort = !isLong && token.length === 2 && token.startsWith("-");
+    if (!isLong && !isShort) {
+      if (token.startsWith("-") && token.length === 1) options.push(token);
+      else positionals.push(token);
+      continue;
+    }
+    const name = isLong ? token.slice(2) : longNameOf.get(token.charAt(1));
     const value = argv[index + 1];
     if (name !== undefined && specs[name]?.type === "string" && value !== undefined) {
       options.push(`--${name}=${value}`);
       index += 1;
-    } else if (NEGATED_QUERY_TERM.test(token)) {
-      queryTerms.push(token);
     } else {
       options.push(token);
     }
   }
-  return queryTerms.length === 0 ? options : [...options, "--", ...queryTerms];
+  return positionals.length === 0 ? options : [...options, "--", ...positionals];
 }
 
 export function parse(argv: readonly string[], specs: OptionSpecs): Args {

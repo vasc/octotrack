@@ -1,5 +1,13 @@
 import { OctoError, notFound } from "../errors.ts";
-import { explicitRefsInQuery, matchQuery, parseQuery, refsInQuery, valuesInQuery } from "../query/index.ts";
+import {
+  explicitRefsInQuery,
+  matchQuery,
+  parseQuery,
+  type QueryNode,
+  refsInQuery,
+  valueMatches,
+  valuesInQuery,
+} from "../query/index.ts";
 import {
   type EntitySummary,
   type FeedEvent,
@@ -10,8 +18,8 @@ import {
 } from "../schemas.ts";
 import { currentCursor, nextNumber } from "../store/common.ts";
 import { type Ctx, one, rows } from "../store/context.ts";
-import { eventDoc, findEntities, matchEnv } from "../store/docs.ts";
-import { findEntity, getProject } from "../store/entities.ts";
+import { ALL_KINDS, entityDoc, eventDoc, findEntities, loadEntities, matchEnv } from "../store/docs.ts";
+import { findEntity } from "../store/entities.ts";
 import { type GraphSnapshot, loadGraph } from "../store/graph.ts";
 import { EventRow, WatchRow } from "../store/rows.ts";
 
@@ -30,27 +38,63 @@ export function toWatch(row: WatchRow, now: string): Watch {
   };
 }
 
+const isGlob = (value: string): boolean => value.includes("*") || value.includes("?");
+
+/** Fields whose values are not a closed list, so a typo cannot be caught by the parser. */
+const OPEN_FIELDS: readonly string[] = [
+  "ref",
+  "project",
+  "repo",
+  "milestone",
+  "assignee",
+  "actor",
+  "label",
+  "target",
+];
+
 /**
- * `--until-none` on something that does not exist matches nothing, so it would fire at once and look like success.
- * Anything a clause names explicitly therefore has to exist. Returns the canonical refs it mentions.
+ * A "none" clause on something that does not exist matches nothing, so it would fire at once and look like success.
+ * Everything it names therefore has to match something today.
  */
+function assertNoneClauseCanMatch(ctx: Ctx, ast: QueryNode, graph: GraphSnapshot): void {
+  for (const ref of valuesInQuery(ast, "linked")) {
+    if (findEntity(ctx, ref) === null) throw notFound(ref);
+  }
+  const named = OPEN_FIELDS.flatMap((field) =>
+    valuesInQuery(ast, field)
+      .filter((value) => value.toLowerCase() !== "none")
+      .map((value) => ({ field, value })),
+  );
+  if (named.length === 0) return;
+  const docs = ALL_KINDS.flatMap((kind) => loadEntities(ctx, kind)).map((entity) => entityDoc(entity, graph));
+  for (const { field, value } of named) {
+    if (!docs.some((doc) => doc.fields[field]?.some((actual) => valueMatches(value, actual)))) {
+      throw new OctoError(
+        "invalid_query",
+        `Nothing has ${field}:${value}, so this watch would fire at once`,
+        "Check the spelling. To wait for something that does not exist yet, use --on.",
+      );
+    }
+  }
+}
+
+/** Checks a spec and returns the canonical refs it mentions, for showing who is waiting on what. */
 export function assertValidSpec(ctx: Ctx, spec: WatchSpec): string[] {
   const refs = new Set<string>();
+  const graph = loadGraph(ctx);
   for (const clause of spec.clauses) {
     const ast = parseQuery(clause.query);
     for (const ref of explicitRefsInQuery(ast)) {
+      if (isGlob(ref)) continue;
       const entity = findEntity(ctx, ref);
       if (entity === null) throw notFound(ref);
       refs.add(entity.value.ref);
     }
     for (const ref of refsInQuery(ast)) {
-      const entity = findEntity(ctx, ref);
+      const entity = isGlob(ref) ? null : findEntity(ctx, ref);
       if (entity !== null) refs.add(entity.value.ref);
     }
-    for (const project of valuesInQuery(ast, "project")) {
-      if (project.includes("*") || project.includes("?") || project.toLowerCase() === "none") continue;
-      if (getProject(ctx, project.toUpperCase()) === null) throw notFound(project);
-    }
+    if (clause.type === "state" && clause.mode === "none") assertNoneClauseCanMatch(ctx, ast, graph);
   }
   return [...refs];
 }
@@ -179,16 +223,24 @@ export function checkWatch(ctx: Ctx, refOrName: string): WatchResult {
   // Starting to be polled is what makes an agent count as waiting. Later polls change nothing a person can see.
   if (!found.waiting) ctx.visibleChange = true;
   const graph = loadGraph(ctx);
-  const clauses = evaluateClauses(ctx, watch, graph);
+  const evaluated = evaluateClauses(ctx, watch, graph);
   const fired =
     watch.spec.require === "all"
-      ? clauses.every((clause) => clause.satisfied)
-      : clauses.some((clause) => clause.satisfied);
+      ? evaluated.every((clause) => clause.satisfied)
+      : evaluated.some((clause) => clause.satisfied);
 
   // A partly matched clause (`all` waiting on the others, or a count not reached yet) must keep its events, so the
   // cursor holds still. With no match at all, those events can never matter and the cursor can move.
-  const partial = clauses.some((clause) => clause.events.length > 0);
-  const nextCursor = fired || !partial ? resumePoint(clauses, cursorNow) : watch.cursor;
+  const partial = evaluated.some((clause) => clause.events.length > 0);
+  const nextCursor = fired || !partial ? resumePoint(evaluated, cursorNow) : watch.cursor;
+  // Anything past the resume point comes back next time, so returning it now as well would deliver it twice.
+  const clauses =
+    nextCursor < cursorNow && nextCursor > watch.cursor
+      ? evaluated.map((clause) => ({
+          ...clause,
+          events: clause.events.filter((event) => event.seq <= nextCursor),
+        }))
+      : evaluated;
   const result: WatchResult = { watch: watch.ref, name: watch.name, fired, cursor: nextCursor, clauses };
   if (fired && !watch.follow) {
     ctx.visibleChange = true;

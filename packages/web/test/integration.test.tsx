@@ -192,6 +192,79 @@ describe("the feed", () => {
     expect(view.queryByText("Nothing matches this filter.") === null).toBe(true);
   });
 
+  test("with the inspector open on a decision, the keys answer that decision and not the queue's", async () => {
+    const top = seedDecision({ title: "Top of the queue", priority: "urgent" });
+    const other = seedDecision({ title: "Being inspected", priority: "low" });
+    navigate(`/?ref=${other.ref}`);
+    const view = renderApp(<App />);
+    const panel = within(await view.findByRole("complementary", { name: other.ref }));
+    await panel.findByRole("button", { name: /SQS/ });
+    fireEvent.keyDown(window, { key: "1" });
+    await waitFor(() =>
+      expect(panel.getByRole("button", { name: /SQS/ }).getAttribute("aria-pressed")).toBe("true"),
+    );
+    fireEvent.keyDown(window, { key: "Enter" });
+    await waitFor(() =>
+      expect(server.act(c.decisionList, { query: `ref:${other.ref}` })[0]?.status).toBe("decided"),
+    );
+    expect(server.act(c.decisionList, { query: `ref:${top.ref}` })[0]?.status).toBe("open");
+  });
+
+  test("when the open decision goes away, the keys do nothing until you say which one you mean", async () => {
+    server = startTestServer({ live: true });
+    server.act(c.projectCreate, { key: "OCT", name: "Octotrack" });
+    const first = seedDecision({ title: "Was open", priority: "urgent" });
+    const second = seedDecision({ title: "Next in line", priority: "low" });
+    const view = renderApp(<App />);
+    await view.findByRole("heading", { name: "Was open" });
+
+    server.act(c.decisionWithdraw, { ref: first.ref });
+    await view.findByRole("heading", { name: "Next in line" });
+    fireEvent.keyDown(window, { key: "1" });
+    fireEvent.keyDown(window, { key: "Enter" });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(server.act(c.decisionList, { query: `ref:${second.ref}` })[0]?.status).toBe("open");
+    await view.findByText(/Press j to answer this one/);
+
+    fireEvent.keyDown(window, { key: "j" });
+    await gone(() => view.queryByText(/Press j to answer this one/));
+    fireEvent.keyDown(window, { key: "1" });
+    await waitFor(() =>
+      expect(view.getByRole("button", { name: /SQS/ }).getAttribute("aria-pressed")).toBe("true"),
+    );
+    fireEvent.keyDown(window, { key: "Enter" });
+    await waitFor(() =>
+      expect(server.act(c.decisionList, { query: `ref:${second.ref}` })[0]?.status).toBe("decided"),
+    );
+  });
+
+  test("the open card stays first, so that a re-rank cannot move the field being typed in", async () => {
+    server = startTestServer({ live: true });
+    server.act(c.projectCreate, { key: "OCT", name: "Octotrack" });
+    const first = seedDecision({ title: "Being typed in", priority: "medium" });
+    const view = renderApp(<App />);
+    await view.findByRole("heading", { name: "Being typed in" });
+    const note = view.getByLabelText(`Note for ${first.ref}`);
+    const queue = note.closest(".queue");
+    const openFirst = () => queue?.firstElementChild?.contains(note) === true;
+    expect(openFirst()).toBe(true);
+
+    seedDecision({ title: "Outranks it", priority: "urgent" });
+    await view.findByRole("button", { name: "Outranks it" });
+    expect(openFirst()).toBe(true);
+  });
+
+  test("a chip for a name with a space still filters on that name", async () => {
+    server.act(c.issueCreate, { project: "OCT", title: "By a spaced name" }, "my agent");
+    server.act(c.issueCreate, { project: "OCT", title: "By another" }, "other");
+    const view = renderApp(<App />);
+    await view.findByText(/created: By a spaced name/);
+    fireEvent.click(view.getAllByRole("button", { name: "my agent" })[0] ?? document.body);
+    await gone(() => view.queryByText(/created: By another/));
+    view.getByText(/created: By a spaced name/);
+    expect(view.queryByText(/not a|Unknown/) === null).toBe(true);
+  });
+
   test("the filter narrows both the queue and the feed, and stays in the URL", async () => {
     seedDecision();
     server.act(c.issueCreate, { project: "OCT", title: "A task" });
@@ -359,6 +432,7 @@ describe("live updates, with nothing but the server's own notifications", () => 
 describe("PR sync problems", () => {
   test("are shown beside the PRs, then go away once it works again", async () => {
     server = startTestServer({ live: true });
+    server.act(c.projectCreate, { key: "APP", name: "App", repo: "acme/app" });
     server.act(c.prSync, { prs: [], failures: [{ repo: "acme/app", error: "gh is not logged in" }] });
     const view = renderApp(<App />);
     await view.findByText(/PR status is stale for acme\/app: gh is not logged in/);

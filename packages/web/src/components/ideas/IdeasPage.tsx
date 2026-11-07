@@ -3,14 +3,20 @@ import { useState } from "react";
 import { useFilter } from "../../hooks/useFilter.ts";
 import { useOpMutation, useOpQuery } from "../../hooks/useOp.ts";
 import { FilterBox } from "../feed/FilterBox.tsx";
+import { ListCapNote } from "../ui/ListCapNote.tsx";
 import { PageHead } from "../ui/PageHead.tsx";
 import { EmptyState, ErrorState, LoadingState } from "../ui/states.tsx";
 import { IdeaRow } from "./IdeaRow.tsx";
 
+const IDEA_LIMIT = 200;
+
 export function IdeasPage() {
   const filter = useFilter();
   const [title, setTitle] = useState("");
-  const ideas = useOpQuery(contracts.ideaList, filter.query === "" ? {} : { query: filter.query });
+  const ideas = useOpQuery(contracts.ideaList, {
+    limit: IDEA_LIMIT,
+    ...(filter.query === "" ? {} : { query: filter.query }),
+  });
   const capture = useOpMutation(contracts.ideaCapture);
   const update = useOpMutation(contracts.ideaUpdate);
   const promote = useOpMutation(contracts.ideaPromote);
@@ -54,6 +60,7 @@ export function IdeasPage() {
           />
         ))}
       </div>
+      <ListCapNote shown={ideas.data?.length ?? 0} cap={IDEA_LIMIT} />
     </div>
   );
 }

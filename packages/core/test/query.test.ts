@@ -5,6 +5,7 @@ import { type MatchEnv, matchQuery, parseQuery, type QueryDoc, refsInQuery } fro
 const env: MatchEnv = {
   now: "2026-11-07T12:00:00.000Z",
   linkedRefs: (ref) => new Set(ref === "OCT-1" ? ["D-1"] : []),
+  refExists: () => true,
 };
 
 const doc: QueryDoc = {

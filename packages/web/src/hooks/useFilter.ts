@@ -38,7 +38,7 @@ export function useFilter(param = "q"): Filter {
     error,
     setText,
     addTerm: (term) => {
-      if (text.split(/\s+/).includes(term)) return;
+      if (` ${text} `.includes(` ${term} `)) return;
       setText(text === "" ? term : `${text} ${term}`);
     },
   };

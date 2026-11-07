@@ -3,7 +3,7 @@ import { BatchOp, contracts as c, type Counts } from "@octotrack/core";
 import { DEFAULT_PORT, serverLogPath, serverStoppedPath, serverUrl, startServer } from "@octotrack/server";
 import { z } from "zod";
 import { UsageError } from "../args.ts";
-import { RemoteError } from "../client.ts";
+import { ConnectionError, RemoteError } from "../client.ts";
 import type { Command } from "../command.ts";
 import { AGENT_GUIDE } from "../guide.ts";
 import * as r from "../render.ts";
@@ -11,6 +11,7 @@ import { seedDemo } from "../seed.ts";
 import { compact } from "./shared.ts";
 
 const STRING = { type: "string" } as const;
+const EXIT_UNREACHABLE = 3;
 
 const Health = z.object({ ok: z.boolean(), cursor: z.number(), pid: z.number().nullable() });
 const OpList = z.object({
@@ -232,11 +233,18 @@ export const systemCommands: Command[] = [
     summary: "Is the server up?",
     ops: [],
     async run({ client, out }) {
-      const health = Health.parse(await client.get("/api/health"));
-      out.data(
-        { ...health, url: client.baseUrl, log: serverLogPath() },
-        () => `Up at ${client.baseUrl}, pid ${health.pid ?? "?"}, cursor ${health.cursor}.`,
-      );
+      try {
+        const health = Health.parse(await client.withoutAutoStart().get("/api/health"));
+        out.data(
+          { ...health, up: true, url: client.baseUrl, log: serverLogPath() },
+          () => `Up at ${client.baseUrl}, pid ${health.pid ?? "?"}, cursor ${health.cursor}.`,
+        );
+        return 0;
+      } catch (error) {
+        if (!(error instanceof ConnectionError)) throw error;
+        out.data({ up: false, url: client.baseUrl }, () => `Down. Any command but this one starts it.`);
+        return EXIT_UNREACHABLE;
+      }
     },
   },
   {
@@ -244,11 +252,16 @@ export const systemCommands: Command[] = [
     summary: "Stop the background server. The next command starts it again",
     ops: [],
     async run({ client, out }) {
-      const health = Health.parse(await client.get("/api/health"));
       // Waiting agents restart a dead server, which is not what someone stopping it wants.
       writeFileSync(serverStoppedPath(), "");
-      if (health.pid !== null) process.kill(health.pid, "SIGTERM");
-      out.data({ stopped: health.pid }, () => `Stopped pid ${health.pid ?? "?"}.`);
+      try {
+        const health = Health.parse(await client.withoutAutoStart().get("/api/health"));
+        if (health.pid !== null) process.kill(health.pid, "SIGTERM");
+        out.data({ stopped: health.pid }, () => `Stopped pid ${health.pid ?? "?"}.`);
+      } catch (error) {
+        if (!(error instanceof ConnectionError)) throw error;
+        out.data({ stopped: null }, () => "It was not running.");
+      }
     },
   },
   {

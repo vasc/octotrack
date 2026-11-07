@@ -8,7 +8,7 @@ import { openSqlite } from "./sqlite.ts";
 
 const WEB_DIST = join(import.meta.dir, "../../web/dist");
 const SWEEP_INTERVAL_MS = 60_000;
-const DEFAULT_PR_SYNC_SECONDS = 60;
+const DEFAULT_PR_SYNC_SECONDS = 120;
 // Long polls hold for 25 seconds and streams ping every 15, so a connection is never idle for this long.
 const IDLE_TIMEOUT_SECONDS = 120;
 
@@ -66,7 +66,8 @@ export function startServer(port: number, hostname = "127.0.0.1"): RunningServer
             tracked.map((card) => card.pr.number),
           );
           errors.push(...warnings);
-          synced += tracker.call(contracts.prSync, { prs, repos: [repo] }, GITHUB_CALLER).synced;
+          const failures = warnings.length === 0 ? [] : [{ repo, error: warnings.join("; ") }];
+          synced += tracker.call(contracts.prSync, { prs, repos: [repo], failures }, GITHUB_CALLER).synced;
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           errors.push(message);

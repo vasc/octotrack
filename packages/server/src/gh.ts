@@ -146,23 +146,25 @@ export function selectRelevant(
 async function runGh(args: readonly string[]): Promise<string> {
   const proc = Bun.spawn(["gh", ...args], { stdout: "pipe", stderr: "pipe" });
   const limit = ghTimeoutMs();
-  let timedOut = false;
-  const timer = setTimeout(() => {
-    timedOut = true;
-    proc.kill();
-  }, limit);
-  try {
-    const [stdout, stderr, exitCode] = await Promise.all([
-      new Response(proc.stdout).text(),
-      new Response(proc.stderr).text(),
-      proc.exited,
-    ]);
-    if (timedOut) throw new Error(`gh did not answer within ${limit}ms`);
-    if (exitCode !== 0) throw new Error(stderr.trim() || `gh exited with ${exitCode}`);
-    return stdout;
-  } finally {
-    clearTimeout(timer);
+  const output = Promise.all([
+    new Response(proc.stdout).text(),
+    new Response(proc.stderr).text(),
+    proc.exited,
+  ]);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const expired = new Promise<null>((resolve) => {
+    timer = setTimeout(() => resolve(null), limit);
+  });
+  // A race, not a wait for the pipes to close: a child that outlives gh can hold them open however hard gh is killed.
+  const finished = await Promise.race([output, expired]);
+  clearTimeout(timer);
+  if (finished === null) {
+    proc.kill("SIGKILL");
+    throw new Error(`gh did not answer within ${limit}ms`);
   }
+  const [stdout, stderr, exitCode] = finished;
+  if (exitCode !== 0) throw new Error(stderr.trim() || `gh exited with ${exitCode}`);
+  return stdout;
 }
 
 async function listByState(repo: string, state: string, limit: number): Promise<GhPr[]> {
@@ -210,7 +212,8 @@ export async function fetchRepoPrs(repo: string, trackedOpen: readonly number[] 
     throw new Error(`gh failed for ${repo}: ${error instanceof Error ? error.message : String(error)}`);
   }
   const seen = new Set(lists.map((pr) => pr.number));
-  const missing = trackedOpen.filter((number) => !seen.has(number)).slice(0, MAX_INDIVIDUAL_LOOKUPS);
+  const unseen = trackedOpen.filter((number) => !seen.has(number));
+  const missing = unseen.slice(0, MAX_INDIVIDUAL_LOOKUPS);
   const lookups = await Promise.allSettled(missing.map((number) => viewOne(repo, number)));
   const individually = lookups.flatMap((lookup) => (lookup.status === "fulfilled" ? [lookup.value] : []));
   const warnings = lookups.flatMap((lookup, index) =>
@@ -220,6 +223,9 @@ export async function fetchRepoPrs(repo: string, trackedOpen: readonly number[] 
         ]
       : [],
   );
+  if (unseen.length > missing.length) {
+    warnings.push(`${repo}: ${unseen.length - missing.length} tracked PRs could not be checked in this sync`);
+  }
   const relevant = selectRelevant(lists, Date.now(), trackedOpen);
   return { prs: [...relevant, ...individually].map((pr) => mapGhPr(repo, pr)), warnings };
 }

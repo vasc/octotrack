@@ -2,7 +2,7 @@ import { type MatchEnv, matchQuery, type QueryDoc, type QueryNode } from "../que
 import { parseQuery } from "../query/parser.ts";
 import type { EntityKind, EntitySummary, FeedEvent, Issue } from "../schemas.ts";
 import { type Ctx, rows } from "./context.ts";
-import { type AnyEntity, summarize } from "./entities.ts";
+import { type AnyEntity, findEntity, summarize } from "./entities.ts";
 import { type GraphSnapshot, loadGraph } from "./graph.ts";
 import {
   DecisionRow,
@@ -16,7 +16,19 @@ import {
 } from "./rows.ts";
 
 export function matchEnv(ctx: Ctx, graph: GraphSnapshot): MatchEnv {
-  return { now: ctx.now, linkedRefs: (ref) => graph.neighbours(ref) };
+  const known = new Map<string, AnyEntity | null>();
+  const lookup = (ref: string): AnyEntity | null => {
+    const cached = known.get(ref);
+    if (cached !== undefined) return cached;
+    const found = findEntity(ctx, ref);
+    known.set(ref, found);
+    return found;
+  };
+  return {
+    now: ctx.now,
+    refExists: (ref) => lookup(ref) !== null,
+    linkedRefs: (ref) => graph.neighbours(lookup(ref)?.value.ref ?? ref.toUpperCase()),
+  };
 }
 
 type FieldMap = Record<string, readonly string[]>;
@@ -205,7 +217,7 @@ export function kindsInQuery(node: QueryNode): ReadonlySet<EntityKind> | null {
   }
 }
 
-const ALL_KINDS: readonly EntityKind[] = [
+export const ALL_KINDS: readonly EntityKind[] = [
   "project",
   "issue",
   "decision",

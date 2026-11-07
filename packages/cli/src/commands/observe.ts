@@ -12,6 +12,7 @@ import { EXIT_TIMEOUT, runFollow, runOneShot, timeoutFrom, waitForWatches } from
 import { compact, LIST_OPTIONS, listInput, queryFrom } from "./shared.ts";
 
 const FEED_DEFAULT_LIMIT = 50;
+const FEED_PAGE_MAX = 500;
 const STRING = { type: "string" } as const;
 const MANY = { type: "string", multiple: true } as const;
 
@@ -85,7 +86,13 @@ export const observeCommands: Command[] = [
       while (true) {
         const page = await ctx.client.call(
           c.feedList,
-          compact({ query, view, limit: limit - events.length, before, after: args.int("after") }),
+          compact({
+            query,
+            view,
+            limit: Math.min(limit - events.length, FEED_PAGE_MAX),
+            before,
+            after: args.int("after"),
+          }),
         );
         events.push(...page.data.events);
         if (events.length >= limit || page.data.nextBefore === null) {

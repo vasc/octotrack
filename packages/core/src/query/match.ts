@@ -11,8 +11,10 @@ export interface QueryDoc {
 
 export interface MatchEnv {
   now: string;
-  /** Refs linked one hop from the given ref. Only consulted by `linked:`. */
+  /** Refs linked one hop from the given ref, in any spelling. Only consulted by `linked:`. */
   linkedRefs(ref: string): ReadonlySet<string>;
+  /** Whether something really goes by this name. Decides what a bare word such as D-3 or UTF-8 means. */
+  refExists(ref: string): boolean;
 }
 
 const globCache = new Map<string, RegExp>();
@@ -43,8 +45,44 @@ const UNIT_MS: Readonly<Record<string, number>> = {
   w: 604_800_000,
 };
 
+const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?$/;
+
+/** A real calendar date, or date and time. Date.parse alone accepts "5", and rolls 2026-02-31 over to March. */
+export function isIsoDate(value: string): boolean {
+  const match = ISO_DATE.exec(value);
+  if (match === null || Number.isNaN(Date.parse(value))) return false;
+  const [, year, month, day] = match;
+  const asUtc = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+  return asUtc.getUTCMonth() === Number(month) - 1 && asUtc.getUTCDate() === Number(day);
+}
+
 export function isValidTime(value: string): boolean {
-  return DURATION.test(value) || !Number.isNaN(Date.parse(value));
+  return DURATION.test(value) || isIsoDate(value);
+}
+
+/** As a whole word: UTF-8 must not match UTF-80. */
+function containsWord(text: string, word: string): boolean {
+  const haystack = text.toLowerCase();
+  const needle = word.toLowerCase();
+  const isWordChar = (char: string) => /[a-z0-9-]/.test(char);
+  let from = haystack.indexOf(needle);
+  while (from !== -1) {
+    const before = haystack.charAt(from - 1);
+    const after = haystack.charAt(from + needle.length);
+    if ((before === "" || !isWordChar(before)) && (after === "" || !isWordChar(after))) return true;
+    from = haystack.indexOf(needle, from + 1);
+  }
+  return false;
+}
+
+/**
+ * A bare D-3 means that item, and nothing else that happens to mention it, or a watch would fire on another item's
+ * title. Only a word that names nothing is text, such as UTF-8.
+ */
+function matchBare(values: readonly string[], doc: QueryDoc, env: MatchEnv): boolean {
+  return values.some((value) =>
+    env.refExists(value) ? matchField("ref", [value], doc, env) : containsWord(doc.text, value),
+  );
 }
 
 /** Accepts a relative duration (`2h`) or an absolute date. Returns epoch milliseconds. */
@@ -70,7 +108,7 @@ function matchField(field: string, values: readonly string[], doc: QueryDoc, env
   if (field === "since") return values.some((value) => Date.parse(doc.time) >= resolveTime(value, env.now));
   if (field === "before") return values.some((value) => Date.parse(doc.time) < resolveTime(value, env.now));
   if (field === "linked") {
-    return values.some((value) => env.linkedRefs(value.toUpperCase()).has(doc.ref));
+    return values.some((value) => env.linkedRefs(value).has(doc.ref));
   }
   const actual = doc.fields[field];
   if (actual === undefined || actual.length === 0)
@@ -91,10 +129,7 @@ export function matchQuery(node: QueryNode, doc: QueryDoc, env: MatchEnv): boole
     case "text":
       return doc.text.toLowerCase().includes(node.value.toLowerCase());
     case "field":
-      if (matchField(node.field, node.values, doc, env)) return true;
-      return (
-        node.bare === true &&
-        node.values.some((value) => doc.text.toLowerCase().includes(value.toLowerCase()))
-      );
+      if (node.bare === true) return matchBare(node.values, doc, env);
+      return matchField(node.field, node.values, doc, env);
   }
 }

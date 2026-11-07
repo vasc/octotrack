@@ -79,12 +79,17 @@ function isClosed(status: IssueStatus): boolean {
   return status === "done" || status === "cancelled";
 }
 
-function emitIssueChange(ctx: Ctx, updated: Issue, changes: ReturnType<typeof applyPatch>): void {
+function emitIssueChange(
+  ctx: Ctx,
+  updated: Issue,
+  changes: ReturnType<typeof applyPatch>,
+  claim?: string,
+): void {
   const fields = Object.keys(changes);
   if (fields.length === 0) return;
   const statusChange = changes.status;
   emit(ctx, {
-    type: statusChange ? "issue.status_changed" : "issue.updated",
+    type: claim ?? (statusChange ? "issue.status_changed" : "issue.updated"),
     kind: "issue",
     ref: updated.ref,
     project: updated.project,
@@ -180,7 +185,7 @@ export const issueOps = [
         status: startsWork ? "in_progress" : undefined,
       });
       const updated = requireIssue(ctx, current.ref);
-      emitIssueChange(ctx, updated, changes);
+      emitIssueChange(ctx, updated, changes, "issue.claimed");
       return updated;
     }),
   ),
@@ -196,7 +201,7 @@ export const issueOps = [
         status: current.status === "in_progress" ? "todo" : undefined,
       });
       const updated = requireIssue(ctx, current.ref);
-      emitIssueChange(ctx, updated, changes);
+      emitIssueChange(ctx, updated, changes, "issue.released");
       return updated;
     }),
   ),

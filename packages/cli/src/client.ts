@@ -118,6 +118,16 @@ export class OctoClient {
     };
   }
 
+  /** The same client, except that it will not start the server: for questions about the server itself. */
+  withoutAutoStart(): OctoClient {
+    return new OctoClient(this.baseUrl, this.actor, this.mainScript, false);
+  }
+
+  /** Housekeeping on the way out, which must not bring back a server that someone stopped. */
+  async opInBackground(name: string, input: unknown): Promise<void> {
+    await this.post(`/api/ops/${name}`, { input }, true);
+  }
+
   async post(path: string, body: unknown, background = false): Promise<unknown> {
     const response = await this.fetch(
       path,

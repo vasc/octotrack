@@ -357,6 +357,7 @@ describe("pull requests and links", () => {
   });
 
   test("sync failures are visible until the repo syncs again", () => {
+    h.call(c.projectUpdate, { ref: "OCT", repo: "a/b" });
     h.call(c.prSync, { prs: [], failures: [{ repo: "a/b", error: "Boom" }] });
     expect(h.call(c.dashboardBootstrap, {}).syncFailures).toMatchObject([{ repo: "a/b", error: "Boom" }]);
     h.call(c.prSync, { prs: [], repos: ["a/b"] });

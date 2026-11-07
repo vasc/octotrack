@@ -76,7 +76,10 @@ These changed how the product looks, slightly. All of them are visible at `/desi
 
 ### Taken while building
 
-- **One decision open at a time.** Three open cards pushed the feed off the screen.
+- **The keys disarm when the open card goes away.** The next card opens, and `j` arms it. It costs a keypress when deciding
+  several in a row, and it means a key meant for one decision cannot answer another.
+- **The open card is always first.** Otherwise a re-rank moves it in the DOM, which takes focus away from the note being typed.
+- **One decision open at a time, on every page.** Three open cards pushed the feed off the screen.
 - **The open card does not follow the ranking.** A live re-rank could otherwise make a keypress decide the wrong thing.
 - **Deciding is not optimistic.** A round trip takes milliseconds locally, and removing the card early would unmount the
   form that has to show a refusal.

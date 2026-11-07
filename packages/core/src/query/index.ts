@@ -1,4 +1,4 @@
-export { type MatchEnv, matchQuery, type QueryDoc, resolveTime } from "./match.ts";
+export { isIsoDate, type MatchEnv, matchQuery, type QueryDoc, resolveTime, valueMatches } from "./match.ts";
 export {
   explicitRefsInQuery,
   parseQuery,

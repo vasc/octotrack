@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isIsoDate } from "./query/match.ts";
 import {
   Agent,
   Bootstrap,
@@ -77,9 +78,7 @@ const Empty = z.strictObject({});
 /** Text a person has to read. Spaces alone do not count as saying something. */
 const Text = z.string().trim().min(1);
 /** A date or a timestamp. Anything unparseable could never be flagged overdue, so it is refused here. */
-const DateText = z
-  .string()
-  .refine((value) => !Number.isNaN(Date.parse(value)), { error: "Not a valid date" });
+const DateText = z.string().refine(isIsoDate, { error: "Use a real date, YYYY-MM-DD, or an ISO timestamp" });
 
 const OptionInput = z.strictObject({
   key: z.string().min(1),
@@ -90,7 +89,7 @@ const OptionInput = z.strictObject({
 export const PrInput = z.strictObject({
   repo: z.string().min(1),
   number: z.number().int().positive(),
-  title: z.string(),
+  title: Text,
   body: z.string().optional(),
   url: z.string().optional(),
   state: PrState,
@@ -142,7 +141,7 @@ export const contracts = {
     "Create a project",
     z.strictObject({
       key: z.string(),
-      name: z.string().min(1),
+      name: Text,
       description: z.string().optional(),
       status: ProjectStatus.optional(),
       repo: z.string().optional(),
@@ -156,7 +155,7 @@ export const contracts = {
     "Update a project",
     z.strictObject({
       ref: z.string(),
-      name: z.string().optional(),
+      name: Text.optional(),
       description: z.string().optional(),
       status: ProjectStatus.optional(),
       repo: z.string().nullable().optional(),
@@ -191,7 +190,7 @@ export const contracts = {
     "Update one or many issues",
     z.strictObject({
       refs: Refs,
-      title: z.string().optional(),
+      title: Text.optional(),
       body: z.string().optional(),
       status: IssueStatus.optional(),
       priority: Priority.optional(),
@@ -239,7 +238,7 @@ export const contracts = {
     "Refine an open decision",
     z.strictObject({
       ref: z.string(),
-      title: z.string().optional(),
+      title: Text.optional(),
       context: z.string().optional(),
       kind: DecisionKind.optional(),
       priority: Priority.optional(),
@@ -351,7 +350,7 @@ export const contracts = {
     "Update an idea",
     z.strictObject({
       ref: z.string(),
-      title: z.string().optional(),
+      title: Text.optional(),
       body: z.string().optional(),
       project: z.string().nullable().optional(),
       status: IdeaStatus.optional(),
@@ -392,7 +391,7 @@ export const contracts = {
     "Update a milestone",
     z.strictObject({
       ref: z.string(),
-      title: z.string().optional(),
+      title: Text.optional(),
       description: z.string().optional(),
       status: MilestoneStatus.optional(),
       horizon: Horizon.optional(),
@@ -455,6 +454,7 @@ export const contracts = {
       target: z.string().optional(),
       mode: z.enum(["updated", "verified"]),
       note: Text,
+      force: z.boolean().optional(),
     }),
     DriftAckResult,
   ),

@@ -113,7 +113,12 @@ export const networkCommands: Command[] = [
       const outcome = await client.call(c.prSync, {
         prs: fetched.flatMap((result) => result.prs),
         repos: fetched.filter((result) => result.error === null).map((result) => result.repo),
-        failures,
+        failures: [
+          ...failures,
+          ...fetched.flatMap(({ repo, warnings }) =>
+            warnings.length === 0 ? [] : [{ repo, error: warnings.join("; ") }],
+          ),
+        ],
       });
       const errors = [
         ...failures.map((failure) => failure.error),
@@ -287,6 +292,7 @@ export const networkCommands: Command[] = [
     summary: "Clear drift: --updated if you changed it, --verified if you checked and nothing needs changing",
     options: {
       target: { ...STRING, description: "All open drift on this item, instead of naming drift refs" },
+      force: { type: "boolean", description: "Clear drift that another agent has claimed" },
       updated: { ...STRING, description: "What you changed" },
       verified: { ...STRING, description: "Why nothing needs changing" },
     },
@@ -311,6 +317,7 @@ export const networkCommands: Command[] = [
           target: args.str("target"),
           mode: updated === undefined ? "verified" : "updated",
           note: updated ?? verified,
+          force: args.flag("force") || undefined,
         }),
       );
       out.result(outcome, () => `Cleared ${outcome.data.acknowledged.length} drift.`);

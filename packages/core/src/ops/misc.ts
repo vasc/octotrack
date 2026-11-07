@@ -184,18 +184,17 @@ export const miscOps = [
       const ref = normalizeRef(rawRef);
       const drift = getDrift(ctx, ref);
       if (drift === null) throw notFound(rawRef);
-      if (drift.assignee !== null && drift.assignee !== ctx.actor && input.force !== true) {
+      if (drift.claimedBy !== null && drift.claimedBy !== ctx.actor && input.force !== true) {
         throw new OctoError(
           "conflict",
-          `${ref} belongs to ${drift.assignee}`,
+          `${ref} belongs to ${drift.claimedBy}`,
           "Pass --force to take it over.",
         );
       }
-      ctx.sql.run("UPDATE drifts SET assignee = ?, updatedAt = ?, version = version + 1 WHERE ref = ?", [
-        ctx.actor,
-        ctx.now,
-        ref,
-      ]);
+      ctx.sql.run(
+        "UPDATE drifts SET assignee = ?, claimedBy = ?, updatedAt = ?, version = version + 1 WHERE ref = ?",
+        [ctx.actor, ctx.actor, ctx.now, ref],
+      );
       emit(ctx, {
         type: "drift.claimed",
         kind: "drift",
@@ -205,7 +204,7 @@ export const miscOps = [
         related: [drift.target],
         attrs: { status: drift.status, rule: drift.rule, target: drift.target, assignee: ctx.actor },
       });
-      return { ...drift, assignee: ctx.actor };
+      return { ...drift, assignee: ctx.actor, claimedBy: ctx.actor };
     }),
   ),
 
@@ -271,8 +270,9 @@ export const miscOps = [
     const drift = rows(
       ctx,
       DriftRow,
-      "SELECT * FROM drifts WHERE status = 'open' AND (assignee = ? OR assignee IS NULL) ORDER BY position DESC",
-      [agent],
+      `SELECT * FROM drifts WHERE status = 'open' AND (assignee = ? OR assignee IS NULL)
+       AND (claimedBy IS NULL OR claimedBy = ?) ORDER BY position DESC`,
+      [agent, agent],
     )
       .filter((item) => inScope(item.project))
       .slice(0, limit);
@@ -380,7 +380,7 @@ export const miscOps = [
       syncFailures: rows(
         ctx,
         SyncFailureRow,
-        "SELECT * FROM github_sync WHERE error IS NOT NULL ORDER BY repo",
+        `SELECT * FROM github_sync WHERE error IS NOT NULL AND repo IN (SELECT repo FROM projects) ORDER BY repo`,
       ),
       counts: computeCounts(ctx, graph),
       queue: buildQueue(ctx, undefined),

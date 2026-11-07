@@ -1,4 +1,4 @@
-import { contracts as c, type WatchSpec } from "@octotrack/core";
+import { contracts as c, normalizeRef, type WatchSpec } from "@octotrack/core";
 import { z } from "zod";
 import { UsageError, type Args } from "../args.ts";
 import type { Command, RunContext } from "../command.ts";
@@ -26,7 +26,8 @@ function optionsFrom(args: Args) {
 }
 
 /** Hangs until a decision is no longer open, then reports how it came out. */
-async function waitForDecisions(ctx: RunContext, refs: readonly string[], args: Args): Promise<number> {
+async function waitForDecisions(ctx: RunContext, rawRefs: readonly string[], args: Args): Promise<number> {
+  const refs = rawRefs.map(normalizeRef);
   const spec: WatchSpec = {
     require: "all",
     clauses: [{ type: "state", query: `ref:${refs.join(",")} status:open`, mode: "none" }],
