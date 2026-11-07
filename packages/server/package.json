@@ -1,0 +1,16 @@
+{
+  "name": "@octotrack/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./gh": "./src/gh.ts",
+    "./paths": "./src/paths.ts"
+  },
+  "dependencies": {
+    "@octotrack/core": "workspace:*",
+    "hono": "^4.13.17",
+    "zod": "^4.6.7"
+  }
+}

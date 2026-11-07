@@ -1,0 +1,11 @@
+language js
+
+or {
+  TsAsExpression() as $cast where {
+    $cast <: not r"(?s).*\bas\s+const\s*",
+    register_diagnostic(span=$cast, message="No casts. Parse with a schema or fix the types. `as const` is fine.")
+  },
+  TsTypeAssertionExpression() as $cast where {
+    register_diagnostic(span=$cast, message="No casts. Parse with a schema or fix the types.")
+  }
+}

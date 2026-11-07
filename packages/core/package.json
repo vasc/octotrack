@@ -1,0 +1,16 @@
+{
+  "name": "@octotrack/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./contracts": "./src/contracts.ts",
+    "./query": "./src/query/index.ts",
+    "./schemas": "./src/schemas.ts",
+    "./decision-lines": "./src/decision-lines.ts"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  }
+}

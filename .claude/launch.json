@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "octo-demo",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "OCTO_HOME=.demo",
+        "OCTO_PR_SYNC_SECONDS=0",
+        "bun",
+        "packages/cli/src/main.ts",
+        "serve",
+        "--port",
+        "4799"
+      ],
+      "port": 4799
+    }
+  ]
+}
