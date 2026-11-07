@@ -73,6 +73,23 @@ file nothing. To allow them, add this to `~/.claude/settings.json`, merging it w
 The allow rules cover plain commands. The `autoMode` entry is for commands that still reach the classifier. Sessions that
 were already running picked this up without a restart.
 
+### Using it from your phone
+
+The server only listens on loopback, so publish it to your tailnet with `tailscale serve`. Never use Funnel: there is no
+login, and Funnel is public.
+
+```bash
+tailscale serve --bg 4747
+```
+
+Add the name it prints to `~/.octotrack/allowed-hosts`, one per line, then restart the server:
+
+```bash
+octo server stop
+```
+
+Any `octo` command starts it again. Every device your tailnet's access rules allow can then read and answer decisions.
+
 ## For agents
 
 Run `octo guide` and put the output in your agents' instructions. It covers everything below in more depth. Have each

@@ -76,6 +76,11 @@ These changed how the product looks, slightly. All of them are visible at `/desi
 
 ### Taken while building
 
+- **Touch follows the input, not the width.** `pointer: coarse` raises type, gives controls a 44px height and hides key
+  hints, so a phone on its side still gets it.
+- **The queue lists five closed decisions beside the feed.** With 25 open, the rows pushed the feed off the screen. The rest
+  are one tap away on the decisions page, which lists them all.
+- **Project links stay hidden on phones.** The strip would get too long, and the Projects page reaches them.
 - **The keys disarm when the open card goes away.** The next card opens, and `j` arms it. It costs a keypress when deciding
   several in a row, and it means a key meant for one decision cannot answer another.
 - **The open card is always first.** Otherwise a re-rank moves it in the DOM, which takes focus away from the note being typed.

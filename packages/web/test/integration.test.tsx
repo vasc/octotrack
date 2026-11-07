@@ -238,6 +238,47 @@ describe("the feed", () => {
     );
   });
 
+  test("on a phone, tapping answers the next card without the keyboard's extra step", async () => {
+    server = startTestServer({ live: true });
+    server.act(c.projectCreate, { key: "OCT", name: "Octotrack" });
+    const first = seedDecision({ title: "Was open", priority: "urgent" });
+    const second = seedDecision({ title: "Next in line", priority: "low" });
+    const view = renderApp(<App />);
+    await view.findByRole("heading", { name: "Was open" });
+
+    server.act(c.decisionWithdraw, { ref: first.ref });
+    await view.findByRole("heading", { name: "Next in line" });
+    expect(view.getByText(/Press j to answer this one/).classList.contains("keyboard-hint")).toBe(true);
+
+    fireEvent.click(view.getByRole("button", { name: /SQS/ }));
+    fireEvent.click(view.getByRole("button", { name: "Decide" }));
+    await waitFor(() =>
+      expect(server.act(c.decisionList, { query: `ref:${second.ref}` })[0]?.status).toBe("decided"),
+    );
+  });
+
+  test("a long queue does not push the feed off the screen", async () => {
+    for (const index of [1, 2, 3, 4, 5, 6, 7, 8, 9]) seedDecision({ title: `Question ${index}` });
+    const view = renderApp(<App />);
+    await view.findByRole("heading", { name: "Question 1" });
+
+    const queue = view.getByRole("heading", { name: "Question 1" }).closest(".queue");
+    expect(queue?.querySelectorAll(".queue-more")).toHaveLength(5);
+    fireEvent.click(view.getByRole("button", { name: "3 more decisions" }));
+    await view.findByRole("heading", { name: "Decisions" });
+  });
+
+  test("the decisions page lists every decision in the queue", async () => {
+    for (const index of [1, 2, 3, 4, 5, 6, 7, 8, 9]) seedDecision({ title: `Question ${index}` });
+    navigate("/decisions");
+    const view = renderApp(<App />);
+    await view.findByRole("heading", { name: "Question 1" });
+
+    const queue = view.getByRole("heading", { name: "Question 1" }).closest(".queue");
+    expect(queue?.querySelectorAll(".queue-more")).toHaveLength(8);
+    expect(view.queryByRole("button", { name: /more decisions/ })).toBeNull();
+  });
+
   test("the open card stays first, so that a re-rank cannot move the field being typed in", async () => {
     server = startTestServer({ live: true });
     server.act(c.projectCreate, { key: "OCT", name: "Octotrack" });

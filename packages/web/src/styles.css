@@ -1075,8 +1075,16 @@ p {
   }
   .sidebar .nav-heading,
   .sidebar .nav-group[data-secondary="true"],
-  .sidebar-hint {
+  .sidebar-hint,
+  .brand-name {
     display: none;
+  }
+  .sidebar {
+    scrollbar-width: none;
+  }
+  .brand,
+  .nav-group {
+    flex: none;
   }
   .nav-group {
     flex-direction: row;
@@ -1084,6 +1092,22 @@ p {
   .nav-item {
     width: auto;
     white-space: nowrap;
+  }
+  .tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tab {
+    flex: none;
+    white-space: nowrap;
+  }
+  .option {
+    flex-wrap: wrap;
+  }
+  .option-desc {
+    order: 1;
+    flex-basis: 100%;
   }
   .page {
     padding: var(--space-6) var(--space-8) var(--space-24);
@@ -1105,5 +1129,40 @@ p {
   }
   .lanes {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Touch is about the input, not the width, so that a phone on its side still gets it. See design/foundations.md. */
+@media (pointer: coarse) {
+  .nav-item,
+  .btn,
+  .tab,
+  .option,
+  .queue-more-title,
+  .field,
+  .detail-close,
+  .check,
+  .chip:not(.chip--static),
+  .pr-strip {
+    min-height: var(--touch-target);
+  }
+  .btn,
+  .tab,
+  .detail-close,
+  .chip:not(.chip--static) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .option {
+    align-items: center;
+  }
+  .field {
+    font-size: var(--text-input-touch);
+  }
+  .option kbd,
+  .keyboard-hint,
+  .sidebar-hint {
+    display: none;
   }
 }

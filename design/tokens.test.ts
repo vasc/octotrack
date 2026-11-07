@@ -123,6 +123,54 @@ describe("the dashboard uses the language instead of going around it", () => {
   });
 });
 
+describe("a finger can use it", () => {
+  const css = stylesCss.replace(/\/\*[\s\S]*?\*\//g, "");
+  const coarse = /@media \(pointer: coarse\) \{([\s\S]*?)\n\}/.exec(css)?.[1] ?? "";
+  const rulesFor = (selector: string) =>
+    [...coarse.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+      .filter((match) => (match[1] ?? "").split(",").some((part) => part.trim() === selector))
+      .map((match) => match[2] ?? "")
+      .join("");
+  const pixels = (token: string) => Number(new RegExp(`${token}: (\\d+)px;`).exec(rootBlock)?.[1] ?? 0);
+
+  test("the touch target is the size fingers need", () => {
+    expect(pixels("--touch-target")).toBeGreaterThanOrEqual(44);
+  });
+
+  test("text fields are large enough that iOS does not zoom the page on focus", () => {
+    expect(pixels("--text-input-touch")).toBeGreaterThanOrEqual(16);
+    expect(rulesFor(".field")).toContain("font-size: var(--text-input-touch)");
+  });
+
+  test.each([
+    ".nav-item",
+    ".btn",
+    ".tab",
+    ".option",
+    ".queue-more-title",
+    ".field",
+    ".detail-close",
+    ".check",
+    ".chip:not(.chip--static)",
+    ".pr-strip",
+  ])("%s is tall enough to tap", (selector) => {
+    expect(rulesFor(selector)).toContain("min-height: var(--touch-target)");
+  });
+
+  test.each([".option kbd", ".keyboard-hint"])(
+    "%s, which only keyboards can act on, is hidden",
+    (selector) => {
+      expect(rulesFor(selector)).toContain("display: none");
+    },
+  );
+
+  test("reading text grows on touch screens", () => {
+    const tokenCoarse = /@media \(pointer: coarse\) \{([\s\S]*?)\n\}/.exec(tokensCss)?.[1] ?? "";
+    const touchSize = Number(/--text-md: (\d+)px;/.exec(tokenCoarse)?.[1] ?? 0);
+    expect(touchSize).toBeGreaterThan(pixels("--text-md"));
+  });
+});
+
 describe("the written language keeps up", () => {
   const foundations = readFileSync(join(import.meta.dir, "foundations.md"), "utf8");
   const components = readFileSync(join(import.meta.dir, "components.md"), "utf8");

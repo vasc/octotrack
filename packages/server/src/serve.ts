@@ -3,7 +3,8 @@ import { join, normalize } from "node:path";
 import { type Caller, contracts, Hub, Tracker } from "@octotrack/core";
 import { createApp } from "./app.ts";
 import { fetchRepoPrs } from "./gh.ts";
-import { databasePath, serverStoppedPath } from "./paths.ts";
+import { loadAllowedHosts } from "./hosts.ts";
+import { allowedHostsPath, databasePath, serverStoppedPath } from "./paths.ts";
 import { openSqlite } from "./sqlite.ts";
 
 const WEB_DIST = join(import.meta.dir, "../../web/dist");
@@ -82,7 +83,13 @@ export function startServer(port: number, hostname = "127.0.0.1"): RunningServer
     return { repos: repos.length, synced, errors };
   };
 
-  const app = createApp({ tracker, hub, assets: serveAsset, syncPrs });
+  const app = createApp({
+    tracker,
+    hub,
+    assets: serveAsset,
+    syncPrs,
+    allowedHosts: loadAllowedHosts(allowedHostsPath()),
+  });
   const server = Bun.serve({ port, hostname, idleTimeout: IDLE_TIMEOUT_SECONDS, fetch: app.fetch });
 
   const timers = [

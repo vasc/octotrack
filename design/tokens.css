@@ -81,6 +81,8 @@
   --rail-width: 340px;
   --page-width: 860px;
   --page-width-wide: 1100px;
+  --touch-target: 44px;
+  --text-input-touch: 16px;
 }
 
 /*
@@ -103,6 +105,17 @@
   --tone: var(--bad);
   --tone-soft: var(--bad-soft);
   --tone-mark: var(--bad);
+}
+
+/* A phone is held further away and tapped, so reading text steps up. Spacing stays, and targets grow on their own. */
+@media (pointer: coarse) {
+  :root {
+    --text-xs: 12px;
+    --text-sm: 13px;
+    --text-md: 15px;
+    --text-lg: 16px;
+    --text-xl: 17px;
+  }
 }
 
 [data-tone="warn"] {

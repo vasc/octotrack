@@ -116,20 +116,26 @@ Only what floats over content gets a shadow. Everything else is separated by a l
 
 Three columns: navigation, the feed, and a rail for what should stay in view.
 
-| Token                    | Use for                                        |
-| ------------------------ | ---------------------------------------------- |
-| `--sidebar-width`        | Navigation                                     |
-| `--sidebar-width-narrow` | Navigation, below the first breakpoint         |
-| `--rail-width`           | The rail: PR status, drift, the inspector      |
-| `--page-width`           | How wide a column of reading gets              |
-| `--page-width-wide`      | Pages laid out in columns, such as the roadmap |
+| Token                    | Use for                                                                |
+| ------------------------ | ---------------------------------------------------------------------- |
+| `--sidebar-width`        | Navigation                                                             |
+| `--sidebar-width-narrow` | Navigation, below the first breakpoint                                 |
+| `--rail-width`           | The rail: PR status, drift, the inspector                              |
+| `--page-width`           | How wide a column of reading gets                                      |
+| `--page-width-wide`      | Pages laid out in columns, such as the roadmap                         |
+| `--touch-target`         | The least height of anything tapped on a touch screen                  |
+| `--text-input-touch`     | Text fields on a touch screen. Below 16px, iOS zooms the page on focus |
 
 CSS custom properties cannot be used in media queries, so the breakpoints live in `packages/web/src/styles.css`:
 
 | Below  | What changes                                                                                 |
 | ------ | -------------------------------------------------------------------------------------------- |
 | 1180px | The rail goes away and the inspector slides over the page. `PrStrip` keeps PR status in view |
-| 720px  | One column. Navigation becomes a scrolling strip, and rows are allowed to wrap               |
+| 720px  | One column. Navigation and tabs become scrolling strips, and rows are allowed to wrap        |
+
+Size and input are separate questions, so touch has its own rule rather than a width: `@media (pointer: coarse)` raises
+the type scale, gives controls `--touch-target`, and hides what only a keyboard can act on. A phone on its side, wider than
+720px, still gets these.
 
 ## Motion
 

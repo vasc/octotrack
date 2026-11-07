@@ -30,7 +30,7 @@ export interface AppOptions {
   keepaliveMs?: number;
 }
 
-const DEFAULT_HOSTS: readonly string[] = ["127.0.0.1", "localhost", "[::1]"];
+export const DEFAULT_HOSTS: readonly string[] = ["127.0.0.1", "localhost", "[::1]"];
 const DEFAULT_HOLD_MS = 25_000;
 const SSE_RETRY_MS = 1000;
 
