@@ -1140,6 +1140,7 @@ p {
   .option,
   .queue-more-title,
   .field,
+  .filter-input,
   .detail-close,
   .check,
   .chip:not(.chip--static),
@@ -1157,7 +1158,8 @@ p {
   .option {
     align-items: center;
   }
-  .field {
+  .field,
+  .filter-input {
     font-size: var(--text-input-touch);
   }
   .option kbd,
