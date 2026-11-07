@@ -140,6 +140,7 @@ describe("a finger can use it", () => {
   test("text fields are large enough that iOS does not zoom the page on focus", () => {
     expect(pixels("--text-input-touch")).toBeGreaterThanOrEqual(16);
     expect(rulesFor(".field")).toContain("font-size: var(--text-input-touch)");
+    expect(rulesFor(".filter-input")).toContain("font-size: var(--text-input-touch)");
   });
 
   test.each([
@@ -149,6 +150,7 @@ describe("a finger can use it", () => {
     ".option",
     ".queue-more-title",
     ".field",
+    ".filter-input",
     ".detail-close",
     ".check",
     ".chip:not(.chip--static)",
