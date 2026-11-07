@@ -4,8 +4,9 @@ import { type Caller, contracts, Hub, Tracker } from "@octotrack/core";
 import { createApp } from "./app.ts";
 import { fetchRepoPrs } from "./gh.ts";
 import { loadAllowedHosts } from "./hosts.ts";
-import { allowedHostsPath, databasePath, serverStoppedPath } from "./paths.ts";
+import { allowedHostsPath, databasePath, serverStoppedPath, wakeAdaptersPath } from "./paths.ts";
 import { openSqlite } from "./sqlite.ts";
+import { createWakeDispatcher, loadWakeAdapters } from "./wake.ts";
 
 const WEB_DIST = join(import.meta.dir, "../../web/dist");
 const SWEEP_INTERVAL_MS = 60_000;
@@ -92,6 +93,11 @@ export function startServer(port: number, hostname = "127.0.0.1"): RunningServer
   });
   const server = Bun.serve({ port, hostname, idleTimeout: IDLE_TIMEOUT_SECONDS, fetch: app.fetch });
 
+  const wakes = createWakeDispatcher({ tracker, adapters: loadWakeAdapters(wakeAdaptersPath()) });
+  const stopWakes = wakes.listen();
+  // Anything answered while the server was down.
+  void wakes.dispatch();
+
   const timers = [
     setInterval(() => {
       try {
@@ -111,6 +117,7 @@ export function startServer(port: number, hostname = "127.0.0.1"): RunningServer
     url: `http://${hostname}:${server.port}`,
     stop() {
       for (const timer of timers) clearInterval(timer);
+      stopWakes();
       server.stop(true);
     },
   };

@@ -76,6 +76,8 @@ These changed how the product looks, slightly. All of them are visible at `/desi
 
 ### Taken while building
 
+- **What became of an answer is visible.** Deciding is not the end of it, so the log says whether anyone picked it up and
+  what they did, and the decisions page leads with answers nobody has heard.
 - **An own answer is one of the choices.** The note field always accepted one, but only a placeholder said so. Options
   written by an agent do not always apply, so `Something else` sits with them, and the feed quotes the words as the answer.
 - **Postponing moves a decision down and nothing else.** It stays open and counted, an agent waiting on it keeps waiting, and

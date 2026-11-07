@@ -147,8 +147,21 @@ export function renderDecisionBlock(decision: Decision): string {
     lines.push("", green(parts.join(", ")));
     if (decision.resolutionNote !== null) lines.push(decision.resolutionNote);
     if (decision.sourceUrl !== null) lines.push(dim(decision.sourceUrl));
+    if (decision.reportStatus !== null) {
+      lines.push(
+        "",
+        `${decision.reportStatus === "done" ? "Carried out" : "Partly carried out"}: ${decision.reportNote ?? ""}`,
+      );
+    }
+    if (decision.wakeError !== null) lines.push(dim(`Wake failed: ${decision.wakeError}`));
   }
   return lines.join("\n");
+}
+
+export function renderInbox(decisions: readonly Decision[]): string {
+  if (decisions.length === 0) return dim("Nothing waiting for you.");
+  const blocks = decisions.map((decision) => renderDecisionBlock(decision)).join("\n\n");
+  return `${blocks}\n\n${dim('Acknowledge with octo decision pickup <REF>, then octo decision report <REF> "what you did".')}`;
 }
 
 export function renderDecisions(decisions: readonly Decision[]): string {

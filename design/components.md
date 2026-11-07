@@ -30,6 +30,8 @@ The loudest thing in the product.
 | `DecisionOptions`  | Pure       | The choices, numbered for the keyboard, with the recommendation marked         |
 | `QueueRest`        | Pure       | A closed decision: one line with its strongest reason                          |
 | `DecisionRow`      | Pure       | A finished decision in the log: outcome, and how it was made                   |
+| `DeliveryBadge`    | Pure       | What became of an answer: not picked up, picked up, carried out                |
+| `PickupSection`    | Structural | Answers no agent has picked up. Absent when there are none                     |
 | `BatchPanelView`   | Pure       | Logging decisions made elsewhere, one per line                                 |
 | `DecisionCardItem` | Structural | A card with its form state and, when active, its keys                          |
 | `QueueSection`     | Structural | The ranked queue, keeping one card open                                        |

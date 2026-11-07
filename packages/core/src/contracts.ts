@@ -7,6 +7,7 @@ import {
   Decision,
   DecisionCard,
   DecisionKind,
+  DecisionReportStatus,
   Drift,
   EntityDetail,
   EntitySummary,
@@ -77,6 +78,11 @@ const IfVersion = z.number().int().optional();
 const Empty = z.strictObject({});
 /** Text a person has to read. Spaces alone do not count as saying something. */
 const Text = z.string().trim().min(1);
+/**
+ * `adapter:address`. Kept narrow, since the address ends up as an argument to a command: it cannot start with a dash, so
+ * it cannot pass for an option, and holds nothing a shell would read.
+ */
+const WakeAddress = z.string().regex(/^[a-z][a-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9._-]*$/);
 /** A date or a timestamp. Anything unparseable could never be flagged overdue, so it is refused here. */
 const DateText = z.string().refine(isIsoDate, { error: "Use a real date, YYYY-MM-DD, or an ISO timestamp" });
 
@@ -230,6 +236,7 @@ export const contracts = {
       dueAt: DateText.optional(),
       blocks: z.array(z.string()).optional(),
       affects: z.array(z.string()).optional(),
+      wake: WakeAddress.optional(),
     }),
     Decision,
   ),
@@ -301,6 +308,42 @@ export const contracts = {
     "decision.postpone",
     "Push an open decision to the bottom of the queue without answering it, or undo that",
     z.strictObject({ ref: z.string(), undo: z.boolean().optional() }),
+    Decision,
+  ),
+  decisionInbox: read(
+    "decision.inbox",
+    "Answers the calling agent has not picked up yet, or every agent's with all",
+    z.strictObject({ all: z.boolean().optional() }),
+    z.array(Decision),
+  ),
+  decisionPickup: write(
+    "decision.pickup",
+    "Acknowledge an answer, taking it out of the inbox",
+    z.strictObject({ ref: z.string() }),
+    Decision,
+  ),
+  decisionReport: write(
+    "decision.report",
+    "Say what became of an answer: done, or only partly",
+    z.strictObject({ ref: z.string(), status: DecisionReportStatus, note: Text }),
+    Decision,
+  ),
+  decisionWake: write(
+    "decision.wake",
+    "Ask to be woken when this is answered, or stop asking with a null address",
+    z.strictObject({ ref: z.string(), address: WakeAddress.nullable() }),
+    Decision,
+  ),
+  decisionWakes: read(
+    "decision.wakes",
+    "Answered decisions whose session asked to be woken and has not been yet",
+    z.strictObject({}),
+    z.array(Decision),
+  ),
+  decisionWoken: write(
+    "decision.woken",
+    "Record that a wake was attempted, and why it failed if it did",
+    z.strictObject({ ref: z.string(), error: z.string().optional() }),
     Decision,
   ),
   decisionWithdraw: write(

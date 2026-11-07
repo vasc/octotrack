@@ -9,6 +9,7 @@ import { Section } from "../ui/Section.tsx";
 import { EmptyState, ErrorState, LoadingState } from "../ui/states.tsx";
 import { BatchPanel } from "./BatchPanel.tsx";
 import { DecisionRow } from "./DecisionRow.tsx";
+import { PickupSection } from "./PickupSection.tsx";
 import { QueueSection } from "./QueueSection.tsx";
 
 const LOG_LIMIT = 200;
@@ -35,6 +36,7 @@ export function DecisionsPage() {
       <PageHead title="Decisions" />
       <FilterBox filter={filter} placeholder="Filter: type:architecture project:OCT" />
       <QueueSection query={filter.query} isDefault={filter.query === ""} linkToAll={false} />
+      <PickupSection />
       <BatchPanel />
       <Section title="Decision log" note={String(history.data?.length ?? "")}>
         <nav className="tabs" aria-label="Decision log">

@@ -330,6 +330,24 @@ describe("the feed", () => {
     );
   });
 
+  test("the decisions page shows answers nobody has picked up, until the agent does", async () => {
+    server = startTestServer({ live: true });
+    server.act(c.projectCreate, { key: "OCT", name: "Octotrack" });
+    const decision = seedDecision({ title: "Answered already" });
+    server.tracker.call(
+      c.decisionResolve,
+      { ref: decision.ref, option: "sqs" },
+      { actor: "dev", channel: "dashboard" },
+    );
+    navigate("/decisions");
+    const view = renderApp(<App />);
+    const section = await view.findByRole("heading", { name: /Answered, not picked up/ });
+    expect(section).not.toBeNull();
+    server.act(c.decisionPickup, { ref: decision.ref });
+    await gone(() => view.queryByRole("heading", { name: /Answered, not picked up/ }));
+    await view.findAllByText("picked up");
+  });
+
   test("a long queue does not push the feed off the screen", async () => {
     for (const index of [1, 2, 3, 4, 5, 6, 7, 8, 9]) seedDecision({ title: `Question ${index}` });
     const view = renderApp(<App />);

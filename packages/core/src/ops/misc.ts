@@ -286,7 +286,7 @@ export const miscOps = [
     const resolvedDecisions = rows(
       ctx,
       DecisionRow,
-      "SELECT * FROM decisions WHERE status = 'decided' AND requestedBy = ? AND updatedAt >= ? ORDER BY updatedAt DESC",
+      "SELECT * FROM decisions WHERE status = 'decided' AND requestedBy = ? AND pickedUpAt IS NULL AND updatedAt >= ? ORDER BY updatedAt DESC",
       [agent, recently],
     ).filter((item) => inScope(item.project));
     const claimedIssues = rows(

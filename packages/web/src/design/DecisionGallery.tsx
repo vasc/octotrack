@@ -1,4 +1,5 @@
 import { BatchPanelView } from "../components/decisions/BatchPanelView.tsx";
+import { DeliveryBadge } from "../components/decisions/DeliveryBadge.tsx";
 import { DecisionCardView } from "../components/decisions/DecisionCardView.tsx";
 import { QueueRest } from "../components/decisions/QueueRest.tsx";
 import { DesignSection, Example } from "./Example.tsx";
@@ -38,6 +39,19 @@ export function DecisionGallery() {
           form={decisionForm({ chosen: "sqs", canSubmit: true, error: 'D-1 has no option "sqs"' })}
           card={decisionCard()}
         />
+      </Example>
+      <Example label="What became of an answer">
+        <DeliveryBadge decision={decision({ status: "decided", decidedBy: "dev" })} />
+        <DeliveryBadge
+          decision={decision({ status: "decided", decidedBy: "dev", wakeError: "No adapter" })}
+        />
+        <DeliveryBadge
+          decision={decision({ status: "decided", decidedBy: "dev", pickedUpAt: "2026-11-07" })}
+        />
+        <DeliveryBadge
+          decision={decision({ status: "decided", decidedBy: "dev", reportStatus: "partial" })}
+        />
+        <DeliveryBadge decision={decision({ status: "decided", decidedBy: "dev", reportStatus: "done" })} />
       </Example>
       <Example label="Closed, in the queue">
         <QueueRest card={decisionCard({ reasons: ["1 agent waiting"] })} onOpen={NOOP} />

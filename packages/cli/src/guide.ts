@@ -36,6 +36,28 @@ The developer can answer in their own words instead of picking an option, so rea
 chosen key. They can also postpone a decision, which only moves it down their queue: it is still open, so keep waiting or
 keep working around it.
 
+## Hearing the answer
+
+Nothing pushes an answer at you unless you ask for that, so check when you start or resume:
+
+  octo inbox                         answers you have not picked up
+  octo decision pickup D-3           you have it
+  octo decision report D-3 "Moved the folder; nothing else changed"
+  octo decision report D-3 "Repo done, host file remains" --partial
+
+Report back when you have acted, so that the developer can see their answer was carried out.
+
+If you are going idle and want to continue as soon as there is an answer, ask to be woken. It is your choice, per decision:
+
+  octo decision ask "Which queue?" --wake claude:$CLAUDE_CODE_SESSION_ID
+  octo decision wake D-3 claude:$CLAUDE_CODE_SESSION_ID
+  octo decision wake D-3 --off
+
+The address is adapter:address, for an adapter the developer has set up for your tool. A wake only says that an answer
+exists. What to do about it is still up to you, and if it fails the answer waits in your inbox.
+
+## Logging decisions
+
 Log anything decided in conversation instead, so that it is on the record:
 
   octo decision record "Use SQLite locally" --chosen SQLite -p OCT --kind architecture
