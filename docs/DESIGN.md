@@ -217,6 +217,27 @@ push results through the `pr.sync` operation. References like `OCT-12` in a PR's
 - **Noise on busy repos:** `pr-without-issue` and friends flag every matching PR, which suits repos where agents open
   the PRs. On a large shared repo that is a lot of drift. Rules cannot be switched off per project yet.
 
+### D12. Delivering answers: an inbox, and waking only on request
+
+Answering a decision used to reach an agent only if it was hanging on `--wait` or a watch. In first real use, nine answers
+were recorded correctly and no session acted on them until each was messaged by hand. Comments from the developer on the
+proposal: "not overfitting to Claude code", "letting the session decide if it want to be reawaken", and that it would be great
+if "we can avoid having the session actively hang on octo".
+
+- **An inbox any tool can use.** `octo inbox`, `decision pickup` and `decision report` are plain CLI commands keyed on the
+  agent's name. An answer moves through not picked up, picked up, and carried out or partly carried out. An agent that answers
+  its own question skips this. A changed answer is delivered again.
+- **Waking is opt-in, per decision.** `--wake adapter:address` on asking, or `decision wake` later. The default is the inbox.
+- **One dispatcher instead of many waits.** A loop in the server wakes sessions, so nothing hangs. It marks a wake before
+  running it, so a crash leaves a session unwoken rather than woken twice, and the answer is still in the inbox.
+- **The tracker knows no tool.** It stores an opaque address. An adapter in `~/.octotrack/wake-adapters.json` turns that into
+  a command, so another tool needs one more entry and no code.
+- **A request can never supply the command.** There is no authentication (D10), so that would let any device that can reach
+  the server run anything. Addresses are also narrow enough that they cannot pass for an option or mean anything to a shell, no
+  shell is involved, and the wake message holds only the ref, so tracker text never becomes a prompt.
+- **Trade-off:** one attempt per answer rather than retries. A retried wake could start a second run of an agent, which is
+  worse than an answer waiting in an inbox where the dashboard shows it.
+
 ## Data model
 
 Everything is addressed by a **ref**: `OCT` (project), `OCT-12` (issue), `D-3` (decision), `PR-7` or

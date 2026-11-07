@@ -1,3 +1,4 @@
+import type { Decision } from "@octotrack/core/schemas";
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
@@ -55,6 +56,21 @@ const TONES: Readonly<Record<string, Tone>> = {
   requested: "warn",
   high: "warn",
 };
+
+export interface Delivery {
+  label: string;
+  tone: Tone;
+}
+
+/** What became of an answer after it was given. Null where there was nobody to deliver it to. */
+export function deliveryOf(decision: Decision): Delivery | null {
+  if (decision.status !== "decided" || decision.decidedBy === decision.requestedBy) return null;
+  if (decision.reportStatus === "done") return { label: "carried out", tone: "good" };
+  if (decision.reportStatus === "partial") return { label: "partly carried out", tone: "warn" };
+  if (decision.pickedUpAt !== null) return { label: "picked up", tone: "info" };
+  if (decision.wakeError !== null) return { label: "wake failed", tone: "bad" };
+  return { label: "not picked up", tone: "warn" };
+}
 
 export function toneOf(value: string): Tone {
   return TONES[value] ?? "neutral";

@@ -123,6 +123,17 @@ const MIGRATIONS: readonly string[] = [
   `
   ALTER TABLE decisions ADD COLUMN postponedAt TEXT;
   `,
+  `
+  ALTER TABLE decisions ADD COLUMN wakeAddress TEXT;
+  ALTER TABLE decisions ADD COLUMN wokenAt TEXT;
+  ALTER TABLE decisions ADD COLUMN wakeError TEXT;
+  ALTER TABLE decisions ADD COLUMN pickedUpAt TEXT;
+  ALTER TABLE decisions ADD COLUMN pickedUpBy TEXT;
+  ALTER TABLE decisions ADD COLUMN reportStatus TEXT;
+  ALTER TABLE decisions ADD COLUMN reportNote TEXT;
+  ALTER TABLE decisions ADD COLUMN reportedAt TEXT;
+  UPDATE decisions SET pickedUpAt = decidedAt, pickedUpBy = requestedBy WHERE status = 'decided';
+  `,
 ];
 
 const UserVersion = z.object({ user_version: z.number().int() });

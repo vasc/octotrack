@@ -52,14 +52,15 @@ interface InsertDecision {
   options?: readonly { key: string; label: string; description?: string }[];
   recommendation?: string;
   dueAt?: string;
+  wake?: string;
 }
 
 function insertDecision(ctx: Ctx, input: InsertDecision): Decision {
   const project = input.project === undefined ? null : requireProject(ctx, input.project).ref;
   const ref = `D-${nextNumber(ctx, "decision")}`;
   ctx.sql.run(
-    `INSERT INTO decisions (ref, project, kind, title, context, options, recommendation, status, priority, requestedBy, dueAt, version, createdAt, updatedAt)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, 1, ?, ?)`,
+    `INSERT INTO decisions (ref, project, kind, title, context, options, recommendation, status, priority, requestedBy, dueAt, wakeAddress, version, createdAt, updatedAt)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, 1, ?, ?)`,
     [
       ref,
       project,
@@ -71,6 +72,7 @@ function insertDecision(ctx: Ctx, input: InsertDecision): Decision {
       input.priority ?? "medium",
       ctx.actor,
       input.dueAt ?? null,
+      input.wake ?? null,
       ctx.now,
       ctx.now,
     ],
@@ -146,6 +148,14 @@ function resolveDecision(ctx: Ctx, input: ResolveInput): Decision {
   const changes = applyPatch(ctx, "decisions", current.ref, current, {
     status: "decided",
     postponedAt: null,
+    // Whoever answered their own question already has the answer. Anyone else's goes in the inbox, even if it changed.
+    pickedUpAt: ctx.actor === current.requestedBy ? ctx.now : null,
+    pickedUpBy: ctx.actor === current.requestedBy ? ctx.actor : null,
+    reportStatus: null,
+    reportNote: null,
+    reportedAt: null,
+    wokenAt: null,
+    wakeError: null,
     chosenOption: option,
     resolutionNote: note,
     decidedBy: ctx.actor,
@@ -190,6 +200,14 @@ function transition(
     changes,
   });
   return updated;
+}
+
+function requireAnswered(ctx: Ctx, ref: string): Decision {
+  const current = requireDecision(ctx, ref);
+  if (current.status !== "decided") {
+    throw new OctoError("conflict", `${current.ref} is ${current.status}, so it has no answer yet`);
+  }
+  return current;
 }
 
 /** Which agents are live-waiting on which refs. Drives the queue ranking and "2 agents waiting". */
@@ -327,6 +345,13 @@ export const decisionOps = [
       {
         status: "open",
         postponedAt: null,
+        pickedUpAt: null,
+        pickedUpBy: null,
+        reportStatus: null,
+        reportNote: null,
+        reportedAt: null,
+        wokenAt: null,
+        wakeError: null,
         chosenOption: null,
         decidedBy: null,
         decidedAt: null,
@@ -354,6 +379,75 @@ export const decisionOps = [
       { postponedAt: undo ? null : ctx.now },
       undefined,
     );
+  }),
+  bind(contracts.decisionInbox, (ctx, input) =>
+    input.all === true
+      ? rows(
+          ctx,
+          DecisionRow,
+          "SELECT * FROM decisions WHERE status = 'decided' AND pickedUpAt IS NULL ORDER BY decidedAt",
+        )
+      : rows(
+          ctx,
+          DecisionRow,
+          "SELECT * FROM decisions WHERE status = 'decided' AND pickedUpAt IS NULL AND requestedBy = ? ORDER BY decidedAt",
+          [ctx.actor],
+        ),
+  ),
+  bind(contracts.decisionPickup, (ctx, input) => {
+    requireAnswered(ctx, input.ref);
+    return transition(
+      ctx,
+      input.ref,
+      "decision.picked_up",
+      (decision) => `${decision.ref} picked up by ${ctx.actor}: ${decision.title}`,
+      { pickedUpAt: ctx.now, pickedUpBy: ctx.actor },
+      undefined,
+    );
+  }),
+  bind(contracts.decisionReport, (ctx, input) => {
+    const current = requireAnswered(ctx, input.ref);
+    const verb = input.status === "done" ? "carried out" : "partly carried out";
+    return transition(
+      ctx,
+      input.ref,
+      "decision.reported",
+      (decision) => `${decision.ref} ${verb}: ${input.note}`,
+      {
+        pickedUpAt: current.pickedUpAt ?? ctx.now,
+        pickedUpBy: current.pickedUpBy ?? ctx.actor,
+        reportStatus: input.status,
+        reportNote: input.note,
+        reportedAt: ctx.now,
+      },
+      undefined,
+    );
+  }),
+  bind(contracts.decisionWake, (ctx, input) =>
+    transition(
+      ctx,
+      input.ref,
+      "decision.wake_changed",
+      (decision) =>
+        `${decision.ref} ${input.address === null ? "will not wake anyone" : "will wake its session"}`,
+      { wakeAddress: input.address, wokenAt: null, wakeError: null },
+      undefined,
+    ),
+  ),
+  bind(contracts.decisionWakes, (ctx) =>
+    rows(
+      ctx,
+      DecisionRow,
+      "SELECT * FROM decisions WHERE status = 'decided' AND wakeAddress IS NOT NULL AND wokenAt IS NULL AND pickedUpAt IS NULL ORDER BY decidedAt",
+    ),
+  ),
+  bind(contracts.decisionWoken, (ctx, input) => {
+    const current = requireDecision(ctx, input.ref);
+    applyPatch(ctx, "decisions", current.ref, current, {
+      wokenAt: current.wokenAt ?? ctx.now,
+      wakeError: input.error ?? null,
+    });
+    return requireDecision(ctx, current.ref);
   }),
   bind(contracts.decisionWithdraw, (ctx, input) => {
     const current = requireDecision(ctx, input.ref);

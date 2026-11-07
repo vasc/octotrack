@@ -119,6 +119,9 @@ export const DecisionOption = z.object({
 });
 export type DecisionOption = z.infer<typeof DecisionOption>;
 
+export const DecisionReportStatus = z.enum(["done", "partial"]);
+export type DecisionReportStatus = z.infer<typeof DecisionReportStatus>;
+
 export const Decision = z.object({
   ref: z.string(),
   project: z.string().nullable(),
@@ -133,6 +136,17 @@ export const Decision = z.object({
   dueAt: z.string().nullable(),
   /** Pushed to the bottom of the queue by someone not ready to answer. Still open. */
   postponedAt: z.string().nullable(),
+  /** How to wake the session that asked, if it wants that. Opaque here: `adapter:address`. */
+  wakeAddress: z.string().nullable(),
+  wokenAt: z.string().nullable(),
+  wakeError: z.string().nullable(),
+  /** When the agent that asked acknowledged the answer. */
+  pickedUpAt: z.string().nullable(),
+  pickedUpBy: z.string().nullable(),
+  /** What the agent says became of the answer. */
+  reportStatus: DecisionReportStatus.nullable(),
+  reportNote: z.string().nullable(),
+  reportedAt: z.string().nullable(),
   chosenOption: z.string().nullable(),
   resolutionNote: z.string().nullable(),
   decidedBy: z.string().nullable(),

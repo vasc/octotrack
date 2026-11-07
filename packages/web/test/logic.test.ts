@@ -1,8 +1,39 @@
 import { describe, expect, test } from "bun:test";
 import { suggest } from "../src/hooks/useSuggestions.ts";
 import { validateQuery } from "../src/hooks/useFilter.ts";
-import { dayLabel, humanize, splitRefs, timeAgo, toneOf } from "../src/lib/format.ts";
+import type { Decision } from "@octotrack/core/schemas";
+import { decision } from "../src/design/fixtures.ts";
+import type { Tone } from "../src/lib/format.ts";
+import { dayLabel, deliveryOf, humanize, splitRefs, timeAgo, toneOf } from "../src/lib/format.ts";
 import { closeEntity, navigate, openEntity, setParams } from "../src/lib/router.ts";
+
+describe("deliveryOf", () => {
+  const answered = {
+    status: "decided" as const,
+    requestedBy: "agent-a",
+    decidedBy: "dev",
+    decidedAt: "2026-11-07",
+  };
+
+  test("an open decision has nothing to deliver", () => {
+    expect(deliveryOf(decision())).toBeNull();
+  });
+
+  test("nor does one the agent answered itself", () => {
+    expect(deliveryOf(decision({ ...answered, decidedBy: "agent-a" }))).toBeNull();
+  });
+
+  const cases: readonly (readonly [Partial<Decision>, string, Tone])[] = [
+    [{}, "not picked up", "warn"],
+    [{ wakeError: "No adapter" }, "wake failed", "bad"],
+    [{ pickedUpAt: "2026-11-07", pickedUpBy: "agent-a" }, "picked up", "info"],
+    [{ pickedUpAt: "2026-11-07", reportStatus: "partial" }, "partly carried out", "warn"],
+    [{ pickedUpAt: "2026-11-07", reportStatus: "done" }, "carried out", "good"],
+  ];
+  test.each(cases)("%j reads as %s", (state, label, tone) => {
+    expect(deliveryOf(decision({ ...answered, ...state }))).toEqual({ label, tone });
+  });
+});
 
 describe("suggest", () => {
   const dynamic = { project: ["OCT", "API"], actor: ["claude-a"] };

@@ -90,6 +90,7 @@ export const decisionCommands: Command[] = [
       blocks: { ...MANY, description: "Work that cannot proceed until this is decided, repeatable" },
       affects: { ...MANY, description: "Items to re-check once this is decided, repeatable" },
       wait: { type: "boolean", short: "w", description: "Hang until the decision is made, then print it" },
+      wake: { ...STRING, description: "Wake this session when answered, as adapter:address. See octo guide" },
       timeout: { ...STRING, description: "With --wait: give up after this long, exit 124. For example 30m" },
     },
     examples: [
@@ -110,6 +111,7 @@ export const decisionCommands: Command[] = [
           dueAt: args.str("due"),
           blocks: args.optionalList("blocks"),
           affects: args.optionalList("affects"),
+          wake: args.str("wake"),
         }),
       );
       if (args.flag("wait")) return waitForDecisions(ctx, [outcome.data.ref], args);
@@ -275,6 +277,79 @@ export const decisionCommands: Command[] = [
       const outcome = await client.call(
         c.decisionReopen,
         compact({ ref: args.requirePositional(0, "REF"), note: args.str("note") }),
+      );
+      out.result(outcome, () => r.renderDecisionBlock(outcome.data));
+    },
+  },
+  {
+    path: ["inbox"],
+    summary: "Answers you have not picked up yet. Check this when you start or resume",
+    options: { all: { type: "boolean", description: "Every agent's, not only yours" } },
+    ops: [c.decisionInbox.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(c.decisionInbox, compact({ all: args.flag("all") || undefined }));
+      out.result(outcome, () => r.renderInbox(outcome.data));
+    },
+  },
+  {
+    path: ["decision", "pickup"],
+    usage: "<REF>",
+    summary: "Acknowledge an answer, taking it out of your inbox",
+    ops: [c.decisionPickup.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(c.decisionPickup, { ref: args.requirePositional(0, "REF") });
+      out.result(outcome, () => r.renderDecisionBlock(outcome.data));
+    },
+  },
+  {
+    path: ["decision", "report"],
+    usage: "<REF> <what happened>",
+    summary: "Say what became of an answer, so that the developer can see it was carried out",
+    options: { partial: { type: "boolean", description: "Only part of it is done. Say what is left" } },
+    examples: ['octo decision report D-3 "Removed from the repo, the host file remains" --partial'],
+    ops: [c.decisionReport.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(c.decisionReport, {
+        ref: args.requirePositional(0, "REF"),
+        note: args.requirePositional(1, "what happened"),
+        status: args.flag("partial") ? "partial" : "done",
+      });
+      out.result(outcome, () => r.renderDecisionBlock(outcome.data));
+    },
+  },
+  {
+    path: ["decision", "wake"],
+    usage: "<REF> [adapter:address]",
+    summary: "Ask to be woken when this is answered, or stop asking with --off",
+    options: { off: { type: "boolean", description: "Do not wake anyone" } },
+    ops: [c.decisionWake.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(c.decisionWake, {
+        ref: args.requirePositional(0, "REF"),
+        address: args.flag("off") ? null : args.requirePositional(1, "adapter:address"),
+      });
+      out.result(outcome, () => r.renderDecisionBlock(outcome.data));
+    },
+  },
+  {
+    path: ["decision", "wakes"],
+    summary: "Answered decisions whose session is due a wake",
+    ops: [c.decisionWakes.name],
+    async run({ client, out }) {
+      const outcome = await client.call(c.decisionWakes, {});
+      out.result(outcome, () => r.renderDecisions(outcome.data));
+    },
+  },
+  {
+    path: ["decision", "woken"],
+    usage: "<REF>",
+    summary: "Record that a wake was attempted. The server does this itself",
+    options: { error: { ...STRING, description: "Why it failed" } },
+    ops: [c.decisionWoken.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(
+        c.decisionWoken,
+        compact({ ref: args.requirePositional(0, "REF"), error: args.str("error") }),
       );
       out.result(outcome, () => r.renderDecisionBlock(outcome.data));
     },

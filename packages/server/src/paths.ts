@@ -28,6 +28,11 @@ export function allowedHostsPath(): string {
   return join(octoHome(), "allowed-hosts");
 }
 
+/** What a wake may run, by adapter name. See wake.ts. */
+export function wakeAdaptersPath(): string {
+  return join(octoHome(), "wake-adapters.json");
+}
+
 export function serverUrl(): string {
   return (process.env.OCTO_URL ?? `http://127.0.0.1:${DEFAULT_PORT}`).replace(/\/$/, "");
 }
