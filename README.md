@@ -51,6 +51,28 @@ OCTO_HOME=/tmp/octo-demo OCTO_URL=http://127.0.0.1:4799 octo seed demo
 
 Then open <http://127.0.0.1:4799>.
 
+### Letting Claude Code sessions write
+
+In auto mode, Claude Code's permission classifier can refuse `octo` writes as writes to an external system. Sessions then
+file nothing. To allow them, add this to `~/.claude/settings.json`, merging it with what is already there:
+
+```json
+{
+  "permissions": {
+    "allow": ["Bash(octo *)", "Bash(OCTO_AGENT=* octo *)"]
+  },
+  "autoMode": {
+    "allow": [
+      "$defaults",
+      "Running the `octo` CLI, including writes (issues, decisions, status posts, ideas, projects, PR links, drift attestations) and with an OCTO_AGENT=name prefix or --agent flag. Octotrack is the user's own local tracker on 127.0.0.1:4747, built for AI agents to write to, and the user has authorized every session to use it."
+    ]
+  }
+}
+```
+
+The allow rules cover plain commands. The `autoMode` entry is for commands that still reach the classifier. Sessions that
+were already running picked this up without a restart.
+
 ## For agents
 
 Run `octo guide` and put the output in your agents' instructions. It covers everything below in more depth. Have each
