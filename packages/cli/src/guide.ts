@@ -47,14 +47,17 @@ Nothing pushes an answer at you unless you ask for that, so check when you start
 
 Report back when you have acted, so that the developer can see their answer was carried out.
 
-If you are going idle and want to continue as soon as there is an answer, ask to be woken. It is your choice, per decision:
+Ask to be woken every time you ask, so that the answer reaches you without a watch. If you run inside GNU screen, your
+address is your screen session:
 
-  octo decision ask "Which queue?" --wake claude:$CLAUDE_CODE_SESSION_ID
-  octo decision wake D-3 claude:$CLAUDE_CODE_SESSION_ID
+  octo decision ask "Which queue?" --wake screen:$STY
+  octo decision wake D-3 screen:$STY       a decision you asked without it
   octo decision wake D-3 --off
 
-The address is adapter:address, for an adapter the developer has set up for your tool. A wake only says that an answer
-exists. What to do about it is still up to you, and if it fails the answer waits in your inbox.
+The address is adapter:address, for an adapter the developer has set up. screen types the wake into window 0 of your screen
+session, so it reaches you as input whether you are busy or idle. claude:$CLAUDE_CODE_SESSION_ID starts a headless run of a
+Claude Code session: use it only for a session that is not open in a terminal, or two copies of it run at once. A wake
+only says that an answer exists. What to do about it is still up to you, and if it fails the answer waits in your inbox.
 
 ## Logging decisions
 
