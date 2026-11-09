@@ -235,6 +235,12 @@ if "we can avoid having the session actively hang on octo".
 - **A request can never supply the command.** There is no authentication (D10), so that would let any device that can reach
   the server run anything. Addresses are also narrow enough that they cannot pass for an option or mean anything to a shell, no
   shell is involved, and the wake message holds only the ref, so tracker text never becomes a prompt.
+- **A running agent is woken where it runs.** The first adapter, for Claude Code, resumes a session headlessly. In use,
+  sessions stay open in terminals, so that started a second copy of a session beside the open one. The `screen` adapter
+  types the wake message into window 0 of the agent's GNU screen session instead, where it arrives as input whether the
+  agent is busy or idle. It needs no code: it is one entry in `wake-adapters.json`, and it works for any tool run inside
+  GNU screen. The guide tells agents to ask with `--wake` every time. Passing a flag on the ask command does not depend
+  on the agent remembering anything afterwards, unlike keeping a watch running.
 - **Trade-off:** one attempt per answer rather than retries. A retried wake could start a second run of an agent, which is
   worse than an answer waiting in an inbox where the dashboard shows it.
 

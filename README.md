@@ -73,6 +73,29 @@ file nothing. To allow them, add this to `~/.claude/settings.json`, merging it w
 The allow rules cover plain commands. The `autoMode` entry is for commands that still reach the classifier. Sessions that
 were already running picked this up without a restart.
 
+### Waking an agent when its decision is answered
+
+An agent that asks with `--wake adapter:address` is woken by the server when the decision is answered. What a wake runs
+comes only from `~/.octotrack/wake-adapters.json`. `{address}` is replaced by the address and `{message}` by the wake
+message, which holds only the decision's ref:
+
+```json
+{
+  "screen": { "command": ["screen", "-S", "{address}", "-p", "0", "-X", "stuff", "{message}\r"] },
+  "claude": {
+    "command": ["bun", "/path/to/octotrack/packages/server/src/adapters/claude.ts", "{address}", "{message}"]
+  }
+}
+```
+
+- `screen` types the message into window 0 of a GNU screen session, followed by Enter. An agent running there
+  receives it as input, as if the developer had typed it, whether it is busy or idle. Agents ask with
+  `--wake screen:$STY`.
+- `claude` resumes a Claude Code session headlessly with `claude -p --resume`. Use it only for sessions that are not
+  open in a terminal: for one that is, it starts a second copy of the session.
+
+The server reads the file when it starts, so run `octo server stop` after changing it.
+
 ### Using it from your phone
 
 The server only listens on loopback, so publish it to your tailnet with `tailscale serve`. Never use Funnel: there is no
