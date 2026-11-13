@@ -104,6 +104,32 @@ describe("output", () => {
     expect(text.stdout).not.toContain("{");
   });
 
+  test("a long answer reaches a slow reader whole", async () => {
+    // About 200 KB, more than a pipe holds at once. Bun's console.log once dropped what a full pipe could not take.
+    const body = "detail ".repeat(30_000).trim();
+    const issue = await data(
+      WithRef,
+      ["issue", "create", "Long", "-p", "OCT", "--body-file", "-"],
+      "agent-a",
+      body,
+    );
+    // A shell pipe whose reader waits before reading, so octo's output fills it. Bun.spawn's own pipe never fills: Bun
+    // reads it as the output comes.
+    const proc = Bun.spawn(
+      ["sh", "-c", '"$0" "$1" show "$2" | { sleep 0.5; cat; }', "bun", MAIN, issue.ref],
+      {
+        env: env("agent-a"),
+        stdin: "ignore",
+        stdout: "pipe",
+        stderr: "pipe",
+      },
+    );
+    const shown = await finish(proc);
+    expect(shown.code).toBe(0);
+    const Shown = z.object({ data: z.object({ entity: z.object({ body: z.string() }) }) });
+    expect(Shown.parse(parseJson(shown.stdout)).data.entity.body).toBe(body);
+  });
+
   test("errors are structured, with a hint, and a useful exit code", async () => {
     const missing = await octo(["show", "OCT-404"]);
     expect(missing.code).toBe(1);

@@ -1,3 +1,4 @@
+import { isatty } from "node:tty";
 import type {
   Decision,
   DecisionCard,
@@ -21,7 +22,9 @@ import type {
   WatchResult,
 } from "@octotrack/core";
 
-const useColor = process.stdout.isTTY === true && process.env.NO_COLOR === undefined;
+// Asked of file descriptor 1, never of process.stdout: in Bun, touching process.stdout makes console.log drop
+// whatever a full pipe cannot take, and `octo show --json | jq` received only the first 8 KB of 12 KB of output.
+const useColor = isatty(1) && process.env.NO_COLOR === undefined;
 
 function paint(code: number, text: string): string {
   return useColor ? `\x1b[${code}m${text}\x1b[0m` : text;
