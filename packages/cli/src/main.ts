@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 import { OctoError } from "@octotrack/core";
 import { serverUrl } from "@octotrack/server/paths";
+import { isatty } from "node:tty";
 import { ZodError } from "zod";
 import { type OptionSpec, type OptionSpecs, parse, UsageError } from "./args.ts";
 import { ConnectionError, OctoClient, RemoteError } from "./client.ts";
@@ -79,7 +80,7 @@ function leadingWords(argv: readonly string[]): string[] {
 function pickFormat(argv: readonly string[]): boolean {
   if (argv.includes("--json")) return true;
   if (argv.includes("--text")) return false;
-  return process.stdout.isTTY !== true;
+  return !isatty(1);
 }
 
 function report(json: boolean, code: string, message: string, hint: string | null): void {
