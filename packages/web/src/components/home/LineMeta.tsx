@@ -19,11 +19,11 @@ export function LineMeta({ crew, details }: { crew?: LineCrew; details?: LineHom
   ];
   if (facts.length === 0) return null;
   return (
-    <span className="line-facts">
+    // The dots between facts are drawn by the stylesheet, so a line of facts of its own, on a phone, starts clean.
+    <span className="line-facts" data-separated="true">
       {facts.map((fact) => (
         <span key={fact} data-tone={fact.startsWith("no owner") ? "bad" : undefined}>
-          {" "}
-          · {fact}
+          {fact}
         </span>
       ))}
     </span>

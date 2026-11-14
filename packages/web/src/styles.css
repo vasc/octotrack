@@ -2001,6 +2001,11 @@ p {
   color: var(--bad);
 }
 
+.line-facts[data-separated="true"] > span::before {
+  content: " · ";
+  color: var(--ink-3);
+}
+
 .line-headline {
   color: var(--ink-2);
 }
@@ -2523,9 +2528,20 @@ p {
     border: 0;
     background: none;
   }
-  /* The handle stays on a phone, the only way to reorder there: a full touch target beside the number. */
+  /* The handle stays on a phone, the only way to reorder there: a full touch target beside the number. Only the
+     title sits beside them; what the line says runs the full width below, as E-Phone draws it. */
   .line-card-head {
-    grid-template-columns: var(--control-height) var(--space-11) minmax(0, 1fr) auto;
+    grid-template-columns: var(--control-height) var(--space-11) minmax(0, 1fr);
+    align-items: center;
+  }
+  .line-card-text {
+    display: contents;
+  }
+  .line-card-text > :not(.line-card-title) {
+    grid-column: 1 / -1;
+  }
+  .line-card-text > .line-facts[data-separated="true"] > span:first-child::before {
+    content: none;
   }
   .line-handle {
     width: var(--control-height);
