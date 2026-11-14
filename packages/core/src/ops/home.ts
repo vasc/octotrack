@@ -3,7 +3,7 @@ import { crewOf, waitingOnYou } from "../agents/claims.ts";
 import { DEVELOPER } from "../agents/state.ts";
 import type { ForYou, HomeView, Line, LineHome, LineState } from "../schemas.ts";
 import type { Ctx } from "../store/context.ts";
-import { rows } from "../store/context.ts";
+import { one, rows } from "../store/context.ts";
 import { allLines } from "../store/entities.ts";
 import { DecisionRow, IssueRow, PlanStepRow } from "../store/rows.ts";
 import { buildQueue } from "./decisions.ts";
@@ -85,6 +85,16 @@ function openTasks(ctx: Ctx, line: string) {
   );
 }
 
+/** How many changes were logged on a line after a time: what its summary does not yet tell. */
+function changesSince(ctx: Ctx, line: string, at: string): number {
+  return (
+    one(ctx, z.object({ n: z.number() }), "SELECT COUNT(*) AS n FROM events WHERE line = ? AND ts > ?", [
+      line,
+      at,
+    ])?.n ?? 0
+  );
+}
+
 /**
  * The home screen in one read: every line in the developer's order, who is on it, its plan step, and what waits on the
  * developer, so that the page never has to piece a line together from several calls.
@@ -160,6 +170,7 @@ export function buildHome(ctx: Ctx): HomeView {
         tasks: held.filter((item) => item.kind === "task").length,
       },
       reconfirming: line.state === "working" || line.state === "up_next" ? reconfirmingOn(ctx, line.ref) : 0,
+      sinceSummary: line.summaryAt === null ? 0 : changesSince(ctx, line.ref, line.summaryAt),
       scopedSteps: steps.length,
       answers: working ? answersOn(ctx, line.ref) : [],
     };

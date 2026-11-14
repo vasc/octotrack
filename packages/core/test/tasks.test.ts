@@ -217,6 +217,22 @@ describe("summaries stay true", () => {
   });
 });
 
+describe("changes since the summary, on home", () => {
+  test("counts what happened on a line after its summary, and nothing for a line never summarized", () => {
+    const w = world();
+    const since = () => w.as(w.dev, c.homeShow, {}).lines[w.line]?.sinceSummary;
+    w.as(w.owner, c.issueUpdate, { refs: ["PANEL-1"], title: "Model the base" });
+    expect(since()).toBe(0);
+    w.later(1);
+    w.as(w.owner, c.lineSummarize, { ref: w.line, headline: "The base is modelled.", summary: "Modelled." });
+    expect(since()).toBe(0);
+    w.later(1);
+    w.as(w.owner, c.issueUpdate, { refs: ["PANEL-1"], status: "done" });
+    w.as(w.owner, c.decisionAsk, { title: "Which board?", context: SITUATION, options: OPTIONS });
+    expect(since()).toBe(2);
+  });
+});
+
 describe("done when and done are the developer's to accept", () => {
   test("an owner proposes a new done when, and the developer accepts or keeps the old one", () => {
     const w = world();

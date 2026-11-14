@@ -766,6 +766,8 @@ export const LineHome = z.object({
    * the agent that takes or scopes the line to re-confirm or withdraw them before they reach the developer.
    */
   reconfirming: z.number().int(),
+  /** How many changes on the line came after its summary: 0 for a line never summarized, which has no headline. */
+  sinceSummary: z.number().int(),
   /** How many plan steps scoping has written so far. */
   scopedSteps: z.number().int(),
   /** Answers given lately, each with what became of it, one sentence each on the line. */

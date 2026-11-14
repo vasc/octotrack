@@ -29,7 +29,8 @@ export interface WorkingLineProps {
 
 /**
  * A line being worked on, as a card: its handle and place in the order, its title with who is on it and its plan step,
- * its headline, what became of its answers, and what it needs from you, indented under it.
+ * its headline and how many changes came after it, what became of its answers, and what it needs from you, indented
+ * under it.
  */
 export function WorkingLine({
   index,
@@ -72,6 +73,14 @@ export function WorkingLine({
             {fold === "at" || line.headline === null ? null : (
               <div className="line-headline">
                 <Markdown text={line.headline} inline />
+                {details === undefined || details.sinceSummary === 0 ? null : (
+                  <>
+                    {" "}
+                    <button type="button" className="since-link" onClick={() => openEntity(line.ref)}>
+                      {details.sinceSummary} change{details.sinceSummary === 1 ? "" : "s"} since the summary
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
