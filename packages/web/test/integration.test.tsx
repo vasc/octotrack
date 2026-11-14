@@ -1919,10 +1919,11 @@ describe("lines of work", () => {
         },
       });
       try {
+        // The waits are inside act: the saves that land during them update the page.
         fireEvent.change(box, { target: { value: "Print it" } });
-        await new Promise((resolve) => setTimeout(resolve, 600));
+        await act(() => new Promise((resolve) => setTimeout(resolve, 600)));
         fireEvent.change(box, { target: { value: "Print it in black" } });
-        await new Promise((resolve) => setTimeout(resolve, 400));
+        await act(() => new Promise((resolve) => setTimeout(resolve, 400)));
         expect(box).toHaveProperty("value", "Print it in black");
         // The last save is let land here, so it reaches no later test.
         await waitFor(
