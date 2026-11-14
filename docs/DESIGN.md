@@ -358,7 +358,7 @@ Everything below is a design decision made from that, with its reasoning.
   `~/.octotrack/agent-setup.json`, with optional per-repo overrides, edited only on the developer's machine and never by
   an operation, as D12 requires. It runs in a git worktree of its own, which Octotrack creates or reuses per session
   name beside the repo's main checkout (from the repos table, for the repo that holds the line's first unclaimed work in
-  plan order, after checking that its git remote matches), so sessions on one repo never share files; it and passes only
+  plan order, after checking that its git remote matches), so sessions on one repo never share files, and passes only
   the ref and the name, so tracker text never becomes a prompt. The line gets a Step in item only for one of four
   reasons, and its first action fits the reason: no start command is set (it shows the file and the line to add, then
   Try again), no agent has run in the repo on this machine so there is no checkout (Set its checkout…), a start never
