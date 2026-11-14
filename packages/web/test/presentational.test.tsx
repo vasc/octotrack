@@ -11,7 +11,10 @@ import { FoldedSection } from "../src/components/home/FoldedSection.tsx";
 import { ForYouRow } from "../src/components/home/ForYouRow.tsx";
 import { HomeCounts } from "../src/components/home/HomeCounts.tsx";
 import { HomeSection } from "../src/components/home/HomeSection.tsx";
+import { AtPicker } from "../src/components/home/AtPicker.tsx";
 import { LineMeta } from "../src/components/home/LineMeta.tsx";
+import { SpreadThin } from "../src/components/home/SpreadThin.tsx";
+import { StartSheetView } from "../src/components/home/StartSheetView.tsx";
 import { LineProposalCard } from "../src/components/home/LineProposalCard.tsx";
 import { ProposalCard } from "../src/components/home/ProposalCard.tsx";
 import { PushToggle } from "../src/components/home/PushToggle.tsx";
@@ -568,16 +571,19 @@ describe("lines of work", () => {
     ...overrides,
   });
 
-  test("HomeCounts names what waits, leaves out what does not, and marks urgent", () => {
+  test("HomeCounts names what waits, leaves out what does not, marks urgent, and each goes to its first item", () => {
+    const onPick = mock((_count: string) => {});
     const view = render(
-      <HomeCounts counts={{ toAnswer: 4, toDo: 0, toAccept: 1, toStepIn: 0, urgent: 1 }} />,
+      <HomeCounts counts={{ toAnswer: 4, toDo: 0, toAccept: 1, toStepIn: 0, urgent: 1 }} onPick={onPick} />,
     );
     expect(view.getByLabelText("Waiting on you").textContent).toBe("1 urgent4 to answer1 to accept");
     expect(view.getByText("1 urgent").getAttribute("data-urgent")).toBe("true");
+    fireEvent.click(view.getByRole("button", { name: "4 to answer" }));
+    expect(onPick).toHaveBeenCalledWith("toAnswer");
     view.unmount();
-    render(<HomeCounts counts={{ toAnswer: 0, toDo: 0, toAccept: 0, toStepIn: 0, urgent: 0 }} />).getByText(
-      "Nothing waits on you.",
-    );
+    render(
+      <HomeCounts counts={{ toAnswer: 0, toDo: 0, toAccept: 0, toStepIn: 0, urgent: 0 }} onPick={onPick} />,
+    ).getByText("Nothing waits on you.");
   });
 
   test("WorkingLine shows its place, who is on it, whether it waits on you, its step and its headline", () => {
@@ -1182,5 +1188,73 @@ describe("saying something to a line", () => {
     fireEvent.change(view.getByLabelText("Look again on"), { target: { value: "2027-03-01" } });
     fireEvent.click(view.getByRole("button", { name: "Table it" }));
     expect(onTable).toHaveBeenCalledWith("Winter", "2027-03-01");
+  });
+});
+
+describe("home's smaller pieces", () => {
+  test("SpreadThin says nothing up to six working lines, then what it costs", () => {
+    expect(render(<SpreadThin working={6} noOwner={3} waiting={2} />).container.textContent).toBe("");
+    render(<SpreadThin working={8} noOwner={1} waiting={2} />).getByText(
+      /8 lines are being worked on: 1 has no owner, 2 wait on you/,
+    );
+  });
+
+  test("AtPicker offers each place as a button, and Leave once at one", () => {
+    const onAt = mock((_place: string | null) => {});
+    const view = render(<AtPicker places={["the bench", "the Mac"]} at={null} onAt={onAt} />);
+    fireEvent.click(view.getByRole("button", { name: "I'm at…" }));
+    fireEvent.click(view.getByRole("button", { name: "the Mac" }));
+    expect(onAt).toHaveBeenCalledWith("the Mac");
+    view.unmount();
+    const there = render(<AtPicker places={["the bench"]} at="the bench" onAt={onAt} />);
+    fireEvent.click(there.getByRole("button", { name: "At the bench" }));
+    expect(onAt).toHaveBeenCalledWith(null);
+    expect(render(<AtPicker places={[]} at={null} onAt={onAt} />).container.textContent).toBe("");
+  });
+
+  test("StartSheetView lists what a line holds and asks about a changed done when before Start now", () => {
+    const onStart = mock(() => {});
+    const onDoneWhen = mock((_accept: boolean) => {});
+    const view = render(
+      <StartSheetView
+        line={line({ title: "Mount", doneWhenProposal: "It hangs flush." })}
+        held={[{ ref: "D-4", kind: "question", title: "Which wall?", line: "L-1", current: true, since: "" }]}
+        onDoneWhen={onDoneWhen}
+        onStart={onStart}
+        onCancel={() => {}}
+      />,
+    );
+    view.getByRole("dialog", { name: "Start Mount" });
+    view.getByText("Which wall?");
+    fireEvent.click(view.getByRole("button", { name: "Keep current" }));
+    expect(onDoneWhen).toHaveBeenCalledWith(false);
+    fireEvent.click(view.getByRole("button", { name: "Start now" }));
+    expect(onStart).toHaveBeenCalledTimes(1);
+  });
+
+  test("StepIn offers the action that fits: a checkout, Try now, or Start one anyway", () => {
+    const onCheckout = mock((_ref: string, _repo: string, _path: string) => {});
+    const onAnyway = mock((_ref: string) => {});
+    const clone = render(
+      <StepIn
+        line={line()}
+        reason="Cloning failed."
+        checkoutRepo="PANEL"
+        onCheckout={onCheckout}
+        onOwn={() => {}}
+        onTable={() => {}}
+      />,
+    );
+    fireEvent.click(clone.getByRole("button", { name: "Set its checkout…" }));
+    fireEvent.change(clone.getByLabelText("Checkout of PANEL"), { target: { value: "/src/panel" } });
+    fireEvent.click(clone.getByRole("button", { name: "Set" }));
+    expect(onCheckout).toHaveBeenCalledWith("L-1", "PANEL", "/src/panel");
+    clone.unmount();
+    const cap = render(
+      <StepIn line={line()} reason="At the cap." onAnyway={onAnyway} onOwn={() => {}} onTable={() => {}} />,
+    );
+    fireEvent.click(cap.getByRole("button", { name: "Start one anyway" }));
+    expect(onAnyway).toHaveBeenCalledWith("L-1");
+    expect(cap.queryByRole("button", { name: "Try now" })).toBeNull();
   });
 });

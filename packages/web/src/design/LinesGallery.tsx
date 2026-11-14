@@ -3,7 +3,12 @@ import { LinePanel } from "../components/entity/LinePanel.tsx";
 import { FoldedSection } from "../components/home/FoldedSection.tsx";
 import { ForYouRow } from "../components/home/ForYouRow.tsx";
 import { HomeCounts } from "../components/home/HomeCounts.tsx";
+import { OwnWorkBox } from "../components/entity/OwnWorkBox.tsx";
+import { TellBox } from "../components/entity/TellBox.tsx";
+import { AtPicker } from "../components/home/AtPicker.tsx";
 import { LineProposalCard } from "../components/home/LineProposalCard.tsx";
+import { SpreadThin } from "../components/home/SpreadThin.tsx";
+import { StartSheetView } from "../components/home/StartSheetView.tsx";
 import { ProposalCard } from "../components/home/ProposalCard.tsx";
 import { QuietRow } from "../components/home/QuietRow.tsx";
 import { StepIn } from "../components/home/StepIn.tsx";
@@ -39,7 +44,7 @@ export function LinesGallery() {
   return (
     <DesignSection title="Lines of work">
       <Example label="What waits on you">
-        <HomeCounts counts={{ toAnswer: 4, toDo: 3, toAccept: 1, toStepIn: 1, urgent: 0 }} />
+        <HomeCounts counts={{ toAnswer: 4, toDo: 3, toAccept: 1, toStepIn: 1, urgent: 0 }} onPick={NOOP} />
       </Example>
       <Example label="A working line, waiting on you">
         <WorkingLine
@@ -70,6 +75,33 @@ export function LinesGallery() {
       <Example label="A task, one row, and opened">
         <ForYouRow item={{ kind: "task", task: TASK }} onOpen={NOOP} />
         <TaskCard task={TASK} words="" onWords={NOOP} onDone={NOOP} onCant={NOOP} />
+      </Example>
+      <Example label="Spread thin, and I'm at">
+        <SpreadThin working={8} noOwner={2} waiting={3} />
+        <AtPicker places={["the bench", "the Mac", "the phone"]} at={null} onAt={NOOP} />
+      </Example>
+      <Example label="Starting a line that waited">
+        <StartSheetView
+          line={line({ title: "Wall mount", doneWhenProposal: "It hangs flush with the cable hidden." })}
+          held={[
+            { ref: "D-41", kind: "question", title: "Which wall?", line: "L-3", current: true, since: "" },
+            {
+              ref: "PANEL-9",
+              kind: "task",
+              title: "Measure the stud spacing",
+              line: "L-3",
+              current: true,
+              since: "",
+            },
+          ]}
+          onDoneWhen={NOOP}
+          onStart={NOOP}
+          onCancel={NOOP}
+        />
+      </Example>
+      <Example label="Telling a line, and a line of your own">
+        <TellBox line="L-1" to="panel-widgets" words="" onWords={NOOP} onSend={NOOP} />
+        <OwnWorkBox line="L-7" words="" onWords={NOOP} onTask={NOOP} onNote={NOOP} />
       </Example>
       <Example label="A case for done, one row, and opened">
         <ForYouRow

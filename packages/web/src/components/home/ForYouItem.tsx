@@ -1,9 +1,8 @@
-import type { ForYou, Issue } from "@octotrack/core/schemas";
-import { useDraft } from "../../hooks/useDraft.ts";
+import type { ForYou } from "@octotrack/core/schemas";
 import { DecisionCardItem } from "../decisions/DecisionCardItem.tsx";
 import { ForYouRow } from "./ForYouRow.tsx";
 import { LineProposalCard } from "./LineProposalCard.tsx";
-import { TaskCard } from "./TaskCard.tsx";
+import { TaskItem } from "./TaskItem.tsx";
 
 /** One thing waiting on the developer: opened in full when it has focus, else one row that opens it. */
 export function ForYouItem({
@@ -62,26 +61,4 @@ export function ForYouItem({
         />
       );
   }
-}
-
-/** A task opened, with what is typed kept as a draft. */
-function TaskItem({
-  task,
-  onDone,
-  onCant,
-}: {
-  task: Issue;
-  onDone(ref: string, result: string): void;
-  onCant(ref: string, why: string): void;
-}) {
-  const draft = useDraft(`task:${task.ref}`);
-  return (
-    <TaskCard
-      task={task}
-      words={draft.value}
-      onWords={(words) => (words === "" ? draft.clear() : draft.change(words))}
-      onDone={(result) => onDone(task.ref, result)}
-      onCant={(why) => onCant(task.ref, why)}
-    />
-  );
 }

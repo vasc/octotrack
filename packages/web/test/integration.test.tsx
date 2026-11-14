@@ -825,6 +825,7 @@ describe("other pages", () => {
 
 describe("lines of work", () => {
   const asDeveloper = { actor: "dev", channel: "dashboard" } as const;
+  const asServer = { actor: "octotrack", channel: "cli", system: true } as const;
 
   function seedLines() {
     server.tracker.call(
@@ -1097,6 +1098,169 @@ describe("lines of work", () => {
     await gone(() => view.queryByRole("article", { name: "Which board?" }));
     fireEvent.keyDown(window, { key: "k" });
     await view.findByRole("article", { name: "Which board?" });
+  });
+
+  describe("home's header and sections", () => {
+    const options = [{ key: "a", label: "Yes", description: "Go ahead." }];
+
+    test("each count opens the first such item in focus order", async () => {
+      seedLines();
+      server.act(c.agentRegister, { repo: "OCT" }, "octo.1");
+      server.act(c.lineTake, { ref: "L-1" }, "octo.1");
+      server.tracker.call(c.placeAdd, { name: "the bench" }, asDeveloper);
+      server.act(c.decisionAsk, { title: "Which board?", context: "Context.", options }, "octo.1");
+      server.act(c.taskFile, { title: "Weigh it", place: "the bench", outcome: "Grams" }, "octo.1");
+      navigate("/");
+      const view = renderApp(<App />);
+      await view.findByRole("article", { name: "Which board?" });
+      fireEvent.click(view.getByRole("button", { name: "1 to do" }));
+      await view.findByRole("article", { name: "Weigh it" });
+      fireEvent.click(view.getByRole("button", { name: "1 to accept" }));
+      await waitFor(() =>
+        expect(view.getByRole("article", { name: "Wall mount" }).getAttribute("data-selected")).toBe("true"),
+      );
+    });
+
+    test("past six working lines, the header says what spreading thin costs", async () => {
+      for (const index of [1, 2, 3, 4, 5, 6, 7]) {
+        server.tracker.call(
+          c.lineAdd,
+          { title: `Line ${index}`, doneWhen: "Done.", repos: ["OCT"], where: "working" },
+          asDeveloper,
+        );
+      }
+      navigate("/");
+      const view = renderApp(<App />);
+      await view.findByText(/7 lines are being worked on: 7 have no owner/);
+    });
+
+    test("Reorder moves a line to the top in one press", async () => {
+      seedLines();
+      navigate("/");
+      const view = renderApp(<App />);
+      fireEvent.click(await view.findByRole("button", { name: "Reorder" }));
+      fireEvent.click(await view.findByRole("button", { name: "Move Weekly digest to the top" }));
+      await waitFor(() =>
+        expect(server.tracker.call(c.homeShow, {}, asDeveloper).working.map((line) => line.title)[0]).toBe(
+          "Weekly digest",
+        ),
+      );
+    });
+
+    test("an urgent proposal says so, first, with Start first", async () => {
+      seedLines();
+      server.act(
+        c.linePropose,
+        {
+          title: "Restore the feed",
+          doneWhen: "It loads.",
+          repos: ["OCT"],
+          recommendation: "start",
+          why: "It broke.",
+          urgent: "broken",
+        },
+        "panel-agent",
+      );
+      navigate("/");
+      const view = renderApp(<App />);
+      const proposed = within(await view.findByRole("region", { name: "Proposed" }));
+      const cards = proposed.getAllByRole("article");
+      expect(cards[0]?.getAttribute("aria-label")).toBe("Restore the feed");
+      within(cards[0] ?? document.body).getByText("Urgent: something is broken");
+      expect(within(cards[0] ?? document.body).getAllByRole("button")[1]?.textContent).toBe("Start");
+    });
+
+    test("at the cap, Step in offers Start one anyway", async () => {
+      server.tracker.call(c.runnerReport, { configured: true, cap: 0, dryRun: false }, asServer);
+      server.tracker.call(
+        c.lineAdd,
+        { title: "Capped", doneWhen: "Done.", repos: ["OCT"], where: "working" },
+        asDeveloper,
+      );
+      server.later(1);
+      navigate("/");
+      const view = renderApp(<App />);
+      const note = within(await view.findByRole("note", { name: "Step in on Capped" }));
+      fireEvent.click(note.getByRole("button", { name: "Start one anyway" }));
+      await waitFor(() =>
+        expect(server.tracker.call(c.lineShow, { ref: "L-1" }, asDeveloper).line.startAnyway).not.toBeNull(),
+      );
+    });
+
+    test("a clone that failed offers Set its checkout…", async () => {
+      server.tracker.call(c.runnerReport, { configured: true, cap: 1, dryRun: false }, asServer);
+      server.tracker.call(
+        c.lineAdd,
+        { title: "No clone", doneWhen: "Done.", repos: ["OCT"], where: "working" },
+        asDeveloper,
+      );
+      server.later(1);
+      for (const _ of [1, 2]) {
+        const started = server.tracker.call(c.runnerStart, { line: "L-1", repo: "OCT" }, asServer);
+        server.tracker.call(
+          c.runnerExited,
+          {
+            name: started.name,
+            code: 1,
+            output: "OCT has no GitHub repo to clone, and no checkout is set for it",
+          },
+          asServer,
+        );
+        server.tracker.call(c.runnerRetry, { line: "L-1" }, asDeveloper);
+      }
+      navigate("/");
+      const view = renderApp(<App />);
+      const note = within(await view.findByRole("note", { name: "Step in on No clone" }));
+      fireEvent.click(note.getByRole("button", { name: "Set its checkout…" }));
+      fireEvent.change(note.getByLabelText("Checkout of OCT"), { target: { value: "/code/octotrack" } });
+      fireEvent.click(note.getByRole("button", { name: "Set" }));
+      await waitFor(() =>
+        expect(server.tracker.call(c.entityShow, { ref: "OCT" }, asDeveloper).entity).toMatchObject({
+          checkout: "/code/octotrack",
+        }),
+      );
+    });
+
+    test("I'm at a place opens every task for it, each with its choices, until left", async () => {
+      seedLines();
+      server.act(c.agentRegister, { repo: "OCT" }, "octo.1");
+      server.act(c.lineTake, { ref: "L-1" }, "octo.1");
+      server.tracker.call(c.placeAdd, { name: "the bench" }, asDeveloper);
+      server.act(c.taskFile, { title: "Weigh it", place: "the bench", outcome: "Grams" }, "octo.1");
+      server.act(c.taskFile, { title: "Measure it", place: "the bench", outcome: "mm" }, "octo.1");
+      navigate("/");
+      const view = renderApp(<App />);
+      fireEvent.click(await view.findByRole("button", { name: "I'm at…" }));
+      fireEvent.click(await view.findByRole("button", { name: "the bench" }));
+      const at = within(await view.findByRole("region", { name: "At the bench" }));
+      await at.findByRole("article", { name: "Weigh it" });
+      expect(at.getAllByRole("button", { name: "Done…" })).toHaveLength(2);
+      fireEvent.click(at.getByRole("button", { name: "Leave" }));
+      await gone(() => view.queryByRole("region", { name: "At the bench" }));
+    });
+
+    test("Start on an up-next line first shows what it holds, then starts it", async () => {
+      seedLines();
+      const queued = server.tracker.call(
+        c.lineAdd,
+        { title: "Mount", doneWhen: "It hangs.", repos: ["OCT"], where: "up_next" },
+        asDeveloper,
+      );
+      server.act(c.agentRegister, { repo: "OCT" }, "octo.2");
+      server.act(c.lineTake, { ref: queued.ref }, "octo.2");
+      server.act(c.decisionAsk, { title: "Which wall?", context: "Context.", options }, "octo.2");
+      navigate("/");
+      const view = renderApp(<App />);
+      const upNext = within(await view.findByRole("region", { name: "Up next" }));
+      fireEvent.click(upNext.getByRole("button", { name: "Start Mount" }));
+      const sheet = within(await view.findByRole("dialog", { name: "Start Mount" }));
+      await sheet.findByText("Which wall?");
+      fireEvent.click(sheet.getByRole("button", { name: "Start now" }));
+      await answerNow(view);
+      await waitFor(() =>
+        expect(server.tracker.call(c.lineShow, { ref: queued.ref }, asDeveloper).line.state).toBe("working"),
+      );
+    });
   });
 
   describe("the line panel", () => {
