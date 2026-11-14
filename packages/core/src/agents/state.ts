@@ -23,3 +23,6 @@ export function isReachable(state: AgentState): boolean {
 export function looksLikeRef(name: string): boolean {
   return /^[A-Za-z][A-Za-z0-9]*-\d+$/.test(name);
 }
+
+/** The name the developer acts under, from the dashboard or the CLI with --me. Tasks are issues assigned to it. */
+export const DEVELOPER = "dev";

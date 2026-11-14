@@ -236,6 +236,35 @@ const MIGRATIONS: readonly Migration[] = [
   ALTER TABLE lines ADD COLUMN lastOwner TEXT;
   ALTER TABLE lines ADD COLUMN lastOwnerEnded TEXT;
   `,
+  `
+  ALTER TABLE decisions ADD COLUMN issue TEXT;
+  ALTER TABLE decisions ADD COLUMN recommendationWhy TEXT;
+  ALTER TABLE decisions ADD COLUMN urgentReason TEXT;
+  ALTER TABLE decisions ADD COLUMN notUrgentAt TEXT;
+  CREATE INDEX decisions_line ON decisions(line);
+
+  CREATE TABLE line_inbox (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, line TEXT NOT NULL REFERENCES lines(ref), kind TEXT NOT NULL, ref TEXT,
+    issue TEXT, body TEXT NOT NULL, createdAt TEXT NOT NULL, deliveredTo TEXT, deliveredAt TEXT
+  );
+  CREATE INDEX line_inbox_pending ON line_inbox(line, deliveredAt);
+
+  ALTER TABLE agents ADD COLUMN wokenAt TEXT;
+  ALTER TABLE agents ADD COLUMN wakeError TEXT;
+  `,
+  `
+  ALTER TABLE issues ADD COLUMN place TEXT;
+  ALTER TABLE issues ADD COLUMN outcome TEXT;
+  ALTER TABLE issues ADD COLUMN result TEXT;
+  ALTER TABLE issues ADD COLUMN confirmedAt TEXT;
+  ALTER TABLE decisions ADD COLUMN confirmedAt TEXT;
+  ALTER TABLE lines ADD COLUMN ownedBy TEXT;
+  ALTER TABLE lines ADD COLUMN doneWhenProposal TEXT;
+  ALTER TABLE lines ADD COLUMN doneWhenProposedBy TEXT;
+  ALTER TABLE lines ADD COLUMN doneProposal TEXT;
+  ALTER TABLE lines ADD COLUMN doneProposedBy TEXT;
+  CREATE TABLE places (name TEXT PRIMARY KEY, position INTEGER NOT NULL);
+  `,
 ];
 
 const UserVersion = z.object({ user_version: z.number().int() });

@@ -11,6 +11,7 @@ import { IssueRow } from "../store/rows.ts";
 import { bind } from "./bind.ts";
 import { buildIssueCard } from "./cards.ts";
 import { guardLineWrite } from "../agents/claims.ts";
+import { DEVELOPER } from "../agents/state.ts";
 import { claimOf, getAgent } from "../store/agents.ts";
 import { checkStep } from "./lines.ts";
 import { addLink } from "./links.ts";
@@ -91,7 +92,8 @@ export function createIssue(ctx: Ctx, input: CreateIssueInput): Issue {
 function isWork(status: IssueStatus | undefined, assignee: string | null | undefined): boolean {
   return (
     (status !== undefined && status !== "todo" && status !== "backlog" && status !== "blocked") ||
-    (assignee !== undefined && assignee !== null)
+    // Filing a task for the developer is scoping; giving an agent an issue is work.
+    (assignee !== undefined && assignee !== null && assignee !== DEVELOPER)
   );
 }
 

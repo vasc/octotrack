@@ -331,7 +331,88 @@ function rollupRules(ctx: Ctx): DesiredDrift[] {
   return desired;
 }
 
+const Unplaced = z.object({ project: z.string(), refs: z.string() });
+
+/**
+ * Work that is on no line, one drift per repo, so that the move to lines is cleaned up by the agents of each repo
+ * rather than by the developer, and without flooding anyone with one drift per issue.
+ */
+function lineRules(ctx: Ctx): DesiredDrift[] {
+  return rows(
+    ctx,
+    Unplaced,
+    `SELECT i.project AS project, group_concat(i.ref, ' ') AS refs
+     FROM issues i JOIN projects p ON p.ref = i.project
+     WHERE i.line IS NULL AND i.status NOT IN ('done', 'cancelled') AND p.status NOT IN ('done', 'archived', 'paused')
+     GROUP BY i.project ORDER BY i.project`,
+  ).map((group) => {
+    const refs = group.refs.split(" ").sort();
+    const count = refs.length;
+    return {
+      rule: "unplaced-work",
+      dedupeKey: `unplaced-work:${group.project}`,
+      fingerprint: refs.join(","),
+      target: group.project,
+      cause: null,
+      project: group.project,
+      message: `${count} open issue${count === 1 ? "" : "s"} in ${group.project} ${count === 1 ? "is" : "are"} on no line`,
+      suggestion: `Put each on its line (octo issue update <REF> --line L-n), or propose a line for them (octo line propose). Then re-propose or reject the proposals from before: octo lines. Or: ${ack(group.project)}`,
+    };
+  });
+}
+
+const SummaryState = z.object({
+  ref: z.string(),
+  repo: z.string().nullable(),
+  summaryAt: z.string().nullable(),
+  lastWork: z.string().nullable(),
+});
+
+/** A summary falls due this long after significant work, so that a burst of work is summed up once. */
+export const SUMMARY_DUE_MS = 60 * 60 * 1000;
+
+/**
+ * Summaries stay true without anyone reading history: an hour after significant work on a working line (a plan
+ * changed, an issue closed, a question asked or answered), its summary is due until the owner rewrites it. What
+ * counts is decided by what happened, not by the agent.
+ */
+function summaryRules(ctx: Ctx): DesiredDrift[] {
+  const dueBefore = new Date(Date.parse(ctx.now) - SUMMARY_DUE_MS).toISOString();
+  return rows(
+    ctx,
+    SummaryState,
+    `SELECT l.ref AS ref, (SELECT repo FROM line_repos WHERE line = l.ref ORDER BY position LIMIT 1) AS repo,
+       l.summaryAt AS summaryAt,
+       (SELECT MAX(e.ts) FROM events e WHERE e.line = l.ref
+          AND (e.type IN ('line.plan_set', 'decision.requested', 'decision.resolved', 'decision.changed')
+               OR (e.type = 'issue.status_changed' AND json_extract(e.attrs, '$.status') IN ('done', 'cancelled')))) AS lastWork
+     FROM lines l WHERE l.state = 'working' AND l.ownedBy IS NULL`,
+  ).flatMap((line): DesiredDrift[] => {
+    if (line.lastWork === null || line.lastWork > dueBefore) return [];
+    if (line.summaryAt !== null && line.summaryAt >= line.lastWork) return [];
+    return [
+      {
+        rule: "summary-due",
+        dedupeKey: `summary-due:${line.ref}`,
+        fingerprint: line.summaryAt ?? "never",
+        target: line.ref,
+        cause: null,
+        project: line.repo,
+        message: `${line.ref}'s summary is due: work happened since it was last written`,
+        suggestion: `octo line summarize ${line.ref} --headline "<one sentence that stands alone>" --summary-file -`,
+      },
+    ];
+  });
+}
+
 /** Every level rule, evaluated from scratch. See docs/DESIGN.md, D6, for why this is not incremental. */
 export function evaluateLevelRules(ctx: Ctx, graph: GraphSnapshot): DesiredDrift[] {
-  return [...prIssueRules(ctx), ...issueRules(ctx, graph), ...prRules(ctx, graph), ...rollupRules(ctx)];
+  return [
+    ...prIssueRules(ctx),
+    ...issueRules(ctx, graph),
+    ...prRules(ctx, graph),
+    ...rollupRules(ctx),
+    ...lineRules(ctx),
+    ...summaryRules(ctx),
+  ];
 }

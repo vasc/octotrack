@@ -12,6 +12,8 @@ import { decisionOps } from "./ops/decisions.ts";
 import { ideaOps } from "./ops/ideas.ts";
 import { issueOps } from "./ops/issues.ts";
 import { claimOps } from "./ops/claims.ts";
+import { inboxOps } from "./ops/inbox.ts";
+import { taskOps } from "./ops/tasks.ts";
 import { lineOps } from "./ops/lines.ts";
 import { linkOps } from "./ops/links.ts";
 import { miscOps, seedViews } from "./ops/misc.ts";
@@ -19,6 +21,7 @@ import { prOps } from "./ops/prs.ts";
 import { projectOps } from "./ops/projects.ts";
 import type { Channel, Drift, FeedEvent, Notice } from "./schemas.ts";
 import { takeNotices } from "./store/agents.ts";
+import { takeInbox } from "./store/inbox.ts";
 import { countOf, currentCursor, emit } from "./store/common.ts";
 import type { Ctx } from "./store/context.ts";
 import { rows } from "./store/context.ts";
@@ -68,6 +71,9 @@ const NO_RECONCILE: ReadonlySet<string> = new Set([
   "view.remove",
   "agent.note",
   "agent.register",
+  "place.add",
+  "place.remove",
+  "held.confirm",
 ]);
 /**
  * Every write notifies, unless it is listed here. It is this way around so that a new operation cannot silently fail to
@@ -91,6 +97,8 @@ const SYSTEM: Caller = { actor: "octotrack", channel: "cli", system: true };
 const ALL_OPS: readonly BoundOp[] = [
   ...lineOps,
   ...claimOps,
+  ...inboxOps,
+  ...taskOps,
   ...projectOps,
   ...issueOps,
   ...decisionOps,
@@ -255,7 +263,11 @@ export class Tracker {
 
   private deliver(ctx: Ctx, caller: Caller): Notice[] {
     if (ctx.developer || ctx.system || caller.anonymous === true) return [];
-    return this.sql.transaction(() => [...takeNotices(ctx, ctx.actor), ...offersFor(ctx, ctx.actor)]);
+    return this.sql.transaction(() => [
+      ...takeNotices(ctx, ctx.actor),
+      ...takeInbox(ctx, ctx.actor),
+      ...offersFor(ctx, ctx.actor),
+    ]);
   }
 
   /**

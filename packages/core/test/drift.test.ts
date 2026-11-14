@@ -5,7 +5,14 @@ import { type Harness, harness } from "./helpers.ts";
 let h: Harness;
 
 function openDrift(query = ""): { ref: string; rule: string; target: string }[] {
-  return h.call(c.driftList, { query }).map(({ ref, rule, target }) => ({ ref, rule, target }));
+  // Work on no line has its own drift and its own test; these are about the other rules.
+  return h
+    .call(c.driftList, { query: `-rule:unplaced-work ${query}`.trim() })
+    .map(({ ref, rule, target }) => ({
+      ref,
+      rule,
+      target,
+    }));
 }
 
 function rules(): string[] {
@@ -113,7 +120,7 @@ describe("drift from decisions", () => {
     h.call(c.driftAck, { target: "OCT", mode: "verified", note: "project description unaffected" });
     expect(openDrift()).toEqual([]);
 
-    const history = h.call(c.driftList, { query: "status:updated,verified" });
+    const history = h.call(c.driftList, { query: "status:updated,verified -rule:unplaced-work" });
     expect(history.map((drift) => drift.note).sort()).toEqual([
       "body now says postgres",
       "project description unaffected",

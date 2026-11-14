@@ -9,17 +9,25 @@ import type {
   DecisionKind,
   DecisionOption,
   EventAttrs,
+  Line,
   Priority,
+  UrgentReason,
 } from "../schemas.ts";
 import { applyPatch, assertVersion, emit, nextNumber } from "../store/common.ts";
 import type { Ctx } from "../store/context.ts";
 import { rows } from "../store/context.ts";
 import { filterEntities } from "../store/docs.ts";
-import { requireDecision, requireProject } from "../store/entities.ts";
+import { allLines, requireDecision, requireIssue, requireLine, requireProject } from "../store/entities.ts";
 import { loadGraph } from "../store/graph.ts";
-import { DecisionRow, WatchRow } from "../store/rows.ts";
+import { DecisionRow, IssueRow, WatchRow } from "../store/rows.ts";
 import { toWatch } from "../watch/engine.ts";
+import { z } from "zod";
+import { guardLineWrite } from "../agents/claims.ts";
+import { DEVELOPER } from "../agents/state.ts";
+import { addNotice, claimOf } from "../store/agents.ts";
+import { addToInbox } from "../store/inbox.ts";
 import { bind } from "./bind.ts";
+import { requireDeveloper } from "./developer.ts";
 import { addLink } from "./links.ts";
 
 export function decisionAttrs(decision: Decision): EventAttrs {
@@ -53,14 +61,73 @@ interface InsertDecision {
   recommendation?: string;
   dueAt?: string;
   wake?: string;
+  line?: string | null;
+  issue?: string | null;
+  why?: string;
+  urgent?: UrgentReason;
+}
+
+/**
+ * Where a question belongs: the line it names or the line the asker is on, and the issue it names or the one the asker
+ * holds there. A question from an agent on no line keeps the rules from before lines, until those go.
+ */
+function placeQuestion(ctx: Ctx, input: InsertDecision): { line: Line | null; issue: string | null } {
+  const lineRef = input.line ?? (ctx.developer ? null : (claimOf(ctx, ctx.actor)?.line ?? null));
+  const line = lineRef === null || lineRef === undefined ? null : requireLine(ctx, lineRef);
+  if (input.issue !== undefined && input.issue !== null) {
+    const issue = requireIssue(ctx, input.issue);
+    if (line !== null && issue.line !== line.ref) {
+      throw new OctoError("invalid_input", `${issue.ref} is not on ${line.ref}`);
+    }
+    return { line, issue: issue.ref };
+  }
+  if (line === null) return { line, issue: null };
+  const [held] = rows(
+    ctx,
+    IssueRow,
+    "SELECT * FROM issues WHERE line = ? AND assignee = ? AND status NOT IN ('done', 'cancelled') ORDER BY updatedAt DESC LIMIT 1",
+    [line.ref, ctx.actor],
+  );
+  return { line, issue: held?.ref ?? null };
+}
+
+/**
+ * A question on a line is read by someone who has read nothing else: it needs a situation, options that say what
+ * happens if picked, and the reason behind any recommendation. Urgent is for working lines and fixed reasons only.
+ */
+function checkStandalone(input: InsertDecision, line: Line): void {
+  if ((input.context ?? "").trim() === "") {
+    throw new OctoError(
+      "invalid_input",
+      "A question needs its situation, written for someone who has read nothing else",
+      'Pass --context "<what is going on, what was tried, what the choice changes>".',
+    );
+  }
+  const options = input.options ?? [];
+  if (options.length === 0 || options.some((option) => (option.description ?? "").trim() === "")) {
+    throw new OctoError(
+      "invalid_input",
+      "Every option must say what happens if it is picked",
+      "Give each option a description: what the agent will do, and what it costs.",
+    );
+  }
+  if (input.recommendation !== undefined && input.why === undefined) {
+    throw new OctoError("invalid_input", "Say why you recommend it", 'Pass --why "<the reason>".');
+  }
+  if (input.urgent !== undefined && line.state !== "working") {
+    throw new OctoError(
+      "invalid_input",
+      `Urgent is for questions on lines being worked on; ${line.ref} is not`,
+    );
+  }
 }
 
 function insertDecision(ctx: Ctx, input: InsertDecision): Decision {
   const project = input.project === undefined ? null : requireProject(ctx, input.project).ref;
   const ref = `D-${nextNumber(ctx, "decision")}`;
   ctx.sql.run(
-    `INSERT INTO decisions (ref, project, kind, title, context, options, recommendation, status, priority, requestedBy, dueAt, wakeAddress, version, createdAt, updatedAt)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, 1, ?, ?)`,
+    `INSERT INTO decisions (ref, project, kind, title, context, options, recommendation, status, priority, requestedBy, dueAt, wakeAddress, line, issue, recommendationWhy, urgentReason, version, createdAt, updatedAt)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
     [
       ref,
       project,
@@ -73,6 +140,10 @@ function insertDecision(ctx: Ctx, input: InsertDecision): Decision {
       ctx.actor,
       input.dueAt ?? null,
       input.wake ?? null,
+      input.line ?? null,
+      input.issue ?? null,
+      input.why ?? null,
+      input.urgent ?? null,
       ctx.now,
       ctx.now,
     ],
@@ -164,6 +235,16 @@ function resolveDecision(ctx: Ctx, input: ResolveInput): Decision {
     sourceUrl: input.sourceUrl,
   });
   const updated = requireDecision(ctx, current.ref);
+  if (updated.line !== null) {
+    addToInbox(
+      ctx,
+      updated.line,
+      "answer",
+      updated.ref,
+      updated.issue,
+      `${updated.ref} ${wasDecided ? "answer changed, replacing the earlier one" : "answered"}: ${describeOutcome(updated)} on "${updated.title}"`,
+    );
+  }
   emit(ctx, {
     type: wasDecided ? "decision.changed" : "decision.resolved",
     kind: "decision",
@@ -235,21 +316,83 @@ function compareCards(a: DecisionCard, b: DecisionCard): number {
   return b.score - a.score || a.decision.createdAt.localeCompare(b.decision.createdAt);
 }
 
+function isUrgent(decision: Decision): boolean {
+  return decision.urgentReason !== null && decision.notUrgentAt === null;
+}
+
+/**
+ * The developer's order decides what reaches them: urgent questions first, then each working line's questions in line
+ * order, by the plan step they hold up, with Later at the bottom of its own line. Questions from before lines follow,
+ * ranked as they were until those go. Questions on lines that are not being worked on are held, and not in the queue.
+ */
 export function buildQueue(ctx: Ctx, query: string | undefined) {
   const graph = loadGraph(ctx);
   const waiting = waitersByRef(ctx);
-  const open = rows(ctx, DecisionRow, "SELECT * FROM decisions WHERE status = 'open'").map((value) => ({
-    kind: "decision" as const,
-    value,
-  }));
+  const order = new Map(allLines(ctx, "WHERE state = 'working'").map((line, index) => [line.ref, index]));
+  const behindTasks = new Set(
+    rows(
+      ctx,
+      z.object({ ref: z.string() }),
+      `SELECT l.toRef AS ref FROM links l JOIN issues t ON t.ref = l.fromRef
+       WHERE l.rel = 'blocks' AND t.assignee = ? AND t.outcome IS NOT NULL AND t.status NOT IN ('done', 'cancelled')`,
+      [DEVELOPER],
+    ).map((row) => row.ref),
+  );
+  const open = rows(ctx, DecisionRow, "SELECT * FROM decisions WHERE status = 'open'")
+    .filter((decision) => decision.line === null || order.has(decision.line))
+    .filter((decision) => !behindTasks.has(decision.ref))
+    .map((value) => ({ kind: "decision" as const, value }));
+  const stepOf = new Map(
+    rows(
+      ctx,
+      IssueRow,
+      "SELECT * FROM issues WHERE ref IN (SELECT issue FROM decisions WHERE status = 'open')",
+    ).map((issue) => [issue.ref, issue.step]),
+  );
+  const step = (decision: Decision) =>
+    decision.issue === null ? null : (stepOf.get(decision.issue) ?? null);
+  const compare = (a: DecisionCard, b: DecisionCard): number => {
+    const [x, y] = [a.decision, b.decision];
+    if (isUrgent(x) !== isUrgent(y)) return isUrgent(x) ? -1 : 1;
+    if (x.line === null || y.line === null) {
+      if (x.line !== y.line) return x.line === null ? 1 : -1;
+      return compareCards(a, b);
+    }
+    const byLine = (order.get(x.line) ?? 0) - (order.get(y.line) ?? 0);
+    if (byLine !== 0) return byLine;
+    if ((x.postponedAt === null) !== (y.postponedAt === null)) return x.postponedAt === null ? -1 : 1;
+    const [sx, sy] = [step(x), step(y)];
+    if (sx !== sy) return sx === null ? 1 : sy === null ? -1 : sx - sy;
+    return (x.postponedAt ?? x.createdAt).localeCompare(y.postponedAt ?? y.createdAt);
+  };
   return filterEntities(ctx, open, query, graph)
     .map((entity) => buildDecisionCard(ctx, entity.value, graph, waiting))
-    .sort(compareCards);
+    .sort(compare);
 }
 
 export const decisionOps = [
   bind(contracts.decisionAsk, (ctx, input) => {
-    const decision = insertDecision(ctx, input);
+    const placed = placeQuestion(ctx, input);
+    if (placed.line !== null) {
+      guardLineWrite(ctx, placed.line.ref, "scope");
+      if (!ctx.developer) checkStandalone(input, placed.line);
+    } else if (input.urgent !== undefined) {
+      throw new OctoError("invalid_input", "Urgent is for questions on lines being worked on");
+    }
+    const decision = insertDecision(ctx, {
+      ...input,
+      project: input.project ?? placed.line?.repos[0],
+      line: placed.line?.ref ?? null,
+      issue: placed.issue,
+    });
+    if (input.waitsFor !== undefined) {
+      const task = requireIssue(ctx, input.waitsFor);
+      if (task.assignee !== DEVELOPER || task.outcome === null) {
+        throw new OctoError("invalid_input", `${task.ref} is not a task for the developer`);
+      }
+      // Held behind the task: asking the developer what their own measurement is about to answer wastes their time.
+      addLink(ctx, task.ref, "blocks", decision.ref);
+    }
     for (const target of input.blocks ?? []) addLink(ctx, decision.ref, "blocks", target);
     for (const target of input.affects ?? []) addLink(ctx, decision.ref, "affects", target);
     emit(ctx, {
@@ -438,7 +581,8 @@ export const decisionOps = [
     rows(
       ctx,
       DecisionRow,
-      "SELECT * FROM decisions WHERE status = 'decided' AND wakeAddress IS NOT NULL AND wokenAt IS NULL AND pickedUpAt IS NULL ORDER BY decidedAt",
+      // A question on a line wakes whoever holds the line, through its inbox, not the session that asked.
+      "SELECT * FROM decisions WHERE status = 'decided' AND line IS NULL AND wakeAddress IS NOT NULL AND wokenAt IS NULL AND pickedUpAt IS NULL ORDER BY decidedAt",
     ),
   ),
   bind(contracts.decisionWoken, (ctx, input) => {
@@ -481,6 +625,31 @@ export const decisionOps = [
       { status: "superseded", supersededBy: replacement.ref },
       input.note,
     );
+  }),
+
+  bind(contracts.decisionNotUrgent, (ctx, input) => {
+    requireDeveloper(ctx, "say a question is not urgent");
+    const current = requireDecision(ctx, input.ref);
+    if (current.urgentReason === null || current.notUrgentAt !== null) {
+      throw new OctoError("conflict", `${current.ref} is not urgent`);
+    }
+    const updated = transition(
+      ctx,
+      current.ref,
+      "decision.not_urgent",
+      (decision) => `${decision.ref} is not urgent, the developer says: ${decision.title}`,
+      { notUrgentAt: ctx.now },
+      undefined,
+    );
+    addNotice(
+      ctx,
+      current.requestedBy,
+      "not_urgent",
+      current.line,
+      `${current.ref} is not urgent: the developer sent it back to its place in the line order.`,
+      false,
+    );
+    return updated;
   }),
 
   bind(contracts.decisionList, (ctx, input) => {

@@ -2,7 +2,7 @@ import { contracts as c } from "@octotrack/core";
 import { type Args, UsageError } from "../args.ts";
 import type { Command } from "../command.ts";
 import * as r from "../render.ts";
-import { compact, LIST_OPTIONS, listInput } from "./shared.ts";
+import { compact, LIST_OPTIONS, listInput, textOption } from "./shared.ts";
 
 const STRING = { type: "string" } as const;
 const MANY = { type: "string", multiple: true } as const;
@@ -214,6 +214,142 @@ export const lineCommands: Command[] = [
       out.result(outcome, () =>
         outcome.data.line === null ? "You were on no line." : `Left ${outcome.data.line}.`,
       );
+    },
+  },
+  {
+    path: ["line", "tell"],
+    usage: "<LINE> [words]",
+    summary:
+      "Tell a line's owner something, or whoever holds --issue; with no words it is a nudge (the developer)",
+    options: { issue: { ...STRING, description: "The issue it is about: it goes to whoever holds it" } },
+    examples: ['octo line tell L-2 "Use the white filament" --me', "octo line tell L-2 --issue PANEL-6 --me"],
+    ops: [c.lineTell.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(
+        c.lineTell,
+        compact({
+          line: args.requirePositional(0, "LINE"),
+          body: args.positionals.slice(1).join(" "),
+          issue: args.str("issue"),
+        }),
+      );
+      out.result(outcome, () =>
+        outcome.data.to === null
+          ? "Waiting in the line's inbox for whoever takes it."
+          : `Told ${outcome.data.to}.`,
+      );
+    },
+  },
+  {
+    path: ["line", "summarize"],
+    usage: "<REF>",
+    summary: "Rewrite a line's summary and its headline, which must stand alone (the owner)",
+    options: {
+      headline: {
+        ...STRING,
+        description: "One sentence someone who has read nothing else understands (required)",
+      },
+      summary: { ...STRING, description: "The rest, in markdown" },
+      "summary-file": { ...STRING, description: "Read the summary from a file, - for stdin" },
+    },
+    ops: [c.lineSummarize.name],
+    async run({ client, out }, args) {
+      const headline = args.str("headline");
+      const summary = await textOption(args, "summary");
+      if (headline === undefined || summary === undefined)
+        throw new UsageError("Pass --headline and --summary");
+      const outcome = await client.call(c.lineSummarize, {
+        ref: args.requirePositional(0, "REF"),
+        headline,
+        summary,
+      });
+      out.result(outcome, () => `${r.bold(outcome.data.ref)}: ${outcome.data.headline ?? ""}`);
+    },
+  },
+  {
+    path: ["line", "done-when"],
+    usage: "<REF> <sentence>",
+    summary: "Set a line's done when (the developer), or propose a new one (its owner or scoper)",
+    ops: [c.lineDoneWhen.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(c.lineDoneWhen, {
+        ref: args.requirePositional(0, "REF"),
+        doneWhen: args.positionals.slice(1).join(" "),
+      });
+      out.result(outcome, () =>
+        outcome.data.doneWhenProposal === null
+          ? `${r.bold(outcome.data.ref)} is done when: ${outcome.data.doneWhen}`
+          : `Proposed for ${outcome.data.ref}: ${outcome.data.doneWhenProposal}`,
+      );
+    },
+  },
+  {
+    path: ["line", "done-when-answer"],
+    usage: "<REF>",
+    summary: "Accept a proposed done when, or keep the one there is (the developer)",
+    options: {
+      accept: { type: "boolean", description: "Take the proposal" },
+      keep: { type: "boolean", description: "Keep the done when there is" },
+    },
+    ops: [c.lineDoneWhenAnswer.name],
+    async run({ client, out }, args) {
+      if (args.flag("accept") === args.flag("keep")) throw new UsageError("Pass --accept or --keep");
+      const outcome = await client.call(c.lineDoneWhenAnswer, {
+        ref: args.requirePositional(0, "REF"),
+        accept: args.flag("accept"),
+      });
+      out.result(outcome, () => `${r.bold(outcome.data.ref)} is done when: ${outcome.data.doneWhen}`);
+    },
+  },
+  {
+    path: ["line", "propose-done"],
+    usage: "<REF> <why>",
+    summary: "Propose that a line is done, saying why (the owner)",
+    ops: [c.lineProposeDone.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(c.lineProposeDone, {
+        ref: args.requirePositional(0, "REF"),
+        why: args.positionals.slice(1).join(" "),
+      });
+      out.result(outcome, () => `Proposed ${outcome.data.ref} is done.`);
+    },
+  },
+  {
+    path: ["line", "keep-going"],
+    usage: "<REF> [what is missing]",
+    summary: "Turn down a proposal that a line is done (the developer)",
+    ops: [c.lineKeepGoing.name],
+    async run({ client, out }, args) {
+      const why = args.positionals.slice(1).join(" ");
+      const outcome = await client.call(
+        c.lineKeepGoing,
+        compact({ ref: args.requirePositional(0, "REF"), why: why === "" ? undefined : why }),
+      );
+      out.result(outcome, () => `${r.bold(outcome.data.ref)} keeps going.`);
+    },
+  },
+  {
+    path: ["line", "own"],
+    usage: "<REF>",
+    summary: "I'll own it: the line becomes yours and its agents wind down (the developer)",
+    ops: [c.lineOwn.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(c.lineOwn, { ref: args.requirePositional(0, "REF") });
+      out.result(outcome, () => `${r.bold(outcome.data.ref)} is yours.`);
+    },
+  },
+  {
+    path: ["line", "hand"],
+    usage: "<REF>",
+    summary: "Hand a line you own back to the agents (the developer)",
+    options: { repo: { ...MANY, short: "r", description: "Its repos, when it names none" } },
+    ops: [c.lineHand.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(
+        c.lineHand,
+        compact({ ref: args.requirePositional(0, "REF"), repos: args.optionalList("repo") }),
+      );
+      out.result(outcome, () => `${r.bold(outcome.data.ref)} is back with the agents.`);
     },
   },
   {

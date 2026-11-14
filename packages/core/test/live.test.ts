@@ -31,6 +31,19 @@ const DEVELOPER_OPS: ReadonlySet<string> = new Set([
   "line.fold",
   "agent.stop",
   "agent.lift",
+  "line.tell",
+  "decision.not_urgent",
+  "task.done",
+  "task.cant",
+  "place.add",
+  "place.remove",
+  "line.done_when",
+  "line.done_when_answer",
+  "line.summarize",
+  "line.propose_done",
+  "line.keep_going",
+  "line.own",
+  "line.hand",
 ]);
 function execute(name: string, input: unknown): void {
   h.tracker.execute(name, input, DEVELOPER_OPS.has(name) ? { ...h.as, developer: true } : h.as);
@@ -60,6 +73,14 @@ beforeEach(() => {
   h.call(c.linePropose, { title: "A proposal", doneWhen: "Done.", recommendation: "up_next", why: "Soon." });
   h.call(c.linePropose, { title: "The same work", doneWhen: "Done.", recommendation: "fold", why: "Same." });
   h.developer(c.lineAdd, { title: "Next", doneWhen: "Done.", where: "up_next" });
+  h.developer(c.decisionAsk, { title: "Order today?", line: "L-1", urgent: "costs_money" });
+  h.developer(c.placeAdd, { name: "the bench" });
+  h.call(c.agentRegister, { repo: "OCT" }, "owner.b");
+  h.call(c.lineTake, { ref: "L-1" }, "owner.b");
+  h.call(c.lineDoneWhen, { ref: "L-1", doneWhen: "Proposed by its owner" }, "owner.b");
+  for (const title of ["Weigh", "Count"]) {
+    h.developer(c.taskFile, { line: "L-1", title, place: "the bench", outcome: "A number", frees: "OCT-1" });
+  }
 });
 
 /**
@@ -118,6 +139,22 @@ const EVERY_WRITE: readonly (readonly [string, unknown])[] = [
   ["agent.register", { wake: "claude:a" }],
   ["line.take", {}],
   ["line.release", {}],
+  ["line.tell", { line: "L-1", body: "Hello" }],
+  ["decision.not_urgent", { ref: "D-4" }],
+  ["place.add", { name: "the shed" }],
+  ["task.file", { line: "L-1", title: "Measure", place: "the bench", outcome: "Numbers", frees: "OCT-1" }],
+  ["task.done", { ref: "OCT-2", result: "12 mm" }],
+  ["task.cant", { ref: "OCT-3", why: "No scale" }],
+  ["place.remove", { name: "the shed" }],
+  ["held.confirm", { refs: ["D-4"] }],
+  ["line.summarize", { ref: "L-1", headline: "Going well.", summary: "All good." }],
+  ["line.done_when_answer", { ref: "L-1", accept: true }],
+  ["line.done_when", { ref: "L-1", doneWhen: "It ships." }],
+  ["line.propose_done", { ref: "L-1", why: "It shipped." }],
+  ["line.keep_going", { ref: "L-1" }],
+  ["line.own", { ref: "L-1" }],
+  ["line.hand", { ref: "L-1", repos: ["OCT"] }],
+  ["agent.woken", { name: "agent-a" }],
   // Last: everything above runs as agent-a, which a stop would refuse.
   ["agent.stop", { name: "agent-a" }],
   ["agent.lift", { name: "agent-a" }],

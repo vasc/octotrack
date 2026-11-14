@@ -82,7 +82,7 @@ export function endClaim(ctx: Ctx, agent: string, why: ClaimEnd): LineClaim | nu
   const line = requireLine(ctx, claim.line);
   if (claim.role === "owner") {
     ctx.sql.run("UPDATE lines SET lastOwner = ?, lastOwnerEnded = ? WHERE ref = ?", [agent, why, line.ref]);
-    if (line.state === "working" && !windingDown(line, ctx.now)) {
+    if (line.state === "working" && line.ownedBy === null && !windingDown(line, ctx.now)) {
       const helper = claimsOn(ctx, line.ref).find((other) => other.role === "helper");
       if (helper === undefined) {
         startSearch(ctx, line, null);
@@ -172,11 +172,13 @@ function beginWorking(ctx: Ctx, line: Line): void {
       true,
     );
   }
-  if (!claimsOn(ctx, line.ref).some((claim) => claim.role === "owner"))
+  if (line.ownedBy !== null) return;
+  if (!claimsOn(ctx, line.ref).some((claim) => claim.role === "owner")) {
     startSearch(ctx, line, firstOfferFor(ctx, line));
+  }
 }
 
-function windDown(ctx: Ctx, line: Line, writes: boolean): void {
+export function windDown(ctx: Ctx, line: Line, writes: boolean): void {
   ctx.sql.run("UPDATE lines SET windDownUntil = ?, windDownWrites = ? WHERE ref = ?", [
     later(ctx.now, WIND_DOWN_MS),
     writes ? 1 : 0,
@@ -184,6 +186,7 @@ function windDown(ctx: Ctx, line: Line, writes: boolean): void {
   ]);
   clearSearch(ctx, line.ref);
   const ending = line.state === "done" || line.state === "dropped";
+  const now = line.ownedBy !== null ? "the developer's own now" : `now ${line.state.replace("_", " ")}`;
   const todo = !writes
     ? "Stop scoping it; your writes there are refused from now."
     : ending
@@ -195,7 +198,7 @@ function windDown(ctx: Ctx, line: Line, writes: boolean): void {
       claim.agent,
       "wind_down",
       line.ref,
-      `${line.ref} ${line.title} is now ${line.state.replace("_", " ")}. You have 15 minutes. ${todo} Then your claim ends.`,
+      `${line.ref} ${line.title} is ${now}. You have 15 minutes. ${todo} Then your claim ends.`,
       true,
     );
   }
@@ -240,7 +243,9 @@ export function afterAdd(ctx: Ctx, line: Line): void {
  */
 export function settle(ctx: Ctx): void {
   for (const line of allLines(ctx, "WHERE windDownUntil IS NOT NULL AND windDownUntil <= ?", [ctx.now])) {
-    for (const claim of claimsOn(ctx, line.ref)) endClaim(ctx, claim.agent, "wind_down");
+    if (line.state !== "working" || line.ownedBy !== null) {
+      for (const claim of claimsOn(ctx, line.ref)) endClaim(ctx, claim.agent, "wind_down");
+    }
     if (line.state === "done" || line.state === "dropped") closeWithLine(ctx, line);
     ctx.sql.run("UPDATE lines SET windDownUntil = NULL, windDownWrites = 0 WHERE ref = ?", [line.ref]);
   }
@@ -304,7 +309,9 @@ export function offersFor(ctx: Ctx, name: string): Notice[] {
   const repo = agent.repo;
   return allLines(ctx, "WHERE state = 'working'").flatMap((line): Notice[] => {
     const search = searchOf(ctx, line.ref);
-    if (search === null || claim?.line === line.ref || !line.repos.includes(repo)) return [];
+    if (search === null || line.ownedBy !== null || claim?.line === line.ref || !line.repos.includes(repo)) {
+      return [];
+    }
     if (searchStep(search, ctx.now) === 1) return [];
     return [
       {
@@ -324,7 +331,7 @@ export function crewOf(ctx: Ctx, line: Line): LineCrew {
   const claims = claimsOn(ctx, line.ref);
   const owner = claims.find((claim) => claim.role === "owner");
   const scoper = claims.find((claim) => claim.role === "scoper");
-  const search = line.state === "working" ? searchOf(ctx, line.ref) : null;
+  const search = line.state === "working" && line.ownedBy === null ? searchOf(ctx, line.ref) : null;
   return {
     owner: owner === undefined ? null : briefOf(ctx, owner.agent),
     helpers: claims.filter((claim) => claim.role === "helper").map((claim) => briefOf(ctx, claim.agent)),
@@ -350,6 +357,14 @@ export function guardLineWrite(ctx: Ctx, lineRef: string | null, kind: LineWrite
     if ((writes?.windDownWrites ?? 0) !== 0) return;
     throw new RefusedWrite(
       `${line.ref} is winding down and no longer takes your writes`,
+      null,
+      line.ref,
+      false,
+    );
+  }
+  if (line.ownedBy !== null) {
+    throw new RefusedWrite(
+      `${line.ref} is the developer's own: no agent writes to it until they hand it back`,
       null,
       line.ref,
       false,

@@ -10,6 +10,7 @@ import { one, placeholders, rows } from "../store/context.ts";
 import { allLines, requireLine, requireProject, summarize } from "../store/entities.ts";
 import { IssueRow, PlanStepRow } from "../store/rows.ts";
 import { bind } from "./bind.ts";
+import { heldOn } from "./tasks.ts";
 import { requireDeveloper } from "./developer.ts";
 
 const CountRow = z.object({ n: z.number() });
@@ -114,7 +115,7 @@ function findLine(
   const repo = agent.repo;
   if (repo === null) return null;
   const mine = (line: Line) =>
-    line.ref !== exclude && line.repos.includes(repo) && !windingDown(line, ctx.now);
+    line.ref !== exclude && line.ownedBy === null && line.repos.includes(repo) && !windingDown(line, ctx.now);
   const working = allLines(ctx, "WHERE state = 'working'").filter(mine);
   const unowned = working.find((line) => !hasOwner(ctx, line));
   if (unowned !== undefined) return { line: unowned, role: "owner" };
@@ -131,6 +132,17 @@ function claimLine(ctx: Ctx, agent: Agent, line: Line, role: ClaimRole): TakeRes
   const current = claimOf(ctx, agent.name);
   if (current !== null && current.line !== line.ref) endClaim(ctx, agent.name, "switch");
   setClaim(ctx, agent.name, line, role);
+  const stale = heldOn(ctx, line.ref).filter((item) => !item.current);
+  if (stale.length > 0) {
+    addNotice(
+      ctx,
+      agent.name,
+      "held_stale",
+      line.ref,
+      `Held on ${line.ref} for more than 7 days, so it does not reach the developer until you re-confirm or withdraw: ${stale.map((item) => item.ref).join(", ")}. Re-confirm with octo held confirm <REF>.`,
+      false,
+    );
+  }
   return result(ctx, requireLine(ctx, line.ref), role, agent);
 }
 
@@ -148,6 +160,12 @@ function nothing(agent: Agent): TakeResult {
 
 /** Which role a named line would give this agent, or why it cannot have it. Refusals here never count. */
 function roleOn(ctx: Ctx, agent: Agent, line: Line): ClaimRole {
+  if (line.ownedBy !== null) {
+    throw new OctoError(
+      "conflict",
+      `${line.ref} is the developer's own; it goes back to agents when they hand it over`,
+    );
+  }
   if (agent.repo === null) {
     throw new OctoError("conflict", "Say which repo you serve first", "octo agent register --repo <KEY>");
   }

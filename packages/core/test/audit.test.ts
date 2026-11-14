@@ -379,10 +379,12 @@ describe("next can focus on one project", () => {
     const next = h.call(c.next, { project: "OCT" });
     expect(next.ready.map((card) => card.issue.title)).toEqual(["Here"]);
     expect(next.claimed).toEqual([]);
-    expect(next.drift).toEqual([]);
+    // Each repo's open issues are on no line, so each has that drift, and only its own.
+    expect(next.drift.map((item) => [item.rule, item.target])).toEqual([["unplaced-work", "OCT"]]);
     expect(next.resolvedDecisions).toEqual([]);
     expect(h.call(c.next, { project: "API" }).drift.map((item) => item.rule)).toEqual([
       "decision-project-sync",
+      "unplaced-work",
     ]);
   });
 });

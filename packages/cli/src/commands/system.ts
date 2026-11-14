@@ -137,6 +137,33 @@ export const systemCommands: Command[] = [
     },
   },
   {
+    path: ["agent", "wakes"],
+    summary: "Asleep agents with something waiting, and how each is woken. The server wakes them itself",
+    ops: [c.agentWakes.name],
+    async run({ client, out }) {
+      const outcome = await client.call(c.agentWakes, {});
+      out.result(outcome, () =>
+        outcome.data.length === 0
+          ? r.dim("Nobody to wake.")
+          : r.table(outcome.data.map((wake) => [r.bold(wake.agent), wake.address, wake.message])),
+      );
+    },
+  },
+  {
+    path: ["agent", "woken"],
+    usage: "<name>",
+    summary: "Record that an agent was woken, or with --error that it could not be, which makes it gone",
+    options: { error: { ...STRING, description: "Why the wake failed" } },
+    ops: [c.agentWoken.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(
+        c.agentWoken,
+        compact({ name: args.requirePositional(0, "name"), error: args.str("error") }),
+      );
+      out.result(outcome, () => r.renderAgents([outcome.data]));
+    },
+  },
+  {
     path: ["agent", "stop"],
     usage: "<name>",
     summary: "Stop an agent: its claims end and its writes are refused until lifted (the developer)",

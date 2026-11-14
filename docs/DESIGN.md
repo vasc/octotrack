@@ -271,6 +271,22 @@ Decisions made from that:
   existing one is locked out. Until the local runner exists, owner search step 2 keeps offering a line in the replies
   of idle agents with its repo after its 30 seconds, and home shows the line as needing the developer to step in. The
   automatic stop only records "would stop" (`agent.would_stop` in the log) until it has been watched for a week.
+- **Questions and the line inbox, as built.** Questions keep their `decision.*` names and D- refs for now. A
+  question asked by an agent on a line belongs to that line and to the issue the agent holds there, and must stand alone
+  (situation, options that say what happens, a reason for any recommendation). One from an agent on no line keeps the
+  older rules, and the older ranking below every line's questions, until Phase 7 removes them. Answers and Tells wait in
+  the line's inbox and reach whoever holds the issue, else the owner, on its next reply; an asleep agent is woken at the
+  address it registered, with a message that carries no tracker text, and a failed wake makes it gone. Work on no line
+  is one `unplaced-work` drift per repo, which is how the move to lines gets cleaned up by each repo's agents.
+- **Tasks, held work, summaries and the developer's own lines, as built.** A task is an issue assigned to `dev` with a
+  place from the developer's list and an outcome to report; it blocks the issue it frees, and its Done or Can't do it
+  goes through the line inbox to whoever holds that issue. A question filed with `--waits-for` a task is left out of
+  the queue until the task closes. Held questions and tasks are current for 7 days from when they were asked or
+  re-confirmed; whoever takes the line is told which are not. A summary falling due is a `summary-due` drift for the
+  owner, so it reaches the owner the way all drift does. A done when or a case for done that an agent proposes waits
+  for the developer on the line itself; agents write a done when directly only on lines still proposed or up next.
+  "I'll own it" winds the agents down like tabling and leaves the line in Working on; handing it back runs the usual
+  owner search, which offers it first to the owner that wound down.
 - **The developer is present, never inferred.** `--me` on the CLI, or `OCTO_DEVELOPER=1` on an interactive terminal; a
   call that names an agent, by `--agent` or `OCTO_AGENT`, is never the developer, and `--me` with one is a usage error.
 - **Migration is simple and agents clean up.** Projects become repos with the same keys, so every ref stays valid; old

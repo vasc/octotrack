@@ -1,6 +1,7 @@
 import type { Command } from "./command.ts";
 import { decisionCommands } from "./commands/decisions.ts";
 import { lineCommands } from "./commands/lines.ts";
+import { taskCommands } from "./commands/tasks.ts";
 import { networkCommands } from "./commands/network.ts";
 import { observeCommands } from "./commands/observe.ts";
 import { systemCommands } from "./commands/system.ts";
@@ -10,6 +11,7 @@ export const COMMANDS: readonly Command[] = [
   ...systemCommands,
   ...observeCommands,
   ...lineCommands,
+  ...taskCommands,
   ...decisionCommands,
   ...workCommands,
   ...networkCommands,

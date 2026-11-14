@@ -1,4 +1,5 @@
 import { OctoError, notFound } from "../errors.ts";
+import { claimsOn } from "../store/agents.ts";
 import { normalizeRef } from "../refs.ts";
 import type { Drift, FeedEvent } from "../schemas.ts";
 import { emit, nextNumber } from "../store/common.ts";
@@ -34,13 +35,20 @@ function projectOf(entity: AnyEntity | null): string | null {
   return entity === null ? null : summarize(entity).project;
 }
 
+function ownerOf(ctx: Ctx, line: string): string | null {
+  return claimsOn(ctx, line).find((claim) => claim.role === "owner")?.agent ?? null;
+}
+
 function assigneeFor(ctx: Ctx, target: AnyEntity | null, graph: GraphSnapshot): string | null {
   if (target === null) return null;
   switch (target.kind) {
     case "issue":
-      return target.value.assignee;
+      // Work on a line with nobody on the issue is its owner's to sort out.
+      return target.value.assignee ?? (target.value.line === null ? null : ownerOf(ctx, target.value.line));
     case "decision":
       return target.value.requestedBy;
+    case "line":
+      return ownerOf(ctx, target.value.ref);
     case "pr": {
       const [issueRef] = graph.from(target.value.ref, "implements");
       const issue = issueRef === undefined ? null : getIssue(ctx, issueRef);

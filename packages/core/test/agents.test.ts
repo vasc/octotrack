@@ -138,6 +138,8 @@ describe("agent states", () => {
     stoppedAt: null,
     stoppedReason: null,
     goneAt: null,
+    wokenAt: null,
+    wakeError: null,
   };
   const at = (minutes: number) => new Date(Date.parse(START) + minutes * MINUTE).toISOString();
 
