@@ -1436,3 +1436,19 @@ p {
 .undo-choice > span:first-child {
   flex: 1;
 }
+
+@media (max-width: 720px) {
+  .composer {
+    flex-wrap: wrap;
+  }
+  .composer .field {
+    flex-basis: 100%;
+  }
+  .home-line-title {
+    font-size: var(--text-md);
+  }
+  /* Facts wrap on a phone, and a dot must not start a line. */
+  .home-meta span + span::before {
+    content: none;
+  }
+}

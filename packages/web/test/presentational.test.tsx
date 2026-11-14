@@ -828,6 +828,7 @@ describe("lines of work", () => {
   test("AddLineForm needs a title and a done-when sentence", () => {
     const onAdd = mock(() => {});
     const view = render(<AddLineForm onAdd={onAdd} />);
+    fireEvent.click(view.getByRole("button", { name: "New line…" }));
     const add = view.getByRole("button", { name: "Add line" });
     fireEvent.change(view.getByLabelText("New line"), { target: { value: "Garden sensor" } });
     expect(add.hasAttribute("disabled")).toBe(true);
