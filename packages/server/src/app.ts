@@ -75,16 +75,19 @@ function decodeHeader(raw: string | undefined): string | undefined {
 }
 
 function callerFrom(header: (name: string) => string | undefined): Caller {
-  const channel = Channel.safeParse(header("x-octo-channel"));
-  const parsedChannel = channel.success ? channel.data : "cli";
+  const claimed = Channel.safeParse(header("x-octo-channel"));
+  const parsedChannel = claimed.success ? claimed.data : "cli";
   const said = decodeHeader(header("x-octo-said"))?.trim();
   const named = decodeHeader(header("x-octo-actor"))?.trim();
   const checkout = decodeHeader(header("x-octo-checkout"))?.trim();
-  const developer = header("x-octo-developer") === "1";
-  const anonymous = (named === undefined || named === "") && parsedChannel !== "dashboard" && !developer;
+  // A call that names an agent is never the developer, whatever else it claims: only the developer's own name, or none.
+  const agentNamed = named !== undefined && named !== "" && named !== "dev";
+  const developer = header("x-octo-developer") === "1" && !agentNamed;
+  const channel = agentNamed && parsedChannel === "dashboard" ? "cli" : parsedChannel;
+  const anonymous = (named === undefined || named === "") && channel !== "dashboard" && !developer;
   return {
-    actor: named || (parsedChannel === "dashboard" || developer ? "dev" : "agent"),
-    channel: parsedChannel,
+    actor: named || (channel === "dashboard" || developer ? "dev" : "agent"),
+    channel,
     developer,
     ...(anonymous ? { anonymous } : {}),
     ...(checkout === undefined || checkout === "" ? {} : { checkout }),

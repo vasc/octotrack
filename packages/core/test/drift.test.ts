@@ -25,7 +25,7 @@ function pr(number: number, state: "open" | "merged" | "closed" | "draft", issue
 
 beforeEach(() => {
   h = harness();
-  h.call(c.projectCreate, { key: "OCT", name: "Octotrack", repo: "acme/app" });
+  h.developer(c.projectCreate, { key: "OCT", name: "Octotrack", repo: "acme/app" });
 });
 
 describe("drift from pull requests and issues", () => {

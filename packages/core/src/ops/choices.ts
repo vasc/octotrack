@@ -5,6 +5,7 @@ import { Channel, PendingChoice } from "../schemas.ts";
 import type { Ctx } from "../store/context.ts";
 import { one, rows } from "../store/context.ts";
 import { bind } from "./bind.ts";
+import { requireDeveloperInPerson } from "./developer.ts";
 
 /** Long enough to see and undo a stray key, short enough not to feel like waiting. */
 export const DEFAULT_CHOICE_DELAY_MS = 5000;
@@ -98,6 +99,7 @@ export const choiceOps = [
   }),
 
   bind(contracts.choiceUndo, (ctx, input) => {
+    requireDeveloperInPerson(ctx, "use the developer's own choices and drafts");
     const row = requireChoice(ctx, input.id);
     // A failed choice is dismissed the same way: it never happened, and the developer has read why.
     if (row.state !== "pending" && row.state !== "failed") {
@@ -109,20 +111,23 @@ export const choiceOps = [
   }),
 
   bind(contracts.choiceNow, (ctx, input) => {
+    requireDeveloperInPerson(ctx, "use the developer's own choices and drafts");
     const row = requireChoice(ctx, input.id);
     if (row.state !== "pending") return view(row);
     return applyChoice(ctx, row);
   }),
 
-  bind(contracts.choiceList, (ctx) =>
-    rows(
+  bind(contracts.choiceList, (ctx) => {
+    requireDeveloperInPerson(ctx, "see the developer's waiting choices");
+    return rows(
       ctx,
       ChoiceRow,
       "SELECT * FROM pending_choices WHERE state IN ('pending', 'failed') ORDER BY id",
-    ).map(view),
-  ),
+    ).map(view);
+  }),
 
   bind(contracts.draftSave, (ctx, input) => {
+    requireDeveloperInPerson(ctx, "use the developer's own choices and drafts");
     if (input.text.trim() === "") {
       ctx.sql.run("DELETE FROM drafts WHERE key = ?", [input.key]);
       return { key: input.key, text: null };
@@ -134,10 +139,13 @@ export const choiceOps = [
     return { key: input.key, text: input.text };
   }),
 
-  bind(contracts.draftGet, (ctx, input) => ({
-    key: input.key,
-    text:
-      one(ctx, z.object({ text: z.string() }), "SELECT text FROM drafts WHERE key = ?", [input.key])?.text ??
-      null,
-  })),
+  bind(contracts.draftGet, (ctx, input) => {
+    requireDeveloperInPerson(ctx, "read the developer's drafts");
+    return {
+      key: input.key,
+      text:
+        one(ctx, z.object({ text: z.string() }), "SELECT text FROM drafts WHERE key = ?", [input.key])
+          ?.text ?? null,
+    };
+  }),
 ];

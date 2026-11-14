@@ -95,7 +95,8 @@ export function emit(ctx: Ctx, event: EmitInput): void {
       event.line ?? null,
       event.summary,
       JSON.stringify(event.related ?? []),
-      JSON.stringify(event.attrs ?? {}),
+      // Anything written on the developer's quoted words carries them, so the log can always show whose words they were.
+      JSON.stringify({ ...(event.attrs ?? {}), ...saidAttrs(ctx) }),
       JSON.stringify(event.changes ?? {}),
     ],
   );
@@ -107,4 +108,9 @@ export function currentCursor(ctx: Ctx): number {
 
 export function countOf(ctx: Ctx, sql: string, params: readonly (string | number | null)[] = []): number {
   return rows(ctx, CountRow, sql, params)[0]?.n ?? 0;
+}
+
+/** The developer's own words, when an agent made one of their operations for them: always quoted in the log. */
+export function saidAttrs(ctx: Ctx): EventAttrs {
+  return ctx.said === null ? {} : { said: ctx.said };
 }

@@ -209,10 +209,16 @@ export const claimOps = [
     if (input.wake !== undefined)
       ctx.sql.run("UPDATE agents SET wakeAddress = ? WHERE name = ?", [input.wake, agent.name]);
     if (input.repo !== undefined) {
-      ctx.sql.run("UPDATE agents SET repo = ? WHERE name = ?", [
-        requireProject(ctx, input.repo).ref,
-        agent.name,
-      ]);
+      const repo = requireProject(ctx, input.repo).ref;
+      // Named once: an agent that could change its repo could step outside what it may take and claim.
+      if (agent.repo !== null && agent.repo !== repo) {
+        throw new OctoError(
+          "forbidden",
+          `${agent.name} serves ${agent.repo}`,
+          "An agent names its repo once. Work in another repo is another session, with its own name.",
+        );
+      }
+      ctx.sql.run("UPDATE agents SET repo = ? WHERE name = ?", [repo, agent.name]);
     }
     return viewOf(ctx, requireAgent(ctx, agent.name));
   }),

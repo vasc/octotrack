@@ -314,15 +314,15 @@ describe("the query language, smaller things", () => {
 
 describe("sync failures", () => {
   test("a failure for a repo no project uses any more is not shown forever", () => {
-    h.call(c.projectUpdate, { ref: "OCT", repo: "acme/app" });
+    h.developer(c.projectUpdate, { ref: "OCT", repo: "acme/app" });
     h.call(c.prSync, { prs: [], failures: [{ repo: "acme/app", error: "Boom" }] });
     expect(h.call(c.dashboardBootstrap, {}).syncFailures).toHaveLength(1);
-    h.call(c.projectUpdate, { ref: "OCT", repo: "acme/other" });
+    h.developer(c.projectUpdate, { ref: "OCT", repo: "acme/other" });
     expect(h.call(c.dashboardBootstrap, {}).syncFailures).toEqual([]);
   });
 
   test("a repo that synced, with a problem on one PR, still shows the problem", () => {
-    h.call(c.projectUpdate, { ref: "OCT", repo: "acme/app" });
+    h.developer(c.projectUpdate, { ref: "OCT", repo: "acme/app" });
     h.call(c.prSync, {
       prs: [],
       repos: ["acme/app"],

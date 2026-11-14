@@ -542,7 +542,7 @@ describe("what the audit found", () => {
   });
 
   test("a gh that hangs is given up on instead of blocking every later sync", async () => {
-    await octo(["project", "create", "SLOW", "Slow repo", "--repo", "acme/slow"]);
+    await octo(["project", "create", "SLOW", "Slow repo", "--repo", "acme/slow", "--me"], "");
     const bin = join(home, "slow-bin");
     mkdirSync(bin, { recursive: true });
     writeFileSync(join(bin, "gh"), "#!/bin/sh\nexec sleep 30\n", { mode: 0o755 });
@@ -855,7 +855,7 @@ describe("decisions out of band", () => {
 
 describe("everything else, through the CLI", () => {
   test("prs, ideas, milestones, links, views, roadmap and show all work", async () => {
-    await octo(["project", "create", "WEB", "Website", "--repo", "acme/web"]);
+    await octo(["project", "create", "WEB", "Website", "--repo", "acme/web", "--me"], "");
     const issue = await data(WithRef, ["issue", "create", "Landing page", "-p", "WEB"]);
     const pr = await data(WithRef, [
       "pr",

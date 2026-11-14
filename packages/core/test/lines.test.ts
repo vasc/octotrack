@@ -7,7 +7,7 @@ import { harness, memoryDriver } from "./helpers.ts";
 
 function withRepos() {
   const h = harness();
-  h.call(c.projectCreate, { key: "PANEL", name: "Home panel", repo: "vasc/homepanel" });
+  h.developer(c.projectCreate, { key: "PANEL", name: "Home panel", repo: "vasc/homepanel" });
   h.call(c.projectCreate, { key: "OCT", name: "Octotrack" });
   return h;
 }

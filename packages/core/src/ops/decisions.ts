@@ -27,7 +27,7 @@ import { DEVELOPER } from "../agents/state.ts";
 import { addNotice, claimOf } from "../store/agents.ts";
 import { addToInbox } from "../store/inbox.ts";
 import { bind } from "./bind.ts";
-import { requireDeveloper } from "./developer.ts";
+import { requireDeveloper, requireServer } from "./developer.ts";
 import { addLink } from "./links.ts";
 
 export function decisionAttrs(decision: Decision): EventAttrs {
@@ -72,14 +72,16 @@ interface InsertDecision {
  * holds there. A question from an agent on no line keeps the rules from before lines, until those go.
  */
 function placeQuestion(ctx: Ctx, input: InsertDecision): { line: Line | null; issue: string | null } {
-  const lineRef = input.line ?? (ctx.developer ? null : (claimOf(ctx, ctx.actor)?.line ?? null));
+  const named = input.issue === undefined || input.issue === null ? null : requireIssue(ctx, input.issue);
+  // A question about an issue on a line belongs to that line, whoever asks it.
+  const lineRef =
+    input.line ?? named?.line ?? (ctx.developer ? null : (claimOf(ctx, ctx.actor)?.line ?? null));
   const line = lineRef === null || lineRef === undefined ? null : requireLine(ctx, lineRef);
-  if (input.issue !== undefined && input.issue !== null) {
-    const issue = requireIssue(ctx, input.issue);
-    if (line !== null && issue.line !== line.ref) {
-      throw new OctoError("invalid_input", `${issue.ref} is not on ${line.ref}`);
+  if (named !== null) {
+    if (line !== null && named.line !== line.ref) {
+      throw new OctoError("invalid_input", `${named.ref} is not on ${line.ref}`);
     }
-    return { line, issue: issue.ref };
+    return { line, issue: named.ref };
   }
   if (line === null) return { line, issue: null };
   const [held] = rows(
@@ -173,8 +175,17 @@ interface ResolveInput {
   force?: boolean;
 }
 
+/**
+ * A question on a line is answered, postponed, reopened or replaced only by the developer, or by an agent quoting
+ * them. One from before lines keeps the older rules, until those go.
+ */
+function requireDeveloperOnLine(ctx: Ctx, decision: Decision, what: string): void {
+  if (decision.line !== null) requireDeveloper(ctx, what);
+}
+
 function resolveDecision(ctx: Ctx, input: ResolveInput): Decision {
   const current = requireDecision(ctx, input.ref);
+  requireDeveloperOnLine(ctx, current, "answer a question");
   const option = input.option ?? null;
   const note = input.note ?? null;
 
@@ -479,8 +490,9 @@ export const decisionOps = [
     });
   }),
 
-  bind(contracts.decisionReopen, (ctx, input) =>
-    transition(
+  bind(contracts.decisionReopen, (ctx, input) => {
+    requireDeveloperOnLine(ctx, requireDecision(ctx, input.ref), "reopen a question");
+    return transition(
       ctx,
       input.ref,
       "decision.reopened",
@@ -502,11 +514,12 @@ export const decisionOps = [
         supersededBy: null,
       },
       input.note,
-    ),
-  ),
+    );
+  }),
 
   bind(contracts.decisionPostpone, (ctx, input) => {
     const current = requireDecision(ctx, input.ref);
+    requireDeveloperOnLine(ctx, current, "move a question to Later");
     if (current.status !== "open") {
       throw new OctoError(
         "conflict",
@@ -586,6 +599,7 @@ export const decisionOps = [
     ),
   ),
   bind(contracts.decisionWoken, (ctx, input) => {
+    requireServer(ctx);
     const current = requireDecision(ctx, input.ref);
     applyPatch(ctx, "decisions", current.ref, current, {
       wokenAt: current.wokenAt ?? ctx.now,
@@ -614,6 +628,7 @@ export const decisionOps = [
   bind(contracts.decisionSupersede, (ctx, input) => {
     const replacement = requireDecision(ctx, input.by);
     const current = requireDecision(ctx, input.ref);
+    requireDeveloperOnLine(ctx, current, "replace a question");
     if (current.ref === replacement.ref)
       throw new OctoError("invalid_input", "A decision cannot supersede itself");
     addLink(ctx, replacement.ref, "supersedes", current.ref);

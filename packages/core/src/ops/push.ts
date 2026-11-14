@@ -9,7 +9,7 @@ import { one, rows } from "../store/context.ts";
 import { allLines } from "../store/entities.ts";
 import { DecisionRow } from "../store/rows.ts";
 import { bind } from "./bind.ts";
-import { requireDeveloper } from "./developer.ts";
+import { requireDeveloper, requireDeveloperInPerson } from "./developer.ts";
 import { lineStart } from "./runner.ts";
 
 const SubscriptionRow = z.object({ endpoint: z.string(), p256dh: z.string(), auth: z.string() });
@@ -53,7 +53,7 @@ function questionNote(line: Line, decision: z.infer<typeof DecisionRow>, urgent:
 
 export const pushOps = [
   bind(contracts.pushSubscribe, (ctx, input) => {
-    requireDeveloper(ctx, "turn on notifications");
+    requireDeveloperInPerson(ctx, "turn on notifications");
     ctx.sql.run(
       `INSERT INTO push_subscriptions (endpoint, p256dh, auth, createdAt) VALUES (?, ?, ?, ?)
        ON CONFLICT(endpoint) DO UPDATE SET p256dh = excluded.p256dh, auth = excluded.auth`,

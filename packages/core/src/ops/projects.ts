@@ -9,6 +9,7 @@ import { getProject, requireProject } from "../store/entities.ts";
 import { loadGraph } from "../store/graph.ts";
 import { MilestoneRow, ProjectRow } from "../store/rows.ts";
 import { bind } from "./bind.ts";
+import { requireDeveloper } from "./developer.ts";
 import { buildProjectCard } from "./cards.ts";
 
 function projectAttrs(project: Project): EventAttrs {
@@ -21,6 +22,8 @@ function projectAttrs(project: Project): EventAttrs {
 
 export const projectOps = [
   bind(contracts.projectCreate, (ctx, input) => {
+    // The runner clones a repo's GitHub name and runs the developer's commands in it, so only they set it.
+    if (input.repo !== undefined) requireDeveloper(ctx, "name a repo's GitHub repo");
     const key = assertProjectKey(input.key);
     if (getProject(ctx, key) !== null) throw new OctoError("conflict", `Project ${key} already exists`);
     ctx.sql.run(
@@ -52,6 +55,7 @@ export const projectOps = [
   }),
 
   bind(contracts.projectUpdate, (ctx, input) => {
+    if (input.repo !== undefined) requireDeveloper(ctx, "change a repo's GitHub repo");
     const current = requireProject(ctx, input.ref);
     assertVersion(current.ref, current.version, input.ifVersion);
     const changes = applyPatch(ctx, "projects", current.ref, current, {

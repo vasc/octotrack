@@ -300,3 +300,32 @@ describe("who is calling", () => {
     expect(body.notices.map((notice) => notice.kind)).toEqual(["stop"]);
   });
 });
+
+describe("a call that names an agent is never the developer", () => {
+  test("whatever developer or dashboard headers it carries", async () => {
+    await post(
+      "/api/ops/project.create",
+      { input: { key: "OCT", name: "Octotrack" } },
+      { "x-octo-developer": "1" },
+    );
+    await post(
+      "/api/ops/line.add",
+      { input: { title: "Enclosure", doneWhen: "Done.", repos: ["OCT"], where: "up_next" } },
+      { "x-octo-developer": "1" },
+    );
+    const claims: Record<string, string>[] = [
+      { "x-octo-actor": "mallory", "x-octo-developer": "1" },
+      { "x-octo-actor": "mallory", "x-octo-channel": "dashboard" },
+    ];
+    for (const headers of claims) {
+      const response = await post("/api/ops/line.start", { input: { ref: "L-1" } }, headers);
+      expect(response.status).toBe(403);
+    }
+    const asDeveloper = await post(
+      "/api/ops/line.start",
+      { input: { ref: "L-1" } },
+      { "x-octo-actor": "dev", "x-octo-developer": "1" },
+    );
+    expect(asDeveloper.status).toBe(200);
+  });
+});

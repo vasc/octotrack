@@ -336,8 +336,8 @@ describe("pull requests and links", () => {
   });
 
   test("several projects can share a repo, and a mentioned issue decides where a PR belongs", () => {
-    h.call(c.projectCreate, { key: "AAA", name: "First", repo: "mono/repo" });
-    h.call(c.projectCreate, { key: "BBB", name: "Second", repo: "mono/repo" });
+    h.developer(c.projectCreate, { key: "AAA", name: "First", repo: "mono/repo" });
+    h.developer(c.projectCreate, { key: "BBB", name: "Second", repo: "mono/repo" });
     const issue = h.call(c.issueCreate, { project: "BBB", title: "Thing" });
     expect(
       h.call(c.prUpsert, { repo: "mono/repo", number: 1, title: `${issue.ref}: x`, state: "open" }).project,
@@ -348,7 +348,7 @@ describe("pull requests and links", () => {
   });
 
   test("sync failures are visible until the repo syncs again", () => {
-    h.call(c.projectUpdate, { ref: "OCT", repo: "a/b" });
+    h.developer(c.projectUpdate, { ref: "OCT", repo: "a/b" });
     h.call(c.prSync, { prs: [], failures: [{ repo: "a/b", error: "Boom" }] });
     expect(h.call(c.dashboardBootstrap, {}).syncFailures).toMatchObject([{ repo: "a/b", error: "Boom" }]);
     h.call(c.prSync, { prs: [], repos: ["a/b"] });
