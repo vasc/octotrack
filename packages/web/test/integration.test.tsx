@@ -293,10 +293,16 @@ describe("the log", () => {
       { key: "APP", name: "App", repo: "acme/app" },
       { actor: "dev", channel: "dashboard" },
     );
-    server.act(c.prSync, { prs: [], failures: [{ repo: "acme/app", error: "gh is not logged in" }] });
+    // Only the server's own sync reports what GitHub says.
+    const github = { actor: "github", channel: "cli", system: true } as const;
+    server.tracker.call(
+      c.prSync,
+      { prs: [], failures: [{ repo: "acme/app", error: "gh is not logged in" }] },
+      github,
+    );
     const view = renderApp(<App />);
     await view.findByText(/PR status is stale for acme\/app: gh is not logged in/);
-    server.act(c.prSync, { prs: [], repos: ["acme/app"] });
+    server.tracker.call(c.prSync, { prs: [], repos: ["acme/app"] }, github);
     await gone(() => view.queryByText(/PR status is stale/));
   });
 });

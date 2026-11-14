@@ -144,7 +144,8 @@ describe("a session Octotrack started that can be woken", () => {
     w.as(w.server, c.runnerReport, { configured: true, cap: 2, dryRun: false });
     const line = w.line("First");
     w.later(1);
-    w.as(w.server, c.runnerStart, { line: line.ref, repo: "PANEL" });
+    const started = w.as(w.server, c.runnerStart, { line: line.ref, repo: "PANEL" });
+    w.as(w.server, c.runnerSpawned, { name: started.name, pid: 4242 });
     w.later(6);
     w.tracker.sweep();
     expect(w.as(w.dev, c.homeShow, {}).lines[line.ref]?.start?.state).toBe("never_took");

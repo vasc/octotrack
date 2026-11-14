@@ -63,9 +63,9 @@ export function addLink(ctx: Ctx, rawFrom: string, rel: LinkRel, rawTo: string):
 
 /**
  * A link changes both its ends, a blocks link most of all: what is held behind what. An agent links or unlinks only
- * what is on the line it is on, or on no line.
+ * what is on the line it is on, or on no line. Filing something linked at once is held to the same rule.
  */
-function guardEnds(ctx: Ctx, from: AnyEntity, toRef: string): void {
+export function guardEnds(ctx: Ctx, from: AnyEntity, toRef: string): void {
   for (const end of [from, findEntity(ctx, toRef)]) {
     if (end !== null) guardOnLine(ctx, lineOfEntity(end), "scope", end.value.ref);
   }

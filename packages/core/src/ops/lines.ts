@@ -10,7 +10,7 @@ import { filterEntities } from "../store/docs.ts";
 import { allLines, requireLine, requireProject, summarize } from "../store/entities.ts";
 import { loadGraph } from "../store/graph.ts";
 import { IssueRow, PlanStepRow, PrRow } from "../store/rows.ts";
-import { afterAdd, afterMove, guardLineWrite, windDown } from "../agents/claims.ts";
+import { afterAdd, afterMove, guardLineWrite, guardOnLine, windDown } from "../agents/claims.ts";
 import { DEVELOPER } from "../agents/state.ts";
 import { addNotice, claimOf } from "../store/agents.ts";
 import { addToInbox } from "../store/inbox.ts";
@@ -474,7 +474,7 @@ export const lineOps = [
 
   bind(contracts.planSet, (ctx, input) => {
     const line = requireLine(ctx, input.line);
-    guardLineWrite(ctx, line.ref, "scope");
+    guardOnLine(ctx, line.ref, "scope", null);
     if (ENDED.has(line.state)) throw new OctoError("conflict", `${line.ref} already ended`);
     const before = new Map(planOf(ctx, line.ref).map((step) => [step.title, step.status]));
     ctx.sql.run("DELETE FROM plan_steps WHERE line = ?", [line.ref]);

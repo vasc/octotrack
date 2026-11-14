@@ -18,7 +18,15 @@ import { applyPatch, assertVersion, emit, nextNumber } from "../store/common.ts"
 import type { Ctx } from "../store/context.ts";
 import { one, rows } from "../store/context.ts";
 import { filterEntities } from "../store/docs.ts";
-import { allLines, requireDecision, requireIssue, requireLine, requireProject } from "../store/entities.ts";
+import {
+  allLines,
+  requireDecision,
+  requireEntity,
+  requireIssue,
+  requireLine,
+  requireProject,
+  resolveRef,
+} from "../store/entities.ts";
 import { loadGraph } from "../store/graph.ts";
 import { DecisionRow, IssueRow, WatchRow } from "../store/rows.ts";
 import { toWatch } from "../watch/engine.ts";
@@ -29,7 +37,7 @@ import { addNotice, claimOf } from "../store/agents.ts";
 import { addToInbox } from "../store/inbox.ts";
 import { bind } from "./bind.ts";
 import { requireDeveloper, requireServer } from "./developer.ts";
-import { addLink } from "./links.ts";
+import { addLink, guardEnds } from "./links.ts";
 
 export function decisionAttrs(decision: Decision): EventAttrs {
   return {
@@ -61,7 +69,6 @@ interface InsertDecision {
   options?: readonly { key: string; label: string; description?: string }[];
   recommendation?: string;
   dueAt?: string;
-  wake?: string;
   line?: string | null;
   issue?: string | null;
   why?: string;
@@ -143,7 +150,8 @@ function insertDecision(ctx: Ctx, input: InsertDecision): Decision {
       input.priority ?? "medium",
       ctx.actor,
       input.dueAt ?? null,
-      input.wake ?? null,
+      // Where its asker is woken is the address the asker registered, read when the answer comes (D14).
+      null,
       input.line ?? null,
       input.issue ?? null,
       input.why ?? null,
@@ -458,7 +466,8 @@ export const decisionOps = [
   bind(contracts.decisionAsk, (ctx, input) => {
     const placed = placeQuestion(ctx, input);
     if (placed.line !== null) {
-      guardLineWrite(ctx, placed.line.ref, "scope");
+      // A question joins its line's queue and its answer goes to whoever holds the line: asked only from that line.
+      guardOnLine(ctx, placed.line.ref, "scope", null);
       if (!ctx.developer) checkStandalone(input, placed.line);
     } else if (input.urgent !== undefined) {
       throw new OctoError("invalid_input", "Urgent is for questions on lines being worked on");
@@ -478,7 +487,13 @@ export const decisionOps = [
         throw new OctoError("invalid_input", `${task.ref} is not a task for the developer`);
       }
       // Held behind the task: asking the developer what their own measurement is about to answer wastes their time.
+      guardEnds(ctx, requireEntity(ctx, task.ref), decision.ref);
       addLink(ctx, task.ref, "blocks", decision.ref);
+    }
+    // What the question holds up or changes is written to as well: only on the asker's line, or on no line.
+    const asked = requireEntity(ctx, decision.ref);
+    for (const target of [...(input.blocks ?? []), ...(input.affects ?? [])]) {
+      guardEnds(ctx, asked, resolveRef(ctx, target));
     }
     for (const target of input.blocks ?? []) addLink(ctx, decision.ref, "blocks", target);
     for (const target of input.affects ?? []) addLink(ctx, decision.ref, "affects", target);
@@ -684,24 +699,20 @@ export const decisionOps = [
       undefined,
     );
   }),
-  bind(contracts.decisionWake, (ctx, input) =>
-    transition(
-      ctx,
-      input.ref,
-      "decision.wake_changed",
-      (decision) =>
-        `${decision.ref} ${input.address === null ? "will not wake anyone" : "will wake its session"}`,
-      { wakeAddress: input.address, wokenAt: null, wakeError: null },
-      undefined,
-    ),
-  ),
   bind(contracts.decisionWakes, (ctx) =>
     rows(
       ctx,
-      DecisionRow,
-      // A question on a line wakes whoever holds the line, through its inbox, not the session that asked.
-      "SELECT * FROM decisions WHERE status = 'decided' AND line IS NULL AND wakeAddress IS NOT NULL AND wokenAt IS NULL AND pickedUpAt IS NULL ORDER BY decidedAt",
-    ),
+      DecisionRow.extend({ registered: z.string().nullable() }),
+      // A question on a line wakes whoever holds the line, through its inbox, not the session that asked. One on no
+      // line wakes its asker at the address it registered; one asked before that keeps the address it was asked with.
+      `SELECT d.*, a.wakeAddress AS registered FROM decisions d LEFT JOIN agents a ON a.name = d.requestedBy
+       WHERE d.status = 'decided' AND d.line IS NULL AND d.wokenAt IS NULL AND d.pickedUpAt IS NULL
+         AND (a.name IS NULL OR a.stoppedAt IS NULL) AND COALESCE(a.wakeAddress, d.wakeAddress) IS NOT NULL
+       ORDER BY d.decidedAt`,
+    ).map(({ registered, ...decision }) => ({
+      ...decision,
+      wakeAddress: registered ?? decision.wakeAddress,
+    })),
   ),
   bind(contracts.decisionWoken, (ctx, input) => {
     requireServer(ctx);

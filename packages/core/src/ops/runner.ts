@@ -8,7 +8,7 @@ import {
   waitingOnYou,
   windingDown,
 } from "../agents/claims.ts";
-import { agentState } from "../agents/state.ts";
+import { agentState, RUNNING_WINDOW_MS } from "../agents/state.ts";
 import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
 import type { Line, LineStart, RunnerDue, RunnerStatus, StartRole } from "../schemas.ts";
@@ -24,6 +24,12 @@ import { requireDeveloper } from "./developer.ts";
 const MINUTE_MS = 60_000;
 /** A start that fails at once is tried again after these waits, then every six hours. */
 const RETRY_WAITS_MS = [2, 10, 60, 360].map((minutes) => minutes * MINUTE_MS);
+/**
+ * A session that takes its line and exits sooner than this, leaving no way to wake it, left at once: the next start
+ * for that line waits as a failed one does, or a start command that exits after taking the line would be run again
+ * every minute (third audit, N1).
+ */
+const LEFT_AT_ONCE_MS = 15 * MINUTE_MS;
 const OUTPUT_KEPT = 2000;
 
 const StartRow = z.object({
@@ -41,6 +47,12 @@ const StartRow = z.object({
   /** When its process ended; null while it still runs, whatever its state says about the line. */
   exitedAt: z.string().nullable(),
   nextTryAt: z.string().nullable(),
+  /** When its process was spawned: its check-in runs from then. Null while its worktree and setup are made. */
+  spawnedAt: z.string().nullable(),
+  pid: z.number().int().nullable(),
+  exitCode: z.number().int().nullable(),
+  /** It ran and took its line: its name is used up, so a retry after it gets a new one. */
+  ran: z.number().int(),
 });
 type StartRow = z.infer<typeof StartRow>;
 const SettingRow = z.object({ key: z.string(), value: z.string() });
@@ -89,40 +101,75 @@ function startingOn(ctx: Ctx, line: string): number {
   );
 }
 
+function toLineStart(start: StartRow): LineStart {
+  return {
+    name: start.name,
+    state: start.state,
+    output: start.output,
+    attempts: start.attempts,
+    at: start.endedAt ?? start.startedAt,
+    nextTryAt: start.nextTryAt,
+  };
+}
+
 /** What home shows for a line: its latest start for an owner, which is what Step in is about. */
 export function lineStart(ctx: Ctx, line: string): LineStart | null {
   const start = latestOn(ctx, line, "owner");
-  return start === null
-    ? null
-    : {
-        name: start.name,
-        state: start.state,
-        output: start.output,
-        attempts: start.attempts,
-        at: start.endedAt ?? start.startedAt,
-        nextTryAt: start.nextTryAt,
-      };
+  return start === null ? null : toLineStart(start);
 }
 
 /**
- * Sessions that count against the cap (D14): those that have not checked in while their process still runs, whether
- * still starting or past their check-in, and those Octotrack started that are running now. One that went to sleep
- * with a wake address keeps its line, but no longer takes a process.
+ * Why a session set up for a line should not run after all, asked once its process is spawned, or null if it should:
+ * its line moved on, became the developer's or found an owner, or the developer stopped it, meanwhile (N6).
  */
-function activeSessions(ctx: Ctx): number {
-  const unchecked = rows(
-    ctx,
-    StartRow,
-    "SELECT * FROM runner_starts WHERE state IN ('starting', 'never_took') AND exitedAt IS NULL",
-  ).map((start) => start.name);
-  const running = rows(
+function whyNotSpawn(ctx: Ctx, start: StartRow): string | null {
+  const agent = getAgent(ctx, start.name);
+  if (agent?.stoppedAt !== null && agent?.stoppedAt !== undefined)
+    return `the developer stopped ${start.name}`;
+  const line = requireLine(ctx, start.line);
+  if (line.state !== "working") return `${line.ref} is ${line.state.replace("_", " ")} now`;
+  if (line.ownedBy !== null) return `${line.ref} is the developer's own now`;
+  if (windingDown(line, ctx.now)) return `${line.ref} is winding down`;
+  const owner = claimsOn(ctx, line.ref).find((claim) => claim.role === "owner");
+  if (start.role === "owner" && owner !== undefined && owner.agent !== start.name) {
+    return `${owner.agent} took ${line.ref} meanwhile`;
+  }
+  return null;
+}
+
+/**
+ * Sessions whose process is alive as far as Octotrack knows, which is what counts against the cap (D14): every start
+ * whose process has not been seen to exit, from its worktree and setup to its end, however silent; and sessions
+ * Octotrack started that were woken after their process exited and are at work. One that went to sleep with a wake
+ * address keeps its line but holds no process. A command in the last 15 minutes is no sign of a process: it may have
+ * exited just after.
+ */
+function liveSessions(ctx: Ctx): Set<string> {
+  const live = rows(ctx, StartRow, "SELECT * FROM runner_starts WHERE exitedAt IS NULL").map(
+    (start) => start.name,
+  );
+  const woken = rows(
     ctx,
     AgentRow,
-    "SELECT * FROM agents WHERE startedBy = 'octotrack' AND goneAt IS NULL AND stoppedAt IS NULL",
+    `SELECT a.* FROM agents a
+     WHERE a.startedBy = 'octotrack' AND a.goneAt IS NULL AND a.stoppedAt IS NULL AND a.wokenAt IS NOT NULL
+       AND a.wakeError IS NULL
+       AND a.wokenAt > COALESCE((SELECT MAX(s.exitedAt) FROM runner_starts s WHERE s.name = a.name), '')`,
   )
-    .filter((agent) => agentState(agent, ctx.now) === "running")
+    .filter((agent) => {
+      // Woken lately, or at work since: a wake's process ends unseen, so silence after it is taken as its end.
+      const latest = Math.max(
+        Date.parse(agent.lastSeenAt),
+        agent.wokenAt === null ? 0 : Date.parse(agent.wokenAt),
+      );
+      return Date.parse(ctx.now) - latest <= RUNNING_WINDOW_MS;
+    })
     .map((agent) => agent.name);
-  return new Set([...unchecked, ...running]).size;
+  return new Set([...live, ...woken]);
+}
+
+function activeSessions(ctx: Ctx): number {
+  return liveSessions(ctx).size;
 }
 
 /** What stopped a start, so that Try now can retry every line stopped the same way: its last line of output. */
@@ -137,6 +184,7 @@ function stoppedBy(start: { state: string; output: string | null }): string {
  * asking it to release would free nothing.
  */
 function lowestRunningHelper(ctx: Ctx): { agent: string; line: string; since: string } | null {
+  const live = liveSessions(ctx);
   const order = new Map(allLines(ctx, "WHERE state = 'working'").map((line, index) => [line.ref, index]));
   const helpers = rows(
     ctx,
@@ -144,10 +192,8 @@ function lowestRunningHelper(ctx: Ctx): { agent: string; line: string; since: st
     `SELECT c.agent AS agent, c.line AS line, c.since AS since FROM line_claims c JOIN agents a ON a.name = c.agent
      WHERE c.role = 'helper' AND a.startedBy = 'octotrack' AND a.goneAt IS NULL AND a.stoppedAt IS NULL`,
   )
-    .filter((helper) => {
-      const agent = getAgent(ctx, helper.agent);
-      return agent !== null && agentState(agent, ctx.now) === "running";
-    })
+    // Only one whose process is alive holds a session to give back.
+    .filter((helper) => live.has(helper.agent))
     .sort((a, b) => (order.get(b.line) ?? -1) - (order.get(a.line) ?? -1));
   return helpers[0] ?? null;
 }
@@ -190,8 +236,11 @@ function ownerStart(ctx: Ctx, line: Line): OwnerStart {
   return repo === null ? { kind: "no_repo" } : { kind: "ready", repo, last };
 }
 
-/** Helpers wanted on a working line: the repo of its first unclaimed work, and how many sessions it has work for. */
-function helpersWanted(ctx: Ctx, line: Line): { repo: string; count: number; last: StartRow | null } | null {
+/** Helpers wanted on a working line: how many sessions it has work for, and the repo of each one's work. */
+function helpersWanted(
+  ctx: Ctx,
+  line: Line,
+): { repos: string[]; count: number; last: StartRow | null } | null {
   if (line.state !== "working" || line.ownedBy !== null || windingDown(line, ctx.now)) return null;
   const crew = claimsOn(ctx, line.ref).filter((claim) => claim.role !== "scoper");
   if (!crew.some((claim) => claim.role === "owner") || line.repos.length === 0) return null;
@@ -207,8 +256,7 @@ function helpersWanted(ctx: Ctx, line: Line): { repo: string; count: number; las
      ORDER BY i.step IS NULL, i.step, i.createdAt`,
     [line.ref, ...line.repos],
   );
-  const repo = work[0]?.project;
-  if (repo === undefined) return null;
+  if (work.length === 0) return null;
   // Who will pick that work up anyway: agents on the line at work and holding nothing, and sessions on their way.
   const idle = crew.filter((claim) => {
     const agent = getAgent(ctx, claim.agent);
@@ -221,8 +269,10 @@ function helpersWanted(ctx: Ctx, line: Line): { repo: string; count: number; las
     );
     return (holding?.n ?? 0) === 0;
   }).length;
-  const count = work.length - idle - startingOn(ctx, line.ref);
-  return count > 0 ? { repo, count, last } : null;
+  const coming = idle + startingOn(ctx, line.ref);
+  const count = work.length - coming;
+  // The work nobody coming will pick up, in order, each helper in the repo of its own.
+  return count > 0 ? { repos: work.slice(coming).map((item) => item.project), count, last } : null;
 }
 
 /** A line whose owner is still being looked for among agents already here: a session started now could take its turn. */
@@ -232,8 +282,14 @@ function seekingOwner(ctx: Ctx, line: Line): boolean {
   return search !== null && searchStep(search, ctx.now) < 3;
 }
 
+/** A failed start that never ran keeps its name for its retry: nothing of it was used. */
 function retryOf(last: StartRow | null): StartRow | null {
-  return last !== null && last.state === "failed" ? last : null;
+  return last !== null && last.state === "failed" && last.ran === 0 ? last : null;
+}
+
+/** Which attempt the next start is: failures in a row, whether at once or by leaving at once, count up. */
+function attemptAfter(last: StartRow | null): number {
+  return last !== null && last.state === "failed" ? last.attempts + 1 : 1;
 }
 
 /**
@@ -380,7 +436,7 @@ export const runnerOps = [
           repo: start.repo,
           role: "owner",
           name: retry?.name ?? null,
-          attempt: retry === null ? 1 : retry.attempts + 1,
+          attempt: attemptAfter(start.last),
         },
       ];
     });
@@ -397,10 +453,11 @@ export const runnerOps = [
         const again = index === 0 ? retry : null;
         helpers.push({
           line: line.ref,
-          repo: wanted.repo,
+          // Each helper starts in the repo of the work it is there for: a helper works only in its own repo.
+          repo: wanted.repos[index] ?? wanted.repos[0] ?? line.repos[0] ?? "",
           role: "helper",
           name: again?.name ?? null,
-          attempt: again === null ? 1 : again.attempts + 1,
+          attempt: index === 0 ? attemptAfter(wanted.last) : 1,
         });
       }
     }
@@ -412,7 +469,8 @@ export const runnerOps = [
     const line = requireLine(ctx, input.line);
     const repo = requireProject(ctx, input.repo).ref;
     const role = input.role ?? "owner";
-    const retry = retryOf(latestOn(ctx, line.ref, role));
+    const last = latestOn(ctx, line.ref, role);
+    const retry = retryOf(last);
     // A start that failed at once used up nothing, so its retry keeps the name.
     const name = retry?.name ?? freshName(ctx, repo);
     if (role === "owner") ctx.sql.run("UPDATE lines SET startAnyway = NULL WHERE ref = ?", [line.ref]);
@@ -432,7 +490,7 @@ export const runnerOps = [
     ctx.sql.run(
       `INSERT INTO runner_starts (line, repo, name, role, worktree, state, attempts, startedAt)
        VALUES (?, ?, ?, ?, ?, 'starting', ?, ?)`,
-      [line.ref, repo, name, role, worktree, retry === null ? 1 : retry.attempts + 1, ctx.now],
+      [line.ref, repo, name, role, worktree, attemptAfter(last), ctx.now],
     );
     const leftBy = handed !== null && retry === null ? `, in ${handed} that a gone session left` : "";
     emit(ctx, {
@@ -444,13 +502,70 @@ export const runnerOps = [
       summary: `Started ${name}${role === "helper" ? " as a helper" : ""} for ${line.ref}${leftBy}: ${line.title}`,
       attrs: {},
     });
-    return { name, line: line.ref, repo, worktree: handed };
+    const ownBranch =
+      (one(ctx, CountRow, "SELECT COUNT(*) AS n FROM runner_worktrees WHERE branch = ?", [`octo/${name}`])
+        ?.n ?? 0) > 0;
+    return { name, line: line.ref, repo, worktree: handed, ownBranch };
   }),
+
+  bind(contracts.runnerSpawned, (ctx, input) => {
+    requireRunner(ctx);
+    const start = latestByName(ctx, input.name);
+    if (start === null || start.exitedAt !== null) {
+      throw new OctoError("not_found", `Octotrack is not starting ${input.name}`);
+    }
+    // Its worktree and setup may have taken many minutes: whether it should run is asked again now.
+    const why = whyNotSpawn(ctx, start);
+    if (why === null) {
+      ctx.sql.run("UPDATE runner_starts SET spawnedAt = ?, pid = ? WHERE id = ?", [
+        ctx.now,
+        input.pid,
+        start.id,
+      ]);
+      ctx.visibleChange = true;
+      return { go: true, why: null };
+    }
+    // Ended here, as a start that did not happen: it used up nothing, is not retried, and its process is ended.
+    ctx.sql.run(
+      "UPDATE runner_starts SET spawnedAt = ?, pid = ?, state = 'exited', endedAt = ?, output = ?, nextTryAt = NULL WHERE id = ?",
+      [ctx.now, input.pid, ctx.now, why, start.id],
+    );
+    ctx.sql.run("UPDATE agents SET goneAt = ? WHERE name = ? AND goneAt IS NULL AND stoppedAt IS NULL", [
+      ctx.now,
+      input.name,
+    ]);
+    emit(ctx, {
+      type: "runner.not_started",
+      kind: "agent",
+      ref: input.name,
+      project: start.repo,
+      line: start.line,
+      summary: `Did not start ${input.name} for ${start.line}: ${why}`,
+      attrs: {},
+    });
+    return { go: false, why };
+  }),
+
+  bind(contracts.runnerLive, (ctx) =>
+    rows(
+      ctx,
+      z.object({ name: z.string(), pid: z.number().int().nullable(), spawnedAt: z.string().nullable() }),
+      "SELECT name, pid, spawnedAt FROM runner_starts WHERE exitedAt IS NULL ORDER BY id",
+    ),
+  ),
 
   bind(contracts.runnerExited, (ctx, input) => {
     requireRunner(ctx);
     const start = latestByName(ctx, input.name);
     if (start === null) throw new OctoError("not_found", `Octotrack never started ${input.name}`);
+    // Told not to go once spawned, or already seen to exit: only its end is recorded.
+    if (start.exitedAt !== null || (start.state === "exited" && start.endedAt !== null)) {
+      ctx.sql.run(
+        "UPDATE runner_starts SET exitedAt = COALESCE(exitedAt, ?), exitCode = COALESCE(exitCode, ?) WHERE id = ?",
+        [ctx.now, input.code, start.id],
+      );
+      return toLineStart({ ...start, exitedAt: start.exitedAt ?? ctx.now });
+    }
     const agent = getAgent(ctx, input.name);
     const output = input.output.trim().slice(-OUTPUT_KEPT) || null;
     const ranCommands = agent !== null && agent.lastSeenAt > start.startedAt;
@@ -463,27 +578,37 @@ export const runnerOps = [
         [input.name, start.startedAt],
       )?.n ?? 0) > 0;
     // Only an exit at once spent nothing and is retried by itself (D14). One that outlived its check-in ran, whatever
-    // its exit code, and waits for the developer like any other that never took its line.
-    const atOnce =
-      start.state === "starting" && Date.parse(ctx.now) - Date.parse(start.startedAt) < CHECK_IN_MS;
-    const state: LineStart["state"] = took
-      ? "exited"
-      : atOnce && !ranCommands && input.code !== 0
-        ? "failed"
-        : "never_took";
+    // its exit code, and waits for the developer like any other that never took its line. The check-in runs from the
+    // spawn: an exit before it, while the worktree or setup was made, is at once.
+    const spawnedAt = start.spawnedAt;
+    const sinceSpawn = spawnedAt === null ? 0 : Date.parse(ctx.now) - Date.parse(spawnedAt);
+    const atOnce = start.state === "starting" && sinceSpawn < CHECK_IN_MS;
+    // A session that took its line and can be woken is only asleep: it keeps its line (D14's agent states). Any
+    // other is gone, and what it held is offered on.
+    const keeps = took && agent !== null && agent.wakeAddress !== null;
+    // One that took its line and left at once, with no way to wake it, waits like a failed start before the next.
+    const leftAtOnce = took && !keeps && sinceSpawn < LEFT_AT_ONCE_MS;
+    const state: LineStart["state"] = leftAtOnce
+      ? "failed"
+      : took
+        ? "exited"
+        : atOnce && !ranCommands && input.code !== 0
+          ? "failed"
+          : "never_took";
     const nextTryAt =
       state === "failed"
         ? new Date(Date.parse(ctx.now) + retryWait(start.attempts)).toISOString()
         : state === "never_took"
           ? start.nextTryAt
           : null;
+    const told = leftAtOnce
+      ? `${input.name} took ${start.line} and exited soon after, with no wake address. Sessions that keep doing this are started less often, then need you: keep the session running, or have it register a wake address (octo agent register --wake).`
+      : null;
+    const kept = told === null ? output : `${output === null ? "" : `${output}\n`}${told}`;
     ctx.sql.run(
-      "UPDATE runner_starts SET state = ?, output = ?, endedAt = ?, exitedAt = ?, nextTryAt = ? WHERE id = ?",
-      [state, output, ctx.now, ctx.now, nextTryAt, start.id],
+      "UPDATE runner_starts SET state = ?, output = ?, endedAt = ?, exitedAt = ?, nextTryAt = ?, exitCode = ?, ran = ? WHERE id = ?",
+      [state, kept, ctx.now, ctx.now, nextTryAt, input.code, took ? 1 : 0, start.id],
     );
-    // A session that took its line and can be woken is only asleep: it keeps its line (D14's agent states). Any
-    // other is gone, and what it held is offered on.
-    const keeps = state === "exited" && agent !== null && agent.wakeAddress !== null;
     const claim = keeps ? claimOf(ctx, input.name) : endClaim(ctx, input.name, "exit");
     if (agent !== null && !keeps) {
       ctx.sql.run("UPDATE agents SET goneAt = ? WHERE name = ?", [ctx.now, input.name]);
@@ -494,8 +619,9 @@ export const runnerOps = [
       ref: input.name,
       project: start.repo,
       line: claim?.line ?? start.line,
-      summary:
-        state === "failed"
+      summary: leftAtOnce
+        ? `${input.name} took ${start.line} and exited soon after (code ${input.code}), with no wake address; the next start waits`
+        : state === "failed"
           ? `${input.name} exited at once (code ${input.code}); trying again later${output === null ? "" : `: ${output.split("\n").at(-1) ?? ""}`}`
           : state === "never_took"
             ? `${input.name} ran but never took ${start.line}${input.code === 0 ? "" : ` (code ${input.code})`}`
@@ -505,7 +631,7 @@ export const runnerOps = [
     return {
       name: start.name,
       state,
-      output,
+      output: kept,
       attempts: start.attempts,
       at: ctx.now,
       nextTryAt,
@@ -542,14 +668,19 @@ export const runnerOps = [
   bind(contracts.runnerDry, (ctx, input) => {
     requireRunner(ctx);
     const line = requireLine(ctx, input.line);
-    // Once per search for an owner, not once a tick.
-    const since = searchOf(ctx, line.ref)?.since ?? "";
+    const role = input.role ?? "owner";
+    // Once per search for an owner, or for helpers once per owner, not once a tick (third audit, N22).
+    const since =
+      role === "owner"
+        ? (searchOf(ctx, line.ref)?.since ?? "")
+        : (claimsOn(ctx, line.ref).find((claim) => claim.role === "owner")?.since ?? "");
     const noted =
       (one(
         ctx,
         CountRow,
-        "SELECT COUNT(*) AS n FROM events WHERE type = 'runner.would_start' AND line = ? AND ts >= ?",
-        [line.ref, since],
+        `SELECT COUNT(*) AS n FROM events WHERE type = 'runner.would_start' AND line = ? AND ts >= ?
+           AND COALESCE(json_extract(attrs, '$.role'), 'owner') = ?`,
+        [line.ref, since, role],
       )?.n ?? 0) > 0;
     if (noted) return { line: line.ref };
     emit(ctx, {
@@ -558,8 +689,8 @@ export const runnerOps = [
       ref: line.ref,
       project: input.repo,
       line: line.ref,
-      summary: `Would start a session for ${line.ref} in ${input.repo}; the runner is watching only`,
-      attrs: {},
+      summary: `Would start ${role === "helper" ? "a helper" : "a session"} for ${line.ref} in ${input.repo}; the runner is watching only`,
+      attrs: { role },
     });
     return { line: line.ref };
   }),
@@ -568,13 +699,16 @@ export const runnerOps = [
     rows(
       ctx,
       z.object({ pr: z.string(), repo: z.string(), number: z.number().int(), line: z.string() }),
-      // Only in the GitHub repo of the issue it implements, since a pull request's row may name any repo, and never
-      // while it also implements work still wanted: an open issue, or one on a line that has not ended.
+      // Only those open when the line ended, unchanged since and as GitHub still reports them (D14); only in the
+      // GitHub repo of the issue it implements, since a pull request's row may name any repo; and never while it also
+      // implements work still wanted: an open issue, or one on a line that has not ended.
       `SELECT p.ref AS pr, p.repo AS repo, p.number AS number, MIN(i.line) AS line
        FROM prs p JOIN links k ON k.fromRef = p.ref AND k.rel = 'implements'
        JOIN issues i ON i.ref = k.toRef JOIN lines l ON l.ref = i.line
        JOIN projects r ON r.ref = i.project
+       JOIN line_closing_prs s ON s.line = l.ref AND s.pr = p.ref AND s.headSha = p.headSha
        WHERE p.state IN ('open', 'draft') AND l.state IN ('done', 'dropped') AND l.windDownUntil IS NULL
+         AND p.githubAt IS NOT NULL
          AND i.status IN ('done', 'cancelled')
          AND r.repo IS NOT NULL AND lower(r.repo) = lower(p.repo)
          AND NOT EXISTS (
@@ -651,17 +785,24 @@ export const runnerOps = [
       .map(({ removedAt: _removed, ...tree }) => tree);
   }),
 
-  bind(contracts.runnerRestarted, (ctx) => {
+  bind(contracts.runnerRestarted, (ctx, input) => {
     requireRunner(ctx);
-    // Sessions from before the server restarted are not the runner's to watch any more: each is settled as exited.
-    const orphans = rows(ctx, StartRow, "SELECT * FROM runner_starts WHERE exitedAt IS NULL");
+    // Sessions from before the server restarted whose process is gone are settled as exited. One whose process still
+    // runs keeps its line, its worktree and its slot, and the runner watches it by its process id (third audit, N10).
+    const alive = new Set(input.alive ?? []);
+    const orphans = rows(ctx, StartRow, "SELECT * FROM runner_starts WHERE exitedAt IS NULL").filter(
+      (start) => !alive.has(start.name),
+    );
     for (const start of orphans) {
       ctx.runOp(
         contracts.runnerExited.name,
         {
           name: start.name,
           code: -1,
-          output: "The server restarted while this session ran, so its end was not seen.",
+          output:
+            start.spawnedAt === null
+              ? "The server restarted while this session was being set up, so it never ran."
+              : "The server restarted while this session ran, and its process has ended since.",
         },
         { actor: ctx.actor, channel: ctx.channel, said: null, system: true },
       );
@@ -709,16 +850,21 @@ export const runnerOps = [
       return { name: input.name };
     }
     ctx.sql.run("UPDATE agents SET stopRanAt = ? WHERE name = ?", [ctx.now, input.name]);
+    const ended = input.ended === true ? `Ended ${input.name}'s process` : null;
+    // A negative code says the runner did not run the command, and why.
+    const command =
+      input.command === false
+        ? null
+        : input.code < 0
+          ? `did not run the stop command: ${input.output.trim()}`
+          : `ran the stop command for ${input.name}${input.code === 0 ? "" : `, which exited ${input.code}: ${input.output.trim().split("\n").at(-1) ?? ""}`}`;
+    const said = [ended, command].flatMap((part) => (part === null ? [] : [part])).join(", and ");
     emit(ctx, {
       type: "runner.stop_ran",
       kind: "agent",
       ref: input.name,
       project: null,
-      // A negative code says the runner did not run it, and why.
-      summary:
-        input.code < 0
-          ? `Did not run the stop command: ${input.output.trim()}`
-          : `Ran the stop command for ${input.name}${input.code === 0 ? "" : `, which exited ${input.code}: ${input.output.trim().split("\n").at(-1) ?? ""}`}`,
+      summary: `${said.charAt(0).toUpperCase()}${said.slice(1)}`,
       attrs: {},
     });
     return { name: input.name };

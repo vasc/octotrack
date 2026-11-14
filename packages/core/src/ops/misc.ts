@@ -133,7 +133,10 @@ function guardDrift(ctx: Ctx, drift: Drift): void {
   guardOnLine(ctx, lineOfDrift(ctx, drift), "scope", drift.ref);
 }
 
-/** A note on anything: kept as an update, and shown in the log on the line it concerns. */
+/**
+ * A note on anything: kept as an update, and shown in the log on the line it concerns. `forDeveloper` is for the
+ * developer's own note on a line of theirs, which an agent may relay with --said.
+ */
 function postUpdate(
   ctx: Ctx,
   input: {
@@ -142,11 +145,12 @@ function postUpdate(
     project?: string | undefined;
     level?: StatusUpdate["level"] | undefined;
   },
+  forDeveloper = false,
 ): StatusUpdate {
   const target = input.target === undefined ? null : requireEntity(ctx, input.target);
   const targetRef = target?.value.ref ?? null;
   const line = target === null ? null : lineOfEntity(target);
-  if (target !== null) guardOnLine(ctx, line, "scope", target.value.ref);
+  if (target !== null && !forDeveloper) guardOnLine(ctx, line, "scope", target.value.ref);
   const project =
     input.project === undefined
       ? target === null
@@ -192,7 +196,7 @@ export const miscOps = [
         "Notes go on lines you own; tell its owner instead.",
       );
     }
-    postUpdate(ctx, { body: input.body, target: line.ref });
+    postUpdate(ctx, { body: input.body, target: line.ref }, true);
     return { line: line.ref };
   }),
 

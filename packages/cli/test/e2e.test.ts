@@ -7,6 +7,24 @@ import { z } from "zod";
 const MAIN = join(import.meta.dir, "../src/main.ts");
 const home = mkdtempSync(join(tmpdir(), "octo-e2e-"));
 const port = 20000 + Math.floor(Math.random() * 20000);
+/**
+ * The server runs gh for `octo pr sync`, so every command, and the server it starts, finds this gh first. It runs
+ * whatever a test put at gh-now in the home, and otherwise fails, so no test reaches GitHub.
+ */
+const ghBin = join(home, "gh-bin");
+mkdirSync(ghBin, { recursive: true });
+writeFileSync(
+  join(ghBin, "gh"),
+  '#!/bin/sh\nif [ -x "$OCTO_HOME/gh-now" ]; then exec "$OCTO_HOME/gh-now" "$@"; fi\necho "no gh in this test" >&2\nexit 1\n',
+  { mode: 0o755 },
+);
+/** What gh does for the rest of this test, until it is put back. */
+function fakeGh(script: string): void {
+  writeFileSync(join(home, "gh-now"), script, { mode: 0o755 });
+}
+function noGh(): void {
+  rmSync(join(home, "gh-now"), { force: true });
+}
 
 interface Result {
   code: number;
@@ -16,8 +34,10 @@ interface Result {
 
 function env(agent: string): Record<string, string> {
   return {
-    PATH: process.env.PATH ?? "",
+    PATH: `${ghBin}:${process.env.PATH ?? ""}`,
     OCTO_HOME: home,
+    // Short, so a test of a gh that never answers is quick; a scripted gh answers in milliseconds.
+    OCTO_GH_TIMEOUT_MS: "1000",
     OCTO_URL: `http://127.0.0.1:${port}`,
     OCTO_PR_SYNC_SECONDS: "0",
     OCTO_AGENT: agent,
@@ -543,20 +563,16 @@ describe("what the audit found", () => {
 
   test("a gh that hangs is given up on instead of blocking every later sync", async () => {
     await octo(["project", "create", "SLOW", "Slow repo", "--repo", "acme/slow", "--me"], "");
-    const bin = join(home, "slow-bin");
-    mkdirSync(bin, { recursive: true });
-    writeFileSync(join(bin, "gh"), "#!/bin/sh\nexec sleep 30\n", { mode: 0o755 });
-    const proc = Bun.spawn(["bun", MAIN, "pr", "sync", "--repo", "acme/slow"], {
-      env: { ...env("agent-a"), PATH: `${bin}:${process.env.PATH ?? ""}`, OCTO_GH_TIMEOUT_MS: "200" },
-      stdin: "ignore",
-      stdout: "pipe",
-      stderr: "pipe",
-    });
-    const started = Date.now();
-    const result = await finish(proc);
-    expect(result.code).toBe(1);
-    expect(result.stdout).toContain("did not answer");
-    expect(Date.now() - started).toBeLessThan(5000);
+    fakeGh("#!/bin/sh\nexec sleep 30\n");
+    try {
+      const started = Date.now();
+      const result = await octo(["pr", "sync", "--repo", "acme/slow"]);
+      expect(result.code).toBe(1);
+      expect(result.stdout).toContain("did not answer");
+      expect(Date.now() - started).toBeLessThan(5000);
+    } finally {
+      noGh();
+    }
     const status = await octo(["status", "--text"]);
     expect(status.stdout).toContain("PR status is stale for acme/slow");
     await octo(["project", "update", "SLOW", "--no-repo"]);
@@ -629,21 +645,42 @@ describe("what the re-audit found", () => {
   });
 
   test("a gh that ignores termination, or leaves a child holding its output, cannot overrun the deadline", async () => {
-    const bin = join(home, "stubborn-bin");
-    mkdirSync(bin, { recursive: true });
-    writeFileSync(join(bin, "gh"), "#!/bin/sh\ntrap '' TERM\nsleep 30 &\nwait\n", { mode: 0o755 });
-    const proc = Bun.spawn(["bun", MAIN, "pr", "sync", "--repo", "acme/stubborn"], {
-      env: { ...env("agent-a"), PATH: `${bin}:${process.env.PATH ?? ""}`, OCTO_GH_TIMEOUT_MS: "200" },
-      stdin: "ignore",
-      stdout: "pipe",
-      stderr: "pipe",
-    });
-    const started = Date.now();
-    const result = await finish(proc);
-    expect(result.stdout).toContain("did not answer");
-    expect(Date.now() - started).toBeLessThan(4000);
-    await octo(["op", "pr.sync", "--input", JSON.stringify({ prs: [], repos: ["acme/stubborn"] })]);
+    fakeGh("#!/bin/sh\ntrap '' TERM\nsleep 30 &\nwait\n");
+    try {
+      const started = Date.now();
+      const result = await octo(["pr", "sync", "--repo", "acme/stubborn"]);
+      expect(result.stdout).toContain("did not answer");
+      expect(Date.now() - started).toBeLessThan(4000);
+    } finally {
+      noGh();
+    }
+    await octo(
+      ["op", "pr.sync", "--input", JSON.stringify({ prs: [], repos: ["acme/stubborn"] }), "--me"],
+      "",
+    );
   }, 15000);
+
+  test("a question's own wake address gave way to the one an agent registers, and the old habit is told so", async () => {
+    for (const args of [
+      ["decision", "wake", "D-1", "claude:abc"],
+      ["question", "ask", "Which?", "--wake", "claude:abc"],
+    ]) {
+      const result = await octo(args);
+      expect(result.code).toBe(2);
+      expect(result.stdout + result.stderr).toContain("octo agent register --wake");
+    }
+  });
+
+  test("an agent's own report is never taken as GitHub's: pr.sync is the server's", async () => {
+    const result = await octo([
+      "op",
+      "pr.sync",
+      "--input",
+      JSON.stringify({ prs: [], failures: [{ repo: "acme/web", error: "fake" }] }),
+    ]);
+    expect(result.code).not.toBe(0);
+    expect(result.stdout + result.stderr).toContain("Only the server's pull request sync");
+  });
 });
 
 describe("several things at once", () => {
@@ -715,14 +752,12 @@ describe("several things at once", () => {
 });
 
 describe("pr sync through gh", () => {
-  test("maps real gh output, links issues by mention, and one bad repo does not stop the others", async () => {
+  test("maps real gh output, links issues by closing keyword, and one bad repo does not stop the others", async () => {
     const issue = await data(WithRef, ["issue", "create", "Sync target", "-p", "OCT"]);
-    const bin = join(home, "bin");
-    mkdirSync(bin, { recursive: true });
     const pr = {
       number: 5,
-      title: `${issue.ref}: from gh`,
-      body: null,
+      title: "From gh",
+      body: `Fixes ${issue.ref}`,
       url: "https://github.com/acme/good/pull/5",
       state: "OPEN",
       isDraft: false,
@@ -754,15 +789,14 @@ case "$*" in
   *) echo "no such repo" >&2; exit 1 ;;
 esac
 `;
-    writeFileSync(join(bin, "gh"), script, { mode: 0o755 });
     await octo(["pr", "upsert", "acme/good#9", "Still open as far as we know"]);
-    const proc = Bun.spawn(["bun", MAIN, "pr", "sync", "--repo", "acme/good", "--repo", "acme/missing"], {
-      env: { ...env("agent-a"), PATH: `${bin}:${process.env.PATH ?? ""}` },
-      stdin: "ignore",
-      stdout: "pipe",
-      stderr: "pipe",
-    });
-    const result = await finish(proc);
+    fakeGh(script);
+    let result: Result;
+    try {
+      result = await octo(["pr", "sync", "--repo", "acme/good", "--repo", "acme/missing"]);
+    } finally {
+      noGh();
+    }
     expect(result.code).toBe(1);
     expect(parseJson(result.stdout)).toMatchObject({
       data: { synced: 2, errors: [expect.stringContaining("acme/missing")] },
@@ -861,7 +895,10 @@ describe("everything else, through the CLI", () => {
       "pr",
       "upsert",
       "acme/web#7",
-      `${issue.ref}: landing`,
+      "Landing",
+      // Linked by its branch: a bare mention in the title is background, not a claim to implement it (D14).
+      "--head",
+      `feature/${issue.ref.toLowerCase()}-landing`,
       "--checks",
       "failing",
       "--sha",
@@ -884,7 +921,8 @@ describe("everything else, through the CLI", () => {
       ["line", "add", "Launch", "--done-when", "It is live.", "-r", "WEB", "--where", "working", "--me"],
       "",
     );
-    await octo(["issue", "update", issue.ref, "--line", launch.ref]);
+    // Putting work on a line from outside it is the developer's: agents write only to the line they are on.
+    await octo(["issue", "update", issue.ref, "--line", launch.ref, "--me"], "");
     expect((await octo(["line", "show", launch.ref, "--text"])).stdout).toContain(issue.ref);
 
     const other = await data(WithRef, ["issue", "create", "Depends", "-p", "WEB"]);
@@ -1024,16 +1062,16 @@ describe("lines of work from the CLI", () => {
       ],
       "",
     );
-    await data(z.array(z.object({ title: z.string() })), [
-      "plan",
-      "set",
-      line.ref,
-      "Wire the probe",
-      "Calibrate",
-    ]);
+    // As the developer: an agent writes to a line only from that line.
+    await data(
+      z.array(z.object({ title: z.string() })),
+      ["plan", "set", line.ref, "Wire the probe", "Calibrate", "--me"],
+      "",
+    );
     const issue = await data(
       z.object({ ref: z.string(), line: z.string().nullable(), step: z.number().nullable() }),
-      ["issue", "create", "Solder the header", "-p", "OCT", "--line", line.ref, "--step", "1"],
+      ["issue", "create", "Solder the header", "-p", "OCT", "--line", line.ref, "--step", "1", "--me"],
+      "",
     );
     expect([issue.line, issue.step]).toEqual([line.ref, 1]);
     const shown = await octo(["line", "show", line.ref, "--text"]);
