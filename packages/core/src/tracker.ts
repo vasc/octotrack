@@ -11,6 +11,7 @@ import type { BoundOp } from "./ops/bind.ts";
 import { decisionOps } from "./ops/decisions.ts";
 import { ideaOps } from "./ops/ideas.ts";
 import { issueOps } from "./ops/issues.ts";
+import { applyChoice, choiceOps, dueChoices } from "./ops/choices.ts";
 import { claimOps } from "./ops/claims.ts";
 import { inboxOps } from "./ops/inbox.ts";
 import { taskOps } from "./ops/tasks.ts";
@@ -74,13 +75,16 @@ const NO_RECONCILE: ReadonlySet<string> = new Set([
   "place.add",
   "place.remove",
   "held.confirm",
+  "choice.make",
+  "choice.undo",
+  "draft.save",
 ]);
 /**
  * Every write notifies, unless it is listed here. It is this way around so that a new operation cannot silently fail to
  * reach the dashboard. Polling is the exception: a waiting agent checks constantly, each check would wake the others, and
  * nothing a person can see has usually changed. A poll sets `visibleChange` when something has.
  */
-const POLLS: ReadonlySet<string> = new Set(["watch.check"]);
+const POLLS: ReadonlySet<string> = new Set(["watch.check", "draft.save"]);
 
 const AGENT_TOUCH_INTERVAL_MS = 30_000;
 
@@ -99,6 +103,7 @@ const ALL_OPS: readonly BoundOp[] = [
   ...claimOps,
   ...inboxOps,
   ...taskOps,
+  ...choiceOps,
   ...projectOps,
   ...issueOps,
   ...decisionOps,
@@ -163,17 +168,31 @@ export class Tracker {
 
   private ctx(caller: Caller): Ctx {
     const said = caller.said === undefined || caller.said.trim() === "" ? null : caller.said.trim();
-    return {
+    const ctx: Ctx = {
       sql: this.sql,
       actor: caller.actor,
       channel: said === null ? caller.channel : "out_of_band",
       developer: caller.system !== true && (caller.developer === true || caller.channel === "dashboard"),
       said,
       system: caller.system === true,
+      runOp: (name, input, as) => {
+        const op = this.requireOp(name);
+        // Only the developer makes choices that wait, so whoever made one is the developer.
+        const inner = this.ctx({
+          actor: as.actor,
+          channel: as.channel,
+          developer: true,
+          ...(as.said === null ? {} : { said: as.said }),
+        });
+        const result = op.run(inner, input);
+        ctx.openedDrift.push(...inner.openedDrift);
+        return result;
+      },
       now: this.clock(),
       openedDrift: [],
       visibleChange: false,
     };
+    return ctx;
   }
 
   listOps(): readonly BoundOp[] {
@@ -240,6 +259,30 @@ export class Tracker {
       [ctx.actor, ctx.now, ctx.now, caller.checkout ?? null, this.repoFor(ctx, caller.checkout)],
     );
     if (previous === undefined) this.notify([]);
+  }
+
+  private applyingChoices = false;
+
+  /**
+   * Applies every waiting choice whose time is up. Called on every call and by the server every second, so an Undo
+   * window ends on time whether or not anyone is looking.
+   */
+  applyDueChoices(): void {
+    if (this.applyingChoices) return;
+    this.applyingChoices = true;
+    try {
+      const ctx = this.ctx(SYSTEM);
+      const before = currentCursor(ctx);
+      const due = dueChoices(ctx);
+      if (due.length === 0) return;
+      this.sql.transaction(() => {
+        for (const choice of due) applyChoice(ctx, choice);
+        reconcileDrift(ctx, before);
+      });
+      this.notify(this.eventsSince(before));
+    } finally {
+      this.applyingChoices = false;
+    }
   }
 
   /** Runs whatever deadline has passed, as Octotrack itself, before anything else is answered. */
@@ -326,6 +369,7 @@ export class Tracker {
   execute(name: string, input: unknown, caller: Caller, options: { deliver?: boolean } = {}): OpOutcome {
     const op = this.requireOp(name);
     this.settleDeadlines();
+    this.applyDueChoices();
     const who = this.identify(caller, op.mutates);
     const ctx = this.ctx(who);
     this.touchAgent(ctx, who);

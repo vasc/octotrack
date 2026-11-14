@@ -1,5 +1,6 @@
 import type { ForYou, HomeView } from "@octotrack/core/schemas";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { type HotkeyMap, useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useHome } from "../../hooks/useHome.ts";
 import { DecisionCardItem } from "../decisions/DecisionCardItem.tsx";
 import { AddLineForm } from "../lines/AddLineForm.tsx";
@@ -27,11 +28,12 @@ function defaultFocus(home: HomeView): string | null {
   return null;
 }
 
-function allRefs(home: HomeView): Set<string> {
-  return new Set([
+/** Everything waiting on the developer, in the order j and k walk through it: urgent first, then line by line. */
+function orderedRefs(home: HomeView): string[] {
+  return [
     ...home.urgent.map((card) => card.decision.ref),
-    ...Object.values(home.lines).flatMap((details) => details.forYou.map(refOf)),
-  ]);
+    ...home.working.flatMap((line) => (home.lines[line.ref]?.forYou ?? []).map(refOf)),
+  ];
 }
 
 /** Every line, in the developer's order, with what each needs from them in place. */
@@ -41,8 +43,18 @@ export function HomePage() {
   const [chosen, setChosen] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   const [reordering, setReordering] = useState(false);
+  const order = useMemo(() => (home === undefined ? [] : orderedRefs(home)), [home]);
   const focus =
-    home === undefined ? null : chosen !== null && allRefs(home).has(chosen) ? chosen : defaultFocus(home);
+    home === undefined ? null : chosen !== null && order.includes(chosen) ? chosen : defaultFocus(home);
+  const keys = useMemo((): HotkeyMap => {
+    const at = focus === null ? -1 : order.indexOf(focus);
+    const step = (by: number) => () => {
+      const next = order[Math.min(Math.max(at + by, 0), order.length - 1)];
+      if (next !== undefined) setChosen(next);
+    };
+    return order.length === 0 ? {} : { j: step(1), k: step(-1) };
+  }, [focus, order]);
+  useHotkeys(keys);
 
   const item = (forYou: ForYou) => (
     <ForYouItem

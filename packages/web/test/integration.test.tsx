@@ -866,6 +866,9 @@ describe("lines of work", () => {
     const view = renderApp(<App />);
     const proposed = within(await view.findByRole("region", { name: "Proposed" }));
     fireEvent.click(proposed.getByRole("button", { name: "Up next Wall mount" }));
+    // Every choice waits a few seconds with Undo; Now skips the wait.
+    within(await view.findByRole("status", { name: "" })).getByText("Wall mount is up next");
+    fireEvent.click(await view.findByRole("button", { name: "Now" }));
     const upNext = within(await view.findByRole("region", { name: "Up next" }));
     await upNext.findByText("Wall mount");
     expect(server.tracker.call(c.lineShow, { ref: proposal.ref }, asDeveloper).line.state).toBe("up_next");
@@ -888,6 +891,7 @@ describe("lines of work", () => {
       target: { value: "Waiting on the board" },
     });
     fireEvent.click(panel.getByRole("button", { name: "Table it" }));
+    fireEvent.click(await view.findByRole("button", { name: "Now" }));
     const tabled = within(await view.findByRole("region", { name: "Tabled" }));
     fireEvent.click(tabled.getByRole("button", { name: "Show" }));
     await tabled.findByText("Waiting on the board");
@@ -935,8 +939,49 @@ describe("lines of work", () => {
     fireEvent.click(opened.getByRole("button", { name: "Done…" }));
     fireEvent.change(opened.getByLabelText(`What ${task.ref} found`), { target: { value: "41, 38, 12" } });
     fireEvent.click(opened.getByRole("button", { name: "Send" }));
-    await waitFor(() => expect(server.calls).toContain("task.done"));
+    fireEvent.click(await view.findByRole("button", { name: "Now" }));
+    await waitFor(() =>
+      expect(
+        server.tracker.call(c.issueList, { query: `ref:${task.ref}` }, asDeveloper)[0]?.issue.status,
+      ).toBe("done"),
+    );
     await gone(() => line.queryByRole("button", { name: `Open ${task.ref}` }));
+  });
+
+  test("a choice waits with Undo, and Undo or the u key means it never happened", async () => {
+    const proposal = seedLines();
+    navigate("/lines");
+    const view = renderApp(<App />);
+    const proposed = within(await view.findByRole("region", { name: "Proposed" }));
+    fireEvent.click(proposed.getByRole("button", { name: "Start Wall mount" }));
+    fireEvent.click(await view.findByRole("button", { name: "Undo" }));
+    await gone(() => view.queryByRole("button", { name: "Undo" }));
+    fireEvent.click(proposed.getByRole("button", { name: "Not a line: Wall mount" }));
+    await view.findByRole("button", { name: "Undo" });
+    fireEvent.keyDown(window, { key: "u" });
+    await gone(() => view.queryByRole("button", { name: "Undo" }));
+    server.tracker.applyDueChoices();
+    expect(server.tracker.call(c.lineShow, { ref: proposal.ref }, asDeveloper).line.state).toBe("proposed");
+  });
+
+  test("j and k move focus through what waits, opening each in place", async () => {
+    seedLines();
+    server.act(c.agentRegister, { repo: "OCT" }, "octo.1");
+    server.act(c.lineTake, { ref: "L-1" }, "octo.1");
+    const options = [
+      { key: "a", label: "26 mm", description: "Print as it is." },
+      { key: "b", label: "30 mm", description: "Remodel first." },
+    ];
+    server.act(c.decisionAsk, { title: "Which board?", context: "The base is printed.", options }, "octo.1");
+    server.act(c.decisionAsk, { title: "Which plug?", context: "The case is open.", options }, "octo.1");
+    navigate("/lines");
+    const view = renderApp(<App />);
+    await view.findByRole("article", { name: "Which board?" });
+    fireEvent.keyDown(window, { key: "j" });
+    await view.findByRole("article", { name: "Which plug?" });
+    await gone(() => view.queryByRole("article", { name: "Which board?" }));
+    fireEvent.keyDown(window, { key: "k" });
+    await view.findByRole("article", { name: "Which board?" });
   });
 
   test("a line opens in the inspector with what finishes it", async () => {

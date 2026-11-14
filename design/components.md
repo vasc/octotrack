@@ -135,12 +135,14 @@ Home is one list: every line in the developer's order, with what each needs from
 
 ## The frame: `layout/`
 
-| Component      | Kind       | What it is                                                                   |
-| -------------- | ---------- | ---------------------------------------------------------------------------- |
-| `NavItem`      | Pure       | A link with a count. The count turns amber when `hot`, and is hidden at zero |
-| `SidebarView`  | Pure       | Navigation, connection state and a reminder of the keys                      |
-| `RailOverview` | Structural | PR status, waiting agents and drift, beside the feed                         |
-| `AppShell`     | Structural | The three columns. Holds the live connection                                 |
+| Component        | Kind       | What it is                                                                   |
+| ---------------- | ---------- | ---------------------------------------------------------------------------- |
+| `NavItem`        | Pure       | A link with a count. The count turns amber when `hot`, and is hidden at zero |
+| `SidebarView`    | Pure       | Navigation, connection state and a reminder of the keys                      |
+| `RailOverview`   | Structural | PR status, waiting agents and drift, beside the feed                         |
+| `AppShell`       | Structural | The three columns. Holds the live connection                                 |
+| `UndoBar`        | Pure       | Choices still waiting to take effect, newest first, each with Undo and Now   |
+| `PendingChoices` | Structural | The Undo bar on every page; u undoes the newest choice                       |
 
 ## The inspector: `entity/`
 

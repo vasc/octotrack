@@ -9,6 +9,7 @@ import { StepIn } from "../components/home/StepIn.tsx";
 import { TaskCard } from "../components/home/TaskCard.tsx";
 import { UpNextRow } from "../components/home/UpNextRow.tsx";
 import { WorkingLine } from "../components/home/WorkingLine.tsx";
+import { UndoBar } from "../components/layout/UndoBar.tsx";
 import { AddLineForm } from "../components/lines/AddLineForm.tsx";
 import { Markdown } from "../components/ui/Markdown.tsx";
 import { TextBox } from "../components/ui/TextBox.tsx";
@@ -125,6 +126,23 @@ export function LinesGallery() {
       </Example>
       <Example label="A box that grows">
         <TextBox label="A note" value={"A longer note,\nover two lines."} onChange={NOOP} />
+      </Example>
+      <Example label="Choices waiting, with Undo">
+        <UndoBar
+          pending={[
+            {
+              id: 1,
+              op: "line.start",
+              summary: "Started Wall mount",
+              dueAt: "",
+              state: "pending",
+              error: null,
+              createdAt: "",
+            },
+          ]}
+          onUndo={NOOP}
+          onNow={NOOP}
+        />
       </Example>
       <Example label="Adding a line">
         <AddLineForm onAdd={NOOP} />

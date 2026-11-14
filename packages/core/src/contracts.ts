@@ -34,6 +34,7 @@ import {
   MilestoneStatus,
   NextWork,
   Place,
+  PendingChoice,
   PlanStep,
   PrChecks,
   PrCard,
@@ -156,6 +157,42 @@ export const DriftAckResult = z.object({ acknowledged: z.array(Drift) });
 const LineRef = z.strictObject({ ref: z.string() });
 
 export const contracts = {
+  choiceMake: write(
+    "choice.make",
+    "Make one of the developer's choices wait a few seconds, with Undo, before it takes effect (the developer)",
+    z.strictObject({
+      op: z.string(),
+      input: z.unknown(),
+      summary: Text,
+      delayMs: z.number().int().min(0).max(60_000).optional(),
+    }),
+    PendingChoice,
+  ),
+  choiceUndo: write(
+    "choice.undo",
+    "Undo a choice still waiting",
+    z.strictObject({ id: z.number().int() }),
+    PendingChoice,
+  ),
+  choiceNow: write(
+    "choice.now",
+    "Apply a waiting choice at once",
+    z.strictObject({ id: z.number().int() }),
+    PendingChoice,
+  ),
+  choiceList: read("choice.list", "Choices still waiting to take effect", Empty, z.array(PendingChoice)),
+  draftSave: write(
+    "draft.save",
+    "Keep a half-written answer, note or outcome, so it can be finished later or elsewhere; empty clears it",
+    z.strictObject({ key: z.string().min(1), text: z.string() }),
+    z.object({ key: z.string(), text: z.string().nullable() }),
+  ),
+  draftGet: read(
+    "draft.get",
+    "Read a kept draft",
+    z.strictObject({ key: z.string().min(1) }),
+    z.object({ key: z.string(), text: z.string().nullable() }),
+  ),
   lineAdd: write(
     "line.add",
     "Add a line of work where it belongs (the developer)",

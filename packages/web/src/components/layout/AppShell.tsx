@@ -6,6 +6,7 @@ import { useLiveUpdates } from "../../hooks/useLiveUpdates.ts";
 import { closeEntity, useRoute } from "../../lib/router.ts";
 import { EntityPanel } from "../entity/EntityPanel.tsx";
 import { ErrorState } from "../ui/states.tsx";
+import { PendingChoices } from "./PendingChoices.tsx";
 import { RailOverview } from "./RailOverview.tsx";
 import { SidebarView } from "./SidebarView.tsx";
 
@@ -21,6 +22,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <SidebarView path={path} live={live} counts={data?.counts ?? null} projects={data?.projects ?? []} />
       <main className="main">
         {isPending ? null : error !== null && data === undefined ? <ErrorState error={error} /> : children}
+        <PendingChoices />
       </main>
       <aside className="rail" data-open={entity !== null} aria-label={entity === null ? "Overview" : entity}>
         {isPending ? null : entity === null ? (

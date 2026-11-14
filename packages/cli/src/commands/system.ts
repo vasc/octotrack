@@ -137,6 +137,102 @@ export const systemCommands: Command[] = [
     },
   },
   {
+    path: ["choice", "list"],
+    summary: "The developer's choices still waiting to take effect, each with its Undo window",
+    ops: [c.choiceList.name],
+    async run({ client, out }) {
+      const outcome = await client.call(c.choiceList, {});
+      out.result(outcome, () =>
+        outcome.data.length === 0
+          ? r.dim("Nothing waiting.")
+          : r.table(
+              outcome.data.map((choice) => [
+                String(choice.id),
+                choice.summary,
+                `at ${choice.dueAt.slice(11, 19)}`,
+              ]),
+            ),
+      );
+    },
+  },
+  {
+    path: ["choice", "make"],
+    usage: "<op>",
+    summary:
+      "Make a choice that waits a few seconds with Undo (the developer). The dashboard does this for you",
+    options: {
+      input: { ...STRING, description: "The operation's input, as JSON" },
+      summary: { ...STRING, description: "What the choice is, in words (required)" },
+      delay: { ...STRING, description: "How long it waits, in milliseconds. Default 5000" },
+    },
+    ops: [c.choiceMake.name],
+    async run({ client, out }, args) {
+      const summary = args.str("summary");
+      if (summary === undefined) throw new UsageError("Missing --summary");
+      const outcome = await client.call(
+        c.choiceMake,
+        compact({
+          op: args.requirePositional(0, "op"),
+          input: JSON.parse(args.str("input") ?? "{}"),
+          summary,
+          delayMs: args.int("delay"),
+        }),
+      );
+      out.result(
+        outcome,
+        () =>
+          `${outcome.data.summary}: takes effect at ${outcome.data.dueAt}. Undo: octo choice undo ${outcome.data.id}`,
+      );
+    },
+  },
+  {
+    path: ["choice", "undo"],
+    usage: "<id>",
+    summary: "Undo a choice still waiting",
+    ops: [c.choiceUndo.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(c.choiceUndo, { id: Number(args.requirePositional(0, "id")) });
+      out.result(outcome, () => `Undone: ${outcome.data.summary}`);
+    },
+  },
+  {
+    path: ["choice", "now"],
+    usage: "<id>",
+    summary: "Apply a waiting choice at once",
+    ops: [c.choiceNow.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(c.choiceNow, { id: Number(args.requirePositional(0, "id")) });
+      out.result(outcome, () =>
+        outcome.data.state === "failed"
+          ? `Failed: ${outcome.data.error ?? ""}`
+          : `Done: ${outcome.data.summary}`,
+      );
+    },
+  },
+  {
+    path: ["draft", "save"],
+    usage: "<key> [text]",
+    summary: "Keep a half-written answer or note; no text clears it",
+    ops: [c.draftSave.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(c.draftSave, {
+        key: args.requirePositional(0, "key"),
+        text: args.positionals.slice(1).join(" "),
+      });
+      out.result(outcome, () => (outcome.data.text === null ? "Cleared." : "Kept."));
+    },
+  },
+  {
+    path: ["draft", "get"],
+    usage: "<key>",
+    summary: "Read a kept draft",
+    ops: [c.draftGet.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(c.draftGet, { key: args.requirePositional(0, "key") });
+      out.result(outcome, () => outcome.data.text ?? r.dim("No draft."));
+    },
+  },
+  {
     path: ["agent", "wakes"],
     summary: "Asleep agents with something waiting, and how each is woken. The server wakes them itself",
     ops: [c.agentWakes.name],

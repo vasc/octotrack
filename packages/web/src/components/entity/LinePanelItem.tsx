@@ -6,7 +6,7 @@ import { LinePanel } from "./LinePanel.tsx";
 
 /** A line in the inspector: what it is, and what the developer can do with it. */
 export function LinePanelItem({ line }: { line: Line }) {
-  const choices = useLineChoices(line.ref);
+  const choices = useLineChoices(line);
   return (
     <>
       <LinePanel line={line} />
