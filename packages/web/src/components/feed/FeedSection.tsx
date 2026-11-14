@@ -32,30 +32,47 @@ export function FeedSection({
   if (feed.stillSearching) return <LoadingState label="Searching older events" />;
   if (unseen) {
     const lines =
-      home.data === undefined ? [] : [...home.data.working, ...home.data.upNext, ...home.data.tabled];
+      home.data === undefined
+        ? []
+        : [
+            ...home.data.working,
+            ...home.data.proposed,
+            ...home.data.doneLately,
+            ...home.data.upNext,
+            ...home.data.tabled,
+          ];
     return (
-      <UnseenLog
-        events={feed.events}
-        lines={lines}
-        includeWaiting={includeWaiting}
-        onShowWaiting={onShowWaiting}
-      />
+      <>
+        <UnseenLog
+          events={feed.events}
+          lines={lines}
+          includeWaiting={includeWaiting}
+          onShowWaiting={onShowWaiting}
+        />
+        <Older feed={feed} />
+      </>
     );
   }
   if (feed.events.length === 0) return <EmptyState>Nothing matches this search.</EmptyState>;
   return (
     <>
       <FeedList events={feed.events} onFilter={onFilter} />
-      {feed.hasNextPage ? (
-        <button
-          type="button"
-          className="btn"
-          disabled={feed.isFetchingNextPage}
-          onClick={() => void feed.fetchNextPage()}
-        >
-          {feed.isFetchingNextPage ? "Loading..." : "Older"}
-        </button>
-      ) : null}
+      <Older feed={feed} />
     </>
+  );
+}
+
+/** More of the log than one page: what is not seen pages like a search does, so nothing past the first page is lost. */
+function Older({ feed }: { feed: ReturnType<typeof useFeed> }) {
+  if (!feed.hasNextPage) return null;
+  return (
+    <button
+      type="button"
+      className="btn"
+      disabled={feed.isFetchingNextPage}
+      onClick={() => void feed.fetchNextPage()}
+    >
+      {feed.isFetchingNextPage ? "Loading" : "Older"}
+    </button>
   );
 }

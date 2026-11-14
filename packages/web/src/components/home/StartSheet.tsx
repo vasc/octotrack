@@ -1,6 +1,7 @@
 import { contracts } from "@octotrack/core/contracts";
 import type { Line } from "@octotrack/core/schemas";
 import { useMemo } from "react";
+import { useChoices } from "../../hooks/useChoices.ts";
 import { type HotkeyMap, useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useLinePlace } from "../../hooks/useLinePlace.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
@@ -17,8 +18,11 @@ export function StartSheet({
   onDoneWhen,
   onStart,
   onCancel,
+  armed = true,
 }: {
   line: Line;
+  /** Whether its number keys act: not while a panel is open over it. */
+  armed?: boolean;
   onDoneWhen(ref: string, accept: boolean): void;
   onStart(ref: string): void;
   onCancel(): void;
@@ -27,6 +31,14 @@ export function StartSheet({
   const questions = useOpQuery(contracts.decisionList, { query: `line:${line.ref} status:open` });
   const place = useLinePlace(line.ref);
   const { resolve } = useResolveDecision();
+  const choices = useChoices();
+  // A choice made here waits with Undo; until it takes effect the sheet's keys stand down, so one press is one choice.
+  const waiting = choices.pending.some(
+    (choice) =>
+      choice.state === "pending" &&
+      choice.ref !== null &&
+      (choice.ref === line.ref || (questions.data ?? []).some((question) => question.ref === choice.ref)),
+  );
   const current = useMemo(() => (held.data ?? []).filter((item) => item.current), [held.data]);
   // The sheet draws its choices numbered in one run; the keys follow the same run.
   const keys = useMemo((): HotkeyMap => {
@@ -51,8 +63,9 @@ export function StartSheet({
         );
       }
     }
+    if (!armed || waiting) return {};
     return Object.fromEntries(actions.slice(0, 9).map((action, index) => [String(index + 1), action]));
-  }, [line, current, questions.data, onDoneWhen, resolve, place]);
+  }, [line, current, questions.data, onDoneWhen, resolve, place, armed, waiting]);
   useHotkeys(keys);
   if (held.isPending || questions.isPending) return <LoadingState />;
   const failure = held.error ?? questions.error;

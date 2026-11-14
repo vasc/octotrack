@@ -589,11 +589,14 @@ describe("small pieces", () => {
 /** A task card whose words are kept, as its caller keeps them in a draft. */
 function TypingTask({ onDone, onCant }: { onDone(result: string): void; onCant(why: string): void }) {
   const [words, setWords] = useState("");
+  const [why, setWhy] = useState("");
   return (
     <TaskCard
       task={issue({ title: "Measure the grip", place: "the bench", outcome: "Five numbers" })}
       words={words}
       onWords={setWords}
+      why={why}
+      onWhy={setWhy}
       onDone={onDone}
       onCant={onCant}
     />
@@ -699,7 +702,7 @@ describe("lines of work", () => {
     ).getByText("Task · OCT-7 · at the Mac");
   });
 
-  test("TaskCard shows what to send back as a form, and Can't do it asks why", () => {
+  test("TaskCard shows what to send back as a form, and Can't do it asks why, in a box of its own", () => {
     const onDone = mock(() => {});
     const onCant = mock(() => {});
     const view = render(<TypingTask onDone={onDone} onCant={onCant} />);
@@ -709,6 +712,8 @@ describe("lines of work", () => {
     fireEvent.click(view.getByRole("button", { name: "Done" }));
     expect(onDone).toHaveBeenCalledWith("41, 38");
     fireEvent.click(view.getByRole("button", { name: "Can't do it" }));
+    // What was found is not offered as the reason: each has its own box.
+    expect(view.getByLabelText("Why OCT-1 cannot be done")).toHaveProperty("value", "");
     fireEvent.change(view.getByLabelText("Why OCT-1 cannot be done"), { target: { value: "No calipers" } });
     fireEvent.click(view.getByRole("button", { name: "Close it" }));
     expect(onCant).toHaveBeenCalledWith("No calipers");
@@ -1775,13 +1780,39 @@ describe("UnseenLog", () => {
     at(1, { line: "L-2", type: "write.refused", summary: "panel was refused a write on L-2" }),
   ];
 
+  test("drops nothing: a proposal, a line just done and a line it does not know each show; late pull requests go to the top", () => {
+    const proposed = line({ ref: "L-3", title: "Wall mount", state: "proposed" });
+    const done = line({ ref: "L-4", title: "Seerr", state: "done" });
+    const view = render(
+      <UnseenLog
+        events={[
+          at(10, { line: "L-3", type: "line.proposed", summary: "L-3 proposed: Wall mount" }),
+          at(11, { line: "L-4", type: "line.summarized", summary: "L-4: finished and in use" }),
+          at(12, { line: "L-9", type: "issue.created", summary: "OCT-9 created on a line gone from home" }),
+          at(13, {
+            line: "L-2",
+            type: "pr.after_wind_down",
+            summary: "PR-4 opened on L-2 after it was tabled",
+          }),
+        ]}
+        lines={[working, queued, proposed, done]}
+        includeWaiting={false}
+        onShowWaiting={() => {}}
+      />,
+    );
+    within(view.getByRole("list", { name: "Rule breaks" })).getByText(/opened on L-2 after it was tabled/);
+    within(view.getByRole("article", { name: "Wall mount" })).getByText(/proposed: Wall mount/);
+    within(view.getByRole("article", { name: "Seerr" })).getByText(/finished and in use/);
+    within(view.getByRole("article", { name: "Elsewhere" })).getByText(/gone from home/);
+  });
+
   test("groups line by line in the developer's order, folds checks to one sentence, and leaves waiting lines out but refused writes in", () => {
     const view = render(
       <UnseenLog events={events} lines={[working, queued]} includeWaiting={false} onShowWaiting={() => {}} />,
     );
     // Rule breaks first, whatever is left out; then only the working lines.
     within(view.getByRole("list", { name: "Rule breaks" })).getByText(/panel was refused a write/);
-    const groups = view.getAllByRole("region");
+    const groups = view.getAllByRole("article");
     expect(groups.map((group) => group.getAttribute("aria-label"))).toEqual(["Enclosure"]);
     within(groups[0] ?? document.body).getByText("Also routine: 2 check changes, 1 re-confirmation.");
     within(groups[0] ?? document.body).getByText(/created: Base/);

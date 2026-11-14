@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useBrowserFocus } from "../../hooks/useBrowserFocus.ts";
 import { useClock } from "../../hooks/useClock.ts";
 import { useDragOrder } from "../../hooks/useDragOrder.ts";
@@ -43,6 +43,11 @@ export function HomePage() {
   const { focus, choose, follow, skip } = focusState;
   const page = useRef<HTMLDivElement>(null);
   useBrowserFocus(page, focus, focusState.moved, follow);
+  // A count or a buzz names an item with ?focus; once focus is there the URL lets it go, so the same count or buzz
+  // works again after focus has moved on. The URL is outside React, so an effect brings it in line.
+  useEffect(() => {
+    if (asked !== null && focus === asked) setParams({ focus: null }, true);
+  }, [asked, focus]);
   const [starting, setStarting] = useState<string | null>(null);
   // With a ref open in the panel, or a Start sheet open, that takes the keys and home stands down, so one key never
   // answers twice.
@@ -82,7 +87,8 @@ export function HomePage() {
     />
   );
   const at = home?.at ?? null;
-  const now = useClock(false);
+  // I'm at counts down in hours, so a minute's tick keeps it right without redrawing home every second.
+  const now = useClock(at !== null, 60_000);
 
   return (
     <div className="page" ref={page}>
@@ -168,6 +174,7 @@ export function HomePage() {
             />
           )}
           <WaitingSections
+            sheetArmed={params.get("ref") === null}
             home={home}
             h={h}
             focus={focus}

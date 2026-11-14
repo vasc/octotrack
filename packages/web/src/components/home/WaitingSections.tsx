@@ -42,6 +42,7 @@ export function WaitingSections({
   handle,
   drop,
   onStarting,
+  sheetArmed = true,
 }: {
   home: HomeView;
   h: HomeActions;
@@ -54,6 +55,8 @@ export function WaitingSections({
   handle(title: string, ref: string, index: number, count: number, section: "working" | "up_next"): ReactNode;
   drop(ref: string, section: "working" | "up_next"): DropTarget;
   onStarting(ref: string | null): void;
+  /** Whether an open Start sheet's number keys act: not while a panel is open over home. */
+  sheetArmed?: boolean;
 }) {
   const sheet = (ref: string) => {
     const line = [...home.upNext, ...home.tabled, ...home.proposed].find(
@@ -68,6 +71,7 @@ export function WaitingSections({
           onStarting(null);
         }}
         onCancel={() => onStarting(null)}
+        armed={sheetArmed}
       />
     );
   };

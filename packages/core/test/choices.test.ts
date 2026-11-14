@@ -79,6 +79,7 @@ describe("every choice waits a few seconds with Undo", () => {
       { op: "line.start", input: { ref: w.line.ref }, summary: "Started", draft: "tell:L-1" },
       w.dev,
     );
+    expect(undone.draft).toBe("tell:L-1");
     w.tracker.call(c.choiceUndo, { id: undone.id }, w.dev);
     expect(draft("tell:L-1")).toBe("Black, please.");
     const applied = w.tracker.call(

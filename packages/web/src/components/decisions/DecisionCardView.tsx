@@ -138,8 +138,13 @@ export function DecisionCardView({ card, form, selected = false, line = null }: 
             autoFocus
           />
           <div className="question-actions">
-            <button type="submit" className="btn" data-primary="true" disabled={form.ownWords.trim() === ""}>
-              Send
+            <button
+              type="submit"
+              className="btn"
+              data-primary="true"
+              disabled={form.ownWords.trim() === "" || form.sending}
+            >
+              {form.sending ? "Sending" : "Send"}
             </button>
             <button type="button" className="btn" onClick={form.closeOwn}>
               Cancel

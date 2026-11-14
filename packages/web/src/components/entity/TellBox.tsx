@@ -9,11 +9,15 @@ export interface TellBoxProps {
   onSend(words: string): void;
   /** Opened with t: the box takes the cursor. */
   focus?: boolean;
+  /** Its words are waiting with Undo: they are not sent again. */
+  sending?: boolean;
 }
 
 /** Tell: a free message to whoever owns the line, closing nothing. Empty, it is a nudge. */
-export function TellBox({ line, to, words, onWords, onSend, focus = false }: TellBoxProps) {
-  const send = () => onSend(words.trim());
+export function TellBox({ line, to, words, onWords, onSend, focus = false, sending = false }: TellBoxProps) {
+  const send = () => {
+    if (!sending) onSend(words.trim());
+  };
   const who = to ?? `whoever takes ${line}`;
   return (
     <section className="panel-section" aria-label="Tell">
@@ -31,8 +35,8 @@ export function TellBox({ line, to, words, onWords, onSend, focus = false }: Tel
             A message, not an answer: it closes nothing. Markdown works; the box grows as you type. It goes to
             the line's inbox and wakes the owner; empty, it is a nudge.
           </span>
-          <button type="submit" className="btn" data-primary="true">
-            {words.trim() === "" ? "Nudge" : "Tell"}
+          <button type="submit" className="btn" data-primary="true" disabled={sending}>
+            {sending ? "Sending" : words.trim() === "" ? "Nudge" : "Tell"}
           </button>
         </div>
       </form>

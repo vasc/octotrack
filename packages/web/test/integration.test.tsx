@@ -560,6 +560,19 @@ describe("the inspector", () => {
     expect(server.act(c.decisionList, { query: `ref:${decision.ref}` })[0]?.chosenOption).toBe("sqs");
   });
 
+  test("a question opened in the panel takes one answer by key while it waits, not two", async () => {
+    const decision = seedDecision();
+    navigate(`/?ref=${decision.ref}`);
+    const view = renderApp(<App />);
+    const panel = within(await view.findByRole("complementary", { name: decision.ref }));
+    await panel.findByRole("button", { name: /SQS/ });
+    fireEvent.keyDown(window, { key: "1" });
+    await view.findByRole("button", { name: "Undo" });
+    fireEvent.keyDown(window, { key: "2" });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(server.calls.filter((name) => name === "choice.make")).toHaveLength(1);
+  });
+
   test("says when a ref does not exist", async () => {
     navigate("/?ref=OCT-404");
     const view = renderApp(<App />);
@@ -963,13 +976,34 @@ describe("lines of work", () => {
       navigate("/log");
       const view = renderApp(<App />);
       const feed = within(await view.findByRole("feed"));
-      const line = within(await feed.findByRole("region", { name: "Sendspin enclosure" }));
+      const line = within(await feed.findByRole("article", { name: "Sendspin enclosure" }));
       await line.findByText("1 unseen");
       line.getByText(/plan/i);
-      within(feed.getByRole("region", { name: "Weekly digest" })).getByText(/nothing new/);
+      within(feed.getByRole("article", { name: "Weekly digest" })).getByText(/nothing new/);
       fireEvent.click(view.getByRole("button", { name: "Mark all seen" }));
       await line.findByText(/nothing new/);
     });
+  });
+
+  test("Not seen shows a new proposal too, not only working lines", async () => {
+    seedLines();
+    server.tracker.call(c.seen, {}, asDeveloper);
+    server.later(1);
+    server.act(
+      c.linePropose,
+      {
+        title: "Garden sensor",
+        doneWhen: "Readings arrive.",
+        recommendation: "up_next",
+        why: "The bed is planted.",
+      },
+      "panel-agent",
+    );
+    navigate("/log");
+    const view = renderApp(<App />);
+    const feed = within(await view.findByRole("feed"));
+    const proposal = within(await feed.findByRole("article", { name: "Garden sensor" }));
+    await proposal.findByText("1 unseen");
   });
 
   describe("keys on home", () => {
@@ -1178,6 +1212,24 @@ describe("lines of work", () => {
       );
     });
 
+    test("a count clicked again goes back to its item, after focus moved away", async () => {
+      seedLines();
+      server.act(c.agentRegister, { repo: "OCT" }, "octo.1");
+      server.act(c.lineTake, { ref: "L-1" }, "octo.1");
+      server.tracker.call(c.placeAdd, { name: "the bench" }, asDeveloper);
+      server.act(c.decisionAsk, { title: "Which board?", context: "Context.", options }, "octo.1");
+      server.act(c.taskFile, { title: "Weigh it", place: "the bench", outcome: "Grams" }, "octo.1");
+      navigate("/");
+      const view = renderApp(<App />);
+      await view.findByRole("article", { name: "Which board?" });
+      fireEvent.click(view.getByRole("link", { name: "1 to do" }));
+      await view.findByRole("article", { name: "Weigh it" });
+      fireEvent.keyDown(window, { key: "k" });
+      await view.findByRole("article", { name: "Which board?" });
+      fireEvent.click(view.getByRole("link", { name: "1 to do" }));
+      await view.findByRole("article", { name: "Weigh it" });
+    });
+
     test("past six working lines, the header says what spreading thin costs", async () => {
       for (const index of [1, 2, 3, 4, 5, 6, 7]) {
         server.tracker.call(
@@ -1375,6 +1427,29 @@ describe("lines of work", () => {
         ).toBe("decided"),
       );
       expect(server.tracker.call(c.lineShow, { ref: queued.ref }, asDeveloper).line.state).toBe("up_next");
+    });
+
+    test("the Start sheet takes one key press per choice while it waits", async () => {
+      seedLines();
+      const queued = server.tracker.call(
+        c.lineAdd,
+        { title: "Mount", doneWhen: "It hangs.", repos: ["OCT"], where: "up_next" },
+        asDeveloper,
+      );
+      server.act(c.agentRegister, { repo: "OCT" }, "octo.2");
+      server.act(c.lineTake, { ref: queued.ref }, "octo.2");
+      server.act(c.decisionAsk, { title: "Which wall?", context: "Context.", options }, "octo.2");
+      navigate("/");
+      const view = renderApp(<App />);
+      const upNext = within(await view.findByRole("region", { name: "Up next" }));
+      fireEvent.click(upNext.getByRole("button", { name: "Start Mount" }));
+      const sheet = within(await view.findByRole("dialog", { name: "Start Mount" }));
+      await sheet.findByRole("button", { name: "Yes" });
+      fireEvent.keyDown(window, { key: "1" });
+      await view.findByRole("button", { name: "Undo" });
+      fireEvent.keyDown(window, { key: "1" });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(server.calls.filter((name) => name === "choice.make")).toHaveLength(1);
     });
 
     test("Start on an up-next line first shows what it holds, then starts it", async () => {
@@ -1756,6 +1831,29 @@ describe("lines of work", () => {
       expect(selected(view, "Which plug?")).toBe("true");
     });
 
+    test("when the focused item goes away, focus moves on without taking the cursor from a box being typed in", async () => {
+      server = startTestServer({ live: true });
+      server.act(c.projectCreate, { key: "OCT", name: "Octotrack" });
+      onLine();
+      const first = server.act(
+        c.decisionAsk,
+        { title: "Which board?", context: "Printed.", options },
+        "octo.1",
+      );
+      server.act(c.decisionAsk, { title: "Which plug?", context: "Side.", options }, "octo.1");
+      navigate("/?new=1");
+      const view = renderApp(<App />);
+      await view.findByRole("article", { name: "Which board?" });
+      // Focus moved by a key once, as it would be in use.
+      fireEvent.keyDown(window, { key: "k" });
+      const box = view.getByLabelText("What it is");
+      box.focus();
+      server.act(c.decisionWithdraw, { ref: first.ref }, "octo.1");
+      await view.findByRole("article", { name: "Which plug?" });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(document.activeElement).toBe(box);
+    });
+
     test("a question arriving, even an urgent one, does not move it", async () => {
       server = startTestServer({ live: true });
       server.act(c.projectCreate, { key: "OCT", name: "Octotrack" });
@@ -1851,6 +1949,21 @@ describe("lines of work", () => {
       );
     });
 
+    test("words waiting to be sent are not sent twice, by button or by Cmd+Enter", async () => {
+      owned();
+      navigate("/?ref=L-1");
+      const view = renderApp(<App />);
+      const panel = within(await view.findByRole("complementary", { name: "L-1" }));
+      const box = await panel.findByLabelText("Tell octo.1");
+      fireEvent.change(box, { target: { value: "Print it in black" } });
+      fireEvent.keyDown(box, { key: "Enter", metaKey: true });
+      await view.findByRole("button", { name: "Undo" });
+      fireEvent.keyDown(box, { key: "Enter", metaKey: true });
+      expect(panel.getByRole("button", { name: "Sending" }).hasAttribute("disabled")).toBe(true);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(server.calls.filter((name) => name === "choice.make")).toHaveLength(1);
+    });
+
     test("Undo keeps a Tell's words in the box; once it takes effect, the box empties", async () => {
       owned();
       navigate("/?ref=L-1");
@@ -1867,6 +1980,39 @@ describe("lines of work", () => {
       await answerNow(view);
       await waitFor(() => expect(panel.getByLabelText("Tell octo.1")).toHaveProperty("value", ""));
       expect(server.tracker.call(c.draftGet, { key: "tell:L-1" }, asDeveloper).text).toBeNull();
+    });
+
+    test("a save that lands while newer words wait for theirs does not put older words back in the box", async () => {
+      owned();
+      navigate("/?ref=L-1");
+      const view = renderApp(<App />);
+      const panel = within(await view.findByRole("complementary", { name: "L-1" }));
+      const box = await panel.findByLabelText("Tell octo.1");
+      // Draft saves answer slowly here, as over a slow link.
+      const fetchNow = globalThis.fetch;
+      Object.assign(globalThis, {
+        fetch: async (input: string | URL | Request, init?: RequestInit) => {
+          if (String(input).includes("draft.save")) await new Promise((resolve) => setTimeout(resolve, 400));
+          return fetchNow(input, init);
+        },
+      });
+      try {
+        fireEvent.change(box, { target: { value: "Print it" } });
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        fireEvent.change(box, { target: { value: "Print it in black" } });
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        expect(box).toHaveProperty("value", "Print it in black");
+        // The last save is let land here, so it reaches no later test.
+        await waitFor(
+          () =>
+            expect(server.tracker.call(c.draftGet, { key: "tell:L-1" }, asDeveloper).text).toBe(
+              "Print it in black",
+            ),
+          { timeout: 2000 },
+        );
+      } finally {
+        Object.assign(globalThis, { fetch: fetchNow });
+      }
     });
 
     test("words typed on another device appear in a box that does not have focus, and never in one that does", async () => {

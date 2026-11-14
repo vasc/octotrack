@@ -9,6 +9,11 @@ export function useChoices() {
   const now = useOpMutation(contracts.choiceNow);
   return {
     pending: pending.data ?? [],
+    /** Whether a choice about this item, or carrying this draft's words, is waiting with Undo. */
+    waiting: (refOrDraft: string) =>
+      (pending.data ?? []).some(
+        (choice) => choice.state === "pending" && (choice.ref === refOrDraft || choice.draft === refOrDraft),
+      ),
     failure: make.error ?? undo.error ?? now.error,
     /** With a draft, the words typed for it stay kept through Undo, and the server deletes them once it takes effect. */
     make: (op: string, input: unknown, summary: string, draft?: string) =>

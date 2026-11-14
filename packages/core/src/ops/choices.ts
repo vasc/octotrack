@@ -14,7 +14,6 @@ export const DEFAULT_CHOICE_DELAY_MS = 5000;
 
 const ChoiceRow = PendingChoice.omit({ ref: true, line: true }).extend({
   input: z.string(),
-  draft: z.string().nullable(),
   actor: z.string(),
   channel: Channel,
   said: z.string().nullable(),
@@ -69,6 +68,7 @@ function view(ctx: Ctx, row: ChoiceRow): PendingChoice {
     op: row.op,
     ref: targetOf(row.op, JSON.parse(row.input)),
     line: lineLeft(ctx, row),
+    draft: row.draft,
     summary: row.summary,
     dueAt: row.dueAt,
     state: row.state,

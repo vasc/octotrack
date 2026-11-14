@@ -1,6 +1,7 @@
 import { contracts } from "@octotrack/core/contracts";
 import type { Line } from "@octotrack/core/schemas";
 import { useState } from "react";
+import { useChoices } from "../../hooks/useChoices.ts";
 import { useDraft } from "../../hooks/useDraft.ts";
 import { StartSheet } from "../home/StartSheet.tsx";
 import { useHome } from "../../hooks/useHome.ts";
@@ -8,6 +9,7 @@ import { useLineChoices } from "../../hooks/useLineChoices.ts";
 import { useMarkSeen } from "../../hooks/useMarkSeen.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
 import { useRoute } from "../../lib/router.ts";
+import { NotKept } from "../ui/NotKept.tsx";
 import { ErrorState } from "../ui/states.tsx";
 import { LineActions } from "./LineActions.tsx";
 import { LinePanelHead } from "./LinePanelHead.tsx";
@@ -25,6 +27,7 @@ import { TellBox } from "./TellBox.tsx";
  */
 export function LinePanelItem({ line }: { line: Line }) {
   const choices = useLineChoices(line);
+  const { waiting: choicesWaiting } = useChoices();
   const h = useHome();
   const shown = useOpQuery(contracts.lineShow, { ref: line.ref });
   const since = useOpQuery(contracts.feedList, { query: `line:${line.ref}`, limit: 50 });
@@ -107,6 +110,7 @@ export function LinePanelItem({ line }: { line: Line }) {
           onWords={own.change}
           onTask={(title) => void own.flush().then(() => choices.addTask(title))}
           onNote={(body) => void own.flush().then(() => choices.addNote(body))}
+          sending={choicesWaiting(`own:${line.ref}`)}
         />
       ) : line.state === "working" ? (
         <TellBox
@@ -115,10 +119,13 @@ export function LinePanelItem({ line }: { line: Line }) {
           words={tell.value}
           onWords={tell.change}
           focus={telling}
+          sending={choicesWaiting(`tell:${line.ref}`)}
           onSend={(words) => void tell.flush().then(() => choices.tell(words))}
         />
       ) : null}
+      <NotKept error={tell.error ?? own.error} />
       {choices.failure === null ? null : <ErrorState error={choices.failure} />}
+      {h.failure === null ? null : <ErrorState error={h.failure} />}
     </div>
   );
 }

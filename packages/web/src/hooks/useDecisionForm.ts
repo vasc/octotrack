@@ -9,6 +9,8 @@ import { useResolveDecision } from "./useResolveDecision.ts";
 export interface DecisionForm {
   /** What is typed as an answer in the developer's own words, or null while that box is closed. */
   ownWords: string | null;
+  /** Words sent in the developer's own words are waiting with Undo: they are not sent again. */
+  sending: boolean;
   error: string | null;
   /** Picks an option, which answers: it waits a few seconds with Undo, like every choice. */
   answer(key: string): void;
@@ -36,7 +38,8 @@ export function useDecisionForm(decision: Decision, onPostponed?: (ref: string) 
   const open = writing || draft.value !== "";
   return {
     ownWords: open ? draft.value : null,
-    error: error?.message ?? null,
+    sending: choices.waiting(key),
+    error: error?.message ?? (draft.error === null ? null : `Not saved: ${draft.error}`),
     answer: (key) => {
       const label = decision.options.find((option) => option.key === key)?.label ?? key;
       resolve({
@@ -54,7 +57,7 @@ export function useDecisionForm(decision: Decision, onPostponed?: (ref: string) 
     setOwn: draft.change,
     sendOwn: () => {
       const words = draft.value.trim();
-      if (words === "") return;
+      if (words === "" || choices.waiting(key)) return;
       setWriting(false);
       void draft.flush().then(() =>
         resolve({

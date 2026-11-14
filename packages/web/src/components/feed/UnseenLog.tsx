@@ -11,8 +11,19 @@ const FOLDED: Readonly<Record<string, readonly [string, string]>> = {
   "held.confirmed": ["re-confirmation", "re-confirmations"],
 };
 
-/** Rule breaks: always shown, at the top, whatever is filtered or left out. */
-const REFUSED: ReadonlySet<string> = new Set(["write.refused", "agent.would_stop", "agent.stopped"]);
+/**
+ * Rule breaks, and work that reached a line after it was told to stop: always shown, at the top, whatever is filtered
+ * or left out.
+ */
+const REFUSED: ReadonlySet<string> = new Set([
+  "write.refused",
+  "agent.would_stop",
+  "agent.stopped",
+  "pr.after_wind_down",
+]);
+
+/** Lines whose changes wait until asked for: up next and tabled are quiet. Every other line is shown. */
+const QUIET: ReadonlySet<Line["state"]> = new Set(["up_next", "tabled"]);
 
 function folded(events: readonly FeedEvent[]): string | null {
   const counts = new Map<string, number>();
@@ -55,11 +66,14 @@ export function UnseenLog({
   onShowWaiting(): void;
 }) {
   const refused = events.filter((event) => REFUSED.has(event.type));
-  const shown = lines.filter((line) => line.state === "working" || includeWaiting);
-  const waiting = lines.filter((line) => line.state !== "working");
+  const shown = lines.filter((line) => includeWaiting || !QUIET.has(line.state));
+  const waiting = lines.filter((line) => QUIET.has(line.state));
+  const known = new Set(lines.map((line) => line.ref));
   const loose = events.filter((event) => event.line === null && !REFUSED.has(event.type));
-  const looseRows = loose.filter((event) => FOLDED[event.type] === undefined);
-  const looseSentence = folded(loose);
+  // A line this page does not list, such as one ended a while ago: its changes still show, never dropped.
+  const elsewhere = events.filter(
+    (event) => event.line !== null && !known.has(event.line) && !REFUSED.has(event.type),
+  );
   const leftOut = includeWaiting
     ? 0
     : events.filter((event) => !REFUSED.has(event.type) && waiting.some((line) => line.ref === event.line))
@@ -78,7 +92,7 @@ export function UnseenLog({
         const rows = own.filter((event) => FOLDED[event.type] === undefined);
         const sentence = folded(own);
         return (
-          <section key={line.ref} className="log-line" aria-label={line.title}>
+          <article key={line.ref} className="log-line" aria-label={line.title}>
             <div className="log-line-head">
               <span className="line-num">{index + 1}</span>
               <span>
@@ -106,26 +120,11 @@ export function UnseenLog({
                 {sentence === null ? null : <li className="muted">Also routine: {sentence}.</li>}
               </ul>
             )}
-          </section>
+          </article>
         );
       })}
-      {looseRows.length === 0 ? null : (
-        <section className="log-line" aria-label="On no line">
-          <div className="log-line-head">
-            <span className="line-num" aria-hidden="true">
-              ·
-            </span>
-            <span>On no line</span>
-            <span className="log-unseen">{looseRows.length} unseen</span>
-          </div>
-          <ul className="log-rows">
-            {looseRows.map((event) => (
-              <Row key={event.seq} event={event} />
-            ))}
-            {looseSentence === null ? null : <li className="muted">Also routine: {looseSentence}.</li>}
-          </ul>
-        </section>
-      )}
+      <LooseSection title="On no line" events={loose} />
+      <LooseSection title="Elsewhere" events={elsewhere} />
       {includeWaiting || waiting.length === 0 ? null : (
         <p className="log-foot">
           <span className="muted">
@@ -138,5 +137,29 @@ export function UnseenLog({
         </p>
       )}
     </div>
+  );
+}
+
+/** Changes on no line, or on a line this page does not list: one group, so nothing not seen is dropped. */
+function LooseSection({ title, events }: { title: string; events: readonly FeedEvent[] }) {
+  const rows = events.filter((event) => FOLDED[event.type] === undefined);
+  const sentence = folded(events);
+  if (rows.length === 0) return null;
+  return (
+    <article className="log-line" aria-label={title}>
+      <div className="log-line-head">
+        <span className="line-num" aria-hidden="true">
+          ·
+        </span>
+        <span>{title}</span>
+        <span className="log-unseen">{rows.length} unseen</span>
+      </div>
+      <ul className="log-rows">
+        {rows.map((event) => (
+          <Row key={event.seq} event={event} />
+        ))}
+        {sentence === null ? null : <li className="muted">Also routine: {sentence}.</li>}
+      </ul>
+    </article>
   );
 }

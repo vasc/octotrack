@@ -8,6 +8,7 @@ import { closeEntity, openEntity } from "../../lib/router.ts";
 import { TaskItem } from "../home/TaskItem.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
 import { RefLink } from "../ui/RefLink.tsx";
+import { NotKept } from "../ui/NotKept.tsx";
 import { ErrorState } from "../ui/states.tsx";
 import { ActivityList } from "./ActivityList.tsx";
 import { PullRequestBox } from "./PullRequestBox.tsx";
@@ -93,6 +94,7 @@ export function IssuePanel({ issue, detail }: { issue: Issue; detail: EntityDeta
               line={issue.line}
               to={issue.assignee === null ? null : `${issue.assignee}, who holds ${issue.ref}`}
               words={tell.value}
+              sending={choices.waiting(`tell:${issue.ref}`)}
               onWords={tell.change}
               onSend={(words) =>
                 void tell
@@ -112,6 +114,7 @@ export function IssuePanel({ issue, detail }: { issue: Issue; detail: EntityDeta
           )}
         </>
       )}
+      <NotKept error={tell.error} />
       {choices.failure === null ? null : <ErrorState error={choices.failure} />}
     </section>
   );

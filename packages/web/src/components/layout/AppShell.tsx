@@ -59,6 +59,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       />
       <main className="main">
         {keysOpen ? <KeyHelp onClose={closeKeys} /> : null}
+        {bar.error === null ? null : <ErrorState error={bar.error} />}
         {isPending ? null : error !== null && data === undefined ? <ErrorState error={error} /> : children}
         <PendingChoices />
       </main>

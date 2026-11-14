@@ -18,6 +18,8 @@ export function useDraft(key: string) {
   const saved = useOpQuery(contracts.draftGet, { key });
   // Typed here and not yet kept by the server; null once the server holds it.
   const [typed, setTyped] = useState<string | null>(null);
+  // Why the last save failed, until one succeeds: the words are still on this screen, but nowhere else.
+  const [error, setError] = useState<string | null>(null);
   // The pending save lives outside rendering: a new keystroke replaces it, and nothing on screen depends on it.
   const pending = useRef<{ timer: ReturnType<typeof setTimeout>; text: string } | null>(null);
   const latest = useRef(0);
@@ -26,11 +28,17 @@ export function useDraft(key: string) {
     const attempt = latest.current;
     return callOp(contracts.draftSave, { key, text })
       .then((kept) => {
+        // An older save landing after a newer one started changes nothing.
         if (attempt !== latest.current) return;
         client.setQueryData([contracts.draftGet.name, { key }], kept);
-        setTyped(null);
+        // What is typed here stays shown until the server holds the newest of it: keystrokes still waiting for their
+        // save keep it.
+        setError(null);
+        if (pending.current === null) setTyped(null);
       })
-      .catch(() => {});
+      .catch((failure: unknown) => {
+        setError(failure instanceof Error ? failure.message : String(failure));
+      });
   };
   const save = (text: string, after: number) => {
     if (pending.current !== null) clearTimeout(pending.current.timer);
@@ -44,6 +52,7 @@ export function useDraft(key: string) {
   };
   return {
     value: typed ?? saved.data?.text ?? "",
+    error,
     change(text: string) {
       setTyped(text);
       save(text, SAVE_AFTER_MS);

@@ -1,5 +1,14 @@
 import { type RefObject, useEffect } from "react";
 
+function isTyping(element: HTMLElement): boolean {
+  return (
+    element.tagName === "INPUT" ||
+    element.tagName === "TEXTAREA" ||
+    element.tagName === "SELECT" ||
+    element.isContentEditable
+  );
+}
+
 function focusRefOf(target: EventTarget | null): string | null {
   if (!(target instanceof HTMLElement)) return null;
   return target.closest<HTMLElement>("[data-focus-ref]")?.dataset.focusRef ?? null;
@@ -17,13 +26,18 @@ export function useBrowserFocus(
   moved: number,
   follow: (ref: string) => void,
 ): void {
+  // Only a move the developer made, counted by `moved`, takes the browser's focus: focus that moves because its item
+  // went away changes home's focus and the keys, never the cursor, and a field being typed in is never left.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: focus is read when the developer moves it, not when it changes
   useEffect(() => {
     if (moved === 0 || focus === null || container.current === null) return;
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && isTyping(active)) return;
     const target = [...container.current.querySelectorAll<HTMLElement>("[data-focus-ref]")].find(
       (element) => element.dataset.focusRef === focus,
     );
-    if (target !== undefined && !target.contains(document.activeElement)) target.focus();
-  }, [container, focus, moved]);
+    if (target !== undefined && !target.contains(active)) target.focus();
+  }, [container, moved]);
 
   useEffect(() => {
     const element = container.current;
