@@ -2,7 +2,14 @@ import { existsSync } from "node:fs";
 import { join, normalize } from "node:path";
 
 /** Files at the root of the built dashboard that make it an installable app. */
-const ROOT_FILES: ReadonlySet<string> = new Set(["/sw.js", "/manifest.webmanifest", "/icon.svg"]);
+const ROOT_FILES: ReadonlySet<string> = new Set([
+  "/sw.js",
+  "/manifest.webmanifest",
+  "/icon.svg",
+  "/apple-touch-icon.png",
+  "/icon-192.png",
+  "/icon-512.png",
+]);
 
 /** Finds a dashboard file by its path under dist, such as "/assets/index-abc.js" or "/index.html". */
 export type Locate = (relative: string) => string | null;

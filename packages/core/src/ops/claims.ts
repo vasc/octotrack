@@ -286,6 +286,23 @@ export const claimOps = [
     return viewOf(ctx, requireAgent(ctx, agent.name));
   }),
 
+  bind(contracts.agentRelease, (ctx, input) => {
+    requireDeveloper(ctx, "release an agent's line");
+    const agent = requireAgent(ctx, input.name);
+    const claim = endClaim(ctx, agent.name, "released");
+    if (claim !== null) {
+      addNotice(
+        ctx,
+        agent.name,
+        "released",
+        claim.line,
+        `The developer released you from ${claim.line}; its issues went back to the line. Run octo line take for what to do next.`,
+        true,
+      );
+    }
+    return viewOf(ctx, requireAgent(ctx, agent.name));
+  }),
+
   bind(contracts.agentLift, (ctx, input) => {
     requireDeveloper(ctx, "lift a stop");
     const agent = requireAgent(ctx, input.name);

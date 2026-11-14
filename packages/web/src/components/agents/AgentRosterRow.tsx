@@ -11,15 +11,20 @@ const STATE_TONE = {
   stopped: "bad",
 } as const;
 
-/** One agent on the roster: what it is, where it is, and Stop, or Lift once stopped. */
+/**
+ * One agent on the roster: what it is, where it is, and Stop, or Lift once stopped. A quiet agent, one that cannot be
+ * woken and has not been heard from, keeps its line until the developer releases it.
+ */
 export function AgentRosterRow({
   agent,
   onStop,
   onLift,
+  onRelease,
 }: {
   agent: AgentView;
   onStop(name: string): void;
   onLift(name: string): void;
+  onRelease(name: string): void;
 }) {
   return (
     <article className="row" aria-label={agent.name}>
@@ -43,6 +48,16 @@ export function AgentRosterRow({
       <span className="muted no-shrink">
         last command <TimeAgo iso={agent.lastSeenAt} />
       </span>
+      {agent.state === "quiet" && agent.line !== null ? (
+        <button
+          type="button"
+          className="btn"
+          aria-label={`Release ${agent.name} from ${agent.line}`}
+          onClick={() => onRelease(agent.name)}
+        >
+          Release
+        </button>
+      ) : null}
       {agent.state === "stopped" ? (
         <button
           type="button"

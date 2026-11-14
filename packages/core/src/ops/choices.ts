@@ -10,7 +10,7 @@ import { requireDeveloperInPerson } from "./developer.ts";
 /** Long enough to see and undo a stray key, short enough not to feel like waiting. */
 export const DEFAULT_CHOICE_DELAY_MS = 5000;
 
-const ChoiceRow = PendingChoice.extend({
+const ChoiceRow = PendingChoice.omit({ ref: true }).extend({
   input: z.string(),
   actor: z.string(),
   channel: Channel,
@@ -27,10 +27,14 @@ const WRITES: ReadonlySet<string> = new Set(
     .map((contract) => contract.name),
 );
 
+const Target = z.object({ ref: z.string() });
+
 function view(row: ChoiceRow): PendingChoice {
+  const target = Target.safeParse(JSON.parse(row.input));
   return {
     id: row.id,
     op: row.op,
+    ref: target.success ? target.data.ref : null,
     summary: row.summary,
     dueAt: row.dueAt,
     state: row.state,

@@ -1,3 +1,4 @@
+import { Markdown } from "../ui/Markdown.tsx";
 import type { Line } from "@octotrack/core/schemas";
 import { useState } from "react";
 import { TableForm } from "../lines/TableForm.tsx";
@@ -44,7 +45,7 @@ export function LineActions({ line, onChoose, onTable, onDoneWhen }: LineActions
       {line.doneWhenProposal === null ? null : (
         <div className="proposal">
           <p>
-            <strong>Proposed done when</strong> {line.doneWhenProposal}
+            <strong>Proposed done when</strong> <Markdown text={line.doneWhenProposal} inline />
             {line.doneWhenProposedBy === null ? "" : ` (${line.doneWhenProposedBy})`}
           </p>
           <div className="decision-actions">
@@ -60,7 +61,7 @@ export function LineActions({ line, onChoose, onTable, onDoneWhen }: LineActions
       {line.doneProposal === null ? null : (
         <div className="proposal">
           <p>
-            <strong>Proposed done</strong> {line.doneProposal}
+            <strong>Proposed done</strong> <Markdown text={line.doneProposal} inline />
           </p>
           <div className="decision-actions">
             <button type="button" className="btn" data-primary="true" onClick={() => onChoose("done")}>

@@ -25,7 +25,7 @@ const OFFER_STEP_MS = 30_000;
 const SCOPING_LASTS_MS = 8 * 7 * 24 * 60 * MINUTE_MS;
 
 /** Why a claim ended. Only an owner that wound down or whose process exited is offered its line first again. */
-export const ClaimEnd = z.enum(["release", "switch", "stop", "gone", "wind_down", "exit"]);
+export const ClaimEnd = z.enum(["release", "released", "switch", "stop", "gone", "wind_down", "exit"]);
 export type ClaimEnd = z.infer<typeof ClaimEnd>;
 const COMES_BACK_FIRST: ReadonlySet<ClaimEnd> = new Set(["wind_down", "exit"]);
 

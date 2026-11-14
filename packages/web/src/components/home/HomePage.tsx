@@ -1,10 +1,12 @@
-import type { ForYou, HomeView } from "@octotrack/core/schemas";
-import { useMemo, useState } from "react";
-import { type HotkeyMap, useHotkeys } from "../../hooks/useHotkeys.ts";
+import type { ForYou } from "@octotrack/core/schemas";
+import { useState } from "react";
 import { useHome } from "../../hooks/useHome.ts";
+import { useHomeFocus } from "../../hooks/useHomeFocus.ts";
+import { useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useNarrow } from "../../hooks/useNarrow.ts";
 import { usePush } from "../../hooks/usePush.ts";
 import { useRoute } from "../../lib/router.ts";
+import { refOf } from "../../lib/focus.ts";
 import { stepInReason } from "../../lib/lines.ts";
 import { DecisionCardItem } from "../decisions/DecisionCardItem.tsx";
 import { AddLineForm } from "../lines/AddLineForm.tsx";
@@ -12,7 +14,7 @@ import { PageHead } from "../ui/PageHead.tsx";
 import { ErrorState, LoadingState } from "../ui/states.tsx";
 import { FirstRun } from "./FirstRun.tsx";
 import { FoldedSection } from "./FoldedSection.tsx";
-import { ForYouItem, refOf } from "./ForYouItem.tsx";
+import { ForYouItem } from "./ForYouItem.tsx";
 import { HomeCounts } from "./HomeCounts.tsx";
 import { HomeSection } from "./HomeSection.tsx";
 import { ProposalCard } from "./ProposalCard.tsx";
@@ -23,25 +25,6 @@ import { StepIn } from "./StepIn.tsx";
 import { UpNextRow } from "./UpNextRow.tsx";
 import { WorkingLine } from "./WorkingLine.tsx";
 
-/** What has focus when nothing was chosen, or the choice is gone: an urgent question, else the first thing waiting. */
-function defaultFocus(home: HomeView): string | null {
-  const urgent = home.urgent[0];
-  if (urgent !== undefined) return urgent.decision.ref;
-  for (const line of home.working) {
-    const first = home.lines[line.ref]?.forYou[0];
-    if (first !== undefined) return refOf(first);
-  }
-  return null;
-}
-
-/** Everything waiting on the developer, in the order j and k walk through it: urgent first, then line by line. */
-function orderedRefs(home: HomeView): string[] {
-  return [
-    ...home.urgent.map((card) => card.decision.ref),
-    ...home.working.flatMap((line) => (home.lines[line.ref]?.forYou ?? []).map(refOf)),
-  ];
-}
-
 /** Every line, in the developer's order, with what each needs from them in place. */
 export function HomePage() {
   const h = useHome();
@@ -51,21 +34,9 @@ export function HomePage() {
   const asked = params.get("focus");
   const narrow = useNarrow();
   const home = h.home.data;
-  const [chosen, setChosen] = useState<string | null>(null);
+  const { focus, armed, choose: setChosen, keys } = useHomeFocus(home, asked, h.held);
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   const [reordering, setReordering] = useState(false);
-  const order = useMemo(() => (home === undefined ? [] : orderedRefs(home)), [home]);
-  const wanted = chosen ?? asked;
-  const focus =
-    home === undefined ? null : wanted !== null && order.includes(wanted) ? wanted : defaultFocus(home);
-  const keys = useMemo((): HotkeyMap => {
-    const at = focus === null ? -1 : order.indexOf(focus);
-    const step = (by: number) => () => {
-      const next = order[Math.min(Math.max(at + by, 0), order.length - 1)];
-      if (next !== undefined) setChosen(next);
-    };
-    return order.length === 0 ? {} : { j: step(1), k: step(-1) };
-  }, [focus, order]);
   useHotkeys(keys);
 
   const item = (forYou: ForYou) => (
@@ -73,6 +44,7 @@ export function HomePage() {
       key={refOf(forYou)}
       item={forYou}
       focused={refOf(forYou) === focus}
+      armed={armed}
       onOpen={setChosen}
       onTaskDone={h.taskDone}
       onTaskCant={h.taskCant}
@@ -102,7 +74,7 @@ export function HomePage() {
         </button>
       </PageHead>
       {home === undefined ? null : <HomeCounts counts={home.counts} />}
-      <AddLineForm onAdd={h.add} />
+      <AddLineForm repos={h.repos} onAdd={h.add} />
       {h.failure === null ? null : <ErrorState error={h.failure} />}
       {h.home.isPending ? <LoadingState /> : null}
       {h.home.error === null ? null : <ErrorState error={h.home.error} />}
@@ -114,7 +86,12 @@ export function HomePage() {
           {home.urgent.length === 0 ? null : (
             <HomeSection title="Urgent" count={home.urgent.length}>
               {home.urgent.map((card) => (
-                <DecisionCardItem key={card.decision.ref} card={card} active={card.decision.ref === focus} />
+                <DecisionCardItem
+                  key={card.decision.ref}
+                  card={card}
+                  active={card.decision.ref === focus}
+                  armed={armed && card.decision.ref === focus}
+                />
               ))}
             </HomeSection>
           )}
@@ -125,7 +102,9 @@ export function HomePage() {
               const crew = home.crews[line.ref];
               const forYou = details?.forYou ?? [];
               const start = details?.start ?? null;
-              const stepIn = crew?.search?.step === 3 ? stepInReason(line, home.runner, start) : null;
+              // Whether to step in is the server's rule, shared with the phone's buzz: not while the line's work all
+              // waits on the developer, nor while a failed start is about to be retried by itself.
+              const stepIn = details?.stepIn === true ? stepInReason(line, home.runner, start) : null;
               const retryable = start?.state === "failed" || start?.state === "never_took";
               const [first, ...rest] = forYou;
               const open = expanded.has(line.ref) || rest.some((other) => refOf(other) === focus);
@@ -207,6 +186,7 @@ export function HomePage() {
                   onTable={h.table}
                   onFold={h.fold}
                   onReject={h.reject}
+                  onDrop={h.drop}
                 />
               ))}
             </HomeSection>

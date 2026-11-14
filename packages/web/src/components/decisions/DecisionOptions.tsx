@@ -1,5 +1,6 @@
 import type { DecisionOption } from "@octotrack/core/schemas";
 import { Badge } from "../ui/Badge.tsx";
+import { Markdown } from "../ui/Markdown.tsx";
 
 export interface DecisionOptionsProps {
   options: readonly DecisionOption[];
@@ -31,7 +32,11 @@ export function DecisionOptions({
         >
           <kbd>{index + 1}</kbd>
           <span className="option-label">{option.label}</span>
-          {option.description === "" ? null : <span className="option-desc">{option.description}</span>}
+          {option.description === "" ? null : (
+            <span className="option-desc">
+              <Markdown text={option.description} inline links={false} />
+            </span>
+          )}
           {option.key === recommendation ? <Badge tone="attention">recommended</Badge> : null}
         </button>
       ))}

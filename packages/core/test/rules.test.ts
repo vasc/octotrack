@@ -207,6 +207,27 @@ describe("the search for an owner", () => {
   });
 });
 
+describe("the developer releasing a quiet agent", () => {
+  test("ends its claim and frees its issues, tells it, and refuses an agent that does not quote the developer", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    const work = w.as(w.dev, c.issueCreate, { project: "PANEL", title: "Base", line: line.ref });
+    const quiet = w.register("quiet");
+    w.as(quiet, c.lineTake, { ref: line.ref });
+    w.as(quiet, c.issueClaim, { refs: [work.ref] });
+    expect(() => w.as(w.agent("other"), c.agentRelease, { name: "quiet" })).toThrow("Only the developer");
+    w.as(w.dev, c.agentRelease, { name: "quiet" });
+    expect(w.as(w.dev, c.agentList, {}).find((agent) => agent.name === "quiet")?.line).toBeNull();
+    expect(w.issue(work.ref)?.assignee).toBeNull();
+    expect(
+      w
+        .notices(quiet)
+        .map((notice) => notice.body)
+        .join(" "),
+    ).toContain("The developer released you");
+  });
+});
+
 describe("lines and repos", () => {
   test("a line added with no repo is the developer's own, and no agent takes it", () => {
     const w = world();

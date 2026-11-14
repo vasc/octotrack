@@ -1,3 +1,4 @@
+import { Markdown } from "../ui/Markdown.tsx";
 import type { Line, LineCrew, LineHome } from "@octotrack/core/schemas";
 import type { ReactNode } from "react";
 import { crewText } from "../../lib/lines.ts";
@@ -45,7 +46,11 @@ export function UpNextRow({
             <span key={words}>{words}</span>
           ))}
         </p>
-        {line.doneWhen === "" ? null : <p className="muted">Done when {line.doneWhen}</p>}
+        {line.doneWhen === "" ? null : (
+          <p className="muted">
+            Done when <Markdown text={line.doneWhen} inline />
+          </p>
+        )}
       </div>
       {reorder}
       <button

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { recommendationText } from "../../lib/lines.ts";
 import { openEntity } from "../../lib/router.ts";
 import { TableForm } from "../lines/TableForm.tsx";
+import { Markdown } from "../ui/Markdown.tsx";
 
 export interface ProposalCardProps {
   line: Line;
@@ -13,6 +14,8 @@ export interface ProposalCardProps {
   onTable(ref: string, reason: string): void;
   onFold(ref: string, into: string): void;
   onReject(ref: string): void;
+  /** For a tabled line back to look at: it was a line, so it is dropped, not rejected. */
+  onDrop(ref: string): void;
 }
 
 /** A proposed line with the agent's case for it, and every choice a proposal has. */
@@ -24,6 +27,7 @@ export function ProposalCard({
   onTable,
   onFold,
   onReject,
+  onDrop,
 }: ProposalCardProps) {
   const [mode, setMode] = useState<"table" | "fold" | null>(null);
   const advice = recommendationText(line);
@@ -36,7 +40,11 @@ export function ProposalCard({
       <p className="home-meta">
         {line.proposedBy === null ? null : <span>proposed by {line.proposedBy}</span>}
         {line.fromRef === null ? null : <span>from before ({line.fromRef})</span>}
-        {line.doneWhen === "" ? null : <span>done when {line.doneWhen}</span>}
+        {line.doneWhen === "" ? null : (
+          <span>
+            done when <Markdown text={line.doneWhen} inline />
+          </span>
+        )}
       </p>
       {fromTable ? (
         <p className="home-headline">
@@ -46,7 +54,11 @@ export function ProposalCard({
       ) : advice === null ? null : (
         <p className="home-headline">
           {advice}
-          {line.recommendationWhy === null ? "" : `: ${line.recommendationWhy}`}
+          {line.recommendationWhy === null ? null : (
+            <>
+              : <Markdown text={line.recommendationWhy} inline />
+            </>
+          )}
         </p>
       )}
       {mode === "table" ? (
@@ -59,26 +71,23 @@ export function ProposalCard({
           onCancel={() => setMode(null)}
         />
       ) : mode === "fold" ? (
-        <div className="decision-actions">
-          <select
-            className="select"
-            aria-label={`Fold ${line.title} into`}
-            defaultValue=""
-            onChange={(event) => {
-              if (event.target.value !== "") onFold(line.ref, event.target.value);
-            }}
-          >
-            <option value="">Fold into…</option>
-            {foldTargets.map((target) => (
-              <option key={target.ref} value={target.ref}>
-                {target.ref} {target.title}
-              </option>
-            ))}
-          </select>
+        <fieldset className="choice-group">
+          <legend className="muted">Fold {line.title} into</legend>
+          {foldTargets.map((target) => (
+            <button
+              key={target.ref}
+              type="button"
+              className="btn"
+              aria-label={`Fold ${line.title} into ${target.title}`}
+              onClick={() => onFold(line.ref, target.ref)}
+            >
+              {target.ref} {target.title}
+            </button>
+          ))}
           <button type="button" className="btn" onClick={() => setMode(null)}>
             Cancel
           </button>
-        </div>
+        </fieldset>
       ) : (
         <div className="decision-actions">
           <button
@@ -115,14 +124,25 @@ export function ProposalCard({
               Fold into…
             </button>
           )}
-          <button
-            type="button"
-            className="btn"
-            aria-label={`Not a line: ${line.title}`}
-            onClick={() => onReject(line.ref)}
-          >
-            {fromTable ? "Drop" : "Not a line"}
-          </button>
+          {fromTable ? (
+            <button
+              type="button"
+              className="btn"
+              aria-label={`Drop ${line.title}`}
+              onClick={() => onDrop(line.ref)}
+            >
+              Drop
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="btn"
+              aria-label={`Not a line: ${line.title}`}
+              onClick={() => onReject(line.ref)}
+            >
+              Not a line
+            </button>
+          )}
         </div>
       )}
     </article>

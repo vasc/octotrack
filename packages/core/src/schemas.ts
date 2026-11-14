@@ -462,6 +462,7 @@ export const NoticeKind = z.enum([
   "done_when",
   "keep_going",
   "held_stale",
+  "released",
 ]);
 export type NoticeKind = z.infer<typeof NoticeKind>;
 
@@ -770,6 +771,8 @@ export type HeldItem = z.infer<typeof HeldItem>;
 export const PendingChoice = z.object({
   id: z.number().int(),
   op: z.string(),
+  /** What it acts on, when its input names one, so the dashboard can hold that item still until it takes effect. */
+  ref: z.string().nullable(),
   summary: z.string(),
   dueAt: z.string(),
   state: z.enum(["pending", "applied", "undone", "failed"]),

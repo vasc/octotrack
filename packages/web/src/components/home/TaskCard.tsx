@@ -23,7 +23,11 @@ export function TaskCard({ task, words, onWords, onDone, onCant }: TaskCardProps
         {task.place === null ? "" : ` · at ${task.place}`}
       </p>
       <h3 className="decision-title">{task.title}</h3>
-      {task.outcome === null ? null : <p className="decision-context">Report: {task.outcome}</p>}
+      {task.outcome === null ? null : (
+        <p className="decision-context">
+          Report: <Markdown text={task.outcome} inline />
+        </p>
+      )}
       {task.body === "" ? null : <Markdown text={task.body} />}
       {mode === null ? (
         <div className="decision-actions">
@@ -40,9 +44,9 @@ export function TaskCard({ task, words, onWords, onDone, onCant }: TaskCardProps
           onSubmit={(event) => {
             event.preventDefault();
             if (!ready) return;
+            // The words stay a draft until the task closes, which deletes it: an Undo must not lose them.
             if (mode === "done") onDone(words.trim());
             else onCant(words.trim());
-            onWords("");
             setMode(null);
           }}
         >

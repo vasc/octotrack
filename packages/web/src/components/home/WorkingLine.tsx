@@ -1,3 +1,4 @@
+import { Markdown } from "../ui/Markdown.tsx";
 import type { Line, LineCrew, LineHome } from "@octotrack/core/schemas";
 import type { ReactNode } from "react";
 import { openEntity } from "../../lib/router.ts";
@@ -26,7 +27,11 @@ export function WorkingLine({ index, line, crew, details, reorder, children }: W
         {reorder}
       </div>
       <LineMeta {...(crew === undefined ? {} : { crew })} {...(details === undefined ? {} : { details })} />
-      {line.headline === null ? null : <p className="home-headline">{line.headline}</p>}
+      {line.headline === null ? null : (
+        <p className="home-headline">
+          <Markdown text={line.headline} inline />
+        </p>
+      )}
       {line.doneProposal === null ? null : (
         <p className="home-headline">
           <strong>Proposed done:</strong> {line.doneProposal}

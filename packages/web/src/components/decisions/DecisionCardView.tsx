@@ -53,7 +53,8 @@ export function DecisionCardView({ card, form, selected = false }: DecisionCardV
       {decision.recommendationWhy === null ? null : (
         <p className="decision-why">
           Why
-          {recommendedAt === -1 ? "" : ` ${recommendedAt + 1}`}: {decision.recommendationWhy}
+          {recommendedAt === -1 ? "" : ` ${recommendedAt + 1}`}:{" "}
+          <Markdown text={decision.recommendationWhy} inline />
         </p>
       )}
       {decision.recommendation !== null &&

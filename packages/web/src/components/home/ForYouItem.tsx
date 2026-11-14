@@ -4,26 +4,25 @@ import { DecisionCardItem } from "../decisions/DecisionCardItem.tsx";
 import { ForYouRow } from "./ForYouRow.tsx";
 import { TaskCard } from "./TaskCard.tsx";
 
-export function refOf(item: ForYou): string {
-  return item.kind === "question" ? item.card.decision.ref : item.task.ref;
-}
-
 /** One thing waiting on the developer: opened in full when it has focus, else one row that opens it. */
 export function ForYouItem({
   item,
   focused,
+  armed,
   onOpen,
   onTaskDone,
   onTaskCant,
 }: {
   item: ForYou;
   focused: boolean;
+  /** Whether its keys act: not while its answer waits with Undo. */
+  armed: boolean;
   onOpen(ref: string): void;
   onTaskDone(ref: string, result: string): void;
   onTaskCant(ref: string, why: string): void;
 }) {
   if (!focused) return <ForYouRow item={item} onOpen={onOpen} />;
-  if (item.kind === "question") return <DecisionCardItem card={item.card} active />;
+  if (item.kind === "question") return <DecisionCardItem card={item.card} active armed={armed} />;
   return <TaskItem task={item.task} onDone={onTaskDone} onCant={onTaskCant} />;
 }
 

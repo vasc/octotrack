@@ -892,6 +892,12 @@ export const contracts = {
     z.strictObject({ name: z.string(), reason: Text.optional() }),
     AgentView,
   ),
+  agentRelease: write(
+    "agent.release",
+    "End an agent's claim on its line, such as one that went quiet; it may take a line again (the developer)",
+    z.strictObject({ name: z.string() }),
+    AgentView,
+  ),
   agentLift: write(
     "agent.lift",
     "Lift an agent's stop (the developer)",
