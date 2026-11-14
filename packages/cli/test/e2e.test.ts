@@ -1086,6 +1086,33 @@ describe("agents and claims from the CLI", () => {
   });
 });
 
+describe("notices reach every command", () => {
+  test("a Tell is shown even by a command that prints no envelope, such as batch, in text and in JSON", async () => {
+    const line = await data(
+      z.object({ ref: z.string() }),
+      ["line", "add", "Heard", "--done-when", "It works.", "--repo", "OCT", "--where", "working", "--me"],
+      "",
+    );
+    await data(
+      z.object({ name: z.string() }),
+      ["agent", "register", "--no-wake", "--repo", "OCT"],
+      "heard.1",
+    );
+    await data(z.object({ role: z.string().nullable() }), ["line", "take", line.ref], "heard.1");
+    const note = JSON.stringify([{ op: "agent.note", input: { note: "Busy" } }]);
+
+    await octo(["line", "tell", line.ref, "Use", "the", "26", "mm", "board", "--me"], "");
+    const text = await octo(["batch", "--text"], "heard.1", note);
+    expect(text.code).toBe(0);
+    expect(text.stderr).toContain("Use the 26 mm board");
+
+    await octo(["line", "tell", line.ref, "Print", "it", "in", "black", "--me"], "");
+    const json = await octo(["batch", "--json"], "heard.1", note);
+    expect(json.code).toBe(0);
+    expect(json.stderr).toContain("Print it in black");
+  });
+});
+
 describe("tasks from the CLI", () => {
   test("an agent files a task at one of the developer's places; Done reaches it on its next command", async () => {
     await data(z.array(z.object({ name: z.string() })), ["place", "add", "the", "bench", "--me"], "");

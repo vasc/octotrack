@@ -7,10 +7,11 @@ import type { Line, PushNote } from "../schemas.ts";
 import type { Ctx } from "../store/context.ts";
 import { one, rows } from "../store/context.ts";
 import { allLines } from "../store/entities.ts";
-import { DecisionRow } from "../store/rows.ts";
+import type { DecisionRow } from "../store/rows.ts";
 import { bind } from "./bind.ts";
 import { requireDeveloper, requireDeveloperInPerson } from "./developer.ts";
-import { lineStart } from "./runner.ts";
+import { buildQueue } from "./decisions.ts";
+import { stepInFor } from "./runner.ts";
 
 const SubscriptionRow = z.object({ endpoint: z.string(), p256dh: z.string(), auth: z.string() });
 
@@ -89,11 +90,10 @@ export const pushOps = [
     requireServer(ctx);
     const opened = lastOpenedAt(ctx);
     const working = allLines(ctx, "WHERE state = 'working'");
-    const open = rows(
-      ctx,
-      DecisionRow,
-      "SELECT * FROM decisions WHERE status = 'open' AND line IS NOT NULL ORDER BY createdAt",
-    );
+    // The queue's own rules: questions behind a task, held ones gone stale and Later all stay out of the way.
+    const open = buildQueue(ctx, undefined)
+      .map((card) => card.decision)
+      .filter((decision) => decision.line !== null && decision.postponedAt === null);
     const notes: PushNote[] = [];
     working.forEach((line, lineIndex) => {
       const lineBuzzedAt = buzzedAt(ctx, line.ref);
@@ -107,9 +107,7 @@ export const pushOps = [
         if (shouldBuzz({ urgent, lineIndex, lineBuzzedAt, lastOpenedAt: opened })) notes.push(note);
       }
       const crew = crewOf(ctx, line);
-      const start = lineStart(ctx, line.ref);
-      const starting = start !== null && (start.state === "starting" || start.state === "running");
-      if (crew.search?.step === 3 && !starting) {
+      if (stepInFor(ctx, line) && crew.search !== null) {
         const key = `stepin:${line.ref}:${crew.search.since}`;
         const buzzedLine = notes.some((other) => other.line === line.ref);
         if (

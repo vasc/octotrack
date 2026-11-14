@@ -4,7 +4,7 @@ import { serverUrl } from "@octotrack/server/paths";
 import { ZodError } from "zod";
 import { type OptionSpec, type OptionSpecs, parse, UsageError } from "./args.ts";
 import { ConnectionError, type Identity, OctoClient, RemoteError } from "./client.ts";
-import { type Command, makeOutput } from "./command.ts";
+import { type Command, makeOutput, printLeftoverNotices } from "./command.ts";
 import { commandsUnder, COMMANDS, resolveCommand } from "./registry.ts";
 import { findCheckout } from "./checkout.ts";
 import { selfCommand } from "./self.ts";
@@ -185,8 +185,12 @@ export async function main(rawArgv: readonly string[]): Promise<number> {
       true,
       identity,
     );
-    const code = await command.run({ client, out: makeOutput(json) }, args);
-    return code ?? 0;
+    try {
+      const code = await command.run({ client, out: makeOutput(json, client) }, args);
+      return code ?? 0;
+    } finally {
+      printLeftoverNotices(client.takeNotices(), json);
+    }
   } catch (error) {
     if (error instanceof UsageError) {
       report(json, "usage", error.message, "Add --help for usage.");

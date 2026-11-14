@@ -56,6 +56,7 @@ export function LinesGallery() {
             start: null,
             step: { position: 3, of: 4, title: "settle board and opening" },
             forYou: [{ kind: "question", card: QUESTION }],
+            stepIn: false,
             held: { questions: 0, tasks: 0 },
             scopedSteps: 4,
           }}
@@ -92,7 +93,14 @@ export function LinesGallery() {
             title: "Wall mount",
             doneWhen: "the panel hangs flush on the hallway wall.",
           })}
-          details={{ start: null, step: null, forYou: [], held: { questions: 0, tasks: 1 }, scopedSteps: 0 }}
+          details={{
+            start: null,
+            step: null,
+            forYou: [],
+            stepIn: false,
+            held: { questions: 0, tasks: 1 },
+            scopedSteps: 0,
+          }}
           onStart={NOOP}
         />
       </Example>

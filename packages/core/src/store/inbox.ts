@@ -36,6 +36,11 @@ export function addToInbox(
     body,
     ctx.now,
   ]);
+  // An answer, a finished task or a Tell gives a line nobody owns something to do: its search starts over.
+  ctx.sql.run(
+    "UPDATE owner_searches SET since = ?, firstOffer = NULL, firstUntil = NULL WHERE line = ? AND NOT EXISTS (SELECT 1 FROM line_claims WHERE line = ? AND role = 'owner')",
+    [ctx.now, line, line],
+  );
 }
 
 /** Who an item is for right now: whoever holds the issue it concerns, if they are on the line, else the line's owner. */

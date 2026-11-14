@@ -26,6 +26,8 @@ export interface StoredCaller {
   actor: string;
   channel: Channel;
   said: string | null;
+  /** The server itself, settling something on its own; otherwise a choice the developer made. */
+  system?: boolean;
 }
 
 export function rows<S extends z.ZodType>(

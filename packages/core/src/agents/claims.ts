@@ -2,6 +2,7 @@ import { z } from "zod";
 import { RefusedWrite } from "../errors.ts";
 import type { Line, LineClaim, LineCrew, Notice } from "../schemas.ts";
 import { applyPatch, emit } from "../store/common.ts";
+import { HELD_CURRENT_MS } from "./held.ts";
 import { addNotice, briefOf, claimOf, claimsOn, getAgent } from "../store/agents.ts";
 import type { Ctx } from "../store/context.ts";
 import { one, rows } from "../store/context.ts";
@@ -13,6 +14,8 @@ import { agentState, isReachable } from "./state.ts";
 const MINUTE_MS = 60_000;
 /** How long the agents on a line that left working on have to wrap up. */
 export const WIND_DOWN_MS = 15 * MINUTE_MS;
+/** A session Octotrack started has this long to take its line. */
+const CHECK_IN_MS = 5 * MINUTE_MS;
 /** Owner search step 1: the last owner alone, this long. */
 const FIRST_OFFER_MS = 10 * MINUTE_MS;
 /** Owner search step 2: idle agents with the repo, this long, before the runner (step 3) would start a session. */
@@ -54,6 +57,11 @@ function emitAgent(ctx: Ctx, type: string, agent: string, line: Line | null, sum
 }
 
 export function setClaim(ctx: Ctx, agent: string, line: Line, role: LineClaim["role"]): void {
+  // A session Octotrack started checking in: its start is running now.
+  ctx.sql.run(
+    "UPDATE runner_starts SET state = 'running' WHERE name = ? AND line = ? AND state = 'starting'",
+    [agent, line.ref],
+  );
   ctx.sql.run("INSERT INTO line_claims (agent, line, role, since) VALUES (?, ?, ?, ?)", [
     agent,
     line.ref,
@@ -80,6 +88,7 @@ export function endClaim(ctx: Ctx, agent: string, why: ClaimEnd): LineClaim | nu
   if (claim === null) return null;
   ctx.sql.run("DELETE FROM line_claims WHERE agent = ?", [agent]);
   const line = requireLine(ctx, claim.line);
+  freeIssues(ctx, agent, line);
   if (claim.role === "owner") {
     ctx.sql.run("UPDATE lines SET lastOwner = ?, lastOwnerEnded = ? WHERE ref = ?", [agent, why, line.ref]);
     if (line.state === "working" && line.ownedBy === null && !windingDown(line, ctx.now)) {
@@ -110,6 +119,102 @@ export function endClaim(ctx: Ctx, agent: string, why: ClaimEnd): LineClaim | nu
     `${agent} left ${line.ref} (${claim.role}, ${why.replace("_", " ")})`,
   );
   return claim;
+}
+
+/**
+ * An agent leaving a line leaves its open issues for whoever comes next, noting who held them and since when, so the
+ * next holder can be told and find their branch.
+ */
+function freeIssues(ctx: Ctx, agent: string, line: Line): void {
+  const held = rows(
+    ctx,
+    IssueRow,
+    "SELECT * FROM issues WHERE line = ? AND assignee = ? AND status NOT IN ('done', 'cancelled')",
+    [line.ref, agent],
+  );
+  for (const issue of held) {
+    const changes = applyPatch(ctx, "issues", issue.ref, issue, {
+      assignee: null,
+      status: issue.status === "in_progress" ? "todo" : undefined,
+      lastAssignee: agent,
+      lastAssignedAt: issue.updatedAt,
+    });
+    emit(ctx, {
+      type: "issue.released",
+      kind: "issue",
+      ref: issue.ref,
+      project: issue.project,
+      line: line.ref,
+      summary: `${issue.ref} is free again: ${agent} left ${line.ref}`,
+      attrs: { status: issue.status === "in_progress" ? "todo" : issue.status },
+      changes,
+    });
+  }
+}
+
+/** Questions and tasks on a line nobody works on are held; they wait for its next start. */
+function holdWork(ctx: Ctx, line: string): void {
+  ctx.sql.run("UPDATE decisions SET heldAt = ? WHERE line = ? AND status = 'open' AND heldAt IS NULL", [
+    ctx.now,
+    line,
+  ]);
+  ctx.sql.run(
+    `UPDATE issues SET heldAt = ? WHERE line = ? AND assignee = 'dev' AND outcome IS NOT NULL
+       AND status NOT IN ('done', 'cancelled') AND heldAt IS NULL`,
+    [ctx.now, line],
+  );
+}
+
+/** When a line starts, held work that is still current reaches the developer; stale work waits to be re-confirmed. */
+function releaseCurrentWork(ctx: Ctx, line: string): void {
+  const since = new Date(Date.parse(ctx.now) - HELD_CURRENT_MS).toISOString();
+  ctx.sql.run(
+    "UPDATE decisions SET heldAt = NULL WHERE line = ? AND heldAt IS NOT NULL AND COALESCE(confirmedAt, createdAt) >= ?",
+    [line, since],
+  );
+  ctx.sql.run(
+    "UPDATE issues SET heldAt = NULL WHERE line = ? AND heldAt IS NOT NULL AND COALESCE(confirmedAt, createdAt) >= ?",
+    [line, since],
+  );
+}
+
+/** All of a working line's open work waits on the developer: questions or tasks, and nothing an agent can pick up. */
+export function waitingOnYou(ctx: Ctx, line: string): boolean {
+  const count = (sql: string) => one(ctx, z.object({ n: z.number() }), sql, [line])?.n ?? 0;
+  const forYou =
+    count("SELECT COUNT(*) AS n FROM decisions WHERE line = ? AND status = 'open'") +
+    count(
+      "SELECT COUNT(*) AS n FROM issues WHERE line = ? AND assignee = 'dev' AND outcome IS NOT NULL AND status NOT IN ('done', 'cancelled')",
+    );
+  if (forYou === 0) return false;
+  const workable = count(
+    `SELECT COUNT(*) AS n FROM issues i WHERE i.line = ? AND (i.assignee IS NULL OR i.assignee <> 'dev')
+       AND i.status NOT IN ('done', 'cancelled', 'blocked')
+       AND NOT EXISTS (
+         SELECT 1 FROM links l
+           LEFT JOIN issues b ON b.ref = l.fromRef
+           LEFT JOIN decisions d ON d.ref = l.fromRef
+         WHERE l.toRef = i.ref AND l.rel = 'blocks'
+           AND ((b.ref IS NOT NULL AND b.status NOT IN ('done', 'cancelled')) OR (d.ref IS NOT NULL AND d.status = 'open')))`,
+  );
+  return workable === 0;
+}
+
+/** Something reached a line with no owner, so its search starts over, from offering it in replies. */
+export function restartSearch(ctx: Ctx, line: string): void {
+  ctx.sql.run("UPDATE owner_searches SET since = ?, firstOffer = NULL, firstUntil = NULL WHERE line = ?", [
+    ctx.now,
+    line,
+  ]);
+}
+
+/** A last owner that cannot be woken is not waited on: the search moves past offering it the line. */
+export function endFirstOffer(ctx: Ctx, agent: string): void {
+  ctx.sql.run("UPDATE owner_searches SET firstUntil = ? WHERE firstOffer = ? AND firstUntil > ?", [
+    ctx.now,
+    agent,
+    ctx.now,
+  ]);
 }
 
 function clearSearch(ctx: Ctx, line: string): void {
@@ -159,6 +264,12 @@ function firstOfferFor(ctx: Ctx, line: Line): string | null {
 /** A line becoming working: its scoper owns it, a wind-down in progress is called off, and an empty line is searched for. */
 function beginWorking(ctx: Ctx, line: Line): void {
   ctx.sql.run("UPDATE lines SET windDownUntil = NULL, windDownWrites = 0 WHERE ref = ?", [line.ref]);
+  releaseCurrentWork(ctx, line.ref);
+  // A line that names no repo has nowhere for an agent to work: it is the developer's own.
+  if (line.repos.length === 0 && line.ownedBy === null) {
+    ctx.sql.run("UPDATE lines SET ownedBy = 'dev' WHERE ref = ?", [line.ref]);
+    return;
+  }
   const crew = claimsOn(ctx, line.ref);
   const scoper = crew.find((claim) => claim.role === "scoper");
   if (scoper !== undefined && !crew.some((claim) => claim.role === "owner")) {
@@ -185,6 +296,7 @@ export function windDown(ctx: Ctx, line: Line, writes: boolean): void {
     line.ref,
   ]);
   clearSearch(ctx, line.ref);
+  holdWork(ctx, line.ref);
   const ending = line.state === "done" || line.state === "dropped";
   const now = line.ownedBy !== null ? "the developer's own now" : `now ${line.state.replace("_", " ")}`;
   const todo = !writes
@@ -219,6 +331,10 @@ export function afterMove(ctx: Ctx, before: Line, after: Line): void {
   if (after.state === "working") beginWorking(ctx, after);
   else if (before.state === "working") windDown(ctx, after, true);
   else if (claimsOn(ctx, after.ref).length > 0) windDown(ctx, after, false);
+  else if (after.state === "done" || after.state === "dropped") {
+    // Nobody is on it to wrap up, so what it leaves open closes with it now.
+    closeWithLine(ctx, after);
+  } else holdWork(ctx, after.ref);
   if (before.state === "proposed" && before.proposedBy !== null && before.proposedBy !== ctx.actor) {
     addNotice(
       ctx,
@@ -270,13 +386,20 @@ export function settle(ctx: Ctx): void {
       changes,
     });
   }
+  // A session that has not taken its line five minutes after it started never will: it stops holding the line's turn.
+  ctx.sql.run(
+    `UPDATE runner_starts SET state = 'never_took', endedAt = ?
+     WHERE state = 'starting' AND startedAt <= ?
+       AND NOT EXISTS (SELECT 1 FROM line_claims c WHERE c.agent = runner_starts.name AND c.line = runner_starts.line)`,
+    [ctx.now, new Date(Date.parse(ctx.now) - CHECK_IN_MS).toISOString()],
+  );
   ctx.sql.run(
     "UPDATE lines SET scopedAt = NULL WHERE state = 'up_next' AND scopedAt IS NOT NULL AND scopedAt <= ?",
     [new Date(Date.parse(ctx.now) - SCOPING_LASTS_MS).toISOString()],
   );
 }
 
-function closeWithLine(ctx: Ctx, line: Line): void {
+export function closeWithLine(ctx: Ctx, line: Line): void {
   const open = rows(
     ctx,
     IssueRow,

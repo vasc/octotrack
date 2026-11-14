@@ -119,6 +119,11 @@ export const Issue = z.object({
   result: z.string().nullable(),
   /** When an agent last said a held task still stands. */
   confirmedAt: z.string().nullable(),
+  /** Who held it last, and since when, after their claim on its line ended. */
+  lastAssignee: z.string().nullable(),
+  lastAssignedAt: z.string().nullable(),
+  /** Set while it waits on a line nobody works on; kept after the line starts until it is current again. */
+  heldAt: z.string().nullable(),
   version: z.number().int(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -246,6 +251,8 @@ export const Decision = z.object({
   notUrgentAt: z.string().nullable(),
   /** When an agent last said a held question still stands. */
   confirmedAt: z.string().nullable(),
+  /** Set while it waits on a line nobody works on; kept after the line starts until it is current again. */
+  heldAt: z.string().nullable(),
   version: z.number().int(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -693,6 +700,8 @@ export const LineHome = z.object({
   step: z.object({ position: z.number().int(), of: z.number().int(), title: z.string() }).nullable(),
   /** On a working line: what waits on the developer, in order. */
   forYou: z.array(ForYou),
+  /** A working line that needs the developer to step in: nobody could be found and nothing is starting. */
+  stepIn: z.boolean(),
   /** On a line not being worked on: the questions and tasks it holds. */
   held: z.object({ questions: z.number().int(), tasks: z.number().int() }),
   /** How many plan steps scoping has written so far. */

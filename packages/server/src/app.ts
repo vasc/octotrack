@@ -179,7 +179,12 @@ export function createApp(options: AppOptions): Hono {
       const remaining = deadline - Date.now();
       const fired = results.some((result) => result.fired);
       if (fired || remaining <= 0) {
-        const response: WatchWaitResponse = { fired, results, cursor: tracker.cursor() };
+        const response: WatchWaitResponse = {
+          fired,
+          results,
+          cursor: tracker.cursor(),
+          notices: tracker.noticesFor(caller),
+        };
         return c.json(response);
       }
       await hub.nextChange(remaining);
