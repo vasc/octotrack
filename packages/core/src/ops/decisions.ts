@@ -18,7 +18,15 @@ import { applyPatch, assertVersion, emit, nextNumber } from "../store/common.ts"
 import type { Ctx } from "../store/context.ts";
 import { one, rows } from "../store/context.ts";
 import { filterEntities } from "../store/docs.ts";
-import { allLines, requireDecision, requireIssue, requireLine, requireProject } from "../store/entities.ts";
+import {
+  allLines,
+  requireDecision,
+  requireEntity,
+  requireIssue,
+  requireLine,
+  requireProject,
+  resolveRef,
+} from "../store/entities.ts";
 import { loadGraph } from "../store/graph.ts";
 import { DecisionRow, IssueRow, WatchRow } from "../store/rows.ts";
 import { toWatch } from "../watch/engine.ts";
@@ -29,7 +37,7 @@ import { addNotice, claimOf } from "../store/agents.ts";
 import { addToInbox } from "../store/inbox.ts";
 import { bind } from "./bind.ts";
 import { requireDeveloper, requireServer } from "./developer.ts";
-import { addLink } from "./links.ts";
+import { addLink, guardEnds } from "./links.ts";
 
 export function decisionAttrs(decision: Decision): EventAttrs {
   return {
@@ -458,7 +466,8 @@ export const decisionOps = [
   bind(contracts.decisionAsk, (ctx, input) => {
     const placed = placeQuestion(ctx, input);
     if (placed.line !== null) {
-      guardLineWrite(ctx, placed.line.ref, "scope");
+      // A question joins its line's queue and its answer goes to whoever holds the line: asked only from that line.
+      guardOnLine(ctx, placed.line.ref, "scope", null);
       if (!ctx.developer) checkStandalone(input, placed.line);
     } else if (input.urgent !== undefined) {
       throw new OctoError("invalid_input", "Urgent is for questions on lines being worked on");
@@ -478,7 +487,13 @@ export const decisionOps = [
         throw new OctoError("invalid_input", `${task.ref} is not a task for the developer`);
       }
       // Held behind the task: asking the developer what their own measurement is about to answer wastes their time.
+      guardEnds(ctx, requireEntity(ctx, task.ref), decision.ref);
       addLink(ctx, task.ref, "blocks", decision.ref);
+    }
+    // What the question holds up or changes is written to as well: only on the asker's line, or on no line.
+    const asked = requireEntity(ctx, decision.ref);
+    for (const target of [...(input.blocks ?? []), ...(input.affects ?? [])]) {
+      guardEnds(ctx, asked, resolveRef(ctx, target));
     }
     for (const target of input.blocks ?? []) addLink(ctx, decision.ref, "blocks", target);
     for (const target of input.affects ?? []) addLink(ctx, decision.ref, "affects", target);

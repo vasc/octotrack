@@ -212,7 +212,7 @@ export const taskOps = [
       throw new OctoError("invalid_input", "A task waits on a line", "Take a line first, or pass --line.");
     }
     const line = requireLine(ctx, lineRef);
-    guardLineWrite(ctx, line.ref, "scope");
+    guardOnLine(ctx, line.ref, "scope", null);
     const place = requirePlace(ctx, input.place);
     const frees =
       input.frees === undefined
@@ -223,6 +223,8 @@ export const taskOps = [
             [line.ref, ctx.actor],
           )[0] ?? null)
         : requireIssue(ctx, input.frees);
+    // The issue it frees is held behind it, so that is a write to that issue's line too.
+    if (frees !== null) guardOnLine(ctx, frees.line, "scope", frees.ref);
     const project = frees?.project ?? line.repos[0];
     if (project === undefined) {
       throw new OctoError(
@@ -357,13 +359,18 @@ export const taskOps = [
         "Your own tasks go on lines you own. On an agent's line, agents file tasks for you.",
       );
     }
-    const task = createIssue(ctx, {
-      project: line.repos[0] ?? ownProject(ctx),
-      title: input.title,
-      ...(input.body === undefined ? {} : { body: input.body }),
-      assignee: DEVELOPER,
-      line: line.ref,
-    });
+    const task = createIssue(
+      ctx,
+      {
+        project: line.repos[0] ?? ownProject(ctx),
+        title: input.title,
+        ...(input.body === undefined ? {} : { body: input.body }),
+        assignee: DEVELOPER,
+        line: line.ref,
+      },
+      // Relayed with --said, it is still the developer's task on the developer's line.
+      true,
+    );
     // Nothing to report back to anyone: the outcome is empty, and Done needs no words.
     ctx.sql.run("UPDATE issues SET place = ?, outcome = '' WHERE ref = ?", [
       input.place === undefined ? null : requirePlace(ctx, input.place),

@@ -418,6 +418,16 @@ Decisions made from that:
   - _Watch mode records only, Stop included._ The stop command is noted once per Stop (`runner.would_stop`) and runs
     when the runner may act, if the agent is still stopped then. Worktrees default to `worktrees` in Octotrack's home,
     so a test install with its own `OCTO_HOME` never works in the live install's.
+- **What the third audit changed.**
+  - _Scoping a line is writing to it, so it too is done only from the line._ An agent sets a plan, files an issue or a
+    task, rewrites an issue, moves one on or off a line, and asks a question on a line (named, or through the issue it
+    names) only from that line, or on a proposal as its proposer; so is anything filed already linked to work on
+    another line (`blocks`, `--blocked-by`, `--derived-from`, `--waits-for`, `affects`). _Why:_ an agent from another
+    repo could replace a working line's plan, take its issues off it, or put a question in its queue whose answer went
+    to that line's owner, not to the asker.
+  - _The developer's own operations, relayed with `--said`, take effect on their own lines._ `task add` and `note add`
+    were refused there, as writes to a line no agent may touch, though D14 says every developer operation accepts the
+    developer's words.
 - **Departures, each for a reason.**
   - _The pages from before lines are gone:_ Decisions, Pull requests, Drift, Issues and Repos. Nothing linked to them
     any more, and the issues page changed status through a select with no Undo. Questions are answered on home, a

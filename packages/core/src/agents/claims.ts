@@ -561,20 +561,26 @@ export function guardLineWrite(ctx: Ctx, lineRef: string | null, kind: LineWrite
  * An agent writes only to the line it is on, or to a proposal it made itself: nothing of another line's is changed from
  * outside it. The developer and Octotrack itself may write anywhere.
  */
-export function requireOnLineOf(ctx: Ctx, lineRef: string | null, ref: string): void {
+export function requireOnLineOf(ctx: Ctx, lineRef: string | null, ref: string | null): void {
   if (lineRef === null || ctx.developer || ctx.system) return;
   if (claimOf(ctx, ctx.actor)?.line === lineRef) return;
   const line = requireLine(ctx, lineRef);
   if (line.state === "proposed" && line.proposedBy === ctx.actor) return;
   throw new OctoError(
     "forbidden",
-    `${ref} is on ${line.ref}, which you are not on`,
+    // Something new has no ref yet: what is refused is filing it there.
+    ref === null
+      ? `You are not on ${line.ref}, so you cannot write to it`
+      : `${ref} is on ${line.ref}, which you are not on`,
     `Only the agents on ${line.ref} write to it. Take it first if it is yours to work on: octo line take ${line.ref}`,
   );
 }
 
-/** A write to something on a line: allowed by the line's state, and made from the line itself. */
-export function guardOnLine(ctx: Ctx, lineRef: string | null, kind: LineWrite, ref: string): void {
+/**
+ * A write to something on a line: allowed by the line's state, and made from the line itself. `ref` is what is written
+ * to, or null for something new being filed there.
+ */
+export function guardOnLine(ctx: Ctx, lineRef: string | null, kind: LineWrite, ref: string | null): void {
   guardLineWrite(ctx, lineRef, kind);
   requireOnLineOf(ctx, lineRef, ref);
 }
