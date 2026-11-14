@@ -269,13 +269,13 @@ Decisions made from that:
   registered on its first command with its checkout, and its repo is read from that checkout's GitHub remote; an agent
   whose repo has no GitHub remote names it once with `agent register --repo`. Reads with no agent name stay answered,
   since they change nothing; writes with none are refused. Ref-shaped names are refused only for new agents, so no
-  existing one is locked out. Until the local runner exists, owner search step 2 keeps offering a line in the replies
-  of idle agents with its repo after its 30 seconds, and home shows the line as needing the developer to step in. The
+  existing one is locked out. Owner search step 2 offers a line in the replies of idle agents with its repo for 30
+  seconds before the runner may start a session for it; with no runner set up, home asks the developer to step in. The
   automatic stop only records "would stop" (`agent.would_stop` in the log) until it has been watched for a week.
 - **Questions and the line inbox, as built.** Questions keep their `decision.*` names and D- refs for now. A
   question asked by an agent on a line belongs to that line and to the issue the agent holds there, and must stand alone
   (situation, options that say what happens, a reason for any recommendation). One from an agent on no line keeps the
-  older rules, and the older ranking below every line's questions, until Phase 7 removes them. Answers and Tells wait in
+  older rules and shows on home under On no line, below every line's questions, until its agent puts it on a line. Answers and Tells wait in
   the line's inbox and reach whoever holds the issue, else the owner, on its next reply; an asleep agent is woken at the
   address it registered, with a message that carries no tracker text, and a failed wake makes it gone. Work on no line
   is one `unplaced-work` drift per repo, which is how the move to lines gets cleaned up by each repo's agents.
@@ -285,7 +285,10 @@ Decisions made from that:
   the queue until the task closes. Held questions and tasks are current for 7 days from when they were asked or
   re-confirmed; whoever takes the line is told which are not. A summary falling due is a `summary-due` drift for the
   owner, so it reaches the owner the way all drift does. A done when or a case for done that an agent proposes waits
-  for the developer on the line itself; agents write a done when directly only on lines still proposed or up next.
+  for the developer: on a working line as an item for them, on a line that waits in its Start sheet, quoting the old
+  and the new with the agent's why. An agent writes a done when directly only on a line it proposed and is still
+  proposed. _Why:_ an up-next line's done when is usually the developer's own words, and E-States 9 holds a change
+  there for the Start sheet.
   "I'll own it" winds the agents down like tabling and leaves the line in Working on; handing it back runs the usual
   owner search, which offers it first to the owner that wound down.
 - **The dashboard and the runner, as built.** Home is `/` and the feed is the Log at `/log`. Every choice the developer
@@ -338,7 +341,29 @@ Decisions made from that:
   sheet, I'm at, Tell, Stop on the owner, Change answer, Later and Not urgent, the developer's own box, and every key
   D14 lists, with `?` showing them. A Stop waiting with Undo offers Pause the line instead, and each line says what
   became of its recent answers.
+- **The dashboard, rebuilt to the E boards.** The first build of the dashboard kept the old shell, a rail and a feed
+  with tabs, and the developer said it did not match the design; it was rebuilt screen by screen to the E · One list
+  boards and checked beside each. Later review of the boards themselves, by the developer, changed them and the code
+  together: the header counts are one quiet group of number and words with only urgent apart in red; every desktop
+  control is one height (`--control-height`) with a few inline icons (a pin for I'm at, a plus for New line, a keyboard
+  for the keys); buttons carry no ellipsis; a line's handle is the one way to reorder; what a line holds lines up under
+  its title. Choices are worded as they happen in the Undo bar ("Sending "26 mm" to Sendspin enclosure in 5 seconds").
+  Drafts follow between devices with a notice naming the draft, and a field with focus keeps what it shows; a choice
+  names the draft it was typed in, which Undo keeps and the server deletes once it takes effect.
 - **Departures, each for a reason.**
+  - _No rail, no saved views on the Log, no watches on Agents._ The boards have none: the Log is what has not been
+    seen, line by line, with a search over everything; Agents is the roster. _Why:_ the boards are the agreed design,
+    and each of these repeated something a page already shows. PR sync problems, which the rail showed, head the Log.
+  - _The Undo bar has no Now._ The boards and D14 have only Undo. Tests apply a choice through the server instead.
+  - _Some moves act at once, without Undo:_ reordering (drag or the handle's menu), I'm at, and Record answers.
+    _Why:_ the first two only change what home shows and are undone by doing them again, and none is on a number key;
+    Record answers is text sent with a button, which reports each line's result, which a waiting choice could not.
+  - _Changes on no line, and rule breaks, are not seen until Mark all seen,_ since there is no line to open; the Log
+    shows the first under On no line. _Why:_ otherwise a change on no line would never reach the developer at all.
+  - _The roster shows an agent's own note_ under what it is doing. _Why:_ `agent note` is how an agent says what it is
+    on, and nothing else shows it.
+  - _Inter is not bundled;_ the stack falls back to the system font. _Why:_ no web font is loaded by the dashboard, so
+    it starts with nothing fetched from outside the machine.
   - _Repos keep their storage name._ The table, contracts and events still say project; what changed is the words
     people and agents use: `octo repo create`, `list`, `update` and `checkout`, the Repos page, and `repo:` in queries,
     which takes a repo's key as well as a pull request's owner/name. `project:` keeps working, so saved watches and
