@@ -1,6 +1,7 @@
-import { describe, expect, mock, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 import { useState } from "react";
-import { fireEvent, render, within } from "@testing-library/react";
+import { fireEvent, render, waitFor, within } from "@testing-library/react";
+import { QueryClient, QueryObserver } from "@tanstack/react-query";
 import { BatchPanelView } from "../src/components/decisions/BatchPanelView.tsx";
 import { DecisionCardView } from "../src/components/decisions/DecisionCardView.tsx";
 import { DriftItem } from "../src/components/drift/DriftItem.tsx";
@@ -48,7 +49,32 @@ import { Markdown } from "../src/components/ui/Markdown.tsx";
 import { RefText } from "../src/components/ui/RefText.tsx";
 import { TextBox } from "../src/components/ui/TextBox.tsx";
 import { EmptyState, ErrorState, LoadingState } from "../src/components/ui/states.tsx";
-import type { AgentView, LineCrew, LineHome, LineStart } from "@octotrack/core/schemas";
+import { ActivityList } from "../src/components/entity/ActivityList.tsx";
+import { HistoryList } from "../src/components/entity/HistoryList.tsx";
+import { KeyValues } from "../src/components/entity/KeyValues.tsx";
+import { LinkList } from "../src/components/entity/LinkList.tsx";
+import { PullRequestBox } from "../src/components/entity/PullRequestBox.tsx";
+import { AtPlaceItems } from "../src/components/home/AtPlaceItems.tsx";
+import { AtUpNext } from "../src/components/home/AtUpNext.tsx";
+import { CheckoutForm } from "../src/components/home/CheckoutForm.tsx";
+import { FocusTarget } from "../src/components/home/FocusTarget.tsx";
+import { FoldPicker } from "../src/components/home/FoldPicker.tsx";
+import { LineForYou } from "../src/components/home/LineForYou.tsx";
+import { LineStepIn } from "../src/components/home/LineStepIn.tsx";
+import { MoreForYou } from "../src/components/home/MoreForYou.tsx";
+import { NotKept } from "../src/components/ui/NotKept.tsx";
+import type { HomeActions } from "../src/hooks/useHome.ts";
+import { refOf } from "../src/lib/focus.ts";
+import type {
+  AgentView,
+  EntitySummary,
+  ForYou,
+  HomeView,
+  LineCrew,
+  LineHome,
+  LineStart,
+  Link,
+} from "@octotrack/core/schemas";
 import type { Tone } from "../src/lib/format.ts";
 import { stepInReason } from "../src/lib/lines.ts";
 import {
@@ -60,8 +86,9 @@ import {
   issue,
   line,
   pendingChoice,
+  pr,
 } from "../src/design/fixtures.ts";
-import { whole } from "./harness.tsx";
+import { contracts, renderApp, startTestServer, whole } from "./harness.tsx";
 
 const form = decisionForm;
 
@@ -1774,5 +1801,739 @@ describe("SinceSummary", () => {
     view.getByText("1 you have seen");
     expect(view.queryByText("Lid made")).toBeNull();
     expect(view.queryByText("Before the summary")).toBeNull();
+  });
+});
+
+/** Every choice home makes, as mocks a test can check; home itself is a query that never ran. */
+function homeActions(overrides: Partial<HomeActions> = {}): HomeActions {
+  return {
+    home: new QueryObserver<HomeView>(new QueryClient(), {
+      queryKey: [contracts.homeShow.name, {}],
+      enabled: false,
+    }).getCurrentResult(),
+    lineOf: () => null,
+    held: new Set<string>(),
+    failure: null,
+    places: [],
+    retry: mock(() => {}),
+    anyway: mock(() => {}),
+    setCheckout: mock(() => {}),
+    at: mock(() => {}),
+    repos: [],
+    repoName: (key: string) => key,
+    add: mock(() => {}),
+    start: mock(() => {}),
+    queue: mock(() => {}),
+    reject: mock(() => {}),
+    drop: mock(() => {}),
+    table: mock(() => {}),
+    fold: mock(() => {}),
+    own: mock(() => {}),
+    lineDone: mock(() => {}),
+    notYet: mock(() => {}),
+    doneWhen: mock(() => {}),
+    acceptRecommended: mock(() => {}),
+    taskDone: mock(() => {}),
+    taskCant: mock(() => {}),
+    dropBefore: mock(() => {}),
+    reorder: mock(() => {}),
+    ...overrides,
+  };
+}
+
+/**
+ * An opened task keeps what is typed as a draft on the server, so items that open one render against the real server
+ * in memory, and the page's own globals come back afterwards.
+ */
+function withDraftServer() {
+  const saved = { fetch: globalThis.fetch, EventSource: globalThis.EventSource };
+  beforeEach(() => {
+    startTestServer();
+  });
+  afterEach(() => {
+    Object.assign(globalThis, saved);
+  });
+}
+
+/** How LineForYou and AtPlaceItems are told to draw an item: a line naming it, so a test can see which were drawn. */
+function drawn(forYou: ForYou) {
+  return <p key={refOf(forYou)}>Drawn {refOf(forYou)}</p>;
+}
+
+const forYouQuestion = {
+  kind: "question" as const,
+  card: decisionCard({ decision: decision({ ref: "D-7", title: "Which?" }) }),
+};
+const forYouTask = (overrides: Parameters<typeof issue>[0]) => ({
+  kind: "task" as const,
+  task: issue(overrides),
+});
+const forYouDone = {
+  kind: "done" as const,
+  line: "L-1",
+  text: "The case holds the board.",
+  by: "claude-a",
+  doneWhen: "A printed case holds the board.",
+};
+
+describe("PullRequestBox", () => {
+  test("shows each pull request with its link, checks, size, opened date and state", () => {
+    const view = render(
+      <PullRequestBox
+        prs={[
+          pr(),
+          pr({ ref: "PR-2", number: 13, title: "Drop the cache", checks: "failing", state: "merged" }),
+        ]}
+        holder="claude-a"
+      />,
+    );
+    const box = view.getByRole("region", { name: "Pull request" });
+    within(box).getByRole("heading", { name: "Pull requests" });
+    expect(within(box).getByRole("link", { name: "acme/app#12" }).getAttribute("href")).toBe(
+      "https://github.com/acme/app/pull/12",
+    );
+    within(box).getByRole("link", { name: "acme/app#13" });
+    within(box).getByText("Add retry");
+    within(box).getByText("Drop the cache");
+    within(box).getByText("✓ checks pass");
+    within(box).getByText("✗ checks failing");
+    expect(within(box).getAllByText("+10 −2 · opened 2026-11-07")).toHaveLength(2);
+    within(box).getByText("merged");
+    within(box).getByText(
+      "Checks are agents' to fix, never yours, and claude-a merges once they pass; if it wants your eyes first, it asks.",
+    );
+  });
+
+  test("with one pull request says so in the singular; checks pending or absent are said in words", () => {
+    const view = render(<PullRequestBox prs={[pr({ checks: "pending" })]} holder={null} />);
+    view.getByRole("heading", { name: "Pull request" });
+    view.getByText("checks running");
+    view.getByText("Checks are agents' to fix, never yours; if it wants your eyes first, it asks.");
+    render(<PullRequestBox prs={[pr({ ref: "PR-3", checks: "none" })]} holder={null} />).getByText(
+      "no checks",
+    );
+  });
+
+  test("with none yet says so", () => {
+    const view = render(<PullRequestBox prs={[]} holder={null} />);
+    view.getByRole("heading", { name: "Pull requests" });
+    view.getByText("None yet.");
+    expect(view.queryByRole("link")).toBeNull();
+  });
+});
+
+describe("FoldPicker", () => {
+  const targets = [line({ ref: "L-1", title: "Sendspin enclosure" }), line({ ref: "L-2", title: "Shelf" })];
+
+  test("offers each open line as a numbered button, the first taking the cursor, with Cancel", () => {
+    const view = render(
+      <FoldPicker title="Wall mount" targets={targets} onFold={() => {}} onCancel={() => {}} />,
+    );
+    const group = view.getByRole("group", { name: "Fold Wall mount into" });
+    const first = within(group).getByRole("button", { name: "Fold Wall mount into Sendspin enclosure" });
+    const second = within(group).getByRole("button", { name: "Fold Wall mount into Shelf" });
+    expect(first.textContent).toBe("L-1 Sendspin enclosure");
+    expect(first.getAttribute("data-choice")).toBe("1");
+    expect(second.getAttribute("data-choice")).toBe("2");
+    expect(document.activeElement).toBe(first);
+    within(group).getByRole("button", { name: "Cancel" });
+  });
+
+  test("folds into the line pressed, by its ref, and Cancel cancels", () => {
+    const onFold = mock((_into: string) => {});
+    const onCancel = mock(() => {});
+    const view = render(
+      <FoldPicker title="Wall mount" targets={targets} onFold={onFold} onCancel={onCancel} />,
+    );
+    fireEvent.click(view.getByRole("button", { name: "Fold Wall mount into Shelf" }));
+    expect(onFold).toHaveBeenCalledWith("L-2");
+    expect(onCancel).not.toHaveBeenCalled();
+    fireEvent.click(view.getByRole("button", { name: "Cancel" }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onFold).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("CheckoutForm", () => {
+  test("takes the cursor, and sets only an absolute path", () => {
+    const onSet = mock((_path: string) => {});
+    const view = render(<CheckoutForm repo="PANEL" onSet={onSet} onCancel={() => {}} />);
+    const field = view.getByRole("textbox", { name: "Checkout of PANEL" });
+    expect(document.activeElement).toBe(field);
+    const set = view.getByRole("button", { name: "Set" });
+    expect(set.hasAttribute("disabled")).toBe(true);
+    fireEvent.change(field, { target: { value: "src/panel" } });
+    expect(set.hasAttribute("disabled")).toBe(true);
+    fireEvent.submit(field);
+    expect(onSet).not.toHaveBeenCalled();
+    fireEvent.change(field, { target: { value: "/Users/me/src/panel" } });
+    expect(set.hasAttribute("disabled")).toBe(false);
+    fireEvent.click(set);
+    expect(onSet).toHaveBeenCalledWith("/Users/me/src/panel");
+  });
+
+  test("Cancel cancels without setting anything", () => {
+    const onSet = mock((_path: string) => {});
+    const onCancel = mock(() => {});
+    const view = render(<CheckoutForm repo="PANEL" onSet={onSet} onCancel={onCancel} />);
+    fireEvent.click(view.getByRole("button", { name: "Cancel" }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onSet).not.toHaveBeenCalled();
+  });
+});
+
+describe("MoreForYou", () => {
+  test("says what one more item is, a task by its place", () => {
+    const say = (items: ForYou[]) => render(<MoreForYou items={items} onShow={() => {}} />);
+    say([forYouTask({ ref: "PANEL-2", place: "the Mac" })]).getByRole("button", {
+      name: "+1 more for you: a task at the Mac",
+    });
+    say([forYouTask({ ref: "PANEL-3" })]).getByRole("button", { name: "+1 more for you: a task" });
+    say([forYouQuestion]).getByRole("button", { name: "+1 more for you: a question" });
+    say([forYouDone]).getByRole("button", { name: "+1 more for you: a proposal" });
+  });
+
+  test("counts several by kind, and shows them when pressed", () => {
+    const onShow = mock(() => {});
+    const view = render(
+      <MoreForYou
+        items={[
+          forYouQuestion,
+          forYouTask({ ref: "PANEL-2" }),
+          forYouTask({ ref: "PANEL-3", place: "the Mac" }),
+          forYouDone,
+        ]}
+        onShow={onShow}
+      />,
+    );
+    fireEvent.click(
+      view.getByRole("button", { name: "+4 more for you: 1 question and 2 tasks and 1 proposal" }),
+    );
+    expect(onShow).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("FocusTarget", () => {
+  test("wraps its item where the browser can focus it, outlined and current when it has home's focus", () => {
+    const focused = render(
+      <FocusTarget focusRef="D-7" focused>
+        <p>Which?</p>
+      </FocusTarget>,
+    );
+    const wrap = focused.getByText("Which?").parentElement;
+    expect(wrap?.getAttribute("data-focus-ref")).toBe("D-7");
+    expect(wrap?.getAttribute("data-selected")).toBe("true");
+    expect(wrap?.getAttribute("aria-current")).toBe("true");
+    expect(wrap?.getAttribute("tabindex")).toBe("-1");
+    focused.unmount();
+    const other = render(
+      <FocusTarget focusRef="D-7" focused={false}>
+        <p>Which?</p>
+      </FocusTarget>,
+    );
+    const plain = other.getByText("Which?").parentElement;
+    expect(plain?.getAttribute("data-selected")).toBe("false");
+    expect(plain?.hasAttribute("aria-current")).toBe(false);
+  });
+});
+
+describe("AtUpNext", () => {
+  withDraftServer();
+  const asked = new Date(Date.now() - 2 * 3_600_000 - 60_000).toISOString();
+  const tasks = [
+    issue({
+      ref: "OCT-5",
+      title: "Find the drill",
+      line: "L-2",
+      place: "the shed",
+      outcome: "Where it is",
+      createdAt: asked,
+    }),
+    issue({
+      ref: "OCT-6",
+      title: "Sweep the shed",
+      line: "L-9",
+      place: "the shed",
+      outcome: "",
+      createdAt: asked,
+    }),
+  ];
+  const lines = [line({ ref: "L-1", title: "Wall mount" }), line({ ref: "L-2", title: "Shelf" })];
+
+  test("is nothing without tasks", () => {
+    const view = render(
+      <AtUpNext
+        tasks={[]}
+        lines={lines}
+        firstNumber={3}
+        focus={null}
+        onTaskDone={() => {}}
+        onTaskCant={() => {}}
+      />,
+    );
+    expect(view.container.textContent).toBe("");
+  });
+
+  test("names each task's up-next line by its number, how long it has waited, and opens it", () => {
+    const view = renderApp(
+      <AtUpNext
+        tasks={tasks}
+        lines={lines}
+        firstNumber={3}
+        focus="OCT-6"
+        onTaskDone={() => {}}
+        onTaskCant={() => {}}
+      />,
+    );
+    const section = view.getByRole("region", { name: "While you're here, from lines up next" });
+    within(section).getByRole("heading", { name: "While you're here, from lines up next" });
+    within(section).getByText("4 Shelf, up next · OCT-5 · asked 2h ago");
+    within(section).getByText("OCT-6 · asked 2h ago");
+    const drill = within(section).getByRole("article", { name: "Find the drill" });
+    const sweep = within(section).getByRole("article", { name: "Sweep the shed" });
+    expect(drill.closest("[data-focus-ref]")?.hasAttribute("aria-current")).toBe(false);
+    expect(sweep.closest("[data-focus-ref]")?.getAttribute("aria-current")).toBe("true");
+  });
+
+  test("sends a task done with what was found, and one of the developer's own as Done", async () => {
+    const onTaskDone = mock((_ref: string, _result: string) => {});
+    const view = renderApp(
+      <AtUpNext
+        tasks={tasks}
+        lines={lines}
+        firstNumber={1}
+        focus={null}
+        onTaskDone={onTaskDone}
+        onTaskCant={() => {}}
+      />,
+    );
+    const drill = view.getByRole("article", { name: "Find the drill" });
+    fireEvent.change(within(drill).getByLabelText("What OCT-5 found"), { target: { value: " Top shelf " } });
+    fireEvent.click(within(drill).getByRole("button", { name: "Done" }));
+    await waitFor(() => expect(onTaskDone).toHaveBeenCalledWith("OCT-5", "Top shelf"));
+    const sweep = view.getByRole("article", { name: "Sweep the shed" });
+    fireEvent.click(within(sweep).getByRole("button", { name: "Done" }));
+    await waitFor(() => expect(onTaskDone).toHaveBeenCalledWith("OCT-6", "Done"));
+  });
+
+  test("closes a task as not doable, with why", async () => {
+    const onTaskCant = mock((_ref: string, _why: string) => {});
+    const view = renderApp(
+      <AtUpNext
+        tasks={tasks}
+        lines={lines}
+        firstNumber={1}
+        focus={null}
+        onTaskDone={() => {}}
+        onTaskCant={onTaskCant}
+      />,
+    );
+    const drill = view.getByRole("article", { name: "Find the drill" });
+    fireEvent.click(within(drill).getByRole("button", { name: "Can't do it" }));
+    fireEvent.change(within(drill).getByLabelText("Why OCT-5 cannot be done"), {
+      target: { value: "Lent out" },
+    });
+    fireEvent.click(within(drill).getByRole("button", { name: "Close it" }));
+    await waitFor(() => expect(onTaskCant).toHaveBeenCalledWith("OCT-5", "Lent out"));
+  });
+});
+
+describe("ActivityList", () => {
+  test("is nothing without events", () => {
+    expect(render(<ActivityList events={[]} />).container.textContent).toBe("");
+  });
+
+  test("lists what happened, one row each, in the order given, with when", () => {
+    const view = render(
+      <ActivityList
+        events={[
+          event({ seq: 2, ts: "2026-01-02T10:00:00.000Z", ref: "OCT-2", summary: "OCT-2 created: Base" }),
+          event({ seq: 1, ts: "2026-01-01T10:00:00.000Z", summary: "OCT-1 created: Thing" }),
+        ]}
+      />,
+    );
+    const activity = view.getByRole("region", { name: "Activity" });
+    within(activity).getByRole("heading", { name: "Activity · newest first" });
+    within(activity).getByText(whole("2026-01-02 OCT-2 created: Base"));
+    within(activity).getByText(whole("2026-01-01 OCT-1 created: Thing"));
+    expect(
+      within(activity)
+        .getAllByRole("button")
+        .map((button) => button.textContent),
+    ).toEqual(["OCT-2", "OCT-1"]);
+  });
+});
+
+describe("LineStepIn", () => {
+  const runner = { configured: true, cap: 2, dryRun: false };
+  const start = (overrides: Partial<LineStart> = {}): LineStart => ({
+    name: "panel.2",
+    state: "failed",
+    output: "Error\nclaude: not logged in",
+    attempts: 1,
+    at: "",
+    nextTryAt: null,
+    ...overrides,
+  });
+  const stepIn = (
+    props: Partial<Parameters<typeof LineStepIn>[0]> & { h: HomeActions },
+  ): Parameters<typeof LineStepIn>[0] => ({
+    line: line(),
+    start: null,
+    needed: true,
+    runner,
+    focused: false,
+    folded: false,
+    onFocus: () => {},
+    ...props,
+  });
+  const choices = (view: ReturnType<typeof render>) =>
+    within(view.getByRole("note", { name: "Step in on Sendspin enclosure" }))
+      .getAllByRole("button")
+      .map((button) => button.textContent);
+
+  test("is nothing when the server says no step in is needed, or while a session is starting", () => {
+    const h = homeActions();
+    expect(
+      render(<LineStepIn {...stepIn({ h, needed: false, runner: { ...runner, configured: false } })} />)
+        .container.textContent,
+    ).toBe("");
+    expect(
+      render(<LineStepIn {...stepIn({ h, start: start({ state: "starting" }) })} />).container.textContent,
+    ).toBe("");
+  });
+
+  test("with no start command set, offers Try now, Table it and I'll own it", () => {
+    const h = homeActions();
+    const view = render(<LineStepIn {...stepIn({ h, runner: { ...runner, configured: false } })} />);
+    view.getByText(/no start command is set on this machine/);
+    expect(choices(view)).toEqual(["Try now", "Table it", "I'll own it"]);
+    fireEvent.click(view.getByRole("button", { name: "Try now" }));
+    expect(h.retry).toHaveBeenCalledWith("L-1");
+    fireEvent.click(view.getByRole("button", { name: "I'll own it" }));
+    expect(h.own).toHaveBeenCalledWith("L-1");
+  });
+
+  test("after a start failed, offers Try now, and tables with a reason", () => {
+    const h = homeActions();
+    const view = render(<LineStepIn {...stepIn({ h, start: start() })} />);
+    view.getByText(/exited at once: claude: not logged in/);
+    expect(choices(view)).toEqual(["Try now", "Table it", "I'll own it"]);
+    fireEvent.click(view.getByRole("button", { name: "Try now" }));
+    expect(h.retry).toHaveBeenCalledWith("L-1");
+    fireEvent.click(view.getByRole("button", { name: "Table it" }));
+    fireEvent.change(view.getByLabelText("Why table Sendspin enclosure"), {
+      target: { value: "After the move" },
+    });
+    fireEvent.click(view.getByRole("button", { name: "Table it" }));
+    expect(h.table).toHaveBeenCalledWith("L-1", "After the move", null);
+  });
+
+  test("after a session ran but never took the line, offers Try now too", () => {
+    const view = render(
+      <LineStepIn {...stepIn({ h: homeActions(), start: start({ state: "never_took", output: null }) })} />,
+    );
+    view.getByText(/panel.2 ran but never took L-1/);
+    expect(choices(view)).toEqual(["Try now", "Table it", "I'll own it"]);
+  });
+
+  test("after a clone failed, offers Set its checkout instead of Try now, and sets the line's first repo", () => {
+    const h = homeActions();
+    const view = render(
+      <LineStepIn
+        {...stepIn({
+          h,
+          line: line({ repos: ["PANEL", "FIRMWARE"] }),
+          start: start({ output: "Cloning into PANEL\nfatal: clone failed: repository not found" }),
+        })}
+      />,
+    );
+    expect(choices(view)).toEqual(["Set its checkout", "Table it", "I'll own it"]);
+    fireEvent.click(view.getByRole("button", { name: "Set its checkout" }));
+    fireEvent.change(view.getByRole("textbox", { name: "Checkout of PANEL" }), {
+      target: { value: "/Users/me/src/panel" },
+    });
+    fireEvent.click(view.getByRole("button", { name: "Set" }));
+    expect(h.setCheckout).toHaveBeenCalledWith("L-1", "PANEL", "/Users/me/src/panel");
+    expect(h.retry).not.toHaveBeenCalled();
+    expect(choices(view)).toEqual(["Set its checkout", "Table it", "I'll own it"]);
+  });
+
+  test("at the cap, offers Start one anyway and no Try now", () => {
+    const h = homeActions();
+    const view = render(<LineStepIn {...stepIn({ h })} />);
+    view.getByText(/every session Octotrack may run is busy \(at most 2\)/);
+    expect(choices(view)).toEqual(["Start one anyway", "Table it", "I'll own it"]);
+    fireEvent.click(view.getByRole("button", { name: "Start one anyway" }));
+    expect(h.anyway).toHaveBeenCalledWith("L-1");
+  });
+
+  test("with a runner that only watches, offers only Table it and I'll own it", () => {
+    const view = render(
+      <LineStepIn {...stepIn({ h: homeActions(), runner: { ...runner, dryRun: true } })} />,
+    );
+    view.getByText(/watching only/);
+    expect(choices(view)).toEqual(["Table it", "I'll own it"]);
+  });
+
+  test("folded at a place, is one row until it has focus, and the row moves focus to it", () => {
+    const onFocus = mock((_ref: string) => {});
+    const h = homeActions();
+    const view = render(<LineStepIn {...stepIn({ h, folded: true, onFocus })} />);
+    expect(view.queryByRole("note")).toBeNull();
+    fireEvent.click(view.getByRole("button", { name: "Step in, folded" }));
+    expect(onFocus).toHaveBeenCalledWith("stepin:L-1");
+    view.unmount();
+    const focused = render(<LineStepIn {...stepIn({ h, folded: true, focused: true })} />);
+    const note = focused.getByRole("note", { name: "Step in on Sendspin enclosure" });
+    expect(note.getAttribute("aria-current")).toBe("true");
+    expect(focused.queryByRole("button", { name: "Step in, folded" })).toBeNull();
+  });
+});
+
+describe("LineForYou", () => {
+  const items: ForYou[] = [
+    forYouQuestion,
+    forYouTask({ ref: "PANEL-2", place: "the Mac" }),
+    forYouTask({ ref: "PANEL-3", place: "the Mac" }),
+  ];
+  const props = {
+    forYou: items,
+    folded: false,
+    open: false,
+    item: drawn,
+    onFocus: () => {},
+    onShowMore: () => {},
+  };
+
+  test("is nothing when nothing waits on the developer", () => {
+    expect(render(<LineForYou {...props} forYou={[]} />).container.textContent).toBe("");
+  });
+
+  test("opens the first item and puts the rest one row away, which shows them", () => {
+    const onShowMore = mock(() => {});
+    const view = render(<LineForYou {...props} onShowMore={onShowMore} />);
+    view.getByText("Drawn D-7");
+    expect(view.queryByText("Drawn PANEL-2")).toBeNull();
+    fireEvent.click(view.getByRole("button", { name: "+2 more for you: 2 tasks" }));
+    expect(onShowMore).toHaveBeenCalledTimes(1);
+  });
+
+  test("with the rest shown, draws every item and no row", () => {
+    const view = render(<LineForYou {...props} open />);
+    expect(view.getAllByText(/^Drawn /).map((row) => row.textContent)).toEqual([
+      "Drawn D-7",
+      "Drawn PANEL-2",
+      "Drawn PANEL-3",
+    ]);
+    expect(view.queryByRole("button")).toBeNull();
+  });
+
+  test("with one item, has no more row", () => {
+    const view = render(<LineForYou {...props} forYou={[forYouQuestion]} />);
+    view.getByText("Drawn D-7");
+    expect(view.queryByRole("button")).toBeNull();
+  });
+
+  test("folded, is one row saying how many, which moves focus to the first", () => {
+    const onFocus = mock((_ref: string) => {});
+    const view = render(<LineForYou {...props} folded onFocus={onFocus} />);
+    expect(view.queryByText(/^Drawn /)).toBeNull();
+    fireEvent.click(view.getByRole("button", { name: "3 for you" }));
+    expect(onFocus).toHaveBeenCalledWith("D-7");
+  });
+});
+
+describe("AtPlaceItems", () => {
+  withDraftServer();
+  const here = forYouTask({
+    ref: "PANEL-1",
+    title: "Measure the grip",
+    place: "the bench",
+    outcome: "Five numbers",
+  });
+  const items: ForYou[] = [
+    forYouQuestion,
+    here,
+    forYouTask({ ref: "PANEL-2", place: "the Mac" }),
+    forYouDone,
+  ];
+
+  test("opens the place's tasks and folds everything else into one sentence that opens the first", () => {
+    const onFocus = mock((_ref: string) => {});
+    const view = renderApp(
+      <AtPlaceItems
+        forYou={items}
+        at="the bench"
+        focus={null}
+        h={homeActions()}
+        item={drawn}
+        onFocus={onFocus}
+      />,
+    );
+    const task = view.getByRole("article", { name: "Measure the grip" });
+    expect(task.closest("[data-focus-ref]")?.getAttribute("data-focus-ref")).toBe("PANEL-1");
+    expect(task.closest("[data-focus-ref]")?.hasAttribute("aria-current")).toBe(false);
+    expect(view.queryByText(/^Drawn /)).toBeNull();
+    fireEvent.click(
+      view.getByRole("button", { name: "1 question · 1 task at the Mac · 1 proposal, folded" }),
+    );
+    expect(onFocus).toHaveBeenCalledWith("D-7");
+  });
+
+  test("draws the item with focus through item, and leaves it out of the folded sentence", () => {
+    const onFocus = mock((_ref: string) => {});
+    const view = renderApp(
+      <AtPlaceItems
+        forYou={items}
+        at="the bench"
+        focus="D-7"
+        h={homeActions()}
+        item={drawn}
+        onFocus={onFocus}
+      />,
+    );
+    view.getByText("Drawn D-7");
+    view.getByRole("article", { name: "Measure the grip" });
+    fireEvent.click(view.getByRole("button", { name: "1 task at the Mac · 1 proposal, folded" }));
+    expect(onFocus).toHaveBeenCalledWith("PANEL-2");
+  });
+
+  test("marks the place's task current when it has focus, with nothing else folded away", () => {
+    const view = renderApp(
+      <AtPlaceItems
+        forYou={[here]}
+        at="the bench"
+        focus="PANEL-1"
+        h={homeActions()}
+        item={drawn}
+        onFocus={() => {}}
+      />,
+    );
+    const task = view.getByRole("article", { name: "Measure the grip" });
+    expect(task.closest("[data-focus-ref]")?.getAttribute("aria-current")).toBe("true");
+    expect(view.queryByRole("button", { name: /folded/ })).toBeNull();
+  });
+
+  test("sends the place's task done or not doable through home's actions", async () => {
+    const h = homeActions();
+    const view = renderApp(
+      <AtPlaceItems forYou={items} at="the bench" focus={null} h={h} item={drawn} onFocus={() => {}} />,
+    );
+    const task = view.getByRole("article", { name: "Measure the grip" });
+    fireEvent.change(within(task).getByLabelText("What PANEL-1 found"), { target: { value: "41, 38" } });
+    fireEvent.click(within(task).getByRole("button", { name: "Done" }));
+    await waitFor(() => expect(h.taskDone).toHaveBeenCalledWith("PANEL-1", "41, 38"));
+    fireEvent.click(within(task).getByRole("button", { name: "Can't do it" }));
+    fireEvent.change(within(task).getByLabelText("Why PANEL-1 cannot be done"), {
+      target: { value: "No calipers" },
+    });
+    fireEvent.click(within(task).getByRole("button", { name: "Close it" }));
+    await waitFor(() => expect(h.taskCant).toHaveBeenCalledWith("PANEL-1", "No calipers"));
+  });
+});
+
+describe("NotKept", () => {
+  test("is nothing while drafts are kept", () => {
+    expect(render(<NotKept error={null} />).container.textContent).toBe("");
+  });
+
+  test("says the draft was not saved, why, and that the words are still here", () => {
+    const view = render(<NotKept error="the server is not answering" />);
+    expect(view.getByRole("alert").textContent).toBe(
+      "Not saved: the server is not answering. What you typed is still here; it is kept as soon as saving works again.",
+    );
+  });
+});
+
+describe("KeyValues", () => {
+  test("lists each pair with a value, in order, and leaves out empty ones", () => {
+    const view = render(
+      <KeyValues
+        items={[
+          ["Status", "open"],
+          ["Owner", null],
+          ["Due", ""],
+          ["Where", undefined],
+          ["Repo", <b key="repo">acme/app</b>],
+        ]}
+      />,
+    );
+    expect(view.getAllByRole("term").map((term) => term.textContent)).toEqual(["Status", "Repo"]);
+    expect(view.getAllByRole("definition").map((value) => value.textContent)).toEqual(["open", "acme/app"]);
+  });
+});
+
+describe("LinkList", () => {
+  const links: Link[] = [
+    { fromRef: "OCT-1", rel: "blocks", toRef: "OCT-2", createdAt: "", createdBy: "dev" },
+    { fromRef: "D-3", rel: "derived_from", toRef: "OCT-1", createdAt: "", createdBy: "dev" },
+    { fromRef: "OCT-1", rel: "promoted_to", toRef: "OCT-9", createdAt: "", createdBy: "dev" },
+  ];
+  const linked: EntitySummary[] = [
+    {
+      kind: "issue",
+      ref: "OCT-2",
+      title: "Base",
+      status: "in_progress",
+      project: "OCT",
+      priority: null,
+      assignee: null,
+      version: 1,
+      updatedAt: "",
+    },
+  ];
+
+  test("is nothing without links", () => {
+    expect(render(<LinkList entityRef="OCT-1" links={[]} linked={[]} />).container.textContent).toBe("");
+  });
+
+  test("says each relation from the item's side, with the other item, its title and status when known", () => {
+    const view = render(<LinkList entityRef="OCT-1" links={links} linked={linked} />);
+    within(view.getByRole("heading", { name: /^Connections/ })).getByText("3");
+    view.getByText("blocks");
+    view.getByText("source of");
+    view.getByText("promoted to");
+    expect(view.getAllByRole("button").map((button) => button.textContent)).toEqual([
+      "OCT-2",
+      "D-3",
+      "OCT-9",
+    ]);
+    view.getByText("Base");
+    view.getByText("in progress");
+  });
+
+  test("opens the other item when its ref is pressed", () => {
+    const view = render(<LinkList entityRef="OCT-1" links={links} linked={linked} />);
+    fireEvent.click(view.getByRole("button", { name: "D-3" }));
+    expect(new URLSearchParams(window.location.search).get("ref")).toBe("D-3");
+  });
+});
+
+describe("HistoryList", () => {
+  test("lists each event with who did it and when", () => {
+    const view = render(
+      <HistoryList
+        events={[
+          event({
+            seq: 2,
+            ts: "2026-01-02T10:00:00.000Z",
+            actor: "dev",
+            ref: "OCT-2",
+            summary: "OCT-2 closed",
+          }),
+          event({ seq: 1, ts: "2026-01-01T10:00:00.000Z" }),
+        ]}
+      />,
+    );
+    view.getByRole("heading", { name: "History" });
+    view.getByText(whole("OCT-2 closed dev 2026-01-02"));
+    view.getByText(whole("OCT-1 created: Thing claude-a 2026-01-01"));
+  });
+
+  test("with no events, is only its heading", () => {
+    const view = render(<HistoryList events={[]} />);
+    view.getByRole("heading", { name: "History" });
+    expect(view.queryByRole("button")).toBeNull();
   });
 });
