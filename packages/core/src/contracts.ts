@@ -37,6 +37,8 @@ import {
   Place,
   PendingChoice,
   PlanStep,
+  PushNote,
+  PushSubscription,
   RunnerClose,
   RunnerDue,
   RunnerStatus,
@@ -162,6 +164,37 @@ export const DriftAckResult = z.object({ acknowledged: z.array(Drift) });
 const LineRef = z.strictObject({ ref: z.string() });
 
 export const contracts = {
+  pushSubscribe: write(
+    "push.subscribe",
+    "Let this browser's phone be buzzed for urgent questions and the top lines (the developer)",
+    PushSubscription.strict(),
+    z.object({ endpoint: z.string() }),
+  ),
+  pushUnsubscribe: write(
+    "push.unsubscribe",
+    "Stop buzzing a browser",
+    z.strictObject({ endpoint: z.string() }),
+    z.object({ endpoint: z.string() }),
+  ),
+  pushSubscriptions: read(
+    "push.subscriptions",
+    "Browsers to buzz. Only the server reads these",
+    Empty,
+    z.array(PushSubscription),
+  ),
+  pushSeen: write(
+    "push.seen",
+    "The developer opened the app: each line may buzz once more",
+    Empty,
+    z.object({ at: z.string() }),
+  ),
+  pushDue: read("push.due", "Notifications due to buzz the phone", Empty, z.array(PushNote)),
+  pushSent: write(
+    "push.sent",
+    "Record notifications sent, so each buzzes once",
+    z.strictObject({ keys: z.array(z.string()) }),
+    z.object({ sent: z.number().int() }),
+  ),
   runnerReport: write(
     "runner.report",
     "How the local runner is set up on this machine. The server says this when it starts",

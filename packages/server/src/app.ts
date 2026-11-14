@@ -26,6 +26,8 @@ export interface AppOptions {
   assets?: (path: string) => Promise<Response | null>;
   /** Which build answers, sent with every response. Defaults to this process's own. */
   build?: string;
+  /** The Web Push public key browsers subscribe with; none means notifications are off. */
+  pushKey?: string;
   /** Pulls PR state from GitHub now. Only available where `gh` can run. */
   syncPrs?: () => Promise<{ repos: number; synced: number; errors: string[] }>;
   /** Hostnames accepted in the Host header. See docs/DESIGN.md, D10. */
@@ -129,6 +131,8 @@ export function createApp(options: AppOptions): Hono {
   app.get("/api/health", (c) =>
     c.json({ ok: true, cursor: tracker.cursor(), pid: serverPid(), schema: SCHEMA_VERSION, build }),
   );
+
+  app.get("/api/push/key", (c) => c.json({ ok: true, publicKey: options.pushKey ?? null }));
 
   app.get("/api/ops", (c) => c.json({ ok: true, data: tracker.listOps().map(describeOp) }));
 

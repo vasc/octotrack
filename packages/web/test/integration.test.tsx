@@ -1074,6 +1074,19 @@ describe("lines of work", () => {
     }
   });
 
+  test("a tapped notification opens its question focused, and opening the app is noted for the next buzz", async () => {
+    seedLines();
+    server.act(c.agentRegister, { repo: "OCT" }, "octo.1");
+    server.act(c.lineTake, { ref: "L-1" }, "octo.1");
+    const options = [{ key: "a", label: "Yes", description: "Go ahead." }];
+    server.act(c.decisionAsk, { title: "First?", context: "Context.", options }, "octo.1");
+    const second = server.act(c.decisionAsk, { title: "Second?", context: "Context.", options }, "octo.1");
+    navigate(`/?focus=${second.ref}`);
+    const view = renderApp(<App />);
+    await view.findByRole("article", { name: "Second?" });
+    await waitFor(() => expect(server.calls).toContain("push.seen"));
+  });
+
   test("a line opens in the inspector with what finishes it", async () => {
     seedLines();
     navigate("/?ref=L-1");

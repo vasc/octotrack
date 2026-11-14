@@ -13,6 +13,7 @@ import { HomeCounts } from "../src/components/home/HomeCounts.tsx";
 import { HomeSection } from "../src/components/home/HomeSection.tsx";
 import { LineMeta } from "../src/components/home/LineMeta.tsx";
 import { ProposalCard } from "../src/components/home/ProposalCard.tsx";
+import { PushToggle } from "../src/components/home/PushToggle.tsx";
 import { QuietRow } from "../src/components/home/QuietRow.tsx";
 import { ReorderButtons } from "../src/components/home/ReorderButtons.tsx";
 import { StepIn } from "../src/components/home/StepIn.tsx";
@@ -1009,5 +1010,20 @@ describe("why a line needs the developer to step in", () => {
     );
     expect(stepInReason(line(), runner, start({ state: "starting" }))).toBeNull();
     expect(stepInReason(line(), runner, null)).toContain("at most 1");
+  });
+});
+
+describe("PushToggle", () => {
+  test("offers to buzz this device until it does, says when it does or cannot, and hides where there is no push", () => {
+    const onTurnOn = mock(() => {});
+    const off = render(<PushToggle state="off" error={null} onTurnOn={onTurnOn} />);
+    fireEvent.click(off.getByRole("button", { name: "Buzz this device" }));
+    expect(onTurnOn).toHaveBeenCalledTimes(1);
+    off.unmount();
+    render(<PushToggle state="on" error={null} onTurnOn={onTurnOn} />).getByText(
+      "Buzzing this device for urgent questions and the top two lines",
+    );
+    const none = render(<PushToggle state="unsupported" error={null} onTurnOn={onTurnOn} />);
+    expect(none.container.textContent).toBe("");
   });
 });

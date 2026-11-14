@@ -3,6 +3,8 @@ import { useMemo, useState } from "react";
 import { type HotkeyMap, useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useHome } from "../../hooks/useHome.ts";
 import { useNarrow } from "../../hooks/useNarrow.ts";
+import { usePush } from "../../hooks/usePush.ts";
+import { useRoute } from "../../lib/router.ts";
 import { stepInReason } from "../../lib/lines.ts";
 import { DecisionCardItem } from "../decisions/DecisionCardItem.tsx";
 import { AddLineForm } from "../lines/AddLineForm.tsx";
@@ -14,6 +16,7 @@ import { ForYouItem, refOf } from "./ForYouItem.tsx";
 import { HomeCounts } from "./HomeCounts.tsx";
 import { HomeSection } from "./HomeSection.tsx";
 import { ProposalCard } from "./ProposalCard.tsx";
+import { PushToggle } from "./PushToggle.tsx";
 import { QuietRow } from "./QuietRow.tsx";
 import { ReorderButtons } from "./ReorderButtons.tsx";
 import { StepIn } from "./StepIn.tsx";
@@ -42,14 +45,19 @@ function orderedRefs(home: HomeView): string[] {
 /** Every line, in the developer's order, with what each needs from them in place. */
 export function HomePage() {
   const h = useHome();
+  const push = usePush();
+  const { params } = useRoute();
+  // A tapped notification opens its question focused.
+  const asked = params.get("focus");
   const narrow = useNarrow();
   const home = h.home.data;
   const [chosen, setChosen] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   const [reordering, setReordering] = useState(false);
   const order = useMemo(() => (home === undefined ? [] : orderedRefs(home)), [home]);
+  const wanted = chosen ?? asked;
   const focus =
-    home === undefined ? null : chosen !== null && order.includes(chosen) ? chosen : defaultFocus(home);
+    home === undefined ? null : wanted !== null && order.includes(wanted) ? wanted : defaultFocus(home);
   const keys = useMemo((): HotkeyMap => {
     const at = focus === null ? -1 : order.indexOf(focus);
     const step = (by: number) => () => {
@@ -83,6 +91,7 @@ export function HomePage() {
   return (
     <div className="page">
       <PageHead title="Lines">
+        <PushToggle state={push.state} error={push.error} onTurnOn={() => void push.turnOn()} />
         <button
           type="button"
           className="btn"

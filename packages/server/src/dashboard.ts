@@ -1,6 +1,9 @@
 import { existsSync } from "node:fs";
 import { join, normalize } from "node:path";
 
+/** Files at the root of the built dashboard that make it an installable app. */
+const ROOT_FILES: ReadonlySet<string> = new Set(["/sw.js", "/manifest.webmanifest", "/icon.svg"]);
+
 /** Finds a dashboard file by its path under dist, such as "/assets/index-abc.js" or "/index.html". */
 export type Locate = (relative: string) => string | null;
 
@@ -32,6 +35,13 @@ export function dashboardAssets(locate: Locate): (path: string) => Promise<Respo
       return new Response(Bun.file(asset), {
         headers: { "cache-control": "public, max-age=31536000, immutable" },
       });
+    }
+    // The installable app's own files live at the root, under fixed names, so they are always checked again.
+    const own = ROOT_FILES.has(relative) ? locate(relative) : null;
+    if (own !== null) {
+      const headers: Record<string, string> = { "cache-control": "no-cache" };
+      if (relative === "/manifest.webmanifest") headers["content-type"] = "application/manifest+json";
+      return new Response(Bun.file(own), { headers });
     }
     return new Response(Bun.file(page), { headers: { "cache-control": "no-cache" } });
   };

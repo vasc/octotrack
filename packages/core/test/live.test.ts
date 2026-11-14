@@ -18,6 +18,14 @@ function notified(action: () => void): number {
   return notifications - before;
 }
 
+/** Saved constantly and seen by nobody else: polls, drafts, and what the server says about notifications. */
+const QUIET: ReadonlySet<string> = new Set([
+  c.watchCheck.name,
+  c.draftSave.name,
+  c.pushSeen.name,
+  c.pushSent.name,
+]);
+
 /** The developer's operations run as the developer; everything else as an agent. */
 const DEVELOPER_OPS: ReadonlySet<string> = new Set([
   "line.add",
@@ -49,6 +57,8 @@ const DEVELOPER_OPS: ReadonlySet<string> = new Set([
   "choice.now",
   "line.accept_recommended",
   "runner.retry",
+  "push.subscribe",
+  "push.unsubscribe",
 ]);
 function execute(name: string, input: unknown): void {
   const caller = name.startsWith("runner.") && name !== "runner.retry" ? { ...h.as, system: true } : h.as;
@@ -176,6 +186,8 @@ const EVERY_WRITE: readonly (readonly [string, unknown])[] = [
   ["runner.retry", { line: "L-1" }],
   ["runner.closed", { pr: "PR-1" }],
   ["runner.removed", { path: "/wt/oct.1" }],
+  ["push.subscribe", { endpoint: "https://push.example/a", keys: { p256dh: "k", auth: "a" } }],
+  ["push.unsubscribe", { endpoint: "https://push.example/a" }],
   ["agent.woken", { name: "agent-a" }],
   // Last: everything above runs as agent-a, which a stop would refuse.
   ["agent.stop", { name: "agent-a" }],
@@ -187,10 +199,7 @@ describe("every write reaches the dashboard", () => {
     const covered = new Set(EVERY_WRITE.map(([name]) => name));
     const missing = Object.values(c)
       // Polls and drafts are saved constantly and change nothing anyone else sees, so they stay quiet.
-      .filter(
-        (contract) =>
-          contract.mutates && contract.name !== c.watchCheck.name && contract.name !== c.draftSave.name,
-      )
+      .filter((contract) => contract.mutates && !QUIET.has(contract.name))
       .map((contract) => contract.name)
       .filter((name) => !covered.has(name));
     expect(missing).toEqual([]);

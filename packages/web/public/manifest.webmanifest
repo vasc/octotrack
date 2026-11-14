@@ -1,0 +1,11 @@
+{
+  "name": "Octotrack",
+  "short_name": "Octotrack",
+  "description": "Every line of work, and what each needs from you",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#141413",
+  "theme_color": "#141413",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

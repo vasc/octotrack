@@ -13,6 +13,7 @@ import { ideaOps } from "./ops/ideas.ts";
 import { issueOps } from "./ops/issues.ts";
 import { applyChoice, choiceOps, dueChoices } from "./ops/choices.ts";
 import { claimOps } from "./ops/claims.ts";
+import { pushOps } from "./ops/push.ts";
 import { runnerOps } from "./ops/runner.ts";
 import { inboxOps } from "./ops/inbox.ts";
 import { taskOps } from "./ops/tasks.ts";
@@ -82,13 +83,17 @@ const NO_RECONCILE: ReadonlySet<string> = new Set([
   "runner.report",
   "runner.worktree",
   "runner.removed",
+  "push.subscribe",
+  "push.unsubscribe",
+  "push.seen",
+  "push.sent",
 ]);
 /**
  * Every write notifies, unless it is listed here. It is this way around so that a new operation cannot silently fail to
  * reach the dashboard. Polling is the exception: a waiting agent checks constantly, each check would wake the others, and
  * nothing a person can see has usually changed. A poll sets `visibleChange` when something has.
  */
-const POLLS: ReadonlySet<string> = new Set(["watch.check", "draft.save"]);
+const POLLS: ReadonlySet<string> = new Set(["watch.check", "draft.save", "push.seen", "push.sent"]);
 
 const AGENT_TOUCH_INTERVAL_MS = 30_000;
 
@@ -109,6 +114,7 @@ const ALL_OPS: readonly BoundOp[] = [
   ...taskOps,
   ...choiceOps,
   ...runnerOps,
+  ...pushOps,
   ...projectOps,
   ...issueOps,
   ...decisionOps,
