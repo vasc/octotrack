@@ -1,26 +1,21 @@
-import { useEffect, useRef, useState } from "react";
-import { useBrowserFocus } from "../../hooks/useBrowserFocus.ts";
+import { useRef, useState } from "react";
 import { useClock } from "../../hooks/useClock.ts";
-import { useDragOrder } from "../../hooks/useDragOrder.ts";
 import { useHome } from "../../hooks/useHome.ts";
-import { useHomeFocus } from "../../hooks/useHomeFocus.ts";
+import { useHomeFocusOnPage } from "../../hooks/useHomeFocusOnPage.ts";
+import { useLineHandles } from "../../hooks/useLineHandles.tsx";
 import { useHomeKeys } from "../../hooks/useHomeKeys.ts";
 import { useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useNarrow } from "../../hooks/useNarrow.ts";
-import { nextAsk, runningAgents } from "../../lib/lines.ts";
+import { linesWaitingOnYou, linesWithNoOwner, nextAsk, runningAgents } from "../../lib/lines.ts";
 import { setParams, useRoute } from "../../lib/router.ts";
-import { BatchPanel } from "../decisions/BatchPanel.tsx";
-import { DecisionCardItem } from "../decisions/DecisionCardItem.tsx";
 import { NewLineCard } from "../lines/NewLineCard.tsx";
 import { ErrorState, LoadingState } from "../ui/states.tsx";
 import { AtSection } from "./AtSection.tsx";
 import { AtUpNext } from "./AtUpNext.tsx";
 import { FirstRun } from "./FirstRun.tsx";
-import { FocusTarget } from "./FocusTarget.tsx";
 import { NothingNeedsYou } from "./NothingNeedsYou.tsx";
-import { ForYouRow } from "./ForYouRow.tsx";
-import { HomeSection } from "./HomeSection.tsx";
-import { LineHandle } from "./LineHandle.tsx";
+import { QuestionList } from "./QuestionList.tsx";
+import { RecordAnswers } from "./RecordAnswers.tsx";
 import { SpreadThin } from "./SpreadThin.tsx";
 import { WaitingSections } from "./WaitingSections.tsx";
 import { WorkingSection } from "./WorkingSection.tsx";
@@ -39,15 +34,9 @@ export function HomePage() {
   const adding = params.get("new") === "1";
   const narrow = useNarrow();
   const home = h.home.data;
-  const focusState = useHomeFocus(home, asked, h.held);
-  const { focus, choose, follow, skip } = focusState;
   const page = useRef<HTMLDivElement>(null);
-  useBrowserFocus(page, focus, focusState.moved, follow);
-  // A count or a buzz names an item with ?focus; once focus is there the URL lets it go, so the same count or buzz
-  // works again after focus has moved on. The URL is outside React, so an effect brings it in line.
-  useEffect(() => {
-    if (asked !== null && focus === asked) setParams({ focus: null }, true);
-  }, [asked, focus]);
+  const focusState = useHomeFocusOnPage(page, home, asked, h.held);
+  const { focus, choose, skip } = focusState;
   const [starting, setStarting] = useState<string | null>(null);
   // With a ref open in the panel, or a Start sheet open, that takes the keys and home stands down, so one key never
   // answers twice.
@@ -67,25 +56,7 @@ export function HomePage() {
       onRecord: () => setRecording(true),
     }),
   );
-  const dragFor = useDragOrder(h.dropBefore);
-  const drop = (ref: string, section: "working" | "up_next") => dragFor(ref, section).target;
-  // Each line's handle is the one way to reorder: drag it, or open it for its moves.
-  const handle = (
-    title: string,
-    ref: string,
-    index: number,
-    count: number,
-    section: "working" | "up_next",
-  ) => (
-    <LineHandle
-      title={title}
-      canMoveUp={index > 0}
-      canMoveDown={index < count - 1}
-      canQueue={section === "working"}
-      drag={dragFor(ref, section).handle}
-      onMove={(direction) => h.reorder(ref, direction)}
-    />
-  );
+  const { handle, drop } = useLineHandles(h);
   const at = home?.at ?? null;
   // I'm at counts down in hours, so a minute's tick keeps it right without redrawing home every second.
   const now = useClock(at !== null, 60_000);
@@ -103,14 +74,7 @@ export function HomePage() {
           onCancel={() => setParams({ new: null })}
         />
       ) : null}
-      {recording ? (
-        <section className="home-section" aria-label="Record answers">
-          <BatchPanel />
-          <button type="button" className="btn" onClick={() => setRecording(false)}>
-            Close
-          </button>
-        </section>
-      ) : null}
+      {recording ? <RecordAnswers onClose={() => setRecording(false)} /> : null}
       {h.failure === null ? null : <ErrorState error={h.failure} />}
       {h.home.isPending ? <LoadingState /> : null}
       {h.home.error === null ? null : <ErrorState error={h.home.error} />}
@@ -122,24 +86,15 @@ export function HomePage() {
             <NothingNeedsYou working={runningAgents(home)} next={nextAsk(home)} />
           ) : null}
           {at === null ? null : <AtSection at={at} now={now} onLeave={() => h.at(null)} />}
-          {home.urgent.length === 0 ? null : (
-            <HomeSection title="Urgent" count={home.urgent.length}>
-              {home.urgent.map((card) => (
-                <FocusTarget
-                  key={card.decision.ref}
-                  focusRef={card.decision.ref}
-                  focused={card.decision.ref === focus}
-                >
-                  {/* Opened only with focus, like any question, so a key meant for another never answers it. */}
-                  {card.decision.ref === focus ? (
-                    <DecisionCardItem card={card} active={!inspecting} armed={armed} onPostponed={skip} />
-                  ) : (
-                    <ForYouRow item={{ kind: "question", card }} onOpen={choose} />
-                  )}
-                </FocusTarget>
-              ))}
-            </HomeSection>
-          )}
+          <QuestionList
+            title="Urgent"
+            cards={home.urgent}
+            focus={focus}
+            inspecting={inspecting}
+            armed={armed}
+            onOpen={choose}
+            onPostponed={skip}
+          />
           <WorkingSection
             home={home}
             h={h}
@@ -153,11 +108,8 @@ export function HomePage() {
             actions={
               <SpreadThin
                 working={home.working.length}
-                noOwner={
-                  home.working.filter((line) => home.crews[line.ref]?.owner == null && line.ownedBy === null)
-                    .length
-                }
-                waiting={home.working.filter((line) => home.lines[line.ref]?.waitingOnYou === true).length}
+                noOwner={linesWithNoOwner(home)}
+                waiting={linesWaitingOnYou(home)}
               />
             }
             onFocus={choose}
@@ -185,29 +137,16 @@ export function HomePage() {
             drop={drop}
             onStarting={setStarting}
           />
-          {home.noLine.length === 0 ? null : (
-            <HomeSection
-              title="On no line"
-              count={home.noLine.length}
-              note="from before lines; their agents should put each on its line"
-            >
-              <div className="line-items" data-flush="true">
-                {home.noLine.map((card) => (
-                  <FocusTarget
-                    key={card.decision.ref}
-                    focusRef={card.decision.ref}
-                    focused={card.decision.ref === focus}
-                  >
-                    {card.decision.ref === focus ? (
-                      <DecisionCardItem card={card} active={!inspecting} armed={armed} onPostponed={skip} />
-                    ) : (
-                      <ForYouRow item={{ kind: "question", card }} onOpen={choose} />
-                    )}
-                  </FocusTarget>
-                ))}
-              </div>
-            </HomeSection>
-          )}
+          <QuestionList
+            title="On no line"
+            note="from before lines; their agents should put each on its line"
+            cards={home.noLine}
+            focus={focus}
+            inspecting={inspecting}
+            armed={armed}
+            onOpen={choose}
+            onPostponed={skip}
+          />
         </>
       )}
     </div>

@@ -4,19 +4,14 @@ import { timeAgo } from "../../lib/format.ts";
 import { openEntity } from "../../lib/router.ts";
 import { TableForm } from "../lines/TableForm.tsx";
 import { FoldPicker } from "./FoldPicker.tsx";
+import { ProposalCase } from "./ProposalCase.tsx";
+import { ProposalChoices } from "./ProposalChoices.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
 
 const URGENT: Readonly<Record<NonNullable<Line["urgentReason"]>, string>> = {
   broken: "something is broken",
   time_boxed: "it is time-boxed",
   costs_money: "waiting costs money",
-};
-
-const RECOMMENDED: Readonly<Record<NonNullable<Line["recommendation"]>, string>> = {
-  start: "Start",
-  up_next: "Up next",
-  table: "Table",
-  fold: "Fold into another line",
 };
 
 /** How long ago, as a phrase: "just now", "2h ago". */
@@ -68,9 +63,6 @@ export function ProposalCard({
 }: ProposalCardProps) {
   const [mode, setMode] = useState<"table" | "fold" | null>(null);
   const fromTable = line.tabledReason !== null;
-  const recommended = (placement: NonNullable<Line["recommendation"]>) =>
-    !fromTable && line.recommendation === placement;
-  const lastNumber = foldTargets.length === 0 ? "4" : "5";
   return (
     <article
       className="proposal-card"
@@ -107,23 +99,7 @@ export function ProposalCard({
             )}
           </span>
         </p>
-        {fromTable ? (
-          <p className="proposal-case">
-            Back to look at, as you asked: {line.tabledReason}
-            {line.lookAgainAt === null ? "" : ` (${line.lookAgainAt.slice(0, 10)})`}
-          </p>
-        ) : line.recommendation === null ? null : (
-          <p className="proposal-case">
-            <b>
-              Recommended: {RECOMMENDED[line.recommendation]}
-              {line.recommendation === "up_next" && lastUpNext !== null && lastUpNext !== undefined
-                ? `, after ${lastUpNext}`
-                : ""}
-              .
-            </b>{" "}
-            {line.recommendationWhy === null ? null : <Markdown text={line.recommendationWhy} inline />}
-          </p>
-        )}
+        <ProposalCase line={line} lastUpNext={lastUpNext} />
       </div>
       {mode === "table" ? (
         <TableForm
@@ -142,73 +118,18 @@ export function ProposalCard({
           onCancel={() => setMode(null)}
         />
       ) : (
-        <div className="proposal-choices">
-          <button
-            type="button"
-            className="btn"
-            aria-label={`Start ${line.title}`}
-            data-choice="1"
-            data-primary={recommended("start")}
-            onClick={() => onStart(line.ref)}
-          >
-            Start{recommended("start") ? " · recommended" : ""}
-          </button>
-          <button
-            type="button"
-            className="btn"
-            aria-label={`Up next ${line.title}`}
-            data-choice="2"
-            data-primary={recommended("up_next")}
-            onClick={() => onQueue(line.ref)}
-          >
-            Up next{recommended("up_next") ? " · recommended" : ""}
-          </button>
-          <button
-            type="button"
-            className="btn"
-            aria-label={`Table ${line.title}`}
-            data-choice="3"
-            data-primary={recommended("table")}
-            onClick={() => setMode("table")}
-          >
-            Table
-          </button>
-          {foldTargets.length === 0 ? null : (
-            <button
-              type="button"
-              className="btn"
-              aria-label={`Fold ${line.title}`}
-              data-choice="4"
-              data-primary={recommended("fold")}
-              onClick={() => setMode("fold")}
-            >
-              Fold into
-            </button>
-          )}
-          {fromTable ? (
-            <button
-              type="button"
-              className="btn"
-              data-quiet="true"
-              aria-label={`Drop ${line.title}`}
-              data-choice={lastNumber}
-              onClick={() => onDrop(line.ref)}
-            >
-              Drop
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="btn"
-              data-quiet="true"
-              aria-label={`Not a line: ${line.title}`}
-              data-choice={lastNumber}
-              onClick={() => onReject(line.ref)}
-            >
-              Not a line
-            </button>
-          )}
-        </div>
+        <ProposalChoices
+          title={line.title}
+          recommended={fromTable ? null : line.recommendation}
+          canFold={foldTargets.length > 0}
+          fromTable={fromTable}
+          onStart={() => onStart(line.ref)}
+          onQueue={() => onQueue(line.ref)}
+          onTable={() => setMode("table")}
+          onFold={() => setMode("fold")}
+          onReject={() => onReject(line.ref)}
+          onDrop={() => onDrop(line.ref)}
+        />
       )}
     </article>
   );

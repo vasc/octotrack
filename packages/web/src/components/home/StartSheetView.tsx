@@ -1,5 +1,6 @@
 import type { Decision, HeldItem, Line } from "@octotrack/core/schemas";
-import { Markdown } from "../ui/Markdown.tsx";
+import { DoneWhenChanged } from "./DoneWhenChanged.tsx";
+import { HeldQuestion } from "./HeldQuestion.tsx";
 
 /** How many of what it holds, in words: "One question", "2 questions and a task". */
 function heldWords(questions: number, tasks: number): string {
@@ -79,69 +80,22 @@ export function StartSheetView({
       </h2>
       <p className="muted">{intro(line, held)}</p>
       {line.doneWhenProposal === null ? null : (
-        <section className="start-sheet-part" aria-label="Done when changed">
-          <span className="panel-label" data-tone="info">
-            Done when changed
-          </span>
-          <p className="line-proposal-claim">
-            "<Markdown text={line.doneWhen} inline />" became "
-            <Markdown text={line.doneWhenProposal} inline />
-            ".
-            {line.doneWhenWhy === null ? null : (
-              <>
-                {" "}
-                Why: <Markdown text={line.doneWhenWhy} inline />
-              </>
-            )}
-          </p>
-          <div className="question-actions">
-            <button type="button" className="btn" data-choice={next()} onClick={() => onDoneWhen(true)}>
-              Accept
-            </button>
-            <button type="button" className="btn" data-choice={next()} onClick={() => onDoneWhen(false)}>
-              Keep current
-            </button>
-          </div>
-        </section>
+        <DoneWhenChanged
+          was={line.doneWhen}
+          proposal={line.doneWhenProposal}
+          why={line.doneWhenWhy}
+          numbers={[next(), next()]}
+          onAnswer={onDoneWhen}
+        />
       )}
-      {asked.map((question) => {
-        const recommended = question.options.findIndex((option) => option.key === question.recommendation);
-        const numbers = question.options.map(() => next());
-        return (
-          <section key={question.ref} className="start-sheet-part" aria-label={question.title}>
-            <span className="panel-label" data-tone="attention">
-              Question · {question.ref}
-            </span>
-            <h3 className="question-title">{question.title}</h3>
-            {question.context === "" ? null : (
-              <div className="question-context">
-                <Markdown text={question.context} />
-              </div>
-            )}
-            <div className="question-actions">
-              {question.options.map((option, index) => (
-                <button
-                  key={option.key}
-                  type="button"
-                  className="btn"
-                  aria-label={option.label}
-                  data-choice={numbers[index]}
-                  data-primary={index === recommended}
-                  onClick={() => onAnswer(question.ref, option.key, option.label)}
-                >
-                  {option.label}
-                  {index === recommended ? " · recommended" : ""}
-                </button>
-              ))}
-            </div>
-            {question.recommendationWhy === null || recommended === -1 ? null : (
-              <p className="question-why">
-                <b>Why {numbers[recommended]}:</b> <Markdown text={question.recommendationWhy} inline />
-              </p>
-            )}
-          </section>
-        );
-      })}
+      {asked.map((question) => (
+        <HeldQuestion
+          key={question.ref}
+          question={question}
+          numbers={question.options.map(() => next())}
+          onAnswer={onAnswer}
+        />
+      ))}
       {tasks.length === 0 ? null : (
         <section className="start-sheet-part" aria-label="Tasks it holds">
           <span className="panel-label">Tasks, which reach you once it starts</span>
