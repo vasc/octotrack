@@ -61,7 +61,8 @@ const DEVELOPER_OPS: ReadonlySet<string> = new Set([
   "push.unsubscribe",
 ]);
 function execute(name: string, input: unknown): void {
-  const caller = name.startsWith("runner.") && name !== "runner.retry" ? { ...h.as, system: true } : h.as;
+  const serverOnly = (name.startsWith("runner.") && name !== "runner.retry") || name.endsWith(".woken");
+  const caller = serverOnly ? { ...h.as, system: true } : h.as;
   h.tracker.execute(name, input, DEVELOPER_OPS.has(name) ? { ...caller, developer: true } : caller);
 }
 

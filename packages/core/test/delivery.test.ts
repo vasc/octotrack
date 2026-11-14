@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { contracts as c } from "../src/contracts.ts";
 import { OctoError } from "../src/errors.ts";
+
+/** Wakes are recorded by the server alone. */
+const SERVER = { actor: "octotrack", channel: "cli", system: true } as const;
 import { type Harness, harness } from "./helpers.ts";
 
 const ASKER = "mediarr";
@@ -150,14 +153,14 @@ describe("asking to be woken", () => {
   test("is one attempt: a wake is never sent twice", () => {
     const { ref } = ask({ wake: ADDRESS });
     answer(ref);
-    h.call(c.decisionWoken, { ref }, "server");
+    h.tracker.call(c.decisionWoken, { ref }, SERVER);
     expect(wakes()).toEqual([]);
   });
 
   test("a failed wake is recorded, and the answer stays in the inbox", () => {
     const { ref } = ask({ wake: ADDRESS });
     answer(ref);
-    h.call(c.decisionWoken, { ref, error: "No wake adapter named claude" }, "server");
+    h.tracker.call(c.decisionWoken, { ref, error: "No wake adapter named claude" }, SERVER);
     expect(wakes()).toEqual([]);
     expect(inbox()).toEqual([ref]);
     expect(h.call(c.decisionList, { query: `ref:${ref}` }, "server")[0]?.wakeError).toBe(
@@ -175,7 +178,7 @@ describe("asking to be woken", () => {
   test("a changed answer wakes the session again", () => {
     const { ref } = ask({ wake: ADDRESS });
     answer(ref);
-    h.call(c.decisionWoken, { ref }, "server");
+    h.tracker.call(c.decisionWoken, { ref }, SERVER);
     h.call(c.decisionResolve, { ref, note: "Other way", force: true }, DEVELOPER);
     expect(wakes()).toEqual([ref]);
   });

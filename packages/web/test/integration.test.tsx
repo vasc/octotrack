@@ -585,7 +585,11 @@ describe("live updates, with nothing but the server's own notifications", () => 
 describe("PR sync problems", () => {
   test("are shown beside the PRs, then go away once it works again", async () => {
     server = startTestServer({ live: true });
-    server.act(c.projectCreate, { key: "APP", name: "App", repo: "acme/app" });
+    server.tracker.call(
+      c.projectCreate,
+      { key: "APP", name: "App", repo: "acme/app" },
+      { actor: "dev", channel: "dashboard" },
+    );
     server.act(c.prSync, { prs: [], failures: [{ repo: "acme/app", error: "gh is not logged in" }] });
     const view = renderApp(<App />);
     await view.findByText(/PR status is stale for acme\/app: gh is not logged in/);

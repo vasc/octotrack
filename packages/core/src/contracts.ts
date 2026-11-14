@@ -100,6 +100,10 @@ const Text = z.string().trim().min(1);
  * it cannot pass for an option, and holds nothing a shell would read.
  */
 const WakeAddress = z.string().regex(/^[a-z][a-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9._-]*$/);
+/** A GitHub repo, owner/name: what the runner clones and works in, so nothing else is taken. */
+const RepoSlug = z.string().regex(/^[A-Za-z0-9][A-Za-z0-9_.-]*\/[A-Za-z0-9_.-]+$/, {
+  error: "A GitHub repo is owner/name",
+});
 /** A date or a timestamp. Anything unparseable could never be flagged overdue, so it is refused here. */
 const DateText = z.string().refine(isIsoDate, { error: "Use a real date, YYYY-MM-DD, or an ISO timestamp" });
 
@@ -375,7 +379,7 @@ export const contracts = {
       name: Text,
       description: z.string().optional(),
       status: ProjectStatus.optional(),
-      repo: z.string().optional(),
+      repo: RepoSlug.optional(),
       horizon: Horizon.optional(),
       targetDate: DateText.optional(),
     }),
@@ -389,7 +393,7 @@ export const contracts = {
       name: Text.optional(),
       description: z.string().optional(),
       status: ProjectStatus.optional(),
-      repo: z.string().nullable().optional(),
+      repo: RepoSlug.nullable().optional(),
       horizon: Horizon.optional(),
       targetDate: DateText.nullable().optional(),
       ifVersion: IfVersion,
@@ -873,7 +877,7 @@ export const contracts = {
   agentRegister: write(
     "agent.register",
     "Say how to wake you (or that you cannot be woken), and which repo you serve when your checkout's remote does not say",
-    z.strictObject({ wake: z.string().trim().min(1).nullable().optional(), repo: z.string().optional() }),
+    z.strictObject({ wake: WakeAddress.nullable().optional(), repo: z.string().optional() }),
     AgentView,
   ),
   agentStop: write(

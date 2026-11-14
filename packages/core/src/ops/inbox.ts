@@ -11,7 +11,7 @@ import { requireIssue, requireLine } from "../store/entities.ts";
 import { addToInbox, inboxFor, recipientOf } from "../store/inbox.ts";
 import { AgentRow } from "../store/rows.ts";
 import { bind } from "./bind.ts";
-import { requireDeveloper } from "./developer.ts";
+import { requireDeveloper, requireServer } from "./developer.ts";
 
 const CountRow = z.object({ n: z.number() });
 
@@ -83,6 +83,7 @@ export const inboxOps = [
   ),
 
   bind(contracts.agentWoken, (ctx, input) => {
+    requireServer(ctx);
     const agent = getAgent(ctx, input.name);
     if (agent === null) throw new OctoError("not_found", `No agent called ${input.name}`);
     ctx.sql.run("UPDATE agents SET wokenAt = ?, wakeError = ? WHERE name = ?", [

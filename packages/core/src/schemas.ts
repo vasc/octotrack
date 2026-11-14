@@ -799,7 +799,11 @@ export type RunnerWorktree = z.infer<typeof RunnerWorktree>;
 
 /** A browser's Web Push subscription, as the Push API gives it. */
 export const PushSubscription = z.object({
-  endpoint: z.string().url(),
+  /** Push services are https; anything else could be a local address collecting question titles. */
+  endpoint: z
+    .string()
+    .url()
+    .refine((url) => url.startsWith("https://"), { error: "A push endpoint is an https address" }),
   keys: z.object({ p256dh: z.string().min(1), auth: z.string().min(1) }),
 });
 export type PushSubscription = z.infer<typeof PushSubscription>;

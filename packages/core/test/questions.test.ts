@@ -175,7 +175,10 @@ describe("the line inbox", () => {
     expect(due.map((wake) => [wake.agent, wake.address])).toEqual([["panel", "claude:panel"]]);
     expect(due[0]?.message).not.toContain("26 mm");
 
-    w.as(w.dev, c.agentWoken, { name: "panel", error: "Exit 1: not logged in" });
+    w.as({ actor: "octotrack", channel: "cli", system: true }, c.agentWoken, {
+      name: "panel",
+      error: "Exit 1: not logged in",
+    });
     expect(w.as(w.dev, c.agentWakes, {})).toEqual([]);
     const listed = w.as(w.dev, c.agentList, {}).find((agent) => agent.name === "panel");
     expect([listed?.state, listed?.line]).toEqual(["gone", null]);
