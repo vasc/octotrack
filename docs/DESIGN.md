@@ -451,19 +451,20 @@ What it would change in what is built:
   the proposed line it became, U-9 to a past summary, read only. Issues on a developer's line with no repo take one
   fixed prefix, ME. Of the link kinds, `blocks` now also holds a question behind the task that settles it instead of
   feeding a score, and `promoted_to` records an idea becoming a line.
-- **Data.** Today's projects become repos: key, GitHub repo, checkout path. Lines are a new table: state, order, done
-  when, repos, headline and summary with the time each was written and falls due, owner and last owner, the developer as
-  owner, the owner search's start and first-refusal deadline, the tabled reason and look-again date, the wind-down
-  deadline, and the developer's last look, which drives seen. First run fills it from the agents' proposals, splitting
-  where one project held several. Issues gain a line and a plan step, and a scoping claim is a claim on the line with
-  the role scoping. Milestones become plan steps: an ordered list per line, which questions and tasks name as what they
-  hold up. Questions gain the urgent reason, any Not urgent and a Later position; questions and tasks gain held and the
-  time they were last confirmed; tasks gain a place and outcome fields. Agents get a table: name, repo, wake address,
-  last command, stopped, started by Octotrack, and unread notices. Each line's inbox is a table: kind (answer, tell,
-  task done), ref, and delivery state. Choices waiting out their Undo, Web Push subscriptions and "I'm at" with its
-  expiry are server state. Refused writes are recorded events. Places live in `~/.octotrack/places`, beside the allowed
-  hosts, edited with `octo place`; `~/.octotrack/agent-setup.json` holds the start command and its per-repo overrides,
-  one stop command, and the cap, which counts sessions Octotrack started that ran a command in the last 15 minutes.
+- **Data.** Today's projects become repos: key, GitHub repo, and the checkout path, filled from the first agent that
+  runs there. Lines are a new table: state, order, done when, repos, headline and summary with the time each was written
+  and falls due, owner and last owner, the developer as owner, the owner search's start and first-refusal deadline, the
+  tabled reason and look-again date, the wind-down deadline, and the developer's last look, which drives seen. First run
+  fills it from the agents' proposals, splitting where one project held several. Issues gain a line and a plan step, and
+  a scoping claim is a claim on the line with the role scoping. Milestones become plan steps: an ordered list per line,
+  which questions and tasks name as what they hold up. Questions gain the urgent reason, any Not urgent and a Later
+  position; questions and tasks gain held and the time they were last confirmed; tasks gain a place and outcome fields.
+  Agents get a table: name, repo, wake address, last command, its one claim, stopped, started by Octotrack with the time
+  it must check in, and unread notices. Each line's inbox is a table: kind (answer, tell, task done), ref, and delivery
+  state. Choices waiting out their Undo, Web Push subscriptions and "I'm at" with its expiry are server state. Refused
+  writes are recorded events. Places live in `~/.octotrack/places`, beside the allowed hosts, edited with `octo place`;
+  `~/.octotrack/agent-setup.json` holds the start command and its per-repo overrides, one stop command, and the cap,
+  which counts sessions Octotrack started that ran a command in the last 15 minutes.
 - **Operations.** Kept: issue claim and release (take uses them), decisions with pickup and report, `decision batch` for
   answers given elsewhere (on Lines too, as Record answers… behind r, each placed on its line), drift (keyed on line
   instead of project), watches (a poll renews claims and receives offers), pull request sync, which stays read only.
