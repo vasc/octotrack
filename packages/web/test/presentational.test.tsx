@@ -1718,6 +1718,18 @@ describe("UnseenLog", () => {
     within(view.getByRole("article", { name: "Elsewhere" })).getByText(/gone from home/);
   });
 
+  test("changes on no line that are all routine still show, folded to their sentence", () => {
+    const view = render(
+      <UnseenLog
+        events={[at(20, { line: null, type: "drift.resolved", summary: "Drift confirmed on OCT" })]}
+        lines={[working]}
+        includeWaiting={false}
+        onShowWaiting={() => {}}
+      />,
+    );
+    within(view.getByRole("article", { name: "On no line" })).getByText(/1 drift confirmation, all routine/);
+  });
+
   test("groups line by line in the developer's order, folds checks to one sentence, and leaves waiting lines out but refused writes in", () => {
     const view = render(
       <UnseenLog events={events} lines={[working, queued]} includeWaiting={false} onShowWaiting={() => {}} />,

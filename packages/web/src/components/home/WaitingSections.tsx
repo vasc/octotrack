@@ -3,31 +3,13 @@ import { Fragment, type ReactNode } from "react";
 import type { DropTarget } from "../../hooks/useDragOrder.ts";
 import type { HomeActions } from "../../hooks/useHome.ts";
 import { lineFocusRef } from "../../lib/focus.ts";
+import { heldOnTabled } from "../../lib/lines.ts";
 import { FoldedSection } from "./FoldedSection.tsx";
 import { HomeSection } from "./HomeSection.tsx";
 import { ProposalCard } from "./ProposalCard.tsx";
 import { QuietRow } from "./QuietRow.tsx";
 import { StartSheet } from "./StartSheet.tsx";
 import { UpNextRow } from "./UpNextRow.tsx";
-
-/** What the tabled lines hold, together: questions and tasks that wait for their line to start. */
-function heldNote(home: HomeView): string | undefined {
-  const held = home.tabled.reduce(
-    (sum, line) => {
-      const details = home.lines[line.ref];
-      return details === undefined
-        ? sum
-        : { questions: sum.questions + details.held.questions, tasks: sum.tasks + details.held.tasks };
-    },
-    { questions: 0, tasks: 0 },
-  );
-  if (held.questions === 0 && held.tasks === 0) return undefined;
-  const parts = [
-    held.questions === 0 ? null : `${held.questions} question${held.questions === 1 ? "" : "s"}`,
-    held.tasks === 0 ? null : `${held.tasks} task${held.tasks === 1 ? "" : "s"}`,
-  ].filter((part) => part !== null);
-  return `${parts.join(" and ")} held`;
-}
 
 /**
  * The lines not being worked on: up next in order, proposals, tabled and done lately. Starting one that waited opens
@@ -77,7 +59,7 @@ export function WaitingSections({
   };
   const quiet = (
     <>
-      <FoldedSection title="Tabled" lines={home.tabled} dashed note={heldNote(home)}>
+      <FoldedSection title="Tabled" lines={home.tabled} dashed note={heldOnTabled(home)}>
         {home.tabled.map((line) => (
           <div key={line.ref}>
             <QuietRow line={line} onStart={onStarting} onQueue={h.queue} />

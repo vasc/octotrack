@@ -1,49 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { suggest } from "../src/hooks/useSuggestions.ts";
 import { validateQuery } from "../src/hooks/useFilter.ts";
-import type { Decision } from "@octotrack/core/schemas";
-import { decision } from "../src/design/fixtures.ts";
-import type { Tone } from "../src/lib/format.ts";
-import {
-  dayLabel,
-  deliveryOf,
-  filterTerm,
-  humanize,
-  splitRefs,
-  timeAgo,
-  timeLabel,
-  toneOf,
-} from "../src/lib/format.ts";
+import { dayLabel, filterTerm, humanize, splitRefs, timeAgo, timeLabel, toneOf } from "../src/lib/format.ts";
 import { nextFocus } from "../src/lib/focus.ts";
+import { heldOnTabled } from "../src/lib/lines.ts";
 import { closeEntity, navigate, openEntity, setParams } from "../src/lib/router.ts";
-
-describe("deliveryOf", () => {
-  const answered = {
-    status: "decided" as const,
-    requestedBy: "agent-a",
-    decidedBy: "dev",
-    decidedAt: "2026-11-07",
-  };
-
-  test("an open decision has nothing to deliver", () => {
-    expect(deliveryOf(decision())).toBeNull();
-  });
-
-  test("nor does one the agent answered itself", () => {
-    expect(deliveryOf(decision({ ...answered, decidedBy: "agent-a" }))).toBeNull();
-  });
-
-  const cases: readonly (readonly [Partial<Decision>, string, Tone])[] = [
-    [{}, "not picked up", "warn"],
-    [{ wakeError: "No adapter" }, "wake failed", "bad"],
-    [{ pickedUpAt: "2026-11-07", pickedUpBy: "agent-a" }, "picked up", "info"],
-    [{ pickedUpAt: "2026-11-07", reportStatus: "partial" }, "partly carried out", "warn"],
-    [{ pickedUpAt: "2026-11-07", reportStatus: "done" }, "carried out", "good"],
-  ];
-  test.each(cases)("%j reads as %s", (state, label, tone) => {
-    expect(deliveryOf(decision({ ...answered, ...state }))).toEqual({ label, tone });
-  });
-});
 
 describe("suggest", () => {
   const dynamic = { project: ["OCT", "API"], actor: ["claude-a"] };
@@ -179,5 +140,26 @@ describe("filterTerm", () => {
     expect(filterTerm("actor", "panel")).toBe("actor:panel");
     expect(filterTerm("actor", "my agent")).toBe('actor:"my agent"');
     expect(filterTerm("actor", 'say "hi"')).toBe('actor:"say \\"hi\\""');
+  });
+});
+
+describe("heldOnTabled", () => {
+  const held = (questions: number, tasks: number) => ({ held: { questions, tasks } });
+
+  test("says nothing when the tabled lines hold nothing", () => {
+    expect(heldOnTabled({ tabled: [{ ref: "L-1" }], lines: { "L-1": held(0, 0) } })).toBeUndefined();
+  });
+
+  test("adds up every tabled line, and only tabled ones", () => {
+    expect(
+      heldOnTabled({
+        tabled: [{ ref: "L-1" }, { ref: "L-2" }, { ref: "L-9" }],
+        lines: { "L-1": held(1, 0), "L-2": held(1, 1), "L-3": held(5, 5) },
+      }),
+    ).toBe("2 questions and 1 task held");
+  });
+
+  test("names only what there is", () => {
+    expect(heldOnTabled({ tabled: [{ ref: "L-1" }], lines: { "L-1": held(0, 3) } })).toBe("3 tasks held");
   });
 });

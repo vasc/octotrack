@@ -2,6 +2,7 @@ import type {
   HomeView,
   Line,
   LineCrew,
+  LineHome,
   LineStart,
   RunnerStatus,
   UrgentReason,
@@ -16,12 +17,6 @@ export const LINE_STATE_LABEL: Readonly<Record<Line["state"], string>> = {
   done: "Done",
   dropped: "Dropped",
 };
-
-/** What the agent that proposed a line thinks should happen to it, in words. */
-export function recommendationText(line: Line): string | null {
-  if (line.recommendation === null) return null;
-  return `${line.proposedBy ?? "An agent"} says ${line.recommendation.replace("_", " ")}`;
-}
 
 /**
  * Who is on a line, in a few words each: its owner and how it is, helpers, its scoper, or that nobody was found. Step
@@ -86,4 +81,36 @@ export function nextAsk(home: HomeView): { title: string; step: string | null } 
   }
   const first = home.working[0];
   return first === undefined ? null : { title: first.title, step: null };
+}
+
+/** Working lines nobody owns, the developer included: what spreading thin costs first. */
+export function linesWithNoOwner(home: HomeView): number {
+  return home.working.filter((line) => home.crews[line.ref]?.owner == null && line.ownedBy === null).length;
+}
+
+/** Working lines whose open work all waits on the developer. */
+export function linesWaitingOnYou(home: HomeView): number {
+  return home.working.filter((line) => home.lines[line.ref]?.waitingOnYou === true).length;
+}
+
+/** What the tabled lines hold, together, as a few words: questions and tasks that wait for their line to start. */
+export function heldOnTabled(home: {
+  tabled: readonly Pick<Line, "ref">[];
+  lines: Readonly<Record<string, Pick<LineHome, "held">>>;
+}): string | undefined {
+  const held = home.tabled.reduce(
+    (sum, line) => {
+      const details = home.lines[line.ref];
+      return details === undefined
+        ? sum
+        : { questions: sum.questions + details.held.questions, tasks: sum.tasks + details.held.tasks };
+    },
+    { questions: 0, tasks: 0 },
+  );
+  if (held.questions === 0 && held.tasks === 0) return undefined;
+  const parts = [
+    held.questions === 0 ? null : `${held.questions} question${held.questions === 1 ? "" : "s"}`,
+    held.tasks === 0 ? null : `${held.tasks} task${held.tasks === 1 ? "" : "s"}`,
+  ].filter((part) => part !== null);
+  return `${parts.join(" and ")} held`;
 }
