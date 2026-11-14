@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { useDecisionForm } from "../../hooks/useDecisionForm.ts";
 import { useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useLinePlace } from "../../hooks/useLinePlace.ts";
+import { openEntity } from "../../lib/router.ts";
 import { DecisionCardView } from "./DecisionCardView.tsx";
 
 const NO_KEYS = {};
@@ -16,11 +17,14 @@ export function DecisionCardItem({
   active = false,
   armed = active,
   onPostponed,
+  background = false,
 }: {
   card: DecisionCard;
   active?: boolean;
   armed?: boolean;
   onPostponed?: (ref: string) => void;
+  /** Offer Background: the question opened on its own, with its history and connections. */
+  background?: boolean;
 }) {
   const form = useDecisionForm(card.decision, onPostponed);
   const { answer, postpone, ownWords, openOwn } = form;
@@ -34,5 +38,13 @@ export function DecisionCardItem({
   }, [active, armed, ownWords, card.decision.options, answer, postpone, openOwn]);
   useHotkeys(keys);
   const line = useLinePlace(card.decision.line);
-  return <DecisionCardView card={card} form={form} selected={active} line={line} />;
+  return (
+    <DecisionCardView
+      card={card}
+      form={form}
+      selected={active}
+      line={line}
+      {...(background ? { onBackground: () => openEntity(card.decision.ref) } : {})}
+    />
+  );
 }

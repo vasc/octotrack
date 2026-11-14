@@ -632,8 +632,21 @@ describe("lines of work", () => {
       recommendation: "up_next",
       recommendationWhy: "The base is final.",
     });
-    const view = render(<ProposalCard line={proposal} foldTargets={[line()]} {...handlers} />);
-    view.getByText("Recommended: Up next.");
+    const view = render(
+      <ProposalCard
+        line={proposal}
+        foldTargets={[line()]}
+        repos={["vasc/homepanel"]}
+        firstStep="land the branch"
+        lastUpNext="Firmware without casts"
+        now={Date.parse(proposal.createdAt) + 2 * 3_600_000}
+        {...handlers}
+      />,
+    );
+    view.getByText(/vasc\/homepanel/);
+    view.getByText(/first step: land the branch/);
+    view.getByText(/2h ago/);
+    view.getByText("Recommended: Up next, after Firmware without casts.");
     view.getByText("The base is final.");
     // The recommended choice is the filled one.
     expect(view.getByRole("button", { name: "Up next Wall mount" }).getAttribute("data-primary")).toBe(
@@ -785,6 +798,24 @@ describe("a line opened", () => {
     ]);
     view.getByRole("button", { name: "OCT-6" });
     expect(view.getByText(/checks failing/).getAttribute("data-checks")).toBe("failing");
+  });
+
+  test("OwnerBox says how its owner keeps the line, in E-Line's words", () => {
+    const crew = (state: "asleep" | "running" | "quiet"): LineCrew => ({
+      owner: { name: "panel-widgets", state },
+      helpers: [],
+      scoper: null,
+      search: null,
+    });
+    const props = { line: line(), repos: ["OCT"], onStop: () => {}, onOwn: () => {}, onHand: () => {} };
+    const asleep = render(<OwnerBox {...props} crew={crew("asleep")} waitingOnYou />);
+    asleep.getByText(
+      whole(
+        "panel-widgets writes the summary and hears what you tell it. All the line's open work waits on you, and it left a wake address, so it keeps the line while it sleeps and is woken by what you send. Helpers may work under it, never writing the summary; none now.",
+      ),
+    );
+    asleep.unmount();
+    render(<OwnerBox {...props} crew={crew("running")} waitingOnYou={false} />).getByText(/is running now/);
   });
 
   test("OwnerBox offers Stop on the owner and I'll own it, or Hand to an agent on a line of yours", () => {
@@ -1166,10 +1197,24 @@ describe("tabling and a line's own choices", () => {
     fireEvent.click(working.getByRole("button", { name: "Done" }));
     fireEvent.click(working.getByRole("button", { name: "Done" }));
     expect(onChoose).toHaveBeenCalledWith("done");
-    fireEvent.click(working.getByRole("button", { name: "More: drop this line" }));
+    fireEvent.click(working.getByRole("button", { name: "More: drop this line, fold it into another" }));
     fireEvent.click(working.getByRole("button", { name: "Drop" }));
     expect(onChoose).toHaveBeenCalledWith("drop");
     working.unmount();
+    const onFoldWorking = mock((_into: string) => {});
+    const folding = render(
+      <LineActions
+        line={line()}
+        foldTargets={[line({ ref: "L-2", title: "Mount" })]}
+        onFold={onFoldWorking}
+        {...props}
+      />,
+    );
+    fireEvent.click(folding.getByRole("button", { name: "More: drop this line, fold it into another" }));
+    fireEvent.click(folding.getByRole("button", { name: "Fold into another" }));
+    fireEvent.click(folding.getByRole("button", { name: "Fold Sendspin enclosure into Mount" }));
+    expect(onFoldWorking).toHaveBeenCalledWith("L-2");
+    folding.unmount();
     const onFold = mock((_into: string) => {});
     const proposed = render(
       <LineActions
@@ -1306,7 +1351,7 @@ describe("saying something to a line", () => {
   test("TellBox names who it reaches, and sends nothing typed as a nudge", () => {
     const onSend = mock((_words: string) => {});
     const nobody = render(<TellBox line="L-1" to={null} words="" onWords={() => {}} onSend={onSend} />);
-    nobody.getByLabelText("Tell whoever takes L-1");
+    nobody.getByLabelText("Message to whoever takes L-1");
     fireEvent.click(nobody.getByRole("button", { name: "Nudge" }));
     expect(onSend).toHaveBeenCalledWith("");
     nobody.unmount();

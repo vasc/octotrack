@@ -102,6 +102,7 @@ export function WorkingSection({
               key={line.ref}
               focused={focus === lineFocusRef(line.ref)}
               drop={drop(line.ref, "working")}
+              fold={at !== null ? "at" : folded ? "phone" : null}
               index={index + 1}
               line={line}
               {...(crew === undefined ? {} : { crew })}

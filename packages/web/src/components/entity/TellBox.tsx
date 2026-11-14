@@ -29,7 +29,13 @@ export function TellBox({ line, to, words, onWords, onSend, focus = false, sendi
           send();
         }}
       >
-        <TextBox label={`Tell ${who}`} value={words} onChange={onWords} onSubmit={send} autoFocus={focus} />
+        <TextBox
+          label={`Message to ${who}`}
+          value={words}
+          onChange={onWords}
+          onSubmit={send}
+          autoFocus={focus}
+        />
         <div className="tell-foot">
           <span className="muted">
             A message, not an answer: it closes nothing. Markdown works; the box grows as you type. It goes to

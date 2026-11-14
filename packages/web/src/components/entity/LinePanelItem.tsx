@@ -100,6 +100,7 @@ export function LinePanelItem({ line }: { line: Line }) {
             onStop={choices.stop}
             onOwn={() => choices.choose("own")}
             onHand={choices.hand}
+            waitingOnYou={home?.lines[line.ref]?.waitingOnYou === true}
           />
         </div>
       </div>

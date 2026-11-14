@@ -17,6 +17,7 @@ export function ForYouItem({
   onNotYet,
   onDoneWhen,
   onPostponed,
+  background = false,
 }: {
   item: ForYou;
   /** The line's title, for proposals about the line itself. */
@@ -31,6 +32,8 @@ export function ForYouItem({
   onNotYet(line: string, why: string): void;
   onDoneWhen(line: string, accept: boolean): void;
   onPostponed?: (ref: string) => void;
+  /** In a line's panel: a question offers its background, opened on its own. */
+  background?: boolean;
 }) {
   if (!focused) return <ForYouRow item={item} onOpen={onOpen} />;
   switch (item.kind) {
@@ -40,6 +43,7 @@ export function ForYouItem({
           card={item.card}
           active
           armed={armed}
+          background={background}
           {...(onPostponed === undefined ? {} : { onPostponed })}
         />
       );

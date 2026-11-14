@@ -1,6 +1,23 @@
 import type { Line, LineCrew } from "@octotrack/core/schemas";
 import { useState } from "react";
 
+/** How the owner keeps the line, as E-Line says it: what waits on the developer, and whether it can be woken. */
+function keeping(state: string, waitingOnYou: boolean): string {
+  const waits = waitingOnYou ? "All the line's open work waits on you, and it" : "It";
+  switch (state) {
+    case "asleep":
+      return `${waits} left a wake address, so it keeps the line while it sleeps and is woken by what you send.`;
+    case "running":
+      return waitingOnYou
+        ? "All the line's open work waits on you; it is running now."
+        : "It is running now.";
+    case "quiet":
+      return "It has been quiet since its last command and cannot be woken; Release is on Agents.";
+    default:
+      return `It is ${state}.`;
+  }
+}
+
 /**
  * Who speaks for the line: its owner and how it is, its helpers; Stop on the owner, and I'll own it; or, on a line the
  * developer owns, Hand to an agent, which asks for repos only when the line names none.
@@ -12,8 +29,11 @@ export function OwnerBox({
   onStop,
   onOwn,
   onHand,
+  waitingOnYou = false,
 }: {
   line: Line;
+  /** All the line's open work waits on the developer. */
+  waitingOnYou?: boolean;
   crew: LineCrew | undefined;
   repos: readonly string[];
   onStop(name: string): void;
@@ -36,7 +56,8 @@ export function OwnerBox({
           <>No agent owns it yet. Octotrack is looking for one.</>
         ) : (
           <>
-            <b>{owner.name}</b>, {owner.state}, writes the summary and hears what you tell it.{" "}
+            <b>{owner.name}</b> writes the summary and hears what you tell it.{" "}
+            {keeping(owner.state, waitingOnYou)}{" "}
             {helpers.length === 0
               ? "Helpers may work under it, never writing the summary; none now."
               : `Helping: ${helpers.map((helper) => helper.name).join(", ")}.`}
