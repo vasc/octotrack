@@ -38,13 +38,13 @@ export function UpNextRow({
         <button type="button" className="row-title" onClick={() => openEntity(line.ref)}>
           {line.title}
         </button>
-        <div className="row-sub">
+        <p className="home-meta">
           {details === undefined ? null : <span>{heldText(details.held)}</span>}
           <span>{scoping}</span>
           {crewText(crew).map((words) => (
             <span key={words}>{words}</span>
           ))}
-        </div>
+        </p>
         {line.doneWhen === "" ? null : <p className="muted">Done when {line.doneWhen}</p>}
       </div>
       {reorder}

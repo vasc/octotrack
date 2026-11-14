@@ -51,6 +51,18 @@ import {
 const form = decisionForm;
 
 describe("DecisionCardView", () => {
+  test("puts the reason for the recommendation directly under the options", () => {
+    const view = render(
+      <DecisionCardView
+        form={form()}
+        card={decisionCard({
+          decision: decision({ recommendation: "redis", recommendationWhy: "It is already deployed." }),
+        })}
+      />,
+    );
+    view.getByText("Why 2: It is already deployed.");
+  });
+
   test("shows what is needed to decide: question, context, options, recommendation, reasons, blocked work", () => {
     const view = render(
       <DecisionCardView

@@ -1284,6 +1284,14 @@ p {
   font-weight: var(--weight-medium);
 }
 
+/* The recommendation goes on its own line, under the row, so the title keeps its width. */
+.for-you-note {
+  order: 1;
+  flex-basis: 100%;
+  font-size: var(--text-sm);
+  color: var(--ink-3);
+}
+
 .task {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -1329,4 +1337,9 @@ p {
   flex-direction: column;
   gap: var(--space-4);
   margin-top: var(--space-4);
+}
+
+.decision-why {
+  font-size: var(--text-sm);
+  color: var(--ink-2);
 }

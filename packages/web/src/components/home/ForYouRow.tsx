@@ -10,7 +10,7 @@ export function ForYouRow({ item, onOpen }: { item: ForYou; onOpen(ref: string):
         <span className="for-you-kind">Question · {decision.ref}</span>
         <span className="for-you-title">{decision.title}</span>
         {recommended === undefined ? null : (
-          <span className="muted">
+          <span className="for-you-note">
             Recommended {recommended.label}
             {decision.recommendationWhy === null ? "" : `: ${decision.recommendationWhy}`}
           </span>
