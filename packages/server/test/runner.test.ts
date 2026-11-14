@@ -1,0 +1,152 @@
+import { describe, expect, test } from "bun:test";
+import { contracts as c, Tracker } from "@octotrack/core";
+import { createRunner, type RunnerConfig, type RunnerShell } from "../src/runner.ts";
+import { openSqlite } from "../src/sqlite.ts";
+
+const DEV = { actor: "dev", channel: "dashboard" } as const;
+
+interface Scripted {
+  [command: string]: { code: number; stdout?: string; stderr?: string };
+}
+
+function fakeShell(scripted: Scripted = {}) {
+  const ran: string[] = [];
+  const started: { argv: string[]; cwd: string; env: Record<string, string> }[] = [];
+  const finish: ((result: { code: number; output: string }) => void)[] = [];
+  const shell: RunnerShell = {
+    async run(argv) {
+      const command = argv.join(" ");
+      ran.push(command);
+      const match = Object.entries(scripted).find(([prefix]) => command.startsWith(prefix))?.[1];
+      return { code: match?.code ?? 0, stdout: match?.stdout ?? "", stderr: match?.stderr ?? "" };
+    },
+    start(argv, options) {
+      started.push({ argv: [...argv], cwd: options.cwd, env: options.env });
+      return { exited: new Promise((resolve) => finish.push(resolve)) };
+    },
+    exists: () => false,
+  };
+  return { shell, ran, started, finish };
+}
+
+function world(config: Partial<RunnerConfig> = {}, scripted: Scripted = {}) {
+  let now = "2026-11-14T09:00:00.000Z";
+  const tracker = new Tracker(openSqlite(":memory:"), () => now);
+  tracker.call(c.projectCreate, { key: "PANEL", name: "Panel", repo: "vasc/homepanel" }, DEV);
+  const line = tracker.call(
+    c.lineAdd,
+    { title: "Enclosure", doneWhen: "Done.", repos: ["PANEL"], where: "working" },
+    DEV,
+  );
+  now = "2026-11-14T09:01:00.000Z";
+  const fake = fakeShell(scripted);
+  const runner = createRunner({
+    tracker,
+    shell: fake.shell,
+    config: {
+      start: ["claude", "--name", "{name}", "octo line take {line}"],
+      cap: 1,
+      dryRun: false,
+      worktrees: "/wt",
+      clones: "/src",
+      repos: { PANEL: { checkout: "/src/homepanel", setup: [["bun", "install"]] } },
+      ...config,
+    },
+  });
+  const later = (minutes: number) => {
+    now = new Date(Date.parse(now) + minutes * 60_000).toISOString();
+  };
+  return { tracker, line, runner, later, ...fake };
+}
+
+describe("the local runner", () => {
+  test("starts a session for a line nobody took, in a fresh worktree, passing only the line's ref and the name", async () => {
+    const w = world();
+    await w.runner.tick();
+    expect(w.ran).toEqual(["git -C /src/homepanel worktree add -b octo/panel.1 /wt/panel.1", "bun install"]);
+    expect(w.started).toEqual([
+      {
+        argv: ["claude", "--name", "panel.1", `octo line take ${w.line.ref}`],
+        cwd: "/wt/panel.1",
+        env: { OCTO_AGENT: "panel.1" },
+      },
+    ]);
+    await w.runner.tick();
+    expect(w.started).toHaveLength(1);
+  });
+
+  test("in watch mode it only records what it would have started", async () => {
+    const w = world({ dryRun: true });
+    await w.runner.tick();
+    expect(w.ran).toEqual([]);
+    expect(w.started).toEqual([]);
+    expect(w.tracker.call(c.feedList, { query: "event:runner.would_start" }, DEV).events).toHaveLength(1);
+  });
+
+  test("a start that exits at once is recorded with its output, for Step in to show", async () => {
+    const w = world();
+    await w.runner.tick();
+    w.finish[0]?.({ code: 1, output: "claude: not logged in" });
+    await w.runner.settled();
+    const home = w.tracker.call(c.homeShow, {}, DEV);
+    expect(home.lines[w.line.ref]?.start).toMatchObject({ state: "failed", output: "claude: not logged in" });
+  });
+
+  test("a worktree that cannot be made is a failed start, not a session", async () => {
+    const w = world(
+      {},
+      { "git -C /src/homepanel worktree add": { code: 128, stderr: "fatal: not a git repository" } },
+    );
+    await w.runner.tick();
+    expect(w.started).toEqual([]);
+    const start = w.tracker.call(c.homeShow, {}, DEV).lines[w.line.ref]?.start;
+    expect(start).toMatchObject({ state: "failed", output: "fatal: not a git repository" });
+  });
+
+  test("with no checkout of the repo, it clones it first", async () => {
+    const w = world({ repos: {} });
+    await w.runner.tick();
+    expect(w.ran.slice(0, 2)).toEqual([
+      "gh repo clone vasc/homepanel /src/panel",
+      "git -C /src/panel worktree add -b octo/panel.1 /wt/panel.1",
+    ]);
+  });
+
+  test("closes pull requests left open on a line that is done, with a comment naming the line", async () => {
+    const w = world({ repos: {}, cap: 0 });
+    const issue = w.tracker.call(c.issueCreate, { project: "PANEL", title: "Base", line: w.line.ref }, DEV);
+    w.tracker.call(
+      c.prUpsert,
+      { repo: "vasc/homepanel", number: 14, title: "Base", state: "open", body: `Fixes ${issue.ref}` },
+      { actor: "github", channel: "cli", system: true },
+    );
+    w.tracker.call(c.lineDone, { ref: w.line.ref }, DEV);
+    await w.runner.tick();
+    expect(w.ran.filter((command) => command.startsWith("gh pr close"))).toEqual([]);
+    w.later(16);
+    w.tracker.sweep();
+    await w.runner.tick();
+    await w.runner.tick();
+    expect(w.ran.filter((command) => command.startsWith("gh pr close"))).toEqual([
+      `gh pr close 14 --repo vasc/homepanel --comment Closed with ${w.line.ref}, which is done in Octotrack.`,
+    ]);
+  });
+
+  test("removes a worktree it made once nobody uses it and it is clean and pushed", async () => {
+    const w = world({}, { "git -C /wt/panel.1 rev-list --count @{u}..HEAD": { code: 0, stdout: "0\n" } });
+    await w.runner.tick();
+    w.finish[0]?.({ code: 0, output: "" });
+    await w.runner.settled();
+    await w.runner.tick();
+    expect(w.ran).toContain("git -C /src/homepanel worktree remove /wt/panel.1");
+  });
+
+  test("keeps a worktree with uncommitted work", async () => {
+    const w = world({}, { "git -C /wt/panel.1 status --porcelain": { code: 0, stdout: " M base.scad\n" } });
+    await w.runner.tick();
+    w.finish[0]?.({ code: 0, output: "" });
+    await w.runner.settled();
+    await w.runner.tick();
+    expect(w.ran.some((command) => command.includes("worktree remove"))).toBe(false);
+  });
+});

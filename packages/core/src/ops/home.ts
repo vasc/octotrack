@@ -6,6 +6,7 @@ import { rows } from "../store/context.ts";
 import { allLines } from "../store/entities.ts";
 import { IssueRow, PlanStepRow } from "../store/rows.ts";
 import { buildQueue } from "./decisions.ts";
+import { lineStart, runnerStatus } from "./runner.ts";
 import { heldOn } from "./tasks.ts";
 
 const DONE_LATELY_MS = 7 * 24 * 60 * 60 * 1000;
@@ -56,6 +57,7 @@ export function buildHome(ctx: Ctx): HomeView {
     const tasks: ForYou[] = working ? openTasks(ctx, line.ref).map((task) => ({ kind: "task", task })) : [];
     const held = working ? [] : heldOn(ctx, line.ref).filter((item) => item.current);
     return {
+      start: lineStart(ctx, line.ref),
       step:
         current === undefined ? null : { position: current.position, of: steps.length, title: current.title },
       forYou: [...questions, ...tasks],
@@ -71,6 +73,7 @@ export function buildHome(ctx: Ctx): HomeView {
   const lineDetails = Object.fromEntries(open.map((line) => [line.ref, details(line)] as const));
   const working = inState("working");
   return {
+    runner: runnerStatus(ctx),
     urgent,
     lines: lineDetails,
     counts: {

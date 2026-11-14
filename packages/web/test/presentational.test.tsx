@@ -39,8 +39,9 @@ import { Markdown } from "../src/components/ui/Markdown.tsx";
 import { RefText } from "../src/components/ui/RefText.tsx";
 import { TextBox } from "../src/components/ui/TextBox.tsx";
 import { EmptyState, ErrorState, LoadingState } from "../src/components/ui/states.tsx";
-import type { AgentView, LineHome } from "@octotrack/core/schemas";
+import type { AgentView, LineHome, LineStart } from "@octotrack/core/schemas";
 import type { Tone } from "../src/lib/format.ts";
+import { stepInReason } from "../src/lib/lines.ts";
 import {
   decision,
   decisionCard,
@@ -618,6 +619,7 @@ describe("lines of work", () => {
   const card = (overrides: Parameters<typeof decision>[0] = {}) =>
     decisionCard({ decision: decision(overrides) });
   const details = (overrides: Partial<LineHome> = {}): LineHome => ({
+    start: null,
     step: null,
     forYou: [],
     held: { questions: 0, tasks: 0 },
@@ -719,7 +721,19 @@ describe("lines of work", () => {
   test("StepIn offers to own the line, or to table it with a reason", () => {
     const onOwn = mock(() => {});
     const onTable = mock(() => {});
-    const view = render(<StepIn line={line()} onOwn={onOwn} onTable={onTable} />);
+    const onRetry = mock((_ref: string) => {});
+    const view = render(
+      <StepIn
+        line={line()}
+        reason="claude is not logged in"
+        onRetry={onRetry}
+        onOwn={onOwn}
+        onTable={onTable}
+      />,
+    );
+    view.getByText("claude is not logged in");
+    fireEvent.click(view.getByRole("button", { name: "Try now" }));
+    expect(onRetry).toHaveBeenCalledWith("L-1");
     fireEvent.click(view.getByRole("button", { name: "I'll own it" }));
     expect(onOwn).toHaveBeenCalledWith("L-1");
     fireEvent.click(view.getByRole("button", { name: "Table it…" }));
@@ -966,5 +980,34 @@ describe("agents and first run", () => {
     expect(onAccept).toHaveBeenCalledWith(["L-1", "L-3"]);
     view.unmount();
     render(<FirstRun proposals={[]} onAccept={onAccept} />).getByText("octo guide");
+  });
+});
+
+describe("why a line needs the developer to step in", () => {
+  const runner = { configured: true, cap: 1, dryRun: false };
+  const start = (overrides: Partial<LineStart> = {}): LineStart => ({
+    name: "panel.2",
+    state: "failed",
+    output: "Error\nclaude: not logged in",
+    attempts: 1,
+    at: "",
+    nextTryAt: null,
+    ...overrides,
+  });
+
+  test("says what to do when nothing can start a session, or when the runner only watches", () => {
+    expect(stepInReason(line(), { ...runner, configured: false }, null)).toContain("agent-setup.json");
+    expect(stepInReason(line(), { ...runner, dryRun: true }, null)).toContain("watching only");
+  });
+
+  test("quotes the last words of a start that failed, and says nothing while one is starting", () => {
+    expect(stepInReason(line(), runner, start())).toBe(
+      "panel.2, started for it, exited at once: claude: not logged in. Octotrack tries again by itself, less often each time.",
+    );
+    expect(stepInReason(line(), runner, start({ state: "never_took" }))).toBe(
+      "panel.2 ran but never took L-1.",
+    );
+    expect(stepInReason(line(), runner, start({ state: "starting" }))).toBeNull();
+    expect(stepInReason(line(), runner, null)).toContain("at most 1");
   });
 });

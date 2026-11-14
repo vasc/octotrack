@@ -53,6 +53,7 @@ export function LinesGallery() {
             search: null,
           }}
           details={{
+            start: null,
             step: { position: 3, of: 4, title: "settle board and opening" },
             forYou: [{ kind: "question", card: QUESTION }],
             held: { questions: 0, tasks: 0 },
@@ -74,7 +75,13 @@ export function LinesGallery() {
           line={line({ title: "South Tyrol trip" })}
           crew={{ owner: null, helpers: [], scoper: null, search: { step: 3, since: "" } }}
         >
-          <StepIn line={line({ title: "South Tyrol trip" })} onOwn={NOOP} onTable={NOOP} />
+          <StepIn
+            line={line({ title: "South Tyrol trip" })}
+            reason="trips.2, started for it, exited at once: claude is not logged in. Octotrack tries again by itself, less often each time."
+            onRetry={NOOP}
+            onOwn={NOOP}
+            onTable={NOOP}
+          />
         </WorkingLine>
       </Example>
       <Example label="Up next">
@@ -85,7 +92,7 @@ export function LinesGallery() {
             title: "Wall mount",
             doneWhen: "the panel hangs flush on the hallway wall.",
           })}
-          details={{ step: null, forYou: [], held: { questions: 0, tasks: 1 }, scopedSteps: 0 }}
+          details={{ start: null, step: null, forYou: [], held: { questions: 0, tasks: 1 }, scopedSteps: 0 }}
           onStart={NOOP}
         />
       </Example>

@@ -274,6 +274,21 @@ const MIGRATIONS: readonly Migration[] = [
   CREATE INDEX pending_choices_due ON pending_choices(state, dueAt);
   CREATE TABLE drafts (key TEXT PRIMARY KEY, text TEXT NOT NULL, updatedAt TEXT NOT NULL);
   `,
+  `
+  CREATE TABLE runner_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+  CREATE TABLE runner_starts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, line TEXT NOT NULL REFERENCES lines(ref), repo TEXT NOT NULL,
+    name TEXT NOT NULL, worktree TEXT, state TEXT NOT NULL, output TEXT, attempts INTEGER NOT NULL,
+    startedAt TEXT NOT NULL, endedAt TEXT, nextTryAt TEXT
+  );
+  CREATE INDEX runner_starts_line ON runner_starts(line, id);
+  CREATE INDEX runner_starts_name ON runner_starts(name, id);
+  CREATE TABLE runner_closes (pr TEXT PRIMARY KEY, line TEXT NOT NULL, at TEXT NOT NULL);
+  CREATE TABLE runner_worktrees (
+    path TEXT PRIMARY KEY, repo TEXT NOT NULL, checkout TEXT NOT NULL, branch TEXT NOT NULL, agent TEXT NOT NULL,
+    createdAt TEXT NOT NULL, removedAt TEXT
+  );
+  `,
 ];
 
 const UserVersion = z.object({ user_version: z.number().int() });

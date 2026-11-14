@@ -704,8 +704,21 @@ export const ForYou = z.discriminatedUnion("kind", [
 ]);
 export type ForYou = z.infer<typeof ForYou>;
 
+/** The latest session Octotrack started for a line, and how it went. */
+export const LineStart = z.object({
+  name: z.string(),
+  state: z.enum(["starting", "running", "failed", "never_took", "exited"]),
+  output: z.string().nullable(),
+  attempts: z.number().int(),
+  at: z.string(),
+  nextTryAt: z.string().nullable(),
+});
+export type LineStart = z.infer<typeof LineStart>;
+
 /** What home shows for one line beyond the line itself. */
 export const LineHome = z.object({
+  /** The latest session Octotrack started for it, if any. */
+  start: LineStart.nullable(),
   /** The first plan step not done, and how many steps there are. */
   step: z.object({ position: z.number().int(), of: z.number().int(), title: z.string() }).nullable(),
   /** On a working line: what waits on the developer, in order. */
@@ -728,7 +741,12 @@ export const HomeCounts = z.object({
 export type HomeCounts = z.infer<typeof HomeCounts>;
 
 /** The home screen: every line, in the developer's order, section by section. */
+/** How the local runner is set up on this machine, as it last reported. */
+export const RunnerStatus = z.object({ configured: z.boolean(), cap: z.number().int(), dryRun: z.boolean() });
+export type RunnerStatus = z.infer<typeof RunnerStatus>;
+
 export const HomeView = z.object({
+  runner: RunnerStatus,
   /** Urgent questions, which stand at the very top, apart from their lines. */
   urgent: z.array(DecisionCard),
   lines: z.record(z.string(), LineHome),
@@ -780,3 +798,31 @@ export const PendingChoice = z.object({
   createdAt: z.string(),
 });
 export type PendingChoice = z.infer<typeof PendingChoice>;
+
+/** A working line due a session: where to start it, and the name to reuse when a failed start is retried. */
+export const RunnerDue = z.object({
+  line: z.string(),
+  repo: z.string(),
+  name: z.string().nullable(),
+  attempt: z.number().int(),
+});
+export type RunnerDue = z.infer<typeof RunnerDue>;
+
+/** A pull request to close on GitHub because the line it served is done or dropped. */
+export const RunnerClose = z.object({
+  pr: z.string(),
+  repo: z.string(),
+  number: z.number().int(),
+  line: z.string(),
+});
+export type RunnerClose = z.infer<typeof RunnerClose>;
+
+/** A git worktree Octotrack made for a session. */
+export const RunnerWorktree = z.object({
+  path: z.string(),
+  repo: z.string(),
+  checkout: z.string(),
+  branch: z.string(),
+  agent: z.string(),
+});
+export type RunnerWorktree = z.infer<typeof RunnerWorktree>;

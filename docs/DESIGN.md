@@ -287,6 +287,15 @@ Decisions made from that:
   for the developer on the line itself; agents write a done when directly only on lines still proposed or up next.
   "I'll own it" winds the agents down like tabling and leaves the line in Working on; handing it back runs the usual
   owner search, which offers it first to the owner that wound down.
+- **The dashboard and the runner, as built.** Home is `/` and the feed is the Log at `/log`. Every choice home and the
+  line panel make waits five seconds on the server with Undo (`choice.make`); the tracker applies it on the next call
+  or its one-second tick, so closing the tab neither loses nor repeats it. Answers to questions keep their existing
+  flow for now. Drafts are kept on the server as they are typed. The local runner reads `~/.octotrack/agent-setup.json`
+  and does nothing without it; it starts in watch mode (`dryRun`, on unless the file turns it off), recording
+  `runner.would_start`. A start runs in a fresh worktree on branch `octo/<name>`, after the repo's setup commands, with
+  only `{line}` and `{name}` filled into the developer's command and `OCTO_AGENT` set. A start that exits at once keeps
+  its name and is retried after 2, 10, 60 then 360 minutes; Step in quotes its last line of output and offers Try now.
+  Only the server's own runner may record starts, exits and closes.
 - **The developer is present, never inferred.** `--me` on the CLI, or `OCTO_DEVELOPER=1` on an interactive terminal; a
   call that names an agent, by `--agent` or `OCTO_AGENT`, is never the developer, and `--me` with one is a usage error.
 - **Migration is simple and agents clean up.** Projects become repos with the same keys, so every ref stays valid; old

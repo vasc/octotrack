@@ -149,5 +149,10 @@ export const QUERY_VALUES: Readonly<Record<string, readonly string[]>> = {
     "line.keep_going",
     "line.owned",
     "line.handed",
+    "runner.started",
+    "runner.failed",
+    "runner.exited",
+    "runner.would_start",
+    "runner.pr_closed",
   ],
 };
