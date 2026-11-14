@@ -245,7 +245,8 @@ export const decisionCommands: Command[] = [
   {
     path: ["decision", "record"],
     usage: "<title>",
-    summary: "Log a decision that was already made somewhere else",
+    summary:
+      "Log a decision already made somewhere else; on a line, the developer's (or relayed with --said)",
     options: {
       chosen: { ...STRING, description: "What was decided (required)" },
       note: { ...STRING, short: "n", description: "Why" },
@@ -257,9 +258,12 @@ export const decisionCommands: Command[] = [
       source: { ...STRING, description: "Link to where it was decided" },
       affects: { ...MANY, description: "Items to re-check, repeatable" },
       blocks: { ...MANY, description: "Items it was blocking, repeatable" },
+      line: { ...STRING, description: "The line it was settled for. Default: the line you are on" },
+      issue: { ...STRING, description: "The issue it concerns. Default: the one you hold on that line" },
     },
     examples: [
-      'octo decision record "Use SQLite locally" --chosen SQLite -p OCT --kind architecture --at 2026-11-01',
+      'octo decision record "Use SQLite locally" --chosen SQLite -p OCT --kind architecture --at 2026-11-01 --me',
+      'octo decision record "Lay the board flat" --chosen Flat --said "<the developer\'s words>"',
     ],
     ops: [c.decisionRecord.name],
     async run({ client, out }, args) {
@@ -278,6 +282,8 @@ export const decisionCommands: Command[] = [
           sourceUrl: args.str("source"),
           affects: args.optionalList("affects"),
           blocks: args.optionalList("blocks"),
+          line: args.str("line"),
+          issue: args.str("issue"),
         }),
       );
       out.result(outcome, () => r.renderDecisionBlock(outcome.data));

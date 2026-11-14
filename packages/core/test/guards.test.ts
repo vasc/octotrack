@@ -343,3 +343,32 @@ describe("agents write only to the line they are on", () => {
     ).toBe("done");
   });
 });
+
+describe("recording a decision already settled on a line is the developer's", () => {
+  test("an agent on a line needs the developer's words, which the log quotes", () => {
+    const w = world();
+    const refusal = w.refused(() => w.as(w.owner, c.decisionRecord, { title: "Use X", chosen: "X" }));
+    expect(refusal.code).toBe("forbidden");
+    expect(refusal.hint).toContain("--said");
+    const recorded = w.as(w.agent("panel", { said: "we use X" }), c.decisionRecord, {
+      title: "Use X",
+      chosen: "X",
+    });
+    expect(recorded.line).toBe(w.line);
+    expect(w.events(`ref:${recorded.ref} event:decision.resolved`)[0]?.attrs.said).toBe("we use X");
+  });
+
+  test("so does an agent naming a line it is not on", () => {
+    const w = world();
+    expect(
+      w.refused(() => w.as(w.outsider, c.decisionRecord, { title: "Use X", chosen: "X", issue: w.issue }))
+        .code,
+    ).toBe("forbidden");
+  });
+
+  test("it can be on a line: the one named, or the line of the issue named", () => {
+    const w = world();
+    expect(w.as(w.dev, c.decisionRecord, { title: "Flat", chosen: "Flat", line: w.line }).line).toBe(w.line);
+    expect(w.as(w.dev, c.decisionRecord, { title: "Base", chosen: "PLA", issue: w.issue }).line).toBe(w.line);
+  });
+});

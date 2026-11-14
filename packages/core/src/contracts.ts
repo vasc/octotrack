@@ -732,7 +732,7 @@ export const contracts = {
   ),
   decisionRecord: write(
     "decision.record",
-    "Log a decision that was already made elsewhere",
+    "Log a decision already made elsewhere; on a line, the developer's, or an agent's quoting them",
     z.strictObject({
       title: Text,
       chosen: Text,
@@ -744,6 +744,10 @@ export const contracts = {
       sourceUrl: z.string().optional(),
       affects: z.array(z.string()).optional(),
       blocks: z.array(z.string()).optional(),
+      /** The line it was settled for. Default: the line the relaying agent is on. */
+      line: z.string().optional(),
+      /** The issue it concerns. Default: the one the relaying agent holds on that line. */
+      issue: z.string().optional(),
     }),
     Decision,
   ),
