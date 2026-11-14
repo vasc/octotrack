@@ -175,7 +175,8 @@ Some drift clears itself when the state becomes consistent. Connect your own wor
   octo link add D-3 blocks OCT-4        OCT-4 cannot proceed until D-3 is decided
   octo link add D-3 affects API-2       re-check API-2 when D-3 is decided
   octo link add OCT-9 derived-from D-3  re-check OCT-9 whenever D-3 changes
-  octo link add PR-7 implements OCT-4   also automatic when a PR mentions OCT-4
+  octo link add PR-7 implements OCT-4   also automatic when a PR's branch is named after OCT-4, or it says
+                                        "Fixes OCT-4" (or Closes, Resolves); a bare mention does not link it
 
 ## The query language
 
