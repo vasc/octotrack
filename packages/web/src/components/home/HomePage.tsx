@@ -2,6 +2,7 @@ import type { ForYou, HomeView } from "@octotrack/core/schemas";
 import { useMemo, useState } from "react";
 import { type HotkeyMap, useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useHome } from "../../hooks/useHome.ts";
+import { useNarrow } from "../../hooks/useNarrow.ts";
 import { DecisionCardItem } from "../decisions/DecisionCardItem.tsx";
 import { AddLineForm } from "../lines/AddLineForm.tsx";
 import { PageHead } from "../ui/PageHead.tsx";
@@ -40,6 +41,7 @@ function orderedRefs(home: HomeView): string[] {
 /** Every line, in the developer's order, with what each needs from them in place. */
 export function HomePage() {
   const h = useHome();
+  const narrow = useNarrow();
   const home = h.home.data;
   const [chosen, setChosen] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
@@ -111,8 +113,11 @@ export function HomePage() {
             {home.working.map((line, index) => {
               const details = home.lines[line.ref];
               const crew = home.crews[line.ref];
-              const [first, ...rest] = details?.forYou ?? [];
+              const forYou = details?.forYou ?? [];
+              const [first, ...rest] = forYou;
               const open = expanded.has(line.ref) || rest.some((other) => refOf(other) === focus);
+              // On a phone, lines past the second fold to one row saying how much waits, unless one of theirs has focus.
+              const folded = narrow && index >= 2 && !forYou.some((other) => refOf(other) === focus);
               return (
                 <WorkingLine
                   key={line.ref}
@@ -123,8 +128,14 @@ export function HomePage() {
                   reorder={reorder(line.title, line.ref, index, home.working.length)}
                 >
                   {crew?.search?.step === 3 ? <StepIn line={line} onOwn={h.own} onTable={h.table} /> : null}
-                  {first === undefined ? null : <div className="home-items">{item(first)}</div>}
-                  {rest.length === 0 ? null : open ? (
+                  {first === undefined ? null : folded ? (
+                    <button type="button" className="chip" onClick={() => setChosen(refOf(first))}>
+                      {forYou.length} waiting on you
+                    </button>
+                  ) : (
+                    <div className="home-items">{item(first)}</div>
+                  )}
+                  {rest.length === 0 || folded ? null : open ? (
                     <div className="home-items">{rest.map(item)}</div>
                   ) : (
                     <button

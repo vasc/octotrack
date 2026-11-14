@@ -898,6 +898,7 @@ describe("lines of work", () => {
     fireEvent.click(tabled.getByRole("button", { name: "Show" }));
     await tabled.findByText("Waiting on the board");
 
+    fireEvent.click(view.getByRole("button", { name: "New line…" }));
     fireEvent.change(view.getByLabelText("New line"), { target: { value: "Garden sensor" } });
     fireEvent.change(view.getByLabelText("Done when"), { target: { value: "Readings arrive hourly." } });
     fireEvent.click(view.getByRole("button", { name: "Add line" }));
@@ -1037,6 +1038,40 @@ describe("lines of work", () => {
     fireEvent.click(await view.findByRole("button", { name: "Now" }));
     fireEvent.click(await view.findByRole("button", { name: "Lift octo.1" }));
     await view.findByRole("button", { name: "Stop octo.1" });
+  });
+
+  test("on a phone, lines past the second fold to one row saying how much waits, and open from it", async () => {
+    const realMatchMedia = window.matchMedia;
+    Object.assign(window, {
+      matchMedia: (media: string) => ({
+        matches: true,
+        media,
+        addEventListener() {},
+        removeEventListener() {},
+      }),
+    });
+    try {
+      const options = [{ key: "a", label: "Yes", description: "Go ahead." }];
+      for (const [index, title] of ["First", "Second", "Third"].entries()) {
+        server.tracker.call(
+          c.lineAdd,
+          { title, doneWhen: "Done.", repos: ["OCT"], where: "working" },
+          asDeveloper,
+        );
+        const agent = `octo.${index + 1}`;
+        server.act(c.agentRegister, { repo: "OCT" }, agent);
+        server.act(c.lineTake, { ref: `L-${index + 1}` }, agent);
+        server.act(c.decisionAsk, { title: `${title} question`, context: "Context.", options }, agent);
+      }
+      navigate("/");
+      const view = renderApp(<App />);
+      const third = within(await view.findByRole("article", { name: "Third" }));
+      within(view.getByRole("article", { name: "Second" })).getByRole("button", { name: "Open D-2" });
+      fireEvent.click(third.getByRole("button", { name: "1 waiting on you" }));
+      await third.findByRole("article", { name: "Third question" });
+    } finally {
+      Object.assign(window, { matchMedia: realMatchMedia });
+    }
   });
 
   test("a line opens in the inspector with what finishes it", async () => {
