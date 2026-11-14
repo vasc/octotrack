@@ -1,3 +1,4 @@
+import { Markdown } from "../ui/Markdown.tsx";
 import type { ForYou } from "@octotrack/core/schemas";
 
 /** Something waiting on the developer, as one row that opens it. */
@@ -12,7 +13,11 @@ export function ForYouRow({ item, onOpen }: { item: ForYou; onOpen(ref: string):
         {recommended === undefined ? null : (
           <span className="for-you-note">
             Recommended {recommended.label}
-            {decision.recommendationWhy === null ? "" : `: ${decision.recommendationWhy}`}
+            {decision.recommendationWhy === null ? null : (
+              <>
+                : <Markdown text={decision.recommendationWhy} inline />
+              </>
+            )}
           </span>
         )}
         <button

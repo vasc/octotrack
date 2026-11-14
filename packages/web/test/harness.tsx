@@ -40,12 +40,20 @@ export interface TestServer {
     input: z.input<I>,
     actor?: string,
   ): z.output<O>;
+  /** Moves the server's clock on, for rules that turn on time passing. */
+  later(minutes: number): void;
 }
 
 /** The real server app with an in-memory database, answering the dashboard's fetches directly. */
-export function startTestServer(options: { live?: boolean } = {}): TestServer {
-  const tracker = new Tracker(openSqlite(":memory:"));
-  const app = createApp({ tracker, hub: new Hub(tracker) });
+export function startTestServer(options: { live?: boolean; pushKey?: string } = {}): TestServer {
+  // Real time, plus however far a test moved it on, so that Undo windows still run out on their own.
+  let offset = 0;
+  const tracker = new Tracker(openSqlite(":memory:"), () => new Date(Date.now() + offset).toISOString());
+  const app = createApp({
+    tracker,
+    hub: new Hub(tracker),
+    ...(options.pushKey === undefined ? {} : { pushKey: options.pushKey }),
+  });
   if (options.live === true) {
     // Wires the real change notifications to the page, so that a test can prove what really reaches it.
     tracker.subscribe(() => {
@@ -69,6 +77,9 @@ export function startTestServer(options: { live?: boolean } = {}): TestServer {
     act(contract, input, actor = "agent-a") {
       return tracker.call(contract, input, { actor, channel: "cli" });
     },
+    later(minutes) {
+      offset += minutes * 60_000;
+    },
   };
 }
 
@@ -80,3 +91,61 @@ export function renderApp(ui: ReactNode): RenderResult {
 }
 
 export { contracts };
+
+/**
+ * Matches an element whose whole text is this sentence, even when parts of it are their own elements, such as
+ * markdown inside a line of words. Only the innermost such element matches, so a lookup finds exactly one.
+ */
+export function whole(text: string) {
+  return (_content: string, element: Element | null): boolean =>
+    element !== null &&
+    element.textContent === text &&
+    [...element.children].every((child) => child.textContent !== text);
+}
+
+interface FakeSubscription {
+  endpoint: string;
+  keys: { p256dh: string; auth: string };
+}
+
+/**
+ * The browser's push machinery, as far as the dashboard uses it: permission, a service worker registration and its
+ * subscription. Returns what the page subscribed, and how to put the real globals back.
+ */
+export function fakePush(options: {
+  permission: NotificationPermission;
+  subscribed: FakeSubscription | null;
+}) {
+  let current = options.subscribed;
+  const asBrowserHas = (json: FakeSubscription) => ({ endpoint: json.endpoint, toJSON: () => json });
+  const registration = {
+    pushManager: {
+      getSubscription: async () => (current === null ? null : asBrowserHas(current)),
+      subscribe: async () => {
+        current = { endpoint: "https://push.example/new", keys: { p256dh: "BNew", auth: "fresh" } };
+        return asBrowserHas(current);
+      },
+    },
+  };
+  const before = {
+    serviceWorker: Object.getOwnPropertyDescriptor(navigator, "serviceWorker"),
+    PushManager: Reflect.get(window, "PushManager"),
+    Notification: Reflect.get(window, "Notification"),
+  };
+  Object.defineProperty(navigator, "serviceWorker", {
+    configurable: true,
+    value: { register: async () => registration, getRegistration: async () => registration },
+  });
+  Object.assign(window, {
+    PushManager: class {},
+    Notification: { permission: options.permission, requestPermission: async () => "granted" },
+  });
+  return {
+    subscribed: () => current,
+    restore() {
+      if (before.serviceWorker === undefined) Reflect.deleteProperty(navigator, "serviceWorker");
+      else Object.defineProperty(navigator, "serviceWorker", before.serviceWorker);
+      Object.assign(window, { PushManager: before.PushManager, Notification: before.Notification });
+    },
+  };
+}

@@ -7,20 +7,20 @@ in isolation. **Structural** ones load data and pass it on to pure ones, so they
 
 ## The small vocabulary: `ui/`
 
-| Component      | What it is                                                                              | Notes                                                   |
-| -------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| `Badge`        | A short label with a tone. `StatusBadge` picks the tone from what the word means        | Always has words in it                                  |
-| `RefLink`      | A ref such as `D-3`, opening that item in the inspector                                 | Monospace. Available wherever a ref appears             |
-| `RefText`      | Running text in which every ref is a `RefLink`                                          | Use for anything that could mention a ref               |
-| `TimeAgo`      | `now`, `5m`, `3h`, `2d`, then a date                                                    | The full time is its tooltip                            |
-| `Progress`     | A 3px bar                                                                               | Has a text alternative: "1 of 4 done"                   |
-| `Section`      | A small heading, with an optional count and link                                        | The unit a page is made of                              |
-| `PageHead`     | A page's title, with room for actions                                                   |                                                         |
-| `ListCapNote`  | Says that a list stopped at its limit                                                   | A short list must not read as the whole story           |
-| `states`       | `LoadingState`, `EmptyState` and `ErrorState`                                           | Empty can show a command to run. See [voice](voice.md)  |
-| `Markdown`     | Text agents and the developer write, rendered as markdown. `MarkdownView` does the work | Loaded on first use. HTML in the text is never rendered |
-| `MarkdownView` | The renderer behind `Markdown`, with links opening outside the dashboard                | Only `Markdown` imports it                              |
-| `TextBox`      | A box that grows as you type, for anything longer than a few words                      | Cmd or Ctrl and Enter sends                             |
+| Component      | What it is                                                                                                                                                                                                                                                               | Notes                                                   |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| `Badge`        | A short label with a tone. `StatusBadge` picks the tone from what the word means                                                                                                                                                                                         | Always has words in it                                  |
+| `RefLink`      | A ref such as `D-3`, opening that item in the inspector                                                                                                                                                                                                                  | Monospace. Available wherever a ref appears             |
+| `RefText`      | Running text in which every ref is a `RefLink`                                                                                                                                                                                                                           | Use for anything that could mention a ref               |
+| `TimeAgo`      | `now`, `5m`, `3h`, `2d`, then a date                                                                                                                                                                                                                                     | The full time is its tooltip                            |
+| `Progress`     | A 3px bar                                                                                                                                                                                                                                                                | Has a text alternative: "1 of 4 done"                   |
+| `Section`      | A small heading, with an optional count and link                                                                                                                                                                                                                         | The unit a page is made of                              |
+| `PageHead`     | A page's title, with room for actions                                                                                                                                                                                                                                    |                                                         |
+| `ListCapNote`  | Says that a list stopped at its limit                                                                                                                                                                                                                                    | A short list must not read as the whole story           |
+| `states`       | `LoadingState`, `EmptyState` and `ErrorState`                                                                                                                                                                                                                            | Empty can show a command to run. See [voice](voice.md)  |
+| `Markdown`     | Text agents and the developer write, rendered as markdown. `MarkdownView` does the work. `inline` for a sentence inside a line of words (a reason, a headline, an option's description), keeping only emphasis, code and links; `links={false}` inside something clicked | Loaded on first use. HTML in the text is never rendered |
+| `MarkdownView` | The renderer behind `Markdown`, with links opening outside the dashboard                                                                                                                                                                                                 | Only `Markdown` imports it                              |
+| `TextBox`      | A box that grows as you type, for anything longer than a few words                                                                                                                                                                                                       | Cmd or Ctrl and Enter sends                             |
 
 ## Decisions: `decisions/`
 
@@ -102,34 +102,34 @@ right, so there "Nothing to update" is the only answer on offer.
 Home is one list: every line in the developer's order, with what each needs from them in place. See
 [patterns.md](patterns.md) and the E · One list boards on the design canvas.
 
-| Component        | Kind       | What it is                                                                                   |
-| ---------------- | ---------- | -------------------------------------------------------------------------------------------- |
-| `HomeCounts`     | Pure       | What waits on the developer: urgent, to answer, to do, to accept, to step in. Zeros left out |
-| `HomeSection`    | Pure       | A named region of home with its count and what it means                                      |
-| `WorkingLine`    | Pure       | A line being worked on: its number, title, meta, headline, a case for done, and its items    |
-| `LineMeta`       | Pure       | One row of facts: who is on it, waiting on you, its plan step                                |
-| `ForYouRow`      | Pure       | A question or task as one row that opens it                                                  |
-| `ForYouItem`     | Structural | One thing waiting: opened in full with focus, else its row                                   |
-| `TaskCard`       | Pure       | A task opened: where, what to report, and Done… or Can't do it…, each asking for its words   |
-| `StepIn`         | Pure       | A working line nobody could be found for, in red, with Table it… and I'll own it             |
-| `UpNextRow`      | Pure       | A line up next: what it holds, how far scoping got, its done when, and Start                 |
-| `ProposalCard`   | Pure       | A proposed line with the agent's case, and Start, Up next, Table…, Fold into…, Not a line    |
-| `FoldedSection`  | Pure       | Tabled and done lines folded to one row that names them, until shown                         |
-| `QuietRow`       | Pure       | A tabled or finished line, opened: why it waits, and Start or Up next                        |
-| `ReorderButtons` | Pure       | Up and down within a section, in Reorder mode                                                |
-| `HomePage`       | Structural | Home: the focus, the sections, and every choice                                              |
-| `FirstRun`       | Pure       | Before anything is placed: accept the agents' recommended placements in one choice           |
-| `PushToggle`     | Pure       | Whether this device is buzzed, and Buzz this device to turn it on                            |
-| `TableForm`      | Pure       | Asks why before tabling: a tabled line always says why                                       |
-| `AddLineForm`    | Pure       | A new line with its done-when sentence. It joins the end of up next                          |
+| Component        | Kind       | What it is                                                                                                                                            |
+| ---------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `HomeCounts`     | Pure       | What waits on the developer: urgent, to answer, to do, to accept, to step in. Zeros left out                                                          |
+| `HomeSection`    | Pure       | A named region of home with its count and what it means                                                                                               |
+| `WorkingLine`    | Pure       | A line being worked on: its number, title, meta, headline, a case for done, and its items                                                             |
+| `LineMeta`       | Pure       | One row of facts: who is on it, waiting on you, its plan step                                                                                         |
+| `ForYouRow`      | Pure       | A question or task as one row that opens it                                                                                                           |
+| `ForYouItem`     | Structural | One thing waiting: opened in full with focus, else its row                                                                                            |
+| `TaskCard`       | Pure       | A task opened: where, what to report, and Done… or Can't do it…, each asking for its words                                                            |
+| `StepIn`         | Pure       | A working line nobody could be found for, in red, with Table it… and I'll own it                                                                      |
+| `UpNextRow`      | Pure       | A line up next: what it holds, how far scoping got, its done when, and Start                                                                          |
+| `ProposalCard`   | Pure       | A proposed line with the agent's case, and Start, Up next, Table…, Fold into… (a button per line), Not a line; Drop for a tabled line back to look at |
+| `FoldedSection`  | Pure       | Tabled and done lines folded to one row that names them, until shown                                                                                  |
+| `QuietRow`       | Pure       | A tabled or finished line, opened: why it waits, and Start or Up next                                                                                 |
+| `ReorderButtons` | Pure       | Up and down within a section, in Reorder mode                                                                                                         |
+| `HomePage`       | Structural | Home: the focus, the sections, and every choice                                                                                                       |
+| `FirstRun`       | Pure       | Before anything is placed: accept the agents' recommended placements in one choice                                                                    |
+| `PushToggle`     | Pure       | Whether this device is buzzed, and Buzz this device to turn it on                                                                                     |
+| `TableForm`      | Pure       | Asks why before tabling: a tabled line always says why                                                                                                |
+| `AddLineForm`    | Pure       | A new line with its done-when sentence. It joins the end of up next                                                                                   |
 
 ## Agents: `agents/`
 
-| Component        | Kind       | What it is                                                                      |
-| ---------------- | ---------- | ------------------------------------------------------------------------------- |
-| `WatchRow`       | Pure       | Who is watching what, in the query the agent itself wrote                       |
-| `AgentsPage`     | Structural | The roster, then who is waiting now and what is registered                      |
-| `AgentRosterRow` | Pure       | One agent: state, repo, line and role, last command, wake address; Stop or Lift |
+| Component        | Kind       | What it is                                                                                                                  |
+| ---------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `WatchRow`       | Pure       | Who is watching what, in the query the agent itself wrote                                                                   |
+| `AgentsPage`     | Structural | The roster, then who is waiting now and what is registered                                                                  |
+| `AgentRosterRow` | Pure       | One agent: state, repo, line and role, last command, wake address; Stop or Lift; Release on a quiet agent that holds a line |
 
 ## The frame: `layout/`
 

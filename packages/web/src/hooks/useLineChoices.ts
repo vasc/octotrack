@@ -31,7 +31,7 @@ export function useLineChoices(line: Line) {
   const choices = useChoices();
   const doneWhen = useOpMutation(contracts.lineDoneWhenAnswer);
   return {
-    failure: doneWhen.error,
+    failure: doneWhen.error ?? choices.failure,
     choose: (choice: LineChoice) =>
       choices.make(OPS[choice], { ref: line.ref }, `${SAID[choice]} ${line.title}`),
     table: (reason: string) =>

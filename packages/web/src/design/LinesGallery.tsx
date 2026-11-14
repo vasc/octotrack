@@ -14,7 +14,7 @@ import { AddLineForm } from "../components/lines/AddLineForm.tsx";
 import { Markdown } from "../components/ui/Markdown.tsx";
 import { TextBox } from "../components/ui/TextBox.tsx";
 import { DesignSection, Example } from "./Example.tsx";
-import { decision, decisionCard, issue, line } from "./fixtures.ts";
+import { decision, decisionCard, issue, line, pendingChoice } from "./fixtures.ts";
 
 const NOOP = () => {};
 const QUESTION = decisionCard({
@@ -120,6 +120,7 @@ export function LinesGallery() {
           onTable={NOOP}
           onFold={NOOP}
           onReject={NOOP}
+          onDrop={NOOP}
         />
       </Example>
       <Example label="Tabled, folded">
@@ -143,24 +144,10 @@ export function LinesGallery() {
         <TextBox label="A note" value={"A longer note,\nover two lines."} onChange={NOOP} />
       </Example>
       <Example label="Choices waiting, with Undo">
-        <UndoBar
-          pending={[
-            {
-              id: 1,
-              op: "line.start",
-              summary: "Started Wall mount",
-              dueAt: "",
-              state: "pending",
-              error: null,
-              createdAt: "",
-            },
-          ]}
-          onUndo={NOOP}
-          onNow={NOOP}
-        />
+        <UndoBar pending={[pendingChoice()]} onUndo={NOOP} onNow={NOOP} />
       </Example>
       <Example label="Adding a line">
-        <AddLineForm onAdd={NOOP} />
+        <AddLineForm repos={["PANEL", "GARDEN"]} onAdd={NOOP} />
       </Example>
       <Example label="A line in the inspector, with what you can do">
         <LinePanel line={line({ doneProposal: "Printed, fitted, in use." })} />

@@ -258,6 +258,16 @@ export const systemCommands: Command[] = [
     },
   },
   {
+    path: ["agent", "release"],
+    usage: "<name>",
+    summary: "End an agent's claim on its line, such as one that went quiet (the developer)",
+    ops: [c.agentRelease.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(c.agentRelease, { name: args.requirePositional(0, "name") });
+      out.result(outcome, () => `${r.bold(outcome.data.name)} released; its line looks for an owner.`);
+    },
+  },
+  {
     path: ["agent", "lift"],
     usage: "<name>",
     summary: "Lift an agent's stop (the developer)",

@@ -5,6 +5,7 @@ import type { Decision } from "@octotrack/core/schemas";
 import { decision } from "../src/design/fixtures.ts";
 import type { Tone } from "../src/lib/format.ts";
 import { dayLabel, deliveryOf, humanize, splitRefs, timeAgo, toneOf } from "../src/lib/format.ts";
+import { nextFocus } from "../src/lib/focus.ts";
 import { closeEntity, navigate, openEntity, setParams } from "../src/lib/router.ts";
 
 describe("deliveryOf", () => {
@@ -134,5 +135,23 @@ describe("router", () => {
     expect(window.location.search).toBe("?ref=D-1");
     closeEntity();
     expect(window.location.search).toBe("");
+  });
+});
+
+describe("nextFocus", () => {
+  test("stays put when something arrives, even ahead of it", () => {
+    expect(nextFocus("D-2", ["D-2", "D-3"], ["D-9", "D-2", "D-3"], "D-9")).toBe("D-2");
+  });
+
+  test("moves to the next item when its own is gone, else the one before, else where it starts", () => {
+    expect(nextFocus("D-2", ["D-1", "D-2", "D-3"], ["D-1", "D-3"], "D-1")).toBe("D-3");
+    expect(nextFocus("D-3", ["D-1", "D-2", "D-3"], ["D-1", "D-2"], "D-1")).toBe("D-2");
+    expect(nextFocus("D-3", ["D-3"], ["D-7"], "D-7")).toBe("D-7");
+  });
+
+  test("starts where it is told to, when that is there, else at the first item", () => {
+    expect(nextFocus(null, [], ["D-1", "D-2"], "D-2")).toBe("D-2");
+    expect(nextFocus(null, [], ["D-1", "D-2"], "D-5")).toBe("D-1");
+    expect(nextFocus(null, [], [], null)).toBeNull();
   });
 });

@@ -16,13 +16,16 @@ export function recommendationText(line: Line): string | null {
   return `${line.proposedBy ?? "An agent"} says ${line.recommendation.replace("_", " ")}`;
 }
 
-/** Who is on a line, in a few words each: its owner and how it is, helpers, its scoper, or that nobody was found. */
-export function crewText(crew: LineCrew | undefined): string[] {
+/**
+ * Who is on a line, in a few words each: its owner and how it is, helpers, its scoper, or that nobody was found. Step
+ * in is said only when the server asks the developer to (`stepIn`), the same rule the phone buzzes on.
+ */
+export function crewText(crew: LineCrew | undefined, stepIn = false): string[] {
   if (crew === undefined) return [];
   const words: string[] = [];
   if (crew.owner !== null) words.push(`owner ${crew.owner.name}, ${crew.owner.state}`);
   else if (crew.search !== null)
-    words.push(crew.search.step === 3 ? "no owner: step in" : "finding an owner");
+    words.push(stepIn ? "no owner: step in" : crew.search.step === 3 ? "no owner yet" : "finding an owner");
   if (crew.helpers.length > 0)
     words.push(`+${crew.helpers.length} helper${crew.helpers.length === 1 ? "" : "s"}`);
   if (crew.scoper !== null) words.push(`${crew.scoper.name} is scoping it`);

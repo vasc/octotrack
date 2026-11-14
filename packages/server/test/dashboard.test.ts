@@ -47,7 +47,10 @@ describe("serving the dashboard", () => {
     const dist = built();
     writeFileSync(join(dist, "sw.js"), "worker");
     writeFileSync(join(dist, "manifest.webmanifest"), "{}");
+    writeFileSync(join(dist, "apple-touch-icon.png"), "png");
     const serve = dashboardAssets(fromDist(dist));
+    // iOS takes its home-screen icon only as a PNG, from a fixed name.
+    expect(await (await serve("/apple-touch-icon.png"))?.text()).toBe("png");
     const worker = await serve("/sw.js");
     expect(await worker?.text()).toBe("worker");
     expect(worker?.headers.get("cache-control")).toBe("no-cache");

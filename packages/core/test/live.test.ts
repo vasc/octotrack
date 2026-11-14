@@ -39,6 +39,7 @@ const DEVELOPER_OPS: ReadonlySet<string> = new Set([
   "line.fold",
   "agent.stop",
   "agent.lift",
+  "agent.release",
   "line.tell",
   "decision.not_urgent",
   "task.done",
@@ -186,6 +187,7 @@ const EVERY_WRITE: readonly (readonly [string, unknown])[] = [
   ["push.subscribe", { endpoint: "https://push.example/a", keys: { p256dh: "k", auth: "a" } }],
   ["push.unsubscribe", { endpoint: "https://push.example/a" }],
   ["agent.woken", { name: "agent-a" }],
+  ["agent.release", { name: "owner.b" }],
   // Last: everything above runs as agent-a, which a stop would refuse.
   ["agent.stop", { name: "agent-a" }],
   ["agent.lift", { name: "agent-a" }],

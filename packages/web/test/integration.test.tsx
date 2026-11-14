@@ -2,7 +2,15 @@ import { beforeEach, describe, expect, test } from "bun:test";
 import { act, fireEvent, waitFor, within } from "@testing-library/react";
 import { App } from "../src/App.tsx";
 import { navigate } from "../src/lib/router.ts";
-import { contracts as c, FakeEventSource, renderApp, startTestServer, type TestServer } from "./harness.tsx";
+import {
+  contracts as c,
+  FakeEventSource,
+  renderApp,
+  startTestServer,
+  fakePush,
+  type TestServer,
+  whole,
+} from "./harness.tsx";
 
 let server: TestServer;
 
@@ -854,7 +862,7 @@ describe("lines of work", () => {
     expect(titles).toEqual(["Sendspin enclosure", "Weekly digest"]);
     const proposed = within(view.getByRole("region", { name: "Proposed" }));
     proposed.getByText("Wall mount");
-    proposed.getByText("panel-agent says up next: The base is final.");
+    proposed.getByText(whole("panel-agent says up next: The base is final."));
   });
 
   test("the developer places a proposal, reorders, tables with a reason and adds a line", async () => {
@@ -896,9 +904,13 @@ describe("lines of work", () => {
     fireEvent.click(view.getByRole("button", { name: "New line…" }));
     fireEvent.change(view.getByLabelText("New line"), { target: { value: "Garden sensor" } });
     fireEvent.change(view.getByLabelText("Done when"), { target: { value: "Readings arrive hourly." } });
+    fireEvent.click(await view.findByRole("checkbox", { name: "OCT" }));
     fireEvent.click(view.getByRole("button", { name: "Add line" }));
     await within(view.getByRole("region", { name: "Up next" })).findByText("Garden sensor");
-    expect(server.calls).toContain("line.add");
+    const added = server.tracker
+      .call(c.homeShow, {}, asDeveloper)
+      .upNext.find((candidate) => candidate.title === "Garden sensor");
+    expect(added?.repos).toEqual(["OCT"]);
   });
 
   test("each line says who owns it, from what agents did", async () => {
@@ -946,6 +958,108 @@ describe("lines of work", () => {
     await gone(() => line.queryByRole("button", { name: `Open ${task.ref}` }));
   });
 
+  describe("choices from home and the line panel", () => {
+    function withTask() {
+      seedLines();
+      server.act(c.agentRegister, { repo: "OCT" }, "octo.1");
+      server.act(c.lineTake, { ref: "L-1" }, "octo.1");
+      server.tracker.call(c.placeAdd, { name: "the bench" }, asDeveloper);
+      return server.act(
+        c.taskFile,
+        { title: "Measure the grip", place: "the bench", outcome: "Five numbers" },
+        "octo.1",
+      );
+    }
+
+    test("Can't do it closes a task with why, and the line's agent hears it", async () => {
+      const task = withTask();
+      navigate("/");
+      const view = renderApp(<App />);
+      const opened = within(await view.findByRole("article", { name: "Measure the grip" }));
+      fireEvent.click(opened.getByRole("button", { name: "Can't do it…" }));
+      fireEvent.change(opened.getByLabelText(`Why ${task.ref} cannot be done`), {
+        target: { value: "The calipers are lost" },
+      });
+      fireEvent.click(opened.getByRole("button", { name: "Close it" }));
+      await answerNow(view);
+      await waitFor(() =>
+        expect(
+          server.tracker.call(c.issueList, { query: `ref:${task.ref}` }, asDeveloper)[0]?.issue.status,
+        ).toBe("cancelled"),
+      );
+      const heard = server.tracker.execute(c.agentList.name, {}, { actor: "octo.1", channel: "cli" }).notices;
+      expect(heard.map((notice) => notice.body).join(" ")).toContain("The calipers are lost");
+    });
+
+    test("undoing a task's Done keeps what was typed", async () => {
+      const task = withTask();
+      navigate("/");
+      const view = renderApp(<App />);
+      const opened = within(await view.findByRole("article", { name: "Measure the grip" }));
+      fireEvent.click(opened.getByRole("button", { name: "Done…" }));
+      fireEvent.change(opened.getByLabelText(`What ${task.ref} found`), { target: { value: "41, 38, 12" } });
+      fireEvent.click(opened.getByRole("button", { name: "Send" }));
+      fireEvent.click(await view.findByRole("button", { name: "Undo" }));
+      await gone(() => view.queryByRole("button", { name: "Undo" }));
+      fireEvent.click(opened.getByRole("button", { name: "Done…" }));
+      expect(opened.getByLabelText(`What ${task.ref} found`).textContent).toBe("41, 38, 12");
+    });
+
+    test("a choice that fails when it takes effect says why in the Undo bar, until dismissed", async () => {
+      const proposal = seedLines();
+      navigate("/");
+      const view = renderApp(<App />);
+      const proposed = within(await view.findByRole("region", { name: "Proposed" }));
+      fireEvent.click(proposed.getByRole("button", { name: "Start Wall mount" }));
+      await view.findByRole("button", { name: "Undo" });
+      // Meanwhile, from elsewhere, the proposal is turned down, so starting it can no longer work.
+      server.tracker.call(c.lineReject, { ref: proposal.ref }, asDeveloper);
+      await answerNow(view);
+      const alert = await view.findByRole("alert");
+      expect(alert.textContent).toContain("Could not: Started Wall mount");
+      fireEvent.click(view.getByRole("button", { name: "Dismiss" }));
+      await gone(() => view.queryByRole("alert"));
+    });
+
+    test("Fold into… folds a proposal into the line chosen, by button", async () => {
+      const proposal = seedLines();
+      navigate("/");
+      const view = renderApp(<App />);
+      const proposed = within(await view.findByRole("region", { name: "Proposed" }));
+      fireEvent.click(proposed.getByRole("button", { name: "Fold Wall mount" }));
+      fireEvent.click(proposed.getByRole("button", { name: "Fold Wall mount into Sendspin enclosure" }));
+      await answerNow(view);
+      await waitFor(() =>
+        expect(server.tracker.call(c.lineShow, { ref: proposal.ref }, asDeveloper).line.state).toBe(
+          "dropped",
+        ),
+      );
+    });
+
+    test("the line panel's choices take effect after Undo's window, and tabling asks why", async () => {
+      seedLines();
+      navigate("/?ref=L-1");
+      const view = renderApp(<App />);
+      const panel = within(await view.findByRole("complementary", { name: "L-1" }));
+      fireEvent.click(await panel.findByRole("button", { name: "Table…" }));
+      fireEvent.change(panel.getByLabelText("Why table Sendspin enclosure"), {
+        target: { value: "Waiting on boards" },
+      });
+      fireEvent.click(panel.getByRole("button", { name: "Table it" }));
+      await answerNow(view);
+      await waitFor(() =>
+        expect(server.tracker.call(c.lineShow, { ref: "L-1" }, asDeveloper).line.tabledReason).toBe(
+          "Waiting on boards",
+        ),
+      );
+      fireEvent.click(await panel.findByRole("button", { name: "Drop" }));
+      await answerNow(view);
+      await waitFor(() =>
+        expect(server.tracker.call(c.lineShow, { ref: "L-1" }, asDeveloper).line.state).toBe("dropped"),
+      );
+    });
+  });
+
   test("a choice waits with Undo, and Undo or the u key means it never happened", async () => {
     const proposal = seedLines();
     navigate("/lines");
@@ -980,6 +1094,143 @@ describe("lines of work", () => {
     await gone(() => view.queryByRole("article", { name: "Which board?" }));
     fireEvent.keyDown(window, { key: "k" });
     await view.findByRole("article", { name: "Which board?" });
+  });
+
+  describe("Step in", () => {
+    function unowned() {
+      return server.tracker.call(
+        c.lineAdd,
+        { title: "Nobody's line", doneWhen: "Done.", repos: ["OCT"], where: "working" },
+        asDeveloper,
+      );
+    }
+
+    test("asks the developer about a line no agent took, and I'll own it makes it theirs", async () => {
+      const line = unowned();
+      server.later(1);
+      navigate("/");
+      const view = renderApp(<App />);
+      const note = within(await view.findByRole("note", { name: "Step in on Nobody's line" }));
+      fireEvent.click(note.getByRole("button", { name: "I'll own it" }));
+      await answerNow(view);
+      await waitFor(() =>
+        expect(server.tracker.call(c.lineShow, { ref: line.ref }, asDeveloper).line.ownedBy).toBe("dev"),
+      );
+    });
+
+    test("Table it… tables the line with the reason given", async () => {
+      const line = unowned();
+      server.later(1);
+      navigate("/");
+      const view = renderApp(<App />);
+      const note = within(await view.findByRole("note", { name: "Step in on Nobody's line" }));
+      fireEvent.click(note.getByRole("button", { name: "Table it…" }));
+      fireEvent.change(note.getByRole("textbox"), { target: { value: "Not this month" } });
+      fireEvent.click(note.getByRole("button", { name: /^Table/ }));
+      await answerNow(view);
+      await waitFor(() =>
+        expect(server.tracker.call(c.lineShow, { ref: line.ref }, asDeveloper).line.tabledReason).toBe(
+          "Not this month",
+        ),
+      );
+    });
+
+    test("is not asked while all of a line's work waits on the developer", async () => {
+      server.tracker.call(c.placeAdd, { name: "the bench" }, asDeveloper);
+      const line = unowned();
+      server.tracker.call(
+        c.taskFile,
+        { line: line.ref, title: "Measure", place: "the bench", outcome: "Numbers" },
+        asDeveloper,
+      );
+      server.later(1);
+      navigate("/");
+      const view = renderApp(<App />);
+      await view.findByRole("article", { name: "Measure" });
+      expect(view.queryByRole("note", { name: "Step in on Nobody's line" })).toBeNull();
+    });
+  });
+
+  describe("focus on home", () => {
+    const options = [
+      { key: "a", label: "26 mm", description: "Print as it is." },
+      { key: "b", label: "30 mm", description: "Remodel first." },
+    ];
+    function onLine() {
+      seedLines();
+      server.act(c.agentRegister, { repo: "OCT" }, "octo.1");
+      server.act(c.lineTake, { ref: "L-1" }, "octo.1");
+    }
+    const selected = (
+      view: { getByRole: (role: string, options: { name: string }) => HTMLElement },
+      name: string,
+    ) => view.getByRole("article", { name }).getAttribute("data-selected");
+
+    test("a question arriving, even an urgent one, does not move it", async () => {
+      server = startTestServer({ live: true });
+      server.act(c.projectCreate, { key: "OCT", name: "Octotrack" });
+      onLine();
+      server.act(
+        c.decisionAsk,
+        { title: "Which board?", context: "The base is printed.", options },
+        "octo.1",
+      );
+      navigate("/");
+      const view = renderApp(<App />);
+      await view.findByRole("article", { name: "Which board?" });
+      server.act(
+        c.decisionAsk,
+        { title: "Order now?", context: "Stock runs out.", options, urgent: "time_boxed" },
+        "octo.1",
+      );
+      await view.findByRole("article", { name: "Order now?" });
+      expect(selected(view, "Which board?")).toBe("true");
+      expect(selected(view, "Order now?")).toBe("false");
+    });
+
+    test("a second key press while an answer waits with Undo sends no second answer", async () => {
+      onLine();
+      server.act(
+        c.decisionAsk,
+        { title: "Which board?", context: "The base is printed.", options },
+        "octo.1",
+      );
+      navigate("/");
+      const view = renderApp(<App />);
+      await view.findByRole("article", { name: "Which board?" });
+      fireEvent.keyDown(window, { key: "1" });
+      fireEvent.keyDown(window, { key: "Enter" });
+      await view.findByRole("button", { name: "Undo" });
+      fireEvent.keyDown(window, { key: "2" });
+      fireEvent.keyDown(window, { key: "Enter" });
+      await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+      expect(server.calls.filter((name) => name === "choice.make")).toHaveLength(1);
+    });
+
+    test("when the question with focus is answered, focus moves to the next one on its line", async () => {
+      onLine();
+      const board = server.act(
+        c.decisionAsk,
+        { title: "Which board?", context: "The base is printed.", options },
+        "octo.1",
+      );
+      server.act(c.decisionAsk, { title: "Which plug?", context: "The case is open.", options }, "octo.1");
+      server.act(
+        c.decisionAsk,
+        { title: "Order now?", context: "Stock runs out.", options, urgent: "time_boxed" },
+        "octo.1",
+      );
+      navigate("/");
+      const view = renderApp(<App />);
+      fireEvent.click(await view.findByRole("button", { name: `Open ${board.ref}` }));
+      await waitFor(() => expect(selected(view, "Which board?")).toBe("true"));
+      fireEvent.keyDown(window, { key: "1" });
+      fireEvent.keyDown(window, { key: "Enter" });
+      await answerNow(view);
+      await view.findByRole("article", { name: "Which plug?" });
+      await waitFor(() => expect(selected(view, "Which plug?")).toBe("true"));
+      expect(selected(view, "Order now?")).toBe("false");
+    });
   });
 
   test("a half-written update is kept on the server, and is there when the panel opens again", async () => {
@@ -1033,6 +1284,22 @@ describe("lines of work", () => {
     fireEvent.click(await view.findByRole("button", { name: "Now" }));
     fireEvent.click(await view.findByRole("button", { name: "Lift octo.1" }));
     await view.findByRole("button", { name: "Stop octo.1" });
+  });
+
+  test("the agents roster releases a quiet agent's line, with Undo", async () => {
+    server.tracker.call(
+      c.lineAdd,
+      { title: "Quiet line", doneWhen: "Done.", repos: ["OCT"], where: "working" },
+      asDeveloper,
+    );
+    server.act(c.agentRegister, { repo: "OCT" }, "octo.9");
+    server.act(c.lineTake, { ref: "L-1" }, "octo.9");
+    server.later(3 * 60);
+    navigate("/agents");
+    const view = renderApp(<App />);
+    fireEvent.click(await view.findByRole("button", { name: "Release octo.9 from L-1" }));
+    fireEvent.click(await view.findByRole("button", { name: "Now" }));
+    await waitFor(() => expect(server.tracker.call(c.agentList, {}, asDeveloper)[0]?.line).toBeNull());
   });
 
   test("on a phone, lines past the second fold to one row saying how much waits, and open from it", async () => {
@@ -1089,5 +1356,43 @@ describe("lines of work", () => {
     const panel = within(await view.findByRole("complementary", { name: "L-1" }));
     await panel.findByText("A printed case holds the board.");
     panel.getByText("Working on");
+  });
+});
+
+describe("buzzing this device", () => {
+  const asDeveloper = { actor: "dev", channel: "dashboard" } as const;
+  const existing = { endpoint: "https://push.example/phone", keys: { p256dh: "BKey", auth: "secret" } };
+
+  test("is on only when this browser holds a subscription, which the server is told about", async () => {
+    server = startTestServer({ pushKey: "BPublic" });
+    const push = fakePush({ permission: "granted", subscribed: existing });
+    try {
+      navigate("/");
+      const view = renderApp(<App />);
+      await view.findByText("Buzzing this device for urgent questions and the top two lines");
+      await waitFor(() =>
+        expect(server.tracker.call(c.pushSubscriptions, {}, { ...asDeveloper, system: true })).toEqual([
+          existing,
+        ]),
+      );
+    } finally {
+      push.restore();
+    }
+  });
+
+  test("allowed but not subscribed is off, and turning it on subscribes and tells the server", async () => {
+    server = startTestServer({ pushKey: "BPublic" });
+    const push = fakePush({ permission: "granted", subscribed: null });
+    try {
+      navigate("/");
+      const view = renderApp(<App />);
+      fireEvent.click(await view.findByRole("button", { name: "Buzz this device" }));
+      await view.findByText("Buzzing this device for urgent questions and the top two lines");
+      expect(server.tracker.call(c.pushSubscriptions, {}, { ...asDeveloper, system: true })).toEqual([
+        { endpoint: "https://push.example/new", keys: { p256dh: "BNew", auth: "fresh" } },
+      ]);
+    } finally {
+      push.restore();
+    }
   });
 });

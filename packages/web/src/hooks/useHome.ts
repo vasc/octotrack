@@ -1,5 +1,7 @@
 import { contracts } from "@octotrack/core/contracts";
 import type { HomeView, Line } from "@octotrack/core/schemas";
+import { useMemo } from "react";
+import type { NewLine } from "../components/lines/AddLineForm.tsx";
 import { useChoices } from "./useChoices.ts";
 import { useOpMutation, useOpQuery } from "./useOp.ts";
 
@@ -21,10 +23,21 @@ function sectionOf(home: HomeView, line: Line): readonly Line[] {
 /** The home view and every choice home makes, as the developer. Choices wait a few seconds with Undo. */
 export function useHome() {
   const home = useOpQuery(contracts.homeShow, {});
+  const projects = useOpQuery(contracts.projectList, {});
+  const repos = useMemo(() => (projects.data ?? []).map((card) => card.project.ref), [projects.data]);
   const add = useOpMutation(contracts.lineAdd);
   const order = useOpMutation(contracts.lineOrder);
   const retry = useOpMutation(contracts.runnerRetry);
   const choices = useChoices();
+  const { pending } = choices;
+  // Items whose choice waits with Undo: home holds them still and disarms their keys until it takes effect.
+  const held = useMemo(
+    () =>
+      new Set(
+        pending.flatMap((choice) => (choice.state === "pending" && choice.ref !== null ? [choice.ref] : [])),
+      ),
+    [pending],
+  );
   const titleOf = (ref: string) =>
     [
       ...(home.data?.working ?? []),
@@ -34,12 +47,15 @@ export function useHome() {
     ].find((line) => line.ref === ref)?.title ?? ref;
   return {
     home,
-    failure: add.error ?? order.error ?? retry.error,
+    held,
+    failure: add.error ?? order.error ?? retry.error ?? choices.failure,
     retry: (ref: string) => retry.mutate({ line: ref }),
-    add: (line: { title: string; doneWhen: string }) => add.mutate({ ...line, where: "up_next" }),
+    repos,
+    add: (line: NewLine) => add.mutate({ ...line, where: "up_next" }),
     start: (ref: string) => choices.make(contracts.lineStart.name, { ref }, `Started ${titleOf(ref)}`),
     queue: (ref: string) => choices.make(contracts.lineQueue.name, { ref }, `${titleOf(ref)} is up next`),
     reject: (ref: string) => choices.make(contracts.lineReject.name, { ref }, `${titleOf(ref)}: not a line`),
+    drop: (ref: string) => choices.make(contracts.lineDrop.name, { ref }, `Dropped ${titleOf(ref)}`),
     table: (ref: string, reason: string) =>
       choices.make(contracts.lineTable.name, { ref, reason }, `Tabled ${titleOf(ref)}`),
     fold: (ref: string, into: string) =>

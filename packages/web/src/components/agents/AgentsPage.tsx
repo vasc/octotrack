@@ -31,6 +31,9 @@ export function AgentsPage() {
               agent={agent}
               onStop={(name) => choices.make(contracts.agentStop.name, { name }, `Stopped ${name}`)}
               onLift={(name) => lift.mutate({ name })}
+              onRelease={(name) =>
+                choices.make(contracts.agentRelease.name, { name }, `Released ${name} from its line`)
+              }
             />
           ))}
         </div>

@@ -19,13 +19,15 @@ export function LinePanel({ line }: { line: Line }) {
       />
       {line.doneWhen === "" ? null : (
         <p className="prose">
-          <strong>Done when</strong> {line.doneWhen}
+          <strong>Done when</strong> <Markdown text={line.doneWhen} inline />
         </p>
       )}
       {line.recommendationWhy === null ? null : <Markdown text={line.recommendationWhy} />}
       {line.headline === null ? null : (
         <p className="home-headline">
-          <strong>{line.headline}</strong>
+          <strong>
+            <Markdown text={line.headline} inline />
+          </strong>
         </p>
       )}
       {line.summary === null ? null : <Markdown text={line.summary} />}

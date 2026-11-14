@@ -7,6 +7,7 @@ import type {
   Issue,
   IssueCard,
   Line,
+  PendingChoice,
   PrCard,
   PullRequest,
 } from "@octotrack/core/schemas";
@@ -223,6 +224,20 @@ export function line(overrides: Partial<Line> = {}): Line {
     createdAt: AT,
     updatedAt: AT,
     createdBy: "dev",
+    ...overrides,
+  };
+}
+
+export function pendingChoice(overrides: Partial<PendingChoice> = {}): PendingChoice {
+  return {
+    id: 1,
+    op: "line.start",
+    ref: null,
+    summary: "Started Wall mount",
+    dueAt: "",
+    state: "pending",
+    error: null,
+    createdAt: "",
     ...overrides,
   };
 }
