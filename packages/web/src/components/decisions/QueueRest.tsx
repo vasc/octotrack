@@ -17,7 +17,7 @@ export function QueueRest({ card, onOpen }: QueueRestProps) {
         {decision.title}
       </button>
       {decision.postponedAt !== null ? (
-        <Badge>postponed</Badge>
+        <Badge>later</Badge>
       ) : (
         reasons.slice(0, 1).map((reason) => (
           <Badge key={reason} tone="attention">

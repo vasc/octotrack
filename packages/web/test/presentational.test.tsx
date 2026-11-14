@@ -1120,3 +1120,25 @@ describe("LineProposalCard", () => {
     expect(onDecline).toHaveBeenCalledWith("");
   });
 });
+
+describe("a question's own choices", () => {
+  test("Later moves it to the bottom of its line; Not urgent shows only on an urgent question", () => {
+    const later = mock(() => {});
+    const notUrgent = mock(() => {});
+    const plain = render(
+      <DecisionCardView form={decisionForm({ postpone: later, notUrgent })} card={decisionCard()} />,
+    );
+    fireEvent.click(plain.getByRole("button", { name: "Later" }));
+    expect(later).toHaveBeenCalledTimes(1);
+    expect(plain.queryByRole("button", { name: "Not urgent" })).toBeNull();
+    plain.unmount();
+    const urgent = render(
+      <DecisionCardView
+        form={decisionForm({ postpone: later, notUrgent })}
+        card={decisionCard({ decision: decision({ urgentReason: "costs_money" }) })}
+      />,
+    );
+    fireEvent.click(urgent.getByRole("button", { name: "Not urgent" }));
+    expect(notUrgent).toHaveBeenCalledTimes(1);
+  });
+});

@@ -26,7 +26,7 @@ export function DecisionCardView({ card, form, selected = false }: DecisionCardV
       <h3 className="decision-title">{decision.title}</h3>
       {card.reasons.length === 0 && decision.postponedAt === null ? null : (
         <div className="decision-reasons">
-          {decision.postponedAt === null ? null : <Badge>postponed</Badge>}
+          {decision.postponedAt === null ? null : <Badge>later</Badge>}
           {card.reasons.map((reason) => (
             <Badge key={reason} tone="attention">
               {reason}
@@ -101,8 +101,13 @@ export function DecisionCardView({ card, form, selected = false }: DecisionCardV
           Decide
         </button>
         <button type="button" className="btn" onClick={form.postpone}>
-          {decision.postponedAt === null ? "Postpone" : "Bring back"}
+          {decision.postponedAt === null ? "Later" : "Bring back"}
         </button>
+        {decision.urgentReason === null || decision.notUrgentAt !== null ? null : (
+          <button type="button" className="btn" onClick={form.notUrgent}>
+            Not urgent
+          </button>
+        )}
       </form>
       {form.error === null ? null : (
         <p className="error-text" role="alert">

@@ -188,6 +188,7 @@ export function decisionForm(overrides: Partial<DecisionForm> = {}): DecisionFor
     choose: () => {},
     chooseOwn: () => {},
     postpone: () => {},
+    notUrgent: () => {},
     setNote: () => {},
     setElsewhere: () => {},
     submit: () => {},
