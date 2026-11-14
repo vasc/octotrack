@@ -183,6 +183,28 @@ export function heldOn(ctx: Ctx, line: string): HeldItem[] {
   return [...questions, ...tasks];
 }
 
+/**
+ * How many questions and tasks on a line wait to be re-confirmed: held, and not asked or re-confirmed in the last 7
+ * days. A line being worked on keeps such work held until an agent re-confirms it; one up next holds all its work.
+ */
+export function reconfirmingOn(ctx: Ctx, line: string): number {
+  const since = new Date(Date.parse(ctx.now) - HELD_CURRENT_MS).toISOString();
+  const count = (sql: string, params: readonly string[]) =>
+    one(ctx, z.object({ n: z.number() }), sql, params)?.n ?? 0;
+  return (
+    count(
+      `SELECT COUNT(*) AS n FROM decisions WHERE line = ? AND status = 'open' AND heldAt IS NOT NULL
+         AND COALESCE(confirmedAt, createdAt) < ?`,
+      [line, since],
+    ) +
+    count(
+      `SELECT COUNT(*) AS n FROM issues WHERE line = ? AND assignee = ? AND outcome IS NOT NULL
+         AND status NOT IN ('done', 'cancelled') AND heldAt IS NOT NULL AND COALESCE(confirmedAt, createdAt) < ?`,
+      [line, DEVELOPER, since],
+    )
+  );
+}
+
 export const taskOps = [
   bind(contracts.taskFile, (ctx, input) => {
     const lineRef = input.line ?? (ctx.developer ? null : (claimOf(ctx, ctx.actor)?.line ?? null));

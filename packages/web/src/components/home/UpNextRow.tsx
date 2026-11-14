@@ -61,6 +61,9 @@ export function UpNextRow({
         </button>
         <span className="line-facts">
           {details === undefined ? null : <span> · {heldText(details.held)}</span>}
+          {details === undefined || details.reconfirming === 0 ? null : (
+            <span> · {details.reconfirming} re-confirming</span>
+          )}
           <span> · {scoping}</span>
           {line.doneWhenProposal === null ? null : <span> · done when changed</span>}
           {crewText(crew).map((words) => (

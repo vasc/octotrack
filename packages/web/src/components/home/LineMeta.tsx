@@ -2,8 +2,8 @@ import type { LineCrew, LineHome } from "@octotrack/core/schemas";
 import { crewText } from "../../lib/lines.ts";
 
 /**
- * The facts beside a line's title, each after a dot: who is on it, whether it waits on you, its plan step. No owner
- * reads in red.
+ * The facts beside a line's title, each after a dot: who is on it, whether it waits on you, held work being
+ * re-confirmed, its plan step. No owner reads in red.
  */
 export function LineMeta({ crew, details }: { crew?: LineCrew; details?: LineHome }) {
   const facts = [
@@ -13,6 +13,8 @@ export function LineMeta({ crew, details }: { crew?: LineCrew; details?: LineHom
     ...(details === undefined || details.forYou.length === 0
       ? []
       : [details.waitingOnYou ? "waiting on you" : "agents on it"]),
+    // Held work from before the line started, waiting for its agent to re-confirm or withdraw it.
+    ...(details === undefined || details.reconfirming === 0 ? [] : [`${details.reconfirming} re-confirming`]),
     ...(details === undefined || details.step === null
       ? []
       : [`step ${details.step.position} of ${details.step.of}, ${details.step.title}`]),

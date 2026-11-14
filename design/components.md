@@ -88,7 +88,7 @@ Home is one list: every line in the developer's order, with what each needs from
 | ------------------ | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `HomeSection`      | Pure       | A named region of home with its count and what it means                                                                                                          |
 | `WorkingLine`      | Pure       | A line being worked on: its number, title, meta, headline, a case for done, and its items                                                                        |
-| `LineMeta`         | Pure       | One row of facts: who is on it, waiting on you, its plan step                                                                                                    |
+| `LineMeta`         | Pure       | One row of facts: who is on it, waiting on you, held work being re-confirmed, its plan step                                                                      |
 | `ForYouRow`        | Pure       | A question or task as one row that opens it                                                                                                                      |
 | `FocusTarget`      | Pure       | One item in home's focus order that the browser can focus: outlined, its numbered choices drawn                                                                  |
 | `ForYouItem`       | Structural | One thing waiting: opened in full with focus, else its row                                                                                                       |
@@ -102,7 +102,7 @@ Home is one list: every line in the developer's order, with what each needs from
 | `StepIn`           | Pure       | A working line nobody could be found for, in red: why, and the action that fits (Set its checkout, Try now, Start one anyway), with Table it and I'll own it     |
 | `LineStepIn`       | Pure       | Whether a working line shows Step in, and which fixes it offers given how its start went; folded to one row at a place                                           |
 | `CheckoutForm`     | Pure       | Set its checkout: where this machine has a repo, after a clone failed                                                                                            |
-| `UpNextRow`        | Pure       | A line up next: what it holds, how far scoping got, its done when, and Start                                                                                     |
+| `UpNextRow`        | Pure       | A line up next: what it holds and how much of it is being re-confirmed, how far scoping got, its done when, and Start                                            |
 | `ProposalCard`     | Pure       | A proposed line with the agent's case, and Start, Up next, Table, Fold into (a button per line), Not a line; Drop for a tabled line back to look at              |
 | `ProposalCase`     | Pure       | Why a proposal should go where its agent recommends and where Up next would put it; for a line back from tabled, the developer's reason                          |
 | `ProposalChoices`  | Pure       | A proposal's numbered choices, the recommended one filled: Start, Up next, Table, Fold into, Not a line; or Drop for a line back from tabled                     |
