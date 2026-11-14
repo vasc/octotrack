@@ -3,6 +3,7 @@ import { useBootstrap } from "../../hooks/useBootstrap.ts";
 import { DEFAULT_VIEW } from "../../hooks/useFeed.ts";
 import { useFilter } from "../../hooks/useFilter.ts";
 import { useHotkeys } from "../../hooks/useHotkeys.ts";
+import { useMarkAllSeen } from "../../hooks/useMarkSeen.ts";
 import { setParams, useRoute } from "../../lib/router.ts";
 import { QueueSection } from "../decisions/QueueSection.tsx";
 import { PageHead } from "../ui/PageHead.tsx";
@@ -25,6 +26,8 @@ export function FeedPage() {
     .map((part) => `(${part})`)
     .join(" ");
 
+  const unseen = params.get("seen") === "no";
+  const seen = useMarkAllSeen();
   const input = useRef<HTMLInputElement>(null);
   useHotkeys({ "/": () => input.current?.focus() });
 
@@ -32,7 +35,19 @@ export function FeedPage() {
 
   return (
     <div className="page">
-      <PageHead title="Log" />
+      <PageHead title="Log">
+        <button
+          type="button"
+          className="btn"
+          aria-pressed={unseen}
+          onClick={() => setParams({ seen: unseen ? null : "no" })}
+        >
+          Not seen
+        </button>
+        <button type="button" className="btn" onClick={seen.markAll}>
+          Mark all seen
+        </button>
+      </PageHead>
       <PrStrip cards={data?.prs ?? []} />
       <FilterBox filter={filter} inputRef={input} />
       <ViewTabs
@@ -47,7 +62,7 @@ export function FeedPage() {
       ) : (
         <>
           <QueueSection query={scope} isDefault={view === DEFAULT_VIEW && filter.query === ""} />
-          <FeedSection view={view} query={filter.query} onFilter={filter.addTerm} />
+          <FeedSection view={view} query={filter.query} unseen={unseen} onFilter={filter.addTerm} />
         </>
       )}
     </div>
