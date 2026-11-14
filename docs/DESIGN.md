@@ -238,6 +238,63 @@ if "we can avoid having the session actively hang on octo".
 - **Trade-off:** one attempt per answer rather than retries. A retried wake could start a second run of an agent, which is
   worse than an answer waiting in an inbox where the dashboard shows it.
 
+## Proposed, not built: lines of work at the centre
+
+A design proposal, not a description of the code. It is drawn on the design canvas as direction E, "One list", beside
+four earlier directions it was built from. Nothing below is implemented on main.
+
+What the developer said, after a week of use. Their words, quoted exactly:
+
+- "ui is a bit unpolished, besids the general unfinished vibe im seeing lack of markdown support, issues having too small of
+  a ui, updates not having auto growing input box, and a general database management ui setup, here are all the fields in a
+  flat list of tables, instead of properly think through the hierarchy of information and how things connect together"
+- "basiclly only the decisions part really worked, the usage was way too much focused on decisions with the integration
+  with other features very sparse and not useful"
+- "project/roadmaps weren't helpful at all, I want projects to be lines of work and I want to be very clear what we are
+  working on whtat is tabled and what we have planned"
+- "keeping in mind that this is not for humans with limitid time spans, ais have virtually infinite time to keep it
+  uptodate, complexity is expected so that simplicity can be achieved, the agents od the hard work to make everything
+  simple and clear so that things can be acted on quickly, right now the operator needs to read millions of lines of text
+  to get context on one decision"
+- "projects and roadmaps needs to be at the center, feed works well but its it can sometimes get in the way with decisions
+  about projects that are currently tabled"
+- "One project is a line of work"
+
+The one-project-per-repo layout in the tracker today was set up by an agent, not chosen by the developer, so it is no
+evidence of how projects are meant to be used.
+
+Everything below is a design decision made from that, with its reasoning.
+
+- **A project is a line of work:** a goal, an end, and a state the developer sets: working on, planned in order, or
+  tabled with a reason, then done or dropped. Nothing sits above projects. A project names the repos it touches; one repo
+  can serve several, and looking at one repo is a filter, not a layer. _Trade-off:_ no grouping to fold many lines under,
+  which a long list may one day want. A filter covers it until then.
+- **One order drives everything.** The developer drags lines into order. That order decides which question comes first,
+  which line an agent asking what to do next gets first, and how the feed is grouped. _Why:_ a computed score competed
+  with the developer's own priorities and had to be second-guessed. _Trade-off:_ a pressing question on a low line waits,
+  so a question marked urgent jumps the queue and says why.
+- **The developer does four things: order, answer, steer, accept.** Everything else is the agents': issues, plans, pull
+  requests, and keeping each line's summary true. The home screen holds all four: the questions to answer next, the
+  ordered list of lines, and the agents on them.
+- **Questions stand alone.** Asking requires a summary written for someone who has read nothing else, options that say
+  what happens if picked, and the reason behind any recommendation. Background stays available, folded. _Why:_ "the
+  operator needs to read millions of lines of text to get context on one decision".
+- **Planned and tabled lines hold their questions,** out of the way until the line is started. Tabling asks for a reason
+  and tells any agent waiting on that line's questions. _Trade-off:_ a question needed to start a line waits until you
+  start it; the line shows that it has one.
+- **Agents keep each line's summary current.** An agent rewrites it when it ends a working session; if it has not, it is
+  due an hour after the line's work moves, and the list says so until it is rewritten. Drift is the mechanism, as in D6.
+- **Agents propose, the developer accepts.** Agents propose a new line when they find work that has none, or when the
+  developer starts something new in conversation, and propose done when a plan is finished. Nothing joins or leaves the
+  list without the developer's yes.
+- **Steering without being asked.** Each line takes a note in the developer's own words, delivered to its agents' inbox
+  and waking them if they asked, as in D12.
+- **Interruptions are rare.** The phone is interrupted only for a question on the top two lines, or one marked urgent.
+- **The feed reads as what moved since you last looked,** grouped by line in your order, routine changes folded, held
+  lines left out unless asked for.
+- **Built only once agreed.** An exploratory branch, `lines-of-work`, tried an earlier version of this model in code. It
+  added an "area" layer above projects, which this proposal drops, so it is research, not the starting point.
+
 ## Data model
 
 Everything is addressed by a **ref**: `OCT` (project), `OCT-12` (issue), `D-3` (decision), `PR-7` or
