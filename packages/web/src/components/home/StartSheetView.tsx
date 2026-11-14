@@ -59,7 +59,21 @@ export function StartSheetView({
     return item.kind === "question" && question !== undefined ? [question] : [];
   });
   return (
-    <dialog open className="start-sheet" aria-labelledby={`start-${line.ref}`}>
+    <dialog
+      open
+      className="start-sheet"
+      aria-labelledby={`start-${line.ref}`}
+      tabIndex={-1}
+      // biome-ignore lint/a11y/noAutofocus: the developer opened it to act on it, so the keys and Tab start here
+      autoFocus
+      onKeyDown={(event) => {
+        // Esc closes the sheet first, before anything behind it.
+        if (event.key === "Escape") {
+          event.stopPropagation();
+          onCancel();
+        }
+      }}
+    >
       <h2 className="start-sheet-title" id={`start-${line.ref}`}>
         Start {line.title}
       </h2>

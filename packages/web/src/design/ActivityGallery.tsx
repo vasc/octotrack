@@ -1,34 +1,22 @@
 import { DriftItem } from "../components/drift/DriftItem.tsx";
 import { FeedList } from "../components/feed/FeedList.tsx";
 import { FilterBar } from "../components/feed/FilterBar.tsx";
-import { ViewTabs } from "../components/feed/ViewTabs.tsx";
-import { IssueRow } from "../components/issues/IssueRow.tsx";
 import { DesignSection } from "./Example.tsx";
-import { drift, event, issue, issueCard } from "./fixtures.ts";
+import { drift, event } from "./fixtures.ts";
 
 const NOOP = () => {};
-const VIEW = { query: "", position: 0, builtin: true, createdAt: "" };
 
-/** The feed and the rows around it: the quiet part, which the decisions stand out against. */
+/** The search and the log it finds: the quiet part, which the lines stand out against. */
 export function ActivityGallery() {
   return (
     <>
-      <DesignSection title="Filter and views">
+      <DesignSection title="Search">
         <FilterBar value="kind:decision status:open" error={null} suggestions={[]} onChange={NOOP} />
         <FilterBar
           value="status:opne"
           error='"opne" is not a value of status'
           suggestions={[]}
           onChange={NOOP}
-        />
-        <ViewTabs
-          active="Feed"
-          onSelect={NOOP}
-          views={[
-            { ...VIEW, name: "Feed" },
-            { ...VIEW, name: "Decisions" },
-            { ...VIEW, name: "Drift" },
-          ]}
         />
       </DesignSection>
       <DesignSection title="Feed">
@@ -97,23 +85,6 @@ export function ActivityGallery() {
           })}
           onAck={NOOP}
         />
-      </DesignSection>
-      <DesignSection title="Rows">
-        <div className="rows">
-          <IssueRow
-            onStatus={NOOP}
-            card={issueCard({
-              issue: issue({ priority: "urgent", assignee: "claude-a", labels: ["backend"] }),
-              blockedBy: ["D-3"],
-              prs: ["PR-7"],
-              openDrift: 1,
-            })}
-          />
-          <IssueRow
-            onStatus={NOOP}
-            card={issueCard({ issue: issue({ ref: "OCT-2", status: "done", title: "Finished" }) })}
-          />
-        </div>
       </DesignSection>
     </>
   );

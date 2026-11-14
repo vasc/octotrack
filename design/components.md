@@ -7,54 +7,45 @@ in isolation. **Structural** ones load data and pass it on to pure ones, so they
 
 ## The small vocabulary: `ui/`
 
-| Component      | What it is                                                                                                                                                                                                                                                               | Notes                                                                                   |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
-| `Badge`        | A short label with a tone. `StatusBadge` picks the tone from what the word means                                                                                                                                                                                         | Always has words in it                                                                  |
-| `RefLink`      | A ref such as `D-3`, opening that item in the inspector                                                                                                                                                                                                                  | Monospace. Available wherever a ref appears                                             |
-| `RefText`      | Running text in which every ref is a `RefLink`                                                                                                                                                                                                                           | Use for anything that could mention a ref                                               |
-| `TimeAgo`      | `now`, `5m`, `3h`, `2d`, then a date                                                                                                                                                                                                                                     | The full time is its tooltip                                                            |
-| `Progress`     | A 3px bar                                                                                                                                                                                                                                                                | Has a text alternative: "1 of 4 done"                                                   |
-| `Section`      | A small heading, with an optional count and link                                                                                                                                                                                                                         | The unit a page is made of                                                              |
-| `PageHead`     | A page's title, with room for actions                                                                                                                                                                                                                                    |                                                                                         |
-| `ListCapNote`  | Says that a list stopped at its limit                                                                                                                                                                                                                                    | A short list must not read as the whole story                                           |
-| `states`       | `LoadingState`, `EmptyState` and `ErrorState`                                                                                                                                                                                                                            | Empty can show a command to run. See [voice](voice.md)                                  |
-| `Markdown`     | Text agents and the developer write, rendered as markdown. `MarkdownView` does the work. `inline` for a sentence inside a line of words (a reason, a headline, an option's description), keeping only emphasis, code and links; `links={false}` inside something clicked | Loaded on first use. HTML in the text is never rendered                                 |
-| `MarkdownView` | The renderer behind `Markdown`, with links opening outside the dashboard                                                                                                                                                                                                 | Only `Markdown` imports it                                                              |
-| `TextBox`      | A box that grows as you type, for anything longer than a few words                                                                                                                                                                                                       | Cmd or Ctrl and Enter sends                                                             |
-| `NotKept`      | Pure                                                                                                                                                                                                                                                                     | A draft the server could not keep: says so, and that the words are still on this screen |
+| Component      | What it is                                                                                                                                                                                                                                                               | Notes                                                   |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| `Badge`        | A short label with a tone. `StatusBadge` picks the tone from what the word means                                                                                                                                                                                         | Always has words in it                                  |
+| `RefLink`      | A ref such as `D-3`, opening that item in the inspector                                                                                                                                                                                                                  | Monospace. Available wherever a ref appears             |
+| `RefText`      | Running text in which every ref is a `RefLink`                                                                                                                                                                                                                           | Use for anything that could mention a ref               |
+| `TimeAgo`      | `now`, `5m`, `3h`, `2d`, then a date                                                                                                                                                                                                                                     | The full time is its tooltip                            |
+| `Section`      | A small heading, with an optional count and link                                                                                                                                                                                                                         | The unit a page is made of                              |
+| `states`       | `LoadingState`, `EmptyState` and `ErrorState`                                                                                                                                                                                                                            | Empty can show a command to run. See [voice](voice.md)  |
+| `Markdown`     | Text agents and the developer write, rendered as markdown. `MarkdownView` does the work. `inline` for a sentence inside a line of words (a reason, a headline, an option's description), keeping only emphasis, code and links; `links={false}` inside something clicked | Loaded on first use. HTML in the text is never rendered |
+| `MarkdownView` | The renderer behind `Markdown`, with links opening outside the dashboard                                                                                                                                                                                                 | Only `Markdown` imports it                              |
+| `TextBox`      | A box that grows as you type, for anything longer than a few words. While it has focus it keeps what it shows                                                                                                                                                            | Cmd or Ctrl and Enter sends, once                       |
+| `NotKept`      | A draft the server could not keep: says so, and that the words are still on this screen                                                                                                                                                                                  | An alert, until a save works                            |
 
-## Decisions: `decisions/`
+## Questions: `decisions/`
 
-The loudest thing in the product.
+What agents ask, answered in one press where it waits: on its line, or at the top when urgent.
 
 | Component          | Kind       | What it is                                                                                                                                                                                                                                                    |
 | ------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `DecisionCardView` | Pure       | A question opened, as E-Home draws it: a strip saying what it is and what it holds up, the situation, options side by side that answer in one press, the reason for the recommendation under them, In my own words and Later. A dark border when it has focus |
 | `DecisionMeta`     | Pure       | The top line: ref, type, priority, project, who asked, how long ago                                                                                                                                                                                           |
-| `QueueRest`        | Pure       | A closed decision: one line with its strongest reason                                                                                                                                                                                                         |
-| `DecisionRow`      | Pure       | A finished decision in the log: outcome, and how it was made                                                                                                                                                                                                  |
-| `DeliveryBadge`    | Pure       | What became of an answer: not picked up, picked up, carried out                                                                                                                                                                                               |
-| `PickupSection`    | Structural | Answers no agent has picked up. Absent when there are none                                                                                                                                                                                                    |
 | `BatchPanelView`   | Pure       | Logging decisions made elsewhere, one per line                                                                                                                                                                                                                |
 | `DecisionCardItem` | Structural | A card with its form state and, when active, its keys                                                                                                                                                                                                         |
-| `QueueSection`     | Structural | The ranked queue, keeping one card open                                                                                                                                                                                                                       |
 | `BatchPanel`       | Structural | The batch panel's parsing and sending                                                                                                                                                                                                                         |
-| `DecisionsPage`    | Structural | The queue, the batch panel and the log                                                                                                                                                                                                                        |
 
 `DecisionCardView` states:
 
-| State         | Looks like                                                              |
-| ------------- | ----------------------------------------------------------------------- |
-| Open          | An amber edge. `Decide` is disabled until there is something to send    |
-| Active        | Also an amber outline. Number keys and `Enter` act on this card         |
-| Option chosen | That option in amber, with `aria-pressed`. Choosing it again clears it  |
-| Own answer    | `Something else` in amber, the note asks for the answer and takes focus |
-| Postponed     | A neutral `postponed` badge, and `Postpone` becomes `Bring back`        |
-| Sending       | `Decide` is disabled                                                    |
-| Refused       | The card stays, with the server's reason underneath                     |
-| Decided       | It leaves the queue                                                     |
+| State     | Looks like                                                                              |
+| --------- | --------------------------------------------------------------------------------------- |
+| A row     | Unfocused, a question is one row on its line: what it is, its title, the recommendation |
+| Focused   | Opened, with the word Focused and a dark border; its numbers answer it                  |
+| Urgent    | Red, with its reason and the line it stands apart from; a row in red until focused      |
+| Own words | A box that takes the cursor; Send, which says Sending while the answer waits            |
+| Waiting   | Its answer waits with Undo; its keys stand down until it takes effect                   |
+| Put off   | Later sends it to the bottom of its line; it then offers Bring back                     |
+| Refused   | The Undo bar says why, and the question stays                                           |
+| Answered  | It leaves; its line says what became of the answer, with Change answer                  |
 
-## The feed: `feed/`
+## The Log: `feed/`
 
 | Component     | Kind       | What it is                                                                                                                                                |
 | ------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -62,41 +53,29 @@ The loudest thing in the product.
 | `FeedList`    | Pure       | Items, with a heading where the day changes                                                                                                               |
 | `UnseenLog`   | Pure       | Not seen: line by line in the developer's order, checks and drift confirmations folded, waiting lines left out unless asked for, refused writes always in |
 | `FilterBar`   | Pure       | The query box, with suggestions. A bad query shows why, and results stay up                                                                               |
-| `ViewTabs`    | Pure       | Saved filters                                                                                                                                             |
 | `FilterBox`   | Structural | A `FilterBar` given suggestions from the tracker's own data                                                                                               |
-| `FeedSection` | Structural | Loads and pages through the feed                                                                                                                          |
-| `FeedPage`    | Structural | The primary screen. See [patterns](patterns.md#the-feed-page)                                                                                             |
+| `FeedSection` | Structural | Loads and pages through the log: what is not seen, or what a search finds                                                                                 |
+| `FeedPage`    | Structural | The Log: what has not been seen, line by line in the developer's order, and a search over everything                                                      |
 
 ## Pull requests: `prs/`
 
-| Component      | Kind       | What it is                                                                       |
-| -------------- | ---------- | -------------------------------------------------------------------------------- |
-| `PrGlyphs`     | Pure       | Checks and review as two labelled glyphs: ✓ ✕ ● – and A C R –                    |
-| `PrRow`        | Pure       | Glyphs, title, repo link, and what it needs. `wide` adds size, author and issues |
-| `PrStrip`      | Pure       | One line summing up open PRs, for screens too narrow for the rail                |
-| `SyncFailures` | Pure       | Says that PR status has stopped updating, and why                                |
-| `PrsPage`      | Structural | All pull requests, problems first                                                |
+| Component      | Kind | What it is                                        |
+| -------------- | ---- | ------------------------------------------------- |
+| `SyncFailures` | Pure | Says that PR status has stopped updating, and why |
 
 ## Drift: `drift/`
 
-| Component   | Kind       | What it is                                                                 |
-| ----------- | ---------- | -------------------------------------------------------------------------- |
-| `DriftItem` | Pure       | What is out of date, what to do, and how to answer. Answering needs a note |
-| `DriftPage` | Structural | Everything out of date                                                     |
+| Component   | Kind | What it is                                                                 |
+| ----------- | ---- | -------------------------------------------------------------------------- |
+| `DriftItem` | Pure | What is out of date, what to do, and how to answer. Answering needs a note |
 
 `DriftItem` only offers "Updated" for drift caused by an event. Drift about state clears by itself once the state is
 right, so there "Nothing to update" is the only answer on offer.
 
 ## Work: `issues/`, `projects/`
 
-| Component           | Kind       | What it is                                                                 |
-| ------------------- | ---------- | -------------------------------------------------------------------------- |
-| `IssueRow`          | Pure       | Ref, title, what blocks it, its PRs and labels, and a status select        |
-| `IssueGroups`       | Pure       | Issues by status, whatever is closest to needing attention first           |
-| `ProjectCardView`   | Pure       | Progress, and what needs attention. Counts turn amber only when above zero |
-| `IssuesPage`        | Structural | All issues                                                                 |
-| `ProjectsPage`      | Structural | All projects                                                               |
-| `ProjectDetailPage` | Structural | One project: decisions, milestones, PRs, issues, activity                  |
+| Component | Kind | What it is |
+| --------- | ---- | ---------- |
 
 ## Home: `home/` and `lines/`
 
@@ -150,17 +129,17 @@ Home is one list: every line in the developer's order, with what each needs from
 
 ## The frame: `layout/`
 
-| Component        | Kind       | What it is                                                                                                                                                                      |
-| ---------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `NavItem`        | Pure       | One of Lines, Log and Agents in the bar, marked when it is the page you are on                                                                                                  |
-| `TopBar`         | Pure       | The bar on every page: Octotrack, Lines, Log and Agents, the counts as links to their first item, I'm at, New line and the keys. On a phone the pages become tabs at the bottom |
-| `AppShell`       | Structural | The three columns. Holds the live connection                                                                                                                                    |
-| `UndoBar`        | Pure       | Choices waiting to take effect, newest first, each saying what it does and in how many seconds, with Undo; failed ones say why                                                  |
-| `PendingChoices` | Structural | The Undo bar on every page; u undoes the newest choice                                                                                                                          |
+| Component        | Kind       | What it is                                                                                                                                                                                    |
+| ---------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NavItem`        | Pure       | One of Lines, Log and Agents in the bar, marked when it is the page you are on                                                                                                                |
+| `TopBar`         | Pure       | The bar on every page: Octotrack, Lines, Log and Agents; what waits as one quiet group of counts, urgent apart; I'm at, New line and the keys. On a phone the pages become tabs at the bottom |
+| `AppShell`       | Structural | The bar, the page, and an opened ref as a panel over the right of the page. Holds the live connection and the keys every page has                                                             |
+| `UndoBar`        | Pure       | Choices waiting to take effect, newest first, each saying what it does and in how many seconds, with Undo; failed ones say why                                                                |
+| `PendingChoices` | Structural | The Undo bar on every page; u undoes the newest choice                                                                                                                                        |
 
 ## The inspector: `entity/`
 
-Opens from any ref, in the rail, without leaving the page.
+Opens from any ref as a panel over the right of the page, so the list keeps its place behind it.
 
 | Component        | Kind       | What it is                                                                                                                                              |
 | ---------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -169,7 +148,6 @@ Opens from any ref, in the rail, without leaving the page.
 | `LinkList`       | Pure       | Connections, worded from this item's point of view: "blocked by", not "blocks"                                                                          |
 | `HistoryList`    | Pure       | What has happened to this item                                                                                                                          |
 | `PrPanel`        | Pure       | A pull request's details                                                                                                                                |
-| `LinePanel`      | Pure       | A line of work: its state, what finishes it, and why it waits if it does                                                                                |
 | `LineActions`    | Pure       | What the developer can do with a line: place, table, finish, own, stop its owner, and answer its proposals                                              |
 | `LinePanelItem`  | Structural | A line opened, as E-Line draws it: head, moves, summary, what it needs from you, plan beside what is new and its owner, Tell. Marked seen when it opens |
 | `OwnerBox`       | Pure       | Who speaks for the line, Stop on its owner, I'll own it, or Hand to an agent on a line of yours                                                         |

@@ -59,7 +59,9 @@ export function UndoBar({
         return (
           <div key={choice.id} className="undo-choice">
             <span>
-              {choice.summary} {inSeconds(choice.dueAt, now)}
+              {choice.summary}{" "}
+              {/* The countdown ticks every second; announcing each tick would drown out the rest. */}
+              <span aria-hidden="true">{inSeconds(choice.dueAt, now)}</span>
               {line === undefined ? "" : `. ${afterStop(line)}`}
             </span>
             {choice.id === newest ? <span className="muted">u to undo</span> : null}

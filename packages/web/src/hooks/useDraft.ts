@@ -1,6 +1,6 @@
 import { contracts } from "@octotrack/core/contracts";
 import { useQueryClient } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { callOp } from "../api/client.ts";
 import { useOpQuery } from "./useOp.ts";
 
@@ -50,11 +50,25 @@ export function useDraft(key: string) {
       }, after),
     };
   };
+  // A box that closes with words still waiting for their save sends them now: the next box to open reads the server,
+  // which must already hold them. The timer is outside React, so an effect lets it go.
+  useEffect(
+    () => () => {
+      const waiting = pending.current;
+      if (waiting === null) return;
+      clearTimeout(waiting.timer);
+      pending.current = null;
+      void callOp(contracts.draftSave, { key, text: waiting.text }).catch(() => {});
+    },
+    [key],
+  );
   return {
     value: typed ?? saved.data?.text ?? "",
     error,
     change(text: string) {
       setTyped(text);
+      // Kept on this page at once, so the words are there if this box closes and opens again before the save lands.
+      client.setQueryData([contracts.draftGet.name, { key }], { key, text });
       save(text, SAVE_AFTER_MS);
     },
     clear() {

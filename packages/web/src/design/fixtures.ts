@@ -5,10 +5,8 @@ import type {
   Drift,
   FeedEvent,
   Issue,
-  IssueCard,
   Line,
   PendingChoice,
-  PrCard,
   PullRequest,
 } from "@octotrack/core/schemas";
 
@@ -94,10 +92,6 @@ export function pr(overrides: Partial<PullRequest> = {}): PullRequest {
   };
 }
 
-export function prCard(overrides: Partial<PrCard> = {}): PrCard {
-  return { pr: pr(), issues: [], attention: [], openDrift: 0, ...overrides };
-}
-
 export function event(overrides: Partial<FeedEvent> = {}): FeedEvent {
   return {
     seq: 1,
@@ -143,10 +137,6 @@ export function issue(overrides: Partial<Issue> = {}): Issue {
     createdBy: "claude-a",
     ...overrides,
   };
-}
-
-export function issueCard(overrides: Partial<IssueCard> = {}): IssueCard {
-  return { issue: issue(), blockedBy: [], blocking: [], prs: [], openDrift: 0, ...overrides };
 }
 
 export function drift(overrides: Partial<Drift> = {}): Drift {

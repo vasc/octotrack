@@ -33,7 +33,8 @@ export function KeyHelp({ onClose }: { onClose(): void }) {
         ))}
       </dl>
       <div className="decision-actions">
-        <button type="button" className="btn" onClick={onClose}>
+        {/* biome-ignore lint/a11y/noAutofocus: opened with ?, so Tab and Enter start at Close */}
+        <button type="button" className="btn" autoFocus onClick={onClose}>
           Close
         </button>
       </div>

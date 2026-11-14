@@ -9,7 +9,7 @@ dashboard: `tokens.css` is imported by it, so a change here is a change in the p
 | [tokens.css](tokens.css)         | Every color, type size, space, radius and shadow. The source of truth      |
 | [foundations.md](foundations.md) | What each token means and when to use it                                   |
 | [components.md](components.md)   | Every component: what it is for, its states, how it behaves                |
-| [patterns.md](patterns.md)       | How components combine into the feed, the queue, the inspector             |
+| [patterns.md](patterns.md)       | How components combine into home, answering, the Log, the panel            |
 | [voice.md](voice.md)             | How the product words things, in the dashboard and the CLI                 |
 | [log.md](log.md)                 | Decisions made so far, and the questions still open                        |
 
@@ -54,7 +54,7 @@ These are one-line edits in `tokens.css` that change the whole product:
 - **Reading size:** `--text-md: 13px`, the size of nearly everything. Change the rest of the scale with it.
 - **Corners:** the three `--radius-*` values.
 - **The attention color:** `--attention`, `--attention-soft` and `--attention-line`. Amber was chosen, not given.
-- **The rail:** `--rail-width`, which decides how much room PR status gets beside the feed.
+- **One control height:** `--control-height`, which every button, field and pill on a desktop shares.
 
 [log.md](log.md) lists the bigger open questions.
 

@@ -36,7 +36,13 @@ export function NewLineCard({
       <span className="card-label">New line</span>
       <label className="field-label">
         <span>What it is</span>
-        <input className="field" value={title} onChange={(event) => setTitle(event.target.value)} />
+        <input
+          className="field"
+          value={title}
+          // biome-ignore lint/a11y/noAutofocus: opened with New line to type one
+          autoFocus
+          onChange={(event) => setTitle(event.target.value)}
+        />
       </label>
       <label className="field-label">
         <span>

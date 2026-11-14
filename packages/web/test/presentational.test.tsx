@@ -36,7 +36,6 @@ import { AtSection } from "../src/components/home/AtSection.tsx";
 import { foldedText } from "../src/components/home/FoldedItems.tsx";
 import { SinceSummary } from "../src/components/entity/SinceSummary.tsx";
 import { FilterBar } from "../src/components/feed/FilterBar.tsx";
-import { IssueRow } from "../src/components/issues/IssueRow.tsx";
 import { LineActions } from "../src/components/entity/LineActions.tsx";
 import { OwnWorkBox } from "../src/components/entity/OwnWorkBox.tsx";
 import { TellBox } from "../src/components/entity/TellBox.tsx";
@@ -44,13 +43,7 @@ import { type NewLine, NewLineCard } from "../src/components/lines/NewLineCard.t
 import { TableForm } from "../src/components/lines/TableForm.tsx";
 import { TopBar } from "../src/components/layout/TopBar.tsx";
 import { UndoBar } from "../src/components/layout/UndoBar.tsx";
-import { ProjectCardView } from "../src/components/projects/ProjectCardView.tsx";
-import { PrGlyphs } from "../src/components/prs/PrGlyphs.tsx";
-import { PrRow } from "../src/components/prs/PrRow.tsx";
-import { PrStrip } from "../src/components/prs/PrStrip.tsx";
 import { SyncFailures } from "../src/components/prs/SyncFailures.tsx";
-import { ListCapNote } from "../src/components/ui/ListCapNote.tsx";
-import { Progress } from "../src/components/ui/Progress.tsx";
 import { Markdown } from "../src/components/ui/Markdown.tsx";
 import { RefText } from "../src/components/ui/RefText.tsx";
 import { TextBox } from "../src/components/ui/TextBox.tsx";
@@ -65,11 +58,8 @@ import {
   drift,
   event,
   issue,
-  issueCard,
   line,
   pendingChoice,
-  pr,
-  prCard,
 } from "../src/design/fixtures.ts";
 import { whole } from "./harness.tsx";
 
@@ -178,70 +168,6 @@ describe("DecisionCardView", () => {
   test("shows an error from the server", () => {
     const view = render(<DecisionCardView form={form({ error: "Already decided" })} card={decisionCard()} />);
     expect(view.getByRole("alert").textContent).toBe("Already decided");
-  });
-});
-
-describe("PrGlyphs and PrRow", () => {
-  test.each([
-    ["passing", "approved"],
-    ["failing", "changes_requested"],
-    ["pending", "requested"],
-    ["none", "none"],
-  ] as const)("status %s, review %s can be read without relying on colour", (checks, review) => {
-    const view = render(<PrGlyphs checks={checks} review={review} />);
-    view.getByRole("img", { name: new RegExp(`Checks ${checks}`) });
-    view.getByRole("img", { name: new RegExp(`Review ${review.replace("_", " ")}`) });
-  });
-
-  test("failing checks are toned as bad", () => {
-    const view = render(<PrGlyphs checks="failing" review="none" />);
-    expect(view.getByRole("img", { name: "Checks failing" }).getAttribute("data-tone")).toBe("bad");
-  });
-
-  test("a row shows title, link to GitHub, attention, and details when wide", () => {
-    const view = render(<PrRow wide card={prCard({ attention: ["checks failing"], issues: ["OCT-4"] })} />);
-    view.getByRole("button", { name: "Add retry" });
-    expect(view.getByRole("link", { name: "acme/app#12" }).getAttribute("href")).toBe(
-      "https://github.com/acme/app/pull/12",
-    );
-    view.getByText("checks failing");
-    view.getByRole("button", { name: "OCT-4" });
-    view.getByText("+10 -2");
-  });
-
-  test("a finished PR shows its state instead of glyphs", () => {
-    const view = render(<PrRow card={prCard({ pr: pr({ state: "merged" }) })} />);
-    view.getByText("merged");
-    expect(view.queryByRole("img")).toBeNull();
-  });
-
-  test("a draft says so", () => {
-    render(<PrRow card={prCard({ pr: pr({ state: "draft" }) })} />).getByText("draft");
-  });
-});
-
-describe("PrStrip", () => {
-  test("sums up open PRs by what they need, ignoring finished ones", () => {
-    const view = render(
-      <PrStrip
-        cards={[
-          prCard({ attention: ["checks failing", "needs review"] }),
-          prCard({ pr: pr({ ref: "PR-2", state: "draft" }), attention: ["checks failing"] }),
-          prCard({ pr: pr({ ref: "PR-3" }), attention: ["ready to merge"] }),
-          prCard({ pr: pr({ ref: "PR-4", state: "merged" }) }),
-        ]}
-      />,
-    );
-    view.getByText("3 open PRs");
-    view.getByText("2 failing");
-    view.getByText("1 need review");
-    view.getByText("1 ready to merge");
-    expect(view.queryByText(/conflicting/)).toBe(null);
-  });
-
-  test("is not there when nothing is open", () => {
-    const view = render(<PrStrip cards={[prCard({ pr: pr({ state: "merged" }) })]} />);
-    expect(view.container.firstChild).toBe(null);
   });
 });
 
@@ -422,31 +348,6 @@ describe("DriftItem", () => {
   });
 });
 
-describe("IssueRow", () => {
-  test("shows blockers, PRs, labels, drift and assignee, and changes status", () => {
-    const onStatus = mock(() => {});
-    const view = render(
-      <IssueRow
-        onStatus={onStatus}
-        card={issueCard({
-          issue: issue({ labels: ["backend"], assignee: "claude-a", priority: "urgent" }),
-          blockedBy: ["D-3"],
-          prs: ["PR-2"],
-          openDrift: 2,
-        })}
-      />,
-    );
-    view.getByRole("button", { name: "D-3" });
-    view.getByRole("button", { name: "PR-2" });
-    view.getByText("backend");
-    view.getByText("2 drift");
-    view.getByText("claude-a");
-    view.getByText("urgent");
-    fireEvent.change(view.getByLabelText("Status of OCT-1"), { target: { value: "done" } });
-    expect(onStatus).toHaveBeenCalledWith("OCT-1", "done");
-  });
-});
-
 describe("TopBar", () => {
   const counts = [
     { key: "toAnswer" as const, label: "to answer", count: 4, to: "D-56" },
@@ -491,14 +392,14 @@ describe("TopBar", () => {
         onKeys={() => {}}
       />,
     );
-    const group = view.getByRole("status", { name: "Waiting on you" });
+    const status = view.getByRole("status", { name: "Waiting on you" });
     expect(
-      within(group)
+      within(status)
         .getAllByRole("link")
         .map((link) => link.textContent),
-    ).toEqual(["4 to answer", "1 to accept", "1 to step in"]);
+    ).toEqual(["1 urgent", "4 to answer", "1 to accept", "1 to step in"]);
     const urgent = view.getByRole("link", { name: "1 urgent" });
-    expect(group.contains(urgent)).toBe(false);
+    expect(status.querySelector(".top-counts")?.contains(urgent)).toBe(false);
     expect(urgent.querySelector(".top-count-n")?.textContent).toBe("1");
   });
 
@@ -519,50 +420,7 @@ describe("TopBar", () => {
   });
 });
 
-describe("ProjectCardView", () => {
-  test("a project card shows progress and what needs attention", () => {
-    const view = render(
-      <ProjectCardView
-        card={{
-          project: {
-            ref: "OCT",
-            name: "Octotrack",
-            description: "Tracker",
-            status: "active",
-            repo: null,
-            checkout: null,
-            horizon: "none",
-            targetDate: null,
-            version: 1,
-            createdAt: "",
-            updatedAt: "",
-            createdBy: "x",
-          },
-          stats: {
-            issuesTotal: 4,
-            issuesClosed: 1,
-            issuesActive: 1,
-            issuesBlocked: 0,
-            openDecisions: 2,
-            openPrs: 1,
-            openDrift: 3,
-          },
-        }}
-      />,
-    );
-    view.getByText("1/4 done");
-    expect(view.getByText("2 decisions").className).toBe("stat-hot");
-    expect(view.getByText("0 blocked").className).toBe("");
-    expect(view.getByRole("progressbar").getAttribute("aria-valuenow")).toBe("25");
-  });
-});
-
 describe("small pieces", () => {
-  test("a list at its limit says so", () => {
-    render(<ListCapNote shown={200} cap={200} />).getByText(/first 200/);
-    expect(render(<ListCapNote shown={199} cap={200} />).container.firstChild).toBe(null);
-  });
-
   test("sync failures name the repo and the reason", () => {
     const view = render(<SyncFailures failures={[{ repo: "a/b", error: "Boom", updatedAt: "" }]} />);
     view.getByText(/stale for a\/b: Boom/);
@@ -573,11 +431,6 @@ describe("small pieces", () => {
     render(<LoadingState />).getByRole("status");
     render(<ErrorState error={new Error("Boom")} />).getByRole("alert");
     render(<EmptyState command="octo guide">Nothing</EmptyState>).getByText("octo guide");
-  });
-
-  test("progress handles nothing to do", () => {
-    const view = render(<Progress done={0} total={0} />);
-    expect(view.getByRole("progressbar").getAttribute("aria-valuenow")).toBe("0");
   });
 
   test("RefText links refs and leaves other words alone", () => {
@@ -1011,8 +864,8 @@ describe("UndoBar", () => {
         onUndo={onUndo}
       />,
     );
-    view.getByText('Sending "26 mm" to Sendspin enclosure in 8 seconds');
-    view.getByText("Starting Wall mount in 1 second");
+    view.getByText(whole('Sending "26 mm" to Sendspin enclosure in 8 seconds'));
+    view.getByText(whole("Starting Wall mount in 1 second"));
     view.getByText("u to undo");
     expect(view.queryByRole("button", { name: "Now" })).toBeNull();
     fireEvent.click(view.getAllByRole("button", { name: "Undo" })[0] ?? document.body);
@@ -1691,6 +1544,20 @@ describe("LineHandle", () => {
     fireEvent.click(menu.getByRole("menuitem", { name: "To up next" }));
     expect(onMove.mock.calls).toEqual([["up_next"]]);
     expect(view.queryByRole("menu")).toBeNull();
+  });
+
+  test("opened, its first item takes the cursor and the arrows move through the items", () => {
+    const view = render(<LineHandle title="One" canMoveUp canMoveDown canQueue onMove={() => {}} />);
+    fireEvent.click(view.getByRole("button", { name: "Move One" }));
+    const menu = view.getByRole("menu");
+    expect(document.activeElement?.textContent).toBe("Move to top");
+    fireEvent.keyDown(menu, { key: "ArrowDown" });
+    expect(document.activeElement?.textContent).toBe("Up");
+    fireEvent.keyDown(menu, { key: "ArrowUp" });
+    fireEvent.keyDown(menu, { key: "ArrowUp" });
+    expect(document.activeElement?.textContent).toBe("To up next");
+    fireEvent.keyDown(menu, { key: "Escape" });
+    expect(document.activeElement).toBe(view.getByRole("button", { name: "Move One" }));
   });
 
   test("cannot move past either end, and Escape closes it", () => {

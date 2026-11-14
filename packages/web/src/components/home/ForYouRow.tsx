@@ -1,4 +1,5 @@
 import type { ForYou } from "@octotrack/core/schemas";
+import { useId } from "react";
 import { refOf } from "../../lib/focus.ts";
 import { URGENT_REASON } from "../../lib/lines.ts";
 import { Markdown } from "../ui/Markdown.tsx";
@@ -6,16 +7,21 @@ import { Markdown } from "../ui/Markdown.tsx";
 /** Something waiting on the developer, as one row that opens it: what it is, its title, and the case for it. */
 export function ForYouRow({ item, onOpen }: { item: ForYou; onOpen(ref: string): void }) {
   const ref = refOf(item);
+  // Named by what it does; described by what it is, so a screen reader hears the title too.
+  const text = useId();
   return (
     <button
       type="button"
+      aria-describedby={text}
       className="item-row"
       data-kind={item.kind}
       data-urgent={item.kind === "question" && item.card.decision.urgentReason !== null}
       aria-label={`Open ${ref}`}
       onClick={() => onOpen(ref)}
     >
-      <span className="item-row-text">{rowText(item)}</span>
+      <span className="item-row-text" id={text}>
+        {rowText(item)}
+      </span>
       <span className="item-row-open">Open</span>
     </button>
   );

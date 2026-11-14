@@ -109,7 +109,8 @@ export function WaitingSections({
               drop={drop(line.ref, "up_next")}
               onStart={onStarting}
             />
-            {sheet(line.ref)}
+            {/* A list holds only items, so the sheet opened under a row is an item of its own. */}
+            {starting === line.ref ? <li className="next-sheet">{sheet(line.ref)}</li> : null}
           </Fragment>
         );
       })}

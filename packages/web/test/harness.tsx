@@ -109,6 +109,14 @@ export function whole(text: string) {
     [...element.children].every((child) => child.textContent !== text);
 }
 
+/** Like whole, for a sentence that varies, such as a countdown: the innermost element whose whole text matches. */
+export function wholeMatching(pattern: RegExp) {
+  return (_content: string, element: Element | null): boolean =>
+    element !== null &&
+    pattern.test(element.textContent ?? "") &&
+    [...element.children].every((child) => !pattern.test(child.textContent ?? ""));
+}
+
 interface FakeSubscription {
   endpoint: string;
   keys: { p256dh: string; auth: string };

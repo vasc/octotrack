@@ -47,6 +47,7 @@ export function StepIn({
       role="note"
       aria-label={`Step in on ${line.title}`}
       data-selected={focused}
+      aria-current={focused ? "true" : undefined}
       data-focus-ref={stepInRef(line.ref)}
       tabIndex={-1}
     >
