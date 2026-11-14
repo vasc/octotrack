@@ -884,7 +884,8 @@ describe("everything else, through the CLI", () => {
       ["line", "add", "Launch", "--done-when", "It is live.", "-r", "WEB", "--where", "working", "--me"],
       "",
     );
-    await octo(["issue", "update", issue.ref, "--line", launch.ref]);
+    // Putting work on a line from outside it is the developer's: agents write only to the line they are on.
+    await octo(["issue", "update", issue.ref, "--line", launch.ref, "--me"], "");
     expect((await octo(["line", "show", launch.ref, "--text"])).stdout).toContain(issue.ref);
 
     const other = await data(WithRef, ["issue", "create", "Depends", "-p", "WEB"]);
@@ -1024,16 +1025,16 @@ describe("lines of work from the CLI", () => {
       ],
       "",
     );
-    await data(z.array(z.object({ title: z.string() })), [
-      "plan",
-      "set",
-      line.ref,
-      "Wire the probe",
-      "Calibrate",
-    ]);
+    // As the developer: an agent writes to a line only from that line.
+    await data(
+      z.array(z.object({ title: z.string() })),
+      ["plan", "set", line.ref, "Wire the probe", "Calibrate", "--me"],
+      "",
+    );
     const issue = await data(
       z.object({ ref: z.string(), line: z.string().nullable(), step: z.number().nullable() }),
-      ["issue", "create", "Solder the header", "-p", "OCT", "--line", line.ref, "--step", "1"],
+      ["issue", "create", "Solder the header", "-p", "OCT", "--line", line.ref, "--step", "1", "--me"],
+      "",
     );
     expect([issue.line, issue.step]).toEqual([line.ref, 1]);
     const shown = await octo(["line", "show", line.ref, "--text"]);

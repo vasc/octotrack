@@ -577,3 +577,85 @@ describe("work on a line makes its summary fall due", () => {
     expect(due(w)).toEqual([w.line]);
   });
 });
+
+describe("agents write only to the line they are on, scoping included (third audit, N4)", () => {
+  test("plan set: an agent from outside cannot replace a line's plan", () => {
+    const w = world();
+    expect(w.refused(() => w.as(w.outsider, c.planSet, { line: w.line, steps: ["Mine"] })).code).toBe(
+      "forbidden",
+    );
+    expect(w.as(w.owner, c.planSet, { line: w.line, steps: ["Base", "Lid"] })).toHaveLength(2);
+  });
+
+  test("task file: an agent from outside cannot file a task for the developer on a line", () => {
+    const w = world();
+    w.as(w.dev, c.placeAdd, { name: "the bench" });
+    const task = { title: "Measure", place: "the bench", outcome: "Width in mm" };
+    expect(w.refused(() => w.as(w.outsider, c.taskFile, { ...task, line: w.line })).code).toBe("forbidden");
+    expect(
+      w.refused(() => w.as(w.outsider, c.taskFile, { ...task, line: w.line, frees: w.issue })).code,
+    ).toBe("forbidden");
+    expect(w.as(w.owner, c.taskFile, task).line).toBe(w.line);
+  });
+
+  test("issue update: an agent from outside can neither take an issue off a line nor rewrite it", () => {
+    const w = world();
+    expect(w.refused(() => w.as(w.outsider, c.issueUpdate, { refs: [w.issue], line: null })).code).toBe(
+      "forbidden",
+    );
+    expect(
+      w.refused(() =>
+        w.as(w.outsider, c.issueUpdate, { refs: [w.issue], title: "Hijacked", status: "blocked" }),
+      ).code,
+    ).toBe("forbidden");
+    const loose = w.as(w.dev, c.issueCreate, { project: "PANEL", title: "Loose" }).ref;
+    expect(w.refused(() => w.as(w.outsider, c.issueUpdate, { refs: [loose], line: w.line })).code).toBe(
+      "forbidden",
+    );
+    expect(w.as(w.owner, c.issueUpdate, { refs: [w.issue], title: "Base, flat" })[0]?.title).toBe(
+      "Base, flat",
+    );
+  });
+
+  test("issue create: an agent from outside cannot file an issue on a line, nor one that blocks its work", () => {
+    const w = world();
+    expect(
+      w.refused(() => w.as(w.outsider, c.issueCreate, { project: "PANEL", title: "Mine", line: w.line }))
+        .code,
+    ).toBe("forbidden");
+    expect(
+      w.refused(() =>
+        w.as(w.outsider, c.issueCreate, { project: "OTHER", title: "Blocker", blocks: [w.issue] }),
+      ).code,
+    ).toBe("forbidden");
+    expect(w.as(w.owner, c.issueCreate, { project: "PANEL", title: "Lid", line: w.line }).line).toBe(w.line);
+  });
+
+  test("question ask: an agent from outside cannot put a question in a line's queue", () => {
+    const w = world();
+    const question = { title: "Which way?", context: SITUATION, options: OPTIONS };
+    expect(w.refused(() => w.as(w.outsider, c.decisionAsk, { ...question, line: w.line })).code).toBe(
+      "forbidden",
+    );
+    expect(w.refused(() => w.as(w.outsider, c.decisionAsk, { ...question, issue: w.issue })).code).toBe(
+      "forbidden",
+    );
+    expect(w.as(w.dev, c.decisionQueue, {})).toEqual([]);
+    expect(w.as(w.owner, c.decisionAsk, question).line).toBe(w.line);
+  });
+});
+
+describe("the developer's own operations, relayed, take effect", () => {
+  test("a task added to the developer's own line on their words is added", () => {
+    const w = world();
+    const mine = w.as(w.dev, c.lineAdd, {
+      title: "Mine",
+      doneWhen: "Done.",
+      repos: [],
+      where: "working",
+    }).ref;
+    const relayed = w.agent("panel", { said: "add measuring the shelf to my line" });
+    expect(w.as(relayed, c.taskAdd, { line: mine, title: "Measure the shelf" }).line).toBe(mine);
+    expect(w.as(relayed, c.noteAdd, { line: mine, body: "Shelf is oak." }).line).toBe(mine);
+  });
+});

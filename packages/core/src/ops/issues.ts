@@ -6,16 +6,23 @@ import { applyPatch, assertVersion, emit, nextNumber } from "../store/common.ts"
 import type { Ctx } from "../store/context.ts";
 import { rows } from "../store/context.ts";
 import { filterEntities } from "../store/docs.ts";
-import { requireIssue, requireLine, requireMilestone, requireProject } from "../store/entities.ts";
+import {
+  requireEntity,
+  requireIssue,
+  requireLine,
+  requireMilestone,
+  requireProject,
+  resolveRef,
+} from "../store/entities.ts";
 import { loadGraph } from "../store/graph.ts";
 import { IssueRow } from "../store/rows.ts";
 import { bind } from "./bind.ts";
 import { buildIssueCard } from "./cards.ts";
-import { guardLineWrite } from "../agents/claims.ts";
+import { guardLineWrite, guardOnLine } from "../agents/claims.ts";
 import { DEVELOPER } from "../agents/state.ts";
 import { claimOf, getAgent } from "../store/agents.ts";
 import { checkStep } from "./lines.ts";
-import { addLink } from "./links.ts";
+import { addLink, guardEnds } from "./links.ts";
 
 export function issueAttrs(issue: Issue): EventAttrs {
   return {
@@ -41,7 +48,11 @@ export interface CreateIssueInput {
   step?: number;
 }
 
-export function createIssue(ctx: Ctx, input: CreateIssueInput): Issue {
+/**
+ * Files an issue. `forDeveloper` is for the developer's own operations, which an agent may relay with --said: the issue
+ * is then the developer's, on a line of theirs no agent may otherwise write to.
+ */
+export function createIssue(ctx: Ctx, input: CreateIssueInput, forDeveloper = false): Issue {
   const project = requireProject(ctx, input.project);
   const milestone = input.milestone === undefined ? null : requireMilestone(ctx, input.milestone);
   if (milestone !== null && milestone.project !== project.ref) {
@@ -52,11 +63,12 @@ export function createIssue(ctx: Ctx, input: CreateIssueInput): Issue {
   }
   const line = input.line === undefined ? null : requireLine(ctx, input.line).ref;
   const work = isWork(input.status, input.assignee);
-  guardLineWrite(ctx, line, work ? "work" : "scope");
+  // Filing on a line is writing to it: only from that line (D13).
+  if (!forDeveloper) guardOnLine(ctx, line, work ? "work" : "scope", null);
   checkStep(ctx, line, input.step ?? null);
   const status = input.status ?? "todo";
   const ref = `${project.ref}-${nextNumber(ctx, `issue:${project.ref}`)}`;
-  if (work) requireOnLine(ctx, { ref, line, project: project.ref });
+  if (work && !forDeveloper) requireOnLine(ctx, { ref, line, project: project.ref });
   ctx.sql.run(
     `INSERT INTO issues (ref, project, title, body, status, priority, assignee, labels, milestone, line, step, version, createdAt, updatedAt, closedAt, createdBy)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)`,
@@ -150,6 +162,11 @@ function emitIssueChange(
 export const issueOps = [
   bind(contracts.issueCreate, (ctx, input) => {
     const issue = createIssue(ctx, input);
+    // What it blocks, or is blocked by, is changed too: only on the line the agent is on, or on no line.
+    const created = requireEntity(ctx, issue.ref);
+    for (const other of [...(input.blocks ?? []), ...(input.blockedBy ?? []), ...(input.derivedFrom ?? [])]) {
+      guardEnds(ctx, created, resolveRef(ctx, other));
+    }
     for (const target of input.blocks ?? []) addLink(ctx, issue.ref, "blocks", target);
     for (const blocker of input.blockedBy ?? []) addLink(ctx, blocker, "blocks", issue.ref);
     for (const source of input.derivedFrom ?? []) addLink(ctx, issue.ref, "derived_from", source);
@@ -176,8 +193,9 @@ export const issueOps = [
         input.line === undefined || input.line === null ? input.line : requireLine(ctx, input.line).ref;
       const nextLine = line === undefined ? current.line : line;
       const kind = isWork(input.status, input.assignee) ? "work" : "scope";
-      guardLineWrite(ctx, current.line, kind);
-      if (nextLine !== current.line) guardLineWrite(ctx, nextLine, kind);
+      // Rewriting an issue, or moving it on or off a line, is writing to the line it leaves and the one it joins.
+      guardOnLine(ctx, current.line, kind, current.ref);
+      if (nextLine !== current.line) guardOnLine(ctx, nextLine, kind, current.ref);
       // Giving an issue to someone, or taking it away, is claiming it, as much as moving it on is.
       const reassigns = input.assignee !== undefined && input.assignee !== current.assignee;
       if (kind === "work" || reassigns) {
