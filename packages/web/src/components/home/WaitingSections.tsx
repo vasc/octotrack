@@ -1,5 +1,6 @@
 import type { HomeView } from "@octotrack/core/schemas";
 import type { ReactNode } from "react";
+import type { DragProps } from "../../hooks/useDragOrder.ts";
 import type { HomeActions } from "../../hooks/useHome.ts";
 import { lineFocusRef } from "../../lib/focus.ts";
 import { FoldedSection } from "./FoldedSection.tsx";
@@ -8,6 +9,10 @@ import { ProposalCard } from "./ProposalCard.tsx";
 import { QuietRow } from "./QuietRow.tsx";
 import { StartSheet } from "./StartSheet.tsx";
 import { UpNextRow } from "./UpNextRow.tsx";
+
+function withDrag(drag: DragProps | undefined): { drag?: DragProps } {
+  return drag === undefined ? {} : { drag };
+}
 
 /**
  * The lines not being worked on: up next in order, proposals, tabled and done lately. Starting one that waited opens
@@ -19,6 +24,7 @@ export function WaitingSections({
   focus,
   starting,
   reorder,
+  drag,
   onStarting,
 }: {
   home: HomeView;
@@ -27,6 +33,7 @@ export function WaitingSections({
   /** The waiting line whose Start sheet is open. */
   starting: string | null;
   reorder(title: string, ref: string, index: number, count: number): ReactNode;
+  drag(ref: string, section: string): DragProps | undefined;
   onStarting(ref: string | null): void;
 }) {
   const sheet = (ref: string) => {
@@ -64,6 +71,7 @@ export function WaitingSections({
                   {...(details === undefined ? {} : { details })}
                   reorder={reorder(line.title, line.ref, index, home.upNext.length)}
                   focused={focus === lineFocusRef(line.ref)}
+                  {...withDrag(drag(line.ref, "up_next"))}
                   onStart={onStarting}
                 />
                 {sheet(line.ref)}

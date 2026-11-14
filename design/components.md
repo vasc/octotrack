@@ -117,7 +117,7 @@ Home is one list: every line in the developer's order, with what each needs from
 | `ProposalCard`     | Pure       | A proposed line with the agent's case, and Start, Up next, Table…, Fold into… (a button per line), Not a line; Drop for a tabled line back to look at          |
 | `FoldedSection`    | Pure       | Tabled and done lines folded to one row that names them, until shown                                                                                           |
 | `QuietRow`         | Pure       | A tabled or finished line, opened: why it waits, and Start or Up next                                                                                          |
-| `ReorderButtons`   | Pure       | To the top, up and down within a section, in Reorder mode                                                                                                      |
+| `ReorderButtons`   | Pure       | To the top, up, down, and for a working line to up next, in Reorder mode, where a line can also be dragged onto another                                        |
 | `HomePage`         | Structural | Home: the header, the focus, and the sections                                                                                                                  |
 | `WorkingSection`   | Structural | Working on: each line with Step in, its first item opened or as a row, the rest one row away, folded on a phone or at a place                                  |
 | `WaitingSections`  | Structural | Up next, Proposed, Tabled and Done lately, with the Start sheet for a line that waited                                                                         |

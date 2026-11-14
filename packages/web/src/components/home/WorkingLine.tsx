@@ -1,6 +1,7 @@
 import { Markdown } from "../ui/Markdown.tsx";
 import type { Line, LineCrew, LineHome } from "@octotrack/core/schemas";
 import type { ReactNode } from "react";
+import type { DragProps } from "../../hooks/useDragOrder.ts";
 import { openEntity } from "../../lib/router.ts";
 import { LineMeta } from "./LineMeta.tsx";
 
@@ -15,6 +16,8 @@ export interface WorkingLineProps {
   children?: ReactNode;
   /** The line itself has focus, reached with Shift J and K. */
   focused?: boolean;
+  /** In Reorder mode, how the line is dragged onto another. */
+  drag?: DragProps;
 }
 
 /** A line being worked on: its place in the order, who is on it, its headline, and what it needs from you. */
@@ -26,9 +29,10 @@ export function WorkingLine({
   reorder,
   children,
   focused = false,
+  drag,
 }: WorkingLineProps) {
   return (
-    <article className="home-line" aria-label={line.title} data-selected={focused}>
+    <article className="home-line" aria-label={line.title} data-selected={focused} {...drag}>
       <div className="home-line-head">
         <span className="home-line-num">{index}</span>
         <button type="button" className="home-line-title" onClick={() => openEntity(line.ref)}>

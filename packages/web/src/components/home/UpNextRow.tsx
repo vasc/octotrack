@@ -1,6 +1,7 @@
 import { Markdown } from "../ui/Markdown.tsx";
 import type { Line, LineCrew, LineHome } from "@octotrack/core/schemas";
 import type { ReactNode } from "react";
+import type { DragProps } from "../../hooks/useDragOrder.ts";
 import { crewText } from "../../lib/lines.ts";
 import { openEntity } from "../../lib/router.ts";
 
@@ -20,6 +21,7 @@ export function UpNextRow({
   details,
   reorder,
   focused = false,
+  drag,
   onStart,
 }: {
   index: number;
@@ -28,6 +30,7 @@ export function UpNextRow({
   details?: LineHome;
   reorder?: ReactNode;
   focused?: boolean;
+  drag?: DragProps;
   onStart(ref: string): void;
 }) {
   const scoping =
@@ -35,7 +38,7 @@ export function UpNextRow({
       ? "not scoped yet"
       : `scoped: ${details.scopedSteps} step${details.scopedSteps === 1 ? "" : "s"}`;
   return (
-    <article className="home-row" aria-label={line.title} data-selected={focused}>
+    <article className="home-row" aria-label={line.title} data-selected={focused} {...drag}>
       <span className="home-line-num">{index}</span>
       <div className="row-stack">
         <button type="button" className="row-title" onClick={() => openEntity(line.ref)}>

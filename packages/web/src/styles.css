@@ -1425,6 +1425,12 @@ p {
   margin-right: var(--space-2);
 }
 
+/* In Reorder mode a line can be dragged onto another. */
+.home-line[draggable="true"],
+.home-row[draggable="true"] {
+  cursor: grab;
+}
+
 .reorder {
   display: inline-flex;
   gap: var(--space-2);

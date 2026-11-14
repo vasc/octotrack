@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useHome } from "../../hooks/useHome.ts";
 import { useHomeFocus } from "../../hooks/useHomeFocus.ts";
+import { useDragOrder } from "../../hooks/useDragOrder.ts";
 import { useHomeKeys } from "../../hooks/useHomeKeys.ts";
 import { useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useNarrow } from "../../hooks/useNarrow.ts";
@@ -53,12 +54,15 @@ export function HomePage() {
       onRecord: () => setRecording(true),
     }),
   );
+  const dragFor = useDragOrder(h.dropBefore);
+  const drag = (ref: string, section: string) => (reordering ? dragFor(ref, section) : undefined);
   const reorder = (title: string, ref: string, index: number, count: number) =>
     reordering ? (
       <ReorderButtons
         title={title}
         canMoveUp={index > 0}
         canMoveDown={index < count - 1}
+        canQueue={home?.working.some((line) => line.ref === ref) === true}
         onMove={(direction) => h.reorder(ref, direction)}
       />
     ) : null;
@@ -143,6 +147,7 @@ export function HomePage() {
             // At a place, everything else folds to one row per line; on a phone, lines past the second do.
             foldFrom={at !== null ? 0 : narrow ? PHONE_OPEN_LINES : Number.POSITIVE_INFINITY}
             reorder={reorder}
+            drag={drag}
             onFocus={choose}
           />
           <WaitingSections
@@ -151,6 +156,7 @@ export function HomePage() {
             focus={focus}
             starting={starting}
             reorder={reorder}
+            drag={drag}
             onStarting={setStarting}
           />
         </>
