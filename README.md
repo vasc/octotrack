@@ -139,10 +139,14 @@ export OCTO_AGENT=claude-feature-x
 ```
 
 Output is JSON when piped and text in a terminal. Every write returns `driftOpened`, listing what it just put out of
-date.
+date, and every reply carries the agent's notices: answers, Tells, a line that needs an owner, a wind-down.
 
 ```bash
-octo next
+octo agent register --wake claude:$CLAUDE_CODE_SESSION_ID
+```
+
+```bash
+octo line take
 ```
 
 ```bash
@@ -150,8 +154,33 @@ octo issue claim OCT-4
 ```
 
 ```bash
-octo decision ask "Which queue?" -p OCT --kind architecture -o sqs=SQS -o redis="Redis::Already deployed" --recommend redis --blocks OCT-4 --wait
+octo decision ask "Which queue?" --context "Deliveries must survive a restart." -o sqs="SQS::Managed, new to us" -o redis="Redis::Already deployed" --recommend redis --why "No new service to run"
 ```
+
+When the developer tells an agent in conversation to do one of their operations, it relays their words:
+`octo line start L-4 --said "yes, start the wall mount"`. The log quotes them.
+
+### Starting sessions on their own
+
+When a working line has no owner and no idle agent takes it, Octotrack can start a session for it. It does nothing
+until `~/.octotrack/agent-setup.json` exists, and starts in watch mode, only noting what it would start, until
+`dryRun` is false. The file is edited on this machine only, never by an operation:
+
+```json
+{
+  "start": ["claude", "-p", "You are {name}. Run: octo line take {line}"],
+  "stop": ["tmux", "kill-session", "-t", "{name}"],
+  "cap": 1,
+  "dryRun": false,
+  "repos": { "PANEL": { "checkout": "/Users/you/src/homepanel", "setup": [["bun", "install"]] } }
+}
+```
+
+Only `{line}` and `{name}` are filled in, so tracker text never becomes a prompt. Each session runs in a fresh worktree
+on `octo/<name>`, made from the repo's main checkout: the one named here, the one set with
+`octo repo checkout PANEL /Users/you/src/homepanel`, one an agent works in, or a clone `gh` makes. `stop` runs when the
+developer stops an agent. Worktrees are removed only when clean, pushed and unused; a gone session's worktree goes to
+the next session on its line.
 
 ## Watching
 
@@ -196,6 +225,7 @@ event:decision.*                 * is a wildcard
 D-3                              a bare ref means ref:D-3
 assignee:none                    none means the field is empty
 linked:OCT-4  blocked:true  ready:true
+line:L-3  repo:PANEL              a line, a repo by its key (repo:owner/name for a PR's GitHub repo)
 to:done  from:todo  changed:checks      on events, what changed
 since:2h  before:7d  since:2026-11-01
 ```
@@ -241,12 +271,16 @@ around, `octo drift claim DR-4` keeps the others off it.
 
 ## The dashboard
 
-Everything an agent does through the CLI shows up without a reload. The decision you have open stays open while the
-queue re-ranks around it.
+Home is every line in your order: working on, with what each needs from you in place; up next; proposals; tabled.
+Everything an agent does shows up without a reload, and nothing that arrives moves the item you are on. Every choice
+waits five seconds with Undo. `I'm at…` opens the tasks for one of your places; the Log shows what changed since you
+last looked at each line.
 
-Keys: `/` filter, `j` `k` move between decisions, `1`-`9` pick an option, `Enter` decide, `Esc` close the inspector.
+Keys: `j` `k` items, `J` `K` lines, `1`-`9` the focused item's choices, `Enter` answer, `p` later, `u` undo, `g u` the
+urgent question, `o` open its line, `t` table it, `Alt` with the arrows to move it, `r` record answers, `?` all of them.
 
-Decisions made elsewhere can be logged back as you remember them, on the Decisions page or with `octo decision batch`:
+Decisions made elsewhere can be logged back as you remember them, with `r` on Lines, on the Decisions page, or with
+`octo decision batch`:
 
 ```text
 D-3 redis Agreed on the call
@@ -256,12 +290,14 @@ D-5 - None of the options, doing this instead
 
 ## Configuration
 
-| Variable               | Default                 | Meaning                                                       |
-| ---------------------- | ----------------------- | ------------------------------------------------------------- |
-| `OCTO_AGENT`           | `agent`                 | Who is acting                                                 |
-| `OCTO_URL`             | `http://127.0.0.1:4747` | The server. Loopback URLs start it on demand                  |
-| `OCTO_HOME`            | `~/.octotrack`          | Where the database and server log live                        |
-| `OCTO_PR_SYNC_SECONDS` | `120`                   | How often the server pulls PR status with `gh`. 0 disables it |
+| Variable               | Default                  | Meaning                                                                            |
+| ---------------------- | ------------------------ | ---------------------------------------------------------------------------------- |
+| `OCTO_AGENT`           | `agent`                  | Who is acting                                                                      |
+| `OCTO_URL`             | `http://127.0.0.1:4747`  | The server. Loopback URLs start it on demand                                       |
+| `OCTO_HOME`            | `~/.octotrack`           | Where the database and server log live                                             |
+| `OCTO_PR_SYNC_SECONDS` | `120`                    | How often the server pulls PR status with `gh`. 0 disables it                      |
+| `OCTO_DEVELOPER`       | unset                    | `1` makes an interactive terminal with no agent name the developer, as `--me` does |
+| `OCTO_PUSH_CONTACT`    | an address naming no one | Who push services may contact about the notifications this server sends            |
 
 ## Development
 

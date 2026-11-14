@@ -8,6 +8,23 @@ import { observeCommands } from "./commands/observe.ts";
 import { systemCommands } from "./commands/system.ts";
 import { workCommands } from "./commands/work.ts";
 
+/**
+ * Lines name repos, so the CLI says repo where it used to say project: octo repo create, list and update are the same
+ * commands as octo project create, list and update, which keep working.
+ */
+function asRepoCommands(commands: readonly Command[]): Command[] {
+  return commands
+    .filter((command) => command.path[0] === "project")
+    .map((command) => ({
+      ...command,
+      path: ["repo", ...command.path.slice(1)],
+      summary: command.summary.replace("project", "repo"),
+      ...(command.examples === undefined
+        ? {}
+        : { examples: command.examples.map((example) => example.replace("octo project", "octo repo")) }),
+    }));
+}
+
 export const COMMANDS: readonly Command[] = [
   ...systemCommands,
   ...observeCommands,
@@ -16,6 +33,7 @@ export const COMMANDS: readonly Command[] = [
   ...runnerCommands,
   ...decisionCommands,
   ...workCommands,
+  ...asRepoCommands(workCommands),
   ...networkCommands,
 ];
 

@@ -3,7 +3,7 @@ import type { Line } from "@octotrack/core/schemas";
 import { useState } from "react";
 import { TableForm } from "../lines/TableForm.tsx";
 
-export type LineChoice = "start" | "queue" | "done" | "drop" | "reject" | "own" | "hand" | "not_yet";
+export type LineChoice = "start" | "queue" | "done" | "drop" | "reject" | "own" | "not_yet";
 
 export interface LineActionsProps {
   line: Line;
@@ -15,6 +15,10 @@ export interface LineActionsProps {
   onStopOwner?: (name: string) => void;
   /** Opened with t: tabling first. */
   tabling?: boolean;
+  /** Every repo, for handing a line that names none to the agents. */
+  repos?: readonly string[];
+  /** Hand to an agent: back to the agents, naming its repos if it has none. */
+  onHand?: (repos: string[]) => void;
 }
 
 const CHOICES: Readonly<Record<Line["state"], readonly (readonly [LineChoice, string])[]>> = {
@@ -50,8 +54,11 @@ export function LineActions({
   owner = null,
   onStopOwner,
   tabling: startTabling = false,
+  repos = [],
+  onHand,
 }: LineActionsProps) {
   const [tabling, setTabling] = useState(startTabling);
+  const [handing, setHanding] = useState<readonly string[] | null>(null);
   const live = line.state !== "done" && line.state !== "dropped";
   return (
     <div className="line-actions">
@@ -95,6 +102,39 @@ export function LineActions({
           }}
           onCancel={() => setTabling(false)}
         />
+      ) : handing !== null && onHand !== undefined ? (
+        <fieldset className="choice-group">
+          <legend className="muted">Its repos, so an agent can take it</legend>
+          {repos.map((repo) => (
+            <label key={repo} className="check">
+              <input
+                type="checkbox"
+                checked={handing.includes(repo)}
+                onChange={(event) =>
+                  setHanding(
+                    event.target.checked ? [...handing, repo] : handing.filter((other) => other !== repo),
+                  )
+                }
+              />
+              {repo}
+            </label>
+          ))}
+          <button
+            type="button"
+            className="btn"
+            data-primary="true"
+            disabled={handing.length === 0}
+            onClick={() => {
+              onHand([...handing]);
+              setHanding(null);
+            }}
+          >
+            Hand over
+          </button>
+          <button type="button" className="btn" onClick={() => setHanding(null)}>
+            Cancel
+          </button>
+        </fieldset>
       ) : (
         <div className="decision-actions">
           {CHOICES[line.state].map(([choice, label]) => (
@@ -116,9 +156,14 @@ export function LineActions({
             <button type="button" className="btn" onClick={() => onChoose("own")}>
               I'll own it
             </button>
-          ) : (
-            <button type="button" className="btn" onClick={() => onChoose("hand")}>
-              Hand to an agent
+          ) : onHand === undefined ? null : (
+            <button
+              type="button"
+              className="btn"
+              // A line that names its repos goes straight back; one that names none asks which first.
+              onClick={() => (line.repos.length > 0 ? onHand([]) : setHanding([]))}
+            >
+              Hand to an agent…
             </button>
           )}
         </div>

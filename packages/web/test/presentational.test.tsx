@@ -568,6 +568,7 @@ describe("lines of work", () => {
     stepIn: false,
     held: { questions: 0, tasks: 0 },
     scopedSteps: 0,
+    answers: [],
     ...overrides,
   });
 
@@ -1052,9 +1053,10 @@ describe("tabling and a line's own choices", () => {
     fireEvent.click(working.getByRole("button", { name: "Done" }));
     expect(onChoose).toHaveBeenCalledWith("done");
     working.unmount();
-    const mine = render(<LineActions line={line({ ownedBy: "dev" })} {...props} />);
-    fireEvent.click(mine.getByRole("button", { name: "Hand to an agent" }));
-    expect(onChoose).toHaveBeenCalledWith("hand");
+    const onHand = mock((_repos: string[]) => {});
+    const mine = render(<LineActions line={line({ ownedBy: "dev" })} {...props} onHand={onHand} />);
+    fireEvent.click(mine.getByRole("button", { name: "Hand to an agent…" }));
+    expect(onHand).toHaveBeenCalledWith([]);
     mine.unmount();
     const proposed = render(<LineActions line={line({ state: "proposed" })} {...props} />);
     expect(names(proposed)).toEqual(["Start", "Up next", "Not a line", "Table…"]);
@@ -1266,5 +1268,47 @@ describe("ReorderButtons in full", () => {
     fireEvent.click(view.getByRole("button", { name: "Move One to the top" }));
     fireEvent.click(view.getByRole("button", { name: "Move One to up next" }));
     expect(onMove.mock.calls).toEqual([["top"], ["up_next"]]);
+  });
+});
+
+describe("UndoBar for a Stop", () => {
+  test("says the line will look for another owner, and offers to pause the line instead", () => {
+    const onPause = mock((_id: number, _line: string) => {});
+    const view = render(
+      <UndoBar
+        pending={[pendingChoice({ id: 7, op: "agent.stop", summary: "Stopped panel", line: "L-1" })]}
+        onUndo={() => {}}
+        onNow={() => {}}
+        onPause={onPause}
+      />,
+    );
+    view.getByText(/L-1 then looks for another owner/);
+    fireEvent.click(view.getByRole("button", { name: "Pause L-1 instead" }));
+    expect(onPause).toHaveBeenCalledWith(7, "L-1");
+  });
+});
+
+describe("answers on their line", () => {
+  test("WorkingLine says what became of each answer given lately, one sentence each", () => {
+    const view = render(
+      <WorkingLine
+        index={1}
+        line={line()}
+        details={{
+          start: null,
+          step: null,
+          forYou: [],
+          stepIn: false,
+          held: { questions: 0, tasks: 0 },
+          scopedSteps: 0,
+          answers: [
+            { ref: "D-3", title: "Which board?", answer: "26 mm", status: "not_picked_up" },
+            { ref: "D-2", title: "Which plug?", answer: "USB-C", status: "carried_out" },
+          ],
+        }}
+      />,
+    );
+    view.getByText("You answered D-3, Which board?: 26 mm. Not picked up yet.");
+    view.getByText("You answered D-2, Which plug?: USB-C. Carried out.");
   });
 });

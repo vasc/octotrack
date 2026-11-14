@@ -723,6 +723,15 @@ export const LineHome = z.object({
   held: z.object({ questions: z.number().int(), tasks: z.number().int() }),
   /** How many plan steps scoping has written so far. */
   scopedSteps: z.number().int(),
+  /** Answers given lately, each with what became of it, one sentence each on the line. */
+  answers: z.array(
+    z.object({
+      ref: z.string(),
+      title: z.string(),
+      answer: z.string(),
+      status: z.enum(["not_picked_up", "picked_up", "carried_out", "wake_failed"]),
+    }),
+  ),
 });
 export type LineHome = z.infer<typeof LineHome>;
 
@@ -794,6 +803,8 @@ export const PendingChoice = z.object({
   op: z.string(),
   /** What it acts on, when its input names one, so the dashboard can hold that item still until it takes effect. */
   ref: z.string().nullable(),
+  /** For a Stop: the working line its agent owns, which then looks for another owner, or can be paused instead. */
+  line: z.string().nullable(),
   summary: z.string(),
   dueAt: z.string(),
   state: z.enum(["pending", "applied", "undone", "failed"]),

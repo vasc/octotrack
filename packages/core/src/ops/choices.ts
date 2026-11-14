@@ -4,13 +4,15 @@ import { OctoError } from "../errors.ts";
 import { Channel, PendingChoice } from "../schemas.ts";
 import type { Ctx } from "../store/context.ts";
 import { one, rows } from "../store/context.ts";
+import { claimOf } from "../store/agents.ts";
+import { getLine } from "../store/entities.ts";
 import { bind } from "./bind.ts";
 import { requireDeveloperInPerson } from "./developer.ts";
 
 /** Long enough to see and undo a stray key, short enough not to feel like waiting. */
 export const DEFAULT_CHOICE_DELAY_MS = 5000;
 
-const ChoiceRow = PendingChoice.omit({ ref: true }).extend({
+const ChoiceRow = PendingChoice.omit({ ref: true, line: true }).extend({
   input: z.string(),
   actor: z.string(),
   channel: Channel,
@@ -28,13 +30,25 @@ const WRITES: ReadonlySet<string> = new Set(
 );
 
 const Target = z.object({ ref: z.string() });
+const Stopping = z.object({ name: z.string() });
 
-function view(row: ChoiceRow): PendingChoice {
+/** The working line a Stop would leave without its owner. */
+function lineLeft(ctx: Ctx, row: ChoiceRow): string | null {
+  if (row.op !== contracts.agentStop.name) return null;
+  const stopping = Stopping.safeParse(JSON.parse(row.input));
+  if (!stopping.success) return null;
+  const claim = claimOf(ctx, stopping.data.name);
+  if (claim === null || claim.role !== "owner") return null;
+  return getLine(ctx, claim.line)?.state === "working" ? claim.line : null;
+}
+
+function view(ctx: Ctx, row: ChoiceRow): PendingChoice {
   const target = Target.safeParse(JSON.parse(row.input));
   return {
     id: row.id,
     op: row.op,
     ref: target.success ? target.data.ref : null,
+    line: lineLeft(ctx, row),
     summary: row.summary,
     dueAt: row.dueAt,
     state: row.state,
@@ -65,7 +79,7 @@ export function applyChoice(ctx: Ctx, row: ChoiceRow): PendingChoice {
       row.id,
     ]);
   }
-  return view(requireChoice(ctx, row.id));
+  return view(ctx, requireChoice(ctx, row.id));
 }
 
 export function dueChoices(ctx: Ctx): ChoiceRow[] {
@@ -99,7 +113,7 @@ export const choiceOps = [
     );
     const id = one(ctx, z.object({ id: z.number().int() }), "SELECT last_insert_rowid() AS id")?.id ?? 0;
     ctx.visibleChange = true;
-    return view(requireChoice(ctx, id));
+    return view(ctx, requireChoice(ctx, id));
   }),
 
   bind(contracts.choiceUndo, (ctx, input) => {
@@ -111,13 +125,13 @@ export const choiceOps = [
     }
     ctx.sql.run("UPDATE pending_choices SET state = 'undone' WHERE id = ?", [row.id]);
     ctx.visibleChange = true;
-    return view(requireChoice(ctx, row.id));
+    return view(ctx, requireChoice(ctx, row.id));
   }),
 
   bind(contracts.choiceNow, (ctx, input) => {
     requireDeveloperInPerson(ctx, "use the developer's own choices and drafts");
     const row = requireChoice(ctx, input.id);
-    if (row.state !== "pending") return view(row);
+    if (row.state !== "pending") return view(ctx, row);
     return applyChoice(ctx, row);
   }),
 
@@ -127,7 +141,7 @@ export const choiceOps = [
       ctx,
       ChoiceRow,
       "SELECT * FROM pending_choices WHERE state IN ('pending', 'failed') ORDER BY id",
-    ).map(view);
+    ).map((row) => view(ctx, row));
   }),
 
   bind(contracts.draftSave, (ctx, input) => {

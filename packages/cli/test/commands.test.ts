@@ -34,6 +34,17 @@ describe("every operation is reachable from the CLI", () => {
   });
 });
 
+describe("repo, the word lines use", () => {
+  test("octo repo create, list and update are octo project's, which keep working", () => {
+    for (const word of ["create", "list", "update"]) {
+      const repo = resolveCommand(["repo", word, "OCT"]);
+      const project = resolveCommand(["project", word, "OCT"]);
+      expect(repo?.command.ops).toEqual(project?.command.ops ?? []);
+    }
+    expect(resolveCommand(["repo", "checkout", "OCT", "/src/oct"])?.command.ops).toEqual(["repo.checkout"]);
+  });
+});
+
 describe("command resolution", () => {
   test("longest path wins, and positionals are not mistaken for subcommands", () => {
     expect(resolveCommand(["watch", "start"])?.command.path).toEqual(["watch", "start"]);

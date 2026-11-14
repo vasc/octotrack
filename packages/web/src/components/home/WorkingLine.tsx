@@ -5,6 +5,13 @@ import type { DragProps } from "../../hooks/useDragOrder.ts";
 import { openEntity } from "../../lib/router.ts";
 import { LineMeta } from "./LineMeta.tsx";
 
+const ANSWER_STATUS: Readonly<Record<LineHome["answers"][number]["status"], string>> = {
+  not_picked_up: "Not picked up yet.",
+  picked_up: "Picked up.",
+  carried_out: "Carried out.",
+  wake_failed: "Its agent could not be woken.",
+};
+
 export interface WorkingLineProps {
   index: number;
   line: Line;
@@ -46,6 +53,11 @@ export function WorkingLine({
           <Markdown text={line.headline} inline />
         </p>
       )}
+      {(details?.answers ?? []).map((answer) => (
+        <p key={answer.ref} className="home-answer muted">
+          You answered {answer.ref}, {answer.title}: {answer.answer}. {ANSWER_STATUS[answer.status]}
+        </p>
+      ))}
       {children}
     </article>
   );
