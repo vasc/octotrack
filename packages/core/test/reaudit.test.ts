@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { contracts as c } from "../src/contracts.ts";
 import { parseQuery, QUERY_VALUES } from "../src/query/index.ts";
 import type { WatchSpec } from "../src/schemas.ts";
-import { type Harness, harness } from "./helpers.ts";
+import { GITHUB, type Harness, harness } from "./helpers.ts";
 
 let h: Harness;
 
@@ -315,7 +315,7 @@ describe("the query language, smaller things", () => {
 describe("sync failures", () => {
   test("a failure for a repo no project uses any more is not shown forever", () => {
     h.developer(c.projectUpdate, { ref: "OCT", repo: "acme/app" });
-    h.call(c.prSync, { prs: [], failures: [{ repo: "acme/app", error: "Boom" }] });
+    h.tracker.call(c.prSync, { prs: [], failures: [{ repo: "acme/app", error: "Boom" }] }, GITHUB);
     expect(h.call(c.dashboardBootstrap, {}).syncFailures).toHaveLength(1);
     h.developer(c.projectUpdate, { ref: "OCT", repo: "acme/other" });
     expect(h.call(c.dashboardBootstrap, {}).syncFailures).toEqual([]);
@@ -323,11 +323,15 @@ describe("sync failures", () => {
 
   test("a repo that synced, with a problem on one PR, still shows the problem", () => {
     h.developer(c.projectUpdate, { ref: "OCT", repo: "acme/app" });
-    h.call(c.prSync, {
-      prs: [],
-      repos: ["acme/app"],
-      failures: [{ repo: "acme/app", error: "acme/app#11: not found" }],
-    });
+    h.tracker.call(
+      c.prSync,
+      {
+        prs: [],
+        repos: ["acme/app"],
+        failures: [{ repo: "acme/app", error: "acme/app#11: not found" }],
+      },
+      GITHUB,
+    );
     expect(h.call(c.dashboardBootstrap, {}).syncFailures).toMatchObject([
       { error: "acme/app#11: not found" },
     ]);

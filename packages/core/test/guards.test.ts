@@ -659,3 +659,27 @@ describe("the developer's own operations, relayed, take effect", () => {
     expect(w.as(relayed, c.noteAdd, { line: mine, body: "Shelf is oak." }).line).toBe(mine);
   });
 });
+
+describe("pull request sync is the server's, or the developer's (third audit, N3)", () => {
+  test("an agent can neither write pull requests through sync nor say how sync went", () => {
+    const w = world();
+    const pr = {
+      repo: "vasc/homepanel",
+      number: 40,
+      title: "Mine",
+      state: "open",
+      body: `Fixes ${w.issue}`,
+    } as const;
+    for (const caller of [w.outsider, w.owner]) {
+      expect(w.refused(() => w.as(caller, c.prSync, { prs: [pr] })).code).toBe("forbidden");
+      expect(
+        w.refused(() =>
+          w.as(caller, c.prSync, { prs: [], failures: [{ repo: "vasc/homepanel", error: "fake" }] }),
+        ).code,
+      ).toBe("forbidden");
+    }
+    expect(w.as(w.dev, c.prList, {})).toEqual([]);
+    expect(w.as(w.github, c.prSync, { prs: [pr] }).synced).toBe(1);
+    expect(w.as(w.dev, c.prSync, { prs: [], repos: ["vasc/homepanel"] }).synced).toBe(0);
+  });
+});

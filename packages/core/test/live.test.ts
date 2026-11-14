@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { contracts as c } from "../src/contracts.ts";
 import type { WatchSpec } from "../src/schemas.ts";
-import { type Harness, harness } from "./helpers.ts";
+import { GITHUB, type Harness, harness } from "./helpers.ts";
 
 let h: Harness;
 let notifications: number;
@@ -69,7 +69,8 @@ const DEVELOPER_OPS: ReadonlySet<string> = new Set([
   "push.unsubscribe",
 ]);
 function execute(name: string, input: unknown): void {
-  const serverOnly = (name.startsWith("runner.") && name !== "runner.retry") || name.endsWith(".woken");
+  const serverOnly =
+    (name.startsWith("runner.") && name !== "runner.retry") || name.endsWith(".woken") || name === "pr.sync";
   const caller = serverOnly ? { ...h.as, system: true } : h.as;
   h.tracker.execute(name, input, DEVELOPER_OPS.has(name) ? { ...caller, developer: true } : caller);
 }
@@ -253,7 +254,7 @@ describe("every write reaches the dashboard", () => {
 
   test("a sync that changed nothing still updates when it last synced", () => {
     const pr = { repo: "a/b", number: 1, title: "A PR", state: "open" } as const;
-    expect(notified(() => h.call(c.prSync, { prs: [pr] }))).toBe(1);
+    expect(notified(() => h.tracker.call(c.prSync, { prs: [pr] }, GITHUB))).toBe(1);
   });
 
   test("an agent seen for the first time shows up, even from a read, but only the first time", () => {

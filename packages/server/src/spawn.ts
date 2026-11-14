@@ -11,17 +11,22 @@ export interface Finished {
   code: number;
   stdout: string;
   stderr: string;
+  /** Killed at its deadline, rather than exiting by itself. */
+  timedOut: boolean;
 }
 
 /** Reads a stream as it comes, keeping its tail, so what arrived is there even if the stream never closes. */
-function gather(stream: ReadableStream<Uint8Array>): { done: Promise<void>; text: () => string } {
+function gather(
+  stream: ReadableStream<Uint8Array>,
+  kept: number,
+): { done: Promise<void>; text: () => string } {
   const decoder = new TextDecoder();
   let text = "";
   const done = (async () => {
     for await (const chunk of stream) {
-      text = `${text}${decoder.decode(chunk, { stream: true })}`.slice(-STREAM_KEPT);
+      text = `${text}${decoder.decode(chunk, { stream: true })}`.slice(-kept);
     }
-    text = `${text}${decoder.decode()}`.slice(-STREAM_KEPT);
+    text = `${text}${decoder.decode()}`.slice(-kept);
   })().catch(() => undefined);
   return { done, text: () => text };
 }
@@ -46,7 +51,13 @@ async function within<T>(promise: Promise<T>, ms: number): Promise<T | null> {
  */
 export async function runProcess(
   argv: readonly string[],
-  options: { cwd?: string; env: Record<string, string>; deadlineMs: number | null },
+  options: {
+    cwd?: string;
+    env: Record<string, string>;
+    deadlineMs: number | null;
+    /** How much of each stream to keep, for a command whose whole output is read, such as gh's JSON. */
+    keep?: number;
+  },
 ): Promise<Finished> {
   let child: Bun.Subprocess<"ignore", "pipe", "pipe">;
   try {
@@ -58,10 +69,15 @@ export async function runProcess(
       stderr: "pipe",
     });
   } catch (error) {
-    return { code: NOT_STARTED, stdout: "", stderr: error instanceof Error ? error.message : String(error) };
+    return {
+      code: NOT_STARTED,
+      stdout: "",
+      stderr: error instanceof Error ? error.message : String(error),
+      timedOut: false,
+    };
   }
-  const stdout = gather(child.stdout);
-  const stderr = gather(child.stderr);
+  const stdout = gather(child.stdout, options.keep ?? STREAM_KEPT);
+  const stderr = gather(child.stderr, STREAM_KEPT);
   const code =
     options.deadlineMs === null ? await child.exited : await within(child.exited, options.deadlineMs);
   if (code === null) child.kill("SIGKILL");
@@ -72,7 +88,8 @@ export async function runProcess(
       code: TIMED_OUT,
       stdout: stdout.text(),
       stderr: `${stderr.text()}\nKilled: ${argv[0] ?? "the command"} ran past its deadline of ${seconds}s`,
+      timedOut: true,
     };
   }
-  return { code, stdout: stdout.text(), stderr: stderr.text() };
+  return { code, stdout: stdout.text(), stderr: stderr.text(), timedOut: false };
 }

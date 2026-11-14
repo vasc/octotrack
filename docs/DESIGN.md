@@ -205,8 +205,9 @@ command can start the server, and that command's environment says nothing about 
 
 ### D11. PR status comes from `gh`
 
-`octo pr sync` and a background loop in the local server shell out to `gh`, reuse the developer's existing login and
-push results through the `pr.sync` operation. References like `OCT-12` in a PR's title, branch or body become
+A background loop in the local server, and `octo pr sync`, which asks the server to run it now, shell out to `gh`, reuse
+the developer's existing login and push results through the `pr.sync` operation, which only the server and the
+developer may call. References like `OCT-12` in a PR's title, branch or body become
 `implements` links automatically.
 
 - **Trade-off:** polling (default 120 seconds, each repo three requests) rather than webhooks, since there is no public endpoint on a laptop.
@@ -425,6 +426,12 @@ Decisions made from that:
     another line (`blocks`, `--blocked-by`, `--derived-from`, `--waits-for`, `affects`). _Why:_ an agent from another
     repo could replace a working line's plan, take its issues off it, or put a question in its queue whose answer went
     to that line's owner, not to the asker.
+  - _Only the server's sync, or the developer, reports what GitHub says._ `pr.sync` refuses agents, and `octo pr sync`
+    asks the server to run its own sync (`POST /api/github/sync`, optionally for named repos, each an owner/name)
+    instead of running `gh` in the agent's shell and reporting the result. _Why:_ any agent could write pull request
+    rows through sync, past the line rules `pr upsert` keeps, and say a repo's sync failed or was fine. _Trade-off:_ the
+    sync runs with the server's `gh` and environment, not the caller's; on this one machine they are the same login.
+    `gh` now runs on the same bounded path as every other command the server runs.
   - _The developer's own operations, relayed with `--said`, take effect on their own lines._ `task add` and `note add`
     were refused there, as writes to a line no agent may touch, though D14 says every developer operation accepts the
     developer's words.
