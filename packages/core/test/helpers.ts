@@ -9,7 +9,7 @@ function bindings(params: readonly SqlValue[]): SQLQueryBindings[] {
   return [...params];
 }
 
-function memoryDriver(): SqlDriver {
+export function memoryDriver(): SqlDriver {
   const db = new Database(":memory:", { strict: true });
   db.exec("PRAGMA foreign_keys = ON");
   let depth = 0;
