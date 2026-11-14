@@ -44,6 +44,9 @@ const DEVELOPER_OPS: ReadonlySet<string> = new Set([
   "line.keep_going",
   "line.own",
   "line.hand",
+  "choice.make",
+  "choice.undo",
+  "choice.now",
 ]);
 function execute(name: string, input: unknown): void {
   h.tracker.execute(name, input, DEVELOPER_OPS.has(name) ? { ...h.as, developer: true } : h.as);
@@ -154,6 +157,10 @@ const EVERY_WRITE: readonly (readonly [string, unknown])[] = [
   ["line.keep_going", { ref: "L-1" }],
   ["line.own", { ref: "L-1" }],
   ["line.hand", { ref: "L-1", repos: ["OCT"] }],
+  ["choice.make", { op: "line.start", input: { ref: "L-4" }, summary: "Start Next" }],
+  ["choice.undo", { id: 1 }],
+  ["choice.make", { op: "line.queue", input: { ref: "L-1" }, summary: "Queue A line" }],
+  ["choice.now", { id: 2 }],
   ["agent.woken", { name: "agent-a" }],
   // Last: everything above runs as agent-a, which a stop would refuse.
   ["agent.stop", { name: "agent-a" }],
@@ -161,10 +168,14 @@ const EVERY_WRITE: readonly (readonly [string, unknown])[] = [
 ];
 
 describe("every write reaches the dashboard", () => {
-  test("every writing operation is covered here, apart from polling, which has its own rules", () => {
+  test("every writing operation is covered here, apart from polling and drafts, which have their own rules", () => {
     const covered = new Set(EVERY_WRITE.map(([name]) => name));
     const missing = Object.values(c)
-      .filter((contract) => contract.mutates && contract.name !== c.watchCheck.name)
+      // Polls and drafts are saved constantly and change nothing anyone else sees, so they stay quiet.
+      .filter(
+        (contract) =>
+          contract.mutates && contract.name !== c.watchCheck.name && contract.name !== c.draftSave.name,
+      )
       .map((contract) => contract.name)
       .filter((name) => !covered.has(name));
     expect(missing).toEqual([]);

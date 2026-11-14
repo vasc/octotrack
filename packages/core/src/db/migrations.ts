@@ -265,6 +265,15 @@ const MIGRATIONS: readonly Migration[] = [
   ALTER TABLE lines ADD COLUMN doneProposedBy TEXT;
   CREATE TABLE places (name TEXT PRIMARY KEY, position INTEGER NOT NULL);
   `,
+  `
+  CREATE TABLE pending_choices (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, op TEXT NOT NULL, input TEXT NOT NULL, actor TEXT NOT NULL,
+    channel TEXT NOT NULL, said TEXT, summary TEXT NOT NULL, dueAt TEXT NOT NULL, state TEXT NOT NULL, error TEXT,
+    createdAt TEXT NOT NULL
+  );
+  CREATE INDEX pending_choices_due ON pending_choices(state, dueAt);
+  CREATE TABLE drafts (key TEXT PRIMARY KEY, text TEXT NOT NULL, updatedAt TEXT NOT NULL);
+  `,
 ];
 
 const UserVersion = z.object({ user_version: z.number().int() });

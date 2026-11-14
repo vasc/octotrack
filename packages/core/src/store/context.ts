@@ -12,11 +12,20 @@ export interface Ctx {
   said: string | null;
   /** Octotrack itself or GitHub sync: never an agent, so no agent rule applies. */
   system: boolean;
+  /** Runs another operation as someone else, inside this one's transaction: how a waiting choice takes effect. */
+  runOp(name: string, input: unknown, as: StoredCaller): unknown;
   now: string;
   /** Drift opened during the current write, reported back to the writer. */
   openedDrift: Drift[];
   /** Set by an operation that normally stays quiet, when this time it changed something a person can see. */
   visibleChange: boolean;
+}
+
+/** Who made a choice, kept with it until it is applied. */
+export interface StoredCaller {
+  actor: string;
+  channel: Channel;
+  said: string | null;
 }
 
 export function rows<S extends z.ZodType>(

@@ -768,3 +768,15 @@ export const HeldItem = z.object({
   since: z.string(),
 });
 export type HeldItem = z.infer<typeof HeldItem>;
+
+/** A choice the developer made that waits a few seconds, with Undo, before the server applies it. */
+export const PendingChoice = z.object({
+  id: z.number().int(),
+  op: z.string(),
+  summary: z.string(),
+  dueAt: z.string(),
+  state: z.enum(["pending", "applied", "undone", "failed"]),
+  error: z.string().nullable(),
+  createdAt: z.string(),
+});
+export type PendingChoice = z.infer<typeof PendingChoice>;

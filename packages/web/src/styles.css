@@ -1407,3 +1407,32 @@ p {
   font-family: inherit;
   line-height: var(--leading-body);
 }
+
+/* Choices wait a few seconds with Undo */
+
+.undo-bar {
+  position: sticky;
+  bottom: var(--space-4);
+  margin: 0 auto;
+  max-width: var(--page-width);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: 0 var(--space-10);
+  z-index: var(--z-popover);
+}
+
+.undo-choice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-popover);
+}
+
+.undo-choice > span:first-child {
+  flex: 1;
+}

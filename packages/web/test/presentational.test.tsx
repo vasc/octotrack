@@ -23,6 +23,7 @@ import { IdeaRow } from "../src/components/ideas/IdeaRow.tsx";
 import { IssueRow } from "../src/components/issues/IssueRow.tsx";
 import { AddLineForm } from "../src/components/lines/AddLineForm.tsx";
 import { SidebarView } from "../src/components/layout/SidebarView.tsx";
+import { UndoBar } from "../src/components/layout/UndoBar.tsx";
 import { ProjectCardView } from "../src/components/projects/ProjectCardView.tsx";
 import { PrGlyphs } from "../src/components/prs/PrGlyphs.tsx";
 import { PrRow } from "../src/components/prs/PrRow.tsx";
@@ -861,5 +862,35 @@ describe("written text", () => {
     expect(onSubmit).toHaveBeenCalledTimes(1);
     fireEvent.keyDown(box, { key: "Enter" });
     expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("UndoBar", () => {
+  test("lists waiting choices newest first, says u undoes the newest, and offers Undo and Now", () => {
+    const onUndo = mock((_id: number) => {});
+    const onNow = mock((_id: number) => {});
+    const choice = (id: number, summary: string) => ({
+      id,
+      op: "line.start",
+      summary,
+      dueAt: "",
+      state: "pending" as const,
+      error: null,
+      createdAt: "",
+    });
+    const view = render(
+      <UndoBar
+        pending={[choice(1, "Started Wall mount"), choice(2, "Tabled Trip")]}
+        onUndo={onUndo}
+        onNow={onNow}
+      />,
+    );
+    const rows = view.getAllByRole("button", { name: "Undo" });
+    expect(rows).toHaveLength(2);
+    view.getByText("u to undo");
+    fireEvent.click(rows[0] ?? document.body);
+    expect(onUndo).toHaveBeenCalledWith(2);
+    fireEvent.click(view.getAllByRole("button", { name: "Now" })[1] ?? document.body);
+    expect(onNow).toHaveBeenCalledWith(1);
   });
 });

@@ -12,6 +12,7 @@ import { createWakeDispatcher, loadWakeAdapters } from "./wake.ts";
 
 const WEB_DIST = join(import.meta.dir, "../../web/dist");
 const SWEEP_INTERVAL_MS = 60_000;
+const CHOICE_TICK_MS = 1000;
 const DEFAULT_PR_SYNC_SECONDS = 120;
 // Long polls hold for 25 seconds and streams ping every 15, so a connection is never idle for this long.
 const IDLE_TIMEOUT_SECONDS = 120;
@@ -95,6 +96,14 @@ export function startServer(port: number, hostname = "127.0.0.1"): RunningServer
         console.error("[sweep]", error);
       }
     }, SWEEP_INTERVAL_MS),
+    // A choice's Undo window ends on time even when nobody calls the server.
+    setInterval(() => {
+      try {
+        tracker.applyDueChoices();
+      } catch (error) {
+        console.error("[choices]", error);
+      }
+    }, CHOICE_TICK_MS),
   ];
   const syncSeconds = prSyncSeconds();
   if (syncSeconds > 0) {
