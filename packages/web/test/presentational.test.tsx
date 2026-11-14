@@ -477,6 +477,29 @@ describe("TopBar", () => {
     expect(onNewLine).toHaveBeenCalledTimes(1);
   });
 
+  test("draws the counts as one group of number and words, with urgent apart in front of it", () => {
+    const view = render(
+      <TopBar
+        path="/"
+        counts={[{ key: "urgent" as const, label: "urgent", count: 1, to: "D-60" }, ...counts]}
+        places={[]}
+        at={null}
+        onAt={() => {}}
+        onNewLine={() => {}}
+        onKeys={() => {}}
+      />,
+    );
+    const group = view.getByRole("status", { name: "Waiting on you" });
+    expect(
+      within(group)
+        .getAllByRole("link")
+        .map((link) => link.textContent),
+    ).toEqual(["4 to answer", "1 to accept", "1 to step in"]);
+    const urgent = view.getByRole("link", { name: "1 urgent" });
+    expect(group.contains(urgent)).toBe(false);
+    expect(urgent.querySelector(".top-count-n")?.textContent).toBe("1");
+  });
+
   test("leaves out I'm at when the developer has no places, and the counts when nothing waits", () => {
     const view = render(
       <TopBar
