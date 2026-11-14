@@ -184,7 +184,7 @@ function move(
     urgentReason: current.state === rule.to ? undefined : null,
   });
   const updated = requireLine(ctx, current.ref);
-  afterMove(ctx, current, updated);
+  afterMove(ctx, current, updated, name === "reject" ? "said it is not a line" : undefined);
   if (Object.keys(changes).length > 0) {
     const why = rule.to === "tabled" ? `: ${extra.tabledReason ?? ""}` : "";
     emitLine(ctx, rule.event, updated, `${updated.ref} ${rule.verb}${why} (${updated.title})`, changes);
@@ -398,7 +398,7 @@ export const lineOps = [
     setRepos(ctx, into.ref, [...new Set([...into.repos, ...current.repos])]);
     const changes = applyPatch(ctx, "lines", current.ref, current, { state: "dropped" });
     const folded = requireLine(ctx, current.ref);
-    afterMove(ctx, current, folded);
+    afterMove(ctx, current, folded, `folded it into ${into.ref}`);
     emitLine(ctx, "line.folded", folded, `${folded.ref} folded into ${into.ref}: ${folded.title}`, changes, [
       into.ref,
     ]);
