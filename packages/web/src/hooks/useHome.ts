@@ -43,6 +43,12 @@ export function useHome() {
     fold: (ref: string, into: string) =>
       choices.make(contracts.lineFold.name, { ref, into }, `Folded ${titleOf(ref)} into ${titleOf(into)}`),
     own: (ref: string) => choices.make(contracts.lineOwn.name, { ref }, `You own ${titleOf(ref)}`),
+    acceptRecommended: (refs: string[]) =>
+      choices.make(
+        contracts.lineAcceptRecommended.name,
+        { refs },
+        `Placed ${refs.length} proposal${refs.length === 1 ? "" : "s"} where their agents recommend`,
+      ),
     taskDone: (ref: string, result: string) =>
       choices.make(contracts.taskDone.name, { ref, result }, `${ref} done`),
     taskCant: (ref: string, why: string) =>

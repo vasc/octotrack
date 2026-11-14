@@ -6,6 +6,7 @@ import { DecisionCardItem } from "../decisions/DecisionCardItem.tsx";
 import { AddLineForm } from "../lines/AddLineForm.tsx";
 import { PageHead } from "../ui/PageHead.tsx";
 import { ErrorState, LoadingState } from "../ui/states.tsx";
+import { FirstRun } from "./FirstRun.tsx";
 import { FoldedSection } from "./FoldedSection.tsx";
 import { ForYouItem, refOf } from "./ForYouItem.tsx";
 import { HomeCounts } from "./HomeCounts.tsx";
@@ -95,6 +96,9 @@ export function HomePage() {
       {h.home.error === null ? null : <ErrorState error={h.home.error} />}
       {home === undefined ? null : (
         <>
+          {home.working.length === 0 && home.upNext.length === 0 ? (
+            <FirstRun proposals={home.proposed} onAccept={h.acceptRecommended} />
+          ) : null}
           {home.urgent.length === 0 ? null : (
             <HomeSection title="Urgent" count={home.urgent.length}>
               {home.urgent.map((card) => (

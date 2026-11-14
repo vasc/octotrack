@@ -47,6 +47,7 @@ const DEVELOPER_OPS: ReadonlySet<string> = new Set([
   "choice.make",
   "choice.undo",
   "choice.now",
+  "line.accept_recommended",
 ]);
 function execute(name: string, input: unknown): void {
   h.tracker.execute(name, input, DEVELOPER_OPS.has(name) ? { ...h.as, developer: true } : h.as);
@@ -161,6 +162,7 @@ const EVERY_WRITE: readonly (readonly [string, unknown])[] = [
   ["choice.undo", { id: 1 }],
   ["choice.make", { op: "line.queue", input: { ref: "L-1" }, summary: "Queue A line" }],
   ["choice.now", { id: 2 }],
+  ["line.accept_recommended", { refs: ["L-2"] }],
   ["agent.woken", { name: "agent-a" }],
   // Last: everything above runs as agent-a, which a stop would refuse.
   ["agent.stop", { name: "agent-a" }],

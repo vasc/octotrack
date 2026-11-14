@@ -1,13 +1,16 @@
 import { contracts } from "@octotrack/core/contracts";
-import { useOpQuery } from "../../hooks/useOp.ts";
+import { useChoices } from "../../hooks/useChoices.ts";
+import { useOpMutation, useOpQuery } from "../../hooks/useOp.ts";
 import { PageHead } from "../ui/PageHead.tsx";
 import { Section } from "../ui/Section.tsx";
 import { EmptyState, ErrorState, LoadingState } from "../ui/states.tsx";
-import { TimeAgo } from "../ui/TimeAgo.tsx";
+import { AgentRosterRow } from "./AgentRosterRow.tsx";
 import { WatchRow } from "./WatchRow.tsx";
 
 export function AgentsPage() {
   const agents = useOpQuery(contracts.agentList, {});
+  const choices = useChoices();
+  const lift = useOpMutation(contracts.agentLift);
   const watches = useOpQuery(contracts.watchList, {});
   const waiting = watches.data?.filter((watch) => watch.waiting) ?? [];
   const registered = watches.data?.filter((watch) => !watch.waiting) ?? [];
@@ -16,6 +19,22 @@ export function AgentsPage() {
       <PageHead title="Agents" />
       {agents.isPending ? <LoadingState /> : null}
       {agents.error === null ? null : <ErrorState error={agents.error} />}
+      {lift.error === null ? null : <ErrorState error={lift.error} />}
+      <Section title="Roster" note={String(agents.data?.length ?? "")}>
+        {agents.data?.length === 0 ? (
+          <EmptyState command="export OCTO_AGENT=claude-feature-x">No agent has checked in yet.</EmptyState>
+        ) : null}
+        <div className="rows">
+          {agents.data?.map((agent) => (
+            <AgentRosterRow
+              key={agent.name}
+              agent={agent}
+              onStop={(name) => choices.make(contracts.agentStop.name, { name }, `Stopped ${name}`)}
+              onLift={(name) => lift.mutate({ name })}
+            />
+          ))}
+        </div>
+      </Section>
       <Section title="Waiting now" note={String(waiting.length)}>
         {waiting.length === 0 ? <p className="muted">No agent is hanging on anything.</p> : null}
         <div className="rows">
@@ -33,20 +52,6 @@ export function AgentsPage() {
           </div>
         </Section>
       )}
-      <Section title="Seen" note={String(agents.data?.length ?? "")}>
-        {agents.data?.length === 0 ? (
-          <EmptyState command="export OCTO_AGENT=claude-feature-x">No agent has checked in yet.</EmptyState>
-        ) : null}
-        <div className="rows">
-          {agents.data?.map((agent) => (
-            <div className="row" key={agent.name}>
-              <span className="strong">{agent.name}</span>
-              <span className="row-stack muted">{agent.note}</span>
-              <TimeAgo iso={agent.lastSeenAt} />
-            </div>
-          ))}
-        </div>
-      </Section>
     </div>
   );
 }

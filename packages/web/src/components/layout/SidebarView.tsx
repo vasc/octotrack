@@ -25,8 +25,8 @@ export function SidebarView({ path, live, counts, projects }: SidebarViewProps) 
         </span>
       </div>
       <div className="nav-group">
-        <NavItem label="Lines" to="/lines" current={path === "/lines"} />
-        <NavItem label="Feed" to="/" current={path === "/"} />
+        <NavItem label="Lines" to="/" current={path === "/" || path === "/lines"} />
+        <NavItem label="Log" to="/log" current={path === "/log"} />
         <NavItem
           label="Decisions"
           to="/decisions"

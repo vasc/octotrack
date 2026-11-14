@@ -224,3 +224,29 @@ describe("moving an older database to lines", () => {
     }
   });
 });
+
+describe("first run", () => {
+  test("Accept takes each proposal's recommended placement in one go; a fold or a proposal with no advice is left", () => {
+    const h = withRepos();
+    const propose = (title: string, recommendation: "start" | "up_next" | "table" | "fold") =>
+      h.call(c.linePropose, {
+        title,
+        doneWhen: "Done.",
+        repos: ["PANEL"],
+        recommendation,
+        why: `Because ${title}.`,
+      }).ref;
+    const start = propose("Start me", "start");
+    const queue = propose("Queue me", "up_next");
+    const table = propose("Table me", "table");
+    const fold = propose("Fold me", "fold");
+    const placed = h.developer(c.lineAcceptRecommended, { refs: [start, queue, table, fold] });
+    expect(placed.map((line) => [line.ref, line.state])).toEqual([
+      [start, "working"],
+      [queue, "up_next"],
+      [table, "tabled"],
+    ]);
+    expect(h.developer(c.lineShow, { ref: table }).line.tabledReason).toBe("Because Table me.");
+    expect(h.developer(c.lineShow, { ref: fold }).line.state).toBe("proposed");
+  });
+});

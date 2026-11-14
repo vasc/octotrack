@@ -5,6 +5,7 @@ import { useFilter } from "../../hooks/useFilter.ts";
 import { useHotkeys } from "../../hooks/useHotkeys.ts";
 import { setParams, useRoute } from "../../lib/router.ts";
 import { QueueSection } from "../decisions/QueueSection.tsx";
+import { PageHead } from "../ui/PageHead.tsx";
 import { PrStrip } from "../prs/PrStrip.tsx";
 import { EmptyState } from "../ui/states.tsx";
 import { FeedSection } from "./FeedSection.tsx";
@@ -31,6 +32,7 @@ export function FeedPage() {
 
   return (
     <div className="page">
+      <PageHead title="Log" />
       <PrStrip cards={data?.prs ?? []} />
       <FilterBox filter={filter} inputRef={input} />
       <ViewTabs

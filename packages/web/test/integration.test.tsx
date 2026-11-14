@@ -33,6 +33,8 @@ function seedDecision(extra: Record<string, unknown> = {}) {
 beforeEach(() => {
   server = startTestServer();
   server.act(c.projectCreate, { key: "OCT", name: "Octotrack" });
+  // Most of these are about the log; home has its own tests below.
+  navigate("/log");
 });
 
 describe("the feed", () => {
@@ -186,7 +188,7 @@ describe("the feed", () => {
       },
       { actor: "agent-a", channel: "cli" },
     );
-    navigate("/?q=event%3Aproject.created");
+    navigate("/log?q=event%3Aproject.created");
     const view = renderApp(<App />);
     await within(await view.findByRole("feed")).findByText(/Project OCT created/);
     expect(view.queryByText("Nothing matches this filter.") === null).toBe(true);
@@ -195,7 +197,7 @@ describe("the feed", () => {
   test("with the inspector open on a decision, the keys answer that decision and not the queue's", async () => {
     const top = seedDecision({ title: "Top of the queue", priority: "urgent" });
     const other = seedDecision({ title: "Being inspected", priority: "low" });
-    navigate(`/?ref=${other.ref}`);
+    navigate(`/log?ref=${other.ref}`);
     const view = renderApp(<App />);
     const panel = within(await view.findByRole("complementary", { name: other.ref }));
     await panel.findByRole("button", { name: /SQS/ });
@@ -1003,6 +1005,38 @@ describe("lines of work", () => {
     await waitFor(() =>
       expect(reopened.getByLabelText("Post an update on L-1")).toHaveProperty("value", "Half of a thought"),
     );
+  });
+
+  test("home is the list of lines, at the root, with the log one link away", async () => {
+    seedLines();
+    navigate("/");
+    const view = renderApp(<App />);
+    await view.findByRole("region", { name: "Working on" });
+    fireEvent.click(view.getByRole("link", { name: "Log" }));
+    await view.findByRole("heading", { name: "Log" });
+  });
+
+  test("first run places proposals where their agents recommend, in one choice", async () => {
+    server.act(
+      c.linePropose,
+      { title: "Wall mount", doneWhen: "It hangs.", recommendation: "up_next", why: "The base is final." },
+      "panel-agent",
+    );
+    navigate("/");
+    const view = renderApp(<App />);
+    fireEvent.click(await view.findByRole("button", { name: "Accept 1 recommended placements" }));
+    fireEvent.click(await view.findByRole("button", { name: "Now" }));
+    await within(await view.findByRole("region", { name: "Up next" })).findByText("Wall mount");
+  });
+
+  test("the agents roster stops an agent, with Undo, and lifts the stop", async () => {
+    server.act(c.agentRegister, { repo: "OCT" }, "octo.1");
+    navigate("/agents");
+    const view = renderApp(<App />);
+    fireEvent.click(await view.findByRole("button", { name: "Stop octo.1" }));
+    fireEvent.click(await view.findByRole("button", { name: "Now" }));
+    fireEvent.click(await view.findByRole("button", { name: "Lift octo.1" }));
+    await view.findByRole("button", { name: "Stop octo.1" });
   });
 
   test("a line opens in the inspector with what finishes it", async () => {
