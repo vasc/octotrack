@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { RefusedWrite } from "../errors.ts";
 import type { Line, LineClaim, LineCrew, Notice } from "../schemas.ts";
+import type { EventTypeName } from "../query/values.ts";
 import { applyPatch, emit } from "../store/common.ts";
 import { HELD_CURRENT_MS } from "./held.ts";
 import { addNotice, briefOf, claimOf, claimsOn, getAgent } from "../store/agents.ts";
@@ -44,7 +45,7 @@ export function windingDown(line: Line, now: string): boolean {
   return line.windDownUntil !== null && line.windDownUntil > now;
 }
 
-function emitAgent(ctx: Ctx, type: string, agent: string, line: Line | null, summary: string): void {
+function emitAgent(ctx: Ctx, type: EventTypeName, agent: string, line: Line | null, summary: string): void {
   emit(ctx, {
     type,
     kind: "agent",

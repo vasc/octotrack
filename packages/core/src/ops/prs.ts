@@ -1,6 +1,7 @@
 import { contracts, type PrInput } from "../contracts.ts";
 import { extractIssueRefs } from "../refs.ts";
 import type { EventAttrs, PullRequest } from "../schemas.ts";
+import type { EventTypeName } from "../query/values.ts";
 import { applyPatch, emit, nextNumber } from "../store/common.ts";
 import { type Ctx, rows } from "../store/context.ts";
 import { filterEntities } from "../store/docs.ts";
@@ -84,7 +85,7 @@ function changeHeadline(
   pr: PullRequest,
   fields: readonly string[],
   fromState: unknown,
-): { type: string; summary: string } {
+): { type: EventTypeName; summary: string } {
   const label = `${pr.ref} (${pr.repo}#${pr.number})`;
   if (fields.includes("state")) {
     if (pr.state === "merged") return { type: "pr.merged", summary: `${label} merged: ${pr.title}` };
@@ -115,7 +116,7 @@ function upsertPr(ctx: Ctx, input: PrInput): { pr: PullRequest; changed: boolean
     changed = true;
     // A PR first seen after it finished must still count as merged or closed, or a watcher would never hear of it.
     const label = `${pr.ref} (${pr.repo}#${pr.number})`;
-    const first =
+    const first: { type: EventTypeName; summary: string } =
       pr.state === "merged"
         ? { type: "pr.merged", summary: `${label} merged: ${pr.title}` }
         : pr.state === "closed"

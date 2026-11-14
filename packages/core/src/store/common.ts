@@ -1,5 +1,6 @@
 import { OctoError } from "../errors.ts";
 import type { EventAttrs, EventKind, FieldChange } from "../schemas.ts";
+import type { EventTypeName } from "../query/values.ts";
 import type { Ctx } from "./context.ts";
 import { one, rows } from "./context.ts";
 import { CountRow, ValueRow } from "./rows.ts";
@@ -69,7 +70,7 @@ export function assertVersion(ref: string, current: number, expected: number | u
 }
 
 export interface EmitInput {
-  type: string;
+  type: EventTypeName;
   kind: EventKind;
   ref: string;
   project: string | null;

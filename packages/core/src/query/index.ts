@@ -8,4 +8,4 @@ export {
   refsInQuery,
   valuesInQuery,
 } from "./parser.ts";
-export { QUERY_VALUES } from "./values.ts";
+export { EVENT_TYPES, type EventTypeName, QUERY_VALUES } from "./values.ts";
