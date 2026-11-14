@@ -265,38 +265,60 @@ evidence of how projects are meant to be used.
 
 Everything below is a design decision made from that, with its reasoning.
 
-- **A project is a line of work:** a goal, an end, and a state the developer sets: working on, planned in order, or
-  tabled with a reason, then done or dropped. Nothing sits above projects. A project names the repos it touches; one repo
-  can serve several, and looking at one repo is a filter, not a layer. _Trade-off:_ no grouping to fold many lines under,
-  which a long list may one day want. A filter covers it until then.
-- **One order drives everything.** The developer drags lines into order. That order decides which question comes first,
-  which line an agent asking what to do next gets first, and how the feed is grouped. _Why:_ a computed score competed
-  with the developer's own priorities and had to be second-guessed. _Trade-off:_ a pressing question on a low line waits,
-  so a question marked urgent jumps the queue and says why.
-- **The developer does four things: order, answer, steer, accept.** Everything else is the agents': issues, plans, pull
-  requests, and keeping each line's summary true. The home screen holds all four: the questions to answer next, the
-  ordered list of lines, and the agents on them.
+- **A line of work is the unit.** A line has a goal ("done when", one sentence), an end, and a state the developer sets:
+  working on, up next in order, or tabled with a reason, then done or dropped. Agents can also leave a line proposed.
+  Nothing sits above lines. A line names the repos it touches; one repo can serve several lines, and looking at one repo
+  is a filter, not a layer. _Trade-off:_ no grouping to fold many lines under. A filter covers that until a long list
+  shows it is needed.
+- **One order drives everything.** The developer orders the lines by dragging, a Move control, or alt with the arrow
+  keys. That order decides what reaches the developer first, which line an agent takes on, and the order of the log.
+  Within a line, questions follow the plan step they hold up, and Later moves one to the bottom of its own line. _Why:_ a
+  computed score competed with the developer's own priorities and had to be second-guessed. _Trade-off:_ a pressing
+  question on a low line waits, so urgent jumps the order. Urgent needs a reason from a fixed set (time-boxed, costs
+  money, something broken), and the developer can send it back with Not urgent, which counts against the agent.
+- **The home screen is one list.** Each working line shows its summary, then whatever needs the developer on it,
+  questions and tasks, inline. A "Step in" section above the list holds what is going wrong: an agent breaking the order,
+  a line no agent can take, a wake that failed. The header counts what is waiting. _Why:_ the first drafts stacked a
+  queue above the list, so the same lines were read twice and the lines were not at the centre.
+- **The developer orders, answers, does, tells, stops and accepts.** Everything else belongs to the agents: issues,
+  plans, pull requests, and keeping each line's summary true.
+- **Each working line has one owner agent.** The owner writes the summary, files questions and tasks, proposes done, and
+  is the one a Tell reaches. Other agents may help. The claim renews while the owner works and lapses when it goes quiet,
+  which frees the line. An agent asking what to do gets the highest line in the order that has work it can do, in a repo
+  it has, and no owner. _Why:_ "the top line first" would pile every idle agent onto line one, and two writers would fight
+  over one summary.
+- **The order is enforced, not just shown.** Writes to a tabled, done or dropped line are refused. The refusal is
+  recorded, always shown in the log, and an agent that keeps trying appears under Step in with Stop.
 - **Questions stand alone.** Asking requires a summary written for someone who has read nothing else, options that say
-  what happens if picked, and the reason behind any recommendation. Background stays available, folded. _Why:_ "the
-  operator needs to read millions of lines of text to get context on one decision".
-- **Planned and tabled lines hold their questions,** out of the way until the line is started. Tabling asks for a reason
-  and tells any agent waiting on that line's questions. _Trade-off:_ a question needed to start a line waits until you
-  start it; the line shows that it has one.
-- **Agents keep each line's summary current.** An agent rewrites it when it ends a working session; if it has not, it is
-  due an hour after the line's work moves, and the list says so until it is rewritten. Drift is the mechanism, as in D6.
-- **Agents propose, the developer accepts.** Agents propose a new line when they find work that has none, or when the
-  developer starts something new in conversation, and propose done when a plan is finished. Nothing joins or leaves the
-  list without the developer's yes.
+  what happens if picked, and the reason behind any recommendation, which is shown on every surface, phone included.
+  Background stays folded. _Why:_ "the operator needs to read millions of lines of text to get context on one decision".
 - **Things only the developer can do are tasks, not questions.** A question has options; a task has an outcome to report:
   a measurement, a login, a play-test. In the tracker today most blocked issues are tasks in disguise ("waiting on
-  Vasco"), and nobody is told. An agent files a task with what, where the developer needs to be, what it unblocks and what
-  to send back. Tasks sit with questions under "For you", grouped by place so that four play-tests are one sitting, and
-  marking one done frees the work and wakes the agent. Drift asks agents to turn blocked-on-the-developer issues into tasks.
-- **Steering without being asked.** Each line takes a note in the developer's own words, delivered to its agents' inbox
-  and waking them if they asked, as in D12.
-- **Interruptions are rare.** The phone is interrupted only for a question on the top two lines, or one marked urgent.
-- **The feed reads as what moved since you last looked,** grouped by line in your order, routine changes folded, held
-  lines left out unless asked for.
+  Vasco"), and nobody is told. A task is an issue assigned to the developer, with a place and an outcome, so it always has
+  a ref. An "I'm at" switch (the bench, the Mac, the phone) shows what can be done there, including tasks held on lines
+  not running. Marking one done frees the work and wakes the owner. Drift asks agents to turn blocked-on-the-developer
+  issues into tasks.
+- **Up-next and tabled lines hold their questions and tasks.** Starting a line shows its held questions first, so it starts
+  with them answered. Tabling asks for a reason and an optional date to look again, tells the owner to stop, and refuses
+  its writes. When a line comes back, its held questions go to the owner to re-confirm or withdraw before they reach the
+  developer. _Trade-off:_ a question can wait a long time, which is why it is re-confirmed rather than trusted.
+- **Answers can be undone, and say what became of them.** An answer waits a few seconds with Undo before it is sent. Then
+  the line shows one status sentence: not picked up, picked up, carried out. A failed wake, or an answer not picked up
+  within an hour, comes back under Step in.
+- **Summaries stay true without anyone reading history.** The owner rewrites the summary at the end of a session. It falls
+  due an hour after significant work; agents mark each change routine or significant when they make it. Until it is
+  rewritten, the line lists what changed since, one line each.
+- **Agents propose, the developer accepts.** Agents propose a line when they find work with none, or when the developer
+  starts something new in conversation, and propose done with how "done when" was met. Nothing joins or leaves the list
+  without the developer's yes. On first run, agents propose lines from the tracker's existing projects, splitting where
+  one project held several, and the developer sorts each once.
+- **The log shows what has not been seen,** line by line in order. A line counts as seen once opened, or with Mark all
+  seen. Routine changes fold into one sentence. Up-next and tabled lines are left out unless asked for; refused writes
+  never are.
+- **Interruptions are rare.** The phone is interrupted only for urgent questions or ones on the top two lines, with a
+  one-tap answer that still has Undo.
+- **One vocabulary:** line, working on, up next, tabled, done, dropped, proposed; summary, done when, owner; question,
+  task, held, later, urgent; for you, step in, tell, stop; log, seen. Contracts and the CLI use the same words.
 - **Built only once agreed.** An exploratory branch, `lines-of-work`, tried an earlier version of this model in code. It
   added an "area" layer above projects, which this proposal drops, so it is research, not the starting point.
 
