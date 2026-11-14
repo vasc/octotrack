@@ -485,6 +485,20 @@ describe("finding a line's questions", () => {
   });
 });
 
+describe("waiting on you", () => {
+  test("is a line whose open work all waits on the developer, not one that merely has something for them", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    const owner = w.register("owner");
+    w.as(owner, c.lineTake, { ref: line.ref });
+    w.as(owner, c.decisionAsk, { title: "Which board?", context: "Context.", options: OPTIONS });
+    const waiting = () => w.as(w.dev, c.homeShow, {}).lines[line.ref]?.waitingOnYou;
+    expect(waiting()).toBe(true);
+    w.as(owner, c.issueCreate, { project: "PANEL", title: "Model the lid", line: line.ref });
+    expect(waiting()).toBe(false);
+  });
+});
+
 describe("questions from before lines", () => {
   test("show on home below every line, so none is lost", () => {
     const w = world();

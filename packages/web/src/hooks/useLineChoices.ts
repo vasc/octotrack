@@ -10,7 +10,6 @@ const OPS: Readonly<Record<LineChoice, string>> = {
   drop: contracts.lineDrop.name,
   reject: contracts.lineReject.name,
   own: contracts.lineOwn.name,
-  not_yet: contracts.lineNotYet.name,
 };
 
 /** What each choice is doing while it waits, as the Undo bar says it. */
@@ -21,7 +20,6 @@ const SAID: Readonly<Record<LineChoice, (title: string) => string>> = {
   drop: (title) => `Dropping ${title}`,
   reject: (title) => `Turning down ${title}: not a line`,
   own: (title) => `Taking ${title} as yours`,
-  not_yet: (title) => `Telling ${title}'s owner it is not done yet`,
 };
 
 /** The developer's choices on one line, as the line panel offers them. Each waits a few seconds with Undo. */

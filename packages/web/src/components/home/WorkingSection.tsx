@@ -164,7 +164,7 @@ export function WorkingSection({
               ) : first === undefined ? null : folded ? (
                 <div className="line-items">
                   <button type="button" className="more-link" onClick={() => onFocus(refOf(first))}>
-                    {forYou.length} waiting on you
+                    {forYou.length} for you
                   </button>
                 </div>
               ) : (

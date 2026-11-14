@@ -1,9 +1,10 @@
 import type { Line } from "@octotrack/core/schemas";
 import { useState } from "react";
 import { LINE_STATE_LABEL } from "../../lib/lines.ts";
+import { FoldPicker } from "../home/FoldPicker.tsx";
 import { TableForm } from "../lines/TableForm.tsx";
 
-export type LineChoice = "start" | "queue" | "done" | "drop" | "reject" | "own" | "not_yet";
+export type LineChoice = "start" | "queue" | "done" | "drop" | "reject" | "own";
 
 export interface LineActionsProps {
   line: Line;
@@ -13,14 +14,25 @@ export interface LineActionsProps {
   onTable(reason: string, lookAgainAt: string | null): void;
   /** What waits on the developer on the line, which tabling holds. */
   held?: { questions: number; tasks: number };
+  /** For a proposal: the open lines it could fold into instead. */
+  foldTargets?: readonly Line[];
+  onFold?: (into: string) => void;
 }
 
 /**
  * Where a line stands and how to move it, as E-Line draws it: its state, the moves that state allows (Done asks
  * before it ends the line), the rarer ones under More, and what a move away does to its agents.
  */
-export function LineActions({ line, owner = null, onChoose, onTable, held }: LineActionsProps) {
-  const [mode, setMode] = useState<"table" | "done" | "more" | null>(null);
+export function LineActions({
+  line,
+  owner = null,
+  onChoose,
+  onTable,
+  held,
+  foldTargets = [],
+  onFold,
+}: LineActionsProps) {
+  const [mode, setMode] = useState<"table" | "done" | "more" | "fold" | null>(null);
   const ended = line.state === "done" || line.state === "dropped";
   if (mode === "table") {
     return (
@@ -30,6 +42,19 @@ export function LineActions({ line, owner = null, onChoose, onTable, held }: Lin
         {...(held === undefined ? {} : { held })}
         onTable={(reason, lookAgainAt) => {
           onTable(reason, lookAgainAt);
+          setMode(null);
+        }}
+        onCancel={() => setMode(null)}
+      />
+    );
+  }
+  if (mode === "fold" && onFold !== undefined) {
+    return (
+      <FoldPicker
+        title={line.title}
+        targets={foldTargets}
+        onFold={(into) => {
+          onFold(into);
           setMode(null);
         }}
         onCancel={() => setMode(null)}
@@ -81,6 +106,11 @@ export function LineActions({ line, owner = null, onChoose, onTable, held }: Lin
       {line.state === "working" ? (
         <button type="button" className="btn" onClick={() => setMode("done")}>
           Done
+        </button>
+      ) : null}
+      {line.state === "proposed" && onFold !== undefined && foldTargets.length > 0 ? (
+        <button type="button" className="btn" onClick={() => setMode("fold")}>
+          Fold into
         </button>
       ) : null}
       {line.state === "proposed" ? move("reject", "Not a line") : null}

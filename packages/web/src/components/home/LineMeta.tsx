@@ -8,7 +8,11 @@ import { crewText } from "../../lib/lines.ts";
 export function LineMeta({ crew, details }: { crew?: LineCrew; details?: LineHome }) {
   const facts = [
     ...crewText(crew, details?.stepIn === true),
-    ...(details !== undefined && details.forYou.length > 0 ? ["waiting on you"] : []),
+    // Waiting on you only when nothing else can move meanwhile; with something for you and work for the agents too,
+    // they are on it.
+    ...(details === undefined || details.forYou.length === 0
+      ? []
+      : [details.waitingOnYou ? "waiting on you" : "agents on it"]),
     ...(details === undefined || details.step === null
       ? []
       : [`step ${details.step.position} of ${details.step.of}, ${details.step.title}`]),

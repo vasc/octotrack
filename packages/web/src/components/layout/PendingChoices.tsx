@@ -31,7 +31,7 @@ export function PendingChoices() {
     [newest, undo],
   );
   useHotkeys(keys);
-  if (choices.pending.length === 0 && choices.failure === null) return null;
+  // The live region stays mounted while empty, so the first choice made is announced too.
   return (
     <>
       <UndoBar

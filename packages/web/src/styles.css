@@ -1375,6 +1375,12 @@ p {
 
 /* Touch is about the input, not the width, so that a phone on its side still gets it. See design/foundations.md. */
 @media (pointer: coarse) {
+  .line-link,
+  .more-link,
+  .item-row,
+  .top-count,
+  .top-urgent,
+  .menu-item,
   .nav-item,
   .btn,
   .tab,
@@ -2517,11 +2523,16 @@ p {
     border: 0;
     background: none;
   }
+  /* The handle stays on a phone, the only way to reorder there: a full touch target beside the number. */
   .line-card-head {
-    grid-template-columns: var(--space-11) minmax(0, 1fr) auto;
+    grid-template-columns: var(--control-height) var(--space-11) minmax(0, 1fr) auto;
   }
-  .line-card .line-handle {
-    display: none;
+  .line-handle {
+    width: var(--control-height);
+    height: var(--touch-target);
+  }
+  .menu-item {
+    min-height: var(--touch-target);
   }
   .proposal-card {
     grid-template-columns: minmax(0, 1fr);

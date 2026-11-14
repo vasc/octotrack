@@ -29,6 +29,8 @@ import { eventTone, FeedItem } from "../src/components/feed/FeedItem.tsx";
 import { FeedList } from "../src/components/feed/FeedList.tsx";
 import { UnseenLog } from "../src/components/feed/UnseenLog.tsx";
 import { AnswerStatus } from "../src/components/home/AnswerStatus.tsx";
+import { ForYouItem } from "../src/components/home/ForYouItem.tsx";
+import { HOME_KEYS, KeyHelp } from "../src/components/home/KeyHelp.tsx";
 import { NothingNeedsYou } from "../src/components/home/NothingNeedsYou.tsx";
 import { AtSection } from "../src/components/home/AtSection.tsx";
 import { foldedText } from "../src/components/home/FoldedItems.tsx";
@@ -606,6 +608,7 @@ describe("lines of work", () => {
     step: null,
     forYou: [],
     stepIn: false,
+    waitingOnYou: false,
     held: { questions: 0, tasks: 0 },
     scopedSteps: 0,
     answers: [],
@@ -621,6 +624,7 @@ describe("lines of work", () => {
         details={details({
           step: { position: 3, of: 4, title: "settle board and opening" },
           forYou: [{ kind: "question", card: card() }],
+          waitingOnYou: true,
         })}
       >
         <p>child</p>
@@ -633,6 +637,22 @@ describe("lines of work", () => {
     article.getByText(/step 3 of 4, settle board and opening/);
     article.getByText("Printed; the short board fits.");
     article.getByText("child");
+  });
+
+  test("LineMeta says waiting on you only when all the line's work waits on you, else agents on it", () => {
+    const crew: LineCrew = {
+      owner: { name: "builder", state: "running" },
+      helpers: [],
+      scoper: null,
+      search: null,
+    };
+    const forYou = [{ kind: "question" as const, card: card() }];
+    const waits = render(<LineMeta crew={crew} details={details({ forYou, waitingOnYou: true })} />);
+    waits.getByText(/waiting on you/);
+    waits.unmount();
+    const busy = render(<LineMeta crew={crew} details={details({ forYou, waitingOnYou: false })} />);
+    busy.getByText(/agents on it/);
+    expect(busy.queryByText(/waiting on you/)).toBeNull();
   });
 
   test("LineMeta says when nobody could be found to own a line, and who is scoping it", () => {
@@ -1288,8 +1308,19 @@ describe("tabling and a line's own choices", () => {
     fireEvent.click(working.getByRole("button", { name: "Drop" }));
     expect(onChoose).toHaveBeenCalledWith("drop");
     working.unmount();
-    const proposed = render(<LineActions line={line({ state: "proposed" })} {...props} />);
-    expect(names(proposed)).toEqual(["Start", "Up next", "Table", "Not a line"]);
+    const onFold = mock((_into: string) => {});
+    const proposed = render(
+      <LineActions
+        line={line({ state: "proposed" })}
+        foldTargets={[line({ ref: "L-2", title: "Mount" })]}
+        onFold={onFold}
+        {...props}
+      />,
+    );
+    expect(names(proposed)).toEqual(["Start", "Up next", "Table", "Fold into", "Not a line"]);
+    fireEvent.click(proposed.getByRole("button", { name: "Fold into" }));
+    fireEvent.click(proposed.getByRole("button", { name: "Fold Sendspin enclosure into Mount" }));
+    expect(onFold).toHaveBeenCalledWith("L-2");
     proposed.unmount();
     const done = render(<LineActions line={line({ state: "done" })} {...props} />);
     expect(done.queryAllByRole("button")).toHaveLength(0);
@@ -1480,6 +1511,41 @@ describe("I'm at a place", () => {
         task("PANEL-3", null),
       ]),
     ).toBe("1 question · 2 tasks at the Mac · 1 task");
+  });
+});
+
+describe("KeyHelp and ForYouItem", () => {
+  test("KeyHelp lists every key in the board's words, and closes", () => {
+    const onClose = mock(() => {});
+    const view = render(<KeyHelp onClose={onClose} />);
+    const keys = view.getAllByRole("term").map((term) => term.textContent);
+    expect(keys).toEqual(HOME_KEYS.map(([key]) => key));
+    expect(keys).toContain("w");
+    expect(keys).toContain("g p");
+    fireEvent.click(view.getByRole("button", { name: "Close" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  test("ForYouItem is one row until it has focus, then the item itself", () => {
+    const item = {
+      kind: "question" as const,
+      card: decisionCard({ decision: decision({ ref: "D-7", title: "Which?" }) }),
+    };
+    const props = {
+      item,
+      title: "Enclosure",
+      armed: true,
+      onOpen: () => {},
+      onTaskDone: () => {},
+      onTaskCant: () => {},
+      onLineDone: () => {},
+      onNotYet: () => {},
+      onDoneWhen: () => {},
+    };
+    const row = render(<ForYouItem {...props} focused={false} />);
+    row.getByRole("button", { name: "Open D-7" });
+    expect(row.queryByRole("article")).toBeNull();
+    row.unmount();
   });
 });
 
@@ -1681,6 +1747,7 @@ describe("answers on their line", () => {
           step: null,
           forYou: [],
           stepIn: false,
+          waitingOnYou: false,
           held: { questions: 0, tasks: 0 },
           scopedSteps: 0,
           answers: [answer({}), answer({ ref: "D-2", answer: "USB-C", status: "carried_out" })],
