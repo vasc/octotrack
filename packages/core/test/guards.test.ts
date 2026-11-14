@@ -372,3 +372,29 @@ describe("recording a decision already settled on a line is the developer's", ()
     expect(w.as(w.dev, c.decisionRecord, { title: "Base", chosen: "PLA", issue: w.issue }).line).toBe(w.line);
   });
 });
+
+describe("a proposal folded or dropped is told so", () => {
+  test("its proposer hears what really became of it", () => {
+    const w = world();
+    const scout = w.agent("scout");
+    w.as(scout, c.agentRegister, { repo: "PANEL" });
+    const propose = (title: string) =>
+      w.as(scout, c.linePropose, {
+        title,
+        doneWhen: "Done.",
+        repos: ["PANEL"],
+        recommendation: "up_next",
+        why: "It is work.",
+      }).ref;
+    const folded = propose("Lid");
+    const dropped = propose("Stand");
+    const rejected = propose("Nothing");
+    w.as(w.dev, c.lineFold, { ref: folded, into: w.line });
+    w.as(w.dev, c.lineDrop, { ref: dropped });
+    w.as(w.dev, c.lineReject, { ref: rejected });
+    const said = w.notices(scout).map((notice) => notice.body);
+    expect(said[0]).toContain(`folded it into ${w.line}`);
+    expect(said[1]).toContain("dropped it");
+    expect(said[2]).toContain("said it is not a line");
+  });
+});

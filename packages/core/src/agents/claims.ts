@@ -326,11 +326,14 @@ const PLACED: Readonly<Record<Line["state"], string>> = {
   up_next: "put it up next",
   tabled: "tabled it",
   done: "marked it done",
-  dropped: "said it is not a line",
+  dropped: "dropped it",
 };
 
-/** What a line's move means for the agents on it and for whoever proposed it. Called by every move. */
-export function afterMove(ctx: Ctx, before: Line, after: Line): void {
+/**
+ * What a line's move means for the agents on it and for whoever proposed it. Called by every move; `placed` says what
+ * became of a proposal when its new state alone does not (Not a line and Fold into both leave it dropped).
+ */
+export function afterMove(ctx: Ctx, before: Line, after: Line, placed?: string): void {
   if (before.state === after.state) return;
   if (after.state === "working") beginWorking(ctx, after);
   else if (before.state === "working") windDown(ctx, after, true);
@@ -345,7 +348,7 @@ export function afterMove(ctx: Ctx, before: Line, after: Line): void {
       before.proposedBy,
       "proposal_placed",
       after.ref,
-      `Your proposal ${after.ref} ${after.title}: the developer ${PLACED[after.state]}.`,
+      `Your proposal ${after.ref} ${after.title}: the developer ${placed ?? PLACED[after.state]}.`,
       true,
     );
   }
