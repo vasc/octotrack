@@ -691,6 +691,10 @@ export type LineDetail = z.infer<typeof LineDetail>;
 export const ForYou = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("question"), card: DecisionCard }),
   z.object({ kind: z.literal("task"), task: Issue }),
+  /** The owner's case that the line is done: Done, or Not yet. */
+  z.object({ kind: z.literal("done"), line: z.string(), text: z.string(), by: z.string().nullable() }),
+  /** A new done when an agent proposes: Accept, or Keep the one there is. */
+  z.object({ kind: z.literal("done_when"), line: z.string(), text: z.string(), by: z.string().nullable() }),
 ]);
 export type ForYou = z.infer<typeof ForYou>;
 

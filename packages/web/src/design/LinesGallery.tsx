@@ -3,6 +3,7 @@ import { LinePanel } from "../components/entity/LinePanel.tsx";
 import { FoldedSection } from "../components/home/FoldedSection.tsx";
 import { ForYouRow } from "../components/home/ForYouRow.tsx";
 import { HomeCounts } from "../components/home/HomeCounts.tsx";
+import { LineProposalCard } from "../components/home/LineProposalCard.tsx";
 import { ProposalCard } from "../components/home/ProposalCard.tsx";
 import { QuietRow } from "../components/home/QuietRow.tsx";
 import { StepIn } from "../components/home/StepIn.tsx";
@@ -69,6 +70,21 @@ export function LinesGallery() {
       <Example label="A task, one row, and opened">
         <ForYouRow item={{ kind: "task", task: TASK }} onOpen={NOOP} />
         <TaskCard task={TASK} words="" onWords={NOOP} onDone={NOOP} onCant={NOOP} />
+      </Example>
+      <Example label="A case for done, one row, and opened">
+        <ForYouRow
+          item={{ kind: "done", line: "L-1", text: "Printed, fitted and in use.", by: "panel" }}
+          onOpen={NOOP}
+        />
+        <LineProposalCard
+          kind="done"
+          line="L-1"
+          title="Sendspin enclosure"
+          text="Printed, fitted and in use: the board sits flush and the plug goes in."
+          by="panel-widgets"
+          onAccept={NOOP}
+          onDecline={NOOP}
+        />
       </Example>
       <Example label="A line nobody could be found for">
         <WorkingLine

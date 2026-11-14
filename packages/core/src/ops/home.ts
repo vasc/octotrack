@@ -56,13 +56,31 @@ export function buildHome(ctx: Ctx): HomeView {
           .map((card) => ({ kind: "question", card }))
       : [];
     const tasks: ForYou[] = working ? openTasks(ctx, line.ref).map((task) => ({ kind: "task", task })) : [];
+    // A proposal about the line itself is its first item: it decides what the rest of it is for.
+    const proposals: ForYou[] = working
+      ? [
+          ...(line.doneProposal === null
+            ? []
+            : [{ kind: "done" as const, line: line.ref, text: line.doneProposal, by: line.doneProposedBy }]),
+          ...(line.doneWhenProposal === null
+            ? []
+            : [
+                {
+                  kind: "done_when" as const,
+                  line: line.ref,
+                  text: line.doneWhenProposal,
+                  by: line.doneWhenProposedBy,
+                },
+              ]),
+        ]
+      : [];
     const held = working ? [] : heldOn(ctx, line.ref).filter((item) => item.current);
     return {
       start: lineStart(ctx, line.ref),
       stepIn: stepInFor(ctx, line),
       step:
         current === undefined ? null : { position: current.position, of: steps.length, title: current.title },
-      forYou: [...questions, ...tasks],
+      forYou: [...proposals, ...questions, ...tasks],
       held: {
         questions: held.filter((item) => item.kind === "question").length,
         tasks: held.filter((item) => item.kind === "task").length,

@@ -59,7 +59,9 @@ describe("home: one list, with what each line needs from the developer", () => {
     const details = home.lines[line.ref];
     expect(details?.step).toEqual({ position: 1, of: 3, title: "Model" });
     expect(
-      details?.forYou.map((item) => (item.kind === "question" ? item.card.decision.ref : item.task.ref)),
+      details?.forYou.map((item) =>
+        item.kind === "question" ? item.card.decision.ref : item.kind === "task" ? item.task.ref : item.line,
+      ),
     ).toEqual([asked.ref, task.ref]);
     expect(home.counts).toEqual({ toAnswer: 1, toDo: 1, toAccept: 0, toStepIn: 0, urgent: 0 });
   });

@@ -333,4 +333,24 @@ describe("a repo's checkout", () => {
   });
 });
 
+describe("proposals on a working line", () => {
+  test("a case for done and a new done when come first among what the line needs from the developer", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    const owner = w.register("owner");
+    w.as(owner, c.lineTake, { ref: line.ref });
+    w.as(owner, c.decisionAsk, { title: "Which?", context: "Context.", options: OPTIONS });
+    w.as(owner, c.lineDoneWhen, { ref: line.ref, doneWhen: "It holds the 30 mm board." });
+    w.as(owner, c.lineProposeDone, { ref: line.ref, why: "Printed and fitted." });
+    const items = w.as(w.dev, c.homeShow, {}).lines[line.ref]?.forYou ?? [];
+    expect(items.map((item) => item.kind)).toEqual(["done", "done_when", "question"]);
+    expect(items[0]).toMatchObject({
+      kind: "done",
+      line: line.ref,
+      text: "Printed and fitted.",
+      by: "owner",
+    });
+  });
+});
+
 void DAY;

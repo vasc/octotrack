@@ -39,10 +39,14 @@ export function HomePage() {
   const [reordering, setReordering] = useState(false);
   useHotkeys(keys);
 
-  const item = (forYou: ForYou) => (
+  const item = (title: string) => (forYou: ForYou) => (
     <ForYouItem
       key={refOf(forYou)}
       item={forYou}
+      title={title}
+      onLineDone={h.lineDone}
+      onNotYet={h.notYet}
+      onDoneWhen={h.doneWhen}
       focused={refOf(forYou) === focus}
       armed={armed}
       onOpen={setChosen}
@@ -133,10 +137,10 @@ export function HomePage() {
                       {forYou.length} waiting on you
                     </button>
                   ) : (
-                    <div className="home-items">{item(first)}</div>
+                    <div className="home-items">{item(line.title)(first)}</div>
                   )}
                   {rest.length === 0 || folded ? null : open ? (
-                    <div className="home-items">{rest.map(item)}</div>
+                    <div className="home-items">{rest.map(item(line.title))}</div>
                   ) : (
                     <button
                       type="button"
