@@ -814,3 +814,103 @@ describe("other pages", () => {
     await view.findByText(/Nothing lives at/);
   });
 });
+
+describe("lines of work", () => {
+  const asDeveloper = { actor: "dev", channel: "dashboard" } as const;
+
+  function seedLines() {
+    server.tracker.call(
+      c.lineAdd,
+      {
+        title: "Sendspin enclosure",
+        doneWhen: "A printed case holds the board.",
+        repos: ["OCT"],
+        where: "working",
+      },
+      asDeveloper,
+    );
+    server.tracker.call(
+      c.lineAdd,
+      { title: "Weekly digest", doneWhen: "Sent on Mondays.", where: "working" },
+      asDeveloper,
+    );
+    return server.act(
+      c.linePropose,
+      {
+        title: "Wall mount",
+        doneWhen: "It hangs flush.",
+        recommendation: "up_next",
+        why: "The base is final.",
+      },
+      "panel-agent",
+    );
+  }
+
+  test("the Lines page shows each section in the developer's order, with what an agent recommends", async () => {
+    seedLines();
+    navigate("/lines");
+    const view = renderApp(<App />);
+    const working = within(await view.findByRole("region", { name: "Working on" }));
+    const titles = working
+      .getAllByRole("button", { name: /^(Sendspin enclosure|Weekly digest)$/ })
+      .map((b) => b.textContent);
+    expect(titles).toEqual(["Sendspin enclosure", "Weekly digest"]);
+    const proposed = within(view.getByRole("region", { name: "Proposed" }));
+    proposed.getByText("Wall mount");
+    proposed.getByText(/panel-agent says up next/);
+    proposed.getByText("The base is final.");
+  });
+
+  test("the developer places a proposal, reorders, tables with a reason and adds a line", async () => {
+    const proposal = seedLines();
+    navigate("/lines");
+    const view = renderApp(<App />);
+    const proposed = within(await view.findByRole("region", { name: "Proposed" }));
+    fireEvent.click(proposed.getByRole("button", { name: "Queue Wall mount" }));
+    const upNext = within(await view.findByRole("region", { name: "Up next" }));
+    await upNext.findByText("Wall mount");
+    expect(server.tracker.call(c.lineShow, { ref: proposal.ref }, asDeveloper).line.state).toBe("up_next");
+
+    const working = within(view.getByRole("region", { name: "Working on" }));
+    fireEvent.click(working.getByRole("button", { name: "Move Weekly digest up" }));
+    await waitFor(() => {
+      const order = within(view.getByRole("region", { name: "Working on" }))
+        .getAllByRole("button", { name: /^(Sendspin enclosure|Weekly digest)$/ })
+        .map((b) => b.textContent);
+      expect(order).toEqual(["Weekly digest", "Sendspin enclosure"]);
+    });
+
+    fireEvent.click(working.getByRole("button", { name: "Table Sendspin enclosure" }));
+    fireEvent.change(working.getByLabelText("Why table Sendspin enclosure"), {
+      target: { value: "Waiting on the board" },
+    });
+    fireEvent.click(working.getByRole("button", { name: "Table it" }));
+    const tabled = within(await view.findByRole("region", { name: "Tabled" }));
+    await tabled.findByText("Waiting on the board");
+
+    fireEvent.change(view.getByLabelText("New line"), { target: { value: "Garden sensor" } });
+    fireEvent.change(view.getByLabelText("Done when"), { target: { value: "Readings arrive hourly." } });
+    fireEvent.click(view.getByRole("button", { name: "Add line" }));
+    await within(view.getByRole("region", { name: "Up next" })).findByText("Garden sensor");
+    expect(server.calls).toContain("line.add");
+  });
+
+  test("each line says who owns it, from what agents did", async () => {
+    seedLines();
+    server.act(c.agentRegister, { repo: "OCT" }, "octo.1");
+    server.act(c.lineTake, { ref: "L-1" }, "octo.1");
+    navigate("/lines");
+    const view = renderApp(<App />);
+    const working = within(await view.findByRole("region", { name: "Working on" }));
+    await working.findByText("owner octo.1, running");
+  });
+
+  test("a line opens in the inspector with what finishes it", async () => {
+    seedLines();
+    navigate("/?ref=L-1");
+    const view = renderApp(<App />);
+    const panel = within(await view.findByRole("complementary", { name: "L-1" }));
+    await panel.findByText("A printed case holds the board.");
+    panel.getByText("Working on");
+  });
+});

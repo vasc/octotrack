@@ -218,7 +218,7 @@ export const observeCommands: Command[] = [
     async run({ client, out }, args) {
       let refs = [...args.positionals];
       if (refs.length === 0) {
-        const mine = await client.call(c.watchList, { agent: client.actor });
+        const mine = await client.call(c.watchList, client.actor === null ? {} : { agent: client.actor });
         refs = mine.data.map((watch) => watch.ref);
       }
       if (refs.length === 0) {

@@ -4,17 +4,22 @@ import { contracts } from "./contracts.ts";
 import type { SqlDriver } from "./db/driver.ts";
 import { migrate } from "./db/migrations.ts";
 import { reconcileDrift } from "./drift/engine.ts";
-import { OctoError } from "./errors.ts";
+import { offersFor, settle } from "./agents/claims.ts";
+import { refuseIfStopped, resolveAgent } from "./agents/identity.ts";
+import { OctoError, RefusedWrite } from "./errors.ts";
 import type { BoundOp } from "./ops/bind.ts";
 import { decisionOps } from "./ops/decisions.ts";
 import { ideaOps } from "./ops/ideas.ts";
 import { issueOps } from "./ops/issues.ts";
+import { claimOps } from "./ops/claims.ts";
+import { lineOps } from "./ops/lines.ts";
 import { linkOps } from "./ops/links.ts";
 import { miscOps, seedViews } from "./ops/misc.ts";
 import { prOps } from "./ops/prs.ts";
 import { projectOps } from "./ops/projects.ts";
-import type { Channel, Drift, FeedEvent } from "./schemas.ts";
-import { currentCursor } from "./store/common.ts";
+import type { Channel, Drift, FeedEvent, Notice } from "./schemas.ts";
+import { takeNotices } from "./store/agents.ts";
+import { countOf, currentCursor, emit } from "./store/common.ts";
 import type { Ctx } from "./store/context.ts";
 import { rows } from "./store/context.ts";
 import { EventRow } from "./store/rows.ts";
@@ -23,12 +28,29 @@ import { expireAbandonedWatches } from "./watch/engine.ts";
 export interface Caller {
   actor: string;
   channel: Channel;
+  /** The developer: the dashboard always is; the CLI only with --me. */
+  developer?: boolean;
+  /** The developer's own words an agent quotes to make one of the developer's operations for them. */
+  said?: string;
+  /** The folder the agent works in, sent by the CLI. One name is one session in one checkout. */
+  checkout?: string;
+  /** No name was given: the call is the one agent using its checkout, if there is exactly one. */
+  anonymous?: boolean;
+  /** Octotrack itself or GitHub sync, to which no agent rule applies. */
+  system?: boolean;
+}
+
+export interface TrackerOptions {
+  /** The GitHub repo (owner/name) a checkout's remote points at, read outside core because it needs git. */
+  remoteOf?: (checkout: string) => string | null;
 }
 
 export interface OpOutcome {
   data: unknown;
   driftOpened: Drift[];
   cursor: number;
+  /** What the calling agent must hear: its undelivered notices, then lines it could take that need an owner. */
+  notices: Notice[];
 }
 
 /**
@@ -45,6 +67,7 @@ const NO_RECONCILE: ReadonlySet<string> = new Set([
   "view.save",
   "view.remove",
   "agent.note",
+  "agent.register",
 ]);
 /**
  * Every write notifies, unless it is listed here. It is this way around so that a new operation cannot silently fail to
@@ -55,7 +78,19 @@ const POLLS: ReadonlySet<string> = new Set(["watch.check"]);
 
 const AGENT_TOUCH_INTERVAL_MS = 30_000;
 
+/**
+ * Whether the third write in an hour that a line's state forbids stops the agent, or is only recorded as "would stop".
+ * Off for now: risky automation runs watching first (docs/DESIGN.md, D13).
+ */
+const AUTO_STOP_ACTS = false;
+const AUTO_STOP_AFTER = 3;
+const HOUR_MS = 60 * 60 * 1000;
+
+const SYSTEM: Caller = { actor: "octotrack", channel: "cli", system: true };
+
 const ALL_OPS: readonly BoundOp[] = [
+  ...lineOps,
+  ...claimOps,
   ...projectOps,
   ...issueOps,
   ...decisionOps,
@@ -106,21 +141,27 @@ function substitute(value: unknown, aliases: ReadonlyMap<string, unknown>): unkn
 export class Tracker {
   private readonly ops = new Map<string, BoundOp>(ALL_OPS.map((op) => [op.name, op]));
   private readonly listeners = new Set<ChangeListener>();
-  private readonly agentTouchedAt = new Map<string, number>();
+  /** When each agent was last recorded as seen, and from which checkout, so that a new checkout is recorded at once. */
+  private readonly agentTouchedAt = new Map<string, { at: number; checkout: string | undefined }>();
 
   constructor(
     private readonly sql: SqlDriver,
     private readonly clock: () => string = () => new Date().toISOString(),
+    private readonly options: TrackerOptions = {},
   ) {
     migrate(sql);
-    sql.transaction(() => seedViews(this.ctx({ actor: "octotrack", channel: "cli" })));
+    sql.transaction(() => seedViews(this.ctx(SYSTEM)));
   }
 
   private ctx(caller: Caller): Ctx {
+    const said = caller.said === undefined || caller.said.trim() === "" ? null : caller.said.trim();
     return {
       sql: this.sql,
       actor: caller.actor,
-      channel: caller.channel,
+      channel: said === null ? caller.channel : "out_of_band",
+      developer: caller.system !== true && (caller.developer === true || caller.channel === "dashboard"),
+      said,
+      system: caller.system === true,
       now: this.clock(),
       openedDrift: [],
       visibleChange: false,
@@ -139,11 +180,11 @@ export class Tracker {
   }
 
   cursor(): number {
-    return currentCursor(this.ctx({ actor: "octotrack", channel: "cli" }));
+    return currentCursor(this.ctx(SYSTEM));
   }
 
   eventsSince(seq: number, limit = 500): FeedEvent[] {
-    const ctx = this.ctx({ actor: "octotrack", channel: "cli" });
+    const ctx = this.ctx(SYSTEM);
     return rows(ctx, EventRow, "SELECT * FROM events WHERE seq > ? ORDER BY seq ASC LIMIT ?", [seq, limit]);
   }
 
@@ -151,22 +192,114 @@ export class Tracker {
     for (const listener of this.listeners) listener(events);
   }
 
+  /** The repo key a checkout serves, from its remote. Projects with no GitHub repo are named when registering. */
+  private repoFor(ctx: Ctx, checkout: string | undefined): string | null {
+    const slug = checkout === undefined ? null : (this.options.remoteOf?.(checkout) ?? null);
+    if (slug === null) return null;
+    const [project] = ctx.sql.all("SELECT ref FROM projects WHERE lower(repo) = lower(?)", [slug]);
+    return typeof project === "object" &&
+      project !== null &&
+      "ref" in project &&
+      typeof project.ref === "string"
+      ? project.ref
+      : null;
+  }
+
   /**
-   * Runs before an operation's transaction, never inside it: if the operation failed and rolled back, the throttle below
-   * would still believe the agent was recorded, and calls that need the row would fail until it expired.
+   * Records an agent as seen, registering it on first sight with its checkout and the repo that checkout serves. Runs
+   * before an operation's transaction, never inside it: if the operation failed and rolled back, the throttle below would
+   * still believe the agent was recorded, and calls that need the row would fail until it expired.
    */
-  private touchAgent(ctx: Ctx): void {
-    if (ctx.channel === "dashboard") return;
+  private touchAgent(ctx: Ctx, caller: Caller): void {
+    if (ctx.developer || ctx.system || caller.anonymous === true) return;
     const nowMs = Date.parse(ctx.now);
     const previous = this.agentTouchedAt.get(ctx.actor);
-    if (previous !== undefined && nowMs - previous < AGENT_TOUCH_INTERVAL_MS) return;
-    this.agentTouchedAt.set(ctx.actor, nowMs);
+    if (
+      previous !== undefined &&
+      previous.checkout === caller.checkout &&
+      nowMs - previous.at < AGENT_TOUCH_INTERVAL_MS
+    ) {
+      return;
+    }
+    this.agentTouchedAt.set(ctx.actor, { at: nowMs, checkout: caller.checkout });
     ctx.sql.run(
-      `INSERT INTO agents (name, firstSeenAt, lastSeenAt) VALUES (?, ?, ?)
-       ON CONFLICT(name) DO UPDATE SET lastSeenAt = excluded.lastSeenAt`,
-      [ctx.actor, ctx.now, ctx.now],
+      `INSERT INTO agents (name, firstSeenAt, lastSeenAt, checkout, repo) VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(name) DO UPDATE SET
+         lastSeenAt = excluded.lastSeenAt,
+         checkout = CASE WHEN agents.goneAt IS NOT NULL THEN excluded.checkout ELSE COALESCE(agents.checkout, excluded.checkout) END,
+         repo = COALESCE(agents.repo, excluded.repo),
+         goneAt = NULL`,
+      [ctx.actor, ctx.now, ctx.now, caller.checkout ?? null, this.repoFor(ctx, caller.checkout)],
     );
     if (previous === undefined) this.notify([]);
+  }
+
+  /** Runs whatever deadline has passed, as Octotrack itself, before anything else is answered. */
+  private settleDeadlines(): void {
+    const ctx = this.ctx(SYSTEM);
+    const before = currentCursor(ctx);
+    this.sql.transaction(() => settle(ctx));
+    const events = this.eventsSince(before);
+    if (events.length > 0) this.notify(events);
+  }
+
+  /** Works out which agent is calling, and refuses what it may not do whoever it is. */
+  private identify(caller: Caller, writes: boolean): Caller {
+    if (caller.system === true || caller.developer === true || caller.channel === "dashboard") return caller;
+    const ctx = this.ctx(caller);
+    const name = resolveAgent(ctx, caller.actor, caller.anonymous === true, caller.checkout ?? null, writes);
+    if (name === null) return caller;
+    if (writes) refuseIfStopped(ctx, name);
+    return { ...caller, actor: name, anonymous: false };
+  }
+
+  private deliver(ctx: Ctx, caller: Caller): Notice[] {
+    if (ctx.developer || ctx.system || caller.anonymous === true) return [];
+    return this.sql.transaction(() => [...takeNotices(ctx, ctx.actor), ...offersFor(ctx, ctx.actor)]);
+  }
+
+  /**
+   * Logs a write the line's state refused, outside the refused write's own transaction, which has rolled back. On the
+   * third counted refusal in an hour Octotrack would stop the agent; for now it only says so.
+   */
+  private recordRefusal(ctx: Ctx, op: string, refusal: RefusedWrite): void {
+    const before = currentCursor(ctx);
+    this.sql.transaction(() => {
+      emit(ctx, {
+        type: "write.refused",
+        kind: "agent",
+        ref: ctx.actor,
+        project: null,
+        line: refusal.line,
+        summary: `${ctx.actor} was refused ${op} on ${refusal.line}: ${refusal.message}`,
+        attrs: { op, counted: refusal.counted ? "yes" : "no" },
+      });
+      if (!refusal.counted) return;
+      const counted = countOf(
+        ctx,
+        `SELECT COUNT(*) AS n FROM events WHERE type = 'write.refused' AND actor = ? AND ts >= ?
+           AND json_extract(attrs, '$.counted') = 'yes'`,
+        [ctx.actor, new Date(Date.parse(ctx.now) - HOUR_MS).toISOString()],
+      );
+      if (counted !== AUTO_STOP_AFTER) return;
+      if (AUTO_STOP_ACTS) {
+        ctx.sql.run("UPDATE agents SET stoppedAt = ?, stoppedReason = ? WHERE name = ?", [
+          ctx.now,
+          "a third write in an hour that a line's state forbids",
+          ctx.actor,
+        ]);
+      }
+      emit(ctx, {
+        type: AUTO_STOP_ACTS ? "agent.stopped" : "agent.would_stop",
+        kind: "agent",
+        ref: ctx.actor,
+        project: null,
+        line: refusal.line,
+        summary: `${AUTO_STOP_ACTS ? "Stopped" : "Would have stopped"} ${ctx.actor}: a third write in an hour that a line's state forbids`,
+        attrs: { op },
+      });
+    });
+    this.notify(this.eventsSince(before));
   }
 
   private requireOp(name: string): BoundOp {
@@ -177,23 +310,33 @@ export class Tracker {
     return op;
   }
 
-  execute(name: string, input: unknown, caller: Caller): OpOutcome {
+  /** Runs one operation. `deliver: false` leaves the agent's notices for a reply that will show them. */
+  execute(name: string, input: unknown, caller: Caller, options: { deliver?: boolean } = {}): OpOutcome {
     const op = this.requireOp(name);
-    const ctx = this.ctx(caller);
+    this.settleDeadlines();
+    const who = this.identify(caller, op.mutates);
+    const ctx = this.ctx(who);
+    this.touchAgent(ctx, who);
+    const deliver = () => (options.deliver === false ? [] : this.deliver(this.ctx(who), who));
     if (!op.mutates) {
-      this.touchAgent(ctx);
-      return { data: op.run(ctx, input), driftOpened: [], cursor: currentCursor(ctx) };
+      const data = op.run(ctx, input);
+      return { data, driftOpened: [], cursor: currentCursor(ctx), notices: deliver() };
     }
-    this.touchAgent(ctx);
     const before = currentCursor(ctx);
-    const data = this.sql.transaction(() => {
-      const result = op.run(ctx, input);
-      if (!NO_RECONCILE.has(name)) reconcileDrift(ctx, before);
-      return result;
-    });
+    let data: unknown;
+    try {
+      data = this.sql.transaction(() => {
+        const result = op.run(ctx, input);
+        if (!NO_RECONCILE.has(name)) reconcileDrift(ctx, before);
+        return result;
+      });
+    } catch (error) {
+      if (error instanceof RefusedWrite) this.recordRefusal(this.ctx(who), name, error);
+      throw error;
+    }
     const events = this.eventsSince(before);
     if (!POLLS.has(name) || events.length > 0 || ctx.visibleChange) this.notify(events);
-    return { data, driftOpened: ctx.openedDrift, cursor: currentCursor(ctx) };
+    return { data, driftOpened: ctx.openedDrift, cursor: currentCursor(ctx), notices: deliver() };
   }
 
   /** The typed path for server-side callers such as the sweep loop. */
@@ -202,7 +345,7 @@ export class Tracker {
     input: z.input<I>,
     caller: Caller,
   ): z.output<O> {
-    return contract.output.parse(this.execute(contract.name, input, caller).data);
+    return contract.output.parse(this.execute(contract.name, input, caller, { deliver: false }).data);
   }
 
   batch(request: BatchRequest, caller: Caller): BatchResult {
@@ -227,13 +370,18 @@ export class Tracker {
   }
 
   private batchAtomic(ops: readonly BatchOp[], caller: Caller): BatchResult {
-    const ctx = this.ctx(caller);
+    this.settleDeadlines();
+    const who = this.identify(caller, true);
+    const ctx = this.ctx(who);
     const before = currentCursor(ctx);
     const aliases = new Map<string, unknown>();
     const outputs: unknown[] = [];
-    const state: { failure: { index: number; error: ErrorBody } | null } = { failure: null };
+    const state: {
+      failure: { index: number; error: ErrorBody } | null;
+      refused: { op: string; error: RefusedWrite } | null;
+    } = { failure: null, refused: null };
     const rollback = new Error("batch rollback");
-    this.touchAgent(ctx);
+    this.touchAgent(ctx, who);
     try {
       this.sql.transaction(() => {
         for (const [index, item] of ops.entries()) {
@@ -244,6 +392,7 @@ export class Tracker {
             if (item.as !== undefined) aliases.set(item.as, output);
           } catch (error) {
             state.failure = { index, error: toErrorBody(error) };
+            if (error instanceof RefusedWrite) state.refused = { op: item.op, error };
             throw rollback;
           }
         }
@@ -253,6 +402,7 @@ export class Tracker {
       if (error !== rollback) throw error;
     }
     const failed = state.failure;
+    if (state.refused !== null) this.recordRefusal(this.ctx(who), state.refused.op, state.refused.error);
     if (failed !== null) {
       return {
         ok: false,
@@ -284,11 +434,10 @@ export class Tracker {
 
   /** Re-evaluates time-based rules and drops abandoned watches. Run periodically by the server. */
   sweep(): OpOutcome {
-    const system: Caller = { actor: "octotrack", channel: "cli" };
-    const ctx = this.ctx(system);
+    const ctx = this.ctx(SYSTEM);
     this.sql.transaction(() => expireAbandonedWatches(ctx));
     // Last, because it notifies, and the dashboard should then see the watches already gone. This is also how an agent
     // that vanished without saying goodbye stops being shown as waiting: nothing else would ever tell the page.
-    return this.execute(contracts.driftScan.name, {}, system);
+    return this.execute(contracts.driftScan.name, {}, SYSTEM);
   }
 }

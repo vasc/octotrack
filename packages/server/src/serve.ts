@@ -1,10 +1,12 @@
-import { existsSync, rmSync } from "node:fs";
-import { join, normalize } from "node:path";
+import { rmSync } from "node:fs";
+import { join } from "node:path";
 import { type Caller, contracts, Hub, Tracker } from "@octotrack/core";
 import { createApp } from "./app.ts";
+import { currentDashboard, dashboardAssets } from "./dashboard.ts";
 import { fetchRepoPrs } from "./gh.ts";
 import { loadAllowedHosts } from "./hosts.ts";
 import { allowedHostsPath, databasePath, serverStoppedPath, wakeAdaptersPath } from "./paths.ts";
+import { cachedRemoteOf } from "./remotes.ts";
 import { openSqlite } from "./sqlite.ts";
 import { createWakeDispatcher, loadWakeAdapters } from "./wake.ts";
 
@@ -14,20 +16,7 @@ const DEFAULT_PR_SYNC_SECONDS = 120;
 // Long polls hold for 25 seconds and streams ping every 15, so a connection is never idle for this long.
 const IDLE_TIMEOUT_SECONDS = 120;
 
-const GITHUB_CALLER: Caller = { actor: "github", channel: "cli" };
-
-async function serveAsset(path: string): Promise<Response | null> {
-  if (!existsSync(join(WEB_DIST, "index.html"))) return null;
-  const relative = normalize(path).replace(/^(\.\.[/\\])+/, "");
-  const candidate = join(WEB_DIST, relative);
-  if (relative.startsWith("/assets/") && candidate.startsWith(WEB_DIST) && existsSync(candidate)) {
-    // File names are content hashes, so these can be cached forever.
-    return new Response(Bun.file(candidate), {
-      headers: { "cache-control": "public, max-age=31536000, immutable" },
-    });
-  }
-  return new Response(Bun.file(join(WEB_DIST, "index.html")), { headers: { "cache-control": "no-cache" } });
-}
+const GITHUB_CALLER: Caller = { actor: "github", channel: "cli", system: true };
 
 export function prSyncSeconds(): number {
   const raw = process.env.OCTO_PR_SYNC_SECONDS;
@@ -42,7 +31,7 @@ export interface RunningServer {
 
 export function startServer(port: number, hostname = "127.0.0.1"): RunningServer {
   rmSync(serverStoppedPath(), { force: true });
-  const tracker = new Tracker(openSqlite(databasePath()));
+  const tracker = new Tracker(openSqlite(databasePath()), undefined, { remoteOf: cachedRemoteOf() });
   const hub = new Hub(tracker);
 
   let syncing = false;
@@ -87,7 +76,7 @@ export function startServer(port: number, hostname = "127.0.0.1"): RunningServer
   const app = createApp({
     tracker,
     hub,
-    assets: serveAsset,
+    assets: dashboardAssets(currentDashboard(WEB_DIST)),
     syncPrs,
     allowedHosts: loadAllowedHosts(allowedHostsPath()),
   });

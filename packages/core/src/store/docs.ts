@@ -2,7 +2,7 @@ import { type MatchEnv, matchQuery, type QueryDoc, type QueryNode } from "../que
 import { parseQuery } from "../query/parser.ts";
 import type { EntityKind, EntitySummary, FeedEvent, Issue } from "../schemas.ts";
 import { type Ctx, rows } from "./context.ts";
-import { type AnyEntity, findEntity, summarize } from "./entities.ts";
+import { type AnyEntity, allLines, findEntity, summarize } from "./entities.ts";
 import { type GraphSnapshot, loadGraph } from "./graph.ts";
 import {
   DecisionRow,
@@ -51,6 +51,7 @@ function issueFields(issue: Issue, graph: GraphSnapshot): FieldMap {
     actor: [issue.createdBy],
     label: issue.labels,
     milestone: present(issue.milestone),
+    line: present(issue.line),
     blocked: [String(graph.openBlockersOf(issue.ref).length > 0 || issue.status === "blocked")],
     ready: [String(isReady(issue, graph))],
   };
@@ -71,6 +72,16 @@ export function entityDoc(entity: AnyEntity, graph: GraphSnapshot): QueryDoc {
     },
   });
   switch (entity.kind) {
+    case "line":
+      return withKind(
+        {
+          status: [entity.value.state],
+          line: [entity.value.ref],
+          project: entity.value.repos,
+          actor: [entity.value.createdBy],
+        },
+        `${entity.value.title} ${entity.value.doneWhen} ${entity.value.headline ?? ""}`,
+      );
     case "project":
       return withKind(
         {
@@ -166,6 +177,7 @@ export function eventDoc(event: FeedEvent): QueryDoc {
     kind: [event.kind],
     ref: [event.ref, ...event.related, ...aliases(event)],
     project: present(event.project),
+    line: present(event.line),
     actor: [event.actor],
     event: [event.type],
     changed: changeKeys,
@@ -218,6 +230,7 @@ export function kindsInQuery(node: QueryNode): ReadonlySet<EntityKind> | null {
 }
 
 export const ALL_KINDS: readonly EntityKind[] = [
+  "line",
   "project",
   "issue",
   "decision",
@@ -230,6 +243,8 @@ export const ALL_KINDS: readonly EntityKind[] = [
 
 export function loadEntities(ctx: Ctx, kind: EntityKind): AnyEntity[] {
   switch (kind) {
+    case "line":
+      return allLines(ctx).map((value) => ({ kind, value }));
     case "project":
       return rows(ctx, ProjectRow, "SELECT * FROM projects").map((value) => ({ kind, value }));
     case "issue":

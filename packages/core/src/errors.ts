@@ -3,6 +3,7 @@ export type ErrorCode =
   | "invalid_query"
   | "not_found"
   | "conflict"
+  | "forbidden"
   | "version_mismatch"
   | "unknown_op"
   | "internal";
@@ -26,4 +27,20 @@ export function notFound(ref: string): OctoError {
     `Nothing found for ${ref}`,
     "Use `octo find` to search for the right ref.",
   );
+}
+
+/**
+ * A write the line's state forbids. Refused like any other error, but recorded in the log afterwards, outside the
+ * write's own transaction; `counted` refusals add up to the automatic stop.
+ */
+export class RefusedWrite extends OctoError {
+  readonly line: string;
+  readonly counted: boolean;
+
+  constructor(message: string, hint: string | null, line: string, counted: boolean) {
+    super("forbidden", message, hint);
+    this.name = "RefusedWrite";
+    this.line = line;
+    this.counted = counted;
+  }
 }

@@ -3,11 +3,15 @@ import { fireEvent, render, within } from "@testing-library/react";
 import { BatchPanelView } from "../src/components/decisions/BatchPanelView.tsx";
 import { DecisionCardView } from "../src/components/decisions/DecisionCardView.tsx";
 import { DriftItem } from "../src/components/drift/DriftItem.tsx";
+import { LinePanel } from "../src/components/entity/LinePanel.tsx";
 import { eventTone, FeedItem } from "../src/components/feed/FeedItem.tsx";
 import { FeedList } from "../src/components/feed/FeedList.tsx";
 import { FilterBar } from "../src/components/feed/FilterBar.tsx";
 import { IdeaRow } from "../src/components/ideas/IdeaRow.tsx";
 import { IssueRow } from "../src/components/issues/IssueRow.tsx";
+import { AddLineForm } from "../src/components/lines/AddLineForm.tsx";
+import { LineRow } from "../src/components/lines/LineRow.tsx";
+import { LineSection } from "../src/components/lines/LineSection.tsx";
 import { SidebarView } from "../src/components/layout/SidebarView.tsx";
 import { ProjectCardView } from "../src/components/projects/ProjectCardView.tsx";
 import { PrGlyphs } from "../src/components/prs/PrGlyphs.tsx";
@@ -28,6 +32,7 @@ import {
   event,
   issue,
   issueCard,
+  line,
   pr,
   prCard,
 } from "../src/design/fixtures.ts";
@@ -563,5 +568,150 @@ describe("small pieces", () => {
   test("RefText links refs and leaves other words alone", () => {
     const view = render(<RefText text="See D-3 and OCT-12, not UTF8 or x-1" />);
     expect(view.getAllByRole("button").map((button) => button.textContent)).toEqual(["D-3", "OCT-12"]);
+  });
+});
+
+describe("lines of work", () => {
+  const actions = () => ({ onMove: mock(() => {}), onTable: mock(() => {}), onOrder: mock(() => {}) });
+
+  test("LineRow offers only the moves its state allows", () => {
+    const working = render(<LineRow line={line()} canMoveUp={false} canMoveDown {...actions()} />);
+    expect(
+      working.getAllByRole("button").map((button) => button.getAttribute("aria-label") ?? button.textContent),
+    ).toEqual([
+      "L-1",
+      "Sendspin enclosure",
+      "Move Sendspin enclosure up",
+      "Move Sendspin enclosure down",
+      "Queue Sendspin enclosure",
+      "Done Sendspin enclosure",
+      "Table Sendspin enclosure",
+    ]);
+    expect(working.getByRole("button", { name: "Move Sendspin enclosure up" }).hasAttribute("disabled")).toBe(
+      true,
+    );
+    working.unmount();
+
+    const done = render(
+      <LineRow line={line({ state: "done" })} canMoveUp={false} canMoveDown={false} {...actions()} />,
+    );
+    expect(done.queryByRole("button", { name: /^(Start|Queue|Done|Table) / })).toBeNull();
+  });
+
+  test("LineRow says who is on the line, and when nobody could be found to own it", () => {
+    const owned = render(
+      <LineRow
+        line={line()}
+        crew={{
+          owner: { name: "panel", state: "asleep" },
+          helpers: [{ name: "panel.2", state: "running" }],
+          scoper: null,
+          search: null,
+        }}
+        canMoveUp={false}
+        canMoveDown={false}
+        {...actions()}
+      />,
+    );
+    owned.getByText("owner panel, asleep");
+    owned.getByText("+1 helper");
+    owned.unmount();
+    const empty = render(
+      <LineRow
+        line={line()}
+        crew={{ owner: null, helpers: [], scoper: null, search: { step: 3, since: "" } }}
+        canMoveUp={false}
+        canMoveDown={false}
+        {...actions()}
+      />,
+    );
+    empty.getByText("no owner: step in");
+    empty.unmount();
+    const searching = render(
+      <LineRow
+        line={line({ state: "up_next" })}
+        crew={{ owner: null, helpers: [], scoper: { name: "garden", state: "running" }, search: null }}
+        canMoveUp={false}
+        canMoveDown={false}
+        {...actions()}
+      />,
+    );
+    searching.getByText("garden is scoping it");
+  });
+
+  test("LineRow shows a proposal's advice and why, and where it came from", () => {
+    const view = render(
+      <LineRow
+        line={line({
+          state: "proposed",
+          proposedBy: "panel-widgets",
+          recommendation: "up_next",
+          recommendationWhy: "The base is final.",
+          fromRef: "I-1",
+        })}
+        canMoveUp={false}
+        canMoveDown={false}
+        {...actions()}
+      />,
+    );
+    view.getByText("panel-widgets says up next");
+    view.getByText("The base is final.");
+    view.getByText("from before (I-1)");
+    view.getByRole("button", { name: "Not a line Sendspin enclosure" });
+  });
+
+  test("tabling asks why and will not table without a reason", () => {
+    const handlers = actions();
+    const view = render(<LineRow line={line()} canMoveUp={false} canMoveDown={false} {...handlers} />);
+    fireEvent.click(view.getByRole("button", { name: "Table Sendspin enclosure" }));
+    expect(view.getByRole("button", { name: "Table it" }).hasAttribute("disabled")).toBe(true);
+    fireEvent.change(view.getByLabelText("Why table Sendspin enclosure"), { target: { value: " Waiting " } });
+    fireEvent.click(view.getByRole("button", { name: "Table it" }));
+    expect(handlers.onTable).toHaveBeenCalledWith("L-1", "Waiting");
+  });
+
+  test("LineSection is a named region in order, and is left out when empty with nothing to say", () => {
+    const view = render(
+      <LineSection
+        title="Working on"
+        lines={[line(), line({ ref: "L-2", title: "Digest" })]}
+        {...actions()}
+      />,
+    );
+    const region = within(view.getByRole("region", { name: "Working on" }));
+    expect(
+      region.getAllByRole("button", { name: /^(Sendspin enclosure|Digest)$/ }).map((b) => b.textContent),
+    ).toEqual(["Sendspin enclosure", "Digest"]);
+    view.unmount();
+    const empty = render(<LineSection title="Tabled" lines={[]} {...actions()} />);
+    expect(empty.queryByRole("region")).toBeNull();
+    empty.unmount();
+    const said = render(
+      <LineSection title="Up next" lines={[]} empty="Nothing is up next." {...actions()} />,
+    );
+    said.getByText("Nothing is up next.");
+  });
+
+  test("AddLineForm needs a title and a done-when sentence", () => {
+    const onAdd = mock(() => {});
+    const view = render(<AddLineForm onAdd={onAdd} />);
+    const add = view.getByRole("button", { name: "Add line" });
+    fireEvent.change(view.getByLabelText("New line"), { target: { value: "Garden sensor" } });
+    expect(add.hasAttribute("disabled")).toBe(true);
+    fireEvent.change(view.getByLabelText("Done when"), { target: { value: "Readings arrive hourly." } });
+    fireEvent.click(add);
+    expect(onAdd).toHaveBeenCalledWith({ title: "Garden sensor", doneWhen: "Readings arrive hourly." });
+  });
+
+  test("LinePanel says where a line stands, what finishes it, and why it waits", () => {
+    const view = render(
+      <LinePanel
+        line={line({ state: "tabled", tabledReason: "The disk is not tight", lookAgainAt: "2027-02-01" })}
+      />,
+    );
+    view.getByText("Tabled");
+    view.getByText("The disk is not tight");
+    view.getByText("2027-02-01");
+    view.getByText("A printed case holds the board and takes the USB-C plug.");
   });
 });

@@ -8,7 +8,7 @@ import { OctoClient } from "./client.ts";
 export async function seedDemo(
   base: OctoClient,
 ): Promise<{ decisions: number; issues: number; prs: number }> {
-  const as = (agent: string) => new OctoClient(base.baseUrl, agent, "", false);
+  const as = (agent: string) => new OctoClient(base.baseUrl, agent, [], false);
   const planner = as("claude-planner");
   const api = as("claude-api");
   const web = as("claude-web");

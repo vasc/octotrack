@@ -1,6 +1,13 @@
 import { writeFileSync } from "node:fs";
 import { BatchOp, contracts as c, type Counts } from "@octotrack/core";
-import { DEFAULT_PORT, serverLogPath, serverStoppedPath, serverUrl, startServer } from "@octotrack/server";
+import {
+  DEFAULT_PORT,
+  serverLogPath,
+  serverStoppedPath,
+  serverUrl,
+  startServer,
+  wakeClaude,
+} from "@octotrack/server";
 import { z } from "zod";
 import { UsageError } from "../args.ts";
 import { ConnectionError, RemoteError } from "../client.ts";
@@ -13,7 +20,13 @@ import { compact } from "./shared.ts";
 const STRING = { type: "string" } as const;
 const EXIT_UNREACHABLE = 3;
 
-const Health = z.object({ ok: z.boolean(), cursor: z.number(), pid: z.number().nullable() });
+const Health = z.object({
+  ok: z.boolean(),
+  cursor: z.number(),
+  pid: z.number().nullable(),
+  schema: z.number().optional(),
+  build: z.string().optional(),
+});
 const OpList = z.object({
   data: z.array(z.object({ name: z.string(), summary: z.string(), mutates: z.boolean() })),
 });
@@ -93,21 +106,58 @@ export const systemCommands: Command[] = [
   },
   {
     path: ["agent", "list"],
-    summary: "List agents and when they were last active",
+    summary: "Every agent: its state, repo, line and role, and its last command",
     ops: [c.agentList.name],
     async run({ client, out }) {
       const outcome = await client.call(c.agentList, {});
-      out.result(outcome, () =>
-        outcome.data.length === 0
-          ? r.dim("No agents yet.")
-          : r.table(
-              outcome.data.map((agent) => [
-                r.bold(agent.name),
-                agent.lastSeenAt.slice(0, 16),
-                agent.note ?? "",
-              ]),
-            ),
+      out.result(outcome, () => r.renderAgents(outcome.data));
+    },
+  },
+  {
+    path: ["agent", "register"],
+    summary:
+      "Say how to wake you, or that you cannot be woken, and which repo you serve if your checkout does not say",
+    options: {
+      wake: { ...STRING, description: "Your wake address, such as claude:<session-id>" },
+      "no-wake": {
+        type: "boolean",
+        description: "You cannot be woken: you hear things on your next command",
+      },
+      repo: {
+        ...STRING,
+        description: "The repo you serve, when your checkout's remote is not a tracked GitHub repo",
+      },
+    },
+    examples: ["octo agent register --wake claude:4f1c…", "octo agent register --no-wake --repo GARDEN"],
+    ops: [c.agentRegister.name],
+    async run({ client, out }, args) {
+      const wake = args.flag("no-wake") ? null : args.str("wake");
+      const outcome = await client.call(c.agentRegister, compact({ wake, repo: args.str("repo") }));
+      out.result(outcome, () => r.renderAgents([outcome.data]));
+    },
+  },
+  {
+    path: ["agent", "stop"],
+    usage: "<name>",
+    summary: "Stop an agent: its claims end and its writes are refused until lifted (the developer)",
+    options: { reason: { ...STRING, description: "Why, which the agent is told" } },
+    ops: [c.agentStop.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(
+        c.agentStop,
+        compact({ name: args.requirePositional(0, "name"), reason: args.str("reason") }),
       );
+      out.result(outcome, () => `${r.bold(outcome.data.name)} stopped.`);
+    },
+  },
+  {
+    path: ["agent", "lift"],
+    usage: "<name>",
+    summary: "Lift an agent's stop (the developer)",
+    ops: [c.agentLift.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(c.agentLift, { name: args.requirePositional(0, "name") });
+      out.result(outcome, () => `${r.bold(outcome.data.name)} may write again.`);
     },
   },
   {
@@ -217,6 +267,16 @@ export const systemCommands: Command[] = [
     },
   },
   {
+    path: ["adapter", "claude"],
+    usage: "-- <session-id> <message>",
+    summary: "Wake a Claude Code session with a message. The server's wake adapters run this",
+    examples: ['octo adapter claude -- 4f1c… "D-34 was answered: 26 mm"'],
+    ops: [],
+    async run(_ctx, args) {
+      return wakeClaude(args.positionals);
+    },
+  },
+  {
     path: ["serve"],
     summary: "Run the server in the foreground. Other commands start it on demand",
     options: { port: { ...STRING, description: `Port, default ${DEFAULT_PORT}` } },
@@ -237,7 +297,8 @@ export const systemCommands: Command[] = [
         const health = Health.parse(await client.withoutAutoStart().get("/api/health"));
         out.data(
           { ...health, up: true, url: client.baseUrl, log: serverLogPath() },
-          () => `Up at ${client.baseUrl}, pid ${health.pid ?? "?"}, cursor ${health.cursor}.`,
+          () =>
+            `Up at ${client.baseUrl}, pid ${health.pid ?? "?"}, cursor ${health.cursor}, schema ${health.schema ?? "?"}, build ${health.build ?? "?"}.`,
         );
         return 0;
       } catch (error) {

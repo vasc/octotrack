@@ -5,11 +5,14 @@ import { applyPatch, assertVersion, emit, nextNumber } from "../store/common.ts"
 import type { Ctx } from "../store/context.ts";
 import { rows } from "../store/context.ts";
 import { filterEntities } from "../store/docs.ts";
-import { requireIssue, requireMilestone, requireProject } from "../store/entities.ts";
+import { requireIssue, requireLine, requireMilestone, requireProject } from "../store/entities.ts";
 import { loadGraph } from "../store/graph.ts";
 import { IssueRow } from "../store/rows.ts";
 import { bind } from "./bind.ts";
 import { buildIssueCard } from "./cards.ts";
+import { guardLineWrite } from "../agents/claims.ts";
+import { claimOf, getAgent } from "../store/agents.ts";
+import { checkStep } from "./lines.ts";
 import { addLink } from "./links.ts";
 
 export function issueAttrs(issue: Issue): EventAttrs {
@@ -19,6 +22,7 @@ export function issueAttrs(issue: Issue): EventAttrs {
     label: issue.labels,
     ...(issue.assignee === null ? {} : { assignee: issue.assignee }),
     ...(issue.milestone === null ? {} : { milestone: issue.milestone }),
+    ...(issue.line === null ? {} : { line: issue.line }),
   };
 }
 
@@ -31,6 +35,8 @@ export interface CreateIssueInput {
   assignee?: string;
   labels?: readonly string[];
   milestone?: string;
+  line?: string;
+  step?: number;
 }
 
 export function createIssue(ctx: Ctx, input: CreateIssueInput): Issue {
@@ -42,11 +48,14 @@ export function createIssue(ctx: Ctx, input: CreateIssueInput): Issue {
       `${milestone.ref} belongs to ${milestone.project}, not ${project.ref}`,
     );
   }
+  const line = input.line === undefined ? null : requireLine(ctx, input.line).ref;
+  guardLineWrite(ctx, line, isWork(input.status, input.assignee) ? "work" : "scope");
+  checkStep(ctx, line, input.step ?? null);
   const status = input.status ?? "todo";
   const ref = `${project.ref}-${nextNumber(ctx, `issue:${project.ref}`)}`;
   ctx.sql.run(
-    `INSERT INTO issues (ref, project, title, body, status, priority, assignee, labels, milestone, version, createdAt, updatedAt, closedAt, createdBy)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)`,
+    `INSERT INTO issues (ref, project, title, body, status, priority, assignee, labels, milestone, line, step, version, createdAt, updatedAt, closedAt, createdBy)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)`,
     [
       ref,
       project.ref,
@@ -57,6 +66,8 @@ export function createIssue(ctx: Ctx, input: CreateIssueInput): Issue {
       input.assignee ?? null,
       JSON.stringify(input.labels ?? []),
       milestone?.ref ?? null,
+      line,
+      input.step ?? null,
       ctx.now,
       ctx.now,
       status === "done" || status === "cancelled" ? ctx.now : null,
@@ -69,10 +80,36 @@ export function createIssue(ctx: Ctx, input: CreateIssueInput): Issue {
     kind: "issue",
     ref,
     project: project.ref,
+    line,
     summary: `${ref} created: ${input.title}`,
     attrs: issueAttrs(issue),
   });
   return issue;
+}
+
+/** Claiming, progressing or finishing an issue is work; filing and describing it is scoping. */
+function isWork(status: IssueStatus | undefined, assignee: string | null | undefined): boolean {
+  return (
+    (status !== undefined && status !== "todo" && status !== "backlog" && status !== "blocked") ||
+    (assignee !== undefined && assignee !== null)
+  );
+}
+
+/** An agent claims issues only on the line it is on: an owner in any repo the line names, a helper in its own. */
+function requireOnLine(ctx: Ctx, issue: Issue): void {
+  if (issue.line === null || ctx.developer || ctx.system) return;
+  const claim = claimOf(ctx, ctx.actor);
+  const hint = `Take the line first: octo line take ${issue.line}`;
+  if (claim === null || claim.line !== issue.line) {
+    throw new OctoError("forbidden", `${issue.ref} is on ${issue.line}, which you are not on`, hint);
+  }
+  if (claim.role === "helper" && getAgent(ctx, ctx.actor)?.repo !== issue.project) {
+    throw new OctoError(
+      "forbidden",
+      `As a helper you claim issues in your own repo only; ${issue.ref} is in ${issue.project}`,
+      "Ask the line's owner, or take an issue in your repo.",
+    );
+  }
 }
 
 function isClosed(status: IssueStatus): boolean {
@@ -93,6 +130,7 @@ function emitIssueChange(
     kind: "issue",
     ref: updated.ref,
     project: updated.project,
+    line: updated.line,
     summary: statusChange
       ? `${updated.ref} moved to ${updated.status}: ${updated.title}`
       : `${updated.ref} updated (${fields.join(", ")}): ${updated.title}`,
@@ -126,6 +164,14 @@ export const issueOps = [
           );
         }
       }
+      const line =
+        input.line === undefined || input.line === null ? input.line : requireLine(ctx, input.line).ref;
+      const nextLine = line === undefined ? current.line : line;
+      const kind = isWork(input.status, input.assignee) ? "work" : "scope";
+      guardLineWrite(ctx, current.line, kind);
+      if (nextLine !== current.line) guardLineWrite(ctx, nextLine, kind);
+      const step = line === null ? null : input.step;
+      checkStep(ctx, nextLine, step === undefined ? current.step : step);
       const labels =
         input.addLabels === undefined && input.removeLabels === undefined
           ? undefined
@@ -151,6 +197,8 @@ export const issueOps = [
             ? input.milestone
             : input.milestone.toUpperCase(),
         closedAt,
+        line,
+        step,
       });
       const updated = requireIssue(ctx, current.ref);
       emitIssueChange(ctx, updated, changes);
@@ -172,6 +220,8 @@ export const issueOps = [
   bind(contracts.issueClaim, (ctx, input) =>
     input.refs.map((rawRef) => {
       const current = requireIssue(ctx, rawRef);
+      guardLineWrite(ctx, current.line, "work");
+      requireOnLine(ctx, current);
       if (current.assignee !== null && current.assignee !== ctx.actor && input.force !== true) {
         throw new OctoError(
           "conflict",

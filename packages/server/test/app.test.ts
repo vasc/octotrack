@@ -5,6 +5,7 @@ import {
   contracts as c,
   Hub,
   OpEnvelope,
+  SCHEMA_VERSION,
   Tracker,
   WatchWaitResponse,
 } from "@octotrack/core";
@@ -14,6 +15,7 @@ import { createApp } from "../src/app.ts";
 import { openSqlite } from "../src/sqlite.ts";
 
 const BASE = "http://127.0.0.1:4747";
+const AS_AGENT = { "x-octo-actor": "agent-a" };
 let tracker: Tracker;
 let app: Hono;
 
@@ -92,12 +94,16 @@ describe("operations over HTTP", () => {
 
   test("batches over HTTP", async () => {
     await op("project.create", { key: "OCT", name: "Octotrack" });
-    const response = await post("/api/batch", {
-      ops: [
-        { op: "issue.create", as: "i", input: { project: "OCT", title: "One" } },
-        { op: "update.post", input: { body: "Started", target: "$i.ref" } },
-      ],
-    });
+    const response = await post(
+      "/api/batch",
+      {
+        ops: [
+          { op: "issue.create", as: "i", input: { project: "OCT", title: "One" } },
+          { op: "update.post", input: { body: "Started", target: "$i.ref" } },
+        ],
+      },
+      AS_AGENT,
+    );
     const body = BatchResult.parse(await response.json());
     expect(body.ok).toBe(true);
     expect(body.results).toHaveLength(2);
@@ -147,7 +153,7 @@ describe("watch long poll", () => {
     await op("decision.ask", { title: "Q" });
     await op("decision.resolve", { ref: "D-1", note: "yes" });
     const ref = await createWatch("ref:D-1 status:decided");
-    const response = await post("/api/watch/wait", { refs: [ref], holdMs: 5000 });
+    const response = await post("/api/watch/wait", { refs: [ref], holdMs: 5000 }, AS_AGENT);
     expect(WatchWaitResponse.parse(await response.json()).fired).toBe(true);
   });
 
@@ -155,7 +161,7 @@ describe("watch long poll", () => {
     await op("decision.ask", { title: "Q" });
     const ref = await createWatch("ref:D-1 status:decided");
     const started = Date.now();
-    const pending = post("/api/watch/wait", { refs: [ref], holdMs: 5000 }).then(async (response) =>
+    const pending = post("/api/watch/wait", { refs: [ref], holdMs: 5000 }, AS_AGENT).then(async (response) =>
       WatchWaitResponse.parse(await response.json()),
     );
     await Bun.sleep(30);
@@ -168,12 +174,12 @@ describe("watch long poll", () => {
   test("gives back a not-fired response when the hold ends, for the client to poll again", async () => {
     await op("decision.ask", { title: "Q" });
     const ref = await createWatch("ref:D-1 status:decided");
-    const response = await post("/api/watch/wait", { refs: [ref], holdMs: 20 });
+    const response = await post("/api/watch/wait", { refs: [ref], holdMs: 20 }, AS_AGENT);
     expect(WatchWaitResponse.parse(await response.json()).fired).toBe(false);
   });
 
   test("errors on an unknown watch", async () => {
-    const response = await post("/api/watch/wait", { refs: ["W-99"], holdMs: 10 });
+    const response = await post("/api/watch/wait", { refs: ["W-99"], holdMs: 10 }, AS_AGENT);
     expect(response.status).toBe(404);
   });
 });
@@ -231,5 +237,66 @@ describe("static fallbacks", () => {
     const response = await app.request(`${BASE}/api/nope`);
     expect(response.status).toBe(404);
     expect(OpEnvelope.parse(await response.json()).ok).toBe(false);
+  });
+});
+
+describe("knowing which build answers", () => {
+  test("health says the schema version and the build, and every answer carries the build", async () => {
+    const built = createApp({ tracker, hub: new Hub(tracker), build: "abc123" });
+    const response = await built.request(`${BASE}/api/health`);
+    expect(response.headers.get("x-octo-build")).toBe("abc123");
+    const health = z.object({ schema: z.number(), build: z.string() }).parse(await response.json());
+    expect(health).toEqual({ schema: SCHEMA_VERSION, build: "abc123" });
+    const failed = await built.request(`${BASE}/api/ops/nothing.here`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{}",
+    });
+    expect(failed.headers.get("x-octo-build")).toBe("abc123");
+  });
+
+  test("an agent's developer operation is refused with 403, and --said lets it through", async () => {
+    await op("project.create", { key: "OCT", name: "Octotrack" });
+    const added = await post(
+      "/api/ops/line.propose",
+      { input: { title: "Wall mount", doneWhen: "It hangs.", recommendation: "start", why: "Ready." } },
+      { "x-octo-actor": "panel" },
+    );
+    expect(added.status).toBe(200);
+    const refused = await post("/api/ops/line.start", { input: { ref: "L-1" } }, { "x-octo-actor": "panel" });
+    expect(refused.status).toBe(403);
+    const relayed = await post(
+      "/api/ops/line.start",
+      { input: { ref: "L-1" } },
+      { "x-octo-actor": "panel", "x-octo-said": encodeURIComponent("yes, start it") },
+    );
+    expect(relayed.status).toBe(200);
+    const developer = await post(
+      "/api/ops/line.done",
+      { input: { ref: "L-1" } },
+      { "x-octo-developer": "1" },
+    );
+    expect(developer.status).toBe(200);
+  });
+});
+
+describe("who is calling", () => {
+  test("a write with no agent name is refused, a read with none is answered", async () => {
+    await op("project.create", { key: "OCT", name: "Octotrack" });
+    const write = await post("/api/ops/issue.create", { input: { project: "OCT", title: "Who?" } });
+    expect(write.status).toBe(400);
+    expect(await write.text()).toContain("set your agent name");
+    const read = await post("/api/ops/issue.list", { input: {} });
+    expect(read.status).toBe(200);
+  });
+
+  test("a call with no name from a checkout one agent uses is that agent, and hears its notices", async () => {
+    await op("project.create", { key: "OCT", name: "Octotrack" });
+    const checkout = { "x-octo-checkout": encodeURIComponent("/src/octotrack") };
+    await post("/api/ops/agent.note", { input: { note: "here" } }, { ...AS_AGENT, ...checkout });
+    await post("/api/ops/agent.stop", { input: { name: "agent-a" } }, { "x-octo-developer": "1" });
+    const response = await post("/api/ops/agent.list", { input: {} }, checkout);
+    const body = z.object({ notices: z.array(z.object({ kind: z.string() })) }).parse(await response.json());
+    expect(body.notices.map((notice) => notice.kind)).toEqual(["stop"]);
   });
 });

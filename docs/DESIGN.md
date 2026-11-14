@@ -252,9 +252,27 @@ Decisions made from that:
 
 - **Built in phases, each one usable on its own:** repos and lines; agents and claims; questions and the line inbox;
   tasks, places and summaries; the dashboard; the local runner; phone interruptions; then removing what it replaces.
-- **The live install stops running from the main checkout.** A compiled `octo` binary is being investigated; until it
-  works, a pinned checkout stands in. Either way a deploy is deliberate, after a backup made with SQLite's `.backup` (the
-  database runs in WAL mode, so a file copy can lose writes) and a rehearsal of the migration on a copy of the real data.
+- **The live install stops running from the main checkout: it runs one compiled `octo` binary.** The investigation
+  worked: `bun build --compile` carries the CLI, the server, SQLite, the built dashboard (embedded through generated
+  `with { type: "file" }` imports, since Bun rebundles HTML and scripts given as entry points) and the Claude wake adapter
+  (`octo adapter claude -- <session> <message>`, so no script path outside the binary). A compiled binary starts its own
+  server by running itself, not its virtual script path. Every answer carries the server's build (`x-octo-build`, a hash of
+  the sources and the dashboard) and the CLI warns once when it differs from its own. `scripts/deploy.ts` builds,
+  rehearses the migration on a copy of the real data, backs the database up with SQLite (`VACUUM INTO` from a read-only
+  connection: the database runs in WAL mode, so a file copy can lose writes), installs to `~/.octotrack/bin/octo`, points
+  the PATH link, the LaunchAgent and the wake adapter at it, restarts, and checks the new build answers;
+  `--rollback` goes back exactly one deploy and never touches the database. _Trade-off:_ a build before every deploy,
+  against a merge to main never again changing the CLI under a server still running the old code.
+- **Agents and claims, as built.** Deadlines (wind-downs, look-again dates, scoping that lapses) are settled at the start
+  of every call and by the minute sweep, so no rule waits on a timer and none needs one to be correct. An agent is
+  registered on its first command with its checkout, and its repo is read from that checkout's GitHub remote; an agent
+  whose repo has no GitHub remote names it once with `agent register --repo`. Reads with no agent name stay answered,
+  since they change nothing; writes with none are refused. Ref-shaped names are refused only for new agents, so no
+  existing one is locked out. Until the local runner exists, owner search step 2 keeps offering a line in the replies
+  of idle agents with its repo after its 30 seconds, and home shows the line as needing the developer to step in. The
+  automatic stop only records "would stop" (`agent.would_stop` in the log) until it has been watched for a week.
+- **The developer is present, never inferred.** `--me` on the CLI, or `OCTO_DEVELOPER=1` on an interactive terminal; a
+  call that names an agent, by `--agent` or `OCTO_AGENT`, is never the developer, and `--me` with one is a usage error.
 - **Migration is simple and agents clean up.** Projects become repos with the same keys, so every ref stays valid; old
   ideas and milestones become proposed lines marked "from before"; one drift per repo then asks its agents to turn the
   repo's work into real lines and to re-propose or reject what came from before.
