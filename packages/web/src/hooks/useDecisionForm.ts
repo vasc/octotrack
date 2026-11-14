@@ -1,7 +1,7 @@
 import { contracts } from "@octotrack/core/contracts";
 import type { Decision } from "@octotrack/core/schemas";
 import { useState } from "react";
-import { useOpMutation } from "./useOp.ts";
+import { useChoices } from "./useChoices.ts";
 import { useResolveDecision } from "./useResolveDecision.ts";
 
 export interface DecisionForm {
@@ -15,8 +15,10 @@ export interface DecisionForm {
   error: string | null;
   choose(key: string): void;
   chooseOwn(): void;
-  /** Pushes it to the bottom of the queue, or brings it back if it is already there. */
+  /** Later: to the bottom of its line, or back if it is already there. Waits with Undo like every choice. */
   postpone(): void;
+  /** Sends an urgent question back to its place in the line order. */
+  notUrgent(): void;
   setNote(note: string): void;
   setElsewhere(value: boolean): void;
   submit(): void;
@@ -29,7 +31,7 @@ export function useDecisionForm(decision: Decision, onPostponed?: (ref: string) 
   const [note, setNote] = useState("");
   const [elsewhere, setElsewhere] = useState(false);
   const { resolve, isPending, error } = useResolveDecision();
-  const postponement = useOpMutation(contracts.decisionPostpone);
+  const choices = useChoices();
   const trimmed = note.trim();
   const canSubmit = ownAnswer ? trimmed !== "" : chosen !== null || trimmed !== "";
 
@@ -40,7 +42,7 @@ export function useDecisionForm(decision: Decision, onPostponed?: (ref: string) 
     elsewhere,
     canSubmit,
     submitting: isPending,
-    error: (error ?? postponement.error)?.message ?? null,
+    error: error?.message ?? null,
     choose: (key) => {
       setOwnAnswer(false);
       setChosen((current) => (current === key ? null : key));
@@ -51,11 +53,15 @@ export function useDecisionForm(decision: Decision, onPostponed?: (ref: string) 
     },
     postpone: () => {
       const undo = decision.postponedAt !== null;
-      postponement.mutate(
+      choices.make(
+        contracts.decisionPostpone.name,
         { ref: decision.ref, ...(undo ? { undo } : {}) },
-        { onSuccess: () => (undo ? undefined : onPostponed?.(decision.ref)) },
+        undo ? `Brought back ${decision.ref}` : `${decision.ref} later`,
       );
+      if (!undo) onPostponed?.(decision.ref);
     },
+    notUrgent: () =>
+      choices.make(contracts.decisionNotUrgent.name, { ref: decision.ref }, `${decision.ref} is not urgent`),
     setNote,
     setElsewhere,
     submit: () => {

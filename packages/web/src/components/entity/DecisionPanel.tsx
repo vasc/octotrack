@@ -1,7 +1,8 @@
 import { contracts } from "@octotrack/core/contracts";
 import type { Decision } from "@octotrack/core/schemas";
 import { humanize } from "../../lib/format.ts";
-import { useOpMutation, useOpQuery } from "../../hooks/useOp.ts";
+import { useChoices } from "../../hooks/useChoices.ts";
+import { useOpQuery } from "../../hooks/useOp.ts";
 import { DecisionCardItem } from "../decisions/DecisionCardItem.tsx";
 import { DecisionMeta } from "../decisions/DecisionMeta.tsx";
 import { RefLink } from "../ui/RefLink.tsx";
@@ -10,14 +11,20 @@ import { Markdown } from "../ui/Markdown.tsx";
 
 function OpenDecision({ decision }: { decision: Decision }) {
   const queue = useOpQuery(contracts.decisionQueue, { query: `ref:${decision.ref}` });
-  const withdraw = useOpMutation(contracts.decisionWithdraw);
+  const choices = useChoices();
   const [card] = queue.data ?? [];
   return (
     <>
       {/* The decision being inspected is the one the keys answer. The queue stands down while this is open. */}
       {card === undefined ? null : <DecisionCardItem card={card} active />}
       <div>
-        <button type="button" className="btn" onClick={() => withdraw.mutate({ ref: decision.ref })}>
+        <button
+          type="button"
+          className="btn"
+          onClick={() =>
+            choices.make(contracts.decisionWithdraw.name, { ref: decision.ref }, `Withdrew ${decision.ref}`)
+          }
+        >
           Withdraw
         </button>
       </div>
@@ -26,7 +33,7 @@ function OpenDecision({ decision }: { decision: Decision }) {
 }
 
 function ClosedDecision({ decision }: { decision: Decision }) {
-  const reopen = useOpMutation(contracts.decisionReopen);
+  const choices = useChoices();
   const chosen = decision.options.find((option) => option.key === decision.chosenOption);
   return (
     <>
@@ -64,8 +71,19 @@ function ClosedDecision({ decision }: { decision: Decision }) {
         />
       )}
       <div>
-        <button type="button" className="btn" onClick={() => reopen.mutate({ ref: decision.ref })}>
-          Reopen
+        {/* The new answer replaces the old: if the old one was carried out, the owner reverts or adapts. */}
+        <button
+          type="button"
+          className="btn"
+          onClick={() =>
+            choices.make(
+              contracts.decisionReopen.name,
+              { ref: decision.ref },
+              `Reopened ${decision.ref} to change it`,
+            )
+          }
+        >
+          {decision.status === "decided" ? "Change answer…" : "Reopen"}
         </button>
       </div>
     </>

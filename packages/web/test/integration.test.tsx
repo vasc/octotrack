@@ -323,15 +323,16 @@ describe("the feed", () => {
     );
   });
 
-  test("postponing moves on to the next decision and leaves the postponed one last, still open", async () => {
+  test("Later moves on to the next decision and leaves the one put off last, still open", async () => {
     const first = seedDecision({ title: "Not ready", priority: "urgent" });
     seedDecision({ title: "Next in line", priority: "low" });
     const view = renderApp(<App />);
     await view.findByRole("heading", { name: "Not ready" });
 
-    fireEvent.click(view.getByRole("button", { name: "Postpone" }));
+    fireEvent.click(view.getByRole("button", { name: "Later" }));
     await view.findByRole("heading", { name: "Next in line" });
-    await view.findAllByText("postponed");
+    await answerNow(view);
+    await view.findAllByText("later");
     expect(server.act(c.decisionQueue, {}).map((card) => card.decision.title)).toEqual([
       "Next in line",
       "Not ready",
@@ -339,12 +340,13 @@ describe("the feed", () => {
     expect(server.act(c.decisionList, { query: `ref:${first.ref}` })[0]?.status).toBe("open");
   });
 
-  test("the p key postpones the card the keys are armed for", async () => {
+  test("the p key puts off the card the keys are armed for", async () => {
     seedDecision({ title: "Not ready", priority: "urgent" });
     seedDecision({ title: "Next in line", priority: "low" });
     const view = renderApp(<App />);
     await view.findByRole("heading", { name: "Not ready" });
     fireEvent.keyDown(window, { key: "p" });
+    await answerNow(view);
     await waitFor(() => expect(server.act(c.decisionQueue, {})[0]?.decision.title).toBe("Next in line"));
   });
 
@@ -354,6 +356,7 @@ describe("the feed", () => {
     const view = renderApp(<App />);
     await view.findByRole("heading", { name: "Not ready" });
     fireEvent.click(view.getByRole("button", { name: "Bring back" }));
+    await answerNow(view);
     await waitFor(() =>
       expect(server.act(c.decisionList, { query: `ref:${decision.ref}` })[0]?.postponedAt).toBeNull(),
     );
@@ -702,7 +705,7 @@ describe("the inspector", () => {
     fireEvent.click(panel.getByRole("button", { name: "Decide" }));
     await answerNow(view);
     await panel.findByText("Decided by");
-    panel.getByRole("button", { name: "Reopen" });
+    panel.getByRole("button", { name: "Change answer…" });
 
     fireEvent.change(panel.getByLabelText(`Post an update on ${decision.ref}`), {
       target: { value: "Noted" },
@@ -1094,6 +1097,63 @@ describe("lines of work", () => {
     await gone(() => view.queryByRole("article", { name: "Which board?" }));
     fireEvent.keyDown(window, { key: "k" });
     await view.findByRole("article", { name: "Which board?" });
+  });
+
+  describe("a question's own choices", () => {
+    const options = [{ key: "a", label: "Yes", description: "Go ahead." }];
+    function asked(extra: Record<string, unknown> = {}) {
+      seedLines();
+      server.act(c.agentRegister, { repo: "OCT" }, "octo.1");
+      server.act(c.lineTake, { ref: "L-1" }, "octo.1");
+      return server.act(
+        c.decisionAsk,
+        { title: "Order now?", context: "Stock.", options, ...extra },
+        "octo.1",
+      );
+    }
+
+    test("Not urgent sends an urgent question back to its line, and its agent hears it", async () => {
+      const question = asked({ urgent: "costs_money" });
+      navigate("/");
+      const view = renderApp(<App />);
+      const card = within(await view.findByRole("article", { name: "Order now?" }));
+      fireEvent.click(card.getByRole("button", { name: "Not urgent" }));
+      await answerNow(view);
+      await waitFor(() =>
+        expect(
+          server.tracker.call(c.decisionList, { query: `ref:${question.ref}` }, asDeveloper)[0]?.notUrgentAt,
+        ).not.toBeNull(),
+      );
+    });
+
+    test("Later waits with Undo like any choice", async () => {
+      const question = asked();
+      navigate("/");
+      const view = renderApp(<App />);
+      const card = within(await view.findByRole("article", { name: "Order now?" }));
+      fireEvent.click(card.getByRole("button", { name: "Later" }));
+      await answerNow(view);
+      await waitFor(() =>
+        expect(
+          server.tracker.call(c.decisionList, { query: `ref:${question.ref}` }, asDeveloper)[0]?.postponedAt,
+        ).not.toBeNull(),
+      );
+    });
+
+    test("Change answer… reopens an answered question, from its panel", async () => {
+      const question = asked();
+      server.tracker.call(c.decisionResolve, { ref: question.ref, option: "a" }, asDeveloper);
+      navigate(`/?ref=${question.ref}`);
+      const view = renderApp(<App />);
+      const panel = within(await view.findByRole("complementary", { name: question.ref }));
+      fireEvent.click(await panel.findByRole("button", { name: "Change answer…" }));
+      await answerNow(view);
+      await waitFor(() =>
+        expect(
+          server.tracker.call(c.decisionList, { query: `ref:${question.ref}` }, asDeveloper)[0]?.status,
+        ).toBe("open"),
+      );
+    });
   });
 
   describe("an agent's proposals about a working line", () => {
