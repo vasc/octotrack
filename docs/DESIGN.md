@@ -272,7 +272,9 @@ Decisions made from that:
   existing one is locked out. Owner search step 2 offers a line in the replies of idle agents with its repo for 30
   seconds before the runner may start a session for it; with no runner set up, home asks the developer to step in. The
   automatic stop only records "would stop" (`agent.would_stop` in the log) until it has been watched for a week.
-- **Questions and the line inbox, as built.** Questions keep their `decision.*` names and D- refs for now. A
+- **Questions and the line inbox, as built.** Questions keep their `decision.*` operation names and D- refs; the CLI
+  also takes D14's words, `question <word>` for every `decision` command, with `question later` for postpone and
+  `question change` for Change answer (answering again, sent as replacing the earlier answer). A
   question asked by an agent on a line belongs to that line and to the issue the agent holds there, and must stand alone
   (situation, options that say what happens, a reason for any recommendation). One from an agent on no line keeps the
   older rules and shows on home under On no line, below every line's questions, until its agent puts it on a line. Answers and Tells wait in
@@ -318,18 +320,41 @@ Decisions made from that:
   automation, the automatic Stop and the runner, first runs in a mode that only records what it would have done.
 - **Who may do what, as built after the audit.** Only the server records wakes, starts, exits and closes. Answering,
   Later, reopening and recording a question on a line are developer operations an agent may only relay with `--said`;
-  withdrawing one is for the developer, its asker or an agent on its line. Undo, drafts and turning on notifications are
-  the developer's in person, never relayed. A call that names an agent is never the developer on the server either. A
-  wake address is the narrow form, an agent names its repo only once, a repo's GitHub name is the developer's to set
-  and must be owner/name, and a clone already in place is used only if its origin is that repo. Every operation's event
-  quotes `--said` when there is one.
+  withdrawing one is for the developer, its asker or an agent on its line. A decision recorded after the fact is placed
+  like a question (the line named, the line of the issue named, or the recording agent's line), so recording one on a
+  line asks for `--said` too. Undo, drafts, turning on notifications, `seen`, the app being opened (`push.seen`) and
+  I'm at are the developer's in person, never relayed: they record what the developer has looked at and where they are,
+  which no agent witnesses, and one made on an agent's word would hide things from the developer or silence the phone.
+  A call that names an agent is never the developer on the server either, and no agent may be called `dev`,
+  `octotrack` or `github`, the names the log uses for the developer, Octotrack and pull request sync. A wake address is
+  the narrow form, an agent names its repo only once, a repo's GitHub name is the developer's to set and must be
+  owner/name, and a clone already in place is used only if its origin is that repo. Every operation's event quotes
+  `--said` when there is one, places added and removed included.
+- **Agents write only to the line they are on, as built after the second audit.** On top of what the line's state
+  allows, an agent changes something on a line only from that line (or, on a proposal, as its proposer): claiming,
+  progressing, finishing or reassigning an issue (through `issue update` and `issue create` as well as `issue claim`),
+  links either of whose ends is on a line, a line's drift, notes on its items, re-confirming its held work, and picking
+  up or reporting on its answers. A question is refined only while open, by its asker or an agent on its line, never
+  while an answer to it waits out its Undo, and must still stand alone afterwards. Things on no line keep the older
+  rules. _Trade-off:_ an agent cannot link its issue to one on another line; the developer can, or the agent tells the
+  other line's owner.
 - **Work follows the line, as built after the audit.** An agent leaving a line returns its open issues to it, noting
   who last held each, and the next holder is told. Not a line cancels the proposer's new issues and returns older work
-  to no line; Done or Drop on a line nobody holds closes its issues at once. Folding a line moves its inbox with it.
+  to no line, where the issues are recorded as not a line so the `unplaced-work` drift leaves them be until someone puts
+  them on a line again; Done or Drop on a line nobody holds closes its issues at once. Folding a line moves its inbox
+  with it, and its proposer is told it was folded, and where, or dropped, never that it was not a line.
   Held questions and tasks stay out of the developer's queue until re-confirmed. A session Octotrack started that can
   be woken keeps its line when its process exits, and only starts not yet checked in whose process still runs, or
-  agents still running, count against the cap. Every reply carries the agent's notices, batch and watch waits included, and the CLI prints each once.
-- **The rest of D14, as built.** Not yet reaches the owner through the line's inbox. `line propose --urgent` stands
+  agents still running, count against the cap. Every reply carries the agent's notices, batch and watch waits
+  included, and the CLI prints each once. Pull request and question events carry their line, so a merged pull
+  request, like a question asked or answered, makes the line's summary fall due. An agent's pull request report is
+  refused, and counted, on up-next, tabled, done and dropped lines. A pull request opened or pushed to after such a
+  line's wind-down is shown on it once (`pr.after_wind_down`, blamed on no agent and always in Not seen), unless the
+  developer owns the line; pull requests still open when a held line's wind-down ends are listed on it once
+  (`line.prs_held`). A re-confirmed question or task is in the log (`held.confirmed`).
+- **The rest of D14, as built.** The CLI takes D14's words beside the older ones: `line retry`, `summary write`,
+  `tell`, and `done-when set`, `accept` and `reject`. Not yet reaches the owner through the line's inbox. `line
+  propose --urgent` stands
   first under Proposed. `held withdraw`. I'm at lasts three hours. `seen`, and the Log's Not seen, line by line in
   order with checks and drift confirmations folded, waiting lines left out unless asked for, refused writes always in;
   a line also lists what is newer than its summary. `task add` and `note add` on the developer's own lines; tasks on a
@@ -415,6 +440,17 @@ Decisions made from that:
     reader cannot drag, and a separate Reorder mode was a second control for the same job, so the one handle does both.
   - _An agent's checkout is its own folder_ (`git rev-parse --show-toplevel`, so a linked worktree for an agent working
     in one), since one name is one session in one checkout; only the runner needs a repo's main checkout.
+  - _Not a line is attested per issue, not as a closed drift._ D6 attests a drift by its fingerprint, and the
+    `unplaced-work` drift's fingerprint is every open issue on no line in the repo, so one new loose issue would undo
+    the attestation and ask about the returned work again. _Why:_ a record per returned issue keeps exactly the turned
+    down work out, and the drift still rises for anything else.
+  - _Notes still take U- refs._ `update.post` writes a new update, as `note add` does on the developer's own lines,
+    while U- refs from before stay read only. _Why:_ notes are how agents report progress on an issue, the stale-work
+    drift reads them as activity, and the dashboard posts them; only the old status updates became summaries.
+  - _A new agent's name may hold inner spaces._ D14 sets no form for names; new ones are letters and digits of any
+    language, dots, dashes, underscores and inner spaces, from a letter or digit, at most 64, and names from before
+    keep working. _Why:_ a name reaches the developer's stop command as one argument with no shell, so only a glob
+    (`*`) or a leading dash could do harm there, while a space does none and names with spaces were already in use.
 
 ## D14. Lines of work at the centre
 
