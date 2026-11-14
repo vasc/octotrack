@@ -1431,3 +1431,8 @@ p {
   gap: var(--space-3);
   font-size: var(--text-xs);
 }
+
+.undo-choice[data-failed="true"] {
+  border-color: var(--bad);
+  background: var(--bad-soft);
+}

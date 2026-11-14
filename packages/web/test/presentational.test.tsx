@@ -958,3 +958,30 @@ describe("PushToggle", () => {
     expect(none.container.textContent).toBe("");
   });
 });
+
+describe("UndoBar when a choice failed", () => {
+  test("says why, as an alert, and offers only Dismiss", () => {
+    const onUndo = mock((_id: number) => {});
+    const view = render(
+      <UndoBar
+        pending={[
+          {
+            id: 4,
+            op: "decision.resolve",
+            summary: "Answered D-3: Redis",
+            dueAt: "",
+            state: "failed",
+            error: 'D-3 has no option "redis"',
+            createdAt: "",
+          },
+        ]}
+        onUndo={onUndo}
+        onNow={() => {}}
+      />,
+    );
+    expect(view.getByRole("alert").textContent).toContain('no option "redis"');
+    expect(view.queryByRole("button", { name: "Now" })).toBeNull();
+    fireEvent.click(view.getByRole("button", { name: "Dismiss" }));
+    expect(onUndo).toHaveBeenCalledWith(4);
+  });
+});

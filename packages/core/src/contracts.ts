@@ -281,7 +281,12 @@ export const contracts = {
     z.strictObject({ id: z.number().int() }),
     PendingChoice,
   ),
-  choiceList: read("choice.list", "Choices still waiting to take effect", Empty, z.array(PendingChoice)),
+  choiceList: read(
+    "choice.list",
+    "Choices still waiting to take effect, and any that failed until they are dismissed",
+    Empty,
+    z.array(PendingChoice),
+  ),
   draftSave: write(
     "draft.save",
     "Keep a half-written answer, note or outcome, so it can be finished later or elsewhere; empty clears it",
