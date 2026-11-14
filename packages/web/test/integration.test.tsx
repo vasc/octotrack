@@ -1099,6 +1099,96 @@ describe("lines of work", () => {
     await view.findByRole("article", { name: "Which board?" });
   });
 
+  describe("the line panel", () => {
+    function owned() {
+      seedLines();
+      server.act(c.agentRegister, { repo: "OCT" }, "octo.1");
+      server.act(c.lineTake, { ref: "L-1" }, "octo.1");
+    }
+
+    test("Tell sends the developer's words to the line's owner, and the box says who that is", async () => {
+      owned();
+      navigate("/?ref=L-1");
+      const view = renderApp(<App />);
+      const panel = within(await view.findByRole("complementary", { name: "L-1" }));
+      fireEvent.change(await panel.findByLabelText("Tell octo.1"), {
+        target: { value: "Print it in black" },
+      });
+      fireEvent.click(panel.getByRole("button", { name: "Send" }));
+      await answerNow(view);
+      await waitFor(() => {
+        const heard = server.tracker.execute(
+          c.agentList.name,
+          {},
+          { actor: "octo.1", channel: "cli" },
+        ).notices;
+        expect(heard.map((notice) => notice.body).join(" ")).toContain("Print it in black");
+      });
+    });
+
+    test("Stop is offered on the line's owner", async () => {
+      owned();
+      navigate("/?ref=L-1");
+      const view = renderApp(<App />);
+      const panel = within(await view.findByRole("complementary", { name: "L-1" }));
+      fireEvent.click(await panel.findByRole("button", { name: "Stop octo.1" }));
+      await answerNow(view);
+      await waitFor(() =>
+        expect(
+          server.tracker.call(c.agentList, {}, asDeveloper).find((agent) => agent.name === "octo.1")?.state,
+        ).toBe("stopped"),
+      );
+    });
+
+    test("tabling asks why and, if wanted, when to look again", async () => {
+      seedLines();
+      navigate("/?ref=L-1");
+      const view = renderApp(<App />);
+      const panel = within(await view.findByRole("complementary", { name: "L-1" }));
+      fireEvent.click(await panel.findByRole("button", { name: "Table…" }));
+      fireEvent.change(panel.getByLabelText("Why table Sendspin enclosure"), {
+        target: { value: "After the move" },
+      });
+      fireEvent.change(panel.getByLabelText("Look again on"), { target: { value: "2027-02-01" } });
+      fireEvent.click(panel.getByRole("button", { name: "Table it" }));
+      await answerNow(view);
+      await waitFor(() =>
+        expect(server.tracker.call(c.lineShow, { ref: "L-1" }, asDeveloper).line.lookAgainAt).toBe(
+          "2027-02-01",
+        ),
+      );
+    });
+
+    test("on a line of the developer's own, one box adds a task or a note", async () => {
+      const mine = server.tracker.call(
+        c.lineAdd,
+        { title: "Tax archive", doneWhen: "Filed.", where: "working" },
+        asDeveloper,
+      );
+      navigate(`/?ref=${mine.ref}`);
+      const view = renderApp(<App />);
+      const panel = within(await view.findByRole("complementary", { name: mine.ref }));
+      const box = await panel.findByLabelText(`Add to ${mine.ref}`);
+      fireEvent.change(box, { target: { value: "Scan the receipts" } });
+      fireEvent.click(panel.getByRole("button", { name: "Add as a task" }));
+      await answerNow(view);
+      await waitFor(() =>
+        expect(
+          server.tracker.call(c.homeShow, {}, asDeveloper).lines[mine.ref]?.forYou.map((item) => item.kind),
+        ).toEqual(["task"]),
+      );
+    });
+
+    test("opening a line marks it seen", async () => {
+      seedLines();
+      navigate("/?ref=L-1");
+      renderApp(<App />);
+      await waitFor(() =>
+        expect(server.tracker.call(c.lineShow, { ref: "L-1" }, asDeveloper).line.seenAt).not.toBeNull(),
+      );
+    });
+  });
+
   describe("a question's own choices", () => {
     const options = [{ key: "a", label: "Yes", description: "Go ahead." }];
     function asked(extra: Record<string, unknown> = {}) {

@@ -9,7 +9,7 @@ export interface StepInProps {
   /** A start keeps failing or never took the line: Try now starts one again. */
   onRetry?: (ref: string) => void;
   onOwn(ref: string): void;
-  onTable(ref: string, reason: string): void;
+  onTable(ref: string, reason: string, lookAgainAt: string | null): void;
 }
 
 /** A working line no agent could be found for: what happened, and what the developer can do about it. */
@@ -23,8 +23,8 @@ export function StepIn({ line, reason, onRetry, onOwn, onTable }: StepInProps) {
       {tabling ? (
         <TableForm
           title={line.title}
-          onTable={(why) => {
-            onTable(line.ref, why);
+          onTable={(why, lookAgainAt) => {
+            onTable(line.ref, why, lookAgainAt);
             setTabling(false);
           }}
           onCancel={() => setTabling(false)}

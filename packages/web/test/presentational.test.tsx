@@ -26,6 +26,8 @@ import { FeedList } from "../src/components/feed/FeedList.tsx";
 import { FilterBar } from "../src/components/feed/FilterBar.tsx";
 import { IssueRow } from "../src/components/issues/IssueRow.tsx";
 import { LineActions } from "../src/components/entity/LineActions.tsx";
+import { OwnWorkBox } from "../src/components/entity/OwnWorkBox.tsx";
+import { TellBox } from "../src/components/entity/TellBox.tsx";
 import { AddLineForm } from "../src/components/lines/AddLineForm.tsx";
 import { TableForm } from "../src/components/lines/TableForm.tsx";
 import { SidebarView } from "../src/components/layout/SidebarView.tsx";
@@ -682,7 +684,7 @@ describe("lines of work", () => {
     fireEvent.click(view.getByRole("button", { name: "Table it…" }));
     fireEvent.change(view.getByLabelText("Why table Sendspin enclosure"), { target: { value: "Later" } });
     fireEvent.click(view.getByRole("button", { name: "Table it" }));
-    expect(onTable).toHaveBeenCalledWith("L-1", "Later");
+    expect(onTable).toHaveBeenCalledWith("L-1", "Later", null);
   });
 
   test("UpNextRow says what it holds and how far scoping got, and starts", () => {
@@ -1022,14 +1024,14 @@ describe("UndoBar when a choice failed", () => {
 
 describe("tabling and a line's own choices", () => {
   test("TableForm will not table without a reason, and sends it trimmed", () => {
-    const onTable = mock((_reason: string) => {});
+    const onTable = mock((_reason: string, _lookAgainAt: string | null) => {});
     const onCancel = mock(() => {});
     const view = render(<TableForm title="Trip" onTable={onTable} onCancel={onCancel} />);
     const table = view.getByRole("button", { name: "Table it" });
     expect(table.hasAttribute("disabled")).toBe(true);
     fireEvent.change(view.getByLabelText("Why table Trip"), { target: { value: "  After the move  " } });
     fireEvent.click(table);
-    expect(onTable).toHaveBeenCalledWith("After the move");
+    expect(onTable).toHaveBeenCalledWith("After the move", null);
     fireEvent.click(view.getByRole("button", { name: "Cancel" }));
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
@@ -1140,5 +1142,45 @@ describe("a question's own choices", () => {
     );
     fireEvent.click(urgent.getByRole("button", { name: "Not urgent" }));
     expect(notUrgent).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("saying something to a line", () => {
+  test("TellBox names who it reaches, and sends nothing typed as a nudge", () => {
+    const onSend = mock((_words: string) => {});
+    const nobody = render(<TellBox line="L-1" to={null} words="" onWords={() => {}} onSend={onSend} />);
+    nobody.getByLabelText("Tell whoever takes L-1");
+    fireEvent.click(nobody.getByRole("button", { name: "Nudge" }));
+    expect(onSend).toHaveBeenCalledWith("");
+    nobody.unmount();
+    const owner = render(
+      <TellBox line="L-1" to="octo.1" words=" Black " onWords={() => {}} onSend={onSend} />,
+    );
+    fireEvent.click(owner.getByRole("button", { name: "Send" }));
+    expect(onSend).toHaveBeenCalledWith("Black");
+  });
+
+  test("OwnWorkBox adds what is typed as a task or a note, and nothing when empty", () => {
+    const onTask = mock((_title: string) => {});
+    const onNote = mock((_body: string) => {});
+    const empty = render(
+      <OwnWorkBox line="L-2" words="" onWords={() => {}} onTask={onTask} onNote={onNote} />,
+    );
+    expect(empty.getByRole("button", { name: "Add as a task" }).hasAttribute("disabled")).toBe(true);
+    empty.unmount();
+    const typed = render(
+      <OwnWorkBox line="L-2" words="Scan receipts" onWords={() => {}} onTask={onTask} onNote={onNote} />,
+    );
+    fireEvent.click(typed.getByRole("button", { name: "Add as a note" }));
+    expect(onNote).toHaveBeenCalledWith("Scan receipts");
+  });
+
+  test("TableForm sends a look-again date when one is given", () => {
+    const onTable = mock((_reason: string, _lookAgainAt: string | null) => {});
+    const view = render(<TableForm title="Trip" onTable={onTable} onCancel={() => {}} />);
+    fireEvent.change(view.getByLabelText("Why table Trip"), { target: { value: "Winter" } });
+    fireEvent.change(view.getByLabelText("Look again on"), { target: { value: "2027-03-01" } });
+    fireEvent.click(view.getByRole("button", { name: "Table it" }));
+    expect(onTable).toHaveBeenCalledWith("Winter", "2027-03-01");
   });
 });

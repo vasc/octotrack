@@ -11,7 +11,7 @@ export interface ProposalCardProps {
   foldTargets: readonly Line[];
   onStart(ref: string): void;
   onQueue(ref: string): void;
-  onTable(ref: string, reason: string): void;
+  onTable(ref: string, reason: string, lookAgainAt: string | null): void;
   onFold(ref: string, into: string): void;
   onReject(ref: string): void;
   /** For a tabled line back to look at: it was a line, so it is dropped, not rejected. */
@@ -64,8 +64,8 @@ export function ProposalCard({
       {mode === "table" ? (
         <TableForm
           title={line.title}
-          onTable={(reason) => {
-            onTable(line.ref, reason);
+          onTable={(reason, lookAgainAt) => {
+            onTable(line.ref, reason, lookAgainAt);
             setMode(null);
           }}
           onCancel={() => setMode(null)}
