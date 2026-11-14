@@ -149,6 +149,7 @@ export const decisionCommands: Command[] = [
     options: {
       ...decisionFields,
       title: { ...STRING, description: "New title" },
+      why: { ...STRING, description: "Why you recommend what you do. Required with --recommend on a line" },
       "no-project": { type: "boolean", description: "Detach from its project" },
       "if-version": { ...STRING, description: "Only if still at this version" },
     },
@@ -165,6 +166,7 @@ export const decisionCommands: Command[] = [
           project: args.flag("no-project") ? null : args.str("project"),
           options: optionsFrom(args),
           recommendation: args.str("recommend"),
+          why: args.str("why"),
           dueAt: args.str("due"),
           ifVersion: args.int("if-version"),
         }),

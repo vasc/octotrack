@@ -699,6 +699,8 @@ export const contracts = {
       project: z.string().nullable().optional(),
       options: z.array(OptionInput).optional(),
       recommendation: z.string().nullable().optional(),
+      /** Why the recommendation: a question on a line needs one. */
+      why: Text.optional(),
       dueAt: DateText.nullable().optional(),
       ifVersion: IfVersion,
     }),

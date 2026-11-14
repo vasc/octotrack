@@ -139,3 +139,66 @@ describe("an agent claims, progresses and finishes issues only on the line it is
     ).toBe("panel");
   });
 });
+
+describe("a question on a line is refined only by its asker or the agents on its line, while it is open", () => {
+  test("an agent from outside cannot rewrite it", () => {
+    const w = world();
+    const asked = w.ask();
+    const refusal = w.refused(() =>
+      w.as(w.outsider, c.decisionUpdate, {
+        ref: asked,
+        options: [{ key: "a", label: "Delete prod", description: "" }],
+      }),
+    );
+    expect(refusal.code).toBe("forbidden");
+    expect(w.as(w.dev, c.entityShow, { ref: asked }).summary.title).toBe("Which way?");
+  });
+
+  test("the asker's change must still stand alone", () => {
+    const w = world();
+    const asked = w.ask();
+    expect(w.refused(() => w.as(w.owner, c.decisionUpdate, { ref: asked, context: "" })).code).toBe(
+      "invalid_input",
+    );
+    expect(
+      w.refused(() =>
+        w.as(w.owner, c.decisionUpdate, {
+          ref: asked,
+          options: [{ key: "a", label: "Go", description: "" }],
+        }),
+      ).code,
+    ).toBe("invalid_input");
+    expect(w.as(w.owner, c.decisionUpdate, { ref: asked, title: "Which way up?" }).title).toBe(
+      "Which way up?",
+    );
+  });
+
+  test("nothing is written to it once its line is tabled", () => {
+    const w = world();
+    const asked = w.ask();
+    w.as(w.dev, c.lineTable, { ref: w.line, reason: "Waiting on the board" });
+    w.later(16);
+    expect(w.refused(() => w.as(w.owner, c.decisionUpdate, { ref: asked, title: "Changed" })).code).toBe(
+      "forbidden",
+    );
+  });
+
+  test("an answered question, or one whose answer waits with Undo, is not rewritten under it", () => {
+    const w = world();
+    const waiting = w.ask();
+    w.as(w.dev, c.choiceMake, {
+      op: c.decisionResolve.name,
+      input: { ref: waiting, option: "a" },
+      summary: "Flat",
+    });
+    expect(
+      w.refused(() => w.as(w.owner, c.decisionUpdate, { ref: waiting, options: [...OPTIONS].reverse() }))
+        .code,
+    ).toBe("conflict");
+    const answered = w.ask();
+    w.as(w.dev, c.decisionResolve, { ref: answered, option: "b" });
+    expect(w.refused(() => w.as(w.owner, c.decisionUpdate, { ref: answered, title: "Changed" })).code).toBe(
+      "conflict",
+    );
+  });
+});
