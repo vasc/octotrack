@@ -888,7 +888,8 @@ describe("everything else, through the CLI", () => {
     expect((await octo(["line", "show", launch.ref, "--text"])).stdout).toContain(issue.ref);
 
     const other = await data(WithRef, ["issue", "create", "Depends", "-p", "WEB"]);
-    await octo(["link", "add", other.ref, "depends-on", issue.ref]);
+    // The issue is on a line no agent here is on, so the developer links it.
+    await octo(["link", "add", other.ref, "depends-on", issue.ref, "--me"], "");
     const links = await data(z.array(z.object({ fromRef: z.string(), rel: z.string(), toRef: z.string() })), [
       "link",
       "list",
@@ -899,7 +900,7 @@ describe("everything else, through the CLI", () => {
     );
     const graph = await data(z.object({ nodes: z.array(WithRef) }), ["link", "graph", other.ref]);
     expect(graph.nodes.map((node) => node.ref)).toContain(pr.ref);
-    await octo(["link", "rm", other.ref, "depends-on", issue.ref]);
+    await octo(["link", "rm", other.ref, "depends-on", issue.ref, "--me"], "");
     expect(await data(z.array(WithRef), ["find", `linked:${other.ref}`])).toEqual([]);
 
     await octo(["view", "save", "Mine", "project:WEB"]);

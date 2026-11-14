@@ -23,7 +23,7 @@ import { loadGraph } from "../store/graph.ts";
 import { DecisionRow, IssueRow, WatchRow } from "../store/rows.ts";
 import { toWatch } from "../watch/engine.ts";
 import { z } from "zod";
-import { guardLineWrite, requireOnLineOf } from "../agents/claims.ts";
+import { guardLineWrite, guardOnLine, requireOnLineOf } from "../agents/claims.ts";
 import { DEVELOPER } from "../agents/state.ts";
 import { addNotice, claimOf } from "../store/agents.ts";
 import { addToInbox } from "../store/inbox.ts";
@@ -643,7 +643,9 @@ export const decisionOps = [
         ),
   ),
   bind(contracts.decisionPickup, (ctx, input) => {
-    requireAnswered(ctx, input.ref);
+    const current = requireAnswered(ctx, input.ref);
+    // An answer on a line is for the agents on it: nobody else picks it up or says what became of it.
+    guardOnLine(ctx, current.line, "scope", current.ref);
     return transition(
       ctx,
       input.ref,
@@ -655,6 +657,7 @@ export const decisionOps = [
   }),
   bind(contracts.decisionReport, (ctx, input) => {
     const current = requireAnswered(ctx, input.ref);
+    guardOnLine(ctx, current.line, "scope", current.ref);
     const verb = input.status === "done" ? "carried out" : "partly carried out";
     return transition(
       ctx,

@@ -271,3 +271,75 @@ describe("what records the developer's own attention is theirs in person; the re
     ]);
   });
 });
+
+describe("agents write only to the line they are on", () => {
+  test("links: an agent from outside can neither add nor remove them", () => {
+    const w = world();
+    w.as(w.dev, c.placeAdd, { name: "the bench" });
+    const task = w.as(w.owner, c.taskFile, {
+      title: "Measure the board",
+      place: "the bench",
+      outcome: "Its width in mm",
+      frees: w.issue,
+    });
+    const asked = w.as(w.owner, c.decisionAsk, {
+      title: "Which way?",
+      context: SITUATION,
+      options: OPTIONS,
+      waitsFor: task.ref,
+    });
+    const refusal = w.refused(() =>
+      w.as(w.outsider, c.linkRemove, { from: task.ref, rel: "blocks", to: asked.ref }),
+    );
+    expect(refusal.code).toBe("forbidden");
+    expect(w.as(w.dev, c.decisionQueue, {}).map((card) => card.decision.ref)).toEqual([]);
+    expect(
+      w.refused(() => w.as(w.outsider, c.linkAdd, { from: w.issue, rel: "relates", to: asked.ref })).code,
+    ).toBe("forbidden");
+    expect(w.as(w.owner, c.linkAdd, { from: w.issue, rel: "relates", to: asked.ref }).toRef).toBe(asked.ref);
+  });
+
+  test("drift: an agent from outside can neither take nor clear a line's drift", () => {
+    const w = world();
+    w.as(w.dev, c.issueUpdate, { refs: [w.issue], status: "in_review" });
+    const [drift] = w.as(w.dev, c.driftList, { query: "rule:in-review-without-pr" });
+    if (drift === undefined) throw new Error("expected drift");
+    expect(w.refused(() => w.as(w.outsider, c.driftClaim, { refs: [drift.ref] })).code).toBe("forbidden");
+    expect(
+      w.refused(() => w.as(w.outsider, c.driftAck, { refs: [drift.ref], mode: "verified", note: "fine" }))
+        .code,
+    ).toBe("forbidden");
+    expect(
+      w.refused(() => w.as(w.outsider, c.driftAck, { target: w.issue, mode: "verified", note: "fine" })).code,
+    ).toBe("forbidden");
+    expect(w.as(w.owner, c.driftClaim, { refs: [drift.ref] })[0]?.claimedBy).toBe("panel");
+  });
+
+  test("notes: an agent from outside cannot post on a line's issue", () => {
+    const w = world();
+    expect(w.refused(() => w.as(w.outsider, c.updatePost, { body: "Mine now", target: w.issue })).code).toBe(
+      "forbidden",
+    );
+    expect(w.as(w.owner, c.updatePost, { body: "Base modelled", target: w.issue }).target).toBe(w.issue);
+  });
+
+  test("held work: an agent from outside cannot re-confirm a line's question", () => {
+    const w = world();
+    const asked = w.ask();
+    expect(w.refused(() => w.as(w.outsider, c.heldConfirm, { refs: [asked] })).code).toBe("forbidden");
+  });
+
+  test("answers: an agent from outside cannot pick one up or say it was carried out", () => {
+    const w = world();
+    const asked = w.ask();
+    w.as(w.dev, c.decisionResolve, { ref: asked, option: "a" });
+    expect(w.refused(() => w.as(w.outsider, c.decisionPickup, { ref: asked })).code).toBe("forbidden");
+    expect(
+      w.refused(() => w.as(w.outsider, c.decisionReport, { ref: asked, status: "done", note: "Did it" }))
+        .code,
+    ).toBe("forbidden");
+    expect(
+      w.as(w.owner, c.decisionReport, { ref: asked, status: "done", note: "Laid flat" }).reportStatus,
+    ).toBe("done");
+  });
+});

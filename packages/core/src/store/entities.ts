@@ -38,6 +38,19 @@ export type AnyEntity =
   | { kind: "update"; value: StatusUpdate }
   | { kind: "drift"; value: Drift };
 
+/** The line something belongs to: a line itself, or the line an issue or a question is on. */
+export function lineOfEntity(entity: AnyEntity): string | null {
+  switch (entity.kind) {
+    case "line":
+      return entity.value.ref;
+    case "issue":
+    case "decision":
+      return entity.value.line;
+    default:
+      return null;
+  }
+}
+
 export function reposOf(ctx: Ctx, line: string): string[] {
   return rows(ctx, LineRepoRow, "SELECT line, repo FROM line_repos WHERE line = ? ORDER BY position", [
     line,
