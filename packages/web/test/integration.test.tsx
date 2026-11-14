@@ -2089,6 +2089,100 @@ describe("lines of work", () => {
     await waitFor(() => expect(server.calls).toContain("push.seen"));
   });
 
+  describe("a task or an issue opened by its ref", () => {
+    function withIssue() {
+      seedLines();
+      server.act(c.agentRegister, { repo: "OCT" }, "octo.1");
+      server.act(c.lineTake, { ref: "L-1" }, "octo.1");
+      server.tracker.call(c.placeAdd, { name: "the bench" }, asDeveloper);
+      server.act(c.planSet, { line: "L-1", steps: ["Settle the board"] }, "octo.1");
+      const issue = server.act(
+        c.issueCreate,
+        { project: "OCT", title: "Fit the board", body: "The **short** board", line: "L-1", step: 1 },
+        "octo.1",
+      );
+      server.act(c.issueClaim, { refs: [issue.ref] }, "octo.1");
+      const task = server.act(
+        c.taskFile,
+        { title: "Measure the grip", place: "the bench", outcome: "Five numbers", frees: issue.ref },
+        "octo.1",
+      );
+      return { issue, task };
+    }
+
+    test("a task says what it frees, and Done reports to whoever holds that", async () => {
+      const { issue, task } = withIssue();
+      navigate(`/?ref=${task.ref}`);
+      const view = renderApp(<App />);
+      const panel = within(await view.findByRole("complementary", { name: task.ref }));
+      const section = within(panel.getByRole("region", { name: `Task ${task.ref}` }));
+      section.getByRole("button", { name: "Sendspin enclosure" });
+      within(section.getByRole("region", { name: "What it frees" })).getByText(new RegExp(issue.ref));
+      section.getByRole("button", { name: "Can't do it" });
+      fireEvent.change(section.getByLabelText(`What ${task.ref} found`), { target: { value: "41, 38, 12" } });
+      fireEvent.click(section.getByRole("button", { name: "Done" }));
+      await answerNow(view);
+      await waitFor(() =>
+        expect(
+          server.tracker.call(c.issueList, { query: `ref:${task.ref}` }, asDeveloper)[0]?.issue.status,
+        ).toBe("done"),
+      );
+      const heard = server.tracker.execute(c.agentList.name, {}, { actor: "octo.1", channel: "cli" }).notices;
+      expect(heard.map((notice) => notice.body).join(" ")).toContain("41, 38, 12");
+    });
+
+    test("an issue shows its line and step, who holds it, its pull requests' checks, and Tell reaches its holder", async () => {
+      const { issue, task } = withIssue();
+      server.act(c.prUpsert, {
+        repo: "a/b",
+        number: 7,
+        title: "Shorter board",
+        state: "open",
+        checks: "failing",
+        issues: [issue.ref],
+      });
+      navigate(`/?ref=${issue.ref}`);
+      const view = renderApp(<App />);
+      const panel = within(await view.findByRole("complementary", { name: issue.ref }));
+      const section = within(panel.getByRole("region", { name: `Issue ${issue.ref}` }));
+      within(section.getByRole("navigation", { name: "Where this is" })).getByText(/step 1/);
+      section.getByRole("heading", { name: "Fit the board" });
+      section.getByText("held by octo.1");
+      expect(section.getAllByRole("button", { name: task.ref }).length).toBeGreaterThan(0);
+      await section.findByText(/Shorter board/);
+      section.getByText("✗ checks failing");
+
+      fireEvent.change(section.getByLabelText(`Message to octo.1, who holds ${issue.ref}`), {
+        target: { value: "Try the 40 mm one" },
+      });
+      fireEvent.click(section.getByRole("button", { name: "Tell" }));
+      await answerNow(view);
+      await waitFor(() => {
+        const heard = server.tracker.execute(
+          c.agentList.name,
+          {},
+          { actor: "octo.1", channel: "cli" },
+        ).notices;
+        expect(heard.map((notice) => notice.body).join(" ")).toContain("Try the 40 mm one");
+      });
+    });
+  });
+
+  test("an issue on a line not being worked on still says which line it is on", async () => {
+    seedLines();
+    const issue = server.tracker.call(
+      c.issueCreate,
+      { project: "OCT", title: "Pick the screws", line: "L-3" },
+      asDeveloper,
+    );
+    navigate(`/?ref=${issue.ref}`);
+    const view = renderApp(<App />);
+    const panel = within(await view.findByRole("complementary", { name: issue.ref }));
+    await within(panel.getByRole("navigation", { name: "Where this is" })).findByRole("button", {
+      name: "Wall mount",
+    });
+  });
+
   test("a line opens in the inspector with what finishes it", async () => {
     seedLines();
     navigate("/?ref=L-1");

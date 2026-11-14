@@ -1,3 +1,4 @@
+import { homeLines } from "../../lib/lines.ts";
 import { contracts } from "@octotrack/core/contracts";
 import { useChoices } from "../../hooks/useChoices.ts";
 import { useHome } from "../../hooks/useHome.ts";
@@ -17,7 +18,7 @@ export function AgentsPage() {
   const choices = useChoices();
   const h = useHome();
   const home = h.home.data;
-  const lines = home === undefined ? [] : [...home.working, ...home.upNext, ...home.tabled, ...home.proposed];
+  const lines = homeLines(home);
   function lineFacts(ref: string | null): { lineTitle?: string; waitsOnYou?: boolean } {
     const line = lines.find((candidate) => candidate.ref === ref);
     if (line === undefined || home === undefined) return {};

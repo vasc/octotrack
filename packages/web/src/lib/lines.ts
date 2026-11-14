@@ -114,3 +114,10 @@ export function heldOnTabled(home: {
   ].filter((part) => part !== null);
   return `${parts.join(" and ")} held`;
 }
+
+/** Every line home knows, in its sections' order: working, up next, proposed, tabled, done lately. */
+export function homeLines(home: HomeView | undefined): readonly Line[] {
+  return home === undefined
+    ? []
+    : [...home.working, ...home.upNext, ...home.proposed, ...home.tabled, ...home.doneLately];
+}
