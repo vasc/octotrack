@@ -8,7 +8,7 @@ import { allLines } from "../store/entities.ts";
 import { DecisionRow, IssueRow, PlanStepRow } from "../store/rows.ts";
 import { buildQueue } from "./decisions.ts";
 import { lineStart, runnerStatus, stepInFor } from "./runner.ts";
-import { atView, heldOn } from "./tasks.ts";
+import { atView, heldOn, reconfirmingOn } from "./tasks.ts";
 
 const DONE_LATELY_MS = 7 * 24 * 60 * 60 * 1000;
 /** How long an answer's status shows on its line. */
@@ -159,6 +159,7 @@ export function buildHome(ctx: Ctx): HomeView {
         questions: held.filter((item) => item.kind === "question").length,
         tasks: held.filter((item) => item.kind === "task").length,
       },
+      reconfirming: line.state === "working" || line.state === "up_next" ? reconfirmingOn(ctx, line.ref) : 0,
       scopedSteps: steps.length,
       answers: working ? answersOn(ctx, line.ref) : [],
     };

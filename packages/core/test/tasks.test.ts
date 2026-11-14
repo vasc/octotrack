@@ -161,6 +161,36 @@ describe("held work on lines not being worked on", () => {
   });
 });
 
+describe("re-confirming, on home", () => {
+  test("counts held work older than 7 days on an up-next or working line until an agent re-confirms it", () => {
+    const w = world();
+    const reconfirming = () => w.as(w.dev, c.homeShow, {}).lines[w.line]?.reconfirming;
+    w.as(w.owner, c.decisionAsk, { title: "Which board?", context: SITUATION, options: OPTIONS });
+    w.as(w.dev, c.lineQueue, { ref: w.line });
+    expect(reconfirming()).toBe(0);
+    w.later(8 * DAY);
+    w.as(w.owner, c.decisionAsk, { title: "Which plug?", context: SITUATION, options: OPTIONS });
+    expect(reconfirming()).toBe(1);
+
+    w.as(w.dev, c.lineStart, { ref: w.line });
+    expect(reconfirming()).toBe(1);
+    const owner = w.agent("garden");
+    w.as(owner, c.agentRegister, { repo: "PANEL" });
+    w.tracker.execute(c.lineTake.name, { ref: w.line }, owner);
+    const stale = w.as(w.dev, c.heldList, { line: w.line }).filter((item) => !item.current);
+    w.as(owner, c.heldConfirm, { refs: stale.map((item) => item.ref) });
+    expect(reconfirming()).toBe(0);
+  });
+
+  test("a tabled line's held work is not being re-confirmed: nobody may work on it", () => {
+    const w = world();
+    w.as(w.owner, c.decisionAsk, { title: "Which board?", context: SITUATION, options: OPTIONS });
+    w.as(w.dev, c.lineTable, { ref: w.line, reason: "Not now" });
+    w.later(8 * DAY);
+    expect(w.as(w.dev, c.homeShow, {}).lines[w.line]?.reconfirming).toBe(0);
+  });
+});
+
 describe("summaries stay true", () => {
   test("fall due an hour after significant work, as drift for the owner, and clear when rewritten", () => {
     const w = world();

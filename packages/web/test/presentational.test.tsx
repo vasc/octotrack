@@ -493,6 +493,7 @@ describe("lines of work", () => {
     stepIn: false,
     waitingOnYou: false,
     held: { questions: 0, tasks: 0 },
+    reconfirming: 0,
     scopedSteps: 0,
     answers: [],
     ...overrides,
@@ -640,6 +641,23 @@ describe("lines of work", () => {
     view.getByText(whole("Done when it hangs flush."));
     fireEvent.click(view.getByRole("button", { name: "Start Wall mount" }));
     expect(onStart).toHaveBeenCalledWith("L-1");
+  });
+
+  test("UpNextRow and LineMeta say how much held work waits to be re-confirmed, and nothing when none does", () => {
+    const row = render(
+      <UpNextRow
+        index={6}
+        line={line({ state: "up_next", title: "Wall mount" })}
+        details={details({ held: { questions: 2, tasks: 0 }, reconfirming: 2 })}
+        onStart={() => {}}
+      />,
+    );
+    row.getByText(/2 re-confirming/);
+    row.unmount();
+    const meta = render(<LineMeta details={details({ reconfirming: 1 })} />);
+    meta.getByText("1 re-confirming");
+    meta.unmount();
+    expect(render(<LineMeta details={details()} />).queryByText(/re-confirming/)).toBeNull();
   });
 
   test("ProposalCard shows the agent's case and every choice a proposal has", () => {
@@ -1697,6 +1715,7 @@ describe("answers on their line", () => {
           stepIn: false,
           waitingOnYou: false,
           held: { questions: 0, tasks: 0 },
+          reconfirming: 0,
           scopedSteps: 0,
           answers: [answer({}), answer({ ref: "D-2", answer: "USB-C", status: "carried_out" })],
         }}

@@ -761,6 +761,11 @@ export const LineHome = z.object({
   waitingOnYou: z.boolean(),
   /** On a line not being worked on: the questions and tasks it holds. */
   held: z.object({ questions: z.number().int(), tasks: z.number().int() }),
+  /**
+   * On a working or up-next line: held questions and tasks not asked or re-confirmed in the last 7 days, which wait for
+   * the agent that takes or scopes the line to re-confirm or withdraw them before they reach the developer.
+   */
+  reconfirming: z.number().int(),
   /** How many plan steps scoping has written so far. */
   scopedSteps: z.number().int(),
   /** Answers given lately, each with what became of it, one sentence each on the line. */
