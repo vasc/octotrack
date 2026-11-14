@@ -338,6 +338,7 @@ function unplacedWork(ctx: Ctx): DesiredDrift[] {
     `SELECT i.project AS project, group_concat(i.ref, ' ') AS refs
      FROM issues i JOIN projects p ON p.ref = i.project
      WHERE i.line IS NULL AND i.status NOT IN ('done', 'cancelled') AND p.status NOT IN ('done', 'archived', 'paused')
+       AND i.ref NOT IN (SELECT issue FROM not_a_line)
      GROUP BY i.project ORDER BY i.project`,
   ).map((group) => {
     const refs = group.refs.split(" ").sort();
