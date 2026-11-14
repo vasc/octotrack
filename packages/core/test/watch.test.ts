@@ -190,3 +190,15 @@ describe("watches", () => {
     expect(() => check(watch.ref)).toThrow("cancelled");
   });
 });
+
+describe("a watch is its agent's (third audit, N23)", () => {
+  test("another agent cannot cancel it; its own agent and the developer can", () => {
+    const watch = h.call(c.watchCreate, { spec: spec({ on: ["kind:issue"] }) });
+    expect(() => h.call(c.watchCancel, { refs: [watch.ref] }, "mallory")).toThrow("not yours");
+    expect(check(watch.ref).fired).toBe(false);
+    expect(h.call(c.watchList, { all: true }).find((item) => item.ref === watch.ref)?.status).toBe("active");
+    expect(h.call(c.watchCancel, { refs: [watch.ref] }).cancelled).toEqual([watch.ref]);
+    const other = h.call(c.watchCreate, { spec: spec({ on: ["kind:issue"] }) });
+    expect(h.developer(c.watchCancel, { refs: [other.ref] }).cancelled).toEqual([other.ref]);
+  });
+});
