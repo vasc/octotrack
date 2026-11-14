@@ -1,8 +1,8 @@
-import { Markdown } from "../ui/Markdown.tsx";
 import type { Line, LineCrew, LineHome } from "@octotrack/core/schemas";
 import type { ReactNode } from "react";
 import type { DragProps } from "../../hooks/useDragOrder.ts";
 import { openEntity } from "../../lib/router.ts";
+import { Markdown } from "../ui/Markdown.tsx";
 import { LineMeta } from "./LineMeta.tsx";
 
 const ANSWER_STATUS: Readonly<Record<LineHome["answers"][number]["status"], string>> = {
@@ -23,11 +23,14 @@ export interface WorkingLineProps {
   children?: ReactNode;
   /** The line itself has focus, reached with Shift J and K. */
   focused?: boolean;
-  /** In Reorder mode, how the line is dragged onto another. */
+  /** How the line is dragged onto another. */
   drag?: DragProps;
 }
 
-/** A line being worked on: its place in the order, who is on it, its headline, and what it needs from you. */
+/**
+ * A line being worked on, as a card: its handle and place in the order, its title with who is on it and its plan step,
+ * its headline, what became of its answers, and what it needs from you, indented under it.
+ */
 export function WorkingLine({
   index,
   line,
@@ -39,26 +42,39 @@ export function WorkingLine({
   drag,
 }: WorkingLineProps) {
   return (
-    <article className="home-line" aria-label={line.title} data-selected={focused} {...drag}>
-      <div className="home-line-head">
-        <span className="home-line-num">{index}</span>
-        <button type="button" className="home-line-title" onClick={() => openEntity(line.ref)}>
-          {line.title}
-        </button>
-        {reorder}
-      </div>
-      <LineMeta {...(crew === undefined ? {} : { crew })} {...(details === undefined ? {} : { details })} />
-      {line.headline === null ? null : (
-        <p className="home-headline">
-          <Markdown text={line.headline} inline />
-        </p>
-      )}
-      {(details?.answers ?? []).map((answer) => (
-        <p key={answer.ref} className="home-answer muted">
-          You answered {answer.ref}, {answer.title}: {answer.answer}. {ANSWER_STATUS[answer.status]}
-        </p>
-      ))}
-      {children}
-    </article>
+    <li className="line-card-item">
+      <article className="line-card" aria-label={line.title} data-selected={focused} {...drag}>
+        <div className="line-card-head">
+          <span className="line-handle" aria-hidden="true" title="Drag to reorder">
+            ⋮⋮
+          </span>
+          <span className="line-num">{index}</span>
+          <div className="line-card-text">
+            <h3 className="line-card-title">
+              <button type="button" className="line-link" onClick={() => openEntity(line.ref)}>
+                {line.title}
+              </button>
+            </h3>
+            {line.ownedBy === null ? null : <span className="line-facts"> · yours</span>}
+            <LineMeta
+              {...(crew === undefined ? {} : { crew })}
+              {...(details === undefined ? {} : { details })}
+            />
+            {line.headline === null ? null : (
+              <div className="line-headline">
+                <Markdown text={line.headline} inline />
+              </div>
+            )}
+          </div>
+          {reorder}
+        </div>
+        {(details?.answers ?? []).map((answer) => (
+          <p key={answer.ref} className="line-answer">
+            You answered {answer.ref}, {answer.title}: {answer.answer}. {ANSWER_STATUS[answer.status]}
+          </p>
+        ))}
+        {children}
+      </article>
+    </li>
   );
 }

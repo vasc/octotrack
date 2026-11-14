@@ -312,6 +312,9 @@ const MIGRATIONS: readonly Migration[] = [
   ALTER TABLE projects ADD COLUMN checkout TEXT;
   ALTER TABLE agents ADD COLUMN stopRanAt TEXT;
   `,
+  `
+  ALTER TABLE pending_choices ADD COLUMN draft TEXT;
+  `,
 ];
 
 const UserVersion = z.object({ user_version: z.number().int() });

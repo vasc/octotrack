@@ -14,6 +14,7 @@ export const DEFAULT_CHOICE_DELAY_MS = 5000;
 
 const ChoiceRow = PendingChoice.omit({ ref: true, line: true }).extend({
   input: z.string(),
+  draft: z.string().nullable(),
   actor: z.string(),
   channel: Channel,
   said: z.string().nullable(),
@@ -73,6 +74,8 @@ export function applyChoice(ctx: Ctx, row: ChoiceRow): PendingChoice {
     ctx.sql.transaction(() =>
       ctx.runOp(row.op, JSON.parse(row.input), { actor: row.actor, channel: row.channel, said: row.said }),
     );
+    // The words went out with it, so the box they were typed in starts empty; Undo or a failure keeps them.
+    if (row.draft !== null) ctx.sql.run("DELETE FROM drafts WHERE key = ?", [row.draft]);
   } catch (error) {
     ctx.sql.run("UPDATE pending_choices SET state = 'failed', error = ? WHERE id = ?", [
       error instanceof Error ? error.message : String(error),
@@ -98,8 +101,8 @@ export const choiceOps = [
       throw new OctoError("invalid_input", `${input.op} is not a choice that changes anything`);
     const dueAt = new Date(Date.parse(ctx.now) + (input.delayMs ?? DEFAULT_CHOICE_DELAY_MS)).toISOString();
     ctx.sql.run(
-      `INSERT INTO pending_choices (op, input, actor, channel, said, summary, dueAt, state, createdAt)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
+      `INSERT INTO pending_choices (op, input, actor, channel, said, summary, dueAt, state, createdAt, draft)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
       [
         input.op,
         JSON.stringify(input.input ?? {}),
@@ -109,6 +112,7 @@ export const choiceOps = [
         input.summary,
         dueAt,
         ctx.now,
+        input.draft ?? null,
       ],
     );
     const id = one(ctx, z.object({ id: z.number().int() }), "SELECT last_insert_rowid() AS id")?.id ?? 0;

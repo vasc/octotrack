@@ -6,6 +6,7 @@ import { lineFocusRef, refOf, stepInRef } from "../../lib/focus.ts";
 import { stepInReason } from "../../lib/lines.ts";
 import { ForYouItem } from "./ForYouItem.tsx";
 import { HomeSection } from "./HomeSection.tsx";
+import { MoreForYou } from "./MoreForYou.tsx";
 import { StepIn } from "./StepIn.tsx";
 import { WorkingLine } from "./WorkingLine.tsx";
 
@@ -29,6 +30,7 @@ export function WorkingSection({
   foldFrom,
   reorder,
   drag,
+  actions,
   onFocus,
 }: {
   home: HomeView;
@@ -39,93 +41,103 @@ export function WorkingSection({
   foldFrom: number;
   reorder(title: string, ref: string, index: number, count: number): ReactNode;
   drag(ref: string, section: string): DragProps | undefined;
+  /** What acts on the whole section: Reorder. */
+  actions: ReactNode;
   onFocus(ref: string): void;
 }) {
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   return (
-    <HomeSection title="Working on" count={home.working.length} note="your order is everyone's order">
+    <HomeSection
+      title="Working on"
+      count={home.working.length}
+      note="Your order is everyone's order"
+      actions={actions}
+      main
+    >
       {home.working.length === 0 ? <p className="muted">Nothing is being worked on.</p> : null}
-      {home.working.map((line, index) => {
-        const details = home.lines[line.ref];
-        const crew = home.crews[line.ref];
-        const forYou = details?.forYou ?? [];
-        const start = details?.start ?? null;
-        // Whether to step in is the server's rule, shared with the phone's buzz.
-        const stepIn = details?.stepIn === true ? stepInReason(line, home.runner, start) : null;
-        const failed = start?.state === "failed" || start?.state === "never_took";
-        const cloneFailed = failed && CLONE_FAILED.test(start?.output ?? "");
-        const atCap = home.runner.configured && !home.runner.dryRun && !failed;
-        const repo = line.repos[0];
-        const [first, ...rest] = forYou;
-        const open = expanded.has(line.ref) || rest.some((other) => refOf(other) === focus);
-        const folded = index >= foldFrom && !forYou.some((other) => refOf(other) === focus);
-        const item = (forYouItem: (typeof forYou)[number]) => (
-          <div
-            key={refOf(forYouItem)}
-            className="focus-wrap"
-            data-selected={refOf(forYouItem) === focus}
-            aria-current={refOf(forYouItem) === focus ? "true" : undefined}
-          >
-            <ForYouItem
-              item={forYouItem}
-              title={line.title}
-              focused={refOf(forYouItem) === focus}
-              armed={armed}
-              onOpen={onFocus}
-              onTaskDone={h.taskDone}
-              onTaskCant={h.taskCant}
-              onLineDone={h.lineDone}
-              onNotYet={h.notYet}
-              onDoneWhen={h.doneWhen}
-            />
-          </div>
-        );
-        return (
-          <WorkingLine
-            key={line.ref}
-            focused={focus === lineFocusRef(line.ref)}
-            {...withDrag(drag(line.ref, "working"))}
-            index={index + 1}
-            line={line}
-            {...(crew === undefined ? {} : { crew })}
-            {...(details === undefined ? {} : { details })}
-            reorder={reorder(line.title, line.ref, index, home.working.length)}
-          >
-            {stepIn === null ? null : (
-              <StepIn
-                line={line}
-                reason={stepIn}
-                focused={focus === stepInRef(line.ref)}
-                {...(failed && !cloneFailed ? { onRetry: h.retry } : {})}
-                {...(atCap ? { onAnyway: h.anyway } : {})}
-                {...(cloneFailed && repo !== undefined
-                  ? { checkoutRepo: repo, onCheckout: h.setCheckout }
-                  : {})}
-                onOwn={h.own}
-                onTable={h.table}
+      <ol className="line-list">
+        {home.working.map((line, index) => {
+          const details = home.lines[line.ref];
+          const crew = home.crews[line.ref];
+          const forYou = details?.forYou ?? [];
+          const start = details?.start ?? null;
+          // Whether to step in is the server's rule, shared with the phone's buzz.
+          const stepIn = details?.stepIn === true ? stepInReason(line, home.runner, start) : null;
+          const failed = start?.state === "failed" || start?.state === "never_took";
+          const cloneFailed = failed && CLONE_FAILED.test(start?.output ?? "");
+          const atCap = home.runner.configured && !home.runner.dryRun && !failed;
+          const repo = line.repos[0];
+          const [first, ...rest] = forYou;
+          const open = expanded.has(line.ref) || rest.some((other) => refOf(other) === focus);
+          const folded = index >= foldFrom && !forYou.some((other) => refOf(other) === focus);
+          const item = (forYouItem: (typeof forYou)[number]) => (
+            <div
+              key={refOf(forYouItem)}
+              className="focus-wrap"
+              data-selected={refOf(forYouItem) === focus}
+              aria-current={refOf(forYouItem) === focus ? "true" : undefined}
+            >
+              <ForYouItem
+                item={forYouItem}
+                title={line.title}
+                focused={refOf(forYouItem) === focus}
+                armed={armed}
+                onOpen={onFocus}
+                onTaskDone={h.taskDone}
+                onTaskCant={h.taskCant}
+                onLineDone={h.lineDone}
+                onNotYet={h.notYet}
+                onDoneWhen={h.doneWhen}
               />
-            )}
-            {first === undefined ? null : folded ? (
-              <button type="button" className="chip" onClick={() => onFocus(refOf(first))}>
-                {forYou.length} waiting on you
-              </button>
-            ) : (
-              <div className="home-items">{item(first)}</div>
-            )}
-            {rest.length === 0 || folded ? null : open ? (
-              <div className="home-items">{rest.map(item)}</div>
-            ) : (
-              <button
-                type="button"
-                className="chip"
-                onClick={() => setExpanded(new Set([...expanded, line.ref]))}
-              >
-                +{rest.length} more for you
-              </button>
-            )}
-          </WorkingLine>
-        );
-      })}
+            </div>
+          );
+          return (
+            <WorkingLine
+              key={line.ref}
+              focused={focus === lineFocusRef(line.ref)}
+              {...withDrag(drag(line.ref, "working"))}
+              index={index + 1}
+              line={line}
+              {...(crew === undefined ? {} : { crew })}
+              {...(details === undefined ? {} : { details })}
+              reorder={reorder(line.title, line.ref, index, home.working.length)}
+            >
+              {stepIn === null ? null : (
+                <div className="line-items">
+                  <StepIn
+                    line={line}
+                    reason={stepIn}
+                    focused={focus === stepInRef(line.ref)}
+                    {...(failed && !cloneFailed ? { onRetry: h.retry } : {})}
+                    {...(atCap ? { onAnyway: h.anyway } : {})}
+                    {...(cloneFailed && repo !== undefined
+                      ? { checkoutRepo: repo, onCheckout: h.setCheckout }
+                      : {})}
+                    onOwn={h.own}
+                    onTable={h.table}
+                  />
+                </div>
+              )}
+              {first === undefined ? null : folded ? (
+                <div className="line-items">
+                  <button type="button" className="more-link" onClick={() => onFocus(refOf(first))}>
+                    {forYou.length} waiting on you
+                  </button>
+                </div>
+              ) : (
+                <div className="line-items">
+                  {item(first)}
+                  {rest.length === 0 ? null : open ? (
+                    rest.map(item)
+                  ) : (
+                    <MoreForYou items={rest} onShow={() => setExpanded(new Set([...expanded, line.ref]))} />
+                  )}
+                </div>
+              )}
+            </WorkingLine>
+          );
+        })}
+      </ol>
     </HomeSection>
   );
 }

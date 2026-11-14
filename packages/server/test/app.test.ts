@@ -226,6 +226,36 @@ describe("bootstrap and stream", () => {
   });
 });
 
+describe("drafts on the stream", () => {
+  test("a draft save reaches other devices as a draft notice naming its key, not as a change", async () => {
+    const response = await app.request(`${BASE}/api/stream`);
+    const reader = response.body?.getReader();
+    if (reader === undefined) throw new Error("no stream");
+    const decoder = new TextDecoder();
+    let received = "";
+    const deadline = Date.now() + 2000;
+    let wrote = false;
+    while (Date.now() < deadline && !received.includes("event: draft")) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      received += decoder.decode(value);
+      if (received.includes("event: hello") && !wrote) {
+        wrote = true;
+        await post(
+          "/api/ops/draft.save",
+          { input: { key: "tell:L-1", text: "Black" } },
+          { "x-octo-developer": "1" },
+        );
+      }
+    }
+    await reader.cancel();
+    expect(received).toContain("event: draft");
+    expect(received).toContain('"key":"tell:L-1"');
+    expect(received).not.toContain("event: change");
+    expect(received).not.toContain("Black");
+  });
+});
+
 describe("static fallbacks", () => {
   test("says how to build when the dashboard is missing", async () => {
     const response = await app.request(`${BASE}/`);

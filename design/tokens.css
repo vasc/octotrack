@@ -9,46 +9,58 @@
 :root {
   color-scheme: light dark;
 
-  /* Ground: the page and what sits on it, from furthest back to nearest. */
-  --bg: light-dark(#fafaf9, #141413);
-  --surface: light-dark(#ffffff, #1c1b1a);
-  --surface-2: light-dark(#f5f5f4, #252422);
-  --line: light-dark(#e7e5e4, #2e2c2a);
-  --line-strong: light-dark(#d6d3d1, #3f3c39);
+  /* Ground: the page and what sits on it, from furthest back to nearest. Values from the E · One list boards. */
+  --bg: light-dark(#f7f7f5, #121211);
+  --surface: light-dark(#ffffff, #1b1b1a);
+  --surface-2: light-dark(#fafafa, #232322);
+  --line: light-dark(#e4e4e7, #2f2f2e);
+  --line-faint: light-dark(#f4f4f5, #262625);
+  --line-strong: light-dark(#d4d4d8, #3d3d3b);
+  /* The edge of a box you type into. */
+  --line-field: light-dark(#a1a1aa, #5a5a58);
 
   /* Ink: text, from most to least important. All three must stay readable at the smallest size. */
-  --ink: light-dark(#1c1917, #eeecea);
-  --ink-2: light-dark(#57534e, #a8a29e);
-  --ink-3: light-dark(#6e6862, #918c86);
+  --ink: light-dark(#18181b, #f2f2f0);
+  --ink-2: light-dark(#3f3f46, #c4c4c0);
+  --ink-3: light-dark(#52525b, #a3a39e);
 
-  /* Attention: means "this needs you". Nothing else may use it, or it stops meaning anything. */
-  --attention: light-dark(#b45309, #fbbf24);
-  --attention-soft: light-dark(#fef3c7, #3a2a0a);
-  --attention-line: light-dark(#f59e0b, #d97706);
+  /* Attention: means "this needs you": questions and tasks. Nothing else may use it, or it stops meaning anything. */
+  --attention: light-dark(#92400e, #fbbf24);
+  --attention-soft: light-dark(#fffbeb, #2e2309);
+  --attention-line: light-dark(#fcd34d, #8a6514);
 
   /* Status: says how a thing stands. Never the only signal: always paired with a word or a glyph. */
-  --good: light-dark(#15803d, #4ade80);
-  --good-soft: light-dark(#dcfce7, #10291a);
-  --bad: light-dark(#b91c1c, #f87171);
-  --bad-soft: light-dark(#fee2e2, #351616);
+  --good: light-dark(#166534, #4ade80);
+  --good-soft: light-dark(#f0fdf4, #10291a);
+  /* Bad is also Step in: a line no agent could be found for. */
+  --bad: light-dark(#991b1b, #f87171);
+  --bad-soft: light-dark(#fef2f2, #331616);
+  --bad-line: light-dark(#fca5a5, #7f2a2a);
   --warn: light-dark(#a16207, #facc15);
   --warn-soft: light-dark(#fef9c3, #2e2708);
-  --info: light-dark(#1d4ed8, #93c5fd);
-  --info-soft: light-dark(#dbeafe, #14233f);
+  /* Info is also what agents propose, waiting for your yes. */
+  --info: light-dark(#1e40af, #93c5fd);
+  --info-soft: light-dark(#eff6ff, #14233f);
+  --info-line: light-dark(#bfdbfe, #2c4a7a);
 
-  /* Type: system fonts, because a web font is a wait, and waiting is what this product is against. */
-  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  --text-xs: 11px;
-  --text-sm: 12px;
-  --text-md: 13px;
-  --text-lg: 14px;
-  --text-xl: 15px;
+  /* Type: Inter where it is installed, else the system's own face, because a web font is a wait. */
+  --font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-md: 14px;
+  --text-lg: 15px;
+  --text-xl: 16px;
+  --text-heading: 20px;
+  --text-title: 26px;
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
+  --weight-bold: 700;
   --leading-tight: 1.3;
-  --leading-body: 1.45;
+  --leading-body: 1.5;
+  /* Small capitals labels: SUMMARY, FOR YOU, PLAN. */
+  --label-spacing: 0.04em;
 
   /* Space: multiples of one unit. Change --space-unit to make the whole product denser or roomier. */
   --space-unit: 2px;
@@ -58,29 +70,36 @@
   --space-4: calc(var(--space-unit) * 4);
   --space-5: calc(var(--space-unit) * 5);
   --space-6: calc(var(--space-unit) * 6);
+  --space-7: calc(var(--space-unit) * 7);
   --space-8: calc(var(--space-unit) * 8);
+  --space-9: calc(var(--space-unit) * 9);
   --space-10: calc(var(--space-unit) * 10);
+  --space-11: calc(var(--space-unit) * 11);
+  --space-12: calc(var(--space-unit) * 12);
   --space-14: calc(var(--space-unit) * 14);
+  --space-16: calc(var(--space-unit) * 16);
   --space-24: calc(var(--space-unit) * 24);
+  --space-32: calc(var(--space-unit) * 32);
 
-  /* Shape */
-  --radius-sm: 2px;
-  --radius-md: 4px;
-  --radius-lg: 6px;
-  --radius-full: 50%;
+  /* Shape: buttons, items, cards and panels, from smallest to largest. */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+  --radius-2xl: 16px;
 
   /* Elevation: only for what floats over content. Everything else is separated by a line. */
   --shadow-popover: 0 6px 20px rgb(0 0 0 / 0.14);
-  --shadow-panel: -8px 0 30px rgb(0 0 0 / 0.2);
+  --shadow-panel: -12px 0 40px rgb(0 0 0 / 0.08);
+  /* The one focus on home: a dark ring, so a key never acts on another item than this. */
+  --shadow-focus: 0 0 0 2px var(--ink);
   --z-popover: 10;
   --z-panel: 20;
 
   /* Layout */
-  --sidebar-width: 208px;
-  --sidebar-width-narrow: 180px;
-  --rail-width: 340px;
-  --page-width: 860px;
-  --page-width-wide: 1100px;
+  --page-width: 1180px;
+  --page-width-narrow: 900px;
+  --panel-width: 820px;
   --touch-target: 44px;
   --text-input-touch: 16px;
 }
@@ -110,11 +129,11 @@
 /* A phone is held further away and tapped, so reading text steps up. Spacing stays, and targets grow on their own. */
 @media (pointer: coarse) {
   :root {
-    --text-xs: 12px;
-    --text-sm: 13px;
-    --text-md: 15px;
+    --text-xs: 13px;
+    --text-sm: 14px;
+    --text-md: 16px;
     --text-lg: 16px;
-    --text-xl: 17px;
+    --text-xl: 19px;
   }
 }
 

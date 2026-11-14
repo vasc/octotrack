@@ -5,13 +5,14 @@ import { BatchPanelView } from "../src/components/decisions/BatchPanelView.tsx";
 import { DecisionCardView } from "../src/components/decisions/DecisionCardView.tsx";
 import { DriftItem } from "../src/components/drift/DriftItem.tsx";
 import { AgentRosterRow } from "../src/components/agents/AgentRosterRow.tsx";
-import { LinePanel } from "../src/components/entity/LinePanel.tsx";
+import { LinePanelHead } from "../src/components/entity/LinePanelHead.tsx";
+import { OwnerBox } from "../src/components/entity/OwnerBox.tsx";
+import { PlanList } from "../src/components/entity/PlanList.tsx";
+import { SummaryBox } from "../src/components/entity/SummaryBox.tsx";
 import { FirstRun } from "../src/components/home/FirstRun.tsx";
 import { FoldedSection } from "../src/components/home/FoldedSection.tsx";
 import { ForYouRow } from "../src/components/home/ForYouRow.tsx";
-import { HomeCounts } from "../src/components/home/HomeCounts.tsx";
 import { HomeSection } from "../src/components/home/HomeSection.tsx";
-import { AtPicker } from "../src/components/home/AtPicker.tsx";
 import { LineMeta } from "../src/components/home/LineMeta.tsx";
 import { SpreadThin } from "../src/components/home/SpreadThin.tsx";
 import { StartSheetView } from "../src/components/home/StartSheetView.tsx";
@@ -33,9 +34,9 @@ import { IssueRow } from "../src/components/issues/IssueRow.tsx";
 import { LineActions } from "../src/components/entity/LineActions.tsx";
 import { OwnWorkBox } from "../src/components/entity/OwnWorkBox.tsx";
 import { TellBox } from "../src/components/entity/TellBox.tsx";
-import { AddLineForm } from "../src/components/lines/AddLineForm.tsx";
+import { type NewLine, NewLineCard } from "../src/components/lines/NewLineCard.tsx";
 import { TableForm } from "../src/components/lines/TableForm.tsx";
-import { SidebarView } from "../src/components/layout/SidebarView.tsx";
+import { TopBar } from "../src/components/layout/TopBar.tsx";
 import { UndoBar } from "../src/components/layout/UndoBar.tsx";
 import { ProjectCardView } from "../src/components/projects/ProjectCardView.tsx";
 import { PrGlyphs } from "../src/components/prs/PrGlyphs.tsx";
@@ -117,7 +118,7 @@ describe("DecisionCardView", () => {
     view.getByRole("heading", { name: "Which queue?" });
     view.getByText("We need at-least-once delivery.");
     view.getByText("2 agents waiting");
-    view.getByText("SQS");
+    view.getByText("1 · SQS");
     view.getByText("Managed");
     const redis = view.getByRole("button", { name: /Redis/ });
     within(redis).getByText("recommended");
@@ -126,54 +127,45 @@ describe("DecisionCardView", () => {
     expect(view.queryByRole("button", { name: "OCT-5" })).toBeNull();
   });
 
-  test("offers an own answer only when there are options to step outside of", () => {
-    const withOptions = render(<DecisionCardView form={form()} card={decisionCard()} />);
-    expect(withOptions.queryByRole("button", { name: /Something else/ })).not.toBeNull();
-    withOptions.unmount();
-    const without = render(
-      <DecisionCardView
-        form={form()}
-        card={decisionCard({ decision: decision({ options: [], recommendation: null }) })}
-      />,
-    );
-    expect(without.queryByRole("button", { name: /Something else/ })).toBeNull();
-  });
-
-  test("the button stays disabled until there is something to submit", () => {
-    const empty = render(<DecisionCardView form={form()} card={decisionCard()} />);
-    expect(empty.getByRole("button", { name: "Decide" }).hasAttribute("disabled")).toBe(true);
-    empty.unmount();
-    const ready = render(<DecisionCardView form={form({ canSubmit: true })} card={decisionCard()} />);
-    expect(ready.getByRole("button", { name: "Decide" }).hasAttribute("disabled")).toBe(false);
-  });
-
-  test("calls back on choosing, typing and submitting, and marks what is chosen", () => {
-    const choose = mock(() => {});
-    const setNote = mock(() => {});
-    const submit = mock(() => {});
-    const view = render(
-      <DecisionCardView
-        form={form({ choose, setNote, submit, chosen: "sqs", canSubmit: true })}
-        card={decisionCard()}
-      />,
-    );
-    expect(view.getByRole("button", { name: /SQS/ }).getAttribute("aria-pressed")).toBe("true");
+  test("one press on an option answers it; the card says when it has focus", () => {
+    const answer = mock((_key: string) => {});
+    const view = render(<DecisionCardView selected form={form({ answer })} card={decisionCard()} />);
+    view.getByText("Focused");
     fireEvent.click(view.getByRole("button", { name: /Redis/ }));
-    expect(choose).toHaveBeenCalledWith("redis");
-    fireEvent.change(view.getByLabelText("Note for D-1"), { target: { value: "Because" } });
-    expect(setNote).toHaveBeenCalledWith("Because");
-    fireEvent.click(view.getByRole("button", { name: "Decide" }));
-    expect(submit).toHaveBeenCalled();
+    expect(answer).toHaveBeenCalledWith("redis");
+    expect(view.queryByRole("button", { name: "Decide" })).toBeNull();
   });
 
-  test("without options it asks for an answer, and shows a free-text recommendation", () => {
+  test("In my own words opens a box whose words are the answer", () => {
+    const openOwn = mock(() => {});
+    const closed = render(<DecisionCardView form={form({ openOwn })} card={decisionCard()} />);
+    fireEvent.click(closed.getByRole("button", { name: "In my own words" }));
+    expect(openOwn).toHaveBeenCalledTimes(1);
+    closed.unmount();
+    const setOwn = mock((_text: string) => {});
+    const sendOwn = mock(() => {});
+    const empty = render(<DecisionCardView form={form({ ownWords: "", setOwn })} card={decisionCard()} />);
+    expect(empty.getByRole("button", { name: "Send" }).hasAttribute("disabled")).toBe(true);
+    fireEvent.change(empty.getByLabelText("Your answer to D-1"), {
+      target: { value: "Redis behind a flag" },
+    });
+    expect(setOwn).toHaveBeenCalledWith("Redis behind a flag");
+    empty.unmount();
+    const typed = render(
+      <DecisionCardView form={form({ ownWords: "Redis", sendOwn })} card={decisionCard()} />,
+    );
+    fireEvent.click(typed.getByRole("button", { name: "Send" }));
+    expect(sendOwn).toHaveBeenCalledTimes(1);
+  });
+
+  test("without options the answer is the developer's own words, and a free-text recommendation shows", () => {
     const view = render(
       <DecisionCardView
         form={form()}
         card={decisionCard({ decision: decision({ options: [], recommendation: "Do it" }) })}
       />,
     );
-    view.getByPlaceholderText("Your answer");
+    view.getByRole("button", { name: "In my own words" });
     view.getByText("Recommendation: Do it");
   });
 
@@ -449,33 +441,52 @@ describe("IssueRow", () => {
   });
 });
 
-describe("SidebarView", () => {
-  const counts = {
-    openDecisions: 4,
-    openDrift: 2,
-    openPrs: 3,
-    failingPrs: 1,
-    activeIssues: 5,
-    blockedIssues: 0,
-    waitingWatches: 1,
-    ideas: 0,
-  };
+describe("TopBar", () => {
+  const counts = [
+    { key: "toAnswer" as const, label: "to answer", count: 4, to: "D-56" },
+    { key: "toAccept" as const, label: "to accept", count: 1, to: "L-6" },
+    { key: "toStepIn" as const, label: "to step in", count: 1, to: "stepin:L-9" },
+  ];
 
-  test("shows where you are and the counts that matter", () => {
-    const view = render(<SidebarView path="/decisions" live="live" counts={counts} projects={[]} />);
-    const link = view.getByRole("link", { name: /Decisions/ });
-    expect(link.getAttribute("aria-current")).toBe("page");
-    within(link).getByText("4");
-    // Lines first; roadmap and ideas are gone, since lines replaced both.
-    expect(
-      view
-        .getAllByRole("link")
-        .map((item) => item.textContent)
-        .slice(0, 2),
-    ).toEqual(["Lines", "Log"]);
-    view.getByRole("link", { name: "Repos" });
-    expect(view.queryByRole("link", { name: "Ideas" })).toBeNull();
-    view.getByText("live");
+  test("names the three pages, marks this one, and links each count to its first item", () => {
+    const onAt = mock((_place: string | null) => {});
+    const onNewLine = mock(() => {});
+    const view = render(
+      <TopBar
+        path="/log"
+        counts={counts}
+        places={["the bench", "the Mac"]}
+        at={null}
+        onAt={onAt}
+        onNewLine={onNewLine}
+        onKeys={() => {}}
+      />,
+    );
+    const nav = within(view.getByRole("navigation", { name: "Main" }));
+    expect(nav.getAllByRole("link").map((link) => link.textContent)).toEqual(["Lines", "Log", "Agents"]);
+    expect(nav.getByRole("link", { name: "Log" }).getAttribute("aria-current")).toBe("page");
+    expect(view.getByRole("link", { name: "4 to answer" }).getAttribute("href")).toBe("/?focus=D-56");
+    expect(view.getByRole("link", { name: "1 to step in" }).getAttribute("data-count")).toBe("toStepIn");
+    fireEvent.change(view.getByRole("combobox"), { target: { value: "the Mac" } });
+    expect(onAt).toHaveBeenCalledWith("the Mac");
+    fireEvent.click(view.getByRole("button", { name: "New line" }));
+    expect(onNewLine).toHaveBeenCalledTimes(1);
+  });
+
+  test("leaves out I'm at when the developer has no places, and the counts when nothing waits", () => {
+    const view = render(
+      <TopBar
+        path="/"
+        counts={[]}
+        places={[]}
+        at={null}
+        onAt={() => {}}
+        onNewLine={() => {}}
+        onKeys={() => {}}
+      />,
+    );
+    expect(view.queryByRole("combobox")).toBeNull();
+    expect(view.queryByRole("status", { name: "Waiting on you" })).toBeNull();
   });
 });
 
@@ -574,21 +585,6 @@ describe("lines of work", () => {
     ...overrides,
   });
 
-  test("HomeCounts names what waits, leaves out what does not, marks urgent, and each goes to its first item", () => {
-    const onPick = mock((_count: string) => {});
-    const view = render(
-      <HomeCounts counts={{ toAnswer: 4, toDo: 0, toAccept: 1, toStepIn: 0, urgent: 1 }} onPick={onPick} />,
-    );
-    expect(view.getByLabelText("Waiting on you").textContent).toBe("1 urgent4 to answer1 to accept");
-    expect(view.getByText("1 urgent").getAttribute("data-urgent")).toBe("true");
-    fireEvent.click(view.getByRole("button", { name: "4 to answer" }));
-    expect(onPick).toHaveBeenCalledWith("toAnswer");
-    view.unmount();
-    render(
-      <HomeCounts counts={{ toAnswer: 0, toDo: 0, toAccept: 0, toStepIn: 0, urgent: 0 }} onPick={onPick} />,
-    ).getByText("Nothing waits on you.");
-  });
-
   test("WorkingLine shows its place, who is on it, whether it waits on you, its step and its headline", () => {
     const view = render(
       <WorkingLine
@@ -605,9 +601,9 @@ describe("lines of work", () => {
     );
     const article = within(view.getByRole("article", { name: "Sendspin enclosure" }));
     article.getByText("2");
-    article.getByText("owner panel, asleep");
-    article.getByText("waiting on you");
-    article.getByText("step 3 of 4, settle board and opening");
+    article.getByText(/owner panel, asleep/);
+    article.getByText(/waiting on you/);
+    article.getByText(/step 3 of 4, settle board and opening/);
     article.getByText("Printed; the short board fits.");
     article.getByText("child");
   });
@@ -615,18 +611,18 @@ describe("lines of work", () => {
   test("LineMeta says when nobody could be found to own a line, and who is scoping it", () => {
     const crew: LineCrew = { owner: null, helpers: [], scoper: null, search: { step: 3, since: "" } };
     const empty = render(<LineMeta crew={crew} details={details({ stepIn: true })} />);
-    empty.getByText("no owner: step in");
+    expect(empty.getByText(/no owner: step in/).getAttribute("data-tone")).toBe("bad");
     empty.unmount();
     // The search ran its course, but a start is on its way or the work waits on the developer: nothing to step in on.
     const waiting = render(<LineMeta crew={crew} details={details({ stepIn: false })} />);
-    waiting.getByText("no owner yet");
-    expect(waiting.queryByText("no owner: step in")).toBeNull();
+    waiting.getByText(/no owner yet/);
+    expect(waiting.queryByText(/no owner: step in/)).toBeNull();
     waiting.unmount();
     render(
       <LineMeta
         crew={{ owner: null, helpers: [], scoper: { name: "garden", state: "running" }, search: null }}
       />,
-    ).getByText("garden is scoping it");
+    ).getByText(/garden is scoping it/);
   });
 
   test("ForYouRow shows a question's recommendation and why, or a task's place, and opens it", () => {
@@ -656,15 +652,14 @@ describe("lines of work", () => {
     ).getByText("Task · OCT-7 · at the Mac");
   });
 
-  test("TaskCard asks for words before Done or Can't do it", () => {
+  test("TaskCard shows what to send back as a form, and Can't do it asks why", () => {
     const onDone = mock(() => {});
     const onCant = mock(() => {});
     const view = render(<TypingTask onDone={onDone} onCant={onCant} />);
-    view.getByText(whole("Report: Five numbers"));
-    fireEvent.click(view.getByRole("button", { name: "Done…" }));
-    expect(view.getByRole("button", { name: "Send" }).hasAttribute("disabled")).toBe(true);
+    view.getByText("Five numbers");
+    expect(view.getByRole("button", { name: "Send · Done" }).hasAttribute("disabled")).toBe(true);
     fireEvent.change(view.getByLabelText("What OCT-1 found"), { target: { value: " 41, 38 " } });
-    fireEvent.click(view.getByRole("button", { name: "Send" }));
+    fireEvent.click(view.getByRole("button", { name: "Send · Done" }));
     expect(onDone).toHaveBeenCalledWith("41, 38");
     fireEvent.click(view.getByRole("button", { name: "Can't do it…" }));
     fireEvent.change(view.getByLabelText("Why OCT-1 cannot be done"), { target: { value: "No calipers" } });
@@ -706,8 +701,10 @@ describe("lines of work", () => {
         onStart={onStart}
       />,
     );
-    view.getByText("1 task held");
-    view.getByText("not scoped yet");
+    view.getByText(/1 task held/);
+    view.getByText(/not scoped yet/);
+    // It holds something, so Start opens the Start sheet first.
+    expect(view.getByRole("button", { name: "Start Wall mount" }).textContent).toBe("Start…");
     view.getByText(whole("Done when it hangs flush."));
     fireEvent.click(view.getByRole("button", { name: "Start Wall mount" }));
     expect(onStart).toHaveBeenCalledWith("L-1");
@@ -731,8 +728,12 @@ describe("lines of work", () => {
       recommendationWhy: "The base is final.",
     });
     const view = render(<ProposalCard line={proposal} foldTargets={[line()]} {...handlers} />);
-    view.getByText(/panel-widgets says up next/);
+    view.getByText("Recommended: Up next.");
     view.getByText("The base is final.");
+    // The recommended choice is the filled one.
+    expect(view.getByRole("button", { name: "Up next Wall mount" }).getAttribute("data-primary")).toBe(
+      "true",
+    );
     fireEvent.click(view.getByRole("button", { name: "Up next Wall mount" }));
     expect(handlers.onQueue).toHaveBeenCalledWith("L-3");
     fireEvent.click(view.getByRole("button", { name: "Not a line: Wall mount" }));
@@ -766,9 +767,9 @@ describe("lines of work", () => {
         <p>the rows</p>
       </FoldedSection>,
     );
-    view.getByText("Podcast cleanup, Bike fit");
+    view.getByText(/Podcast cleanup, Bike fit/);
     expect(view.queryByText("the rows")).toBeNull();
-    fireEvent.click(view.getByRole("button", { name: "Show" }));
+    fireEvent.click(view.getByRole("button", { name: /Show/ }));
     view.getByText("the rows");
   });
 
@@ -800,35 +801,123 @@ describe("lines of work", () => {
     ).getByRole("region", { name: "Working on" });
   });
 
-  test("AddLineForm needs a title and a done-when sentence, and says whose the line is by its repos", () => {
-    const onAdd = mock(() => {});
-    const view = render(<AddLineForm repos={["OCT", "GARDEN"]} onAdd={onAdd} />);
-    fireEvent.click(view.getByRole("button", { name: "New line…" }));
-    const add = view.getByRole("button", { name: "Add line" });
-    fireEvent.change(view.getByLabelText("New line"), { target: { value: "Garden sensor" } });
+  test("NewLineCard needs what it is, done when, and its repos or that it is yours, then places it", () => {
+    const onAdd = mock((_line: NewLine) => {});
+    const view = render(<NewLineCard repos={["OCT", "GARDEN"]} onAdd={onAdd} onCancel={() => {}} />);
+    const add = view.getByRole("button", { name: "Add to up next" });
+    fireEvent.change(view.getByLabelText("What it is"), { target: { value: "Garden sensor" } });
+    fireEvent.change(view.getByLabelText(/Done when/), { target: { value: "Readings arrive hourly." } });
     expect(add.hasAttribute("disabled")).toBe(true);
-    fireEvent.change(view.getByLabelText("Done when"), { target: { value: "Readings arrive hourly." } });
-    view.getByText("No repo: the line is yours, and no agent takes it.");
-    fireEvent.click(view.getByRole("checkbox", { name: "GARDEN" }));
-    expect(view.queryByText("No repo: the line is yours, and no agent takes it.")).toBeNull();
-    fireEvent.click(add);
+    fireEvent.change(view.getByLabelText("Add a repo"), { target: { value: "GARDEN" } });
+    view.getByRole("button", { name: "Remove GARDEN" });
+    fireEvent.click(view.getByRole("button", { name: "Start" }));
     expect(onAdd).toHaveBeenCalledWith({
       title: "Garden sensor",
       doneWhen: "Readings arrive hourly.",
       repos: ["GARDEN"],
+      where: "working",
+    });
+    fireEvent.click(view.getByRole("checkbox", { name: "None: it is mine" }));
+    fireEvent.click(add);
+    expect(onAdd).toHaveBeenLastCalledWith({
+      title: "Garden sensor",
+      doneWhen: "Readings arrive hourly.",
+      repos: [],
+      where: "up_next",
     });
   });
+});
 
-  test("LinePanel says where a line stands, what finishes it, and why it waits", () => {
+describe("a line opened", () => {
+  test("LinePanelHead says where the line sits, its ref and repos, and what finishes it", () => {
     const view = render(
-      <LinePanel
-        line={line({ state: "tabled", tabledReason: "The disk is not tight", lookAgainAt: "2027-02-01" })}
+      <LinePanelHead line={line({ ref: "L-7" })} position="Line 2 of 5" repos={["vasc/homepanel"]} />,
+    );
+    view.getByText(/Line 2 of 5/);
+    view.getByText("vasc/homepanel");
+    view.getByRole("heading", { name: "Sendspin enclosure" });
+    view.getByText("A printed case holds the board and takes the USB-C plug.");
+    view.getByRole("button", { name: "Close" });
+  });
+
+  test("SummaryBox puts the headline first, says it stands alone, and says when there is none", () => {
+    const view = render(
+      <SummaryBox
+        line={line({
+          headline: "Printed; it fits.",
+          summary: "The base is printed.",
+          summaryAt: "2026-11-14T09:40:00Z",
+        })}
+        owner="panel"
       />,
     );
-    view.getByText("Tabled");
-    view.getByText("The disk is not tight");
-    view.getByText("2027-02-01");
-    view.getByText("A printed case holds the board and takes the USB-C plug.");
+    view.getByText("Printed; it fits.");
+    view.getByText(/home, the log and the phone show only this/);
+    view.getByText(/panel keeps it/);
+    view.unmount();
+    render(<SummaryBox line={line()} owner="panel" />).getByText("none yet; panel writes it");
+  });
+
+  test("PlanList marks each step done, now or next, with its issues and their pull requests' checks", () => {
+    const view = render(
+      <PlanList
+        steps={[
+          { line: "L-1", position: 1, title: "Model", status: "done" },
+          { line: "L-1", position: 2, title: "Print", status: "todo" },
+          { line: "L-1", position: 3, title: "Photograph", status: "todo" },
+        ]}
+        work={[
+          {
+            ref: "OCT-6",
+            title: "Test-print",
+            status: "in_progress",
+            step: 2,
+            assignee: "panel",
+            prs: [{ ref: "PR-1", repo: "vasc/homepanel", number: 14, state: "open", checks: "failing" }],
+          },
+        ]}
+      />,
+    );
+    view.getByRole("heading", { name: "Plan · step 2 of 3" });
+    expect(view.getAllByRole("listitem").map((item) => item.getAttribute("data-state"))).toEqual([
+      "done",
+      "now",
+      "next",
+    ]);
+    view.getByRole("button", { name: "OCT-6" });
+    expect(view.getByText(/checks failing/).getAttribute("data-checks")).toBe("failing");
+  });
+
+  test("OwnerBox offers Stop on the owner and I'll own it, or Hand to an agent on a line of yours", () => {
+    const onStop = mock((_name: string) => {});
+    const onHand = mock((_repos: string[]) => {});
+    const crew: LineCrew = {
+      owner: { name: "panel", state: "asleep" },
+      helpers: [],
+      scoper: null,
+      search: null,
+    };
+    const view = render(
+      <OwnerBox line={line()} crew={crew} repos={["OCT"]} onStop={onStop} onOwn={() => {}} onHand={onHand} />,
+    );
+    fireEvent.click(view.getByRole("button", { name: "Stop panel" }));
+    expect(onStop).toHaveBeenCalledWith("panel");
+    view.getByRole("button", { name: "I'll own it" });
+    view.unmount();
+    const mine = render(
+      <OwnerBox
+        line={line({ ownedBy: "dev", repos: [] })}
+        crew={undefined}
+        repos={["OCT"]}
+        onStop={onStop}
+        onOwn={() => {}}
+        onHand={onHand}
+      />,
+    );
+    fireEvent.click(mine.getByRole("button", { name: "Hand to an agent…" }));
+    fireEvent.click(mine.getByRole("checkbox", { name: "OCT" }));
+    fireEvent.click(mine.getByRole("button", { name: "Hand over" }));
+    expect(onHand).toHaveBeenCalledWith(["OCT"]);
   });
 });
 
@@ -905,17 +994,30 @@ describe("agents and first run", () => {
   test("AgentRosterRow says where an agent is and how to reach it, and offers Stop or Lift", () => {
     const onStop = mock((_name: string) => {});
     const onLift = mock((_name: string) => {});
-    const view = render(
-      <AgentRosterRow agent={agent()} onStop={onStop} onLift={onLift} onRelease={() => {}} />,
+    const row = (element: React.ReactNode) =>
+      render(
+        <table>
+          <tbody>{element}</tbody>
+        </table>,
+      );
+    const view = row(
+      <AgentRosterRow
+        agent={agent()}
+        repo="vasc/homepanel"
+        onStop={onStop}
+        onLift={onLift}
+        onRelease={() => {}}
+      />,
     );
-    view.getByText("wakes at claude:abc");
-    view.getByText("owner");
-    view.getByText("asleep");
+    view.getByText("vasc/homepanel");
+    view.getByText("claude");
+    view.getByText(", owner");
+    view.getByText("asleep, on its line");
     expect(view.queryByRole("button", { name: "Release panel" })).toBeNull();
     fireEvent.click(view.getByRole("button", { name: "Stop panel" }));
     expect(onStop).toHaveBeenCalledWith("panel");
     view.unmount();
-    const stopped = render(
+    const stopped = row(
       <AgentRosterRow
         agent={agent({ state: "stopped", stoppedReason: "Wrong repo", line: null, role: null })}
         onStop={onStop}
@@ -926,6 +1028,26 @@ describe("agents and first run", () => {
     stopped.getByText("stopped: Wrong repo");
     fireEvent.click(stopped.getByRole("button", { name: "Lift panel" }));
     expect(onLift).toHaveBeenCalledWith("panel");
+  });
+
+  test("AgentRosterRow names the line, says when it waits on the developer, and shows the agent's own note", () => {
+    const view = render(
+      <table>
+        <tbody>
+          <AgentRosterRow
+            agent={agent({ state: "running", note: "Printing the base" })}
+            lineTitle="Sendspin enclosure"
+            waitsOnYou
+            onStop={() => {}}
+            onLift={() => {}}
+            onRelease={() => {}}
+          />
+        </tbody>
+      </table>,
+    );
+    view.getByText("Sendspin enclosure");
+    view.getByText("running; its line waits on you");
+    view.getByText("Printing the base");
   });
 
   test("AgentRosterRow offers Release on a quiet agent that still holds a line", () => {
@@ -1045,49 +1167,27 @@ describe("tabling and a line's own choices", () => {
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
 
-  test("LineActions offers what each state allows, and own or hand by who owns a working line", () => {
+  test("LineActions offers the moves each state allows, the rare ones under More, and asks before Done", () => {
     const onChoose = mock((_choice: string) => {});
-    const props = { onChoose, onTable: () => {}, onDoneWhen: () => {} };
+    const props = { onChoose, onTable: () => {} };
     const names = (view: ReturnType<typeof render>) =>
       view.getAllByRole("button").map((button) => button.textContent);
-    const working = render(<LineActions line={line()} {...props} />);
-    expect(names(working)).toEqual(["Up next", "Done", "Drop", "Table…", "I'll own it"]);
+    const working = render(<LineActions line={line()} owner="panel" {...props} />);
+    working.getByText("Working on");
+    expect(names(working)).toEqual(["Move to up next", "Table…", "Done…", "More"]);
+    working.getByText(/give panel 15 minutes to wind down/);
+    fireEvent.click(working.getByRole("button", { name: "Done…" }));
     fireEvent.click(working.getByRole("button", { name: "Done" }));
     expect(onChoose).toHaveBeenCalledWith("done");
+    fireEvent.click(working.getByRole("button", { name: "More: drop this line" }));
+    fireEvent.click(working.getByRole("button", { name: "Drop" }));
+    expect(onChoose).toHaveBeenCalledWith("drop");
     working.unmount();
-    const onHand = mock((_repos: string[]) => {});
-    const mine = render(<LineActions line={line({ ownedBy: "dev" })} {...props} onHand={onHand} />);
-    fireEvent.click(mine.getByRole("button", { name: "Hand to an agent…" }));
-    expect(onHand).toHaveBeenCalledWith([]);
-    mine.unmount();
     const proposed = render(<LineActions line={line({ state: "proposed" })} {...props} />);
-    expect(names(proposed)).toEqual(["Start", "Up next", "Not a line", "Table…"]);
+    expect(names(proposed)).toEqual(["Start", "Up next", "Table…", "Not a line"]);
     proposed.unmount();
     const done = render(<LineActions line={line({ state: "done" })} {...props} />);
     expect(done.queryAllByRole("button")).toHaveLength(0);
-  });
-
-  test("LineActions puts an agent's proposals to the developer: a new done when, and that the line is done", () => {
-    const onChoose = mock((_choice: string) => {});
-    const onDoneWhen = mock((_accept: boolean) => {});
-    const view = render(
-      <LineActions
-        line={line({
-          doneWhenProposal: "It holds the 30 mm board.",
-          doneWhenProposedBy: "panel",
-          doneProposal: "The final print fits.",
-        })}
-        onChoose={onChoose}
-        onTable={() => {}}
-        onDoneWhen={onDoneWhen}
-      />,
-    );
-    view.getByText("It holds the 30 mm board.");
-    fireEvent.click(view.getByRole("button", { name: "Keep the one there is" }));
-    expect(onDoneWhen).toHaveBeenCalledWith(false);
-    view.getByText("The final print fits.");
-    fireEvent.click(view.getByRole("button", { name: "Not yet" }));
-    expect(onChoose).toHaveBeenCalledWith("not_yet");
   });
 });
 
@@ -1166,7 +1266,8 @@ describe("saying something to a line", () => {
     const owner = render(
       <TellBox line="L-1" to="octo.1" words=" Black " onWords={() => {}} onSend={onSend} />,
     );
-    fireEvent.click(owner.getByRole("button", { name: "Send" }));
+    owner.getByRole("heading", { name: "Tell octo.1" });
+    fireEvent.click(owner.getByRole("button", { name: "Tell" }));
     expect(onSend).toHaveBeenCalledWith("Black");
   });
 
@@ -1201,19 +1302,6 @@ describe("home's smaller pieces", () => {
     render(<SpreadThin working={8} noOwner={1} waiting={2} />).getByText(
       /8 lines are being worked on: 1 has no owner, 2 wait on you/,
     );
-  });
-
-  test("AtPicker offers each place as a button, and Leave once at one", () => {
-    const onAt = mock((_place: string | null) => {});
-    const view = render(<AtPicker places={["the bench", "the Mac"]} at={null} onAt={onAt} />);
-    fireEvent.click(view.getByRole("button", { name: "I'm at…" }));
-    fireEvent.click(view.getByRole("button", { name: "the Mac" }));
-    expect(onAt).toHaveBeenCalledWith("the Mac");
-    view.unmount();
-    const there = render(<AtPicker places={["the bench"]} at="the bench" onAt={onAt} />);
-    fireEvent.click(there.getByRole("button", { name: "At the bench" }));
-    expect(onAt).toHaveBeenCalledWith(null);
-    expect(render(<AtPicker places={[]} at={null} onAt={onAt} />).container.textContent).toBe("");
   });
 
   test("StartSheetView lists what a line holds and asks about a changed done when before Start now", () => {
@@ -1329,19 +1417,22 @@ describe("UnseenLog", () => {
 
   test("groups line by line in the developer's order, folds checks to one sentence, and leaves waiting lines out but refused writes in", () => {
     const view = render(
-      <UnseenLog events={events} lines={[working, queued]} includeWaiting={false} onFilter={() => {}} />,
+      <UnseenLog events={events} lines={[working, queued]} includeWaiting={false} onShowWaiting={() => {}} />,
     );
+    // Rule breaks first, whatever is left out; then only the working lines.
+    within(view.getByRole("list", { name: "Rule breaks" })).getByText(/panel was refused a write/);
     const groups = view.getAllByRole("region");
-    expect(groups.map((group) => group.getAttribute("aria-label"))).toEqual(["Enclosure", "Mount"]);
-    within(groups[0] ?? document.body).getByText("2 check changes");
+    expect(groups.map((group) => group.getAttribute("aria-label"))).toEqual(["Enclosure"]);
+    within(groups[0] ?? document.body).getByText("Also routine: 2 check changes.");
     within(groups[0] ?? document.body).getByText(/created: Base/);
-    expect(within(groups[1] ?? document.body).queryByText("Plan set")).toBeNull();
-    within(groups[1] ?? document.body).getByText(/panel was refused a write/);
+    within(groups[0] ?? document.body).getByText("1 unseen");
+    expect(view.queryByText("Plan set")).toBeNull();
+    view.getByRole("button", { name: "Show them" });
   });
 
   test("with waiting lines asked for, shows their changes too", () => {
     const view = render(
-      <UnseenLog events={events} lines={[working, queued]} includeWaiting onFilter={() => {}} />,
+      <UnseenLog events={events} lines={[working, queued]} includeWaiting onShowWaiting={() => {}} />,
     );
     view.getByText("Plan set");
   });
@@ -1357,10 +1448,10 @@ describe("SinceSummary", () => {
     ];
     const view = render(
       <SinceSummary
+        line="L-1"
         events={events}
         summaryAt="2026-11-14T09:00:00.000Z"
         seenAt="2026-11-14T10:45:00.000Z"
-        onFilter={() => {}}
       />,
     );
     view.getByText("Plan set");

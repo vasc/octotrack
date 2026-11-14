@@ -1,59 +1,84 @@
 import type { DecisionCard } from "@octotrack/core/schemas";
-import { useRef } from "react";
 import type { DecisionForm } from "../../hooks/useDecisionForm.ts";
-import { Badge } from "../ui/Badge.tsx";
-import { RefLink } from "../ui/RefLink.tsx";
-import { DecisionMeta } from "./DecisionMeta.tsx";
-import { DecisionOptions } from "./DecisionOptions.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
+import { RefLink } from "../ui/RefLink.tsx";
+import { TextBox } from "../ui/TextBox.tsx";
 
 export interface DecisionCardViewProps {
   card: DecisionCard;
   form: DecisionForm;
+  /** The one item with focus: the keys answer this question. */
   selected?: boolean;
 }
 
-/** Everything needed to make the call, without leaving the feed. Pure: all state comes in through `form`. */
+/**
+ * A question opened: the situation, options that say what happens, the reason for the recommendation directly under
+ * them, and the answer in one press. Pure: all state comes in through `form`.
+ */
 export function DecisionCardView({ card, form, selected = false }: DecisionCardViewProps) {
   const { decision } = card;
-  // Tapping "Something else" has to open the keyboard, which only a real focus call inside the tap can do.
-  const noteField = useRef<HTMLInputElement>(null);
   const recommendedAt = decision.options.findIndex((option) => option.key === decision.recommendation);
   const openWork = card.blocks.filter((item) => item.status !== "done" && item.status !== "cancelled");
+  const columns = Math.min(Math.max(decision.options.length, 1), 3);
   return (
-    <article className="decision" data-selected={selected} aria-label={decision.title}>
-      <DecisionMeta decision={decision} />
-      <h3 className="decision-title">{decision.title}</h3>
-      {card.reasons.length === 0 && decision.postponedAt === null ? null : (
-        <div className="decision-reasons">
-          {decision.postponedAt === null ? null : <Badge>later</Badge>}
-          {card.reasons.map((reason) => (
-            <Badge key={reason} tone="attention">
-              {reason}
-            </Badge>
-          ))}
-        </div>
-      )}
+    <article className="question" data-selected={selected} aria-label={decision.title}>
+      <div className="question-strip">
+        {selected ? <span className="question-focused">Focused</span> : null}
+        <span className="question-kind">
+          {decision.urgentReason === null ? "Question" : "Urgent question"}
+        </span>
+        <RefLink value={decision.ref} />
+        {openWork.length === 0 ? (
+          <span>asked by {decision.requestedBy}</span>
+        ) : (
+          <span>
+            holds up{" "}
+            {openWork.map((item) => (
+              <RefLink key={item.ref} value={item.ref} />
+            ))}
+          </span>
+        )}
+        {decision.postponedAt === null ? null : <span>later</span>}
+        {card.reasons.map((reason) => (
+          <span key={reason}>{reason}</span>
+        ))}
+      </div>
+      <h3 className="question-title">{decision.title}</h3>
       {decision.context === "" ? null : (
-        <div className="decision-context">
+        <div className="question-context">
           <Markdown text={decision.context} />
         </div>
       )}
-      <DecisionOptions
-        options={decision.options}
-        recommendation={decision.recommendation}
-        chosen={form.chosen}
-        ownAnswer={form.ownAnswer}
-        onChoose={form.choose}
-        onChooseOwn={() => {
-          form.chooseOwn();
-          noteField.current?.focus();
-        }}
-      />
+      {decision.options.length === 0 ? null : (
+        <div className="question-options" data-columns={columns}>
+          {decision.options.map((option, index) => (
+            <button
+              key={option.key}
+              type="button"
+              className="question-option"
+              data-recommended={option.key === decision.recommendation}
+              onClick={() => form.answer(option.key)}
+            >
+              <span className="question-option-head">
+                <b>
+                  {index + 1} · {option.label}
+                </b>
+                {option.key === decision.recommendation ? (
+                  <span className="question-recommended">recommended</span>
+                ) : null}
+              </span>
+              {option.description === "" ? null : (
+                <span className="question-option-desc">
+                  <Markdown text={option.description} inline links={false} />
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
       {decision.recommendationWhy === null ? null : (
-        <p className="decision-why">
-          Why
-          {recommendedAt === -1 ? "" : ` ${recommendedAt + 1}`}:{" "}
+        <p className="question-why">
+          <b>Why{recommendedAt === -1 ? "" : ` ${recommendedAt + 1}`}:</b>{" "}
           <Markdown text={decision.recommendationWhy} inline />
         </p>
       )}
@@ -61,54 +86,45 @@ export function DecisionCardView({ card, form, selected = false }: DecisionCardV
       decision.options.every((option) => option.key !== decision.recommendation) ? (
         <p className="muted">Recommendation: {decision.recommendation}</p>
       ) : null}
-      {openWork.length === 0 ? null : (
-        <div className="decision-top">
-          <span>Blocks</span>
-          {openWork.map((item) => (
-            <RefLink key={item.ref} value={item.ref} />
-          ))}
-        </div>
-      )}
-      <form
-        className="decision-actions"
-        onSubmit={(event) => {
-          event.preventDefault();
-          form.submit();
-        }}
-      >
-        <input
-          ref={noteField}
-          className="field"
-          aria-label={`Note for ${decision.ref}`}
-          placeholder={form.ownAnswer || decision.options.length === 0 ? "Your answer" : "Why (optional)"}
-          value={form.note}
-          onChange={(event) => form.setNote(event.target.value)}
-        />
-        <label className="check">
-          <input
-            type="checkbox"
-            checked={form.elsewhere}
-            onChange={(event) => form.setElsewhere(event.target.checked)}
-          />
-          decided elsewhere
-        </label>
-        <button
-          type="submit"
-          className="btn"
-          data-primary="true"
-          disabled={!form.canSubmit || form.submitting}
-        >
-          Decide
-        </button>
-        <button type="button" className="btn" onClick={form.postpone}>
-          {decision.postponedAt === null ? "Later" : "Bring back"}
-        </button>
-        {decision.urgentReason === null || decision.notUrgentAt !== null ? null : (
-          <button type="button" className="btn" onClick={form.notUrgent}>
-            Not urgent
+      {form.ownWords === null ? (
+        <div className="question-actions">
+          <button type="button" className="btn" onClick={form.openOwn}>
+            In my own words
           </button>
-        )}
-      </form>
+          <button type="button" className="btn" onClick={form.postpone}>
+            {decision.postponedAt === null ? "Later" : "Bring back"}
+          </button>
+          {decision.urgentReason === null || decision.notUrgentAt !== null ? null : (
+            <button type="button" className="btn" onClick={form.notUrgent}>
+              Not urgent
+            </button>
+          )}
+        </div>
+      ) : (
+        <form
+          className="question-own"
+          onSubmit={(event) => {
+            event.preventDefault();
+            form.sendOwn();
+          }}
+        >
+          <TextBox
+            label={`Your answer to ${decision.ref}`}
+            placeholder="In your own words"
+            value={form.ownWords}
+            onChange={form.setOwn}
+            onSubmit={form.sendOwn}
+          />
+          <div className="question-actions">
+            <button type="submit" className="btn" data-primary="true" disabled={form.ownWords.trim() === ""}>
+              Send
+            </button>
+            <button type="button" className="btn" onClick={form.closeOwn}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
       {form.error === null ? null : (
         <p className="error-text" role="alert">
           {form.error}

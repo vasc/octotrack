@@ -536,8 +536,16 @@ export const runnerOps = [
       ref: project.ref,
       project: project.ref,
       summary: `${project.ref}'s checkout is ${input.path}`,
-      attrs: {},
+      attrs: ctx.said === null ? {} : { said: ctx.said },
     });
+    // Step in's "Set its checkout" fixes what stopped the line, so it tries again in the same choice.
+    if (input.retry !== undefined) {
+      ctx.runOp(
+        contracts.runnerRetry.name,
+        { line: input.retry, same: true },
+        { actor: ctx.actor, channel: ctx.channel, said: ctx.said },
+      );
+    }
     return requireProject(ctx, project.ref);
   }),
 ];

@@ -43,7 +43,7 @@ export function StepIn({
   return (
     <div className="step-in" role="note" aria-label={`Step in on ${line.title}`} data-selected={focused}>
       <p>
-        <strong>Step in</strong> {reason}
+        <span className="step-in-label">Step in</span> {reason}
       </p>
       {mode === "table" ? (
         <TableForm
@@ -85,7 +85,7 @@ export function StepIn({
             <button
               type="button"
               className="btn"
-              data-primary="true"
+              data-tone="bad"
               data-choice={number("checkout")}
               onClick={() => setMode("checkout")}
             >
@@ -96,7 +96,7 @@ export function StepIn({
             <button
               type="button"
               className="btn"
-              data-primary="true"
+              data-tone="bad"
               data-choice={number("retry")}
               onClick={() => onRetry(line.ref)}
             >
@@ -107,7 +107,7 @@ export function StepIn({
             <button
               type="button"
               className="btn"
-              data-primary="true"
+              data-tone="bad"
               data-choice={number("anyway")}
               onClick={() => onAnyway(line.ref)}
             >

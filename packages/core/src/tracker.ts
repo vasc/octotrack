@@ -1,4 +1,4 @@
-import type { z } from "zod";
+import { z } from "zod";
 import type { BatchOp, BatchRequest, BatchResult, Contract, ErrorBody } from "./contracts.ts";
 import { contracts } from "./contracts.ts";
 import type { SqlDriver } from "./db/driver.ts";
@@ -64,6 +64,10 @@ export interface OpOutcome {
  * state outside the feed changed, such as an agent's note or a new watch.
  */
 export type ChangeListener = (events: readonly FeedEvent[]) => void;
+/** Told the key of a draft just saved, so the developer's other devices can fetch that one draft and nothing else. */
+export type DraftListener = (key: string) => void;
+
+const DraftSaved = z.object({ key: z.string() });
 
 /** Operations that touch nothing the drift rules look at. Watches poll constantly, so this matters. */
 const NO_RECONCILE: ReadonlySet<string> = new Set([
@@ -93,7 +97,8 @@ const NO_RECONCILE: ReadonlySet<string> = new Set([
  * reach the dashboard. Polling is the exception: a waiting agent checks constantly, each check would wake the others, and
  * nothing a person can see has usually changed. A poll sets `visibleChange` when something has.
  */
-const POLLS: ReadonlySet<string> = new Set(["watch.check", "draft.save", "push.seen", "push.sent"]);
+const DRAFT_SAVE = "draft.save";
+const POLLS: ReadonlySet<string> = new Set(["watch.check", DRAFT_SAVE, "push.seen", "push.sent"]);
 
 const AGENT_TOUCH_INTERVAL_MS = 30_000;
 
@@ -165,6 +170,7 @@ function substitute(value: unknown, aliases: ReadonlyMap<string, unknown>): unkn
 export class Tracker {
   private readonly ops = new Map<string, BoundOp>(ALL_OPS.map((op) => [op.name, op]));
   private readonly listeners = new Set<ChangeListener>();
+  private readonly draftListeners = new Set<DraftListener>();
   /** When each agent was last recorded as seen, and from which checkout, so that a new checkout is recorded at once. */
   private readonly agentTouchedAt = new Map<string, { at: number; checkout: string | undefined }>();
 
@@ -219,6 +225,14 @@ export class Tracker {
     this.listeners.add(listener);
     return () => {
       this.listeners.delete(listener);
+    };
+  }
+
+  /** Draft saves are an exception to D9b: a notice of their own, which refreshes only that draft. */
+  onDraft(listener: DraftListener): () => void {
+    this.draftListeners.add(listener);
+    return () => {
+      this.draftListeners.delete(listener);
     };
   }
 
@@ -417,6 +431,8 @@ export class Tracker {
     }
     const events = this.eventsSince(before);
     if (!POLLS.has(name) || events.length > 0 || ctx.visibleChange) this.notify(events);
+    const saved = name === DRAFT_SAVE ? DraftSaved.safeParse(data) : null;
+    if (saved?.success === true) for (const listener of this.draftListeners) listener(saved.data.key);
     return { data, driftOpened: ctx.openedDrift, cursor: currentCursor(ctx), notices: deliver() };
   }
 

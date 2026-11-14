@@ -42,6 +42,7 @@ export function orderedRefs(home: HomeView): string[] {
       ...(home.lines[line.ref]?.forYou ?? []).map(refOf),
     ]),
     ...home.proposed.map((line) => line.ref),
+    ...home.noLine.map((card) => card.decision.ref),
   ];
 }
 
@@ -55,7 +56,7 @@ export function firstOf(home: HomeView, count: keyof HomeCounts): string | null 
       );
     case "toAnswer": {
       const question = items.find((item) => item.kind === "question");
-      return question === undefined ? null : refOf(question);
+      return question === undefined ? (home.noLine[0]?.decision.ref ?? null) : refOf(question);
     }
     case "toDo": {
       const task = items.find((item) => item.kind === "task");
@@ -128,7 +129,7 @@ export function lineOf(home: HomeView, focus: string | null): string | null {
 /** Whether the focused item is a question, which takes its own number keys for its options. */
 export function isQuestion(home: HomeView, focus: string | null): boolean {
   if (focus === null) return false;
-  if (home.urgent.some((card) => card.decision.ref === focus)) return true;
+  if ([...home.urgent, ...home.noLine].some((card) => card.decision.ref === focus)) return true;
   return home.working.some((line) =>
     (home.lines[line.ref]?.forYou ?? []).some((item) => item.kind === "question" && refOf(item) === focus),
   );

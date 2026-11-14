@@ -1,17 +1,16 @@
 import type { EntityDetail } from "@octotrack/core/schemas";
 import { DecisionPanel } from "./DecisionPanel.tsx";
-import { IssuePanel } from "./IssuePanel.tsx";
 import { KeyValues } from "./KeyValues.tsx";
-import { LinePanelItem } from "./LinePanelItem.tsx";
 import { PrPanel } from "./PrPanel.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
 
 /** The part that differs by kind of item. */
 export function EntityBody({ entity }: { entity: EntityDetail["entity"] }) {
-  if ("doneWhen" in entity) return <LinePanelItem line={entity} />;
+  // A line has a panel of its own, which EntityPanel shows instead.
+  if ("doneWhen" in entity) return null;
   if ("options" in entity) return <DecisionPanel decision={entity} />;
   if ("number" in entity) return <PrPanel pr={entity} />;
-  if ("priority" in entity) return <IssuePanel issue={entity} />;
+  if ("priority" in entity) return null;
   if ("rule" in entity) {
     return (
       <>

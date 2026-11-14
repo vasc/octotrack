@@ -680,10 +680,30 @@ export const NextWork = z.object({
 });
 export type NextWork = z.infer<typeof NextWork>;
 
+/** An issue on a line, as the line's plan shows it: under its step, with its pull requests and their checks. */
+export const LineWork = z.object({
+  ref: z.string(),
+  title: z.string(),
+  status: IssueStatus,
+  step: z.number().int().nullable(),
+  assignee: z.string().nullable(),
+  prs: z.array(
+    z.object({
+      ref: z.string(),
+      repo: z.string(),
+      number: z.number().int(),
+      state: PrState,
+      checks: PrChecks,
+    }),
+  ),
+});
+export type LineWork = z.infer<typeof LineWork>;
+
 export const LineDetail = z.object({
   line: Line,
   steps: z.array(PlanStep),
   issues: z.array(EntitySummary),
+  work: z.array(LineWork),
 });
 export type LineDetail = z.infer<typeof LineDetail>;
 
@@ -759,6 +779,8 @@ export const HomeView = z.object({
   at: AtView.nullable(),
   /** Urgent questions, which stand at the very top, apart from their lines. */
   urgent: z.array(DecisionCard),
+  /** Questions from before lines, on no line, below every line's: their agents still owe them a line. */
+  noLine: z.array(DecisionCard),
   lines: z.record(z.string(), LineHome),
   counts: HomeCounts,
   working: z.array(Line),

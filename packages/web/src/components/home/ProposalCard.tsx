@@ -1,6 +1,5 @@
 import type { Line } from "@octotrack/core/schemas";
 import { useState } from "react";
-import { recommendationText } from "../../lib/lines.ts";
 import { openEntity } from "../../lib/router.ts";
 import { TableForm } from "../lines/TableForm.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
@@ -9,6 +8,13 @@ const URGENT: Readonly<Record<NonNullable<Line["urgentReason"]>, string>> = {
   broken: "something is broken",
   time_boxed: "it is time-boxed",
   costs_money: "waiting costs money",
+};
+
+const RECOMMENDED: Readonly<Record<NonNullable<Line["recommendation"]>, string>> = {
+  start: "Start",
+  up_next: "Up next",
+  table: "Table",
+  fold: "Fold into another line",
 };
 
 export interface ProposalCardProps {
@@ -25,7 +31,10 @@ export interface ProposalCardProps {
   onDrop(ref: string): void;
 }
 
-/** A proposed line with the agent's case for it, and every choice a proposal has. */
+/**
+ * A proposed line: what it is and who proposed it, the agent's recommended placement and why, and the five choices a
+ * proposal has, numbered, with the recommended one filled.
+ */
 export function ProposalCard({
   line,
   focused = false,
@@ -38,43 +47,48 @@ export function ProposalCard({
   onDrop,
 }: ProposalCardProps) {
   const [mode, setMode] = useState<"table" | "fold" | null>(null);
-  const advice = recommendationText(line);
   const fromTable = line.tabledReason !== null;
+  const recommended = (placement: NonNullable<Line["recommendation"]>) =>
+    !fromTable && line.recommendation === placement;
+  const lastNumber = foldTargets.length === 0 ? "4" : "5";
   return (
     <article
-      className="proposal"
+      className="proposal-card"
       aria-label={line.title}
       data-selected={focused}
       data-urgent={line.urgentReason !== null}
     >
-      <button type="button" className="home-line-title" onClick={() => openEntity(line.ref)}>
-        {line.title}
-      </button>
-      <p className="home-meta">
-        {line.proposedBy === null ? null : <span>proposed by {line.proposedBy}</span>}
-        {line.fromRef === null ? null : <span>from before ({line.fromRef})</span>}
-        {line.doneWhen === "" ? null : (
-          <span>
-            done when <Markdown text={line.doneWhen} inline />
-          </span>
+      <div className="proposal-text">
+        {line.urgentReason === null ? null : (
+          <p className="home-urgent">Urgent: {URGENT[line.urgentReason]}</p>
         )}
-      </p>
-      {line.urgentReason === null ? null : <p className="home-urgent">Urgent: {URGENT[line.urgentReason]}</p>}
-      {fromTable ? (
-        <p className="home-headline">
-          Back to look at, as you asked: {line.tabledReason}
-          {line.lookAgainAt === null ? "" : ` (${line.lookAgainAt.slice(0, 10)})`}
+        <p>
+          <button type="button" className="line-link" onClick={() => openEntity(line.ref)}>
+            {line.title}
+          </button>
+          <span className="line-facts">
+            {line.proposedBy === null ? null : <span> · proposed by {line.proposedBy}</span>}
+            {line.fromRef === null ? null : <span> · from before ({line.fromRef})</span>}
+            {line.doneWhen === "" ? null : (
+              <span>
+                {" "}
+                · done when <Markdown text={line.doneWhen} inline />
+              </span>
+            )}
+          </span>
         </p>
-      ) : advice === null ? null : (
-        <p className="home-headline">
-          {advice}
-          {line.recommendationWhy === null ? null : (
-            <>
-              : <Markdown text={line.recommendationWhy} inline />
-            </>
-          )}
-        </p>
-      )}
+        {fromTable ? (
+          <p className="proposal-case">
+            Back to look at, as you asked: {line.tabledReason}
+            {line.lookAgainAt === null ? "" : ` (${line.lookAgainAt.slice(0, 10)})`}
+          </p>
+        ) : line.recommendation === null ? null : (
+          <p className="proposal-case">
+            <b>Recommended: {RECOMMENDED[line.recommendation]}.</b>{" "}
+            {line.recommendationWhy === null ? null : <Markdown text={line.recommendationWhy} inline />}
+          </p>
+        )}
+      </div>
       {mode === "table" ? (
         <TableForm
           title={line.title}
@@ -103,30 +117,33 @@ export function ProposalCard({
           </button>
         </fieldset>
       ) : (
-        <div className="decision-actions">
+        <div className="proposal-choices">
           <button
             type="button"
             className="btn"
             aria-label={`Start ${line.title}`}
             data-choice="1"
+            data-primary={recommended("start")}
             onClick={() => onStart(line.ref)}
           >
-            Start
+            Start{recommended("start") ? " · recommended" : ""}
           </button>
           <button
             type="button"
             className="btn"
             aria-label={`Up next ${line.title}`}
             data-choice="2"
+            data-primary={recommended("up_next")}
             onClick={() => onQueue(line.ref)}
           >
-            Up next
+            Up next{recommended("up_next") ? " · recommended" : ""}
           </button>
           <button
             type="button"
             className="btn"
             aria-label={`Table ${line.title}`}
             data-choice="3"
+            data-primary={recommended("table")}
             onClick={() => setMode("table")}
           >
             Table…
@@ -137,6 +154,7 @@ export function ProposalCard({
               className="btn"
               aria-label={`Fold ${line.title}`}
               data-choice="4"
+              data-primary={recommended("fold")}
               onClick={() => setMode("fold")}
             >
               Fold into…
@@ -146,8 +164,9 @@ export function ProposalCard({
             <button
               type="button"
               className="btn"
+              data-quiet="true"
               aria-label={`Drop ${line.title}`}
-              data-choice={foldTargets.length === 0 ? "4" : "5"}
+              data-choice={lastNumber}
               onClick={() => onDrop(line.ref)}
             >
               Drop
@@ -156,8 +175,9 @@ export function ProposalCard({
             <button
               type="button"
               className="btn"
+              data-quiet="true"
               aria-label={`Not a line: ${line.title}`}
-              data-choice={foldTargets.length === 0 ? "4" : "5"}
+              data-choice={lastNumber}
               onClick={() => onReject(line.ref)}
             >
               Not a line

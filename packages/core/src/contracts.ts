@@ -277,10 +277,11 @@ export const contracts = {
   ),
   repoCheckout: write(
     "repo.checkout",
-    "Set a repo's main checkout on this machine, where new worktrees are made (the developer)",
+    "Set a repo's main checkout on this machine, where new worktrees are made; with retry, then Try now on that line (the developer)",
     z.strictObject({
       repo: z.string(),
       path: z.string().refine((path) => path.startsWith("/"), "An absolute path"),
+      retry: z.string().optional(),
     }),
     Project,
   ),
@@ -304,6 +305,8 @@ export const contracts = {
       input: z.unknown(),
       summary: Text,
       delayMs: z.number().int().min(0).max(60_000).optional(),
+      /** The draft the words were typed in: kept through Undo, deleted once the choice takes effect. */
+      draft: z.string().min(1).optional(),
     }),
     PendingChoice,
   ),

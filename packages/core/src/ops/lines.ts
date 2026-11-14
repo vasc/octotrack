@@ -9,12 +9,13 @@ import { rows } from "../store/context.ts";
 import { filterEntities } from "../store/docs.ts";
 import { allLines, requireLine, requireProject, summarize } from "../store/entities.ts";
 import { loadGraph } from "../store/graph.ts";
-import { IssueRow, PlanStepRow } from "../store/rows.ts";
+import { IssueRow, PlanStepRow, PrRow } from "../store/rows.ts";
 import { afterAdd, afterMove, guardLineWrite, windDown } from "../agents/claims.ts";
 import { DEVELOPER } from "../agents/state.ts";
 import { addNotice, claimOf } from "../store/agents.ts";
 import { addToInbox } from "../store/inbox.ts";
 import { bind } from "./bind.ts";
+import { LOG_SEEN_KEY } from "./feed.ts";
 import { buildHome } from "./home.ts";
 import { requireDeveloper } from "./developer.ts";
 
@@ -430,8 +431,28 @@ export const lineOps = [
       IssueRow,
       "SELECT * FROM issues WHERE line = ? ORDER BY step IS NULL, step, createdAt",
       [line.ref],
-    ).map((value) => summarize({ kind: "issue", value }));
-    return { line, steps: planOf(ctx, line.ref), issues };
+    );
+    const prsOf = (issue: string) =>
+      rows(
+        ctx,
+        PrRow,
+        `SELECT p.* FROM prs p JOIN links k ON k.fromRef = p.ref AND k.rel = 'implements' WHERE k.toRef = ?
+         ORDER BY p.number`,
+        [issue],
+      ).map((pr) => ({ ref: pr.ref, repo: pr.repo, number: pr.number, state: pr.state, checks: pr.checks }));
+    return {
+      line,
+      steps: planOf(ctx, line.ref),
+      issues: issues.map((value) => summarize({ kind: "issue", value })),
+      work: issues.map((issue) => ({
+        ref: issue.ref,
+        title: issue.title,
+        status: issue.status,
+        step: issue.step,
+        assignee: issue.assignee,
+        prs: prsOf(issue.ref),
+      })),
+    };
   }),
 
   bind(contracts.lineList, (ctx, input) => {
@@ -667,6 +688,12 @@ export const lineOps = [
     const params = input.line === undefined ? [ctx.now] : [ctx.now, requireLine(ctx, input.line).ref];
     const count = input.line === undefined ? allLines(ctx).length : 1;
     ctx.sql.run(`UPDATE lines SET seenAt = ?${where}`, params);
+    if (input.line === undefined) {
+      ctx.sql.run(
+        "INSERT INTO developer_state (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+        [LOG_SEEN_KEY, ctx.now],
+      );
+    }
     ctx.visibleChange = true;
     return { lines: count };
   }),

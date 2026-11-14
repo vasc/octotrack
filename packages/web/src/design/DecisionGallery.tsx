@@ -15,9 +15,9 @@ export function DecisionGallery() {
       <Example label="Open, nothing chosen yet">
         <DecisionCardView selected form={decisionForm()} card={decisionCard({ reasons: REASONS })} />
       </Example>
-      <Example label="An option chosen, ready to confirm">
+      <Example label="Answering in your own words">
         <DecisionCardView
-          form={decisionForm({ chosen: "redis", canSubmit: true, note: "Already deployed" })}
+          form={decisionForm({ ownWords: "Redis, but behind a flag" })}
           card={decisionCard()}
         />
       </Example>
@@ -35,10 +35,7 @@ export function DecisionGallery() {
         />
       </Example>
       <Example label="Refused by the server">
-        <DecisionCardView
-          form={decisionForm({ chosen: "sqs", canSubmit: true, error: 'D-1 has no option "sqs"' })}
-          card={decisionCard()}
-        />
+        <DecisionCardView form={decisionForm({ error: 'D-1 has no option "sqs"' })} card={decisionCard()} />
       </Example>
       <Example label="What became of an answer">
         <DeliveryBadge decision={decision({ status: "decided", decidedBy: "dev" })} />

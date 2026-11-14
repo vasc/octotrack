@@ -8,6 +8,8 @@ import { EntityBody } from "./EntityBody.tsx";
 import { EntityHeader } from "./EntityHeader.tsx";
 import { HistoryList } from "./HistoryList.tsx";
 import { LinkList } from "./LinkList.tsx";
+import { IssuePanel } from "./IssuePanel.tsx";
+import { LinePanelItem } from "./LinePanelItem.tsx";
 import { UpdatesSection } from "./UpdatesSection.tsx";
 
 /** Any item, by ref: what it is, what it connects to, what is out of date about it, and how it got here. */
@@ -26,6 +28,10 @@ export function EntityPanel({ entityRef }: { entityRef: string }) {
     );
   }
   const { summary, entity, links, linked, drift, updates, history } = detail.data;
+  // A line has its own panel, as E-Line draws it.
+  if ("doneWhen" in entity) return <LinePanelItem line={entity} />;
+  // So does an issue or task, as E-Issue draws it.
+  if ("priority" in entity && "outcome" in entity) return <IssuePanel issue={entity} detail={detail.data} />;
   const openDrift = drift.filter((item) => item.status === "open" && item.ref !== summary.ref);
   return (
     <div className="detail">

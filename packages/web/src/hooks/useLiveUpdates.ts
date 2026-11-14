@@ -1,7 +1,11 @@
+import { contracts } from "@octotrack/core/contracts";
 import { useQueryClient } from "@tanstack/react-query";
+import { z } from "zod";
 import { useEffect, useState } from "react";
 
 const MIN_GAP_MS = 100;
+
+const DraftNotice = z.object({ key: z.string() });
 
 export type LiveState = "connecting" | "live" | "offline";
 
@@ -50,6 +54,13 @@ export function useLiveUpdates(): LiveState {
         refresh();
       });
       source.addEventListener("change", refresh);
+      // A draft saved on another device: only that draft is fetched again, so typing elsewhere refreshes nothing else.
+      source.addEventListener("draft", (event: { data: string }) => {
+        const notice = DraftNotice.safeParse(JSON.parse(event.data));
+        if (notice.success) {
+          void client.invalidateQueries({ queryKey: [contracts.draftGet.name, { key: notice.data.key }] });
+        }
+      });
       source.addEventListener("error", () => setState("offline"));
     };
     const disconnect = () => {

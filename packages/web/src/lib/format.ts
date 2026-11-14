@@ -19,6 +19,22 @@ export function dayLabel(iso: string, now: number = Date.now()): string {
   return day;
 }
 
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/**
+ * When something happened, as the boards write it beside a row: the time today, the weekday this past week, else the
+ * date. In the viewer's own time.
+ */
+export function timeLabel(iso: string, now: number = Date.now()): string {
+  const at = new Date(iso);
+  const today = new Date(now);
+  if (at.toDateString() === today.toDateString()) {
+    return `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
+  }
+  if (now - at.getTime() < 6 * DAY) return WEEKDAYS[at.getDay()] ?? iso.slice(0, 10);
+  return iso.slice(0, 10);
+}
+
 /** A filter term that survives names with spaces or brackets in them. */
 export function filterTerm(field: string, value: string): string {
   return /[\s(),"]/.test(value) ? `${field}:"${value.replaceAll('"', '\\"')}"` : `${field}:${value}`;
