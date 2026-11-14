@@ -76,7 +76,7 @@ export const inboxOps = [
         {
           agent: agent.name,
           address: agent.wakeAddress,
-          message: `Octotrack: ${waiting} thing${waiting === 1 ? "" : "s"} wait for you. Run any octo command as ${agent.name} to read them.`,
+          message: `Octotrack: ${waiting === 1 ? "1 thing waits" : `${waiting} things wait`} for you. Run any octo command as ${agent.name} to read them.`,
         },
       ];
     }),
