@@ -189,8 +189,8 @@ describe("the whole flow an agent goes through", () => {
     expect(blocked.map((item) => item.issue.ref)).toContain(issue.ref);
 
     const resolved = await octo(
-      ["decision", "resolve", card.decision.ref, "redis", "-n", "Already deployed"],
-      "dev",
+      ["decision", "resolve", card.decision.ref, "redis", "-n", "Already deployed", "--me"],
+      "",
     );
     expect(resolved.code).toBe(0);
 
@@ -316,7 +316,7 @@ describe("watch", () => {
     const quiet = await data(Results, ["watch", "check"], "juggler");
     expect(quiet.map((item) => item.fired)).toEqual([false, false]);
 
-    await octo(["decision", "resolve", second.ref, "-n", "Yes"], "dev");
+    await octo(["decision", "resolve", second.ref, "-n", "Yes", "--me"], "");
     const partial = await data(Results, ["watch", "check"], "juggler");
     expect(partial.find((item) => item.name === "two")?.fired).toBe(true);
     expect(partial.find((item) => item.name === "one")?.fired).toBe(false);
@@ -324,7 +324,7 @@ describe("watch", () => {
     const hanging = start(["watch", "wait", "one", "--timeout", "10s"], "juggler");
     await Bun.sleep(300);
     expect(hanging.exitCode).toBeNull();
-    await octo(["decision", "resolve", first.ref, "-n", "Yes"], "dev");
+    await octo(["decision", "resolve", first.ref, "-n", "Yes", "--me"], "");
     expect((await finish(hanging)).code).toBe(0);
   }, 15000);
 
@@ -370,7 +370,7 @@ describe("watch", () => {
     await upAgain(second);
 
     expect(waiting.exitCode).toBeNull();
-    expect((await octo(["decision", "resolve", decision.ref, "-n", "Yes"], "dev")).code).toBe(0);
+    expect((await octo(["decision", "resolve", decision.ref, "-n", "Yes", "--me"], "")).code).toBe(0);
     expect((await finish(waiting)).code).toBe(0);
   }, 45000);
 
@@ -389,7 +389,7 @@ describe("watch", () => {
     expect(up).toBe(false);
     expect(waiting.exitCode).toBeNull();
 
-    expect((await octo(["decision", "resolve", decision.ref, "-n", "Yes"], "dev")).code).toBe(0);
+    expect((await octo(["decision", "resolve", decision.ref, "-n", "Yes", "--me"], "")).code).toBe(0);
     expect((await finish(waiting)).code).toBe(0);
   }, 45000);
 
@@ -402,7 +402,7 @@ describe("watch", () => {
     expect(waiting.exitCode).toBeNull();
 
     // Any command starts the server again, and the data is still there.
-    expect((await octo(["decision", "resolve", decision.ref, "-n", "Yes"], "dev")).code).toBe(0);
+    expect((await octo(["decision", "resolve", decision.ref, "-n", "Yes", "--me"], "")).code).toBe(0);
     expect((await finish(waiting)).code).toBe(0);
   }, 20000);
 });
@@ -461,7 +461,7 @@ describe("what the audit found", () => {
     const decision = await data(WithRef, ["decision", "ask", "Zero timeout"]);
     const open = await octo(["watch", "--until", `ref:${decision.ref} status:decided`, "--timeout", "0"]);
     expect(open.code).toBe(124);
-    await octo(["decision", "resolve", decision.ref, "-n", "Yes"], "dev");
+    await octo(["decision", "resolve", decision.ref, "-n", "Yes", "--me"], "");
     const decided = await octo(["watch", "--until", `ref:${decision.ref} status:decided`, "--timeout", "0"]);
     expect(decided.code).toBe(0);
   });
@@ -519,7 +519,7 @@ describe("what the audit found", () => {
       ref = list.find((item) => item.title === "Told about drift")?.ref;
       if (ref === undefined) await Bun.sleep(50);
     }
-    await octo(["decision", "resolve", ref ?? "", "-n", "Yes"], "dev");
+    await octo(["decision", "resolve", ref ?? "", "-n", "Yes", "--me"], "");
     const result = await finish(waiting);
     const targets = z
       .object({ data: z.object({ driftToClear: z.array(z.object({ target: z.string() })) }) })
@@ -530,7 +530,7 @@ describe("what the audit found", () => {
 
   test("partial failures say so at the top level", async () => {
     const asked = await data(WithRef, ["decision", "ask", "Partial", "-o", "x=X"]);
-    const result = await octo(["decision", "batch"], "dev", `${asked.ref} nope\n`);
+    const result = await octo(["decision", "batch", "--me"], "", `${asked.ref} nope\n`);
     expect(result.code).toBe(1);
     expect(parseJson(result.stdout)).toMatchObject({ ok: false });
   });
@@ -616,7 +616,7 @@ describe("what the re-audit found", () => {
 
   test("decision wait takes a lowercase ref and still reports the drift", async () => {
     const asked = await data(WithRef, ["decision", "ask", "Lowercase wait", "-p", "OCT"]);
-    await octo(["decision", "resolve", asked.ref, "-n", "Yes"], "dev");
+    await octo(["decision", "resolve", asked.ref, "-n", "Yes", "--me"], "");
     const result = await octo(["decision", "wait", asked.ref.toLowerCase(), "--timeout", "2s"]);
     const parsed = z
       .object({ data: z.object({ driftToClear: z.array(WithRef) }) })
@@ -801,8 +801,8 @@ describe("decisions out of band", () => {
     const asked = await data(WithRef, ["decision", "ask", "Bulk A", "-o", "x=X", "-o", "y=Y"]);
     const other = await data(WithRef, ["decision", "ask", "Bulk B", "-o", "x=X"]);
     const result = await octo(
-      ["decision", "batch"],
-      "dev",
+      ["decision", "batch", "--me"],
+      "",
       `${asked.ref} y Agreed on the call\n${other.ref} nope\n`,
     );
     expect(result.code).toBe(1);
@@ -824,7 +824,7 @@ describe("decisions out of band", () => {
     const asked = await data(WithRef, ["decision", "ask", "File A"]);
     const file = join(home, "outcomes.json");
     writeFileSync(file, JSON.stringify([{ ref: asked.ref, note: "From the file" }]));
-    const result = await octo(["decision", "batch", "-f", file], "dev");
+    const result = await octo(["decision", "batch", "-f", file, "--me"], "");
     expect(result.code).toBe(0);
     expect(result.stdout).toContain("From the file");
   });

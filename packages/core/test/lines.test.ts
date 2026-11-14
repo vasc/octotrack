@@ -220,7 +220,7 @@ describe("moving an older database to lines", () => {
       ["A weekly digest", "I-2", []],
     ]);
     const show = (ref: string) =>
-      tracker.call(c.entityShow, { ref }, { actor: "dev", channel: "cli" }).entity.ref;
+      tracker.call(c.entityShow, { ref }, { actor: "dev", channel: "cli", developer: true }).entity.ref;
     for (const ref of ["PANEL", "PANEL-6", "D-34", "M-1", "I-3", "U-1", "U-2", "PR-1"])
       expect(show(ref)).toBe(ref);
     expect([show("I-1")]).toEqual(home.proposed.slice(0, 1).map((line) => line.ref));

@@ -3,7 +3,7 @@ import { getAgent } from "../store/agents.ts";
 import type { Ctx } from "../store/context.ts";
 import { rows } from "../store/context.ts";
 import { AgentRow } from "../store/rows.ts";
-import { looksLikeRef } from "./state.ts";
+import { isAgentName, looksLikeRef, RESERVED_NAMES } from "./state.ts";
 
 /** Said to a call with no name: never mentions --me, so that an agent is not taught to pass as the developer. */
 function unnamed(): OctoError {
@@ -50,8 +50,23 @@ export function resolveAgent(
     if (writes) throw unnamed();
     return null;
   }
+  if (RESERVED_NAMES.has(name.toLowerCase())) {
+    throw new OctoError(
+      "invalid_input",
+      `"${name}" cannot be an agent's name: the log uses it for the developer or for Octotrack itself`,
+      "Pick another name. The developer passes --me instead.",
+    );
+  }
   const existing = getAgent(ctx, name);
   if (existing === null) {
+    // Agents named before this rule keep their names; new ones keep to it.
+    if (!isAgentName(name)) {
+      throw new OctoError(
+        "invalid_input",
+        `"${name}" cannot be an agent's name`,
+        "Use letters, digits, dots, dashes, underscores and inner spaces, starting with a letter or digit, at most 64.",
+      );
+    }
     if (looksLikeRef(name)) {
       throw new OctoError(
         "invalid_input",

@@ -7,7 +7,6 @@ const SERVER = { actor: "octotrack", channel: "cli", system: true } as const;
 import { type Harness, harness } from "./helpers.ts";
 
 const ASKER = "mediarr";
-const DEVELOPER = "dev";
 const ADDRESS = "claude:ca1743eb-4524-4f04-9737-3980f49747b4";
 
 let h: Harness;
@@ -17,7 +16,7 @@ function ask(extra: { wake?: string } = {}) {
 }
 
 function answer(ref: string) {
-  return h.call(c.decisionResolve, { ref, note: "Use Kafka" }, DEVELOPER);
+  return h.developer(c.decisionResolve, { ref, note: "Use Kafka" });
 }
 
 const inbox = (actor = ASKER) => h.call(c.decisionInbox, {}, actor).map((decision) => decision.ref);
@@ -42,7 +41,7 @@ describe("the inbox", () => {
   test("can list what every agent has not picked up, for the dashboard", () => {
     const { ref } = ask();
     answer(ref);
-    expect(h.call(c.decisionInbox, { all: true }, DEVELOPER).map((item) => item.ref)).toEqual([ref]);
+    expect(h.developer(c.decisionInbox, { all: true }).map((item) => item.ref)).toEqual([ref]);
   });
 
   test("leaves out a decision the agent answered itself, since there is nothing to deliver", () => {
@@ -74,14 +73,14 @@ describe("the inbox", () => {
     const { ref } = ask();
     answer(ref);
     h.call(c.decisionPickup, { ref }, ASKER);
-    h.call(c.decisionResolve, { ref, note: "Actually, RabbitMQ", force: true }, DEVELOPER);
+    h.developer(c.decisionResolve, { ref, note: "Actually, RabbitMQ", force: true });
     expect(inbox()).toEqual([ref]);
   });
 
   test("reopening takes it back out of the inbox", () => {
     const { ref } = ask();
     answer(ref);
-    h.call(c.decisionReopen, { ref }, DEVELOPER);
+    h.developer(c.decisionReopen, { ref });
     expect(inbox()).toEqual([]);
   });
 });
@@ -116,7 +115,7 @@ describe("reporting back", () => {
     const { ref } = ask();
     answer(ref);
     h.call(c.decisionReport, { ref, status: "done", note: "Did it" }, ASKER);
-    const changed = h.call(c.decisionResolve, { ref, note: "Other way", force: true }, DEVELOPER);
+    const changed = h.developer(c.decisionResolve, { ref, note: "Other way", force: true });
     expect(changed).toMatchObject({ reportStatus: null, reportNote: null, pickedUpAt: null });
   });
 });
@@ -179,7 +178,7 @@ describe("asking to be woken", () => {
     const { ref } = ask({ wake: ADDRESS });
     answer(ref);
     h.tracker.call(c.decisionWoken, { ref }, SERVER);
-    h.call(c.decisionResolve, { ref, note: "Other way", force: true }, DEVELOPER);
+    h.developer(c.decisionResolve, { ref, note: "Other way", force: true });
     expect(wakes()).toEqual([ref]);
   });
 

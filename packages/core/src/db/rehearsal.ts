@@ -91,7 +91,7 @@ export function checkMigration(before: Inventory, driver: SqlDriver, tracker: Tr
   const problems: string[] = [];
   for (const ref of before.refs) {
     try {
-      tracker.call(contracts.entityShow, { ref }, { actor: "octotrack", channel: "cli" });
+      tracker.call(contracts.entityShow, { ref }, { actor: "octotrack", channel: "cli", system: true });
     } catch {
       problems.push(`${ref} no longer resolves`);
     }
