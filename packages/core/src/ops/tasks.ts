@@ -5,6 +5,7 @@ import { DEVELOPER } from "../agents/state.ts";
 import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
 import type { AtView, HeldItem, Issue, Place } from "../schemas.ts";
+import type { EventTypeName } from "../query/values.ts";
 import { claimOf } from "../store/agents.ts";
 import { applyPatch, emit } from "../store/common.ts";
 import type { Ctx } from "../store/context.ts";
@@ -13,7 +14,7 @@ import { allLines, findEntity, requireIssue, requireLine } from "../store/entiti
 import { addToInbox } from "../store/inbox.ts";
 import { DecisionRow, IssueRow } from "../store/rows.ts";
 import { bind } from "./bind.ts";
-import { requireDeveloper } from "./developer.ts";
+import { requireDeveloper, requireDeveloperInPerson } from "./developer.ts";
 import { withdrawQuestion } from "./decisions.ts";
 import { createIssue } from "./issues.ts";
 import { addLink } from "./links.ts";
@@ -23,6 +24,11 @@ const ToRow = z.object({ toRef: z.string() });
 
 function places(ctx: Ctx): Place[] {
   return rows(ctx, PlaceRow, "SELECT * FROM places ORDER BY position");
+}
+
+/** A place added or removed is in the log, so one made on the developer's quoted words shows whose words they were. */
+function emitPlace(ctx: Ctx, type: EventTypeName, name: string, summary: string): void {
+  emit(ctx, { type, kind: "place", ref: name, project: null, summary });
 }
 
 function requirePlace(ctx: Ctx, name: string): string {
@@ -241,15 +247,15 @@ export const taskOps = [
         "INSERT INTO places (name, position) VALUES (?, (SELECT COALESCE(MAX(position), 0) + 1 FROM places))",
         [input.name],
       );
-      ctx.visibleChange = true;
+      emitPlace(ctx, "place.added", input.name, `${input.name} added to the places`);
     }
     return places(ctx);
   }),
 
   bind(contracts.placeRemove, (ctx, input) => {
     requireDeveloper(ctx, "remove a place");
-    ctx.sql.run("DELETE FROM places WHERE lower(name) = lower(?)", [input.name]);
-    ctx.visibleChange = true;
+    const { changes } = ctx.sql.run("DELETE FROM places WHERE lower(name) = lower(?)", [input.name]);
+    if (changes > 0) emitPlace(ctx, "place.removed", input.name, `${input.name} removed from the places`);
     return places(ctx);
   }),
 
@@ -337,7 +343,8 @@ export const taskOps = [
   }),
 
   bind(contracts.at, (ctx, input) => {
-    requireDeveloper(ctx, "say where they are");
+    // Where the developer is, only the developer can say: an agent was not there to see it.
+    requireDeveloperInPerson(ctx, "say where they are");
     if (input.place === undefined) {
       ctx.sql.run("DELETE FROM developer_at");
     } else {

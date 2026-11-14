@@ -245,3 +245,29 @@ describe("the developer's and the server's names are not agents' names", () => {
     expect(w.as(w.agent("old agent"), c.agentRegister, {}).name).toBe("old agent");
   });
 });
+
+describe("what records the developer's own attention is theirs in person; the rest is logged when relayed", () => {
+  test("seen, the app opened and I'm at cannot be relayed", () => {
+    const w = world();
+    w.as(w.dev, c.placeAdd, { name: "the bench" });
+    const relay = w.agent("panel", { said: "I looked at everything" });
+    for (const run of [
+      () => w.as(relay, c.seen, {}),
+      () => w.as(relay, c.pushSeen, {}),
+      () => w.as(relay, c.at, { place: "the bench" }),
+    ]) {
+      expect(w.refused(run).code).toBe("forbidden");
+    }
+  });
+
+  test("a place added or removed on the developer's words is in the log, quoting them", () => {
+    const w = world();
+    w.as(w.agent("panel", { said: "add the shed" }), c.placeAdd, { name: "the shed" });
+    w.as(w.agent("panel", { said: "the shed is gone" }), c.placeRemove, { name: "the shed" });
+    const logged = w.events("event:place.*");
+    expect(logged.map((event) => [event.type, event.actor, event.attrs.said])).toEqual([
+      ["place.removed", "panel", "the shed is gone"],
+      ["place.added", "panel", "add the shed"],
+    ]);
+  });
+});

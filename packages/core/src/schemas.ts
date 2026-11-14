@@ -78,7 +78,8 @@ export const EntityKind = z.enum([
 export type EntityKind = z.infer<typeof EntityKind>;
 
 /** What an event is about: any item, or an agent, which is not an item you open by ref. */
-export const EventKind = z.enum([...EntityKind.options, "agent"]);
+/** What an event is about: an entity, an agent, or one of the developer's places. */
+export const EventKind = z.enum([...EntityKind.options, "agent", "place"]);
 export type EventKind = z.infer<typeof EventKind>;
 
 export const WatchStatus = z.enum(["active", "fired", "cancelled", "expired"]);
