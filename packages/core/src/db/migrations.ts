@@ -1,7 +1,10 @@
 import { z } from "zod";
 import type { SqlDriver } from "./driver.ts";
 
-const MIGRATIONS: readonly string[] = [
+/** One schema version: SQL, or code for steps SQL cannot express, such as rewriting a JSON query. */
+export type Migration = string | ((driver: SqlDriver) => void);
+
+const MIGRATIONS: readonly Migration[] = [
   `
   CREATE TABLE counters (name TEXT PRIMARY KEY, value INTEGER NOT NULL);
 
@@ -138,14 +141,26 @@ const MIGRATIONS: readonly string[] = [
 
 const UserVersion = z.object({ user_version: z.number().int() });
 
-export function migrate(driver: SqlDriver): void {
+/** The version a fully migrated database is at. */
+export const SCHEMA_VERSION = MIGRATIONS.length;
+
+/**
+ * Brings the database up to `target` (the latest by default), one version per transaction, so a failing step leaves
+ * it at the version before. Stopping early lets a test build the database exactly as an older release left it.
+ */
+export function migrate(
+  driver: SqlDriver,
+  target = SCHEMA_VERSION,
+  migrations: readonly Migration[] = MIGRATIONS,
+): void {
   const [row] = driver.all("PRAGMA user_version");
   const current = UserVersion.parse(row).user_version;
-  MIGRATIONS.forEach((sql, index) => {
+  migrations.forEach((step, index) => {
     const version = index + 1;
-    if (version <= current) return;
+    if (version <= current || version > target) return;
     driver.transaction(() => {
-      driver.exec(sql);
+      if (typeof step === "string") driver.exec(step);
+      else step(driver);
       driver.exec(`PRAGMA user_version = ${version}`);
     });
   });
