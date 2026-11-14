@@ -51,10 +51,12 @@ export function createIssue(ctx: Ctx, input: CreateIssueInput): Issue {
     );
   }
   const line = input.line === undefined ? null : requireLine(ctx, input.line).ref;
-  guardLineWrite(ctx, line, isWork(input.status, input.assignee) ? "work" : "scope");
+  const work = isWork(input.status, input.assignee);
+  guardLineWrite(ctx, line, work ? "work" : "scope");
   checkStep(ctx, line, input.step ?? null);
   const status = input.status ?? "todo";
   const ref = `${project.ref}-${nextNumber(ctx, `issue:${project.ref}`)}`;
+  if (work) requireOnLine(ctx, { ref, line, project: project.ref });
   ctx.sql.run(
     `INSERT INTO issues (ref, project, title, body, status, priority, assignee, labels, milestone, line, step, version, createdAt, updatedAt, closedAt, createdBy)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)`,
@@ -98,8 +100,11 @@ function isWork(status: IssueStatus | undefined, assignee: string | null | undef
   );
 }
 
-/** An agent claims issues only on the line it is on: an owner in any repo the line names, a helper in its own. */
-function requireOnLine(ctx: Ctx, issue: Issue): void {
+/**
+ * An agent claims, progresses and finishes issues only on the line it is on: an owner in any repo the line names, a
+ * helper in its own.
+ */
+function requireOnLine(ctx: Ctx, issue: { ref: string; line: string | null; project: string }): void {
   if (issue.line === null || ctx.developer || ctx.system) return;
   const claim = claimOf(ctx, ctx.actor);
   const hint = `Take the line first: octo line take ${issue.line}`;
@@ -173,6 +178,12 @@ export const issueOps = [
       const kind = isWork(input.status, input.assignee) ? "work" : "scope";
       guardLineWrite(ctx, current.line, kind);
       if (nextLine !== current.line) guardLineWrite(ctx, nextLine, kind);
+      // Giving an issue to someone, or taking it away, is claiming it, as much as moving it on is.
+      const reassigns = input.assignee !== undefined && input.assignee !== current.assignee;
+      if (kind === "work" || reassigns) {
+        requireOnLine(ctx, current);
+        if (nextLine !== current.line) requireOnLine(ctx, { ...current, line: nextLine });
+      }
       const step = line === null ? null : input.step;
       checkStep(ctx, nextLine, step === undefined ? current.step : step);
       const labels =
