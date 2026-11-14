@@ -8,6 +8,7 @@ const ISSUE_REF = /^[A-Z][A-Z0-9]{1,5}-\d+$/;
 
 const PREFIXES: readonly (readonly [RegExp, EntityKind])[] = [
   [/^D-\d+$/, "decision"],
+  [/^L-\d+$/, "line"],
   [/^PR-\d+$/, "pr"],
   [/^DR-\d+$/, "drift"],
   [/^M-\d+$/, "milestone"],

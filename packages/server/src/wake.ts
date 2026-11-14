@@ -13,7 +13,7 @@ export interface WakeResult {
 
 export type WakeRunner = (argv: readonly string[]) => Promise<WakeResult>;
 
-const DISPATCHER: Caller = { actor: "octotrack", channel: "cli" };
+const DISPATCHER: Caller = { actor: "octotrack", channel: "cli", system: true };
 const STDERR_KEPT = 300;
 // A woken agent may work for a while before its command returns, and must not hold a process forever.
 const WAKE_DEADLINE_MS = 30 * 60 * 1000;

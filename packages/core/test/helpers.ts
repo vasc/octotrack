@@ -46,6 +46,11 @@ export interface Harness {
     input: z.input<I>,
     actor?: string,
   ): z.output<O>;
+  /** Acts as the developer: the dashboard, or the CLI with `--me`. */
+  developer<I extends z.ZodType, O extends z.ZodType>(
+    contract: Contract<I, O>,
+    input: z.input<I>,
+  ): z.output<O>;
   as: Caller;
 }
 
@@ -61,6 +66,9 @@ export function harness(start = "2026-11-07T12:00:00.000Z"): Harness {
     },
     call(contract, input, actor = as.actor) {
       return tracker.call(contract, input, { actor, channel: "cli" });
+    },
+    developer(contract, input) {
+      return tracker.call(contract, input, { actor: "dev", channel: "cli", developer: true });
     },
   };
 }

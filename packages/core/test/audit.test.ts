@@ -15,8 +15,9 @@ import {
   ProjectStatus,
   UpdateLevel,
   DriftStatus,
-  EntityKind,
+  EventKind,
   Channel,
+  LineState,
 } from "../src/schemas.ts";
 import { type Harness, harness } from "./helpers.ts";
 
@@ -66,9 +67,10 @@ describe("a typo in a query is an error, never a false result", () => {
       ...MilestoneStatus.options,
       ...DriftStatus.options,
       ...UpdateLevel.options,
+      ...LineState.options,
     ];
     expect([...new Set(QUERY_VALUES.status)].sort()).toEqual([...new Set(statuses)].sort());
-    expect([...(QUERY_VALUES.kind ?? [])].sort()).toEqual([...EntityKind.options].sort());
+    expect([...(QUERY_VALUES.kind ?? [])].sort()).toEqual([...EventKind.options].sort());
     expect([...(QUERY_VALUES.priority ?? [])].sort()).toEqual([...Priority.options].sort());
     expect([...(QUERY_VALUES.type ?? [])].sort()).toEqual([...DecisionKind.options].sort());
     expect([...(QUERY_VALUES.channel ?? [])].sort()).toEqual([...Channel.options].sort());

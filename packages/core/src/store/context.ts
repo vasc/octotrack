@@ -6,6 +6,12 @@ export interface Ctx {
   sql: SqlDriver;
   actor: string;
   channel: Channel;
+  /** True for the developer: the dashboard, or the CLI with --me. */
+  developer: boolean;
+  /** The developer's words an agent quotes to make a developer's operation on their behalf, or null. */
+  said: string | null;
+  /** Octotrack itself or GitHub sync: never an agent, so no agent rule applies. */
+  system: boolean;
   now: string;
   /** Drift opened during the current write, reported back to the writer. */
   openedDrift: Drift[];

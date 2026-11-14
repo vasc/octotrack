@@ -18,7 +18,7 @@ export interface QueryField {
 }
 
 export const QUERY_FIELDS: readonly QueryField[] = [
-  { name: "kind", description: "project, issue, decision, pr, milestone, idea, update, drift" },
+  { name: "kind", description: "line, project, issue, decision, pr, milestone, idea, update, drift" },
   { name: "ref", description: "A specific item, for example ref:D-3,OCT-12. A bare D-3 means the same." },
   { name: "project", description: "Project key" },
   { name: "status", description: "Status of the item (open, decided, in_progress, ...)" },
@@ -41,6 +41,7 @@ export const QUERY_FIELDS: readonly QueryField[] = [
   { name: "target", description: "Item a drift or update is about" },
   { name: "horizon", description: "now, next, later, none" },
   { name: "milestone", description: "Milestone ref" },
+  { name: "line", description: "Line of work ref, for example line:L-3" },
   { name: "blocked", description: "true when an issue has open blockers" },
   { name: "ready", description: "true for an unblocked, unassigned issue in todo" },
   { name: "linked", description: "Items linked to this ref, for example linked:OCT-12" },

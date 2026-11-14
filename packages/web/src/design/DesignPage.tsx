@@ -2,6 +2,7 @@ import { setParams, useRoute } from "../lib/router.ts";
 import { ActivityGallery } from "./ActivityGallery.tsx";
 import { DecisionGallery } from "./DecisionGallery.tsx";
 import { FoundationsGallery } from "./FoundationsGallery.tsx";
+import { LinesGallery } from "./LinesGallery.tsx";
 import { StatusGallery } from "./StatusGallery.tsx";
 import { useDesignTokens } from "./useDesignTokens.ts";
 
@@ -44,6 +45,7 @@ export function DesignPage() {
             <FoundationsGallery tokens={tokens} />
             <StatusGallery />
             <DecisionGallery />
+            <LinesGallery />
             <ActivityGallery />
           </div>
         ))}

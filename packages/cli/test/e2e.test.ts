@@ -682,7 +682,7 @@ describe("several things at once", () => {
     expect(updated.map((item) => item.priority)).toEqual(["urgent", "urgent"]);
 
     const claims = await Promise.all(
-      ["racer-1", "racer-2", "racer-3"].map((agent) => octo(["issue", "claim", one.ref], agent)),
+      ["racer.1", "racer.2", "racer.3"].map((agent) => octo(["issue", "claim", one.ref], agent)),
     );
     expect(claims.filter((claim) => claim.code === 0)).toHaveLength(1);
     expect(claims.filter((claim) => claim.code === 1)).toHaveLength(2);
@@ -691,7 +691,7 @@ describe("several things at once", () => {
   test("ten agents writing concurrently all land", async () => {
     const results = await Promise.all(
       Array.from({ length: 10 }, (_, index) =>
-        octo(["issue", "create", `Concurrent ${index}`, "-p", "OCT"], `agent-${index}`),
+        octo(["issue", "create", `Concurrent ${index}`, "-p", "OCT"], `agent.${index}`),
       ),
     );
     expect(results.every((result) => result.code === 0)).toBe(true);
@@ -931,5 +931,156 @@ describe("everything else, through the CLI", () => {
     const result = await octo(["seed", "demo"]);
     expect(result.code).toBe(1);
     expect(result.stdout).toContain("already has projects");
+  });
+});
+
+describe("lines of work from the CLI", () => {
+  const Line = z.object({ ref: z.string(), state: z.string(), title: z.string() });
+  const Home = z.object({ working: z.array(Line), upNext: z.array(Line), proposed: z.array(Line) });
+
+  test("the developer adds and orders lines with --me; an agent proposes and relays with --said", async () => {
+    const first = await data(
+      Line,
+      [
+        "line",
+        "add",
+        "Sendspin enclosure",
+        "--done-when",
+        "It holds the board.",
+        "--repo",
+        "OCT",
+        "--where",
+        "working",
+        "--me",
+      ],
+      "",
+    );
+    const second = await data(
+      Line,
+      ["line", "add", "Weekly digest", "--done-when", "It is sent on Mondays.", "--where", "working", "--me"],
+      "",
+    );
+    await data(Line, ["line", "order", second.ref, "--top", "--me"], "");
+    const home = await data(Home, ["lines", "--me"], "");
+    expect(home.working.map((line) => line.ref).slice(0, 2)).toEqual([second.ref, first.ref]);
+
+    const proposal = await data(
+      Line,
+      [
+        "line",
+        "propose",
+        "Wall mount",
+        "--done-when",
+        "It hangs flush.",
+        "--recommend",
+        "up_next",
+        "--why",
+        "The base is final.",
+      ],
+      "panel-agent",
+    );
+    expect(proposal.state).toBe("proposed");
+
+    const refused = await octo(["line", "start", proposal.ref, "--json"], "panel-agent");
+    expect(refused.code).toBe(1);
+    expect(refused.stdout).toContain('"forbidden"');
+    expect(refused.stdout).toContain("--said");
+    expect(refused.stdout).not.toContain("--me");
+
+    const started = await data(
+      Line,
+      ["line", "start", proposal.ref, "--said", "yes, start the wall mount"],
+      "panel-agent",
+    );
+    expect(started.state).toBe("working");
+
+    const text = await octo(["lines", "--text", "--me"], "");
+    expect(text.stdout).toContain("Working on");
+    expect(text.stdout).toContain("Wall mount");
+  });
+
+  test("--me cannot be combined with an agent name: a call that names an agent is never the developer", async () => {
+    const result = await octo(["lines", "--me", "--json"], "some-agent");
+    expect(result.code).toBe(2);
+    expect(result.stdout).toContain("agent");
+  });
+
+  test("a plan's steps and an issue placed on one", async () => {
+    const line = await data(
+      Line,
+      [
+        "line",
+        "add",
+        "Garden sensor",
+        "--done-when",
+        "Readings arrive hourly.",
+        "--repo",
+        "OCT",
+        "--where",
+        "working",
+        "--me",
+      ],
+      "",
+    );
+    await data(z.array(z.object({ title: z.string() })), [
+      "plan",
+      "set",
+      line.ref,
+      "Wire the probe",
+      "Calibrate",
+    ]);
+    const issue = await data(
+      z.object({ ref: z.string(), line: z.string().nullable(), step: z.number().nullable() }),
+      ["issue", "create", "Solder the header", "-p", "OCT", "--line", line.ref, "--step", "1"],
+    );
+    expect([issue.line, issue.step]).toEqual([line.ref, 1]);
+    const shown = await octo(["line", "show", line.ref, "--text"]);
+    expect(shown.stdout).toContain("1. Wire the probe");
+    expect(shown.stdout).toContain(issue.ref);
+  });
+});
+
+describe("agents and claims from the CLI", () => {
+  test("an agent registers, takes the line it should be on, and hears it was stopped on its next command", async () => {
+    await data(
+      z.object({ ref: z.string() }),
+      [
+        "line",
+        "add",
+        "Agent flow",
+        "--done-when",
+        "It works.",
+        "--repo",
+        "OCT",
+        "--where",
+        "working",
+        "--me",
+      ],
+      "",
+    );
+    const me = await data(
+      z.object({ repo: z.string().nullable() }),
+      ["agent", "register", "--no-wake", "--repo", "OCT"],
+      "flow.1",
+    );
+    expect(me.repo).toBe("OCT");
+    const take = await data(
+      z.object({ role: z.string().nullable(), message: z.string() }),
+      ["line", "take"],
+      "flow.1",
+    );
+    expect(take.role).toBe("owner");
+
+    await data(
+      z.object({ name: z.string() }),
+      ["agent", "stop", "flow.1", "--reason", "Wrong repo", "--me"],
+      "",
+    );
+    const listed = await octo(["agent", "list", "--text"], "flow.1");
+    expect(listed.stdout).toContain("stopped");
+    expect(listed.stderr).toContain("The developer stopped you: Wrong repo");
+    const refused = await octo(["agent", "note", "busy", "--json"], "flow.1");
+    expect(refused.code).toBe(1);
+    expect(refused.stdout).toContain('"forbidden"');
   });
 });

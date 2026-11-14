@@ -9,9 +9,13 @@ import {
   FieldChange,
   Idea,
   Issue,
+  Line,
+  LineClaim,
   Link,
   Milestone,
+  Notice,
   Project,
+  PlanStep,
   PullRequest,
   StatusUpdate,
   SyncFailure,
@@ -36,6 +40,12 @@ export const StatusUpdateRow = StatusUpdate;
 export const LinkRow = Link;
 export const AgentRow = Agent;
 
+/** A line as stored; its repos live in their own table and are joined in when it is read. */
+export const LineRow = Line.omit({ repos: true });
+export const PlanStepRow = PlanStep;
+export const LineRepoRow = z.object({ line: z.string(), repo: z.string() });
+export const ClaimRow = LineClaim;
+export const NoticeRow = Notice.extend({ wakes: z.number().transform((value) => value !== 0) });
 export const IssueRow = Issue.extend({ labels: jsonColumn(StringList) });
 export const IdeaRow = Idea.extend({ labels: jsonColumn(StringList) });
 export const DecisionRow = Decision.extend({ options: jsonColumn(z.array(DecisionOption)) });

@@ -65,6 +65,7 @@ export const LinkRel = z.enum([
 export type LinkRel = z.infer<typeof LinkRel>;
 
 export const EntityKind = z.enum([
+  "line",
   "project",
   "issue",
   "decision",
@@ -75,6 +76,10 @@ export const EntityKind = z.enum([
   "drift",
 ]);
 export type EntityKind = z.infer<typeof EntityKind>;
+
+/** What an event is about: any item, or an agent, which is not an item you open by ref. */
+export const EventKind = z.enum([...EntityKind.options, "agent"]);
+export type EventKind = z.infer<typeof EventKind>;
 
 export const WatchStatus = z.enum(["active", "fired", "cancelled", "expired"]);
 export type WatchStatus = z.infer<typeof WatchStatus>;
@@ -104,6 +109,9 @@ export const Issue = z.object({
   assignee: z.string().nullable(),
   labels: z.array(z.string()),
   milestone: z.string().nullable(),
+  /** The line of work this issue is part of, and the step of its plan it belongs to. */
+  line: z.string().nullable(),
+  step: z.number().int().nullable(),
   version: z.number().int(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -111,6 +119,59 @@ export const Issue = z.object({
   createdBy: z.string(),
 });
 export type Issue = z.infer<typeof Issue>;
+
+/** Where a line stands. Only the developer moves a line between these; agents propose. */
+export const LineState = z.enum(["proposed", "working", "up_next", "tabled", "done", "dropped"]);
+export type LineState = z.infer<typeof LineState>;
+
+/** What an agent recommends doing with a line it proposes. */
+export const LinePlacement = z.enum(["start", "up_next", "table", "fold"]);
+export type LinePlacement = z.infer<typeof LinePlacement>;
+
+export const LineSource = z.enum(["developer", "agent", "migration"]);
+export type LineSource = z.infer<typeof LineSource>;
+
+export const Line = z.object({
+  ref: z.string(),
+  title: z.string(),
+  /** One sentence saying when the line is finished. */
+  doneWhen: z.string(),
+  state: LineState,
+  /** Position within its section; lower comes first. The developer's order is everyone's order. */
+  rank: z.number(),
+  headline: z.string().nullable(),
+  summary: z.string().nullable(),
+  summaryAt: z.string().nullable(),
+  tabledReason: z.string().nullable(),
+  lookAgainAt: z.string().nullable(),
+  proposedBy: z.string().nullable(),
+  recommendation: LinePlacement.nullable(),
+  recommendationWhy: z.string().nullable(),
+  source: LineSource,
+  /** The idea or milestone a line migrated from, so it can be shown as coming from before. */
+  fromRef: z.string().nullable(),
+  /** When its scoper released it with a done when and a plan. Up-next lines need scoping again after eight weeks. */
+  scopedAt: z.string().nullable(),
+  /** While set, the agents that held it when it left working on may still wrap up. */
+  windDownUntil: z.string().nullable(),
+  repos: z.array(z.string()),
+  version: z.number().int(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  createdBy: z.string(),
+});
+export type Line = z.infer<typeof Line>;
+
+export const PlanStepStatus = z.enum(["todo", "doing", "done"]);
+export type PlanStepStatus = z.infer<typeof PlanStepStatus>;
+
+export const PlanStep = z.object({
+  line: z.string(),
+  position: z.number().int(),
+  title: z.string(),
+  status: PlanStepStatus,
+});
+export type PlanStep = z.infer<typeof PlanStep>;
 
 export const DecisionOption = z.object({
   key: z.string(),
@@ -252,9 +313,10 @@ export const FeedEvent = z.object({
   ts: z.string(),
   actor: z.string(),
   type: z.string(),
-  kind: EntityKind,
+  kind: EventKind,
   ref: z.string(),
   project: z.string().nullable(),
+  line: z.string().nullable(),
   summary: z.string(),
   related: z.array(z.string()),
   attrs: EventAttrs,
@@ -303,8 +365,79 @@ export const Agent = z.object({
   note: z.string().nullable(),
   firstSeenAt: z.string(),
   lastSeenAt: z.string(),
+  /** The folder it works in. One name is one session in one checkout. */
+  checkout: z.string().nullable(),
+  /** The repo it serves, a repo key, read from its checkout's remote or given when it registered. */
+  repo: z.string().nullable(),
+  /** How to wake it, such as claude:<session>, or null when it asked not to be woken. */
+  wakeAddress: z.string().nullable(),
+  /** "octotrack" for a session Octotrack started; null for one the developer started. */
+  startedBy: z.string().nullable(),
+  stoppedAt: z.string().nullable(),
+  stoppedReason: z.string().nullable(),
+  goneAt: z.string().nullable(),
 });
 export type Agent = z.infer<typeof Agent>;
+
+/** See docs/DESIGN.md, the agent state table. Never decided by silence alone. */
+export const AgentState = z.enum(["running", "asleep", "quiet", "gone", "stopped"]);
+export type AgentState = z.infer<typeof AgentState>;
+
+export const ClaimRole = z.enum(["owner", "helper", "scoper"]);
+export type ClaimRole = z.infer<typeof ClaimRole>;
+
+export const LineClaim = z.object({
+  agent: z.string(),
+  line: z.string(),
+  role: ClaimRole,
+  since: z.string(),
+});
+export type LineClaim = z.infer<typeof LineClaim>;
+
+/** An agent as the roster shows it: with its state and the line it is on. */
+export const AgentView = Agent.extend({
+  state: AgentState,
+  line: z.string().nullable(),
+  role: ClaimRole.nullable(),
+});
+export type AgentView = z.infer<typeof AgentView>;
+
+export const NoticeKind = z.enum([
+  "wind_down",
+  "stop",
+  "promoted",
+  "owner_offer",
+  "needs_owner",
+  "proposal_placed",
+]);
+export type NoticeKind = z.infer<typeof NoticeKind>;
+
+/** Something an agent must hear, carried on its next reply. Some also wake it. */
+export const Notice = z.object({
+  /** Null for an offer worked out for this reply, which is not stored. */
+  id: z.number().int().nullable(),
+  agent: z.string(),
+  kind: NoticeKind,
+  line: z.string().nullable(),
+  body: z.string(),
+  wakes: z.boolean(),
+  createdAt: z.string(),
+});
+export type Notice = z.infer<typeof Notice>;
+
+export const AgentBrief = z.object({ name: z.string(), state: AgentState });
+export type AgentBrief = z.infer<typeof AgentBrief>;
+
+/** Who is on a line, and how far the search for an owner got when there is none. */
+export const LineCrew = z.object({
+  owner: AgentBrief.nullable(),
+  helpers: z.array(AgentBrief),
+  scoper: AgentBrief.nullable(),
+  search: z
+    .object({ step: z.union([z.literal(1), z.literal(2), z.literal(3)]), since: z.string() })
+    .nullable(),
+});
+export type LineCrew = z.infer<typeof LineCrew>;
 
 export const WatchClause = z.discriminatedUnion("type", [
   z.strictObject({
@@ -490,7 +623,7 @@ export type Bootstrap = z.infer<typeof Bootstrap>;
 
 export const EntityDetail = z.object({
   summary: EntitySummary,
-  entity: z.union([Project, Issue, Decision, PullRequest, Milestone, Idea, StatusUpdate, Drift]),
+  entity: z.union([Project, Issue, Decision, PullRequest, Milestone, Idea, StatusUpdate, Drift, Line]),
   links: z.array(Link),
   linked: z.array(EntitySummary),
   drift: z.array(Drift),
@@ -510,3 +643,32 @@ export const NextWork = z.object({
   summary: z.string(),
 });
 export type NextWork = z.infer<typeof NextWork>;
+
+export const LineDetail = z.object({
+  line: Line,
+  steps: z.array(PlanStep),
+  issues: z.array(EntitySummary),
+});
+export type LineDetail = z.infer<typeof LineDetail>;
+
+/** The home screen: every line, in the developer's order, section by section. */
+export const HomeView = z.object({
+  working: z.array(Line),
+  upNext: z.array(Line),
+  proposed: z.array(Line),
+  tabled: z.array(Line),
+  doneLately: z.array(Line),
+  /** Who is on each line that has anyone, or needs someone. */
+  crews: z.record(z.string(), LineCrew),
+});
+export type HomeView = z.infer<typeof HomeView>;
+
+/** What `line take` gave an agent: the line, its role there, and what to do next. */
+export const TakeResult = z.object({
+  /** Null when there was nothing to take. */
+  line: Line.nullable(),
+  role: ClaimRole.nullable(),
+  next: EntitySummary.nullable(),
+  message: z.string(),
+});
+export type TakeResult = z.infer<typeof TakeResult>;

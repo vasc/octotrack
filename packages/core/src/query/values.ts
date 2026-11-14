@@ -6,7 +6,7 @@
  * in through here. A test holds the two together.
  */
 export const QUERY_VALUES: Readonly<Record<string, readonly string[]>> = {
-  kind: ["project", "issue", "decision", "pr", "milestone", "idea", "update", "drift"],
+  kind: ["line", "project", "issue", "decision", "pr", "milestone", "idea", "update", "drift", "agent"],
   status: [
     "planned",
     "active",
@@ -37,6 +37,11 @@ export const QUERY_VALUES: Readonly<Record<string, readonly string[]>> = {
     "updated",
     "verified",
     "auto_resolved",
+    "proposed",
+    "working",
+    "up_next",
+    "tabled",
+    "dropped",
   ],
   priority: ["urgent", "high", "medium", "low", "none"],
   type: ["technical", "architecture", "product", "approval"],
@@ -111,5 +116,22 @@ export const QUERY_VALUES: Readonly<Record<string, readonly string[]>> = {
     "drift.opened",
     "drift.resolved",
     "drift.claimed",
+    "line.added",
+    "line.proposed",
+    "line.started",
+    "line.queued",
+    "line.tabled",
+    "line.done",
+    "line.dropped",
+    "line.rejected",
+    "line.folded",
+    "line.reordered",
+    "line.plan_set",
+    "line.taken",
+    "line.released",
+    "agent.stopped",
+    "agent.lifted",
+    "agent.would_stop",
+    "write.refused",
   ],
 };

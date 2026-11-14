@@ -1,7 +1,7 @@
 import type { Drift } from "@octotrack/core";
 import type { Args, OptionSpecs } from "./args.ts";
 import type { OctoClient, OpSuccess } from "./client.ts";
-import { renderDriftNotice } from "./render.ts";
+import { renderDriftNotice, renderNotices } from "./render.ts";
 
 export interface Output {
   json: boolean;
@@ -27,6 +27,8 @@ export function makeOutput(json: boolean): Output {
       }
       console.log(text());
       printDrift(outcome.driftOpened);
+      const notices = renderNotices(outcome.notices);
+      if (notices !== "") console.error(notices);
     },
     data(value, text) {
       if (json) console.log(JSON.stringify({ ok: true, data: value }));
@@ -42,7 +44,6 @@ export function makeOutput(json: boolean): Output {
 export interface RunContext {
   client: OctoClient;
   out: Output;
-  mainScript: string;
 }
 
 export interface Command {

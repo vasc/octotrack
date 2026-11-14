@@ -1,13 +1,19 @@
 import type {
+  AgentView,
   Decision,
   DecisionCard,
   Drift,
   EntityDetail,
   EntitySummary,
   FeedEvent,
+  HomeView,
   Idea,
   Issue,
   IssueCard,
+  Line,
+  Notice,
+  TakeResult,
+  LineDetail,
   Link,
   Milestone,
   NextWork,
@@ -381,3 +387,97 @@ export function renderDetail(detail: EntityDetail): string {
 }
 
 export { orNothing };
+
+const STATE_LABEL: Readonly<Record<Line["state"], string>> = {
+  proposed: "Proposed",
+  working: "Working on",
+  up_next: "Up next",
+  tabled: "Tabled",
+  done: "Done",
+  dropped: "Dropped",
+};
+
+function lineRow(line: Line): string[] {
+  const repos = line.repos.length === 0 ? dim("no repo") : line.repos.join(", ");
+  if (line.state === "proposed") {
+    const from = line.fromRef === null ? "" : dim(` from before (${line.fromRef})`);
+    const advice =
+      line.recommendation === null
+        ? ""
+        : dim(` ${line.proposedBy ?? "?"} says ${line.recommendation.replace("_", " ")}`);
+    return [bold(line.ref), line.title, repos, `${advice}${from}`.trim()];
+  }
+  if (line.state === "tabled") {
+    const back = line.lookAgainAt === null ? "" : dim(` look again ${line.lookAgainAt.slice(0, 10)}`);
+    return [bold(line.ref), line.title, repos, `${line.tabledReason ?? ""}${back}`];
+  }
+  return [bold(line.ref), line.title, repos, line.headline ?? ""];
+}
+
+/** Every line in the developer's order, section by section; empty sections are left out except the first. */
+export function renderHome(home: HomeView): string {
+  const sections: [string, readonly Line[]][] = [
+    [STATE_LABEL.working, home.working],
+    [STATE_LABEL.up_next, home.upNext],
+    [STATE_LABEL.proposed, home.proposed],
+    [STATE_LABEL.tabled, home.tabled],
+    ["Done lately", home.doneLately],
+  ];
+  const shown = sections.filter(([, lines], index) => index === 0 || lines.length > 0);
+  return shown
+    .map(
+      ([title, lines]) =>
+        `${bold(title)}\n${lines.length === 0 ? dim("  Nothing yet.") : table(lines.map(lineRow))}`,
+    )
+    .join("\n\n");
+}
+
+export function renderLines(lines: readonly Line[]): string {
+  if (lines.length === 0) return dim("No lines.");
+  return table(
+    lines.map((line) => [bold(line.ref), STATE_LABEL[line.state], line.title, line.repos.join(", ")]),
+  );
+}
+
+export function renderLine(detail: LineDetail): string {
+  const { line } = detail;
+  const out = [`${bold(line.ref)} ${line.title} ${dim(`(${STATE_LABEL[line.state]})`)}`];
+  if (line.doneWhen !== "") out.push(`Done when: ${line.doneWhen}`);
+  if (line.repos.length > 0) out.push(`Repos: ${line.repos.join(", ")}`);
+  if (line.tabledReason !== null) out.push(`Tabled because: ${line.tabledReason}`);
+  if (line.recommendationWhy !== null) out.push(`Why: ${line.recommendationWhy}`);
+  out.push("", bold("Plan"));
+  out.push(
+    detail.steps.length === 0
+      ? dim("  No plan yet.")
+      : detail.steps.map((step) => `  ${step.position}. ${step.title} ${dim(step.status)}`).join("\n"),
+  );
+  out.push("", bold("Issues"), detail.issues.length === 0 ? dim("  None.") : renderSummaries(detail.issues));
+  return out.join("\n");
+}
+
+/** What the agent must hear, after its command's own output. */
+export function renderNotices(notices: readonly Notice[]): string {
+  return notices
+    .map((notice) => `${notice.wakes ? yellow("notice") : dim("notice")} ${notice.body}`)
+    .join("\n");
+}
+
+export function renderAgents(agents: readonly AgentView[]): string {
+  if (agents.length === 0) return dim("No agents yet.");
+  return table(
+    agents.map((agent) => [
+      bold(agent.name),
+      agent.state === "stopped" || agent.state === "gone" ? yellow(agent.state) : agent.state,
+      agent.repo ?? dim("no repo"),
+      agent.line === null ? dim("no line") : `${agent.line} ${agent.role ?? ""}`.trim(),
+      dim(`last ${when(agent.lastSeenAt)}`),
+      agent.note ?? "",
+    ]),
+  );
+}
+
+export function renderTake(take: TakeResult): string {
+  if (take.line === null) return take.message;
+  return `${bold(take.line.ref)} ${take.line.title} ${dim(`(${take.role ?? ""})`)}\n${take.message}`;
+}

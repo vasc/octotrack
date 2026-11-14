@@ -6,6 +6,7 @@ import type {
   FeedEvent,
   Issue,
   IssueCard,
+  Line,
   PrCard,
   PullRequest,
 } from "@octotrack/core/schemas";
@@ -98,6 +99,7 @@ export function event(overrides: Partial<FeedEvent> = {}): FeedEvent {
     kind: "issue",
     ref: "OCT-1",
     project: "OCT",
+    line: null,
     summary: "OCT-1 created: Thing",
     related: [],
     attrs: {},
@@ -117,6 +119,8 @@ export function issue(overrides: Partial<Issue> = {}): Issue {
     assignee: null,
     labels: [],
     milestone: null,
+    line: null,
+    step: null,
     version: 1,
     createdAt: AT,
     updatedAt: AT,
@@ -172,6 +176,34 @@ export function decisionForm(overrides: Partial<DecisionForm> = {}): DecisionFor
     setNote: () => {},
     setElsewhere: () => {},
     submit: () => {},
+    ...overrides,
+  };
+}
+
+export function line(overrides: Partial<Line> = {}): Line {
+  return {
+    ref: "L-1",
+    title: "Sendspin enclosure",
+    doneWhen: "A printed case holds the board and takes the USB-C plug.",
+    state: "working",
+    rank: 1,
+    headline: null,
+    summary: null,
+    summaryAt: null,
+    tabledReason: null,
+    lookAgainAt: null,
+    proposedBy: null,
+    recommendation: null,
+    recommendationWhy: null,
+    source: "developer",
+    fromRef: null,
+    scopedAt: null,
+    windDownUntil: null,
+    repos: ["PANEL"],
+    version: 1,
+    createdAt: AT,
+    updatedAt: AT,
+    createdBy: "dev",
     ...overrides,
   };
 }

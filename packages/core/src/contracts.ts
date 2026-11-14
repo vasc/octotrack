@@ -2,6 +2,7 @@ import { z } from "zod";
 import { isIsoDate } from "./query/match.ts";
 import {
   Agent,
+  AgentView,
   Bootstrap,
   Channel,
   Decision,
@@ -12,17 +13,24 @@ import {
   EntityDetail,
   EntitySummary,
   FeedPage,
+  HomeView,
   Horizon,
   Idea,
   IdeaStatus,
   Issue,
   IssueCard,
   IssueStatus,
+  Line,
+  LineDetail,
+  LinePlacement,
+  Notice,
+  TakeResult,
   Link,
   LinkRel,
   Milestone,
   MilestoneStatus,
   NextWork,
+  PlanStep,
   PrChecks,
   PrCard,
   PrMergeable,
@@ -141,7 +149,77 @@ export const LinkGraph = z.object({
 
 export const DriftAckResult = z.object({ acknowledged: z.array(Drift) });
 
+const LineRef = z.strictObject({ ref: z.string() });
+
 export const contracts = {
+  lineAdd: write(
+    "line.add",
+    "Add a line of work where it belongs (the developer)",
+    z.strictObject({
+      title: Text,
+      doneWhen: Text,
+      repos: z.array(z.string()).optional(),
+      where: z.enum(["working", "up_next", "tabled"]),
+      reason: Text.optional(),
+      lookAgainAt: DateText.optional(),
+    }),
+    Line,
+  ),
+  linePropose: write(
+    "line.propose",
+    "Propose a line of work, recommending where it goes and why",
+    z.strictObject({
+      title: Text,
+      doneWhen: Text,
+      repos: z.array(z.string()).optional(),
+      recommendation: LinePlacement,
+      why: Text,
+      place: z.enum(["start", "queue"]).optional(),
+    }),
+    Line,
+  ),
+  lineStart: write("line.start", "Start a line: it joins the bottom of working on", LineRef, Line),
+  lineQueue: write("line.queue", "Move a line to up next, at the end", LineRef, Line),
+  lineTable: write(
+    "line.table",
+    "Table a line, saying why, with an optional date to look again",
+    z.strictObject({ ref: z.string(), reason: Text, lookAgainAt: DateText.optional() }),
+    Line,
+  ),
+  lineDone: write("line.done", "Finish a line", LineRef, Line),
+  lineDrop: write("line.drop", "Drop a line", LineRef, Line),
+  lineReject: write("line.reject", "Not a line: drop a proposal", LineRef, Line),
+  lineFold: write(
+    "line.fold",
+    "Fold a line into another: its issues move there and it ends",
+    z.strictObject({ ref: z.string(), into: z.string() }),
+    Line,
+  ),
+  lineOrder: write(
+    "line.order",
+    "Move a line within its section: to the top or bottom, or before or after another line",
+    z.strictObject({
+      ref: z.string(),
+      to: z.enum(["top", "bottom"]).optional(),
+      before: z.string().optional(),
+      after: z.string().optional(),
+    }),
+    Line,
+  ),
+  lineShow: read("line.show", "Show a line with its plan and its issues", LineRef, LineDetail),
+  lineList: read("line.list", "List lines of work", ListInput, z.array(Line)),
+  homeShow: read(
+    "home.show",
+    "Every line of work, section by section, in the developer's order",
+    Empty,
+    HomeView,
+  ),
+  planSet: write(
+    "plan.set",
+    "Set a line's plan: its steps, in order",
+    z.strictObject({ line: z.string(), steps: z.array(Text).min(1) }),
+    z.array(PlanStep),
+  ),
   projectCreate: write(
     "project.create",
     "Create a project",
@@ -185,6 +263,8 @@ export const contracts = {
       assignee: z.string().optional(),
       labels: z.array(z.string()).optional(),
       milestone: z.string().optional(),
+      line: z.string().optional(),
+      step: z.number().int().positive().optional(),
       blocks: z.array(z.string()).optional(),
       blockedBy: z.array(z.string()).optional(),
       derivedFrom: z.array(z.string()).optional(),
@@ -204,6 +284,8 @@ export const contracts = {
       addLabels: z.array(z.string()).optional(),
       removeLabels: z.array(z.string()).optional(),
       milestone: z.string().nullable().optional(),
+      line: z.string().nullable().optional(),
+      step: z.number().int().positive().nullable().optional(),
       ifVersion: IfVersion,
     }),
     z.array(Issue),
@@ -578,7 +660,37 @@ export const contracts = {
     z.object({ cancelled: z.array(z.string()) }),
   ),
 
-  agentList: read("agent.list", "List agents seen by the tracker", Empty, z.array(Agent)),
+  agentList: read("agent.list", "Every agent: its state, repo, line and role", Empty, z.array(AgentView)),
+  agentRegister: write(
+    "agent.register",
+    "Say how to wake you (or that you cannot be woken), and which repo you serve when your checkout's remote does not say",
+    z.strictObject({ wake: z.string().trim().min(1).nullable().optional(), repo: z.string().optional() }),
+    AgentView,
+  ),
+  agentStop: write(
+    "agent.stop",
+    "Stop an agent: its claims end and every write under its name is refused until lifted (the developer)",
+    z.strictObject({ name: z.string(), reason: Text.optional() }),
+    AgentView,
+  ),
+  agentLift: write(
+    "agent.lift",
+    "Lift an agent's stop (the developer)",
+    z.strictObject({ name: z.string() }),
+    AgentView,
+  ),
+  lineTake: write(
+    "line.take",
+    "Take a line: by ref, or with none the line you should be on. Says what to do next",
+    z.strictObject({ ref: z.string().optional() }),
+    TakeResult,
+  ),
+  lineRelease: write(
+    "line.release",
+    "Leave your line. A scoper that leaves a done when and a plan leaves it scoped",
+    Empty,
+    z.object({ line: z.string().nullable() }),
+  ),
   agentNote: write(
     "agent.note",
     "Say what the calling agent is working on",
@@ -638,7 +750,14 @@ export type ErrorBody = z.infer<typeof ErrorBody>;
 
 /** Every op response. `driftOpened` tells a writer immediately what its change just put out of date. */
 export const OpEnvelope = z.discriminatedUnion("ok", [
-  z.object({ ok: z.literal(true), data: z.unknown(), driftOpened: z.array(Drift), cursor: z.number().int() }),
+  z.object({
+    ok: z.literal(true),
+    data: z.unknown(),
+    driftOpened: z.array(Drift),
+    cursor: z.number().int(),
+    /** What the calling agent must hear. Older servers send none. */
+    notices: z.array(Notice).default([]),
+  }),
   z.object({ ok: z.literal(false), error: ErrorBody }),
 ]);
 export type OpEnvelope = z.infer<typeof OpEnvelope>;

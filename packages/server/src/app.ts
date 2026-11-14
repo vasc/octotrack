@@ -7,6 +7,7 @@ import {
   type FeedEvent,
   type Hub,
   OctoError,
+  SCHEMA_VERSION,
   toErrorBody,
   type Tracker,
   WatchWaitRequest,
@@ -16,12 +17,15 @@ import { Hono } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { streamSSE } from "hono/streaming";
 import { z } from "zod";
+import { BUILD_ID } from "./build.ts";
 
 export interface AppOptions {
   tracker: Tracker;
   hub: Hub;
   /** Serves the built dashboard. Injected so that this file stays free of runtime specifics. */
   assets?: (path: string) => Promise<Response | null>;
+  /** Which build answers, sent with every response. Defaults to this process's own. */
+  build?: string;
   /** Pulls PR state from GitHub now. Only available where `gh` can run. */
   syncPrs?: () => Promise<{ repos: number; synced: number; errors: string[] }>;
   /** Hostnames accepted in the Host header. See docs/DESIGN.md, D10. */
@@ -47,6 +51,8 @@ function statusFor(code: string): ContentfulStatusCode {
     case "conflict":
     case "version_mismatch":
       return 409;
+    case "forbidden":
+      return 403;
     default:
       return 500;
   }
@@ -57,7 +63,7 @@ function hostnameOf(host: string): string {
 }
 
 /** Header values are limited to Latin-1, so the client percent-encodes names. */
-function decodeActor(raw: string | undefined): string | undefined {
+function decodeHeader(raw: string | undefined): string | undefined {
   if (raw === undefined) return undefined;
   try {
     return decodeURIComponent(raw);
@@ -66,12 +72,21 @@ function decodeActor(raw: string | undefined): string | undefined {
   }
 }
 
-function callerFrom(headerActor: string | undefined, headerChannel: string | undefined): Caller {
-  const channel = Channel.safeParse(headerChannel);
+function callerFrom(header: (name: string) => string | undefined): Caller {
+  const channel = Channel.safeParse(header("x-octo-channel"));
   const parsedChannel = channel.success ? channel.data : "cli";
+  const said = decodeHeader(header("x-octo-said"))?.trim();
+  const named = decodeHeader(header("x-octo-actor"))?.trim();
+  const checkout = decodeHeader(header("x-octo-checkout"))?.trim();
+  const developer = header("x-octo-developer") === "1";
+  const anonymous = (named === undefined || named === "") && parsedChannel !== "dashboard" && !developer;
   return {
-    actor: decodeActor(headerActor)?.trim() || (parsedChannel === "dashboard" ? "dev" : "agent"),
+    actor: named || (parsedChannel === "dashboard" || developer ? "dev" : "agent"),
     channel: parsedChannel,
+    developer,
+    ...(anonymous ? { anonymous } : {}),
+    ...(checkout === undefined || checkout === "" ? {} : { checkout }),
+    ...(said === undefined || said === "" ? {} : { said }),
   };
 }
 
@@ -89,10 +104,12 @@ export function createApp(options: AppOptions): Hono {
   const { tracker, hub, assets, syncPrs } = options;
   const allowedHosts = options.allowedHosts ?? DEFAULT_HOSTS;
   const keepaliveMs = options.keepaliveMs ?? 15_000;
+  const build = options.build ?? BUILD_ID;
   const app = new Hono();
 
   // No authentication, but a web page the developer happens to visit must not be able to approve decisions.
   app.use("*", async (c, next) => {
+    c.header("x-octo-build", build);
     const host = c.req.header("host");
     if (host !== undefined && !allowedHosts.includes(hostnameOf(host))) {
       return c.json({ ok: false, error: errorBody("forbidden", `Host ${host} is not allowed`) }, 403);
@@ -105,10 +122,13 @@ export function createApp(options: AppOptions): Hono {
 
   app.onError((error, c) => {
     const body = toErrorBody(error);
+    c.header("x-octo-build", build);
     return c.json({ ok: false, error: body }, statusFor(body.code));
   });
 
-  app.get("/api/health", (c) => c.json({ ok: true, cursor: tracker.cursor(), pid: serverPid() }));
+  app.get("/api/health", (c) =>
+    c.json({ ok: true, cursor: tracker.cursor(), pid: serverPid(), schema: SCHEMA_VERSION, build }),
+  );
 
   app.get("/api/ops", (c) => c.json({ ok: true, data: tracker.listOps().map(describeOp) }));
 
@@ -120,9 +140,15 @@ export function createApp(options: AppOptions): Hono {
 
   app.post("/api/ops/:name", async (c) => {
     const body = OpBody.parse(await c.req.json());
-    const caller = callerFrom(c.req.header("x-octo-actor"), c.req.header("x-octo-channel"));
+    const caller = callerFrom((name) => c.req.header(name));
     const outcome = tracker.execute(c.req.param("name"), body.input, caller);
-    return c.json({ ok: true, data: outcome.data, driftOpened: outcome.driftOpened, cursor: outcome.cursor });
+    return c.json({
+      ok: true,
+      data: outcome.data,
+      driftOpened: outcome.driftOpened,
+      cursor: outcome.cursor,
+      notices: outcome.notices,
+    });
   });
 
   app.post("/api/batch", async (c) => {
@@ -130,7 +156,7 @@ export function createApp(options: AppOptions): Hono {
     if (!parsed.success) {
       throw new OctoError("invalid_input", `Invalid batch: ${z.prettifyError(parsed.error)}`);
     }
-    const caller = callerFrom(c.req.header("x-octo-actor"), c.req.header("x-octo-channel"));
+    const caller = callerFrom((name) => c.req.header(name));
     return c.json(tracker.batch(parsed.data, caller));
   });
 
@@ -139,7 +165,7 @@ export function createApp(options: AppOptions): Hono {
     if (!parsed.success) {
       throw new OctoError("invalid_input", `Invalid wait: ${z.prettifyError(parsed.error)}`);
     }
-    const caller = callerFrom(c.req.header("x-octo-actor"), c.req.header("x-octo-channel"));
+    const caller = callerFrom((name) => c.req.header(name));
     const deadline = Date.now() + (parsed.data.holdMs ?? DEFAULT_HOLD_MS);
     while (true) {
       const results = tracker.call(contracts.watchCheck, { refs: parsed.data.refs }, caller);

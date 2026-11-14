@@ -99,6 +99,16 @@ right, so there "Nothing to update" is the only answer on offer.
 | `RoadmapPage`       | Structural | Three lanes, and a copy as markdown                                        |
 | `IdeasPage`         | Structural | Quick capture, and the list                                                |
 
+## Lines of work: `lines/`
+
+| Component     | Kind       | What it is                                                                                |
+| ------------- | ---------- | ----------------------------------------------------------------------------------------- |
+| `LineRow`     | Pure       | One line: ref, title, repos, an agent's advice or the reason it waits, and its moves      |
+| `LineSection` | Pure       | A titled section of lines in the developer's order. Left out when empty unless it says so |
+| `TableForm`   | Pure       | Asks why before tabling: a tabled line always says why                                    |
+| `AddLineForm` | Pure       | A new line with its done-when sentence. It joins the end of up next                       |
+| `LinesPage`   | Structural | Every line, section by section                                                            |
+
 ## Agents: `agents/`
 
 | Component    | Kind       | What it is                                                |
@@ -126,6 +136,7 @@ Opens from any ref, in the rail, without leaving the page.
 | `LinkList`       | Pure       | Connections, worded from this item's point of view: "blocked by", not "blocks" |
 | `HistoryList`    | Pure       | What has happened to this item                                                 |
 | `PrPanel`        | Pure       | A pull request's details                                                       |
+| `LinePanel`      | Pure       | A line of work: its state, what finishes it, and why it waits if it does       |
 | `EntityBody`     | Pure       | Picks the right body for the kind of item                                      |
 | `DecisionPanel`  | Structural | An open decision as a card, or a closed one as its record                      |
 | `IssuePanel`     | Structural | An issue's details, with its status select                                     |

@@ -1,5 +1,5 @@
 import { OctoError } from "../errors.ts";
-import type { EntityKind, EventAttrs, FieldChange } from "../schemas.ts";
+import type { EventAttrs, EventKind, FieldChange } from "../schemas.ts";
 import type { Ctx } from "./context.ts";
 import { one, rows } from "./context.ts";
 import { CountRow, ValueRow } from "./rows.ts";
@@ -70,9 +70,11 @@ export function assertVersion(ref: string, current: number, expected: number | u
 
 export interface EmitInput {
   type: string;
-  kind: EntityKind;
+  kind: EventKind;
   ref: string;
   project: string | null;
+  /** The line of work the event belongs to, when there is one. */
+  line?: string | null;
   summary: string;
   related?: readonly string[];
   attrs?: EventAttrs;
@@ -81,8 +83,8 @@ export interface EmitInput {
 
 export function emit(ctx: Ctx, event: EmitInput): void {
   ctx.sql.run(
-    `INSERT INTO events (ts, actor, type, kind, ref, project, summary, related, attrs, changes)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO events (ts, actor, type, kind, ref, project, line, summary, related, attrs, changes)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       ctx.now,
       ctx.actor,
@@ -90,6 +92,7 @@ export function emit(ctx: Ctx, event: EmitInput): void {
       event.kind,
       event.ref,
       event.project,
+      event.line ?? null,
       event.summary,
       JSON.stringify(event.related ?? []),
       JSON.stringify(event.attrs ?? {}),

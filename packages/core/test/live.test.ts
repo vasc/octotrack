@@ -18,8 +18,22 @@ function notified(action: () => void): number {
   return notifications - before;
 }
 
+/** The developer's operations run as the developer; everything else as an agent. */
+const DEVELOPER_OPS: ReadonlySet<string> = new Set([
+  "line.add",
+  "line.order",
+  "line.queue",
+  "line.start",
+  "line.table",
+  "line.done",
+  "line.drop",
+  "line.reject",
+  "line.fold",
+  "agent.stop",
+  "agent.lift",
+]);
 function execute(name: string, input: unknown): void {
-  h.tracker.execute(name, input, h.as);
+  h.tracker.execute(name, input, DEVELOPER_OPS.has(name) ? { ...h.as, developer: true } : h.as);
 }
 
 beforeEach(() => {
@@ -42,6 +56,10 @@ beforeEach(() => {
   h.call(c.milestoneCreate, { project: "OCT", title: "A milestone" });
   h.call(c.viewSave, { name: "Mine", query: "kind:issue" });
   h.call(c.watchCreate, { spec: SPEC, name: "registered" });
+  h.developer(c.lineAdd, { title: "A line", doneWhen: "Done.", where: "working" });
+  h.call(c.linePropose, { title: "A proposal", doneWhen: "Done.", recommendation: "up_next", why: "Soon." });
+  h.call(c.linePropose, { title: "The same work", doneWhen: "Done.", recommendation: "fold", why: "Same." });
+  h.developer(c.lineAdd, { title: "Next", doneWhen: "Done.", where: "up_next" });
 });
 
 /**
@@ -86,6 +104,23 @@ const EVERY_WRITE: readonly (readonly [string, unknown])[] = [
   ["watch.create", { spec: SPEC }],
   ["watch.cancel", { refs: ["registered"] }],
   ["agent.note", { note: "Busy" }],
+  ["line.add", { title: "New", doneWhen: "Done.", where: "up_next" }],
+  ["line.propose", { title: "Idea", doneWhen: "Done.", recommendation: "table", why: "Later." }],
+  ["line.order", { ref: "L-5", to: "top" }],
+  ["line.queue", { ref: "L-2" }],
+  ["line.start", { ref: "L-2" }],
+  ["line.table", { ref: "L-2", reason: "Not now" }],
+  ["line.done", { ref: "L-2" }],
+  ["line.drop", { ref: "L-4" }],
+  ["line.reject", { ref: "L-6" }],
+  ["line.fold", { ref: "L-3", into: "L-1" }],
+  ["plan.set", { line: "L-1", steps: ["One"] }],
+  ["agent.register", { wake: "claude:a" }],
+  ["line.take", {}],
+  ["line.release", {}],
+  // Last: everything above runs as agent-a, which a stop would refuse.
+  ["agent.stop", { name: "agent-a" }],
+  ["agent.lift", { name: "agent-a" }],
 ];
 
 describe("every write reaches the dashboard", () => {

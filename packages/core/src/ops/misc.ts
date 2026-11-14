@@ -7,7 +7,10 @@ import type { Counts, Decision, Drift, Issue } from "../schemas.ts";
 import { countOf, emit, nextNumber, currentCursor } from "../store/common.ts";
 import { type Ctx, rows } from "../store/context.ts";
 import { filterEntities, findEntities, isReady } from "../store/docs.ts";
+import { guardLineWrite } from "../agents/claims.ts";
+import { viewOf } from "../store/agents.ts";
 import {
+  type AnyEntity,
   findEntity,
   getDrift,
   getUpdate,
@@ -117,10 +120,18 @@ function describeNext(
   return parts.length === 0 ? "Nothing to do." : `${parts.join("; ")}.`;
 }
 
+/** The line a note is about: the line itself, or the line its issue is on. */
+function lineOfTarget(target: AnyEntity): string | null {
+  if (target.kind === "line") return target.value.ref;
+  if (target.kind === "issue") return target.value.line;
+  return null;
+}
+
 export const miscOps = [
   bind(contracts.updatePost, (ctx, input) => {
     const target = input.target === undefined ? null : requireEntity(ctx, input.target);
     const targetRef = target?.value.ref ?? null;
+    guardLineWrite(ctx, target === null ? null : lineOfTarget(target), "scope");
     const project =
       input.project === undefined
         ? target === null
@@ -244,7 +255,9 @@ export const miscOps = [
     cancelled: input.refs.map((ref) => cancelWatch(ctx, ref)),
   })),
 
-  bind(contracts.agentList, (ctx) => rows(ctx, AgentRow, "SELECT * FROM agents ORDER BY lastSeenAt DESC")),
+  bind(contracts.agentList, (ctx) =>
+    rows(ctx, AgentRow, "SELECT * FROM agents ORDER BY lastSeenAt DESC").map((agent) => viewOf(ctx, agent)),
+  ),
 
   bind(contracts.agentNote, (ctx, input) => {
     ctx.sql.run("UPDATE agents SET note = ? WHERE name = ?", [input.note, ctx.actor]);

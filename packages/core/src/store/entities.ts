@@ -7,17 +7,20 @@ import type {
   EntitySummary,
   Idea,
   Issue,
+  Line,
   Milestone,
   Project,
   PullRequest,
   StatusUpdate,
 } from "../schemas.ts";
-import { one, type Ctx } from "./context.ts";
+import { one, rows, type Ctx } from "./context.ts";
 import {
   DecisionRow,
   DriftRow,
   IdeaRow,
   IssueRow,
+  LineRepoRow,
+  LineRow,
   MilestoneRow,
   PrRow,
   ProjectRow,
@@ -25,6 +28,7 @@ import {
 } from "./rows.ts";
 
 export type AnyEntity =
+  | { kind: "line"; value: Line }
   | { kind: "project"; value: Project }
   | { kind: "issue"; value: Issue }
   | { kind: "decision"; value: Decision }
@@ -33,6 +37,32 @@ export type AnyEntity =
   | { kind: "idea"; value: Idea }
   | { kind: "update"; value: StatusUpdate }
   | { kind: "drift"; value: Drift };
+
+export function reposOf(ctx: Ctx, line: string): string[] {
+  return rows(ctx, LineRepoRow, "SELECT line, repo FROM line_repos WHERE line = ? ORDER BY position", [
+    line,
+  ]).map((row) => row.repo);
+}
+export function getLine(ctx: Ctx, ref: string): Line | null {
+  const row = one(ctx, LineRow, "SELECT * FROM lines WHERE ref = ?", [ref]);
+  return row === null ? null : { ...row, repos: reposOf(ctx, row.ref) };
+}
+export function requireLine(ctx: Ctx, rawRef: string): Line {
+  const value = getLine(ctx, normalizeRef(rawRef));
+  if (value === null) throw notFound(rawRef);
+  return value;
+}
+/** Every line, with its repos, in one pass. */
+export function allLines(ctx: Ctx, where = "", params: readonly (string | number | null)[] = []): Line[] {
+  const repos = new Map<string, string[]>();
+  for (const row of rows(ctx, LineRepoRow, "SELECT line, repo FROM line_repos ORDER BY position")) {
+    repos.set(row.line, [...(repos.get(row.line) ?? []), row.repo]);
+  }
+  return rows(ctx, LineRow, `SELECT * FROM lines ${where} ORDER BY rank`, params).map((row) => ({
+    ...row,
+    repos: repos.get(row.ref) ?? [],
+  }));
+}
 
 export function getProject(ctx: Ctx, ref: string): Project | null {
   return one(ctx, ProjectRow, "SELECT * FROM projects WHERE ref = ?", [ref]);
@@ -64,6 +94,10 @@ export function getDrift(ctx: Ctx, ref: string): Drift | null {
 
 function loadByKind(ctx: Ctx, kind: EntityKind, ref: string): AnyEntity | null {
   switch (kind) {
+    case "line": {
+      const value = getLine(ctx, ref);
+      return value && { kind, value };
+    }
     case "project": {
       const value = getProject(ctx, ref);
       return value && { kind, value };
@@ -155,6 +189,15 @@ export function summarize(entity: AnyEntity): EntitySummary {
     updatedAt: entity.value.updatedAt,
   };
   switch (entity.kind) {
+    case "line":
+      return {
+        ...base,
+        title: entity.value.title,
+        status: entity.value.state,
+        project: entity.value.repos[0] ?? null,
+        priority: null,
+        assignee: null,
+      };
     case "project":
       return {
         ...base,

@@ -4,6 +4,44 @@ import type { SqlDriver } from "./driver.ts";
 /** One schema version: SQL, or code for steps SQL cannot express, such as rewriting a JSON query. */
 export type Migration = string | ((driver: SqlDriver) => void);
 
+const Before = z.object({ ref: z.string(), project: z.string().nullable(), title: z.string() });
+
+/**
+ * Ideas still open and milestones not finished become proposed lines marked as coming from before. The developer said
+ * how they migrate does not matter as long as agents clean up afterwards; their tables stay, so every old ref resolves.
+ */
+function proposalsFromBefore(driver: SqlDriver): void {
+  const ideas = z
+    .array(Before)
+    .parse(
+      driver.all(
+        "SELECT ref, project, title FROM ideas WHERE status IN ('captured', 'exploring', 'planned') ORDER BY CAST(SUBSTR(ref, 3) AS INTEGER)",
+      ),
+    );
+  const milestones = z
+    .array(Before)
+    .parse(
+      driver.all(
+        "SELECT ref, project, title FROM milestones WHERE status IN ('planned', 'active') ORDER BY CAST(SUBSTR(ref, 3) AS INTEGER)",
+      ),
+    );
+  const now = new Date().toISOString();
+  [...ideas, ...milestones].forEach((item, index) => {
+    const ref = `L-${index + 1}`;
+    driver.run(
+      `INSERT INTO lines (ref, title, doneWhen, state, rank, source, fromRef, version, createdAt, updatedAt, createdBy)
+       VALUES (?, ?, '', 'proposed', ?, 'migration', ?, 1, ?, ?, 'octotrack')`,
+      [ref, item.title, index + 1, item.ref, now, now],
+    );
+    if (item.project !== null)
+      driver.run("INSERT INTO line_repos (line, repo, position) VALUES (?, ?, 0)", [ref, item.project]);
+    if (item.ref.startsWith("M-"))
+      driver.run("UPDATE issues SET line = ? WHERE milestone = ?", [ref, item.ref]);
+  });
+  const made = ideas.length + milestones.length;
+  if (made > 0) driver.run("INSERT INTO counters (name, value) VALUES ('line', ?)", [made]);
+}
+
 const MIGRATIONS: readonly Migration[] = [
   `
   CREATE TABLE counters (name TEXT PRIMARY KEY, value INTEGER NOT NULL);
@@ -136,6 +174,67 @@ const MIGRATIONS: readonly Migration[] = [
   ALTER TABLE decisions ADD COLUMN reportNote TEXT;
   ALTER TABLE decisions ADD COLUMN reportedAt TEXT;
   UPDATE decisions SET pickedUpAt = decidedAt, pickedUpBy = requestedBy WHERE status = 'decided';
+  `,
+  `
+  CREATE TABLE lines (
+    ref TEXT PRIMARY KEY, title TEXT NOT NULL, doneWhen TEXT NOT NULL, state TEXT NOT NULL, rank REAL NOT NULL,
+    headline TEXT, summary TEXT, summaryAt TEXT, tabledReason TEXT, lookAgainAt TEXT,
+    proposedBy TEXT, recommendation TEXT, recommendationWhy TEXT, source TEXT NOT NULL, fromRef TEXT,
+    version INTEGER NOT NULL, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL, createdBy TEXT NOT NULL
+  );
+  CREATE INDEX lines_state ON lines(state, rank);
+
+  CREATE TABLE line_repos (
+    line TEXT NOT NULL REFERENCES lines(ref), repo TEXT NOT NULL REFERENCES projects(ref), position INTEGER NOT NULL,
+    PRIMARY KEY (line, repo)
+  );
+  CREATE INDEX line_repos_repo ON line_repos(repo);
+
+  CREATE TABLE plan_steps (
+    line TEXT NOT NULL REFERENCES lines(ref), position INTEGER NOT NULL, title TEXT NOT NULL, status TEXT NOT NULL,
+    PRIMARY KEY (line, position)
+  );
+
+  ALTER TABLE issues ADD COLUMN line TEXT REFERENCES lines(ref);
+  ALTER TABLE issues ADD COLUMN step INTEGER;
+  CREATE INDEX issues_line ON issues(line);
+  ALTER TABLE decisions ADD COLUMN line TEXT REFERENCES lines(ref);
+  ALTER TABLE events ADD COLUMN line TEXT;
+  `,
+  proposalsFromBefore,
+  `
+  ALTER TABLE agents ADD COLUMN checkout TEXT;
+  ALTER TABLE agents ADD COLUMN repo TEXT;
+  ALTER TABLE agents ADD COLUMN wakeAddress TEXT;
+  ALTER TABLE agents ADD COLUMN startedBy TEXT;
+  ALTER TABLE agents ADD COLUMN stoppedAt TEXT;
+  ALTER TABLE agents ADD COLUMN stoppedReason TEXT;
+  ALTER TABLE agents ADD COLUMN goneAt TEXT;
+  CREATE INDEX agents_checkout ON agents(checkout);
+
+  CREATE TABLE line_claims (
+    agent TEXT PRIMARY KEY REFERENCES agents(name), line TEXT NOT NULL REFERENCES lines(ref),
+    role TEXT NOT NULL, since TEXT NOT NULL
+  );
+  CREATE INDEX line_claims_line ON line_claims(line);
+  CREATE UNIQUE INDEX line_claims_one_owner ON line_claims(line) WHERE role = 'owner';
+  CREATE UNIQUE INDEX line_claims_one_scoper ON line_claims(line) WHERE role = 'scoper';
+
+  CREATE TABLE notices (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, agent TEXT NOT NULL, kind TEXT NOT NULL, line TEXT, body TEXT NOT NULL,
+    wakes INTEGER NOT NULL, createdAt TEXT NOT NULL, deliveredAt TEXT
+  );
+  CREATE INDEX notices_undelivered ON notices(agent, deliveredAt);
+
+  CREATE TABLE owner_searches (
+    line TEXT PRIMARY KEY REFERENCES lines(ref), since TEXT NOT NULL, firstOffer TEXT, firstUntil TEXT
+  );
+
+  ALTER TABLE lines ADD COLUMN scopedAt TEXT;
+  ALTER TABLE lines ADD COLUMN windDownUntil TEXT;
+  ALTER TABLE lines ADD COLUMN windDownWrites INTEGER NOT NULL DEFAULT 0;
+  ALTER TABLE lines ADD COLUMN lastOwner TEXT;
+  ALTER TABLE lines ADD COLUMN lastOwnerEnded TEXT;
   `,
 ];
 

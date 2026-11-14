@@ -3,9 +3,11 @@ import { OctoError } from "@octotrack/core";
 import { serverUrl } from "@octotrack/server/paths";
 import { ZodError } from "zod";
 import { type OptionSpec, type OptionSpecs, parse, UsageError } from "./args.ts";
-import { ConnectionError, OctoClient, RemoteError } from "./client.ts";
+import { ConnectionError, type Identity, OctoClient, RemoteError } from "./client.ts";
 import { type Command, makeOutput } from "./command.ts";
 import { commandsUnder, COMMANDS, resolveCommand } from "./registry.ts";
+import { findCheckout } from "./checkout.ts";
+import { selfCommand } from "./self.ts";
 
 const EXIT_ERROR = 1;
 const EXIT_USAGE = 2;
@@ -15,6 +17,11 @@ const GLOBAL_OPTIONS: OptionSpecs = {
   json: { type: "boolean", description: "JSON output. The default when not in a terminal" },
   text: { type: "boolean", description: "Text output. The default in a terminal" },
   agent: { type: "string", description: "Who is acting. Default: $OCTO_AGENT" },
+  me: { type: "boolean", description: "You are the developer, not an agent. Never with an agent name" },
+  said: {
+    type: "string",
+    description: "An agent making one of the developer's operations quotes the developer's own words here",
+  },
   help: { type: "boolean", short: "h", description: "Show help" },
 };
 
@@ -100,7 +107,10 @@ export function normalizeArgv(argv: readonly string[]): string[] {
     if (word === "--json" || word === "--text") {
       moved.push(word);
       index += 1;
-    } else if (word === "--agent" && argv[index + 1] !== undefined) {
+    } else if (word === "--me") {
+      moved.push(word);
+      index += 1;
+    } else if ((word === "--agent" || word === "--said") && argv[index + 1] !== undefined) {
       moved.push(word, argv[index + 1] ?? "");
       index += 2;
     } else {
@@ -108,6 +118,37 @@ export function normalizeArgv(argv: readonly string[]): string[] {
     }
   }
   return [...argv.slice(index), ...moved];
+}
+
+/**
+ * The developer is something present, never something missing: `--me`, or OCTO_DEVELOPER=1 on an interactive terminal,
+ * which agent tools' shells never are. A call that carries an agent name is never the developer.
+ */
+export function whoIsCalling(
+  agentFlag: string | undefined,
+  me: boolean,
+  said: string | undefined,
+): { actor: string | null; identity: Identity } {
+  const fromEnv = process.env.OCTO_AGENT?.trim() || undefined;
+  const agent = agentFlag?.trim() || fromEnv;
+  const interactive = process.stdin.isTTY === true && process.stdout.isTTY === true;
+  const developer = me || (agent === undefined && interactive && process.env.OCTO_DEVELOPER === "1");
+  if (me && agent !== undefined) {
+    throw new UsageError(
+      `--me is the developer, but this call names the agent "${agent}"${agentFlag === undefined ? " (OCTO_AGENT)" : ""}. A call that names an agent is never the developer`,
+    );
+  }
+  if (developer && said !== undefined)
+    throw new UsageError("--said is for agents relaying the developer's words");
+  const checkout = developer ? null : findCheckout(process.cwd());
+  return {
+    actor: developer ? "dev" : (agent ?? null),
+    identity: {
+      developer,
+      ...(said === undefined ? {} : { said }),
+      ...(checkout === null ? {} : { checkout }),
+    },
+  };
 }
 
 export async function main(rawArgv: readonly string[]): Promise<number> {
@@ -136,10 +177,15 @@ export async function main(rawArgv: readonly string[]): Promise<number> {
       console.log(commandHelp(command));
       return 0;
     }
-    const actor = args.str("agent") ?? process.env.OCTO_AGENT ?? "agent";
-    const mainScript = import.meta.path;
-    const client = new OctoClient(serverUrl(), actor, mainScript);
-    const code = await command.run({ client, out: makeOutput(json), mainScript }, args);
+    const { actor, identity } = whoIsCalling(args.str("agent"), args.flag("me"), args.str("said"));
+    const client = new OctoClient(
+      serverUrl(),
+      actor,
+      selfCommand(import.meta.path, process.execPath),
+      true,
+      identity,
+    );
+    const code = await command.run({ client, out: makeOutput(json) }, args);
     return code ?? 0;
   } catch (error) {
     if (error instanceof UsageError) {
