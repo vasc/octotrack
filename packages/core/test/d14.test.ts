@@ -340,6 +340,19 @@ describe("the developer's stop command", () => {
     expect(w.as(w.server, c.runnerStops, {})).toEqual([{ name: "panel" }]);
     expect(() => w.as(w.dev, c.runnerStopRan, { name: "panel", code: 0, output: "" })).toThrow();
   });
+
+  test("in watch mode is only noted, once, and still runs once the runner may act", () => {
+    const w = world();
+    w.register("panel");
+    w.as(w.dev, c.agentStop, { name: "panel" });
+    for (let tick = 0; tick < 2; tick += 1) {
+      w.as(w.server, c.runnerStopRan, { name: "panel", code: 0, output: "", dry: true });
+    }
+    const noted = w.as(w.dev, c.feedList, { query: "event:runner.would_stop" }).events;
+    expect(noted.map((event) => event.ref)).toEqual(["panel"]);
+    expect(w.as(w.dev, c.feedList, { query: "event:runner.stop_ran" }).events).toEqual([]);
+    expect(w.as(w.server, c.runnerStops, {})).toEqual([{ name: "panel" }]);
+  });
 });
 
 describe("a repo's checkout", () => {

@@ -8,7 +8,7 @@ const INTERNAL = "The server's runner records this; from the CLI it is refused";
 export const runnerCommands: Command[] = [
   {
     path: ["runner", "due"],
-    summary: "Working lines due a session, up to the cap",
+    summary: "Working lines due a session, up to the cap: owners first, then helpers for unclaimed work",
     ops: [c.runnerDue.name],
     async run({ client, out }) {
       const outcome = await client.call(c.runnerDue, {});
@@ -19,6 +19,7 @@ export const runnerCommands: Command[] = [
               outcome.data.map((due) => [
                 r.bold(due.line),
                 due.repo,
+                due.role,
                 due.name ?? "new",
                 `try ${due.attempt}`,
               ]),
