@@ -1153,12 +1153,16 @@ describe("agents and first run", () => {
   test("AgentRosterRow offers Release on a quiet agent that still holds a line", () => {
     const onRelease = mock((_name: string) => {});
     const view = render(
-      <AgentRosterRow
-        agent={agent({ state: "quiet" })}
-        onStop={() => {}}
-        onLift={() => {}}
-        onRelease={onRelease}
-      />,
+      <table>
+        <tbody>
+          <AgentRosterRow
+            agent={agent({ state: "quiet" })}
+            onStop={() => {}}
+            onLift={() => {}}
+            onRelease={onRelease}
+          />
+        </tbody>
+      </table>,
     );
     fireEvent.click(view.getByRole("button", { name: "Release panel from L-2" }));
     expect(onRelease).toHaveBeenCalledWith("panel");
@@ -1767,6 +1771,7 @@ describe("UnseenLog", () => {
     at(4, { line: "L-1", type: "pr.checks_changed", summary: "Checks failing" }),
     at(3, { line: "L-1", type: "pr.checks_changed", summary: "Checks passing" }),
     at(2, { line: "L-1", type: "issue.created", summary: "OCT-3 created: Base" }),
+    at(6, { line: "L-1", type: "held.confirmed", summary: "D-4 re-confirmed" }),
     at(1, { line: "L-2", type: "write.refused", summary: "panel was refused a write on L-2" }),
   ];
 
@@ -1778,7 +1783,7 @@ describe("UnseenLog", () => {
     within(view.getByRole("list", { name: "Rule breaks" })).getByText(/panel was refused a write/);
     const groups = view.getAllByRole("region");
     expect(groups.map((group) => group.getAttribute("aria-label"))).toEqual(["Enclosure"]);
-    within(groups[0] ?? document.body).getByText("Also routine: 2 check changes.");
+    within(groups[0] ?? document.body).getByText("Also routine: 2 check changes, 1 re-confirmation.");
     within(groups[0] ?? document.body).getByText(/created: Base/);
     within(groups[0] ?? document.body).getByText("1 unseen");
     expect(view.queryByText("Plan set")).toBeNull();
