@@ -238,10 +238,36 @@ if "we can avoid having the session actively hang on octo".
 - **Trade-off:** one attempt per answer rather than retries. A retried wake could start a second run of an agent, which is
   worse than an answer waiting in an inbox where the dashboard shows it.
 
-## Proposed, not built: lines of work at the centre
+### D13. Building lines of work at the centre
 
-A design proposal, not a description of the code. It is drawn on the design canvas as direction E, "One list", beside
-four earlier directions it was built from. Nothing below is implemented on main.
+The developer, after twenty review rounds of the design below: "I think in general this is a good direction", then "sounds
+good lets build it". While planning, on three open questions:
+
+- On the live install: "id like to package this and investigate is bun compile could work"
+- On migrating old ideas and milestones: "I dont care how it migrates you need each agent to clean it up afterwards"
+- On a two-hour "silent" rule: "I dont know what silent for 2 hours mean / make good decisions / and line of work might
+  be running for weeks without being tables I dont know what 2h signals but my intuition is nothing"
+
+Decisions made from that:
+
+- **Built in phases, each one usable on its own:** repos and lines; agents and claims; questions and the line inbox;
+  tasks, places and summaries; the dashboard; the local runner; phone interruptions; then removing what it replaces.
+- **The live install stops running from the main checkout.** A compiled `octo` binary is being investigated; until it
+  works, a pinned checkout stands in. Either way a deploy is deliberate, after a backup made with SQLite's `.backup` (the
+  database runs in WAL mode, so a file copy can lose writes) and a rehearsal of the migration on a copy of the real data.
+- **Migration is simple and agents clean up.** Projects become repos with the same keys, so every ref stays valid; old
+  ideas and milestones become proposed lines marked "from before"; one drift per repo then asks its agents to turn the
+  repo's work into real lines and to re-propose or reject what came from before.
+- **No claim ends on a timer.** Silence is not a signal: a line can run for weeks with its owner busy. A claim ends on
+  release, Stop, a failed wake, or the exit of a session Octotrack started. _Trade-off:_ a crashed session the developer
+  started keeps its line until the developer releases it from Agents, where its last command shows how long it has been.
+- **Old names keep working for at least a phase** (`decision.*`, `project:`, M-, I- and U- refs), and the riskiest
+  automation, the automatic Stop and the runner, first runs in a mode that only records what it would have done.
+
+## Being built: lines of work at the centre
+
+The design being built, in the phases D13 lists. It is drawn on the design canvas as direction E, "One list", beside
+four earlier directions it was built from. Until a phase lands on main, the code works as the earlier decisions say.
 
 What the developer said, after a week of use. Their words, quoted exactly:
 
@@ -328,37 +354,37 @@ Everything below is a design decision made from that, with its reasoning.
   command or Change answer… undoes it. Without `--said`, an agent's developer operation is refused with that hint and
   never counted toward the automatic stop. Agent operations need a registered name, and Octotrack numbers the sessions
   it starts upward from the repo's name (octotrack.3), never reusing one. Who holds a line is one table of claims (line,
-  agent, and a role of owner, helper or scoper); an agent is on one line at a time and claims issues only there, in its
-  repo. Work is an open issue on a line, in a repo, not blocked, not the developer's and not claimed. A line is scoped
+  agent, and a role of owner, helper or scoper); an agent is on one line at a time and claims issues only there: an owner
+  in any repo its line names that has a checkout here, a helper only in its own repo. Work is an open issue on a line, in a repo, not blocked, not the developer's and not claimed. A line is scoped
   once it has a done when and a plan step and its scoper has released it, and unscoped again after eight weeks. _Why:_
   "the top line first" would pile every idle agent onto line one, and a crash, a clean exit and a line waiting on the
   developer must each come out right without the developer.
 
-| Agent state | When                                                                                                                                    | Its claims                                                                                                                                                       |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| running     | a command, watch poll or push in the last 15 minutes, for every agent                                                                   | renewed; its replies tell it of lines needing an owner                                                                                                           |
-| asleep      | not running, with a wake address; for a session Octotrack started, also when its runner sees the process exit, which is a lapse at once | an owner keeps a line whose open work all waits on the developer or is held by helpers, and is woken by inbox items; otherwise as quiet                          |
-| quiet       | not running, no wake address                                                                                                            | kept for two hours; a session Octotrack started whose process the runner sees alive keeps its claims and shows as "alive, silent" on Agents, one click from Stop |
-| gone        | a wake failed, or two quiet hours passed without a wake address, or the runner sees its process exit without one                        | ended; a worktree Octotrack made goes to the next session                                                                                                        |
-| stopped     | Stop, or a third write in an hour that a line's state forbids                                                                           | ended; every write refused until the developer lifts it                                                                                                          |
+| Agent state | When                                                                                                  | Its claims                                                  |
+| ----------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| running     | a command, watch poll or push in the last 15 minutes                                                  | its replies tell it of lines needing an owner               |
+| asleep      | not running, with a wake address, including a session Octotrack started whose process exited          | kept; woken by inbox items and waking notices               |
+| quiet       | not running, no wake address                                                                          | kept; Agents shows its last command, with Release beside it |
+| gone        | a wake failed, or the runner saw the process of a session Octotrack started exit with no wake address | ended; a worktree Octotrack made goes to the next session   |
+| stopped     | Stop, or a third write in an hour that a line's state forbids                                         | ended; every write refused until the developer lifts it     |
 
-An agent is idle when it is on no line or only scoping, and reachable when it is running or asleep. The reply to
-`line take` reminds an agent to run a command at least hourly while it holds a claim.
+An agent is idle when it is on no line or only scoping, and reachable when it is running or asleep. No claim ends on
+a timer: a line can run for weeks with its owner busy and silent, and silence alone says nothing.
 
-| Claim event                                           | Effect                                                                                                                                                                                                                           |
-| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `line take L-7`                                       | on a working line that names its repo: owner if it has none, else helper; on an up-next line: scoper if it is unscoped; otherwise refused with why, and never counted                                                            |
-| bare `line take`, on no line                          | owner of the highest working line in its repo with no owner; else helper on the highest with work in its repo; else scoper of the highest unscoped up-next line in its repo                                                      |
-| bare `line take`, on its own line                     | owner: its next issue, or "break step 3 into issues, or propose done", or "nothing for you; you will be woken", and it stays; helper: its next issue, else released and searching again at once; scoper: working-line work first |
-| taking a different line                               | releases the current one first                                                                                                                                                                                                   |
-| a command or watch poll, or a push on a claimed issue | renews all its claims                                                                                                                                                                                                            |
-| `line release`, gone, Stop                            | ends its claims                                                                                                                                                                                                                  |
-| two quiet hours                                       | ends its claims, except an asleep owner's, as above                                                                                                                                                                              |
-| the owner's claim ends while a helper remains         | the helper becomes owner, with no search                                                                                                                                                                                         |
+| Claim event                                                        | Effect                                                                                                                                                                                                                           |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `line take L-7`                                                    | on a working line that names its repo: owner if it has none, else helper; on an up-next line: scoper if it is unscoped; otherwise refused with why, and never counted                                                            |
+| bare `line take`, on no line                                       | owner of the highest working line in its repo with no owner; else helper on the highest with work in its repo; else scoper of the highest unscoped up-next line in its repo                                                      |
+| bare `line take`, on its own line                                  | owner: its next issue, or "break step 3 into issues, or propose done", or "nothing for you; you will be woken", and it stays; helper: its next issue, else released and searching again at once; scoper: working-line work first |
+| taking a different line                                            | releases the current one first                                                                                                                                                                                                   |
+| `line release`, gone, Stop                                         | ends its claims                                                                                                                                                                                                                  |
+| the owner's claim ends while a helper remains                      | the helper becomes owner, with no search                                                                                                                                                                                         |
+| an up-next line is tabled, done or dropped while a scoper holds it | the scoper gets a wind-down notice that wakes it; its writes in those 15 minutes are refused but never counted; then its claim ends                                                                                              |
+| an up-next line starts while a scoper holds it                     | the scoper becomes owner, with no search                                                                                                                                                                                         |
 
 | Owner search | Offered to                                                                                                                                                                              | The step ends when                                    |
 | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| 1            | the last owner, woken, after a lapse or a Start, if it is now idle; never after release, Stop or a failed wake                                                                          | it takes the line, 10 minutes pass, or the wake fails |
+| 1            | the last owner, woken, when its process exited or on a Start, if it is now idle; never after release, Stop or a failed wake                                                             | it takes the line, 10 minutes pass, or the wake fails |
 | 2            | idle agents with the repo, scopers included, and helpers in that repo on other lines, in their replies                                                                                  | one takes it, or 30 seconds pass                      |
 | 3            | a session the start command runs, up to the developer's cap; at the cap, the lowest Octotrack-started helper is told to release after its current issue, and the search takes its place | it takes the line within 5 minutes                    |
 
@@ -380,8 +406,8 @@ you", answers wait in its inbox, and the next answer, finished task or Tell star
   developer's has no owner, whether or not it has issues; with none, the owner's job is to break the current step into
   issues or propose done. Once every working line has an owner, spare sessions under the cap go to helpers for unclaimed
   work, in line order, so the developer's order also decides where parallel agents go. Stopped agents are never offered
-  a line. A lapsed owner that comes back to a taken line is told it is a helper, with the issues it lost and who holds
-  them, and whoever is handed a lapsed issue is told who last held it, when, and its branch. The start command is one
+  a line. An owner whose claim ended and that comes back to a taken line is told it is a helper, with the issues it lost
+  and who holds them, and whoever is handed such an issue is told who last held it, when, and its branch. The start command is one
   command in `~/.octotrack/agent-setup.json`, with optional per-repo overrides and setup commands, edited only on the
   developer's machine and never by an operation (D12). It runs in the repo of the current step's first unclaimed issue,
   else the line's first-listed repo (step 2 of the search uses the same repo), in a new git worktree beside that repo's
@@ -408,7 +434,7 @@ you", answers wait in its inbox, and the next answer, finished task or Tell star
   proposed it. Up next: scoping only (done when, plan, held questions and tasks), by an agent that took it to scope;
   claiming an issue, moving one to in progress or done, and reporting a pull request are refused there. Tabled, done and
   dropped: nothing. Moving a working line to up next or tabled, ending it with Done or Drop, or I'll own it gives its
-  owner and helpers 15 minutes to wind down: a hand-off summary, reports on answers already taken, a branch note, and
+  owner, helpers and scoper 15 minutes to wind down: a hand-off summary, reports on answers already taken, a branch note, and
   for Done and Drop, closing, or folding into another line (where they land held if that line is up next or tabled),
   every open issue and pull request, and a closing note. Then the claims end. For Done and Drop, at the deadline
   Octotrack closes the tracker issues still open, as closed with the line, and discards its drift, and the local runner
