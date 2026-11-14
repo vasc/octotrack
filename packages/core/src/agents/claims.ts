@@ -16,7 +16,7 @@ const MINUTE_MS = 60_000;
 /** How long the agents on a line that left working on have to wrap up. */
 export const WIND_DOWN_MS = 15 * MINUTE_MS;
 /** A session Octotrack started has this long to take its line. */
-const CHECK_IN_MS = 5 * MINUTE_MS;
+export const CHECK_IN_MS = 5 * MINUTE_MS;
 /** Owner search step 1: the last owner alone, this long. */
 const FIRST_OFFER_MS = 10 * MINUTE_MS;
 /** Owner search step 2: idle agents with the repo, this long, before the runner (step 3) would start a session. */
@@ -179,6 +179,14 @@ function releaseCurrentWork(ctx: Ctx, line: string): void {
   );
 }
 
+/** SQL for an issue `i` that waits on nothing unfinished: no open issue and no open question blocks it. */
+export const NOT_BLOCKED = `NOT EXISTS (
+  SELECT 1 FROM links l
+    LEFT JOIN issues b ON b.ref = l.fromRef
+    LEFT JOIN decisions d ON d.ref = l.fromRef
+  WHERE l.toRef = i.ref AND l.rel = 'blocks'
+    AND ((b.ref IS NOT NULL AND b.status NOT IN ('done', 'cancelled')) OR (d.ref IS NOT NULL AND d.status = 'open')))`;
+
 /** All of a working line's open work waits on the developer: questions or tasks, and nothing an agent can pick up. */
 export function waitingOnYou(ctx: Ctx, line: string): boolean {
   const count = (sql: string) => one(ctx, z.object({ n: z.number() }), sql, [line])?.n ?? 0;
@@ -191,12 +199,7 @@ export function waitingOnYou(ctx: Ctx, line: string): boolean {
   const workable = count(
     `SELECT COUNT(*) AS n FROM issues i WHERE i.line = ? AND (i.assignee IS NULL OR i.assignee <> 'dev')
        AND i.status NOT IN ('done', 'cancelled', 'blocked')
-       AND NOT EXISTS (
-         SELECT 1 FROM links l
-           LEFT JOIN issues b ON b.ref = l.fromRef
-           LEFT JOIN decisions d ON d.ref = l.fromRef
-         WHERE l.toRef = i.ref AND l.rel = 'blocks'
-           AND ((b.ref IS NOT NULL AND b.status NOT IN ('done', 'cancelled')) OR (d.ref IS NOT NULL AND d.status = 'open')))`,
+       AND ${NOT_BLOCKED}`,
   );
   return workable === 0;
 }

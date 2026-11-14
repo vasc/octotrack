@@ -316,6 +316,11 @@ const MIGRATIONS: readonly Migration[] = [
   ALTER TABLE pending_choices ADD COLUMN draft TEXT;
   ALTER TABLE lines ADD COLUMN doneWhenWhy TEXT;
   `,
+  `
+  ALTER TABLE runner_starts ADD COLUMN role TEXT NOT NULL DEFAULT 'owner';
+  ALTER TABLE runner_starts ADD COLUMN exitedAt TEXT;
+  UPDATE runner_starts SET exitedAt = COALESCE(endedAt, startedAt) WHERE state NOT IN ('starting', 'running');
+  `,
 ];
 
 const UserVersion = z.object({ user_version: z.number().int() });

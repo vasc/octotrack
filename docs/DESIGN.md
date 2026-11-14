@@ -327,15 +327,15 @@ Decisions made from that:
   who last held each, and the next holder is told. Not a line cancels the proposer's new issues and returns older work
   to no line; Done or Drop on a line nobody holds closes its issues at once. Folding a line moves its inbox with it.
   Held questions and tasks stay out of the developer's queue until re-confirmed. A session Octotrack started that can
-  be woken keeps its line when its process exits, and only starts still starting or agents still running count against
-  the cap. Every reply carries the agent's notices, batch and watch waits included, and the CLI prints each once.
+  be woken keeps its line when its process exits, and only starts not yet checked in whose process still runs, or
+  agents still running, count against the cap. Every reply carries the agent's notices, batch and watch waits included, and the CLI prints each once.
 - **The rest of D14, as built.** Not yet reaches the owner through the line's inbox. `line propose --urgent` stands
   first under Proposed. `held withdraw`. I'm at lasts three hours. `seen`, and the Log's Not seen, line by line in
   order with checks and drift confirmations folded, waiting lines left out unless asked for, refused writes always in;
   a line also lists what is newer than its summary. `task add` and `note add` on the developer's own lines; tasks on a
   line with no repo go in a repo named ME. Try now retries every line stopped the same way; Start one anyway starts
-  one past the cap, once; at the cap the lowest helper Octotrack started is asked to make room before the developer
-  is. The developer's stop command runs once per Stop. A gone session's worktree goes to the next session on its line.
+  one past the cap, once; at the cap the lowest running helper Octotrack started is asked to make room before the
+  developer is. The developer's stop command runs once per Stop. A gone session's worktree goes to the next session on its line.
   `repo checkout` sets where worktrees are made from, and the runner otherwise finds the main checkout with
   `--git-common-dir`. Home has the header counts as one group of links, the spread-thin nudge, To top and To up next, the Start
   sheet, I'm at, Tell, Stop on the owner, Change answer, Later and Not urgent, the developer's own box, and every key
@@ -350,6 +350,42 @@ Decisions made from that:
   its title. Choices are worded as they happen in the Undo bar ("Sending "26 mm" to Sendspin enclosure in 5 seconds").
   Drafts follow between devices with a notice naming the draft, and a field with focus keeps what it shows; a choice
   names the draft it was typed in, which Undo keeps and the server deletes once it takes effect.
+- **The runner, as fixed after its audit.**
+  - _Owners first, then helpers._ Once every owner start is placed, spare sessions under the cap go to helpers for the
+    unclaimed work on each line, in line order, as D14 says. A line gets as many as it has unclaimed, unblocked issues
+    in its repos beyond the agents on it that are running and hold nothing, and the sessions still starting for it; each
+    starts in the repo of the first such issue, since a helper works only in its own repo. _Decided:_ no helper starts
+    while any working line is still being offered to agents already here (owner search steps 1 and 2), because that line
+    may need the slot in seconds and the helper would at once be asked to give it back. _Decided:_ a helper start that ran
+    but never took its line is not retried until Try now, as for owners, but raises no Step in, since the line has an
+    owner and needs nothing from the developer; the Log shows it.
+  - _One rule decides whether a line can be started,_ shared by `runner.due`, making room and Step in, so a helper is
+    never asked to give way for a line the runner would not start (one that never took it, waits to retry, or has no
+    repo), and only a running helper is asked, since an asleep one holds no session. _Trade-off:_ a few more queries per
+    tick, against three copies of the rule drifting apart, which is what the audit found.
+  - _A start is judged by when it ended._ Only an exit before the five-minute check-in, having run no command, counts as
+    failing at once and is retried by itself; one that outlived its check-in ran, whatever its exit code, and waits for
+    Try now like any other that never took its line. Each start records when its process exited, so one past its
+    check-in whose process still runs keeps counting against the cap, and its worktree is not removed under it. Try now
+    on one that never took gives the next session a new name, since that session ran.
+  - _Worktrees._ A retry keeps the worktree its first attempt had, made or handed on, so unpushed work is not
+    stranded; a gone session's worktree is handed on only once its process has exited and no agent that is not gone
+    works in it. A retry whose worktree was removed is made again on the branch it left.
+  - _Pull requests are closed only in the GitHub repo of the issues they implement,_ and never while they also
+    implement an open issue or one on a line that has not ended. _Why:_ a pull request's row names any repo its writer
+    likes, and closing work still wanted cannot be undone from Octotrack.
+  - _No process inherits an identity._ The server the CLI starts drops `OCTO_AGENT` and `OCTO_DEVELOPER`, and every
+    command, session and wake the server runs is given only its own: a session its name, a wake the agent woken (or,
+    for a question from before lines, its asker). _Why:_ the server is often started by an agent's first command, and a
+    woken session would otherwise act as that agent.
+  - _Commands are bounded and answered._ git and gh get two minutes, setup commands thirty, the stop command ten, and a
+    wake thirty; each is killed at its deadline and reported. Output is read as it comes and raced once the command
+    exits, so a child it leaves holding the pipes cannot hang the runner. Only names and refs of the narrow form are
+    filled into the developer's commands. A push service that cannot be reached costs that browser its notification
+    and nothing else: the rest are sent and recorded, so a line still buzzes once.
+  - _Watch mode records only, Stop included._ The stop command is noted once per Stop (`runner.would_stop`) and runs
+    when the runner may act, if the agent is still stopped then. Worktrees default to `worktrees` in Octotrack's home,
+    so a test install with its own `OCTO_HOME` never works in the live install's.
 - **Departures, each for a reason.**
   - _No rail, no saved views on the Log, no watches on Agents._ The boards have none: the Log is what has not been
     seen, line by line, with a search over everything; Agents is the roster. _Why:_ the boards are the agreed design,

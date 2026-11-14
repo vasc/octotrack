@@ -862,9 +862,14 @@ export const PendingChoice = z.object({
 export type PendingChoice = z.infer<typeof PendingChoice>;
 
 /** A working line due a session: where to start it, and the name to reuse when a failed start is retried. */
+/** Whom a session is started to be on its line: its owner, or a helper for unclaimed work once it has one. */
+export const StartRole = z.enum(["owner", "helper"]);
+export type StartRole = z.infer<typeof StartRole>;
+
 export const RunnerDue = z.object({
   line: z.string(),
   repo: z.string(),
+  role: StartRole,
   name: z.string().nullable(),
   attempt: z.number().int(),
 });

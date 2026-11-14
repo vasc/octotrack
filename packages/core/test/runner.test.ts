@@ -8,18 +8,35 @@ const MINUTE = 60_000;
 
 function world() {
   let now = "2026-11-14T09:00:00.000Z";
-  const tracker = new Tracker(memoryDriver(), () => now);
+  const driver = memoryDriver();
+  const tracker = new Tracker(driver, () => now);
   const dev: Caller = { actor: "dev", channel: "dashboard" };
   const runner: Caller = { actor: "octotrack", channel: "cli", system: true };
   tracker.call(c.projectCreate, { key: "PANEL", name: "Panel", repo: "vasc/homepanel" }, dev);
   tracker.call(c.runnerReport, { configured: true, cap: 2, dryRun: false }, runner);
   const line = (title: string) =>
     tracker.call(c.lineAdd, { title, doneWhen: "Done.", repos: ["PANEL"], where: "working" }, dev);
+  const session = (name: string, checkout?: string): Caller => ({
+    actor: name,
+    channel: "cli",
+    ...(checkout === undefined ? {} : { checkout }),
+  });
+  const issue = (line: string, title: string) =>
+    tracker.call(c.issueCreate, { project: "PANEL", title, line }, dev);
+  /** Read straight from the database, since asking as the agent would count as it being at work. */
+  const releaseAsked = (agent: string) =>
+    driver.all("SELECT body FROM notices WHERE agent = ? AND kind = 'release_asked'", [agent]);
+  const cap = (value: number) =>
+    tracker.call(c.runnerReport, { configured: true, cap: value, dryRun: false }, runner);
   return {
     tracker,
     dev,
     runner,
     line,
+    session,
+    issue,
+    releaseAsked,
+    cap,
     later(minutes: number) {
       now = new Date(Date.parse(now) + minutes * MINUTE).toISOString();
     },
@@ -166,5 +183,214 @@ describe("only the server's runner records starts", () => {
         { actor: "mallory", channel: "cli" },
       ),
     ).toThrow("Only the server's runner records this");
+  });
+});
+
+describe("what the runner audit found", () => {
+  /** A session started for the line, which took it and then exited with no wake address: gone, its worktree left. */
+  function goneOwner(w: ReturnType<typeof world>, line: string) {
+    w.tracker.call(c.runnerStart, { line, repo: "PANEL", worktree: "/wt/panel.1" }, w.runner);
+    w.tracker.call(
+      c.runnerWorktree,
+      {
+        path: "/wt/panel.1",
+        repo: "PANEL",
+        checkout: "/src/panel",
+        branch: "octo/panel.1",
+        agent: "panel.1",
+      },
+      w.runner,
+    );
+    w.tracker.call(c.lineTake, { ref: line }, w.session("panel.1", "/wt/panel.1"));
+    w.tracker.call(c.runnerExited, { name: "panel.1", code: 0, output: "" }, w.runner);
+  }
+
+  test("a pull request in another repo is never closed, whatever it says it fixes", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    const issue = w.issue(line.ref, "Base");
+    w.tracker.call(
+      c.prUpsert,
+      { repo: "vasc/other-repo", number: 99, title: "Other", state: "open", body: `Fixes ${issue.ref}` },
+      w.runner,
+    );
+    w.tracker.call(c.lineDone, { ref: line.ref }, w.dev);
+    w.later(16);
+    w.tracker.sweep();
+    expect(w.tracker.call(c.runnerCloses, {}, w.runner)).toEqual([]);
+  });
+
+  test("a pull request that also implements work on a line still being worked on is left open", () => {
+    const w = world();
+    const ended = w.line("Enclosure");
+    const working = w.line("Mount");
+    const done = w.issue(ended.ref, "Base");
+    const open = w.issue(working.ref, "Bracket");
+    w.tracker.call(
+      c.prUpsert,
+      {
+        repo: "vasc/homepanel",
+        number: 15,
+        title: "Both",
+        state: "open",
+        body: `Fixes ${done.ref} and ${open.ref}`,
+      },
+      w.runner,
+    );
+    w.tracker.call(c.lineDone, { ref: ended.ref }, w.dev);
+    w.later(16);
+    w.tracker.sweep();
+    expect(w.tracker.call(c.runnerCloses, {}, w.runner)).toEqual([]);
+  });
+
+  test("a retry after a hand-over keeps the worktree it was handed, unpushed work and all", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    w.later(1);
+    goneOwner(w, line.ref);
+    w.later(15);
+    const handed = w.tracker.call(c.runnerStart, { line: line.ref, repo: "PANEL" }, w.runner);
+    expect([handed.name, handed.worktree]).toEqual(["panel.2", "/wt/panel.1"]);
+    w.tracker.call(c.runnerExited, { name: "panel.2", code: 1, output: "claude: not logged in" }, w.runner);
+    w.later(2);
+    expect(w.tracker.call(c.runnerDue, {}, w.runner).map((due) => due.name)).toEqual(["panel.2"]);
+    const retry = w.tracker.call(
+      c.runnerStart,
+      { line: line.ref, repo: "PANEL", worktree: "/wt/panel.2" },
+      w.runner,
+    );
+    expect([retry.name, retry.worktree]).toEqual(["panel.2", "/wt/panel.1"]);
+  });
+
+  test("a gone session's worktree is not handed on while another agent works in it", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    w.later(1);
+    goneOwner(w, line.ref);
+    w.tracker.call(c.agentRegister, { repo: "PANEL" }, w.session("visitor", "/wt/panel.1"));
+    w.later(15);
+    expect(w.tracker.call(c.runnerStart, { line: line.ref, repo: "PANEL" }, w.runner).worktree).toBeNull();
+  });
+
+  test("a session that ran past its check-in and then exited with an error is not retried by itself", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    w.later(1);
+    w.tracker.call(c.runnerStart, { line: line.ref, repo: "PANEL" }, w.runner);
+    w.later(6);
+    w.tracker.sweep();
+    w.later(34);
+    w.tracker.call(c.runnerExited, { name: "panel.1", code: 1, output: "killed" }, w.runner);
+    expect(w.tracker.call(c.homeShow, {}, w.dev).lines[line.ref]?.start?.state).toBe("never_took");
+    w.later(10);
+    expect(w.tracker.call(c.runnerDue, {}, w.runner)).toEqual([]);
+  });
+
+  test("a session that never took its line still counts against the cap until its process exits", () => {
+    const w = world();
+    w.cap(1);
+    const first = w.line("Enclosure");
+    const second = w.line("Mount");
+    w.later(1);
+    expect(w.tracker.call(c.runnerDue, {}, w.runner).map((due) => due.line)).toEqual([first.ref]);
+    w.tracker.call(c.runnerStart, { line: first.ref, repo: "PANEL" }, w.runner);
+    w.later(16);
+    w.tracker.sweep();
+    expect(w.tracker.call(c.runnerDue, {}, w.runner)).toEqual([]);
+    w.tracker.call(c.runnerExited, { name: "panel.1", code: 0, output: "" }, w.runner);
+    expect(w.tracker.call(c.runnerDue, {}, w.runner).map((due) => due.line)).toEqual([second.ref]);
+  });
+
+  test("at the cap, an asleep helper is not asked to make room, since it holds no session", () => {
+    const w = world();
+    const first = w.line("Enclosure");
+    w.later(1);
+    for (const [name, role] of [
+      ["panel.1", "owner"],
+      ["panel.2", "helper"],
+    ] as const) {
+      w.tracker.call(c.runnerStart, { line: first.ref, repo: "PANEL" }, w.runner);
+      w.tracker.call(c.agentRegister, { wake: `claude:${name}` }, w.session(name));
+      expect(w.tracker.call(c.lineTake, { ref: first.ref }, w.session(name)).role).toBe(role);
+    }
+    w.later(16);
+    // The owner is at work; the helper went to sleep.
+    w.tracker.call(c.agentRegister, {}, w.session("panel.1"));
+    w.cap(1);
+    const second = w.line("Mount");
+    w.later(1);
+    w.tracker.call(c.agentRegister, {}, w.session("panel.1"));
+    w.tracker.sweep();
+    w.tracker.sweep();
+    expect(w.tracker.call(c.homeShow, {}, w.dev).lines[second.ref]?.stepIn).toBe(true);
+    expect(w.releaseAsked("panel.2")).toEqual([]);
+  });
+
+  test("making room asks no helper to give way for a line the runner would not start", () => {
+    const w = world();
+    w.cap(3);
+    const first = w.line("Enclosure");
+    const second = w.line("Mount");
+    w.later(1);
+    for (const name of ["panel.1", "panel.2"]) {
+      w.tracker.call(c.runnerStart, { line: first.ref, repo: "PANEL" }, w.runner);
+      w.tracker.call(c.lineTake, { ref: first.ref }, w.session(name));
+    }
+    w.tracker.call(c.runnerStart, { line: second.ref, repo: "PANEL" }, w.runner);
+    w.later(6);
+    w.tracker.sweep();
+    w.tracker.call(c.runnerExited, { name: "panel.3", code: 0, output: "" }, w.runner);
+    expect(w.tracker.call(c.homeShow, {}, w.dev).lines[second.ref]?.start?.state).toBe("never_took");
+    w.cap(2);
+    w.tracker.sweep();
+    expect(w.releaseAsked("panel.2")).toEqual([]);
+  });
+
+  test("once every working line has an owner, spare sessions go to helpers for unclaimed work, in line order", () => {
+    const w = world();
+    const first = w.line("Enclosure");
+    const second = w.line("Mount");
+    w.issue(first.ref, "Base");
+    w.issue(first.ref, "Lid");
+    w.later(1);
+    for (const [line, name] of [
+      [first.ref, "panel.1"],
+      [second.ref, "panel.2"],
+    ] as const) {
+      w.tracker.call(c.runnerStart, { line, repo: "PANEL" }, w.runner);
+      w.tracker.call(c.lineTake, { ref: line }, w.session(name));
+    }
+    expect(w.tracker.call(c.runnerDue, {}, w.runner)).toEqual([]);
+    w.cap(4);
+    // The owner of the first line takes one issue; the other waits for a helper. The second line has no work.
+    const due = w.tracker.call(c.runnerDue, {}, w.runner);
+    expect(due.map((start) => [start.line, start.role])).toEqual([[first.ref, "helper"]]);
+    const helper = w.tracker.call(
+      c.runnerStart,
+      { line: first.ref, repo: "PANEL", role: "helper" },
+      w.runner,
+    );
+    expect(w.tracker.call(c.runnerDue, {}, w.runner)).toEqual([]);
+    expect(w.tracker.call(c.lineTake, { ref: first.ref }, w.session(helper.name)).role).toBe("helper");
+    expect(w.tracker.call(c.runnerDue, {}, w.runner)).toEqual([]);
+  });
+
+  test("no helper is started while a working line is still looking for its owner", () => {
+    const w = world();
+    w.cap(3);
+    const first = w.line("Enclosure");
+    w.issue(first.ref, "Base");
+    w.issue(first.ref, "Lid");
+    w.later(1);
+    w.tracker.call(c.runnerStart, { line: first.ref, repo: "PANEL" }, w.runner);
+    w.tracker.call(c.lineTake, { ref: first.ref }, w.session("panel.1"));
+    const second = w.line("Mount");
+    expect(w.tracker.call(c.runnerDue, {}, w.runner)).toEqual([]);
+    w.later(1);
+    const due = w.tracker.call(c.runnerDue, {}, w.runner);
+    expect(due.map((start) => [start.line, start.role])).toEqual([
+      [second.ref, "owner"],
+      [first.ref, "helper"],
+    ]);
   });
 });
