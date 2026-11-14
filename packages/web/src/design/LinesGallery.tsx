@@ -66,7 +66,7 @@ export function LinesGallery() {
       </Example>
       <Example label="A task, one row, and opened">
         <ForYouRow item={{ kind: "task", task: TASK }} onOpen={NOOP} />
-        <TaskCard task={TASK} onDone={NOOP} onCant={NOOP} />
+        <TaskCard task={TASK} words="" onWords={NOOP} onDone={NOOP} onCant={NOOP} />
       </Example>
       <Example label="A line nobody could be found for">
         <WorkingLine

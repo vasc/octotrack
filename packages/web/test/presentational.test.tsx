@@ -1,4 +1,5 @@
 import { describe, expect, mock, test } from "bun:test";
+import { useState } from "react";
 import { fireEvent, render, within } from "@testing-library/react";
 import { BatchPanelView } from "../src/components/decisions/BatchPanelView.tsx";
 import { DecisionCardView } from "../src/components/decisions/DecisionCardView.tsx";
@@ -686,13 +687,19 @@ describe("lines of work", () => {
   test("TaskCard asks for words before Done or Can't do it", () => {
     const onDone = mock(() => {});
     const onCant = mock(() => {});
-    const view = render(
-      <TaskCard
-        task={issue({ title: "Measure the grip", place: "the bench", outcome: "Five numbers" })}
-        onDone={onDone}
-        onCant={onCant}
-      />,
-    );
+    function Typing() {
+      const [words, setWords] = useState("");
+      return (
+        <TaskCard
+          task={issue({ title: "Measure the grip", place: "the bench", outcome: "Five numbers" })}
+          words={words}
+          onWords={setWords}
+          onDone={onDone}
+          onCant={onCant}
+        />
+      );
+    }
+    const view = render(<Typing />);
     view.getByText("Report: Five numbers");
     fireEvent.click(view.getByRole("button", { name: "Done…" }));
     expect(view.getByRole("button", { name: "Send" }).hasAttribute("disabled")).toBe(true);

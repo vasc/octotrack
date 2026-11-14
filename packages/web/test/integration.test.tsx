@@ -984,6 +984,27 @@ describe("lines of work", () => {
     await view.findByRole("article", { name: "Which board?" });
   });
 
+  test("a half-written update is kept on the server, and is there when the panel opens again", async () => {
+    seedLines();
+    navigate("/?ref=L-1");
+    const first = renderApp(<App />);
+    const panel = within(await first.findByRole("complementary", { name: "L-1" }));
+    fireEvent.change(await panel.findByLabelText("Post an update on L-1"), {
+      target: { value: "Half of a thought" },
+    });
+    await waitFor(() =>
+      expect(server.tracker.call(c.draftGet, { key: "update:L-1" }, asDeveloper).text).toBe(
+        "Half of a thought",
+      ),
+    );
+    first.unmount();
+    const again = renderApp(<App />);
+    const reopened = within(await again.findByRole("complementary", { name: "L-1" }));
+    await waitFor(() =>
+      expect(reopened.getByLabelText("Post an update on L-1")).toHaveProperty("value", "Half of a thought"),
+    );
+  });
+
   test("a line opens in the inspector with what finishes it", async () => {
     seedLines();
     navigate("/?ref=L-1");
