@@ -25,7 +25,55 @@ function asRepoCommands(commands: readonly Command[]): Command[] {
     }));
 }
 
-export const COMMANDS: readonly Command[] = [
+/** The same command under another path, its examples written with that path. */
+function aliasOf(command: Command, path: readonly string[]): Command {
+  const from = `octo ${command.path.join(" ")}`;
+  const to = `octo ${path.join(" ")}`;
+  return {
+    ...command,
+    path,
+    ...(command.examples === undefined
+      ? {}
+      : { examples: command.examples.map((example) => example.replace(from, to)) }),
+  };
+}
+
+/**
+ * D14 names questions, retries, summaries, Tells and done whens in its own words. Each is the older command under that
+ * word, and the older one keeps working. `question change` is not here: it is Change answer, a command of its own.
+ */
+const D14_WORDS: readonly (readonly [readonly string[], readonly string[]])[] = [
+  [
+    ["question", "later"],
+    ["decision", "postpone"],
+  ],
+  [
+    ["line", "retry"],
+    ["runner", "retry"],
+  ],
+  [
+    ["summary", "write"],
+    ["line", "summarize"],
+  ],
+  [["tell"], ["line", "tell"]],
+  [
+    ["done-when", "set"],
+    ["line", "done-when"],
+  ],
+];
+
+function inD14Words(commands: readonly Command[]): Command[] {
+  const questions = commands
+    .filter((command) => command.path[0] === "decision")
+    .map((command) => aliasOf(command, ["question", ...command.path.slice(1)]));
+  const renamed = D14_WORDS.flatMap(([alias, original]) => {
+    const command = commands.find((candidate) => candidate.path.join(" ") === original.join(" "));
+    return command === undefined ? [] : [aliasOf(command, alias)];
+  });
+  return [...questions, ...renamed];
+}
+
+const OWN_COMMANDS: readonly Command[] = [
   ...systemCommands,
   ...observeCommands,
   ...lineCommands,
@@ -36,6 +84,8 @@ export const COMMANDS: readonly Command[] = [
   ...asRepoCommands(workCommands),
   ...networkCommands,
 ];
+
+export const COMMANDS: readonly Command[] = [...OWN_COMMANDS, ...inD14Words(OWN_COMMANDS)];
 
 /** Longest match wins, so that `watch start` beats `watch`, whose positionals are refs. */
 export function resolveCommand(words: readonly string[]): { command: Command; rest: string[] } | null {

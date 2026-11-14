@@ -36,6 +36,24 @@ function moveCommand(word: string, contract: typeof c.lineStart, summary: string
   };
 }
 
+/** `done-when accept` and `done-when reject`: D14's words for answering a proposed done when. */
+function doneWhenAnswer(word: string, accept: boolean, summary: string): Command {
+  return {
+    path: ["done-when", word],
+    usage: "<LINE>",
+    summary,
+    examples: [`octo done-when ${word} L-3 --me`],
+    ops: [c.lineDoneWhenAnswer.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(c.lineDoneWhenAnswer, {
+        ref: args.requirePositional(0, "LINE"),
+        accept,
+      });
+      out.result(outcome, () => `${r.bold(outcome.data.ref)} is done when: ${outcome.data.doneWhen}`);
+    },
+  };
+}
+
 export const lineCommands: Command[] = [
   {
     path: ["lines"],
@@ -310,6 +328,8 @@ export const lineCommands: Command[] = [
       out.result(outcome, () => `${r.bold(outcome.data.ref)} is done when: ${outcome.data.doneWhen}`);
     },
   },
+  doneWhenAnswer("accept", true, "Accept the proposed done when (the developer)"),
+  doneWhenAnswer("reject", false, "Keep the done when there is, turning the proposal down (the developer)"),
   {
     path: ["line", "propose-done"],
     usage: "<REF> <why>",

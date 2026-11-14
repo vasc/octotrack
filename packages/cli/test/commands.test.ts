@@ -45,6 +45,70 @@ describe("repo, the word lines use", () => {
   });
 });
 
+describe("D14's words, beside the older ones", () => {
+  const opsOf = (words: readonly string[]) => resolveCommand(words)?.command.ops;
+
+  test.each([
+    [
+      ["question", "ask", "Which?"],
+      ["decision", "ask", "Which?"],
+    ],
+    [
+      ["question", "resolve", "D-1", "a"],
+      ["decision", "resolve", "D-1", "a"],
+    ],
+    [
+      ["question", "record", "Use X"],
+      ["decision", "record", "Use X"],
+    ],
+    [
+      ["question", "later", "D-1"],
+      ["decision", "postpone", "D-1"],
+    ],
+    [
+      ["question", "not-urgent", "D-1"],
+      ["decision", "not-urgent", "D-1"],
+    ],
+    [
+      ["question", "withdraw", "D-1"],
+      ["decision", "withdraw", "D-1"],
+    ],
+    [
+      ["line", "retry", "L-1"],
+      ["runner", "retry", "L-1"],
+    ],
+    [
+      ["summary", "write", "L-1"],
+      ["line", "summarize", "L-1"],
+    ],
+    [
+      ["tell", "L-1", "hello"],
+      ["line", "tell", "L-1", "hello"],
+    ],
+    [
+      ["done-when", "set", "L-1", "It works."],
+      ["line", "done-when", "L-1", "It works."],
+    ],
+  ])("%p is %p", (alias, original) => {
+    expect(opsOf(alias)).toBeDefined();
+    expect(opsOf(alias)).toEqual(opsOf(original) ?? []);
+    expect(resolveCommand(alias)?.rest).toEqual(resolveCommand(original)?.rest ?? []);
+  });
+
+  test("done when is accepted or kept, and an answer changed, each in one word", () => {
+    expect(opsOf(["done-when", "accept", "L-1"])).toEqual([contracts.lineDoneWhenAnswer.name]);
+    expect(opsOf(["done-when", "reject", "L-1"])).toEqual([contracts.lineDoneWhenAnswer.name]);
+    expect(opsOf(["question", "change", "D-1", "b"])).toEqual([contracts.decisionResolve.name]);
+  });
+
+  test("every decision command has its question name", () => {
+    const decisions = COMMANDS.filter((command) => command.path[0] === "decision");
+    for (const command of decisions) {
+      expect(opsOf(["question", ...command.path.slice(1)])).toEqual(command.ops);
+    }
+  });
+});
+
 describe("command resolution", () => {
   test("longest path wins, and positionals are not mistaken for subcommands", () => {
     expect(resolveCommand(["watch", "start"])?.command.path).toEqual(["watch", "start"]);
