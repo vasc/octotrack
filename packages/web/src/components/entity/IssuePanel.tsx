@@ -5,6 +5,7 @@ import { useOpMutation } from "../../hooks/useOp.ts";
 import { ISSUE_STATUSES } from "../issues/IssueRow.tsx";
 import { RefLink } from "../ui/RefLink.tsx";
 import { KeyValues } from "./KeyValues.tsx";
+import { Markdown } from "../ui/Markdown.tsx";
 
 export function IssuePanel({ issue }: { issue: Issue }) {
   const update = useOpMutation(contracts.issueUpdate);
@@ -42,7 +43,7 @@ export function IssuePanel({ issue }: { issue: Issue }) {
           ["Created by", issue.createdBy],
         ]}
       />
-      {issue.body === "" ? null : <p className="prose">{issue.body}</p>}
+      {issue.body === "" ? null : <Markdown text={issue.body} />}
       {update.error === null ? null : <p className="error-text">{update.error.message}</p>}
     </>
   );

@@ -6,6 +6,7 @@ import { DecisionCardItem } from "../decisions/DecisionCardItem.tsx";
 import { DecisionMeta } from "../decisions/DecisionMeta.tsx";
 import { RefLink } from "../ui/RefLink.tsx";
 import { KeyValues } from "./KeyValues.tsx";
+import { Markdown } from "../ui/Markdown.tsx";
 
 function OpenDecision({ decision }: { decision: Decision }) {
   const queue = useOpQuery(contracts.decisionQueue, { query: `ref:${decision.ref}` });
@@ -30,7 +31,7 @@ function ClosedDecision({ decision }: { decision: Decision }) {
   return (
     <>
       <DecisionMeta decision={decision} />
-      {decision.context === "" ? null : <p className="prose">{decision.context}</p>}
+      {decision.context === "" ? null : <Markdown text={decision.context} />}
       <KeyValues
         items={[
           ["Outcome", chosen?.label],

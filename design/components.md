@@ -7,17 +7,20 @@ in isolation. **Structural** ones load data and pass it on to pure ones, so they
 
 ## The small vocabulary: `ui/`
 
-| Component     | What it is                                                                       | Notes                                                  |
-| ------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| `Badge`       | A short label with a tone. `StatusBadge` picks the tone from what the word means | Always has words in it                                 |
-| `RefLink`     | A ref such as `D-3`, opening that item in the inspector                          | Monospace. Available wherever a ref appears            |
-| `RefText`     | Running text in which every ref is a `RefLink`                                   | Use for anything that could mention a ref              |
-| `TimeAgo`     | `now`, `5m`, `3h`, `2d`, then a date                                             | The full time is its tooltip                           |
-| `Progress`    | A 3px bar                                                                        | Has a text alternative: "1 of 4 done"                  |
-| `Section`     | A small heading, with an optional count and link                                 | The unit a page is made of                             |
-| `PageHead`    | A page's title, with room for actions                                            |                                                        |
-| `ListCapNote` | Says that a list stopped at its limit                                            | A short list must not read as the whole story          |
-| `states`      | `LoadingState`, `EmptyState` and `ErrorState`                                    | Empty can show a command to run. See [voice](voice.md) |
+| Component      | What it is                                                                              | Notes                                                   |
+| -------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `Badge`        | A short label with a tone. `StatusBadge` picks the tone from what the word means        | Always has words in it                                  |
+| `RefLink`      | A ref such as `D-3`, opening that item in the inspector                                 | Monospace. Available wherever a ref appears             |
+| `RefText`      | Running text in which every ref is a `RefLink`                                          | Use for anything that could mention a ref               |
+| `TimeAgo`      | `now`, `5m`, `3h`, `2d`, then a date                                                    | The full time is its tooltip                            |
+| `Progress`     | A 3px bar                                                                               | Has a text alternative: "1 of 4 done"                   |
+| `Section`      | A small heading, with an optional count and link                                        | The unit a page is made of                              |
+| `PageHead`     | A page's title, with room for actions                                                   |                                                         |
+| `ListCapNote`  | Says that a list stopped at its limit                                                   | A short list must not read as the whole story           |
+| `states`       | `LoadingState`, `EmptyState` and `ErrorState`                                           | Empty can show a command to run. See [voice](voice.md)  |
+| `Markdown`     | Text agents and the developer write, rendered as markdown. `MarkdownView` does the work | Loaded on first use. HTML in the text is never rendered |
+| `MarkdownView` | The renderer behind `Markdown`, with links opening outside the dashboard                | Only `Markdown` imports it                              |
+| `TextBox`      | A box that grows as you type, for anything longer than a few words                      | Cmd or Ctrl and Enter sends                             |
 
 ## Decisions: `decisions/`
 

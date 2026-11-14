@@ -31,7 +31,9 @@ import { RoadmapLaneView } from "../src/components/roadmap/RoadmapLaneView.tsx";
 import { SyncFailures } from "../src/components/prs/SyncFailures.tsx";
 import { ListCapNote } from "../src/components/ui/ListCapNote.tsx";
 import { Progress } from "../src/components/ui/Progress.tsx";
+import { Markdown } from "../src/components/ui/Markdown.tsx";
 import { RefText } from "../src/components/ui/RefText.tsx";
+import { TextBox } from "../src/components/ui/TextBox.tsx";
 import { EmptyState, ErrorState, LoadingState } from "../src/components/ui/states.tsx";
 import type { LineHome } from "@octotrack/core/schemas";
 import type { Tone } from "../src/lib/format.ts";
@@ -832,5 +834,32 @@ describe("lines of work", () => {
     view.getByText("The disk is not tight");
     view.getByText("2027-02-01");
     view.getByText("A printed case holds the board and takes the USB-C plug.");
+  });
+});
+
+describe("written text", () => {
+  test("Markdown renders what agents write, and never renders HTML in it", async () => {
+    const view = render(
+      <Markdown
+        text={"## Where it stands\n\n- printed\n- **fits**\n\n<img src=x onerror=alert(1)>\n\n`octo lines`"}
+      />,
+    );
+    await view.findByRole("heading", { name: "Where it stands" });
+    expect(view.getAllByRole("listitem").map((item) => item.textContent)).toEqual(["printed", "fits"]);
+    expect(view.container.querySelector("img")).toBeNull();
+    expect(view.container.querySelector("code")?.textContent).toBe("octo lines");
+  });
+
+  test("TextBox reports what is typed, and sends on Cmd+Enter", () => {
+    const onChange = mock((_value: string) => {});
+    const onSubmit = mock(() => {});
+    const view = render(<TextBox label="Note" value="" onChange={onChange} onSubmit={onSubmit} />);
+    const box = view.getByLabelText("Note");
+    fireEvent.change(box, { target: { value: "line one\nline two" } });
+    expect(onChange).toHaveBeenCalledWith("line one\nline two");
+    fireEvent.keyDown(box, { key: "Enter", metaKey: true });
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    fireEvent.keyDown(box, { key: "Enter" });
+    expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 });
