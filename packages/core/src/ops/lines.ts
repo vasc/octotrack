@@ -9,7 +9,9 @@ import { filterEntities } from "../store/docs.ts";
 import { allLines, requireLine, requireProject, summarize } from "../store/entities.ts";
 import { loadGraph } from "../store/graph.ts";
 import { IssueRow, PlanStepRow } from "../store/rows.ts";
-import { afterAdd, afterMove, crewOf, guardLineWrite } from "../agents/claims.ts";
+import { afterAdd, afterMove, crewOf, guardLineWrite, windDown } from "../agents/claims.ts";
+import { DEVELOPER } from "../agents/state.ts";
+import { addNotice, claimOf } from "../store/agents.ts";
 import { bind } from "./bind.ts";
 import { requireDeveloper } from "./developer.ts";
 
@@ -18,6 +20,19 @@ const DONE_LATELY_MS = 7 * 24 * 60 * 60 * 1000;
 const SMALLEST_GAP = 1e-6;
 
 const ENDED: ReadonlySet<LineState> = new Set(["done", "dropped"]);
+
+/** Only the owner speaks for the line: its summary and its case for done. The developer may too. */
+function requireOwner(ctx: Ctx, line: Line, what: string): void {
+  if (ctx.developer) return;
+  const claim = claimOf(ctx, ctx.actor);
+  if (claim === null || claim.line !== line.ref || claim.role !== "owner") {
+    throw new OctoError(
+      "forbidden",
+      `Only ${line.ref}'s owner may ${what}`,
+      "Helpers report to the owner instead.",
+    );
+  }
+}
 
 function lineAttrs(ctx: Ctx, line: Line): EventAttrs {
   return {
@@ -155,6 +170,9 @@ function move(
     rank: current.state === rule.to ? undefined : rankAtEnd(ctx, rule.to),
     tabledReason: rule.to === "tabled" ? extra.tabledReason : leavingTable ? null : undefined,
     lookAgainAt: rule.to === "tabled" ? (extra.lookAgainAt ?? null) : leavingTable ? null : undefined,
+    // A case for done is about the line as it was; once it moves, it is answered.
+    doneProposal: current.state === rule.to ? undefined : null,
+    doneProposedBy: current.state === rule.to ? undefined : null,
   });
   const updated = requireLine(ctx, current.ref);
   afterMove(ctx, current, updated);
@@ -397,5 +415,183 @@ export const lineOps = [
     });
     emitLine(ctx, "line.plan_set", line, `${line.ref}'s plan set: ${input.steps.length} steps`);
     return planOf(ctx, line.ref);
+  }),
+
+  bind(contracts.lineSummarize, (ctx, input) => {
+    const line = requireLine(ctx, input.ref);
+    requireOwner(ctx, line, "write its summary");
+    guardLineWrite(ctx, line.ref, "scope");
+    const changes = applyPatch(ctx, "lines", line.ref, line, {
+      headline: input.headline,
+      summary: input.summary,
+      summaryAt: ctx.now,
+    });
+    const updated = requireLine(ctx, line.ref);
+    emitLine(ctx, "line.summarized", updated, `${updated.ref}: ${input.headline}`, changes);
+    return updated;
+  }),
+
+  bind(contracts.lineDoneWhen, (ctx, input) => {
+    const line = requireLine(ctx, input.ref);
+    if (ctx.developer) {
+      const changes = applyPatch(ctx, "lines", line.ref, line, {
+        doneWhen: input.doneWhen,
+        doneWhenProposal: null,
+        doneWhenProposedBy: null,
+      });
+      const updated = requireLine(ctx, line.ref);
+      emitLine(ctx, "line.done_when_set", updated, `${updated.ref} is done when: ${input.doneWhen}`, changes);
+      return updated;
+    }
+    const claim = claimOf(ctx, ctx.actor);
+    const mayPropose =
+      (claim !== null && claim.line === line.ref && claim.role !== "helper") || line.proposedBy === ctx.actor;
+    if (!mayPropose) {
+      throw new OctoError(
+        "forbidden",
+        `Only ${line.ref}'s owner or scoper proposes its done when`,
+        `Take it first: octo line take ${line.ref}`,
+      );
+    }
+    guardLineWrite(ctx, line.ref, "scope");
+    // A line still being proposed or scoped has no accepted done when to change, so its agent writes it directly.
+    const direct = line.state === "proposed" || line.state === "up_next";
+    const changes = applyPatch(
+      ctx,
+      "lines",
+      line.ref,
+      line,
+      direct
+        ? { doneWhen: input.doneWhen }
+        : { doneWhenProposal: input.doneWhen, doneWhenProposedBy: ctx.actor },
+    );
+    const updated = requireLine(ctx, line.ref);
+    emitLine(
+      ctx,
+      direct ? "line.done_when_set" : "line.done_when_proposed",
+      updated,
+      `${updated.ref} ${direct ? "is done when" : "could be done when"}: ${input.doneWhen}`,
+      changes,
+    );
+    return updated;
+  }),
+
+  bind(contracts.lineDoneWhenAnswer, (ctx, input) => {
+    requireDeveloper(ctx, "answer a proposed done when");
+    const line = requireLine(ctx, input.ref);
+    if (line.doneWhenProposal === null)
+      throw new OctoError("conflict", `${line.ref} has no proposed done when`);
+    const changes = applyPatch(ctx, "lines", line.ref, line, {
+      ...(input.accept ? { doneWhen: line.doneWhenProposal } : {}),
+      doneWhenProposal: null,
+      doneWhenProposedBy: null,
+    });
+    if (line.doneWhenProposedBy !== null) {
+      addNotice(
+        ctx,
+        line.doneWhenProposedBy,
+        "done_when",
+        line.ref,
+        input.accept
+          ? `${line.ref} is now done when: ${line.doneWhenProposal}`
+          : `${line.ref} keeps its done when: ${line.doneWhen}`,
+        false,
+      );
+    }
+    const updated = requireLine(ctx, line.ref);
+    emitLine(
+      ctx,
+      input.accept ? "line.done_when_set" : "line.done_when_kept",
+      updated,
+      input.accept
+        ? `${updated.ref} is done when: ${updated.doneWhen}`
+        : `${updated.ref} keeps its done when`,
+      changes,
+    );
+    return updated;
+  }),
+
+  bind(contracts.lineProposeDone, (ctx, input) => {
+    const line = requireLine(ctx, input.ref);
+    requireOwner(ctx, line, "propose it is done");
+    if (line.state !== "working") throw new OctoError("conflict", `${line.ref} is not being worked on`);
+    const changes = applyPatch(ctx, "lines", line.ref, line, {
+      doneProposal: input.why,
+      doneProposedBy: ctx.actor,
+    });
+    const updated = requireLine(ctx, line.ref);
+    emitLine(ctx, "line.done_proposed", updated, `${updated.ref} could be done: ${input.why}`, changes);
+    return updated;
+  }),
+
+  bind(contracts.lineKeepGoing, (ctx, input) => {
+    requireDeveloper(ctx, "say a line is not done");
+    const line = requireLine(ctx, input.ref);
+    if (line.doneProposal === null) throw new OctoError("conflict", `Nobody proposed ${line.ref} is done`);
+    const changes = applyPatch(ctx, "lines", line.ref, line, { doneProposal: null, doneProposedBy: null });
+    if (line.doneProposedBy !== null) {
+      addNotice(
+        ctx,
+        line.doneProposedBy,
+        "keep_going",
+        line.ref,
+        `${line.ref} is not done yet${input.why === undefined ? "" : `: ${input.why}`}`,
+        true,
+      );
+    }
+    const updated = requireLine(ctx, line.ref);
+    emitLine(
+      ctx,
+      "line.keep_going",
+      updated,
+      `${updated.ref} is not done yet${input.why === undefined ? "" : `: ${input.why}`}`,
+      changes,
+    );
+    return updated;
+  }),
+
+  bind(contracts.lineOwn, (ctx, input) => {
+    requireDeveloper(ctx, "own a line");
+    const line = requireLine(ctx, input.ref);
+    if (line.state !== "working") {
+      throw new OctoError("conflict", `${line.ref} is not being worked on`, "Start it first, then own it.");
+    }
+    if (line.ownedBy !== null) return line;
+    const changes = applyPatch(ctx, "lines", line.ref, line, { ownedBy: DEVELOPER });
+    const updated = requireLine(ctx, line.ref);
+    windDown(ctx, updated, true);
+    emitLine(
+      ctx,
+      "line.owned",
+      updated,
+      `${updated.ref} is the developer's own now: ${updated.title}`,
+      changes,
+    );
+    return updated;
+  }),
+
+  bind(contracts.lineHand, (ctx, input) => {
+    requireDeveloper(ctx, "hand a line to the agents");
+    const line = requireLine(ctx, input.ref);
+    if (line.ownedBy === null) throw new OctoError("conflict", `${line.ref} is not the developer's own`);
+    if (input.repos !== undefined) setRepos(ctx, line.ref, checkRepos(ctx, input.repos));
+    const changes = applyPatch(ctx, "lines", line.ref, line, { ownedBy: null });
+    const updated = requireLine(ctx, line.ref);
+    if (updated.repos.length === 0) {
+      throw new OctoError(
+        "invalid_input",
+        `${line.ref} names no repo, so no agent could take it`,
+        "Pass --repo <KEY>.",
+      );
+    }
+    afterAdd(ctx, updated);
+    emitLine(
+      ctx,
+      "line.handed",
+      updated,
+      `${updated.ref} is back with the agents: ${updated.title}`,
+      changes,
+    );
+    return updated;
   }),
 ];

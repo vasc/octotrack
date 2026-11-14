@@ -112,6 +112,13 @@ export const Issue = z.object({
   /** The line of work this issue is part of, and the step of its plan it belongs to. */
   line: z.string().nullable(),
   step: z.number().int().nullable(),
+  /** A task, which is an issue for the developer: where it is done, and what to report when it is. */
+  place: z.string().nullable(),
+  outcome: z.string().nullable(),
+  /** What the developer reported, or why it could not be done. */
+  result: z.string().nullable(),
+  /** When an agent last said a held task still stands. */
+  confirmedAt: z.string().nullable(),
   version: z.number().int(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -154,6 +161,14 @@ export const Line = z.object({
   scopedAt: z.string().nullable(),
   /** While set, the agents that held it when it left working on may still wrap up. */
   windDownUntil: z.string().nullable(),
+  /** "dev" when the developer owns it: no agent writes to it until it is handed back. */
+  ownedBy: z.string().nullable(),
+  /** A done when an agent proposed, waiting for the developer to accept it or keep the one there is. */
+  doneWhenProposal: z.string().nullable(),
+  doneWhenProposedBy: z.string().nullable(),
+  /** The owner's case that the line is done, waiting for the developer. */
+  doneProposal: z.string().nullable(),
+  doneProposedBy: z.string().nullable(),
   repos: z.array(z.string()),
   version: z.number().int(),
   createdAt: z.string(),
@@ -182,6 +197,10 @@ export type DecisionOption = z.infer<typeof DecisionOption>;
 
 export const DecisionReportStatus = z.enum(["done", "partial"]);
 export type DecisionReportStatus = z.infer<typeof DecisionReportStatus>;
+
+/** The only reasons a question may jump the developer's order. */
+export const UrgentReason = z.enum(["time_boxed", "costs_money", "broken"]);
+export type UrgentReason = z.infer<typeof UrgentReason>;
 
 export const Decision = z.object({
   ref: z.string(),
@@ -215,6 +234,18 @@ export const Decision = z.object({
   channel: Channel.nullable(),
   sourceUrl: z.string().nullable(),
   supersededBy: z.string().nullable(),
+  /** The line it was asked on; its answer goes to that line's inbox. Null for a question from before lines. */
+  line: z.string().nullable(),
+  /** The issue it concerns: its answer goes to whoever holds that issue, else the line's owner. */
+  issue: z.string().nullable(),
+  /** Why the asker recommends what it does, shown under the options. */
+  recommendationWhy: z.string().nullable(),
+  /** Set when asked as urgent, for a reason from a fixed set. */
+  urgentReason: UrgentReason.nullable(),
+  /** When the developer sent an urgent question back to its place in the order. */
+  notUrgentAt: z.string().nullable(),
+  /** When an agent last said a held question still stands. */
+  confirmedAt: z.string().nullable(),
   version: z.number().int(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -376,8 +407,15 @@ export const Agent = z.object({
   stoppedAt: z.string().nullable(),
   stoppedReason: z.string().nullable(),
   goneAt: z.string().nullable(),
+  /** When Octotrack last woke it, and why that failed if it did. */
+  wokenAt: z.string().nullable(),
+  wakeError: z.string().nullable(),
 });
 export type Agent = z.infer<typeof Agent>;
+
+/** An agent asleep with something waiting for it, and how to wake it. The message carries no tracker text. */
+export const AgentWake = z.object({ agent: z.string(), address: z.string(), message: z.string() });
+export type AgentWake = z.infer<typeof AgentWake>;
 
 /** See docs/DESIGN.md, the agent state table. Never decided by silence alone. */
 export const AgentState = z.enum(["running", "asleep", "quiet", "gone", "stopped"]);
@@ -409,6 +447,14 @@ export const NoticeKind = z.enum([
   "owner_offer",
   "needs_owner",
   "proposal_placed",
+  "not_urgent",
+  "answer",
+  "tell",
+  "task_done",
+  "task_cant",
+  "done_when",
+  "keep_going",
+  "held_stale",
 ]);
 export type NoticeKind = z.infer<typeof NoticeKind>;
 
@@ -672,3 +718,19 @@ export const TakeResult = z.object({
   message: z.string(),
 });
 export type TakeResult = z.infer<typeof TakeResult>;
+
+/** Somewhere the developer does tasks: a fixed list they own. */
+export const Place = z.object({ name: z.string(), position: z.number().int() });
+export type Place = z.infer<typeof Place>;
+
+/** A question or task waiting on a line nobody is working on. Only current ones reach the developer. */
+export const HeldItem = z.object({
+  ref: z.string(),
+  kind: z.enum(["question", "task"]),
+  title: z.string(),
+  line: z.string(),
+  /** Asked or re-confirmed in the last 7 days. */
+  current: z.boolean(),
+  since: z.string(),
+});
+export type HeldItem = z.infer<typeof HeldItem>;

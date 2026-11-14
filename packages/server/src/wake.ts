@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { type Caller, contracts, type Decision, type Tracker } from "@octotrack/core";
+import { type AgentWake, type Caller, contracts, type Decision, type Tracker } from "@octotrack/core";
 import { z } from "zod";
 
 const WakeAdapter = z.object({ command: z.array(z.string().min(1)).min(1) });
@@ -101,15 +101,43 @@ export function createWakeDispatcher(options: {
     }
   };
 
+  const recordAgent = (name: string, error?: string) =>
+    tracker.call(contracts.agentWoken, { name, ...(error === undefined ? {} : { error }) }, DISPATCHER);
+
+  /** An agent on a line is woken at the address it registered, whatever is waiting for it. */
+  const wakeAgent = async (due: AgentWake): Promise<void> => {
+    const split = due.address.indexOf(":");
+    const name = due.address.slice(0, split);
+    const adapter = adapters[name];
+    if (adapter === undefined) {
+      recordAgent(due.agent, `No wake adapter named ${name}`);
+      return;
+    }
+    // Recorded first: if this process dies mid-run, an agent is left unwoken rather than woken twice.
+    recordAgent(due.agent);
+    try {
+      const { exitCode, stderr } = await run(
+        argvFor(adapter.command, due.address.slice(split + 1), due.message),
+      );
+      if (exitCode !== 0) recordAgent(due.agent, `Exit ${exitCode}: ${stderr.trim().slice(0, STDERR_KEPT)}`);
+    } catch (error) {
+      recordAgent(due.agent, error instanceof Error ? error.message : String(error));
+    }
+  };
+
+  const track = (task: () => Promise<void>): Promise<void> => {
+    const promise = task().finally(() => running.delete(promise));
+    running.add(promise);
+    return promise;
+  };
+
   const dispatch = async (): Promise<void> => {
     const due = tracker.call(contracts.decisionWakes, {}, DISPATCHER);
-    await Promise.all(
-      due.map((decision) => {
-        const task = wake(decision).finally(() => running.delete(task));
-        running.add(task);
-        return task;
-      }),
-    );
+    const agents = tracker.call(contracts.agentWakes, {}, DISPATCHER);
+    await Promise.all([
+      ...due.map((decision) => track(() => wake(decision))),
+      ...agents.map((agent) => track(() => wakeAgent(agent))),
+    ]);
   };
 
   return {

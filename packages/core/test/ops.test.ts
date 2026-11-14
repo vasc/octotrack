@@ -251,7 +251,7 @@ ${third.ref} - Neither, doing something else`,
     });
     expect(
       h
-        .call(c.driftList, {})
+        .call(c.driftList, { query: "-rule:unplaced-work" })
         .map((drift) => drift.target)
         .sort(),
     ).toEqual([issue.ref, "OCT"].sort());
@@ -472,7 +472,8 @@ describe("agents", () => {
     h.call(c.decisionResolve, { ref: decision.ref, note: "yes" }, "vasco");
     next = h.call(c.next, {});
     expect(next.resolvedDecisions.map((item) => item.ref)).toEqual([decision.ref]);
-    expect(next.drift.map((item) => item.rule)).toEqual(["decision-project-sync"]);
+    // Its issue is on no line, which drift asks it to fix too; that rule has its own tests.
+    expect(next.drift.map((item) => item.rule)).toEqual(["decision-project-sync", "unplaced-work"]);
     expect(next.summary).toContain("1 of your decisions came back");
   });
 

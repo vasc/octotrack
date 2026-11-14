@@ -215,15 +215,17 @@ describe("the whole flow an agent goes through", () => {
     expect(next.summary).toContain("decisions came back");
     expect(next.drift.length).toBeGreaterThan(0);
 
+    // OCT has two drifts now: the decision's, and its issues being on no line. Neither was fixed, so neither may be
+    // claimed as updated; the refusal names whichever it checked first.
     const refused = await octo(["drift", "ack", "--target", "OCT", "--updated", "did it"]);
     expect(refused.code).toBe(1);
-    expect(refused.stdout).toContain("has not changed");
+    expect(refused.stdout).toContain("cannot be marked updated");
 
     expect(
       (await octo(["drift", "ack", "--target", issue.ref, "--verified", "Issue never named a queue"])).code,
     ).toBe(0);
     expect((await octo(["drift", "ack", "--target", "OCT", "--verified", "Nothing to change"])).code).toBe(0);
-    expect(await data(z.array(WithRef), ["drift", "list", "target:OCT"])).toEqual([]);
+    expect(await data(z.array(WithRef), ["drift", "list", "target:OCT -rule:unplaced-work"])).toEqual([]);
   }, 20000);
 });
 
@@ -1082,5 +1084,31 @@ describe("agents and claims from the CLI", () => {
     const refused = await octo(["agent", "note", "busy", "--json"], "flow.1");
     expect(refused.code).toBe(1);
     expect(refused.stdout).toContain('"forbidden"');
+  });
+});
+
+describe("tasks from the CLI", () => {
+  test("an agent files a task at one of the developer's places; Done reaches it on its next command", async () => {
+    await data(z.array(z.object({ name: z.string() })), ["place", "add", "the", "bench", "--me"], "");
+    const line = await data(
+      z.object({ ref: z.string() }),
+      ["line", "add", "Task flow", "--done-when", "It works.", "--repo", "OCT", "--where", "working", "--me"],
+      "",
+    );
+    await data(
+      z.object({ repo: z.string().nullable() }),
+      ["agent", "register", "--no-wake", "--repo", "OCT"],
+      "tasks.1",
+    );
+    await data(z.object({ role: z.string().nullable() }), ["line", "take", line.ref], "tasks.1");
+    const task = await data(
+      z.object({ ref: z.string(), place: z.string().nullable() }),
+      ["task", "file", "Measure the grip", "--place", "the bench", "--outcome", "Five numbers"],
+      "tasks.1",
+    );
+    expect(task.place).toBe("the bench");
+    await data(z.object({ ref: z.string() }), ["task", "done", task.ref, "41,", "38,", "12", "--me"], "");
+    const heard = await octo(["agent", "list", "--text"], "tasks.1");
+    expect(heard.stderr).toContain(`${task.ref} done: 41, 38, 12`);
   });
 });

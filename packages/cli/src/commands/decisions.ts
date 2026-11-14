@@ -92,8 +92,17 @@ export const decisionCommands: Command[] = [
       wait: { type: "boolean", short: "w", description: "Hang until the decision is made, then print it" },
       wake: { ...STRING, description: "Wake this session when answered, as adapter:address. See octo guide" },
       timeout: { ...STRING, description: "With --wait: give up after this long, exit 124. For example 30m" },
+      line: { ...STRING, description: "The line it is asked on. Default: the line you are on" },
+      issue: { ...STRING, description: "The issue it concerns. Default: the one you hold on that line" },
+      why: { ...STRING, description: "Why you recommend what you do. Required with --recommend on a line" },
+      urgent: { ...STRING, description: "Only on a working line: time_boxed, costs_money or broken" },
+      "waits-for": {
+        ...STRING,
+        description: "A task whose outcome would settle this: it waits behind the task",
+      },
     },
     examples: [
+      'octo decision ask "Which board goes in?" --context "<the situation>" -o a="26 mm::Print as it is" -o b="30 mm::Remodel first, a day" --recommend a --why "Antenna gain does not matter at 2 m"',
       'octo decision ask "Which queue?" -p OCT -o sqs=SQS -o redis="Redis::Cheaper, less durable" --recommend redis --blocks OCT-4 --wait',
     ],
     ops: [c.decisionAsk.name],
@@ -112,6 +121,11 @@ export const decisionCommands: Command[] = [
           blocks: args.optionalList("blocks"),
           affects: args.optionalList("affects"),
           wake: args.str("wake"),
+          line: args.str("line"),
+          issue: args.str("issue"),
+          why: args.str("why"),
+          urgent: args.str("urgent"),
+          waitsFor: args.str("waits-for"),
         }),
       );
       if (args.flag("wait")) return waitForDecisions(ctx, [outcome.data.ref], args);
@@ -351,6 +365,16 @@ export const decisionCommands: Command[] = [
         c.decisionWoken,
         compact({ ref: args.requirePositional(0, "REF"), error: args.str("error") }),
       );
+      out.result(outcome, () => r.renderDecisionBlock(outcome.data));
+    },
+  },
+  {
+    path: ["decision", "not-urgent"],
+    usage: "<REF>",
+    summary: "Send an urgent question back to its place in the line order (the developer)",
+    ops: [c.decisionNotUrgent.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(c.decisionNotUrgent, { ref: args.requirePositional(0, "REF") });
       out.result(outcome, () => r.renderDecisionBlock(outcome.data));
     },
   },
