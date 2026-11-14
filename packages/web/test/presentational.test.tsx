@@ -554,6 +554,7 @@ describe("lines of work", () => {
     start: null,
     step: null,
     forYou: [],
+    stepIn: false,
     held: { questions: 0, tasks: 0 },
     scopedSteps: 0,
     ...overrides,

@@ -84,10 +84,10 @@ beforeEach(() => {
   h.call(c.prUpsert, { repo: "a/b", number: 1, title: "A PR", state: "open" });
   h.call(c.viewSave, { name: "Mine", query: "kind:issue" });
   h.call(c.watchCreate, { spec: SPEC, name: "registered" });
-  h.developer(c.lineAdd, { title: "A line", doneWhen: "Done.", where: "working" });
+  h.developer(c.lineAdd, { title: "A line", doneWhen: "Done.", repos: ["OCT"], where: "working" });
   h.call(c.linePropose, { title: "A proposal", doneWhen: "Done.", recommendation: "up_next", why: "Soon." });
   h.call(c.linePropose, { title: "The same work", doneWhen: "Done.", recommendation: "fold", why: "Same." });
-  h.developer(c.lineAdd, { title: "Next", doneWhen: "Done.", where: "up_next" });
+  h.developer(c.lineAdd, { title: "Next", doneWhen: "Done.", repos: ["OCT"], where: "up_next" });
   h.developer(c.decisionAsk, { title: "Order today?", line: "L-1", urgent: "costs_money" });
   h.developer(c.placeAdd, { name: "the bench" });
   h.call(c.agentRegister, { repo: "OCT" }, "owner.b");
@@ -178,6 +178,9 @@ const EVERY_WRITE: readonly (readonly [string, unknown])[] = [
   ],
   ["runner.exited", { name: "oct.1", code: 1, output: "not logged in" }],
   ["runner.retry", { line: "L-1" }],
+  ["runner.start", { line: "L-1", repo: "OCT" }],
+  ["runner.restarted", {}],
+  ["runner.closed", { pr: "PR-1", dry: true }],
   ["runner.closed", { pr: "PR-1" }],
   ["runner.removed", { path: "/wt/oct.1" }],
   ["push.subscribe", { endpoint: "https://push.example/a", keys: { p256dh: "k", auth: "a" } }],

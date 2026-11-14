@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { guardLineWrite } from "../agents/claims.ts";
+import { HELD_CURRENT_MS } from "../agents/held.ts";
 import { DEVELOPER } from "../agents/state.ts";
 import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
@@ -15,9 +16,6 @@ import { bind } from "./bind.ts";
 import { requireDeveloper } from "./developer.ts";
 import { createIssue } from "./issues.ts";
 import { addLink } from "./links.ts";
-
-/** Held work is trusted for this long after it was asked or re-confirmed. */
-export const HELD_CURRENT_MS = 7 * 24 * 60 * 60 * 1000;
 
 const PlaceRow = z.object({ name: z.string(), position: z.number().int() });
 const ToRow = z.object({ toRef: z.string() });
@@ -64,6 +62,8 @@ function freedBy(ctx: Ctx, task: string): string | null {
 
 function closeTask(ctx: Ctx, task: Issue, status: "done" | "cancelled", result: string): Issue {
   const changes = applyPatch(ctx, "issues", task.ref, task, { status, result, closedAt: ctx.now });
+  // The half-written outcome is answered now.
+  ctx.sql.run("DELETE FROM drafts WHERE key = ?", [`task:${task.ref}`]);
   const kind = status === "done" ? "task_done" : "task_cant";
   const frees = freedBy(ctx, task.ref);
   if (task.line !== null) {
@@ -165,7 +165,13 @@ export const taskOps = [
       assignee: DEVELOPER,
       line: line.ref,
     });
-    ctx.sql.run("UPDATE issues SET place = ?, outcome = ? WHERE ref = ?", [place, input.outcome, task.ref]);
+    // Filed on a line nobody works on, it is held until the line starts.
+    ctx.sql.run("UPDATE issues SET place = ?, outcome = ?, heldAt = ? WHERE ref = ?", [
+      place,
+      input.outcome,
+      line.state === "working" ? null : ctx.now,
+      task.ref,
+    ]);
     if (frees !== null) addLink(ctx, task.ref, "blocks", frees.ref);
     return requireIssue(ctx, task.ref);
   }),
@@ -216,8 +222,10 @@ export const taskOps = [
         throw new OctoError("invalid_input", `${ref} is not a question or task on a line`);
       }
       guardLineWrite(ctx, entity.value.line, "scope");
+      // Re-confirmed, it is current again; on a line being worked on it reaches the developer from now.
+      const working = requireLine(ctx, entity.value.line).state === "working";
       ctx.sql.run(
-        `UPDATE ${entity.kind === "decision" ? "decisions" : "issues"} SET confirmedAt = ? WHERE ref = ?`,
+        `UPDATE ${entity.kind === "decision" ? "decisions" : "issues"} SET confirmedAt = ?, heldAt = ${working ? "NULL" : "heldAt"} WHERE ref = ?`,
         [ctx.now, entity.value.ref],
       );
       lines.add(entity.value.line);

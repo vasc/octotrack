@@ -66,13 +66,14 @@ export const runnerCommands: Command[] = [
   },
   {
     path: ["runner", "record"],
-    usage: "<report|start|exited|dry|closed|worktree|removed>",
+    usage: "<report|start|exited|restarted|dry|closed|worktree|removed>",
     summary: INTERNAL,
     options: { input: { ...STRING, description: "The operation's input, as JSON" } },
     ops: [
       c.runnerReport.name,
       c.runnerStart.name,
       c.runnerExited.name,
+      c.runnerRestarted.name,
       c.runnerDry.name,
       c.runnerClosed.name,
       c.runnerWorktree.name,

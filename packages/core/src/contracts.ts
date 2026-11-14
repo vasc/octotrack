@@ -240,9 +240,15 @@ export const contracts = {
   ),
   runnerClosed: write(
     "runner.closed",
-    "Record that a pull request was closed with its line",
-    z.strictObject({ pr: z.string() }),
+    "Record that a pull request was closed with its line, or in watch mode that it would have been",
+    z.strictObject({ pr: z.string(), dry: z.boolean().optional() }),
     z.object({ pr: z.string() }),
+  ),
+  runnerRestarted: write(
+    "runner.restarted",
+    "Settle sessions from before a server restart, whose ends the runner did not see",
+    Empty,
+    z.object({ settled: z.number().int() }),
   ),
   runnerWorktree: write(
     "runner.worktree",
@@ -996,6 +1002,8 @@ export const BatchResult = z.object({
   ),
   driftOpened: z.array(Drift),
   cursor: z.number().int(),
+  /** What the calling agent must hear, as on any other reply. */
+  notices: z.array(Notice).default([]),
 });
 export type BatchResult = z.infer<typeof BatchResult>;
 
@@ -1010,5 +1018,7 @@ export const WatchWaitResponse = z.object({
   fired: z.boolean(),
   results: z.array(WatchResult),
   cursor: z.number().int(),
+  /** What the waiting agent must hear, as on any other reply. */
+  notices: z.array(Notice).default([]),
 });
 export type WatchWaitResponse = z.infer<typeof WatchWaitResponse>;

@@ -111,6 +111,10 @@ function insertLine(ctx: Ctx, input: NewLine): Line {
     ],
   );
   setRepos(ctx, ref, input.repos);
+  // A line the developer adds names its repos, or is theirs: with no repo, no agent could work on it.
+  if (input.repos.length === 0 && input.proposedBy === null) {
+    ctx.sql.run("UPDATE lines SET ownedBy = 'dev' WHERE ref = ?", [ref]);
+  }
   return requireLine(ctx, ref);
 }
 
@@ -302,7 +306,51 @@ export const lineOps = [
   ),
   bind(contracts.lineDone, (ctx, input) => move(ctx, input.ref, "done")),
   bind(contracts.lineDrop, (ctx, input) => move(ctx, input.ref, "drop")),
-  bind(contracts.lineReject, (ctx, input) => move(ctx, input.ref, "reject")),
+  bind(contracts.lineReject, (ctx, input) => {
+    requireDeveloper(ctx, "say a proposal is not a line");
+    const line = requireLine(ctx, input.ref);
+    if (line.state === "proposed") {
+      // Not a line ends the work made for it, and returns older work to no line, where drift asks for a home for it.
+      for (const issue of rows(
+        ctx,
+        IssueRow,
+        "SELECT * FROM issues WHERE line = ? AND status NOT IN ('done', 'cancelled')",
+        [line.ref],
+      )) {
+        const madeForIt =
+          line.proposedBy !== null &&
+          issue.createdBy === line.proposedBy &&
+          issue.createdAt >= line.createdAt;
+        const changes = applyPatch(
+          ctx,
+          "issues",
+          issue.ref,
+          issue,
+          madeForIt
+            ? { status: "cancelled", closedAt: ctx.now }
+            : {
+                line: null,
+                step: null,
+                assignee: null,
+                status: issue.status === "in_progress" ? "todo" : undefined,
+              },
+        );
+        emit(ctx, {
+          type: madeForIt ? "issue.status_changed" : "issue.updated",
+          kind: "issue",
+          ref: issue.ref,
+          project: issue.project,
+          line: line.ref,
+          summary: madeForIt
+            ? `${issue.ref} closed: ${line.ref} is not a line`
+            : `${issue.ref} is on no line again: ${line.ref} is not a line`,
+          attrs: { status: madeForIt ? "cancelled" : issue.status },
+          changes,
+        });
+      }
+    }
+    return move(ctx, line.ref, "reject");
+  }),
 
   bind(contracts.lineFold, (ctx, input) => {
     requireDeveloper(ctx, "fold a line");
@@ -328,6 +376,11 @@ export const lineOps = [
       });
     }
     ctx.sql.run("UPDATE decisions SET line = ? WHERE line = ?", [into.ref, current.ref]);
+    // Answers and Tells waiting for the folded line go where its work went.
+    ctx.sql.run("UPDATE line_inbox SET line = ? WHERE line = ? AND deliveredAt IS NULL", [
+      into.ref,
+      current.ref,
+    ]);
     setRepos(ctx, into.ref, [...new Set([...into.repos, ...current.repos])]);
     const changes = applyPatch(ctx, "lines", current.ref, current, { state: "dropped" });
     const folded = requireLine(ctx, current.ref);

@@ -1,4 +1,4 @@
-import type { Drift } from "@octotrack/core";
+import type { Drift, Notice } from "@octotrack/core";
 import type { Args, OptionSpecs } from "./args.ts";
 import type { OctoClient, OpSuccess } from "./client.ts";
 import { renderDriftNotice, renderNotices } from "./render.ts";
@@ -13,7 +13,12 @@ export interface Output {
   line(value: unknown, text: () => string): void;
 }
 
-export function makeOutput(json: boolean): Output {
+/** Whatever tracks the notices a command was handed, so that each is shown exactly once. */
+export interface NoticeLedger {
+  shown(notices: readonly Notice[]): void;
+}
+
+export function makeOutput(json: boolean, ledger: NoticeLedger = { shown: () => undefined }): Output {
   const printDrift = (drifts: readonly Drift[]) => {
     const notice = renderDriftNotice(drifts);
     if (notice !== "") console.error(notice);
@@ -21,6 +26,7 @@ export function makeOutput(json: boolean): Output {
   return {
     json,
     result(outcome, text, ok = true) {
+      ledger.shown(outcome.notices);
       if (json) {
         console.log(JSON.stringify({ ok, ...outcome }));
         return;
@@ -39,6 +45,17 @@ export function makeOutput(json: boolean): Output {
       else console.log(text());
     },
   };
+}
+
+/** Shows the notices a command was handed but did not print itself: on stderr, as text or as one JSON line. */
+export function printLeftoverNotices(notices: readonly Notice[], json: boolean): void {
+  if (notices.length === 0) return;
+  if (json) {
+    console.error(JSON.stringify({ notices }));
+    return;
+  }
+  const text = renderNotices(notices);
+  if (text !== "") console.error(text);
 }
 
 export interface RunContext {

@@ -188,13 +188,18 @@ export class Tracker {
       system: caller.system === true,
       runOp: (name, input, as) => {
         const op = this.requireOp(name);
-        // Only the developer makes choices that wait, so whoever made one is the developer.
-        const inner = this.ctx({
-          actor: as.actor,
-          channel: as.channel,
-          developer: true,
-          ...(as.said === null ? {} : { said: as.said }),
-        });
+        // The server settling something runs as the server. Anything else is a choice that waited, and only the
+        // developer makes those, so whoever made one is the developer.
+        const inner = this.ctx(
+          as.system === true
+            ? { actor: as.actor, channel: as.channel, system: true }
+            : {
+                actor: as.actor,
+                channel: as.channel,
+                developer: true,
+                ...(as.said === null ? {} : { said: as.said }),
+              },
+        );
         const result = op.run(inner, input);
         ctx.openedDrift.push(...inner.openedDrift);
         return result;
@@ -315,6 +320,12 @@ export class Tracker {
     return { ...caller, actor: name, anonymous: false };
   }
 
+  /** Hands a caller what it must hear, for replies that do not run an operation, such as a long-polled wait. */
+  noticesFor(caller: Caller): Notice[] {
+    const who = this.identify(caller, false);
+    return this.deliver(this.ctx(who), who);
+  }
+
   private deliver(ctx: Ctx, caller: Caller): Notice[] {
     if (ctx.developer || ctx.system || caller.anonymous === true) return [];
     return this.sql.transaction(() => [
@@ -423,17 +434,19 @@ export class Tracker {
   private batchIndependent(ops: readonly BatchOp[], caller: Caller): BatchResult {
     const aliases = new Map<string, unknown>();
     const driftOpened: Drift[] = [];
+    const notices: Notice[] = [];
     const results = ops.map((item) => {
       try {
         const outcome = this.execute(item.op, substitute(item.input, aliases), caller);
         if (item.as !== undefined) aliases.set(item.as, outcome.data);
         driftOpened.push(...outcome.driftOpened);
+        notices.push(...outcome.notices);
         return { op: item.op, ok: true, data: outcome.data, error: null };
       } catch (error) {
         return { op: item.op, ok: false, data: null, error: toErrorBody(error) };
       }
     });
-    return { ok: results.every((result) => result.ok), results, driftOpened, cursor: this.cursor() };
+    return { ok: results.every((result) => result.ok), results, driftOpened, cursor: this.cursor(), notices };
   }
 
   private batchAtomic(ops: readonly BatchOp[], caller: Caller): BatchResult {
@@ -488,6 +501,7 @@ export class Tracker {
         })),
         driftOpened: [],
         cursor: this.cursor(),
+        notices: this.deliver(this.ctx(who), who),
       };
     }
     this.notify(this.eventsSince(before));
@@ -496,6 +510,7 @@ export class Tracker {
       results: ops.map((item, index) => ({ op: item.op, ok: true, data: outputs[index], error: null })),
       driftOpened: ctx.openedDrift,
       cursor: currentCursor(ctx),
+      notices: this.deliver(this.ctx(who), who),
     };
   }
 

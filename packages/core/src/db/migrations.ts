@@ -295,6 +295,13 @@ const MIGRATIONS: readonly Migration[] = [
   CREATE TABLE push_lines (line TEXT PRIMARY KEY, buzzedAt TEXT NOT NULL);
   CREATE TABLE developer_state (key TEXT PRIMARY KEY, value TEXT NOT NULL);
   `,
+  `
+  ALTER TABLE issues ADD COLUMN lastAssignee TEXT;
+  ALTER TABLE issues ADD COLUMN lastAssignedAt TEXT;
+  ALTER TABLE issues ADD COLUMN heldAt TEXT;
+  ALTER TABLE decisions ADD COLUMN heldAt TEXT;
+  ALTER TABLE runner_closes ADD COLUMN dry INTEGER NOT NULL DEFAULT 0;
+  `,
 ];
 
 const UserVersion = z.object({ user_version: z.number().int() });

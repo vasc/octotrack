@@ -7,7 +7,7 @@ import { addNotice, claimOf, claimsOn, getAgent, viewOf } from "../store/agents.
 import { emit } from "../store/common.ts";
 import type { Ctx } from "../store/context.ts";
 import { one, placeholders, rows } from "../store/context.ts";
-import { allLines, requireLine, requireProject, summarize } from "../store/entities.ts";
+import { allLines, getIssue, requireLine, requireProject, summarize } from "../store/entities.ts";
 import { IssueRow, PlanStepRow } from "../store/rows.ts";
 import { bind } from "./bind.ts";
 import { heldOn } from "./tasks.ts";
@@ -88,13 +88,37 @@ function result(ctx: Ctx, line: Line, role: ClaimRole, agent: Agent): TakeResult
     };
   }
   const next = nextIssue(ctx, line, role, agent);
-  if (next !== null) return { line, role, next, message: `Work on ${next.ref}: ${next.title}` };
+  if (next !== null) {
+    return { line, role, next, message: `Work on ${next.ref}: ${next.title}${lastHeld(ctx, next.ref)}` };
+  }
   return {
     line,
     role,
     next: null,
     message: role === "owner" ? ownerWithoutWork(ctx, line) : "Nothing for you here.",
   };
+}
+
+/** Who held an issue before it came back to the line, so its next holder can find their branch. */
+function lastHeld(ctx: Ctx, ref: string): string {
+  const issue = getIssue(ctx, ref);
+  if (issue === null || issue.lastAssignee === null) return "";
+  return ` (last held by ${issue.lastAssignee} until ${issue.lastAssignedAt ?? "recently"}; look for their branch)`;
+}
+
+/** An owner that comes back to a line someone else now owns helps, and hears what became of the issues it held. */
+function backAsHelper(ctx: Ctx, agent: string, line: Line): string {
+  const lost = rows(
+    ctx,
+    IssueRow,
+    "SELECT * FROM issues WHERE line = ? AND lastAssignee = ? AND status NOT IN ('done', 'cancelled')",
+    [line.ref, agent],
+  );
+  if (lost.length === 0) return "";
+  const held = lost.map(
+    (issue) => `${issue.ref} (${issue.assignee === null ? "free" : `held by ${issue.assignee}`})`,
+  );
+  return ` You owned ${line.ref} before; it has an owner now, so you help. The issues you held: ${held.join(", ")}.`;
 }
 
 function hasOwner(ctx: Ctx, line: Line): boolean {
@@ -143,7 +167,10 @@ function claimLine(ctx: Ctx, agent: Agent, line: Line, role: ClaimRole): TakeRes
       false,
     );
   }
-  return result(ctx, requireLine(ctx, line.ref), role, agent);
+  const taken = result(ctx, requireLine(ctx, line.ref), role, agent);
+  return role === "helper"
+    ? { ...taken, message: `${taken.message}${backAsHelper(ctx, agent.name, line)}` }
+    : taken;
 }
 
 function nothing(agent: Agent): TakeResult {
@@ -165,6 +192,12 @@ function roleOn(ctx: Ctx, agent: Agent, line: Line): ClaimRole {
       "conflict",
       `${line.ref} is the developer's own; it goes back to agents when they hand it over`,
     );
+  }
+  if (line.repos.length === 0) {
+    throw new OctoError("conflict", `${line.ref} names no repo, so there is nowhere to work on it`);
+  }
+  if (windingDown(line, ctx.now)) {
+    throw new OctoError("conflict", `${line.ref} is winding down; take it once its agents have wrapped up`);
   }
   if (agent.repo === null) {
     throw new OctoError("conflict", "Say which repo you serve first", "octo agent register --repo <KEY>");

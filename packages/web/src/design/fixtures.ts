@@ -18,6 +18,7 @@ export function decision(overrides: Partial<Decision> = {}): Decision {
   return {
     ref: "D-1",
     project: "OCT",
+    heldAt: null,
     kind: "architecture",
     title: "Which queue?",
     context: "We need at-least-once delivery.",
@@ -118,6 +119,9 @@ export function issue(overrides: Partial<Issue> = {}): Issue {
   return {
     ref: "OCT-1",
     project: "OCT",
+    lastAssignee: null,
+    lastAssignedAt: null,
+    heldAt: null,
     title: "Thing",
     body: "",
     status: "todo",

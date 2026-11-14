@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { endClaim } from "../agents/claims.ts";
+import { endClaim, endFirstOffer } from "../agents/claims.ts";
 import { agentState } from "../agents/state.ts";
 import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
@@ -94,6 +94,7 @@ export const inboxOps = [
     if (input.error !== undefined) {
       // A session that cannot be woken is gone: what it held goes to whoever comes next.
       ctx.sql.run("UPDATE agents SET goneAt = ? WHERE name = ?", [ctx.now, agent.name]);
+      endFirstOffer(ctx, agent.name);
       const claim = endClaim(ctx, agent.name, "gone");
       emit(ctx, {
         type: "agent.gone",

@@ -71,6 +71,7 @@ export class OctoClient {
   ) {}
 
   private warnedAboutSkew = false;
+  private heard: Notice[] = [];
 
   /** Says once per command when the server answering is from another build than this CLI. */
   private noticeBuild(response: Response): Response {
@@ -193,6 +194,7 @@ export class OctoClient {
   async op(name: string, input: unknown): Promise<OpSuccess> {
     const envelope = OpEnvelope.parse(await this.post(`/api/ops/${name}`, { input }));
     if (!envelope.ok) throw new RemoteError(envelope.error);
+    this.heard.push(...envelope.notices);
     return {
       data: envelope.data,
       driftOpened: envelope.driftOpened,
@@ -211,10 +213,27 @@ export class OctoClient {
   }
 
   async batch(request: BatchRequest): Promise<BatchResult> {
-    return BatchResult.parse(await this.post("/api/batch", request));
+    const result = BatchResult.parse(await this.post("/api/batch", request));
+    this.heard.push(...result.notices);
+    return result;
   }
 
   async wait(refs: readonly string[], holdMs: number): Promise<WatchWaitResponse> {
-    return WatchWaitResponse.parse(await this.post("/api/watch/wait", { refs, holdMs }, true));
+    const response = WatchWaitResponse.parse(await this.post("/api/watch/wait", { refs, holdMs }, true));
+    this.heard.push(...response.notices);
+    return response;
+  }
+
+  /**
+   * Every notice the server handed this command, on any call, that has not been shown yet. Notices are delivered once,
+   * so a command that makes several calls, or prints its data without an envelope, must still show each of them.
+   */
+  takeNotices(): Notice[] {
+    return this.heard.splice(0);
+  }
+
+  /** Marks notices as shown, when a command printed them itself. */
+  shown(notices: readonly Notice[]): void {
+    this.heard = this.heard.filter((notice) => !notices.includes(notice));
   }
 }

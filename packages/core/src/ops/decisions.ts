@@ -65,6 +65,7 @@ interface InsertDecision {
   issue?: string | null;
   why?: string;
   urgent?: UrgentReason;
+  held?: boolean;
 }
 
 /**
@@ -128,8 +129,8 @@ function insertDecision(ctx: Ctx, input: InsertDecision): Decision {
   const project = input.project === undefined ? null : requireProject(ctx, input.project).ref;
   const ref = `D-${nextNumber(ctx, "decision")}`;
   ctx.sql.run(
-    `INSERT INTO decisions (ref, project, kind, title, context, options, recommendation, status, priority, requestedBy, dueAt, wakeAddress, line, issue, recommendationWhy, urgentReason, version, createdAt, updatedAt)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+    `INSERT INTO decisions (ref, project, kind, title, context, options, recommendation, status, priority, requestedBy, dueAt, wakeAddress, line, issue, recommendationWhy, urgentReason, heldAt, version, createdAt, updatedAt)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
     [
       ref,
       project,
@@ -146,6 +147,7 @@ function insertDecision(ctx: Ctx, input: InsertDecision): Decision {
       input.issue ?? null,
       input.why ?? null,
       input.urgent ?? null,
+      input.held === true ? ctx.now : null,
       ctx.now,
       ctx.now,
     ],
@@ -349,7 +351,8 @@ export function buildQueue(ctx: Ctx, query: string | undefined) {
       [DEVELOPER],
     ).map((row) => row.ref),
   );
-  const open = rows(ctx, DecisionRow, "SELECT * FROM decisions WHERE status = 'open'")
+  // Held questions that went stale while their line waited reach the developer only once an agent re-confirms them.
+  const open = rows(ctx, DecisionRow, "SELECT * FROM decisions WHERE status = 'open' AND heldAt IS NULL")
     .filter((decision) => decision.line === null || order.has(decision.line))
     .filter((decision) => !behindTasks.has(decision.ref))
     .map((value) => ({ kind: "decision" as const, value }));
@@ -395,7 +398,10 @@ export const decisionOps = [
       project: input.project ?? placed.line?.repos[0],
       line: placed.line?.ref ?? null,
       issue: placed.issue,
+      // Asked on a line nobody works on: held until it starts.
+      held: placed.line !== null && placed.line.state !== "working",
     });
+
     if (input.waitsFor !== undefined) {
       const task = requireIssue(ctx, input.waitsFor);
       if (task.assignee !== DEVELOPER || task.outcome === null) {

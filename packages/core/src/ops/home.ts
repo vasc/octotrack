@@ -6,7 +6,7 @@ import { rows } from "../store/context.ts";
 import { allLines } from "../store/entities.ts";
 import { IssueRow, PlanStepRow } from "../store/rows.ts";
 import { buildQueue } from "./decisions.ts";
-import { lineStart, runnerStatus } from "./runner.ts";
+import { lineStart, runnerStatus, stepInFor } from "./runner.ts";
 import { heldOn } from "./tasks.ts";
 
 const DONE_LATELY_MS = 7 * 24 * 60 * 60 * 1000;
@@ -16,6 +16,7 @@ function openTasks(ctx: Ctx, line: string) {
     ctx,
     IssueRow,
     `SELECT * FROM issues WHERE line = ? AND assignee = ? AND outcome IS NOT NULL AND status NOT IN ('done', 'cancelled')
+       AND heldAt IS NULL
      ORDER BY step IS NULL, step, createdAt`,
     [line, DEVELOPER],
   );
@@ -58,6 +59,7 @@ export function buildHome(ctx: Ctx): HomeView {
     const held = working ? [] : heldOn(ctx, line.ref).filter((item) => item.current);
     return {
       start: lineStart(ctx, line.ref),
+      stepIn: stepInFor(ctx, line),
       step:
         current === undefined ? null : { position: current.position, of: steps.length, title: current.title },
       forYou: [...questions, ...tasks],
@@ -82,7 +84,7 @@ export function buildHome(ctx: Ctx): HomeView {
       toAccept:
         inState("proposed").length +
         lines.filter((line) => line.doneWhenProposal !== null || line.doneProposal !== null).length,
-      toStepIn: working.filter((line) => crews[line.ref]?.search?.step === 3).length,
+      toStepIn: working.filter((line) => lineDetails[line.ref]?.stepIn === true).length,
       urgent: urgent.length,
     },
     working,
