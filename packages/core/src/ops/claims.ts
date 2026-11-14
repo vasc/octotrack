@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { endClaim, setClaim, windingDown } from "../agents/claims.ts";
+import { endClaim, NOT_BLOCKED, setClaim, windingDown } from "../agents/claims.ts";
 import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
 import type { Agent, ClaimRole, EntitySummary, Line, TakeResult } from "../schemas.ts";
@@ -46,12 +46,7 @@ function nextIssue(ctx: Ctx, line: Line, role: ClaimRole, agent: Agent): EntityS
     IssueRow,
     `SELECT * FROM issues i WHERE i.line = ? AND i.status IN ('todo', 'backlog') AND i.assignee IS NULL
        AND i.project IN (${placeholders(repos)})
-       AND NOT EXISTS (
-         SELECT 1 FROM links l
-           LEFT JOIN issues b ON b.ref = l.fromRef
-           LEFT JOIN decisions d ON d.ref = l.fromRef
-         WHERE l.toRef = i.ref AND l.rel = 'blocks'
-           AND ((b.ref IS NOT NULL AND b.status NOT IN ('done', 'cancelled')) OR (d.ref IS NOT NULL AND d.status = 'open')))
+       AND ${NOT_BLOCKED}
      ORDER BY i.step IS NULL, i.step, i.createdAt LIMIT 1`,
     [line.ref, ...repos],
   );
