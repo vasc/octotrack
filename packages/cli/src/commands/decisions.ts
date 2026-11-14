@@ -205,6 +205,29 @@ export const decisionCommands: Command[] = [
     },
   },
   {
+    path: ["question", "change"],
+    usage: "<REF> [option]",
+    summary: "Change answer: answer a question again, sent as replacing the earlier answer (the developer)",
+    options: {
+      option: { ...STRING, short: "o", description: "The chosen option key" },
+      note: { ...STRING, short: "n", description: "Why, or the answer when no option applies" },
+    },
+    examples: ['octo question change D-3 b -n "The board arrived wider" --me'],
+    ops: [c.decisionResolve.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(
+        c.decisionResolve,
+        compact({
+          ref: args.requirePositional(0, "REF"),
+          option: args.str("option") ?? args.positionals[1],
+          note: args.str("note"),
+          force: true,
+        }),
+      );
+      out.result(outcome, () => r.renderDecisionBlock(outcome.data));
+    },
+  },
+  {
     path: ["decision", "batch"],
     summary: "Record many outcomes at once, from lines or JSON, on stdin or from a file",
     options: {
