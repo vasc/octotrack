@@ -375,6 +375,13 @@ Decisions made from that:
   its title. Choices are worded as they happen in the Undo bar ("Sending "26 mm" to Sendspin enclosure in 5 seconds").
   Drafts follow between devices with a notice naming the draft, and a field with focus keeps what it shows; a choice
   names the draft it was typed in, which Undo keeps and the server deletes once it takes effect.
+- **A number key presses the button that shows the number.** On home, an item's numbered choices are buttons carrying
+  `data-choice`, which also draws the number beside them; the key finds the focused item's button by that number and
+  clicks it, unless it is disabled. _Decided,_ after an audit asked for handlers registered per item instead: the drawn
+  number and the action then come from one element and cannot disagree, a disabled or Sending button is skipped for
+  free, and a submit button submits its form as a press would. _Trade-off:_ the keys reach into the page's markup
+  rather than React state, against a second registry of numbers that every item would have to keep in step with what
+  it draws.
 - **The runner, as fixed after its audit.**
   - _Owners first, then helpers._ Once every owner start is placed, spare sessions under the cap go to helpers for the
     unclaimed work on each line, in line order, as D14 says. A line gets as many as it has unclaimed, unblocked issues
