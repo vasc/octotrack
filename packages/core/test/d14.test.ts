@@ -353,4 +353,18 @@ describe("proposals on a working line", () => {
   });
 });
 
+describe("repo: in queries", () => {
+  test("takes a repo's key as well as a pull request's owner/name, on current state and in the log", () => {
+    const w = world();
+    w.as(w.dev, c.projectCreate, { key: "GARDEN", name: "Garden" });
+    const panel = w.as(w.dev, c.issueCreate, { project: "PANEL", title: "Base" });
+    w.as(w.dev, c.issueCreate, { project: "GARDEN", title: "Probe" });
+    expect(w.as(w.dev, c.entityFind, { query: "repo:PANEL kind:issue" }).map((item) => item.ref)).toEqual([
+      panel.ref,
+    ]);
+    const logged = w.as(w.dev, c.feedList, { query: "repo:GARDEN event:issue.created" }).events;
+    expect(logged.map((event) => event.ref)).toEqual(["GARDEN-1"]);
+  });
+});
+
 void DAY;

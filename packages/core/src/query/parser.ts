@@ -32,7 +32,7 @@ export const QUERY_FIELDS: readonly QueryField[] = [
   { name: "label", description: "Issue or idea label" },
   { name: "type", description: "Decision type: technical, architecture, product, approval" },
   { name: "channel", description: "How a decision was made: dashboard, cli, out_of_band" },
-  { name: "repo", description: "PR repository, owner/name" },
+  { name: "repo", description: "A repo by its key (PANEL), or a PR's GitHub repository (owner/name)" },
   { name: "checks", description: "PR checks: none, pending, passing, failing" },
   { name: "review", description: "PR review: none, requested, approved, changes_requested" },
   { name: "state", description: "PR state: open, draft, merged, closed" },

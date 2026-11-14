@@ -1,5 +1,6 @@
 import type { HomeView } from "@octotrack/core/schemas";
 import { type ReactNode, useState } from "react";
+import type { DragProps } from "../../hooks/useDragOrder.ts";
 import type { HomeActions } from "../../hooks/useHome.ts";
 import { lineFocusRef, refOf, stepInRef } from "../../lib/focus.ts";
 import { stepInReason } from "../../lib/lines.ts";
@@ -7,6 +8,10 @@ import { ForYouItem } from "./ForYouItem.tsx";
 import { HomeSection } from "./HomeSection.tsx";
 import { StepIn } from "./StepIn.tsx";
 import { WorkingLine } from "./WorkingLine.tsx";
+
+function withDrag(drag: DragProps | undefined): { drag?: DragProps } {
+  return drag === undefined ? {} : { drag };
+}
 
 /** A clone that failed says so in its output: the fix is a checkout this machine already has. */
 const CLONE_FAILED = /clone|checkout is set/i;
@@ -23,6 +28,7 @@ export function WorkingSection({
   armed,
   foldFrom,
   reorder,
+  drag,
   onFocus,
 }: {
   home: HomeView;
@@ -32,6 +38,7 @@ export function WorkingSection({
   /** Lines from this index on fold to one row. */
   foldFrom: number;
   reorder(title: string, ref: string, index: number, count: number): ReactNode;
+  drag(ref: string, section: string): DragProps | undefined;
   onFocus(ref: string): void;
 }) {
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
@@ -77,6 +84,7 @@ export function WorkingSection({
           <WorkingLine
             key={line.ref}
             focused={focus === lineFocusRef(line.ref)}
+            {...withDrag(drag(line.ref, "working"))}
             index={index + 1}
             line={line}
             {...(crew === undefined ? {} : { crew })}

@@ -1258,3 +1258,13 @@ describe("home's smaller pieces", () => {
     expect(cap.queryByRole("button", { name: "Try now" })).toBeNull();
   });
 });
+
+describe("ReorderButtons in full", () => {
+  test("a working line can also go to the top or to up next", () => {
+    const onMove = mock((_direction: string) => {});
+    const view = render(<ReorderButtons title="One" canMoveUp canMoveDown canQueue onMove={onMove} />);
+    fireEvent.click(view.getByRole("button", { name: "Move One to the top" }));
+    fireEvent.click(view.getByRole("button", { name: "Move One to up next" }));
+    expect(onMove.mock.calls).toEqual([["top"], ["up_next"]]);
+  });
+});

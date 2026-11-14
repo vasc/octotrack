@@ -57,19 +57,27 @@ function issueFields(issue: Issue, graph: GraphSnapshot): FieldMap {
   };
 }
 
+/**
+ * `repo:` takes a repo's key (PANEL), which is what lines name, and a pull request's GitHub repository (owner/name):
+ * an item in a repo matches either. `project:` keeps meaning the key alone.
+ */
+function withRepoKeys(fields: FieldMap): FieldMap {
+  return { ...fields, repo: [...(fields.repo ?? []), ...(fields.project ?? [])] };
+}
+
 export function entityDoc(entity: AnyEntity, graph: GraphSnapshot): QueryDoc {
   const base = { ref: entity.value.ref, time: entity.value.updatedAt };
   const withKind = (fields: FieldMap, text: string): QueryDoc => ({
     ...base,
     text,
-    fields: {
+    fields: withRepoKeys({
       kind: [entity.kind],
       ref:
         entity.kind === "pr"
           ? [entity.value.ref, `${entity.value.repo}#${entity.value.number}`]
           : [entity.value.ref],
       ...fields,
-    },
+    }),
   });
   switch (entity.kind) {
     case "line":
@@ -184,7 +192,12 @@ export function eventDoc(event: FeedEvent): QueryDoc {
     from: changeKeys.flatMap((key) => stringValues(event.changes[key]?.from)),
     to: changeKeys.flatMap((key) => stringValues(event.changes[key]?.to)),
   };
-  return { ref: event.ref, time: event.ts, text: `${event.summary} ${event.ref}`, fields };
+  return {
+    ref: event.ref,
+    time: event.ts,
+    text: `${event.summary} ${event.ref}`,
+    fields: withRepoKeys(fields),
+  };
 }
 
 /** PR events carry `owner/repo#12`, so that `ref:owner/repo#12` means the same in a watch as it does everywhere else. */

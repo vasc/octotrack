@@ -1272,6 +1272,30 @@ describe("lines of work", () => {
       );
     });
 
+    test("in Reorder mode a line is dragged before another, or sent to up next", async () => {
+      seedLines();
+      navigate("/");
+      const view = renderApp(<App />);
+      fireEvent.click(await view.findByRole("button", { name: "Reorder" }));
+      const working = within(view.getByRole("region", { name: "Working on" }));
+      fireEvent.dragStart(working.getByRole("article", { name: "Weekly digest" }));
+      fireEvent.dragOver(working.getByRole("article", { name: "Sendspin enclosure" }));
+      fireEvent.drop(working.getByRole("article", { name: "Sendspin enclosure" }));
+      await waitFor(() =>
+        expect(server.tracker.call(c.homeShow, {}, asDeveloper).working.map((line) => line.title)).toEqual([
+          "Weekly digest",
+          "Sendspin enclosure",
+        ]),
+      );
+      fireEvent.click(view.getByRole("button", { name: "Move Weekly digest to up next" }));
+      await answerNow(view);
+      await waitFor(() =>
+        expect(server.tracker.call(c.homeShow, {}, asDeveloper).upNext.map((line) => line.title)).toContain(
+          "Weekly digest",
+        ),
+      );
+    });
+
     test("an urgent proposal says so, first, with Start first", async () => {
       seedLines();
       server.act(

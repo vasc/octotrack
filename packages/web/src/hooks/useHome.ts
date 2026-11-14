@@ -98,9 +98,15 @@ export function useHome() {
       choices.make(contracts.taskDone.name, { ref, result }, `${ref} done`),
     taskCant: (ref: string, why: string) =>
       choices.make(contracts.taskCant.name, { ref, why }, `${ref} cannot be done`),
+    /** Dragged onto another line: it lands before it. */
+    dropBefore: (ref: string, before: string) => order.mutate({ ref, before }),
     reorder(ref: string, direction: Move) {
       if (direction === "top") {
         order.mutate({ ref, to: "top" });
+        return;
+      }
+      if (direction === "up_next") {
+        choices.make(contracts.lineQueue.name, { ref }, `${titleOf(ref)} is up next`);
         return;
       }
       const data = home.data;
