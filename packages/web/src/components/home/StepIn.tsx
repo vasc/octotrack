@@ -6,37 +6,88 @@ export interface StepInProps {
   line: Line;
   /** What happened, and what would fix it. */
   reason: string;
-  /** A start keeps failing or never took the line: Try now starts one again. */
+  focused?: boolean;
+  /** A start keeps failing or never took the line: Try now starts one again, for every line stopped the same way. */
   onRetry?: (ref: string) => void;
+  /** Every session the cap allows is an owner: Start one anyway, past the cap, once. */
+  onAnyway?: (ref: string) => void;
+  /** A clone failed: where this machine already has the repo. */
+  checkoutRepo?: string;
+  onCheckout?: (ref: string, repo: string, path: string) => void;
   onOwn(ref: string): void;
   onTable(ref: string, reason: string, lookAgainAt: string | null): void;
 }
 
-/** A working line no agent could be found for: what happened, and what the developer can do about it. */
-export function StepIn({ line, reason, onRetry, onOwn, onTable }: StepInProps) {
-  const [tabling, setTabling] = useState(false);
+/** A working line no agent could be found for: what happened, and the action that fits, with Table and own beside. */
+export function StepIn({
+  line,
+  reason,
+  focused = false,
+  onRetry,
+  onAnyway,
+  checkoutRepo,
+  onCheckout,
+  onOwn,
+  onTable,
+}: StepInProps) {
+  const [mode, setMode] = useState<"table" | "checkout" | null>(null);
+  const [path, setPath] = useState("");
   return (
-    <div className="step-in" role="note" aria-label={`Step in on ${line.title}`}>
+    <div className="step-in" role="note" aria-label={`Step in on ${line.title}`} data-selected={focused}>
       <p>
         <strong>Step in</strong> {reason}
       </p>
-      {tabling ? (
+      {mode === "table" ? (
         <TableForm
           title={line.title}
           onTable={(why, lookAgainAt) => {
             onTable(line.ref, why, lookAgainAt);
-            setTabling(false);
+            setMode(null);
           }}
-          onCancel={() => setTabling(false)}
+          onCancel={() => setMode(null)}
         />
+      ) : mode === "checkout" && checkoutRepo !== undefined && onCheckout !== undefined ? (
+        <form
+          className="composer"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!path.startsWith("/")) return;
+            onCheckout(line.ref, checkoutRepo, path);
+            setMode(null);
+          }}
+        >
+          <input
+            className="field"
+            aria-label={`Checkout of ${checkoutRepo}`}
+            placeholder="/Users/you/src/repo"
+            value={path}
+            onChange={(event) => setPath(event.target.value)}
+          />
+          <button type="submit" className="btn" data-primary="true" disabled={!path.startsWith("/")}>
+            Set
+          </button>
+          <button type="button" className="btn" onClick={() => setMode(null)}>
+            Cancel
+          </button>
+        </form>
       ) : (
         <div className="decision-actions">
+          {checkoutRepo === undefined || onCheckout === undefined ? null : (
+            <button type="button" className="btn" data-primary="true" onClick={() => setMode("checkout")}>
+              Set its checkout…
+            </button>
+          )}
           {onRetry === undefined ? null : (
             <button type="button" className="btn" data-primary="true" onClick={() => onRetry(line.ref)}>
               Try now
             </button>
           )}
-          <button type="button" className="btn" onClick={() => setTabling(true)}>
+          {onAnyway === undefined ? null : (
+            <button type="button" className="btn" data-primary="true" onClick={() => onAnyway(line.ref)}>
+              Start one anyway
+            </button>
+          )}
+          <button type="button" className="btn" onClick={() => setMode("table")}>
             Table it…
           </button>
           <button type="button" className="btn" onClick={() => onOwn(line.ref)}>

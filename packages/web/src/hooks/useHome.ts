@@ -1,6 +1,7 @@
 import { contracts } from "@octotrack/core/contracts";
 import type { HomeView, Line } from "@octotrack/core/schemas";
 import { useMemo } from "react";
+import type { Move } from "../components/home/ReorderButtons.tsx";
 import type { NewLine } from "../components/lines/AddLineForm.tsx";
 import { useChoices } from "./useChoices.ts";
 import { useOpMutation, useOpQuery } from "./useOp.ts";
@@ -28,6 +29,9 @@ export function useHome() {
   const add = useOpMutation(contracts.lineAdd);
   const order = useOpMutation(contracts.lineOrder);
   const retry = useOpMutation(contracts.runnerRetry);
+  const checkout = useOpMutation(contracts.repoCheckout);
+  const at = useOpMutation(contracts.at);
+  const places = useOpQuery(contracts.placeList, {});
   const choices = useChoices();
   const { pending } = choices;
   // Items whose choice waits with Undo: home holds them still and disarms their keys until it takes effect.
@@ -48,8 +52,14 @@ export function useHome() {
   return {
     home,
     held,
-    failure: add.error ?? order.error ?? retry.error ?? choices.failure,
-    retry: (ref: string) => retry.mutate({ line: ref }),
+    failure: add.error ?? order.error ?? retry.error ?? checkout.error ?? at.error ?? choices.failure,
+    places: (places.data ?? []).map((place) => place.name),
+    // Try now retries every line stopped the same way: one fix, such as logging in, fixes them all.
+    retry: (ref: string) => retry.mutate({ line: ref, same: true }),
+    anyway: (ref: string) => retry.mutate({ line: ref, anyway: true }),
+    setCheckout: (line: string, repo: string, path: string) =>
+      checkout.mutate({ repo, path }, { onSuccess: () => retry.mutate({ line, same: true }) }),
+    at: (place: string | null) => at.mutate(place === null ? {} : { place }),
     repos,
     add: (line: NewLine) => add.mutate({ ...line, where: "up_next" }),
     start: (ref: string) => choices.make(contracts.lineStart.name, { ref }, `Started ${titleOf(ref)}`),
@@ -88,7 +98,11 @@ export function useHome() {
       choices.make(contracts.taskDone.name, { ref, result }, `${ref} done`),
     taskCant: (ref: string, why: string) =>
       choices.make(contracts.taskCant.name, { ref, why }, `${ref} cannot be done`),
-    reorder(ref: string, direction: "up" | "down") {
+    reorder(ref: string, direction: Move) {
+      if (direction === "top") {
+        order.mutate({ ref, to: "top" });
+        return;
+      }
       const data = home.data;
       const line = [...(data?.working ?? []), ...(data?.upNext ?? [])].find(
         (candidate) => candidate.ref === ref,
@@ -102,3 +116,6 @@ export function useHome() {
     },
   };
 }
+
+/** What home can do, as the sections below the page receive it. */
+export type HomeActions = ReturnType<typeof useHome>;

@@ -5,8 +5,15 @@ import { openEntity } from "../../lib/router.ts";
 import { TableForm } from "../lines/TableForm.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
 
+const URGENT: Readonly<Record<NonNullable<Line["urgentReason"]>, string>> = {
+  broken: "something is broken",
+  time_boxed: "it is time-boxed",
+  costs_money: "waiting costs money",
+};
+
 export interface ProposalCardProps {
   line: Line;
+  focused?: boolean;
   /** Lines it could fold into: those still open. */
   foldTargets: readonly Line[];
   onStart(ref: string): void;
@@ -21,6 +28,7 @@ export interface ProposalCardProps {
 /** A proposed line with the agent's case for it, and every choice a proposal has. */
 export function ProposalCard({
   line,
+  focused = false,
   foldTargets,
   onStart,
   onQueue,
@@ -33,7 +41,12 @@ export function ProposalCard({
   const advice = recommendationText(line);
   const fromTable = line.tabledReason !== null;
   return (
-    <article className="proposal" aria-label={line.title}>
+    <article
+      className="proposal"
+      aria-label={line.title}
+      data-selected={focused}
+      data-urgent={line.urgentReason !== null}
+    >
       <button type="button" className="home-line-title" onClick={() => openEntity(line.ref)}>
         {line.title}
       </button>
@@ -46,6 +59,7 @@ export function ProposalCard({
           </span>
         )}
       </p>
+      {line.urgentReason === null ? null : <p className="home-urgent">Urgent: {URGENT[line.urgentReason]}</p>}
       {fromTable ? (
         <p className="home-headline">
           Back to look at, as you asked: {line.tabledReason}

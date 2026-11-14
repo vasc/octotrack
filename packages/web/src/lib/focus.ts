@@ -1,4 +1,4 @@
-import type { ForYou, HomeView } from "@octotrack/core/schemas";
+import type { ForYou, HomeCounts, HomeView } from "@octotrack/core/schemas";
 
 /** What an item is known by in focus order: a question's or task's ref; a proposal about a line, by its kind and line. */
 export function refOf(item: ForYou): string {
@@ -25,12 +25,51 @@ export function defaultFocus(home: HomeView): string | null {
   return null;
 }
 
-/** Everything waiting on the developer, in the order j and k walk through it: urgent first, then line by line. */
+/** A working line's Step in item, in focus order. */
+export function stepInRef(line: string): string {
+  return `stepin:${line}`;
+}
+
+/**
+ * Everything waiting on the developer, in the order j and k walk through it, top to bottom as drawn: urgent questions,
+ * the working lines with their items (Step in first), then the proposals.
+ */
 export function orderedRefs(home: HomeView): string[] {
   return [
     ...home.urgent.map((card) => card.decision.ref),
-    ...home.working.flatMap((line) => (home.lines[line.ref]?.forYou ?? []).map(refOf)),
+    ...home.working.flatMap((line) => [
+      ...(home.lines[line.ref]?.stepIn === true ? [stepInRef(line.ref)] : []),
+      ...(home.lines[line.ref]?.forYou ?? []).map(refOf),
+    ]),
+    ...home.proposed.map((line) => line.ref),
   ];
+}
+
+/** The first item a header count stands for, in focus order: where clicking the count goes. */
+export function firstOf(home: HomeView, count: keyof HomeCounts): string | null {
+  const items = home.working.flatMap((line) => home.lines[line.ref]?.forYou ?? []);
+  switch (count) {
+    case "urgent":
+      return (
+        home.urgent[0]?.decision.ref ?? home.proposed.find((line) => line.urgentReason !== null)?.ref ?? null
+      );
+    case "toAnswer": {
+      const question = items.find((item) => item.kind === "question");
+      return question === undefined ? null : refOf(question);
+    }
+    case "toDo": {
+      const task = items.find((item) => item.kind === "task");
+      return task === undefined ? null : refOf(task);
+    }
+    case "toAccept": {
+      const proposal = items.find((item) => item.kind === "done" || item.kind === "done_when");
+      return proposal === undefined ? (home.proposed[0]?.ref ?? null) : refOf(proposal);
+    }
+    case "toStepIn": {
+      const line = home.working.find((candidate) => home.lines[candidate.ref]?.stepIn === true);
+      return line === undefined ? null : stepInRef(line.ref);
+    }
+  }
 }
 
 /**
