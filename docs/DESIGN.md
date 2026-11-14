@@ -267,7 +267,7 @@ Everything below is a design decision made from that, with its reasoning.
 
 - **A line of work is the unit.** A line has a goal ("done when", one sentence), an end, and a state the developer sets:
   working on, up next in order, or tabled with a reason, then done or dropped. Agents can also leave a line proposed.
-  Nothing sits above lines. A line names the repos it touches; one repo can serve several lines, and looking at one repo
+  Nothing sits above lines. A line names one or more repos; one repo can serve several lines, and looking at one repo
   is a filter, not a layer. _Trade-off:_ no grouping to fold many lines under. A filter covers that until a long list
   shows it is needed.
 - **One order drives everything.** The developer orders the lines by drag handle, by a Reorder mode (to top, up, down,
@@ -277,29 +277,45 @@ Everything below is a design decision made from that, with its reasoning.
   to be second-guessed. _Trade-off:_ a pressing question on a low line waits, so urgent jumps the order. Urgent needs a
   reason from a fixed set (time-boxed, costs money, something broken), and the developer can send it back with Not
   urgent, which counts against the agent.
-- **The home screen is one list.** Each working line shows its summary and the first thing waiting on the developer,
-  with the rest one row away ("+2 more for you"); only the focused item opens fully. That keeps five lines on about one
-  screen. An urgent question sits above line 1, in red, distinct from focus, with its options. A "Step in" section above
-  the list holds what is going wrong: an agent breaking the order, a line with work and no owner for 12 hours, a wake
-  that failed. The header counts what is waiting: to answer, to do, to accept, to step in. _Why:_ the first drafts
+- **The home screen is one list.** Each working line shows its summary's headline and the first thing waiting on the
+  developer, with the rest one row away ("+2 more for you"); only the focused item opens fully. That keeps five lines on
+  about one screen. An urgent question sits at the very top, in red, distinct from focus, with its options. Below it, a
+  "Step in" section holds what is going wrong: an agent breaking the order, an owner gone quiet, a line with work and no
+  owner for 12 hours, a wake that failed. Up-next rows show their done when and how far scoping got; the tabled row
+  names its lines. The header counts what is waiting: to answer, to do, to accept, to step in. _Why:_ the first drafts
   stacked a queue above the list, so the same lines were read twice and the lines were not at the centre.
+- **Any ref opens in place.** A task or an issue opens in the same panel as its line, from the list, the log or a
+  summary. A task shows what to send back as a form, and Done sends what is filled. An issue shows its pull request
+  with its checks, and plan steps show them too. Everything written, by agents or the developer, is markdown, and every
+  box grows as you type. _Why:_ the developer named "lack of markdown support, issues having too small of a ui, updates
+  not having auto growing input box", and pull request status has to be visible without leaving the line. Checks are
+  the owner's to fix; a failing one reaches the developer only through Step in, if the owner has gone quiet.
 - **The developer orders, answers, does, tells, stops and accepts.** Everything else belongs to the agents: issues,
   plans, pull requests, and keeping each line's summary true.
-- **Each working line has one owner.** An agent is one named session. The owner writes the summary, files questions and
-  tasks, proposes done, and is the one a Tell reaches. Helpers may work under it but never write the summary. The owner
-  keeps the line while its session runs, asleep waiting on the developer included; the claim lapses when the session
-  ends or cannot be woken, and moving the line to up next or tabled ends it. Agents take only working lines: one asking
-  what to do gets the highest working line that has work it can do, in a repo it has, and no owner. The developer can
-  own a line too ("I'll own it"); it then shows only their tasks and no summary falls due. _Why:_ "the top line first"
-  would pile every idle agent onto line one, and two writers would fight over one summary.
+- **Each working line has one owner, and the claim is kept by what the owner does.** An agent is one named session. The
+  owner writes the summary, files questions and tasks, proposes done, and is the one a Tell reaches. Helpers may work
+  under it but never write the summary. Octotrack cannot see a session, only what it does, so: while the owner waits on
+  the developer it keeps the line, and the wake an answer sends is its check; otherwise every command under its name
+  renews the claim, it releases the line when its session ends, and two quiet hours bring it to Step in with Tell,
+  Start a session and Release. Taking a line is one operation: the highest working line that has work the agent can
+  do, in one of the line's repos, with no owner, so two agents cannot both take it. Agents take only working lines.
+  _Why:_ "the top line first" would pile every idle agent onto line one, two writers would fight over one summary, and
+  a crashed owner must not hold a line for ever.
 - **A line without an owner is normal.** It reaches Step in only when it has work and no agent has taken it for 12
   hours, offering Start a session, Table it… and I'll own it. Start a session runs the start command from the
-  developer's local agent setup in the repo's checkout; without one configured, it gives the command to copy. _Why:_
-  showing every unowned line would fill Step in each morning, after sessions ended overnight.
+  developer's local agent setup, in the checkout of the repo the current step is in (or asks, when there is none), and
+  passes only the line's ref, so tracker text never becomes a prompt; without a start command configured, it gives the
+  command to copy. _Why:_ showing every unowned line would fill Step in each morning, after sessions ended overnight.
+- **The developer can own a line.** "I'll own it" makes it theirs: it shows their tasks and notes, added with one
+  growing box, and no summary falls due. No agent writes to it until "Hand to an agent…", which asks for its repos.
 - **What agents may write depends on the state.** Working on: anything. Up next: scoping only (done when, plan, held
-  questions and tasks), no code, by an agent the developer sends there or the one that proposed the line, without a
-  claim. Tabled, done and dropped: nothing. A refused write is recorded and always shown in the log, and an agent that
-  keeps trying appears under Step in with Stop.
+  questions and tasks), no code, by an agent the developer sends with Scope… or the one that proposed the line, without
+  a claim. Tabled, done and dropped: nothing. Moving a working line to up next or tabled gives its owner 15 minutes to
+  park (a hand-off summary, reports on answers it already took, a branch note); then the claim ends. A write refused
+  after that is recorded and always shown in the log, and an agent that keeps trying appears under Step in with Stop.
+  Stop refuses every write under that agent's name, tells its inbox, runs the developer's local stop command if one is
+  set, and shows it as stopped on Agents until lifted. _Trade-off:_ Octotrack cannot kill a session; refusing its writes
+  and telling it is what it can do.
 - **Questions stand alone.** Asking requires a summary written for someone who has read nothing else, options that say
   what happens if picked, and the reason behind any recommendation, which is shown on every surface, phone included.
   Background stays folded. _Why:_ "the operator needs to read millions of lines of text to get context on one decision".
@@ -307,47 +323,55 @@ Everything below is a design decision made from that, with its reasoning.
   report: a measurement, a login, a play-test. In the tracker today most blocked issues are tasks in disguise ("waiting
   on Vasco"), and nobody is told. A task is an issue assigned to the developer, with a place and an outcome, so it
   always has a ref, and it waits on its line in the developer's order. Places are a fixed list the developer owns (the
-  bench, the Mac, the phone, the house), and the CLI refuses any other. "I'm at" keeps the same list and order, folds
-  tasks for other places, adds tasks held on lines not running for that place, and ends by itself after a few hours.
-  Marking one done frees the work and wakes the owner. Drift asks agents to turn blocked-on-the-developer issues into
-  tasks.
-- **Up-next and tabled lines hold their questions and tasks.** Starting a line shows its held questions first, so it
-  starts with them answered. Tabling asks for a reason and an optional date to look again, tells the owner to stop, and
-  refuses its writes. When a line comes back, its held questions go to whichever agent owns it next, to re-confirm or
-  withdraw before they reach the developer. _Trade-off:_ a question can wait a long time, which is why it is
-  re-confirmed rather than trusted.
+  bench, the Mac, the phone, the house), and the CLI refuses any other. "I'm at" keeps the same list and order, opens
+  that place's tasks, folds everything else (questions included) to one row per line, adds tasks held on lines not
+  running for that place, and ends by itself after a few hours. Marking one done frees the work. Drift asks agents to
+  turn blocked-on-the-developer issues into tasks.
+- **Up-next and tabled lines hold their questions, tasks and drift.** Tabling asks for a reason and an optional date to
+  look again; on that date the line comes back under Proposed, counted as to accept, with Bring back, Up next, Keep
+  tabled until… and Drop. A tabled line can go back to up next. A held question older than a week, or held through a
+  change of state, goes to the agent that owns or scopes the line next, to re-confirm or withdraw, before it reaches the
+  developer; Start shows only current ones. _Trade-off:_ a question can wait a long time, which is why age, not the
+  state it waited in, decides whether it is trusted.
+- **Everything for an owner goes to its inbox, and wakes it only if it asked.** An owner leaves a wake address, or none,
+  when it takes a line. Answers, Tells and finished tasks all reach the inbox, and wake the owner when it left one.
+  _Why:_ the developer wanted the session to decide "if it want to be reawaken"; deciding once per line, instead of per
+  question, gives one rule for everything sent. It would replace D12's per-decision choice.
 - **An answer closes a question; Tell closes nothing.** Answering, by an option or in the developer's own words, closes
-  one question, can be undone, and shows its status. Tell is a free message to the owner, delivered to its inbox and
-  waking it; empty, it is a nudge.
-- **Answers can be undone, and say what became of them.** An answer waits a few seconds with Undo before it is sent.
-  Then the line shows one status sentence: not picked up, picked up, carried out. A failed wake, or an answer not picked
-  up within an hour, comes back under Step in.
-- **Summaries stay true without anyone reading history.** The owner rewrites the summary at the end of a session. It
-  falls due an hour after significant work. Significance is decided by what happened, not by the agent: a plan step
-  changed, an issue closed, a question asked or answered, a pull request merged. Until it is rewritten, the line lists
-  what changed since, one line each.
+  one question and shows its status. Tell is a free message to the owner; empty, it is a nudge.
+- **Answers can be changed, and say what became of them.** An answer waits a few seconds with Undo before it is sent.
+  Then the line shows one status sentence: not picked up, picked up, carried out. After that, Change answer… reopens the
+  question and sends the new answer as replacing the old; if the old one was carried out, the owner reverts or adapts.
+  A failed wake, or an answer not picked up within an hour, comes back under Step in.
+- **Summaries stay true without anyone reading history.** A summary opens with a headline written to stand alone; home,
+  the log and the phone show only the headline, the line shows the rest. The owner rewrites both at the end of a
+  session. They fall due an hour after significant work. Significance is decided by what happened, not by the agent: a
+  plan step changed, an issue closed, a question asked or answered, a pull request merged. Until they are rewritten,
+  the line lists what changed since, one line each.
 - **Agents propose, the developer accepts.** Agents propose a line when they find work with none, or when the developer
   starts something new in conversation. Every proposed line offers the same five choices: Start, Up next, Table…
   (which asks why), Fold into…, Not a line. Agents also propose a line as done, with how "done when" was met; that
   proposal is the line's first item, on its own row, with Done and Not yet…. Both kinds count in the header as "to
-  accept". A line the developer adds names its repo, or says it is theirs, so that an agent can take it. Nothing joins
-  or leaves the list without the developer's yes. On first run, agents propose lines from the tracker's existing
-  projects, splitting where one project held several, and the developer sorts each once.
+  accept". A line the developer adds names its repos, or says it is theirs, and goes to up next, starts, or is tabled
+  with one button each. Nothing joins or leaves the list without the developer's yes. On first run, agents propose
+  lines from the tracker's existing projects, splitting where one project held several, and the developer sorts each
+  once.
 - **The log shows what has not been seen,** line by line in order. A line counts as seen once opened, or with Mark all
   seen. Routine changes fold into one sentence. Up-next and tabled lines are left out unless asked for; refused writes
   never are.
 - **State changes are buttons, never radio buttons,** so no arrow key can table a line. Reorder buttons are at least
   30px tall, 44px on the phone.
-- **Keys reach every choice.** j and k visit, in order, an urgent question, Step in, the lines, then Proposed. Every
-  item there numbers its choices, so 1–9 picks an option, a step-in action, a proposal's choice, or Done and Not yet;
-  everything else is in Tab order. Keys act only on the focused item, marked with a dark outline and the word Focused,
-  never while typing, and are listed behind "?".
+- **Keys move the browser's own focus.** j and k move focus between items, top to bottom as drawn: an urgent question,
+  Step in, the lines, then Proposed. Tab moves within the focused item, and 1–9 pick its numbered choices: an option, a
+  step-in action, a proposal's choice, or Done and Not yet. There is only one focus, marked with a dark outline and the
+  word Focused, so a key never acts on an item other than the one in focus. Keys never act while typing, u undoes only
+  an answer still sending, and all of them are listed behind "?".
 - **Interruptions are rare.** The phone is interrupted only for urgent questions and questions on the top two lines,
   with a one-tap answer that still has Undo. Tasks never buzz: they wait for "I'm at".
-- **One vocabulary:** line, working on, up next, tabled, done, dropped, proposed; summary, done when, owner, helper,
-  agent; plan, step, issue, ref; question, situation, task, place, held, later, urgent; for you, step in, tell, stop;
-  log, seen. Contracts and the CLI use the same words. Refs keep their prefixes (D-34 is a question), because a ref
-  never changes once written.
+- **One vocabulary:** line, working on, up next, tabled, done, dropped, proposed; summary, headline, done when, owner,
+  helper, agent, claim, wake address; plan, step, issue, pull request, check, ref; question, situation, task, place,
+  held, later, urgent; for you, step in, tell, stop, scope; log, seen. Contracts and the CLI use the same words. Refs
+  keep their prefixes (D-34 is a question), because a ref never changes once written.
 - **Built only once agreed.** An exploratory branch, `lines-of-work`, tried an earlier version of this model in code. It
   added an "area" layer above projects, which this proposal drops, so it is research, not the starting point.
 
