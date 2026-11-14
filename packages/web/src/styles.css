@@ -1431,6 +1431,11 @@ p {
   cursor: grab;
 }
 
+.feed-folded {
+  font-size: var(--text-sm);
+  padding: var(--space-2) 0;
+}
+
 .reorder {
   display: inline-flex;
   gap: var(--space-2);

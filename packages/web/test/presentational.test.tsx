@@ -26,6 +26,8 @@ import { UpNextRow } from "../src/components/home/UpNextRow.tsx";
 import { WorkingLine } from "../src/components/home/WorkingLine.tsx";
 import { eventTone, FeedItem } from "../src/components/feed/FeedItem.tsx";
 import { FeedList } from "../src/components/feed/FeedList.tsx";
+import { UnseenLog } from "../src/components/feed/UnseenLog.tsx";
+import { SinceSummary } from "../src/components/entity/SinceSummary.tsx";
 import { FilterBar } from "../src/components/feed/FilterBar.tsx";
 import { IssueRow } from "../src/components/issues/IssueRow.tsx";
 import { LineActions } from "../src/components/entity/LineActions.tsx";
@@ -1310,5 +1312,61 @@ describe("answers on their line", () => {
     );
     view.getByText("You answered D-3, Which board?: 26 mm. Not picked up yet.");
     view.getByText("You answered D-2, Which plug?: USB-C. Carried out.");
+  });
+});
+
+describe("UnseenLog", () => {
+  const working = line({ ref: "L-1", title: "Enclosure", state: "working" });
+  const queued = line({ ref: "L-2", title: "Mount", state: "up_next" });
+  const at = (seq: number, overrides: Parameters<typeof event>[0]) => event({ seq, ...overrides });
+  const events = [
+    at(5, { line: "L-2", type: "line.plan_set", summary: "Plan set" }),
+    at(4, { line: "L-1", type: "pr.checks_changed", summary: "Checks failing" }),
+    at(3, { line: "L-1", type: "pr.checks_changed", summary: "Checks passing" }),
+    at(2, { line: "L-1", type: "issue.created", summary: "OCT-3 created: Base" }),
+    at(1, { line: "L-2", type: "write.refused", summary: "panel was refused a write on L-2" }),
+  ];
+
+  test("groups line by line in the developer's order, folds checks to one sentence, and leaves waiting lines out but refused writes in", () => {
+    const view = render(
+      <UnseenLog events={events} lines={[working, queued]} includeWaiting={false} onFilter={() => {}} />,
+    );
+    const groups = view.getAllByRole("region");
+    expect(groups.map((group) => group.getAttribute("aria-label"))).toEqual(["Enclosure", "Mount"]);
+    within(groups[0] ?? document.body).getByText("2 check changes");
+    within(groups[0] ?? document.body).getByText(/created: Base/);
+    expect(within(groups[1] ?? document.body).queryByText("Plan set")).toBeNull();
+    within(groups[1] ?? document.body).getByText(/panel was refused a write/);
+  });
+
+  test("with waiting lines asked for, shows their changes too", () => {
+    const view = render(
+      <UnseenLog events={events} lines={[working, queued]} includeWaiting onFilter={() => {}} />,
+    );
+    view.getByText("Plan set");
+  });
+});
+
+describe("SinceSummary", () => {
+  test("lists what is newer than the summary, one row each, with what was seen folded to one row", () => {
+    const events = [
+      event({ seq: 4, ts: "2026-11-14T12:00:00.000Z", type: "line.plan_set", summary: "Plan set" }),
+      event({ seq: 3, ts: "2026-11-14T11:00:00.000Z", type: "issue.created", summary: "Base made" }),
+      event({ seq: 2, ts: "2026-11-14T10:30:00.000Z", type: "issue.created", summary: "Lid made" }),
+      event({ seq: 1, ts: "2026-11-14T08:00:00.000Z", type: "issue.created", summary: "Before the summary" }),
+    ];
+    const view = render(
+      <SinceSummary
+        events={events}
+        summaryAt="2026-11-14T09:00:00.000Z"
+        seenAt="2026-11-14T10:45:00.000Z"
+        onFilter={() => {}}
+      />,
+    );
+    view.getByText("Plan set");
+    view.getByText("Base made");
+    view.getByText("1 you have seen");
+    expect(view.queryByText("Lid made")).toBeNull();
+    expect(view.queryByText("Before the summary")).toBeNull();
   });
 });
