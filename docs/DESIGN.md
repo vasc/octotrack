@@ -287,6 +287,11 @@ Everything below is a design decision made from that, with its reasoning.
 - **Agents propose, the developer accepts.** Agents propose a new line when they find work that has none, or when the
   developer starts something new in conversation, and propose done when a plan is finished. Nothing joins or leaves the
   list without the developer's yes.
+- **Things only the developer can do are tasks, not questions.** A question has options; a task has an outcome to report:
+  a measurement, a login, a play-test. In the tracker today most blocked issues are tasks in disguise ("waiting on
+  Vasco"), and nobody is told. An agent files a task with what, where the developer needs to be, what it unblocks and what
+  to send back. Tasks sit with questions under "For you", grouped by place so that four play-tests are one sitting, and
+  marking one done frees the work and wakes the agent. Drift asks agents to turn blocked-on-the-developer issues into tasks.
 - **Steering without being asked.** Each line takes a note in the developer's own words, delivered to its agents' inbox
   and waking them if they asked, as in D12.
 - **Interruptions are rare.** The phone is interrupted only for a question on the top two lines, or one marked urgent.
