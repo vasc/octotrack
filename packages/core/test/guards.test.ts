@@ -398,3 +398,19 @@ describe("a proposal folded or dropped is told so", () => {
     expect(said[2]).toContain("said it is not a line");
   });
 });
+
+describe("re-confirmed work is in the log", () => {
+  test("held confirm records what was re-confirmed", () => {
+    const w = world();
+    const asked = w.ask();
+    w.as(w.dev, c.lineQueue, { ref: w.line });
+    w.later(16);
+    const scoper = w.agent("scoper");
+    w.as(scoper, c.agentRegister, { repo: "PANEL" });
+    w.as(scoper, c.lineTake, { ref: w.line });
+    w.as(scoper, c.heldConfirm, { refs: [asked] });
+    expect(w.events("event:held.confirmed").map((event) => [event.ref, event.line])).toEqual([
+      [asked, w.line],
+    ]);
+  });
+});

@@ -279,9 +279,17 @@ export const taskOps = [
         `UPDATE ${entity.kind === "decision" ? "decisions" : "issues"} SET confirmedAt = ?, heldAt = ${working ? "NULL" : "heldAt"} WHERE ref = ?`,
         [ctx.now, entity.value.ref],
       );
+      // In the log, so that a re-confirmation is seen; the log folds them into one sentence per line.
+      emit(ctx, {
+        type: "held.confirmed",
+        kind: entity.kind,
+        ref: entity.value.ref,
+        project: entity.value.project,
+        line: entity.value.line,
+        summary: `${entity.value.ref} still stands, ${ctx.actor} re-confirmed: ${entity.value.title}`,
+      });
       lines.add(entity.value.line);
     }
-    ctx.visibleChange = true;
     return [...lines].flatMap((line) => heldOn(ctx, line)).filter((item) => input.refs.includes(item.ref));
   }),
 
