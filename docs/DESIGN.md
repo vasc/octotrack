@@ -463,6 +463,10 @@ Decisions made from that:
     digit, at most 64; `dev`, `octotrack` and `github` are reserved; names from before keep working, spaces included.
     _Why:_ a name is filled into the developer's start and stop commands and written into queries, where a glob, a
     leading dash or a space would each need care; D14 sets no form for names, so the narrow one costs nothing.
+  - _A line the developer owns has two adds, Add as a task and Add as a note,_ where E-States 14 draws one Add. _Why:_ the
+    same words become a task (open work with an outcome to report) or a note (a record that closes nothing), and the
+    board's one button cannot tell which the developer means; guessing from the text would file work as a note or a
+    note as work.
 
 ## D14. Lines of work at the centre
 
