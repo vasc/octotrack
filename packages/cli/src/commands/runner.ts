@@ -45,6 +45,35 @@ export const runnerCommands: Command[] = [
     },
   },
   {
+    path: ["runner", "stops"],
+    summary: "Agents the developer stopped whose stop command has not run yet",
+    ops: [c.runnerStops.name],
+    async run({ client, out }) {
+      const outcome = await client.call(c.runnerStops, {});
+      out.result(outcome, () =>
+        outcome.data.length === 0
+          ? r.dim("Nothing to stop.")
+          : outcome.data.map((stop) => stop.name).join("\n"),
+      );
+    },
+  },
+  {
+    path: ["repo", "checkout"],
+    usage: "<REPO> <path>",
+    summary: "Set a repo's main checkout on this machine, where new worktrees are made (the developer)",
+    ops: [c.repoCheckout.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(c.repoCheckout, {
+        repo: args.requirePositional(0, "REPO"),
+        path: args.requirePositional(1, "path"),
+      });
+      out.result(
+        outcome,
+        () => `${r.bold(outcome.data.ref)} is checked out at ${outcome.data.checkout ?? ""}.`,
+      );
+    },
+  },
+  {
     path: ["runner", "closes"],
     summary: "Pull requests still open on lines that ended, which the runner closes",
     ops: [c.runnerCloses.name],
@@ -74,7 +103,7 @@ export const runnerCommands: Command[] = [
   },
   {
     path: ["runner", "record"],
-    usage: "<report|start|exited|restarted|dry|closed|worktree|removed>",
+    usage: "<report|start|exited|restarted|dry|closed|worktree|removed|stop_ran>",
     summary: INTERNAL,
     options: { input: { ...STRING, description: "The operation's input, as JSON" } },
     ops: [
@@ -86,6 +115,7 @@ export const runnerCommands: Command[] = [
       c.runnerClosed.name,
       c.runnerWorktree.name,
       c.runnerRemoved.name,
+      c.runnerStopRan.name,
     ],
     async run({ client, out }, args) {
       const outcome = await client.op(

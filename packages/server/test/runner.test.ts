@@ -250,4 +250,41 @@ describe("the local runner", () => {
     await w.runner.tick();
     expect(w.ran).toContain("git -C /src/panel worktree add -b octo/panel.1 /wt/panel.1");
   });
+
+  test("runs the developer's stop command for an agent they stopped, once, with only its name filled in", async () => {
+    const w = world({ stop: ["tmux", "kill-session", "-t", "{name}"] });
+    w.tracker.call(c.agentRegister, { repo: "PANEL" }, { actor: "panel-a", channel: "cli" });
+    w.tracker.call(c.agentStop, { name: "panel-a" }, DEV);
+    await w.runner.tick();
+    await w.runner.tick();
+    expect(w.ran.filter((command) => command.startsWith("tmux"))).toEqual(["tmux kill-session -t panel-a"]);
+  });
+
+  test("starts the next session for a line in the worktree a gone session left on it", async () => {
+    const w = world(
+      {},
+      { "git -C /wt/panel.1 rev-list --count HEAD --not --remotes": { code: 0, stdout: "3\n" } },
+    );
+    await w.runner.tick();
+    // It took the line, left no way to wake it, and exited: gone, with its unpushed work in the worktree.
+    const session = { actor: "panel.1", channel: "cli" } as const;
+    w.tracker.call(c.agentRegister, {}, session);
+    w.tracker.call(c.lineTake, { ref: w.line.ref }, session);
+    w.finish[0]?.({ code: 0, output: "" });
+    await w.runner.settled();
+    w.later(15);
+    await w.runner.tick();
+    expect(w.started.map((session) => [session.argv[2], session.cwd])).toEqual([
+      ["panel.1", "/wt/panel.1"],
+      ["panel.2", "/wt/panel.1"],
+    ]);
+    expect(w.ran.filter((command) => command.includes("worktree add"))).toHaveLength(1);
+  });
+
+  test("makes worktrees from the checkout the developer set for the repo", async () => {
+    const w = world({ repos: {} });
+    w.tracker.call(c.repoCheckout, { repo: "PANEL", path: "/code/homepanel" }, DEV);
+    await w.runner.tick();
+    expect(w.ran).toContain("git -C /code/homepanel worktree add -b octo/panel.1 /wt/panel.1");
+  });
 });

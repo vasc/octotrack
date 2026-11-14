@@ -260,4 +260,77 @@ describe("proposals from before", () => {
   });
 });
 
+describe("the runner at its cap", () => {
+  test("asks the lowest helper it started to release after its current issue, once, instead of asking the developer", () => {
+    const w = world();
+    w.as(w.server, c.runnerReport, { configured: true, cap: 2, dryRun: false });
+    const first = w.line("First");
+    w.later(1);
+    for (const role of ["owner", "helper"] as const) {
+      const started = w.as(w.server, c.runnerStart, { line: first.ref, repo: "PANEL" });
+      const session = w.agent(started.name);
+      w.as(session, c.agentRegister, {});
+      expect(w.as(session, c.lineTake, { ref: first.ref }).role).toBe(role);
+    }
+    const second = w.line("Second");
+    w.later(1);
+    w.tracker.sweep();
+    w.tracker.sweep();
+    const asked = w.notices(w.agent("panel.2")).filter((notice) => notice.kind === "release_asked");
+    expect(asked.map((notice) => [notice.wakes, notice.body.includes(second.ref)])).toEqual([[true, true]]);
+    expect(w.as(w.dev, c.homeShow, {}).lines[second.ref]?.stepIn).toBe(false);
+  });
+});
+
+describe("a gone session's worktree", () => {
+  test("goes to the next session started for its line, which no cleanup removes", () => {
+    const w = world();
+    w.as(w.server, c.runnerReport, { configured: true, cap: 1, dryRun: false });
+    const line = w.line("First");
+    w.later(1);
+    w.as(w.server, c.runnerStart, { line: line.ref, repo: "PANEL", worktree: "/wt/panel.1" });
+    w.as(w.server, c.runnerWorktree, {
+      path: "/wt/panel.1",
+      repo: "PANEL",
+      checkout: "/src/panel",
+      branch: "octo/panel.1",
+      agent: "panel.1",
+    });
+    w.as(w.agent("panel.1"), c.agentRegister, {});
+    w.as(w.agent("panel.1"), c.lineTake, { ref: line.ref });
+    w.as(w.server, c.runnerExited, { name: "panel.1", code: 0, output: "" });
+    w.later(15);
+    expect(w.as(w.server, c.runnerDue, {}).map((due) => due.line)).toEqual([line.ref]);
+    const next = w.as(w.server, c.runnerStart, { line: line.ref, repo: "PANEL" });
+    expect([next.name, next.worktree]).toEqual(["panel.2", "/wt/panel.1"]);
+    expect(w.as(w.server, c.runnerCleanups, {})).toEqual([]);
+  });
+});
+
+describe("the developer's stop command", () => {
+  test("is due once for each Stop, for the runner to run", () => {
+    const w = world();
+    w.register("panel");
+    w.as(w.dev, c.agentStop, { name: "panel" });
+    expect(w.as(w.server, c.runnerStops, {})).toEqual([{ name: "panel" }]);
+    w.as(w.server, c.runnerStopRan, { name: "panel", code: 0, output: "" });
+    expect(w.as(w.server, c.runnerStops, {})).toEqual([]);
+    w.as(w.dev, c.agentLift, { name: "panel" });
+    w.as(w.dev, c.agentStop, { name: "panel" });
+    expect(w.as(w.server, c.runnerStops, {})).toEqual([{ name: "panel" }]);
+    expect(() => w.as(w.dev, c.runnerStopRan, { name: "panel", code: 0, output: "" })).toThrow();
+  });
+});
+
+describe("a repo's checkout", () => {
+  test("is set by the developer only, and kept on the repo", () => {
+    const w = world();
+    expect(w.as(w.dev, c.repoCheckout, { repo: "PANEL", path: "/src/homepanel" }).checkout).toBe(
+      "/src/homepanel",
+    );
+    expect(() => w.as(w.agent("panel"), c.repoCheckout, { repo: "PANEL", path: "/tmp/evil" })).toThrow();
+    expect(() => w.as(w.dev, c.repoCheckout, { repo: "PANEL", path: "relative/path" })).toThrow();
+  });
+});
+
 void DAY;

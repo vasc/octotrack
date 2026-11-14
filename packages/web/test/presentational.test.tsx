@@ -482,6 +482,7 @@ describe("ProjectCardView", () => {
             description: "Tracker",
             status: "active",
             repo: null,
+            checkout: null,
             horizon: "none",
             targetDate: null,
             version: 1,

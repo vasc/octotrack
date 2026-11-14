@@ -4,7 +4,7 @@ import { agentState } from "../agents/state.ts";
 import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
 import type { Line, LineStart, RunnerDue, RunnerStatus } from "../schemas.ts";
-import { claimOf, claimsOn, getAgent } from "../store/agents.ts";
+import { addNotice, claimOf, claimsOn, getAgent } from "../store/agents.ts";
 import { emit, nextNumber } from "../store/common.ts";
 import type { Ctx } from "../store/context.ts";
 import { one, rows } from "../store/context.ts";
@@ -103,6 +103,60 @@ function stoppedBy(start: { state: string; output: string | null }): string {
   return start.output?.trim().split("\n").at(-1)?.trim() ?? "";
 }
 
+/**
+ * A helper Octotrack started, on the lowest line that has one: the first to give way when a line needs an owner and
+ * every session the cap allows is running. Owners come before helpers.
+ */
+function lowestHelper(ctx: Ctx): { agent: string; line: string; since: string } | null {
+  const order = new Map(allLines(ctx, "WHERE state = 'working'").map((line, index) => [line.ref, index]));
+  const helpers = rows(
+    ctx,
+    z.object({ agent: z.string(), line: z.string(), since: z.string() }),
+    `SELECT c.agent AS agent, c.line AS line, c.since AS since FROM line_claims c JOIN agents a ON a.name = c.agent
+     WHERE c.role = 'helper' AND a.startedBy = 'octotrack' AND a.goneAt IS NULL AND a.stoppedAt IS NULL`,
+  ).sort((a, b) => (order.get(b.line) ?? -1) - (order.get(a.line) ?? -1));
+  return helpers[0] ?? null;
+}
+
+/** Working lines at step 3 of the search with nothing starting for them: the ones a session would be started for. */
+function needingStart(ctx: Ctx): Line[] {
+  return allLines(ctx, "WHERE state = 'working' AND ownedBy IS NULL").filter((line) => {
+    const search = searchOf(ctx, line.ref);
+    if (search === null || searchStep(search, ctx.now) !== 3) return false;
+    if (claimsOn(ctx, line.ref).some((claim) => claim.role === "owner")) return false;
+    if (waitingOnYou(ctx, line.ref)) return false;
+    const start = latestStart(ctx, "line", line.ref);
+    return start === null || (start.state !== "starting" && start.state !== "running");
+  });
+}
+
+/**
+ * At the cap, a line that needs an owner takes the place of the lowest helper Octotrack started: that helper is asked,
+ * once, to release after its current issue, which frees a session for the line. Settled with the other deadlines.
+ */
+export function makeRoom(ctx: Ctx): void {
+  const status = runnerStatus(ctx);
+  if (!status.configured || status.dryRun || status.cap - activeSessions(ctx) > 0) return;
+  const line = needingStart(ctx)[0];
+  const helper = lowestHelper(ctx);
+  if (line === undefined || helper === null) return;
+  const asked = one(
+    ctx,
+    z.object({ n: z.number() }),
+    "SELECT COUNT(*) AS n FROM notices WHERE agent = ? AND kind = 'release_asked' AND createdAt >= ?",
+    [helper.agent, helper.since],
+  );
+  if ((asked?.n ?? 0) > 0) return;
+  addNotice(
+    ctx,
+    helper.agent,
+    "release_asked",
+    helper.line,
+    `${line.ref} needs an owner and every session is in use. Finish your current issue on ${helper.line}, then release it: octo line release.`,
+    true,
+  );
+}
+
 export function stepInFor(ctx: Ctx, line: Line): boolean {
   if (line.state !== "working" || line.ownedBy !== null) return false;
   const search = searchOf(ctx, line.ref);
@@ -118,7 +172,8 @@ export function stepInFor(ctx: Ctx, line: Line): boolean {
   if (start?.state === "failed") return start.attempts >= 2;
   // Started anyway, past the cap: a session is on its way.
   if (line.startAnyway !== null) return false;
-  return status.cap - activeSessions(ctx) <= 0;
+  // At the cap with a helper Octotrack started, that helper gives way instead: only owners everywhere needs the developer.
+  return status.cap - activeSessions(ctx) <= 0 && lowestHelper(ctx) === null;
 }
 
 /** The repo of the current step's first unclaimed issue, else the line's first-listed repo. */
@@ -199,7 +254,22 @@ export const runnerOps = [
     // A start that failed at once used up nothing, so its retry keeps the name.
     const name = retry ? last.name : freshName(ctx, repo);
     ctx.sql.run("UPDATE lines SET startAnyway = NULL WHERE ref = ?", [line.ref]);
-    const worktree = input.worktree ?? null;
+    // A worktree a gone session left on this line goes to the next session, with whatever it had not pushed.
+    const handed = retry
+      ? null
+      : one(
+          ctx,
+          z.object({ path: z.string() }),
+          `SELECT w.path AS path FROM runner_worktrees w JOIN agents a ON a.name = w.agent
+           WHERE w.removedAt IS NULL AND w.repo = ? AND a.goneAt IS NOT NULL
+             AND EXISTS (SELECT 1 FROM runner_starts s WHERE s.name = w.agent AND s.line = ?)
+           ORDER BY w.createdAt DESC LIMIT 1`,
+          [repo, line.ref],
+        );
+    const worktree = handed?.path ?? input.worktree ?? null;
+    if (handed !== null) {
+      ctx.sql.run("UPDATE runner_worktrees SET agent = ? WHERE path = ?", [name, handed.path]);
+    }
     ctx.sql.run(
       `INSERT INTO agents (name, firstSeenAt, lastSeenAt, checkout, repo, startedBy) VALUES (?, ?, ?, ?, ?, 'octotrack')
        ON CONFLICT(name) DO UPDATE SET goneAt = NULL, checkout = excluded.checkout, firstSeenAt = excluded.firstSeenAt,
@@ -217,10 +287,10 @@ export const runnerOps = [
       ref: name,
       project: repo,
       line: line.ref,
-      summary: `Started ${name} for ${line.ref}: ${line.title}`,
+      summary: `Started ${name} for ${line.ref}${handed === null ? "" : `, in ${handed.path} that a gone session left`}: ${line.title}`,
       attrs: {},
     });
-    return { name, line: line.ref, repo };
+    return { name, line: line.ref, repo, worktree: handed?.path ?? null };
   }),
 
   bind(contracts.runnerExited, (ctx, input) => {
@@ -432,5 +502,42 @@ export const runnerOps = [
     ctx.sql.run("UPDATE runner_worktrees SET removedAt = ? WHERE path = ?", [ctx.now, input.path]);
     ctx.visibleChange = true;
     return { path: input.path };
+  }),
+
+  bind(contracts.runnerStops, (ctx) =>
+    rows(
+      ctx,
+      z.object({ name: z.string() }),
+      "SELECT name FROM agents WHERE stoppedAt IS NOT NULL AND stopRanAt IS NULL ORDER BY stoppedAt",
+    ),
+  ),
+
+  bind(contracts.runnerStopRan, (ctx, input) => {
+    requireRunner(ctx);
+    ctx.sql.run("UPDATE agents SET stopRanAt = ? WHERE name = ?", [ctx.now, input.name]);
+    emit(ctx, {
+      type: "runner.stop_ran",
+      kind: "agent",
+      ref: input.name,
+      project: null,
+      summary: `Ran the stop command for ${input.name}${input.code === 0 ? "" : `, which exited ${input.code}: ${input.output.trim().split("\n").at(-1) ?? ""}`}`,
+      attrs: {},
+    });
+    return { name: input.name };
+  }),
+
+  bind(contracts.repoCheckout, (ctx, input) => {
+    requireDeveloper(ctx, "set a repo's checkout");
+    const project = requireProject(ctx, input.repo);
+    ctx.sql.run("UPDATE projects SET checkout = ? WHERE ref = ?", [input.path, project.ref]);
+    emit(ctx, {
+      type: "project.updated",
+      kind: "project",
+      ref: project.ref,
+      project: project.ref,
+      summary: `${project.ref}'s checkout is ${input.path}`,
+      attrs: {},
+    });
+    return requireProject(ctx, project.ref);
   }),
 ];

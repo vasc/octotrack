@@ -12,6 +12,8 @@ import { z } from "zod";
 export const RunnerConfig = z.object({
   /** The start command, such as ["claude", "-p", "You are {name}. Run octo line take {line}."]. */
   start: z.array(z.string().min(1)).min(1),
+  /** Run when the developer stops an agent, with only `{name}` filled in, such as ["tmux", "kill-session", "-t", "{name}"]. */
+  stop: z.array(z.string().min(1)).min(1).optional(),
   /** How many sessions Octotrack may have running at once. */
   cap: z.number().int().min(0).default(1),
   /** Watch mode: record what would be started, start nothing. On until the developer turns it off. */
@@ -155,6 +157,9 @@ export function createRunner(options: {
   const checkoutFor = async (repo: string): Promise<{ path: string } | { error: string }> => {
     const named = config.repos[repo]?.checkout;
     if (named !== undefined) return { path: named };
+    const project = tracker.call(contracts.entityShow, { ref: repo }, RUNNER).entity;
+    // The checkout the developer set, from Step in or octo repo checkout.
+    if ("checkout" in project && typeof project.checkout === "string") return { path: project.checkout };
     const known = tracker
       .call(contracts.agentList, {}, RUNNER)
       .find(
@@ -162,7 +167,6 @@ export function createRunner(options: {
           agent.repo === repo && agent.checkout !== null && !agent.checkout.startsWith(config.worktrees),
       );
     if (known !== undefined && known.checkout !== null) return { path: await mainCheckout(known.checkout) };
-    const project = tracker.call(contracts.entityShow, { ref: repo }, RUNNER).entity;
     const slug = "repo" in project && typeof project.repo === "string" ? project.repo : null;
     const target = join(config.clones, repo.toLowerCase());
     if (shell.exists(target)) {
@@ -199,9 +203,10 @@ export function createRunner(options: {
       { line: due.line, repo: due.repo, ...(planned === null ? {} : { worktree: planned }) },
       RUNNER,
     );
-    const worktree = join(config.worktrees, started.name);
+    // A gone session's worktree, handed on for this line, else a new one named after the session.
+    const worktree = started.worktree ?? join(config.worktrees, started.name);
     const branch = `octo/${started.name}`;
-    if (!shell.exists(worktree)) {
+    if (started.worktree === null && !shell.exists(worktree)) {
       const added = await shell.run(["git", "-C", checkout.path, "worktree", "add", "-b", branch, worktree]);
       if (added.code !== 0) {
         tracker.call(
@@ -264,6 +269,19 @@ export function createRunner(options: {
     }
   };
 
+  /** The developer's stop command, once for each agent they stopped. Without one, Stop only refuses its writes. */
+  const runStops = async () => {
+    if (config.stop === undefined) return;
+    for (const { name } of tracker.call(contracts.runnerStops, {}, RUNNER)) {
+      const ran = await shell.run(config.stop.map((part) => part.replaceAll("{name}", name)));
+      tracker.call(
+        contracts.runnerStopRan,
+        { name, code: ran.code, output: `${ran.stdout}${ran.stderr}`.slice(-OUTPUT_KEPT) },
+        RUNNER,
+      );
+    }
+  };
+
   /** Only a worktree Octotrack made, with nothing uncommitted and nothing unpushed, and no session on it. */
   const removeUnused = async () => {
     for (const tree of tracker.call(contracts.runnerCleanups, {}, RUNNER)) {
@@ -292,6 +310,8 @@ export function createRunner(options: {
       busy = true;
       try {
         for (const due of tracker.call(contracts.runnerDue, {}, RUNNER)) await startOne(due);
+        // Stopping touches only the developer's own sessions, by their own command, so watch mode runs it too.
+        await runStops();
         await closeEnded();
         // Watch mode touches nothing on disk.
         if (!config.dryRun) await removeUnused();
