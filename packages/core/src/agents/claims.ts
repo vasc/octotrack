@@ -362,6 +362,7 @@ export function settle(ctx: Ctx): void {
       for (const claim of claimsOn(ctx, line.ref)) endClaim(ctx, claim.agent, "wind_down");
     }
     if (line.state === "done" || line.state === "dropped") closeWithLine(ctx, line);
+    else if (line.state !== "working" || line.ownedBy !== null) listHeldPrs(ctx, line);
     ctx.sql.run("UPDATE lines SET windDownUntil = NULL, windDownWrites = 0 WHERE ref = ?", [line.ref]);
   }
   const today = ctx.now.slice(0, 10);
@@ -396,6 +397,32 @@ export function settle(ctx: Ctx): void {
     "UPDATE lines SET scopedAt = NULL WHERE state = 'up_next' AND scopedAt IS NOT NULL AND scopedAt <= ?",
     [new Date(Date.parse(ctx.now) - SCOPING_LASTS_MS).toISOString()],
   );
+}
+
+const PrRefRow = z.object({ ref: z.string() });
+
+/** Pull requests still open when a held line's wind-down ends stay, held with the line, and the log lists them once. */
+function listHeldPrs(ctx: Ctx, line: Line): void {
+  const open = rows(
+    ctx,
+    PrRefRow,
+    `SELECT DISTINCT p.ref AS ref FROM prs p
+       JOIN links l ON l.fromRef = p.ref AND l.rel = 'implements'
+       JOIN issues i ON i.ref = l.toRef
+     WHERE i.line = ? AND p.state IN ('open', 'draft') ORDER BY p.ref`,
+    [line.ref],
+  ).map((row) => row.ref);
+  if (open.length === 0) return;
+  emit(ctx, {
+    type: "line.prs_held",
+    kind: "line",
+    ref: line.ref,
+    project: line.repos[0] ?? null,
+    line: line.ref,
+    summary: `${line.ref} holds ${open.length === 1 ? "an open pull request" : `${open.length} open pull requests`}, kept as they are until it is worked on again: ${open.join(", ")}`,
+    related: open,
+    attrs: { status: line.state },
+  });
 }
 
 export function closeWithLine(ctx: Ctx, line: Line): void {

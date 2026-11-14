@@ -1,11 +1,13 @@
+import { z } from "zod";
+import { guardLineWrite, windingDown } from "../agents/claims.ts";
 import { contracts, type PrInput } from "../contracts.ts";
-import { extractIssueRefs } from "../refs.ts";
-import type { EventAttrs, PullRequest } from "../schemas.ts";
+import { extractIssueRefs, normalizeRef } from "../refs.ts";
+import type { EventAttrs, Issue, Line, PullRequest } from "../schemas.ts";
 import type { EventTypeName } from "../query/values.ts";
-import { applyPatch, emit, nextNumber } from "../store/common.ts";
+import { applyPatch, countOf, emit, nextNumber } from "../store/common.ts";
 import { type Ctx, rows } from "../store/context.ts";
 import { filterEntities } from "../store/docs.ts";
-import { getIssue, getPr, getPrByNumber } from "../store/entities.ts";
+import { getIssue, getLine, getPr, getPrByNumber } from "../store/entities.ts";
 import { loadGraph } from "../store/graph.ts";
 import { PrRow, ProjectRow } from "../store/rows.ts";
 import { bind } from "./bind.ts";
@@ -39,6 +41,66 @@ function projectForRepo(ctx: Ctx, repo: string, mentioned: readonly string[]): s
 
 function mentionsIn(input: PrInput): string[] {
   return extractIssueRefs(`${input.title} ${input.headRef ?? ""} ${input.body ?? ""}`);
+}
+
+const ToRow = z.object({ toRef: z.string() });
+
+/**
+ * The issues a pull request implements, as an upsert will leave them: those it is linked to, those named, and those its
+ * text mentions, except a link someone removed on purpose.
+ */
+function implementedIssues(ctx: Ctx, prRef: string | null, input: PrInput): Issue[] {
+  const linked =
+    prRef === null
+      ? []
+      : rows(ctx, ToRow, "SELECT toRef FROM links WHERE fromRef = ? AND rel = 'implements'", [prRef]).map(
+          (row) => row.toRef,
+        );
+  const named = (input.issues ?? []).map(normalizeRef);
+  const mentioned = mentionsIn(input).filter(
+    (ref) => prRef === null || !wasRemoved(ctx, prRef, "implements", ref),
+  );
+  return [...new Set([...named, ...linked, ...mentioned])].flatMap((ref) => {
+    const issue = getIssue(ctx, ref);
+    return issue === null ? [] : [issue];
+  });
+}
+
+/** The line a pull request's events belong to: the line of the first issue it implements that is on one. */
+function lineOf(issues: readonly Issue[]): string | null {
+  return issues.find((issue) => issue.line !== null)?.line ?? null;
+}
+
+/** States in which a line holds its work: nobody works on it, so a pull request moving there was not expected. */
+const HOLDING: ReadonlySet<Line["state"]> = new Set(["up_next", "tabled", "done", "dropped"]);
+
+/**
+ * A pull request opened, or pushed to, after its line's wind-down, on a line nobody works on, is shown on that line once,
+ * blamed on no agent, since every push comes through the developer's one GitHub login. A push on a line the developer
+ * owns is presumed theirs.
+ */
+function noteLateWork(ctx: Ctx, pr: PullRequest, issues: readonly Issue[], opened: boolean): void {
+  const lines = new Set(issues.flatMap((issue) => (issue.line === null ? [] : [issue.line])));
+  for (const ref of lines) {
+    const line = getLine(ctx, ref);
+    if (line === null || !HOLDING.has(line.state) || line.ownedBy !== null || windingDown(line, ctx.now))
+      continue;
+    const already = countOf(
+      ctx,
+      "SELECT COUNT(*) AS n FROM events WHERE type = 'pr.after_wind_down' AND ref = ? AND line = ?",
+      [pr.ref, line.ref],
+    );
+    if (already > 0) continue;
+    emit(ctx, {
+      type: "pr.after_wind_down",
+      kind: "pr",
+      ref: pr.ref,
+      project: pr.project,
+      line: line.ref,
+      summary: `${pr.ref} (${pr.repo}#${pr.number}) was ${opened ? "opened" : "pushed to"} after ${line.ref} was ${line.state.replace("_", " ")}; it is held there: ${pr.title}`,
+      attrs: prAttrs(pr),
+    });
+  }
 }
 
 function requirePr(ctx: Ctx, repo: string, number: number): PullRequest {
@@ -109,8 +171,11 @@ function changeHeadline(
 
 function upsertPr(ctx: Ctx, input: PrInput): { pr: PullRequest; changed: boolean } {
   const existing = getPrByNumber(ctx, input.repo, input.number);
+  const issues = implementedIssues(ctx, existing?.ref ?? null, input);
+  const line = lineOf(issues);
   let pr: PullRequest;
   let changed = false;
+  let pushed = false;
   if (existing === null) {
     pr = insertPr(ctx, input);
     changed = true;
@@ -127,6 +192,7 @@ function upsertPr(ctx: Ctx, input: PrInput): { pr: PullRequest; changed: boolean
       kind: "pr",
       ref: pr.ref,
       project: pr.project,
+      line,
       attrs: prAttrs(pr),
       // Counts as changes from nothing, so that `to:merged` also matches a PR first seen once it had merged.
       changes: {
@@ -159,6 +225,7 @@ function upsertPr(ctx: Ctx, input: PrInput): { pr: PullRequest; changed: boolean
     });
     pr = getPr(ctx, existing.ref) ?? existing;
     const fields = Object.keys(changes);
+    pushed = changes.headSha !== undefined && pr.headSha !== "";
     if (fields.length > 0) {
       changed = true;
       const headline = changeHeadline(pr, fields, changes.state?.from);
@@ -167,6 +234,7 @@ function upsertPr(ctx: Ctx, input: PrInput): { pr: PullRequest; changed: boolean
         kind: "pr",
         ref: pr.ref,
         project: pr.project,
+        line,
         summary: headline.summary,
         attrs: prAttrs(pr),
         changes,
@@ -187,11 +255,19 @@ function upsertPr(ctx: Ctx, input: PrInput): { pr: PullRequest; changed: boolean
       addLink(ctx, pr.ref, "implements", issueRef);
     }
   }
+  if (!ctx.developer && (existing === null || pushed)) noteLateWork(ctx, pr, issues, existing === null);
   return { pr: getPr(ctx, pr.ref) ?? pr, changed };
 }
 
 export const prOps = [
-  bind(contracts.prUpsert, (ctx, input) => upsertPr(ctx, input).pr),
+  bind(contracts.prUpsert, (ctx, input) => {
+    // An agent reporting a pull request is working on the lines of the issues it implements, which their state allows or
+    // refuses, counted, as any other work there.
+    const existing = getPrByNumber(ctx, input.repo, input.number);
+    for (const issue of implementedIssues(ctx, existing?.ref ?? null, input))
+      guardLineWrite(ctx, issue.line, "work");
+    return upsertPr(ctx, input).pr;
+  }),
 
   bind(contracts.prSync, (ctx, input) => {
     for (const repo of input.repos ?? []) {

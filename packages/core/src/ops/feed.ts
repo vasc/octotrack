@@ -38,7 +38,12 @@ export interface FeedInput {
 const SeenRow = z.object({ ref: z.string(), seenAt: z.string().nullable() });
 
 /** Rule breaks: they stay not seen until Mark all seen, so opening the line they broke a rule on does not hide them. */
-const RULE_BREAKS: ReadonlySet<string> = new Set(["write.refused", "agent.would_stop", "agent.stopped"]);
+const RULE_BREAKS: ReadonlySet<string> = new Set([
+  "write.refused",
+  "agent.would_stop",
+  "agent.stopped",
+  "pr.after_wind_down",
+]);
 
 /** When the developer last marked everything seen: changes on no line and rule breaks are not seen after it. */
 export const LOG_SEEN_KEY = "logSeenAt";
