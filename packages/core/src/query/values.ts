@@ -71,6 +71,7 @@ export const EVENT_TYPES = [
   "decision.not_urgent",
   "task.done",
   "place.added",
+  "held.confirmed",
   "place.removed",
   "task.cant",
   "line.summarized",
