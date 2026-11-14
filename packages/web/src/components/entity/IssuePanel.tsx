@@ -23,12 +23,7 @@ export function IssuePanel({ issue, detail }: { issue: Issue; detail: EntityDeta
   const choices = useChoices();
   const prs = useOpQuery(contracts.prList, { query: `linked:${issue.ref} kind:pr` });
   const tell = useDraft(`tell:${issue.ref}`);
-  const line =
-    issue.line === null
-      ? null
-      : ([...(h.home.data?.working ?? []), ...(h.home.data?.upNext ?? [])].find(
-          (candidate) => candidate.ref === issue.line,
-        ) ?? null);
+  const line = issue.line === null ? null : h.lineOf(issue.line);
   // A task is an issue for the developer with something to report: "dev" is the name the developer acts under.
   const task = issue.assignee === "dev" && issue.outcome !== null;
   const frees = detail.links

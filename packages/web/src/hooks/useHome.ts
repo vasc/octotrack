@@ -1,3 +1,4 @@
+import { homeLines } from "../lib/lines.ts";
 import { contracts } from "@octotrack/core/contracts";
 import type { HomeView, Line } from "@octotrack/core/schemas";
 import { useMemo } from "react";
@@ -58,15 +59,11 @@ export function useHome() {
       ),
     [pending],
   );
-  const titleOf = (ref: string) =>
-    [
-      ...(home.data?.working ?? []),
-      ...(home.data?.upNext ?? []),
-      ...(home.data?.proposed ?? []),
-      ...(home.data?.tabled ?? []),
-    ].find((line) => line.ref === ref)?.title ?? ref;
+  const lineOf = (ref: string) => homeLines(home.data).find((line) => line.ref === ref) ?? null;
+  const titleOf = (ref: string) => lineOf(ref)?.title ?? ref;
   return {
     home,
+    lineOf,
     held,
     failure: order.error ?? at.error ?? choices.failure,
     places: (places.data ?? []).map((place) => place.name),
