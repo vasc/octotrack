@@ -149,8 +149,9 @@ Every decision records how it was made: `dashboard`, `cli` or `out_of_band`. Out
 back later one at a time, retroactively (`decision record`), or in bulk (`decision batch`, or the dashboard's
 batch panel), with a line format simple enough to type from memory: `D-3 a Went with postgres`.
 
-The queue is ordered by a score: priority, agents currently waiting, open work blocked, age and overdue status.
-The reasons are displayed so the ranking is not a black box.
+~~The queue is ordered by a score.~~ Replaced by D14: the developer's own line order decides what reaches them first,
+since a computed score competed with their priorities. A question still shows its reasons (agents waiting, work it
+blocks, priority), as facts rather than as a rank. Questions from before lines are oldest first.
 
 ### D9. Dashboard speed
 
@@ -313,10 +314,10 @@ Decisions made from that:
 - **Old names keep working for at least a phase** (`decision.*`, `project:`, M-, I- and U- refs), and the riskiest
   automation, the automatic Stop and the runner, first runs in a mode that only records what it would have done.
 
-## Being built: lines of work at the centre
+## D14. Lines of work at the centre
 
-The design being built, in the phases D13 lists. It is drawn on the design canvas as direction E, "One list", beside
-four earlier directions it was built from. Until a phase lands on main, the code works as the earlier decisions say.
+The design, built in the phases D13 lists; D13 records where the build departed from it and why. It is drawn on the
+design canvas as direction E, "One list", beside four earlier directions it was built from.
 
 What the developer said, after a week of use. Their words, quoted exactly:
 
@@ -663,19 +664,21 @@ What it would change in what is built:
 
 ## Data model
 
-Everything is addressed by a **ref**: `OCT` (project), `OCT-12` (issue), `D-3` (decision), `PR-7` or
-`owner/repo#12` (pull request), `M-2` (milestone), `I-4` (idea), `U-9` (status update), `DR-5` (drift), `W-1`
-(watch). Links connect any two refs:
+Everything is addressed by a **ref**: `L-4` (line of work), `OCT` (repo, stored as a project), `OCT-12` (issue or
+task), `D-3` (question), `PR-7` or `owner/repo#12` (pull request), `U-9` (status update), `DR-5` (drift), `W-1`
+(watch). `M-2` (milestone) and `I-4` (idea) still resolve, read-only: milestones became plan steps and proposed lines,
+ideas became proposals. Lines, their repos and plan steps, claims, notices, the line inbox, waiting choices, drafts,
+runner starts and worktrees, and Web Push subscriptions each have their own table. Links connect any two refs:
 
-| Relation       | Meaning                                | Effect                                            |
-| -------------- | -------------------------------------- | ------------------------------------------------- |
-| `blocks`       | from must finish before to can proceed | readiness, score, `blocked-issue-unblocked` drift |
-| `implements`   | PR implements issue                    | PR and issue status drift                         |
-| `affects`      | decision changes what to should say    | drift on resolve                                  |
-| `derived_from` | from is derived from to                | drift when to changes                             |
-| `supersedes`   | decision replaces decision             | history                                           |
-| `promoted_to`  | idea became issue/milestone            | history                                           |
-| `relates`      | informational                          | none                                              |
+| Relation       | Meaning                                | Effect                                   |
+| -------------- | -------------------------------------- | ---------------------------------------- |
+| `blocks`       | from must finish before to can proceed | readiness, a task frees its issue, drift |
+| `implements`   | PR implements issue                    | PR and issue status drift                |
+| `affects`      | decision changes what to should say    | drift on resolve                         |
+| `derived_from` | from is derived from to                | drift when to changes                    |
+| `supersedes`   | decision replaces decision             | history                                  |
+| `promoted_to`  | idea became issue/milestone            | history                                  |
+| `relates`      | informational                          | none                                     |
 
 The append-only `events` table is the feed and also what event clauses in watches match against.
 
@@ -686,6 +689,8 @@ The append-only `events` table is the feed and also what event clauses in watche
   have a full page, so a rare filter on a very long log takes several requests.
 - Every waiting agent re-evaluates on every write. With 40 agents hanging, a write takes about 290ms instead of 6ms.
 - PRs are synced for repos that a project names. A PR reported by hand for any other repo is never refreshed.
+- Answers to questions take effect at once; every other choice of the developer's waits five seconds with Undo.
+- Octotrack cannot kill a session it did not start; Stop refuses its writes and tells it.
 - Lists stop at their limit with no paging: the dashboard says so, and the CLI allows `--limit` up to 1000.
 - A decision's `--recommend` may be free text, so a mistyped option key is shown as text rather than refused.
 - PR status is only as fresh as the sync interval.

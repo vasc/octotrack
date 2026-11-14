@@ -1,16 +1,20 @@
 # Octotrack
 
-A project tracker for one developer directing many AI agents, across many projects.
+A tracker for one developer directing many AI agents, across many lines of work.
 
-Agents write through a CLI. The developer reads one feed and makes the decisions that unblock them, as the senior
-developer, architect and product manager. Everything runs on one machine with a local SQLite file.
+The developer keeps one ordered list: what is being worked on, what is up next, what is tabled. Agents take lines,
+keep them true, and ask only what is theirs to decide, in questions that stand alone. Everything runs on one machine,
+as one binary, with a local SQLite file.
 
 ![The feed: a ranked decision queue over filterable activity, with PR status alongside](docs/feed.jpg)
 
 What makes it different from a normal tracker:
 
-- **Agents can hang on a decision.** `octo decision ask ... --wait` blocks until the developer answers, and survives
-  server restarts. The dashboard shows who is waiting, and ranks those decisions higher.
+- **One order drives everything.** The developer's line order decides what reaches them first, which line an agent
+  takes, and where parallel agents go. Every working line gets an owner without the developer: an idle agent, its
+  last owner, or a session the local runner starts in its own worktree.
+- **Questions stand alone, and answers find their agent.** A question carries its situation, options that say what
+  happens, and why the recommendation. Answers wait in the line's inbox for whoever holds the work, and wake them.
 - **It knows what has gone stale.** Decide something and everything depending on it is flagged. Close an issue with its
   PR still open and that is flagged too. An agent has to either update the item or say on the record that it checked
   and nothing needs changing. This is called [drift](#drift).
@@ -64,7 +68,7 @@ file nothing. To allow them, add this to `~/.claude/settings.json`, merging it w
   "autoMode": {
     "allow": [
       "$defaults",
-      "Running the `octo` CLI, including writes (issues, decisions, status posts, ideas, projects, PR links, drift attestations) and with an OCTO_AGENT=name prefix or --agent flag. Octotrack is the user's own local tracker on 127.0.0.1:4747, built for AI agents to write to, and the user has authorized every session to use it."
+      "Running the `octo` CLI, including writes (lines, issues, questions, tasks, status posts, projects, PR links, drift attestations) and with an OCTO_AGENT=name prefix or --agent flag. Octotrack is the user's own local tracker on 127.0.0.1:4747, built for AI agents to write to, and the user has authorized every session to use it."
     ]
   }
 }
@@ -214,9 +218,11 @@ since:2h  before:7d  since:2026-11-01
 | `in-review-without-pr`                                        | An issue in review with no PR                                                    |
 | `pr-checks-failing`, `pr-changes-requested`, `pr-conflicting` | PRs needing work                                                                 |
 | `pr-without-issue`                                            | An open PR linked to nothing                                                     |
-| `milestone-complete`, `project-work-complete`                 | All the work is done, but it is still open                                       |
+| `project-work-complete`                                       | All the work is done, but it is still open                                       |
+| `unplaced-work`                                               | Open issues in a repo that are on no line, one per repo                          |
+| `summary-due`                                                 | A line's summary, an hour after real work, for its owner                         |
 | `project-closed-open-work`                                    | A closed project with open issues                                                |
-| `milestone-overdue`, `stale-in-progress`                      | Time based: past its date, or no change for 48 hours                             |
+| `stale-in-progress`                                           | Time based: no change for 48 hours                                               |
 
 Clear it in one of two ways, always with a note:
 
