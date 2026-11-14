@@ -1,6 +1,7 @@
 import type { Line } from "@octotrack/core/schemas";
 import { LINE_STATE_LABEL, recommendationText } from "../../lib/lines.ts";
 import { KeyValues } from "./KeyValues.tsx";
+import { Markdown } from "../ui/Markdown.tsx";
 
 /** A line of work: where it stands, what finishes it, and why it waits if it does. */
 export function LinePanel({ line }: { line: Line }) {
@@ -21,7 +22,13 @@ export function LinePanel({ line }: { line: Line }) {
           <strong>Done when</strong> {line.doneWhen}
         </p>
       )}
-      {line.recommendationWhy === null ? null : <p className="prose">{line.recommendationWhy}</p>}
+      {line.recommendationWhy === null ? null : <Markdown text={line.recommendationWhy} />}
+      {line.headline === null ? null : (
+        <p className="home-headline">
+          <strong>{line.headline}</strong>
+        </p>
+      )}
+      {line.summary === null ? null : <Markdown text={line.summary} />}
     </>
   );
 }

@@ -1,5 +1,7 @@
 import type { Issue } from "@octotrack/core/schemas";
 import { useState } from "react";
+import { Markdown } from "../ui/Markdown.tsx";
+import { TextBox } from "../ui/TextBox.tsx";
 
 export interface TaskCardProps {
   task: Issue;
@@ -20,7 +22,7 @@ export function TaskCard({ task, onDone, onCant }: TaskCardProps) {
       </p>
       <h3 className="decision-title">{task.title}</h3>
       {task.outcome === null ? null : <p className="decision-context">Report: {task.outcome}</p>}
-      {task.body === "" ? null : <p className="prose">{task.body}</p>}
+      {task.body === "" ? null : <Markdown text={task.body} />}
       {mode === null ? (
         <div className="decision-actions">
           <button type="button" className="btn" data-primary="true" onClick={() => setMode("done")}>
@@ -42,12 +44,11 @@ export function TaskCard({ task, onDone, onCant }: TaskCardProps) {
             setMode(null);
           }}
         >
-          <input
-            className="field"
-            aria-label={mode === "done" ? `What ${task.ref} found` : `Why ${task.ref} cannot be done`}
+          <TextBox
+            label={mode === "done" ? `What ${task.ref} found` : `Why ${task.ref} cannot be done`}
             placeholder={mode === "done" ? (task.outcome ?? "What you found") : "Why not"}
             value={words}
-            onChange={(event) => setWords(event.target.value)}
+            onChange={setWords}
           />
           <button type="submit" className="btn" data-primary="true" disabled={!ready}>
             {mode === "done" ? "Send" : "Close it"}

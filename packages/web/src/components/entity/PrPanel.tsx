@@ -2,6 +2,7 @@ import type { PullRequest } from "@octotrack/core/schemas";
 import { humanize } from "../../lib/format.ts";
 import { StatusBadge } from "../ui/Badge.tsx";
 import { KeyValues } from "./KeyValues.tsx";
+import { Markdown } from "../ui/Markdown.tsx";
 
 export function PrPanel({ pr }: { pr: PullRequest }) {
   return (
@@ -23,7 +24,7 @@ export function PrPanel({ pr }: { pr: PullRequest }) {
           ["Synced", pr.syncedAt?.slice(0, 16).replace("T", " ")],
         ]}
       />
-      {pr.body === "" ? null : <p className="prose">{pr.body}</p>}
+      {pr.body === "" ? null : <Markdown text={pr.body} />}
     </>
   );
 }

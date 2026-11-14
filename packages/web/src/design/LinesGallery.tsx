@@ -10,6 +10,8 @@ import { TaskCard } from "../components/home/TaskCard.tsx";
 import { UpNextRow } from "../components/home/UpNextRow.tsx";
 import { WorkingLine } from "../components/home/WorkingLine.tsx";
 import { AddLineForm } from "../components/lines/AddLineForm.tsx";
+import { Markdown } from "../components/ui/Markdown.tsx";
+import { TextBox } from "../components/ui/TextBox.tsx";
 import { DesignSection, Example } from "./Example.tsx";
 import { decision, decisionCard, issue, line } from "./fixtures.ts";
 
@@ -113,6 +115,16 @@ export function LinesGallery() {
             line={line({ title: "Podcast cleanup", state: "tabled", tabledReason: "The disk is not tight" })}
           />
         </FoldedSection>
+      </Example>
+      <Example label="Markdown, as agents write it">
+        <Markdown
+          text={
+            "## Where it stands\n\nThe base is printed for the **26 mm** board.\n\n- measured the grip\n- `octo task file` for the final fit"
+          }
+        />
+      </Example>
+      <Example label="A box that grows">
+        <TextBox label="A note" value={"A longer note,\nover two lines."} onChange={NOOP} />
       </Example>
       <Example label="Adding a line">
         <AddLineForm onAdd={NOOP} />

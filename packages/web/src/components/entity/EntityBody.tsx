@@ -4,6 +4,7 @@ import { IssuePanel } from "./IssuePanel.tsx";
 import { KeyValues } from "./KeyValues.tsx";
 import { LinePanelItem } from "./LinePanelItem.tsx";
 import { PrPanel } from "./PrPanel.tsx";
+import { Markdown } from "../ui/Markdown.tsx";
 
 /** The part that differs by kind of item. */
 export function EntityBody({ entity }: { entity: EntityDetail["entity"] }) {
@@ -28,7 +29,7 @@ export function EntityBody({ entity }: { entity: EntityDetail["entity"] }) {
       </>
     );
   }
-  if ("level" in entity) return <p className="prose">{entity.body}</p>;
+  if ("level" in entity) return <Markdown text={entity.body} />;
   if ("promotedTo" in entity) {
     return (
       <>
@@ -40,7 +41,7 @@ export function EntityBody({ entity }: { entity: EntityDetail["entity"] }) {
             ["Labels", entity.labels.join(", ")],
           ]}
         />
-        {entity.body === "" ? null : <p className="prose">{entity.body}</p>}
+        {entity.body === "" ? null : <Markdown text={entity.body} />}
       </>
     );
   }
@@ -54,7 +55,7 @@ export function EntityBody({ entity }: { entity: EntityDetail["entity"] }) {
           ["Target", entity.targetDate],
         ]}
       />
-      {entity.description === "" ? null : <p className="prose">{entity.description}</p>}
+      {entity.description === "" ? null : <Markdown text={entity.description} />}
     </>
   );
 }

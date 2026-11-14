@@ -5,6 +5,7 @@ import { Badge } from "../ui/Badge.tsx";
 import { RefLink } from "../ui/RefLink.tsx";
 import { DecisionMeta } from "./DecisionMeta.tsx";
 import { DecisionOptions } from "./DecisionOptions.tsx";
+import { Markdown } from "../ui/Markdown.tsx";
 
 export interface DecisionCardViewProps {
   card: DecisionCard;
@@ -33,7 +34,11 @@ export function DecisionCardView({ card, form, selected = false }: DecisionCardV
           ))}
         </div>
       )}
-      {decision.context === "" ? null : <p className="decision-context">{decision.context}</p>}
+      {decision.context === "" ? null : (
+        <div className="decision-context">
+          <Markdown text={decision.context} />
+        </div>
+      )}
       <DecisionOptions
         options={decision.options}
         recommendation={decision.recommendation}

@@ -6,6 +6,7 @@ import { StatusBadge } from "../ui/Badge.tsx";
 import { RefText } from "../ui/RefText.tsx";
 import { Section } from "../ui/Section.tsx";
 import { TimeAgo } from "../ui/TimeAgo.tsx";
+import { TextBox } from "../ui/TextBox.tsx";
 
 export function UpdatesSection({ target, updates }: { target: string; updates: readonly StatusUpdate[] }) {
   const [body, setBody] = useState("");
@@ -21,12 +22,16 @@ export function UpdatesSection({ target, updates }: { target: string; updates: r
           setBody("");
         }}
       >
-        <input
-          className="field"
-          aria-label={`Post an update on ${target}`}
-          placeholder="Post an update"
+        <TextBox
+          label={`Post an update on ${target}`}
+          placeholder="Post an update. Markdown works; Cmd+Enter posts"
           value={body}
-          onChange={(event) => setBody(event.target.value)}
+          onChange={setBody}
+          onSubmit={() => {
+            if (body.trim() === "") return;
+            post.mutate({ body: body.trim(), target });
+            setBody("");
+          }}
         />
         <button type="submit" className="btn" disabled={body.trim() === ""}>
           Post
