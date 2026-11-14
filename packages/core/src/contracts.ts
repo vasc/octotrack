@@ -545,13 +545,21 @@ export const contracts = {
       line: z.string().optional(),
       /** The issue it frees. Default: the one you hold on the line. */
       frees: z.string().optional(),
+      /** Named outcomes, each sent back on its own, such as the five measurements a model assumes. */
+      fields: z.array(Text).max(12).optional(),
     }),
     Issue,
   ),
   taskDone: write(
     "task.done",
     "Done: report the task's outcome, which goes to whoever holds the issue it frees (the developer)",
-    z.strictObject({ ref: z.string(), result: Text }),
+    z.strictObject({
+      ref: z.string(),
+      /** The outcome, or for a task with named outcomes, a note beside them. */
+      result: Text.optional(),
+      /** Each named outcome's value, all of them. */
+      values: z.record(z.string(), z.string()).optional(),
+    }),
     Issue,
   ),
   taskCant: write(

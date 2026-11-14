@@ -67,10 +67,65 @@ function freedBy(ctx: Ctx, task: string): string | null {
   );
 }
 
-function closeTask(ctx: Ctx, task: Issue, status: "done" | "cancelled", result: string): Issue {
+/** A task's names, as given, refused when two differ only in case: each is a box of its own. */
+function distinctFields(fields: readonly string[]): string[] {
+  const seen = new Set<string>();
+  for (const field of fields) {
+    const key = field.toLowerCase();
+    if (seen.has(key))
+      throw new OctoError("invalid_input", `"${field}" is named twice`, "Give each outcome its own name.");
+    seen.add(key);
+  }
+  return [...fields];
+}
+
+/**
+ * What Done reports: a task's named outcomes as a list, each filled, then any note; or, with none named, its words.
+ * `said` is the same on one line, for the line's inbox and the log.
+ */
+function outcomeOf(
+  task: Issue,
+  values: Readonly<Record<string, string>>,
+  note: string | null,
+): { result: string; said: string } {
+  if (task.fields.length === 0) {
+    if (note === null)
+      throw new OctoError("invalid_input", `${task.ref} needs what you found`, "Pass the outcome.");
+    return { result: note, said: note };
+  }
+  const unknown = Object.keys(values).find((name) => !task.fields.includes(name));
+  if (unknown !== undefined) {
+    throw new OctoError(
+      "invalid_input",
+      `${task.ref} asks for no ${unknown}`,
+      `It asks for: ${task.fields.join(", ")}.`,
+    );
+  }
+  const missing = task.fields.filter((name) => (values[name] ?? "").trim() === "");
+  if (missing.length > 0) {
+    throw new OctoError(
+      "invalid_input",
+      `${task.ref} still needs: ${missing.join(", ")}`,
+      "Fill every named outcome.",
+    );
+  }
+  const filled = task.fields.map((name) => `${name}: ${(values[name] ?? "").trim()}`);
+  return {
+    result: [filled.map((line) => `- ${line}`).join("\n"), ...(note === null ? [] : [note])].join("\n\n"),
+    said: [...filled, ...(note === null ? [] : [note])].join("; "),
+  };
+}
+
+function closeTask(
+  ctx: Ctx,
+  task: Issue,
+  status: "done" | "cancelled",
+  result: string,
+  said: string = result,
+): Issue {
   const changes = applyPatch(ctx, "issues", task.ref, task, { status, result, closedAt: ctx.now });
-  // The half-written outcome is answered now.
-  ctx.sql.run("DELETE FROM drafts WHERE key = ?", [`task:${task.ref}`]);
+  // The half-written outcome, and any half-written reason it cannot be done, are answered now.
+  ctx.sql.run("DELETE FROM drafts WHERE key IN (?, ?)", [`task:${task.ref}`, `task-why:${task.ref}`]);
   const kind = status === "done" ? "task_done" : "task_cant";
   const frees = freedBy(ctx, task.ref);
   if (task.line !== null) {
@@ -81,8 +136,8 @@ function closeTask(ctx: Ctx, task: Issue, status: "done" | "cancelled", result: 
       task.ref,
       frees,
       status === "done"
-        ? `${task.ref} done: ${result} ("${task.title}")`
-        : `${task.ref} could not be done: ${result} ("${task.title}")`,
+        ? `${task.ref} done: ${said} ("${task.title}")`
+        : `${task.ref} could not be done: ${said} ("${task.title}")`,
     );
   }
   emit(ctx, {
@@ -91,7 +146,7 @@ function closeTask(ctx: Ctx, task: Issue, status: "done" | "cancelled", result: 
     ref: task.ref,
     project: task.project,
     line: task.line,
-    summary: status === "done" ? `${task.ref} done: ${result}` : `${task.ref} could not be done: ${result}`,
+    summary: status === "done" ? `${task.ref} done: ${said}` : `${task.ref} could not be done: ${said}`,
     attrs: { status },
     changes,
   });
@@ -214,6 +269,7 @@ export const taskOps = [
     const line = requireLine(ctx, lineRef);
     guardLineWrite(ctx, line.ref, "scope");
     const place = requirePlace(ctx, input.place);
+    const fields = distinctFields(input.fields ?? []);
     const frees =
       input.frees === undefined
         ? (rows(
@@ -239,9 +295,10 @@ export const taskOps = [
       line: line.ref,
     });
     // Filed on a line nobody works on, it is held until the line starts.
-    ctx.sql.run("UPDATE issues SET place = ?, outcome = ?, heldAt = ? WHERE ref = ?", [
+    ctx.sql.run("UPDATE issues SET place = ?, outcome = ?, fields = ?, heldAt = ? WHERE ref = ?", [
       place,
       input.outcome,
+      JSON.stringify(fields),
       line.state === "working" ? null : ctx.now,
       task.ref,
     ]);
@@ -251,7 +308,9 @@ export const taskOps = [
 
   bind(contracts.taskDone, (ctx, input) => {
     requireDeveloper(ctx, "finish a task");
-    return closeTask(ctx, requireTask(ctx, input.ref), "done", input.result);
+    const task = requireTask(ctx, input.ref);
+    const outcome = outcomeOf(task, input.values ?? {}, input.result ?? null);
+    return closeTask(ctx, task, "done", outcome.result, outcome.said);
   }),
 
   bind(contracts.taskCant, (ctx, input) => {

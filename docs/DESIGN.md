@@ -375,6 +375,12 @@ Decisions made from that:
   its title. Choices are worded as they happen in the Undo bar ("Sending "26 mm" to Sendspin enclosure in 5 seconds").
   Drafts follow between devices with a notice naming the draft, and a field with focus keeps what it shows; a choice
   names the draft it was typed in, which Undo keeps and the server deletes once it takes effect.
+- **Named outcomes.** A task can name what to send back (`task file --field Length --field Holes`), as E-Issue draws
+  it: a box for each, a note for anything that surprised, and how many are filled. _Decided:_ Done needs every named
+  outcome and refuses a name the task does not have, and the server writes the result as one list (`- Length: 41 mm`)
+  with the note after it, which the line's inbox and the log say on one line, so an agent reads one answer whichever
+  way it was given. _Decided:_ the dashboard keeps a task's boxes as one draft, its values and note together, so the
+  choice that closes the task deletes all of it at once; a draft written as plain words before is read as the note.
 - **A number key presses the button that shows the number.** On home, an item's numbered choices are buttons carrying
   `data-choice`, which also draws the number beside them; the key finds the focused item's button by that number and
   clicks it, unless it is disabled. _Decided,_ after an audit asked for handlers registered per item instead: the drawn

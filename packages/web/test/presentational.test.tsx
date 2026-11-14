@@ -1,4 +1,5 @@
 import { navigate } from "../src/lib/router.ts";
+import type { TaskOutcome } from "../src/lib/tasks.ts";
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 import { useState } from "react";
 import { fireEvent, render, waitFor, within } from "@testing-library/react";
@@ -468,14 +469,25 @@ describe("small pieces", () => {
 });
 
 /** A task card whose words are kept, as its caller keeps them in a draft. */
-function TypingTask({ onDone, onCant }: { onDone(result: string): void; onCant(why: string): void }) {
+function TypingTask({
+  onDone,
+  onCant,
+  fields = [],
+}: {
+  onDone(outcome: TaskOutcome): void;
+  onCant(why: string): void;
+  fields?: string[];
+}) {
   const [words, setWords] = useState("");
+  const [values, setValues] = useState<Readonly<Record<string, string>>>({});
   const [why, setWhy] = useState("");
   return (
     <TaskCard
-      task={issue({ title: "Measure the grip", place: "the bench", outcome: "Five numbers" })}
+      task={issue({ title: "Measure the grip", place: "the bench", outcome: "Five numbers", fields })}
       words={words}
       onWords={setWords}
+      values={values}
+      onValue={(name, value) => setValues({ ...values, [name]: value })}
       why={why}
       onWhy={setWhy}
       onDone={onDone}
@@ -619,6 +631,20 @@ describe("lines of work", () => {
     ).getByText("Task · OCT-7 · at the Mac");
   });
 
+  test("TaskCard with named outcomes has a box for each and a note, counts what is filled, and needs them all", () => {
+    const onDone = mock(() => {});
+    const view = render(<TypingTask onDone={onDone} onCant={() => {}} fields={["Length", "Holes"]} />);
+    view.getByText(/0 of 2 filled/);
+    fireEvent.change(view.getByLabelText("Length"), { target: { value: "41 mm" } });
+    view.getByText(/1 of 2 filled/);
+    expect(view.getByRole("button", { name: "Done" }).hasAttribute("disabled")).toBe(true);
+    fireEvent.change(view.getByLabelText("Holes"), { target: { value: " 38 " } });
+    fireEvent.change(view.getByLabelText("Note, if anything surprised you"), { target: { value: "Warped" } });
+    view.getByText(/2 of 2 filled/);
+    fireEvent.click(view.getByRole("button", { name: "Done" }));
+    expect(onDone).toHaveBeenCalledWith({ values: { Length: "41 mm", Holes: "38" }, result: "Warped" });
+  });
+
   test("TaskCard shows what to send back as a form, and Can't do it asks why, in a box of its own", () => {
     const onDone = mock(() => {});
     const onCant = mock(() => {});
@@ -627,7 +653,7 @@ describe("lines of work", () => {
     expect(view.getByRole("button", { name: "Done" }).hasAttribute("disabled")).toBe(true);
     fireEvent.change(view.getByLabelText("What OCT-1 found"), { target: { value: " 41, 38 " } });
     fireEvent.click(view.getByRole("button", { name: "Done" }));
-    expect(onDone).toHaveBeenCalledWith("41, 38");
+    expect(onDone).toHaveBeenCalledWith({ result: "41, 38" });
     fireEvent.click(view.getByRole("button", { name: "Can't do it" }));
     // What was found is not offered as the reason: each has its own box.
     expect(view.getByLabelText("Why OCT-1 cannot be done")).toHaveProperty("value", "");
@@ -2152,7 +2178,7 @@ describe("AtUpNext", () => {
   });
 
   test("sends a task done with what was found, and one of the developer's own as Done", async () => {
-    const onTaskDone = mock((_ref: string, _result: string) => {});
+    const onTaskDone = mock((_ref: string, _outcome: TaskOutcome) => {});
     const view = renderApp(
       <AtUpNext
         tasks={tasks}
@@ -2166,10 +2192,10 @@ describe("AtUpNext", () => {
     const drill = view.getByRole("article", { name: "Find the drill" });
     fireEvent.change(within(drill).getByLabelText("What OCT-5 found"), { target: { value: " Top shelf " } });
     fireEvent.click(within(drill).getByRole("button", { name: "Done" }));
-    await waitFor(() => expect(onTaskDone).toHaveBeenCalledWith("OCT-5", "Top shelf"));
+    await waitFor(() => expect(onTaskDone).toHaveBeenCalledWith("OCT-5", { result: "Top shelf" }));
     const sweep = view.getByRole("article", { name: "Sweep the shed" });
     fireEvent.click(within(sweep).getByRole("button", { name: "Done" }));
-    await waitFor(() => expect(onTaskDone).toHaveBeenCalledWith("OCT-6", "Done"));
+    await waitFor(() => expect(onTaskDone).toHaveBeenCalledWith("OCT-6", { result: "Done" }));
   });
 
   test("closes a task as not doable, with why", async () => {
@@ -2479,7 +2505,7 @@ describe("AtPlaceItems", () => {
     const task = view.getByRole("article", { name: "Measure the grip" });
     fireEvent.change(within(task).getByLabelText("What PANEL-1 found"), { target: { value: "41, 38" } });
     fireEvent.click(within(task).getByRole("button", { name: "Done" }));
-    await waitFor(() => expect(h.taskDone).toHaveBeenCalledWith("PANEL-1", "41, 38"));
+    await waitFor(() => expect(h.taskDone).toHaveBeenCalledWith("PANEL-1", { result: "41, 38" }));
     fireEvent.click(within(task).getByRole("button", { name: "Can't do it" }));
     fireEvent.change(within(task).getByLabelText("Why PANEL-1 cannot be done"), {
       target: { value: "No calipers" },

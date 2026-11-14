@@ -325,6 +325,10 @@ const MIGRATIONS: readonly Migration[] = [
   `
   CREATE TABLE not_a_line (issue TEXT PRIMARY KEY, line TEXT NOT NULL, at TEXT NOT NULL);
   `,
+  // A task's named outcomes: what to send back, one box each.
+  `
+  ALTER TABLE issues ADD COLUMN fields TEXT NOT NULL DEFAULT '[]';
+  `,
 ];
 
 const UserVersion = z.object({ user_version: z.number().int() });

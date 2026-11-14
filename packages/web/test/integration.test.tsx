@@ -746,6 +746,31 @@ describe("lines of work", () => {
       expect(heard.map((notice) => notice.body).join(" ")).toContain("The calipers are lost");
     });
 
+    test("a task with named outcomes takes a box for each, and Done sends them all to its line", async () => {
+      seedLines();
+      server.act(c.agentRegister, { repo: "OCT" }, "octo.1");
+      server.act(c.lineTake, { ref: "L-1" }, "octo.1");
+      server.tracker.call(c.placeAdd, { name: "the bench" }, asDeveloper);
+      const task = server.act(
+        c.taskFile,
+        { title: "Measure the board", place: "the bench", outcome: "In mm", fields: ["Length", "Holes"] },
+        "octo.1",
+      );
+      navigate("/");
+      const view = renderApp(<App />);
+      const opened = within(await view.findByRole("article", { name: "Measure the board" }));
+      fireEvent.change(opened.getByLabelText("Length"), { target: { value: "41" } });
+      fireEvent.change(opened.getByLabelText("Holes"), { target: { value: "38" } });
+      opened.getByText(/2 of 2 filled/);
+      fireEvent.click(opened.getByRole("button", { name: "Done" }));
+      await answerNow(view);
+      await waitFor(() =>
+        expect(
+          server.tracker.call(c.issueList, { query: `ref:${task.ref}` }, asDeveloper)[0]?.issue.result,
+        ).toBe("- Length: 41\n- Holes: 38"),
+      );
+    });
+
     test("undoing a task's Done keeps what was typed", async () => {
       const task = withTask();
       navigate("/");

@@ -1137,5 +1137,36 @@ describe("tasks from the CLI", () => {
     await data(z.object({ ref: z.string() }), ["task", "done", task.ref, "41,", "38,", "12", "--me"], "");
     const heard = await octo(["agent", "list", "--text"], "tasks.1");
     expect(heard.stderr).toContain(`${task.ref} done: 41, 38, 12`);
+
+    const named = await data(
+      z.object({ ref: z.string(), fields: z.array(z.string()) }),
+      [
+        "task",
+        "file",
+        "Measure the board",
+        "--place",
+        "the bench",
+        "--outcome",
+        "In mm",
+        "--field",
+        "Length",
+        "--field",
+        "Holes",
+      ],
+      "tasks.1",
+    );
+    expect(named.fields).toEqual(["Length", "Holes"]);
+    const missing = await octo(["task", "done", named.ref, "--value", "Length=41 mm", "--me"], "");
+    expect(parseJson(missing.stdout)).toMatchObject({
+      ok: false,
+      error: { code: "invalid_input", message: `${named.ref} still needs: Holes` },
+    });
+    await data(
+      z.object({ ref: z.string() }),
+      ["task", "done", named.ref, "--value", "Length=41 mm", "--value", "Holes=38", "Warped", "--me"],
+      "",
+    );
+    const told = await octo(["agent", "list", "--text"], "tasks.1");
+    expect(told.stderr).toContain(`${named.ref} done: Length: 41 mm; Holes: 38; Warped`);
   });
 });
