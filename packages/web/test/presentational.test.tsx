@@ -598,6 +598,20 @@ describe("small pieces", () => {
   });
 });
 
+/** A task card whose words are kept, as its caller keeps them in a draft. */
+function TypingTask({ onDone, onCant }: { onDone(result: string): void; onCant(why: string): void }) {
+  const [words, setWords] = useState("");
+  return (
+    <TaskCard
+      task={issue({ title: "Measure the grip", place: "the bench", outcome: "Five numbers" })}
+      words={words}
+      onWords={setWords}
+      onDone={onDone}
+      onCant={onCant}
+    />
+  );
+}
+
 describe("lines of work", () => {
   const card = (overrides: Parameters<typeof decision>[0] = {}) =>
     decisionCard({ decision: decision(overrides) });
@@ -687,19 +701,7 @@ describe("lines of work", () => {
   test("TaskCard asks for words before Done or Can't do it", () => {
     const onDone = mock(() => {});
     const onCant = mock(() => {});
-    function Typing() {
-      const [words, setWords] = useState("");
-      return (
-        <TaskCard
-          task={issue({ title: "Measure the grip", place: "the bench", outcome: "Five numbers" })}
-          words={words}
-          onWords={setWords}
-          onDone={onDone}
-          onCant={onCant}
-        />
-      );
-    }
-    const view = render(<Typing />);
+    const view = render(<TypingTask onDone={onDone} onCant={onCant} />);
     view.getByText("Report: Five numbers");
     fireEvent.click(view.getByRole("button", { name: "Done…" }));
     expect(view.getByRole("button", { name: "Send" }).hasAttribute("disabled")).toBe(true);
