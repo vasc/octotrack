@@ -1,3 +1,5 @@
+import { z } from "zod";
+import { DEVELOPER } from "../agents/state.ts";
 import { OctoError } from "../errors.ts";
 import { matchQuery, parseQuery } from "../query/index.ts";
 import type { FeedEvent, FeedPage } from "../schemas.ts";
@@ -30,11 +32,30 @@ export interface FeedInput {
   before?: number;
   after?: number;
   limit?: number;
+  unseen?: boolean;
+}
+
+const SeenRow = z.object({ ref: z.string(), seenAt: z.string().nullable() });
+
+/**
+ * Not seen: a change on a line after the developer last looked at it, made by someone else. Changes on no line are
+ * about no line the developer could have looked at, so "not seen" leaves them out.
+ */
+function unseenTest(ctx: Ctx): (event: FeedEvent) => boolean {
+  const seen = new Map(
+    rows(ctx, SeenRow, "SELECT ref, seenAt FROM lines").map((line) => [line.ref, line.seenAt]),
+  );
+  return (event) => {
+    if (event.line === null || event.actor === DEVELOPER) return false;
+    const at = seen.get(event.line);
+    return at === undefined ? false : at === null || event.ts > at;
+  };
 }
 
 export function listFeed(ctx: Ctx, input: FeedInput): FeedPage {
   const ast = parseQuery(combinedQuery(ctx, input.view, input.query));
   const env = matchEnv(ctx, loadGraph(ctx));
+  const unseen = input.unseen === true ? unseenTest(ctx) : () => true;
   const limit = input.limit ?? 50;
   const after = input.after ?? 0;
   const matched: FeedEvent[] = [];
@@ -56,7 +77,7 @@ export function listFeed(ctx: Ctx, input: FeedInput): FeedPage {
     for (const event of batch) {
       scanned += 1;
       before = event.seq;
-      if (matchQuery(ast, eventDoc(event), env)) {
+      if (unseen(event) && matchQuery(ast, eventDoc(event), env)) {
         matched.push(event);
         if (matched.length === limit) break;
       }

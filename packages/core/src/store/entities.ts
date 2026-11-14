@@ -141,6 +141,11 @@ export function findEntity(ctx: Ctx, rawRef: string): AnyEntity | null {
   }
   const ref = normalizeRef(rawRef);
   const kind = kindOfRef(ref);
+  if (kind === "milestone" || kind === "idea") {
+    // Ideas and milestones became proposed lines: their old refs open the line they became.
+    const became = one(ctx, LineRow, "SELECT * FROM lines WHERE fromRef = ?", [ref]);
+    if (became !== null) return { kind: "line", value: { ...became, repos: reposOf(ctx, became.ref) } };
+  }
   return kind === null ? null : loadByKind(ctx, kind, ref);
 }
 

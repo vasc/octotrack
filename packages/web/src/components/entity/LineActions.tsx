@@ -3,7 +3,7 @@ import type { Line } from "@octotrack/core/schemas";
 import { useState } from "react";
 import { TableForm } from "../lines/TableForm.tsx";
 
-export type LineChoice = "start" | "queue" | "done" | "drop" | "reject" | "own" | "hand" | "keep_going";
+export type LineChoice = "start" | "queue" | "done" | "drop" | "reject" | "own" | "hand" | "not_yet";
 
 export interface LineActionsProps {
   line: Line;
@@ -67,8 +67,8 @@ export function LineActions({ line, onChoose, onTable, onDoneWhen }: LineActions
             <button type="button" className="btn" data-primary="true" onClick={() => onChoose("done")}>
               It is done
             </button>
-            <button type="button" className="btn" onClick={() => onChoose("keep_going")}>
-              Keep going
+            <button type="button" className="btn" onClick={() => onChoose("not_yet")}>
+              Not yet
             </button>
           </div>
         </div>

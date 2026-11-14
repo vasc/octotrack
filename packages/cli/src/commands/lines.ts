@@ -84,6 +84,11 @@ export const lineCommands: Command[] = [
       recommend: { ...STRING, description: "start, up_next, table or fold (required)" },
       why: { ...STRING, description: "Why, in a sentence the developer can act on (required)" },
       place: { ...STRING, description: "start or queue it at once; needs --said with the developer's words" },
+      urgent: {
+        ...STRING,
+        description:
+          "broken, time_boxed or costs_money: only for something broken on a line no agent may work on",
+      },
     },
     examples: [
       'octo line propose "Wall mount" --done-when "It hangs flush." -r PANEL --recommend up_next --why "The base is final."',
@@ -103,6 +108,7 @@ export const lineCommands: Command[] = [
           recommendation,
           why,
           place: args.str("place"),
+          urgent: args.str("urgent"),
         }),
       );
       out.result(outcome, () => `${r.bold(outcome.data.ref)} proposed: ${outcome.data.title}`);
@@ -315,17 +321,29 @@ export const lineCommands: Command[] = [
     },
   },
   {
-    path: ["line", "keep-going"],
+    path: ["line", "not-yet"],
     usage: "<REF> [what is missing]",
-    summary: "Turn down a proposal that a line is done (the developer)",
-    ops: [c.lineKeepGoing.name],
+    summary: "Turn down a proposal that a line is done; its owner hears what is missing (the developer)",
+    ops: [c.lineNotYet.name],
     async run({ client, out }, args) {
       const why = args.positionals.slice(1).join(" ");
       const outcome = await client.call(
-        c.lineKeepGoing,
+        c.lineNotYet,
         compact({ ref: args.requirePositional(0, "REF"), why: why === "" ? undefined : why }),
       );
-      out.result(outcome, () => `${r.bold(outcome.data.ref)} keeps going.`);
+      out.result(outcome, () => `${r.bold(outcome.data.ref)} is not done yet.`);
+    },
+  },
+  {
+    path: ["seen"],
+    usage: "[LINE]",
+    summary:
+      "Mark a line as looked at, or every line, so the log's not-seen starts after now (the developer)",
+    ops: [c.seen.name],
+    async run({ client, out }, args) {
+      const line = args.positionals[0];
+      const outcome = await client.call(c.seen, compact({ line }));
+      out.result(outcome, () => (line === undefined ? "Everything seen." : `${line} seen.`));
     },
   },
   {

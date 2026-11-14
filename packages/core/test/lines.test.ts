@@ -210,7 +210,7 @@ describe("lines of work", () => {
 });
 
 describe("moving an older database to lines", () => {
-  test("open ideas become proposals from before, and every old ref still resolves", () => {
+  test("open ideas become proposals from before, and every old ref still resolves, an idea's to the line it became", () => {
     const driver = memoryDriver();
     buildVersion4(driver);
     const tracker = new Tracker(driver, () => "2026-11-14T12:00:00.000Z");
@@ -219,9 +219,11 @@ describe("moving an older database to lines", () => {
       ["Wall mount", "I-1", ["PANEL"]],
       ["A weekly digest", "I-2", []],
     ]);
-    for (const ref of ["PANEL", "PANEL-6", "D-34", "M-1", "I-1", "I-3", "U-1", "U-2", "PR-1"]) {
-      expect(tracker.call(c.entityShow, { ref }, { actor: "dev", channel: "cli" }).entity.ref).toBe(ref);
-    }
+    const show = (ref: string) =>
+      tracker.call(c.entityShow, { ref }, { actor: "dev", channel: "cli" }).entity.ref;
+    for (const ref of ["PANEL", "PANEL-6", "D-34", "M-1", "I-3", "U-1", "U-2", "PR-1"])
+      expect(show(ref)).toBe(ref);
+    expect([show("I-1")]).toEqual(home.proposed.slice(0, 1).map((line) => line.ref));
   });
 });
 

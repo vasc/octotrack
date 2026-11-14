@@ -3,6 +3,7 @@ import { isIsoDate } from "./query/match.ts";
 import {
   Agent,
   AgentView,
+  AtView,
   AgentWake,
   Bootstrap,
   Channel,
@@ -222,9 +223,9 @@ export const contracts = {
   ),
   runnerRetry: write(
     "runner.retry",
-    "Try now: start a session for a line again without waiting (the developer)",
-    z.strictObject({ line: z.string() }),
-    z.object({ line: z.string() }),
+    "Try now: start a session for a line again without waiting; with same, every line stopped the same way; with anyway, past the cap, once (the developer)",
+    z.strictObject({ line: z.string(), same: z.boolean().optional(), anyway: z.boolean().optional() }),
+    z.object({ lines: z.array(z.string()) }),
   ),
   runnerDry: write(
     "runner.dry",
@@ -332,6 +333,8 @@ export const contracts = {
       recommendation: LinePlacement,
       why: Text,
       place: z.enum(["start", "queue"]).optional(),
+      /** Only for something broken on a line no agent may work on, such as a done service. */
+      urgent: UrgentReason.optional(),
     }),
     Line,
   ),
@@ -529,6 +532,41 @@ export const contracts = {
     z.strictObject({ line: z.string() }),
     z.array(HeldItem),
   ),
+  at: write(
+    "at",
+    "I'm at a place: home opens its tasks for a few hours; with no place, it leaves (the developer)",
+    z.strictObject({ place: z.string().optional() }),
+    AtView.nullable(),
+  ),
+  seen: write(
+    "seen",
+    "Mark a line as looked at, or every line with none, so the log's not-seen starts after now (the developer)",
+    z.strictObject({ line: z.string().optional() }),
+    z.object({ lines: z.number().int() }),
+  ),
+  taskAdd: write(
+    "task.add",
+    "Add a task of your own to a line you own, at a place or none (the developer)",
+    z.strictObject({
+      line: z.string(),
+      title: Text,
+      place: z.string().optional(),
+      body: z.string().optional(),
+    }),
+    Issue,
+  ),
+  noteAdd: write(
+    "note.add",
+    "Add a note to a line you own (the developer)",
+    z.strictObject({ line: z.string(), body: Text }),
+    z.object({ line: z.string() }),
+  ),
+  heldWithdraw: write(
+    "held.withdraw",
+    "Withdraw held questions or tasks on your line that no longer stand",
+    z.strictObject({ refs: z.array(z.string()).min(1), why: Text.optional() }),
+    z.object({ withdrawn: z.array(z.string()) }),
+  ),
   heldConfirm: write(
     "held.confirm",
     "Say held questions or tasks still stand, which makes them current for another 7 days",
@@ -559,9 +597,9 @@ export const contracts = {
     z.strictObject({ ref: z.string(), why: Text }),
     Line,
   ),
-  lineKeepGoing: write(
-    "line.keep_going",
-    "Turn down a proposal that a line is done, saying what is missing (the developer)",
+  lineNotYet: write(
+    "line.not_yet",
+    "Turn down a proposal that a line is done, saying what is missing; the owner hears it (the developer)",
     z.strictObject({ ref: z.string(), why: Text.optional() }),
     Line,
   ),
@@ -830,6 +868,8 @@ export const contracts = {
       before: z.number().int().optional(),
       after: z.number().int().optional(),
       limit: z.number().int().positive().max(500).optional(),
+      /** Only what changed on a line since the developer last looked at it, and never the developer's own doing. */
+      unseen: z.boolean().optional(),
     }),
     FeedPage,
   ),

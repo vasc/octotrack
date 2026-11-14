@@ -199,14 +199,14 @@ describe("done when and done are the developer's to accept", () => {
     expect(w.notices(w.owner).map((notice) => [notice.kind, notice.wakes])).toEqual([["done_when", false]]);
   });
 
-  test("an owner proposes done; the developer finishes the line or says keep going", () => {
+  test("an owner proposes done; the developer finishes the line or says not yet", () => {
     const w = world();
     w.as(w.owner, c.lineProposeDone, { ref: w.line, why: "Printed, fitted, and in use." });
     expect(w.as(w.dev, c.lineShow, { ref: w.line }).line.doneProposal).toBe("Printed, fitted, and in use.");
-    w.as(w.dev, c.lineKeepGoing, { ref: w.line, why: "The plug does not fit yet." });
+    w.as(w.dev, c.lineNotYet, { ref: w.line, why: "The plug does not fit yet." });
     expect(w.as(w.dev, c.lineShow, { ref: w.line }).line.doneProposal).toBeNull();
     const heard = w.notices(w.owner);
-    expect(heard.map((notice) => notice.kind)).toEqual(["keep_going"]);
+    expect(heard.map((notice) => notice.kind)).toEqual(["not_yet"]);
     expect(heard[0]?.body).toContain("The plug does not fit yet.");
   });
 });

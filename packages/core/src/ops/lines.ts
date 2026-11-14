@@ -13,6 +13,7 @@ import { IssueRow, PlanStepRow } from "../store/rows.ts";
 import { afterAdd, afterMove, guardLineWrite, windDown } from "../agents/claims.ts";
 import { DEVELOPER } from "../agents/state.ts";
 import { addNotice, claimOf } from "../store/agents.ts";
+import { addToInbox } from "../store/inbox.ts";
 import { bind } from "./bind.ts";
 import { buildHome } from "./home.ts";
 import { requireDeveloper } from "./developer.ts";
@@ -178,6 +179,8 @@ function move(
     // A case for done is about the line as it was; once it moves, it is answered.
     doneProposal: current.state === rule.to ? undefined : null,
     doneProposedBy: current.state === rule.to ? undefined : null,
+    // Urgent is a proposal's: placed, the line is in the developer's order like any other.
+    urgentReason: current.state === rule.to ? undefined : null,
   });
   const updated = requireLine(ctx, current.ref);
   afterMove(ctx, current, updated);
@@ -295,9 +298,18 @@ export const lineOps = [
       recommendation: input.recommendation,
       recommendationWhy: input.why,
     });
-    emitLine(ctx, "line.proposed", line, `${line.ref} proposed by ${ctx.actor}: ${line.title}`);
-    afterAdd(ctx, line);
-    return line;
+    if (input.urgent !== undefined) {
+      ctx.sql.run("UPDATE lines SET urgentReason = ? WHERE ref = ?", [input.urgent, line.ref]);
+    }
+    const proposed = requireLine(ctx, line.ref);
+    emitLine(
+      ctx,
+      "line.proposed",
+      proposed,
+      `${proposed.ref} proposed by ${ctx.actor}${proposed.urgentReason === null ? "" : `, urgent (${proposed.urgentReason.replace("_", " ")})`}: ${proposed.title}`,
+    );
+    afterAdd(ctx, proposed);
+    return proposed;
   }),
 
   bind(contracts.lineStart, (ctx, input) => move(ctx, input.ref, "start")),
@@ -556,25 +568,24 @@ export const lineOps = [
     return updated;
   }),
 
-  bind(contracts.lineKeepGoing, (ctx, input) => {
+  bind(contracts.lineNotYet, (ctx, input) => {
     requireDeveloper(ctx, "say a line is not done");
     const line = requireLine(ctx, input.ref);
     if (line.doneProposal === null) throw new OctoError("conflict", `Nobody proposed ${line.ref} is done`);
     const changes = applyPatch(ctx, "lines", line.ref, line, { doneProposal: null, doneProposedBy: null });
-    if (line.doneProposedBy !== null) {
-      addNotice(
-        ctx,
-        line.doneProposedBy,
-        "keep_going",
-        line.ref,
-        `${line.ref} is not done yet${input.why === undefined ? "" : `: ${input.why}`}`,
-        true,
-      );
-    }
+    // To the line, not the proposer: whoever owns it now hears what is missing, and is woken by it.
+    addToInbox(
+      ctx,
+      line.ref,
+      "not_yet",
+      line.ref,
+      null,
+      `${line.ref} is not done yet${input.why === undefined ? "" : `: ${input.why}`}`,
+    );
     const updated = requireLine(ctx, line.ref);
     emitLine(
       ctx,
-      "line.keep_going",
+      "line.not_yet",
       updated,
       `${updated.ref} is not done yet${input.why === undefined ? "" : `: ${input.why}`}`,
       changes,
@@ -648,5 +659,15 @@ export const lineOps = [
           return [];
       }
     });
+  }),
+
+  bind(contracts.seen, (ctx, input) => {
+    requireDeveloper(ctx, "mark lines as seen");
+    const where = input.line === undefined ? "" : " WHERE ref = ?";
+    const params = input.line === undefined ? [ctx.now] : [ctx.now, requireLine(ctx, input.line).ref];
+    const count = input.line === undefined ? allLines(ctx).length : 1;
+    ctx.sql.run(`UPDATE lines SET seenAt = ?${where}`, params);
+    ctx.visibleChange = true;
+    return { lines: count };
   }),
 ];

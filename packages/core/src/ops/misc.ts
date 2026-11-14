@@ -2,7 +2,8 @@ import { contracts } from "../contracts.ts";
 import { ackDrift } from "../drift/engine.ts";
 import { notFound, OctoError } from "../errors.ts";
 import { parseQuery, QUERY_FIELDS } from "../query/index.ts";
-import type { Counts, Decision, Drift, Issue } from "../schemas.ts";
+import { DEVELOPER } from "../agents/state.ts";
+import type { Counts, Decision, Drift, Issue, StatusUpdate } from "../schemas.ts";
 import { countOf, emit, nextNumber, currentCursor } from "../store/common.ts";
 import { type Ctx, rows } from "../store/context.ts";
 import { filterEntities, findEntities, isReady } from "../store/docs.ts";
@@ -14,6 +15,7 @@ import {
   getDrift,
   getUpdate,
   requireEntity,
+  requireLine,
   requireProject,
   summarize,
 } from "../store/entities.ts";
@@ -35,6 +37,7 @@ import {
 } from "../store/rows.ts";
 import { cancelWatch, checkWatch, createWatch, listWatches } from "../watch/engine.ts";
 import { bind } from "./bind.ts";
+import { requireDeveloper } from "./developer.ts";
 import { buildIssueCard, buildPrCard, buildProjectCard, comparePrCards } from "./cards.ts";
 import { buildQueue } from "./decisions.ts";
 import { listFeed } from "./feed.ts";
@@ -126,40 +129,66 @@ function lineOfTarget(target: AnyEntity): string | null {
   return null;
 }
 
-export const miscOps = [
-  bind(contracts.updatePost, (ctx, input) => {
-    const target = input.target === undefined ? null : requireEntity(ctx, input.target);
-    const targetRef = target?.value.ref ?? null;
-    guardLineWrite(ctx, target === null ? null : lineOfTarget(target), "scope");
-    const project =
-      input.project === undefined
-        ? target === null
-          ? null
-          : summarize(target).project
-        : requireProject(ctx, input.project).ref;
-    const level = input.level ?? "info";
-    const ref = `U-${nextNumber(ctx, "update")}`;
-    ctx.sql.run(
-      `INSERT INTO updates (ref, target, project, level, body, actor, version, createdAt, updatedAt)
+/** A note on anything: kept as an update, and shown in the log on the line it concerns. */
+function postUpdate(
+  ctx: Ctx,
+  input: {
+    body: string;
+    target?: string | undefined;
+    project?: string | undefined;
+    level?: StatusUpdate["level"] | undefined;
+  },
+): StatusUpdate {
+  const target = input.target === undefined ? null : requireEntity(ctx, input.target);
+  const targetRef = target?.value.ref ?? null;
+  guardLineWrite(ctx, target === null ? null : lineOfTarget(target), "scope");
+  const project =
+    input.project === undefined
+      ? target === null
+        ? null
+        : summarize(target).project
+      : requireProject(ctx, input.project).ref;
+  const level = input.level ?? "info";
+  const ref = `U-${nextNumber(ctx, "update")}`;
+  ctx.sql.run(
+    `INSERT INTO updates (ref, target, project, level, body, actor, version, createdAt, updatedAt)
        VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)`,
-      [ref, targetRef, project, level, input.body, ctx.actor, ctx.now, ctx.now],
-    );
-    const firstLine = input.body.split("\n")[0] ?? "";
-    emit(ctx, {
-      type: "status.posted",
-      kind: "update",
-      ref,
-      project,
-      summary:
-        firstLine.length > UPDATE_SUMMARY_LENGTH
-          ? `${firstLine.slice(0, UPDATE_SUMMARY_LENGTH)}...`
-          : firstLine,
-      related: targetRef === null ? [] : [targetRef],
-      attrs: { status: level, level, ...(targetRef === null ? {} : { target: targetRef }) },
-    });
-    const update = getUpdate(ctx, ref);
-    if (update === null) throw new OctoError("internal", `${ref} vanished`);
-    return update;
+    [ref, targetRef, project, level, input.body, ctx.actor, ctx.now, ctx.now],
+  );
+  const firstLine = input.body.split("\n")[0] ?? "";
+  emit(ctx, {
+    type: "status.posted",
+    kind: "update",
+    ref,
+    project,
+    summary:
+      firstLine.length > UPDATE_SUMMARY_LENGTH
+        ? `${firstLine.slice(0, UPDATE_SUMMARY_LENGTH)}...`
+        : firstLine,
+    line: target === null ? null : lineOfTarget(target),
+    related: targetRef === null ? [] : [targetRef],
+    attrs: { status: level, level, ...(targetRef === null ? {} : { target: targetRef }) },
+  });
+  const update = getUpdate(ctx, ref);
+  if (update === null) throw new OctoError("internal", `${ref} vanished`);
+  return update;
+}
+
+export const miscOps = [
+  bind(contracts.updatePost, (ctx, input) => postUpdate(ctx, input)),
+
+  bind(contracts.noteAdd, (ctx, input) => {
+    requireDeveloper(ctx, "add a note to a line of theirs");
+    const line = requireLine(ctx, input.line);
+    if (line.ownedBy !== DEVELOPER) {
+      throw new OctoError(
+        "conflict",
+        `${line.ref} is not yours`,
+        "Notes go on lines you own; tell its owner instead.",
+      );
+    }
+    postUpdate(ctx, { body: input.body, target: line.ref });
+    return { line: line.ref };
   }),
 
   bind(contracts.updateList, (ctx, input) => {

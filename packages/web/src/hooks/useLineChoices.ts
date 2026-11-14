@@ -12,7 +12,7 @@ const OPS: Readonly<Record<LineChoice, string>> = {
   reject: contracts.lineReject.name,
   own: contracts.lineOwn.name,
   hand: contracts.lineHand.name,
-  keep_going: contracts.lineKeepGoing.name,
+  not_yet: contracts.lineNotYet.name,
 };
 
 const SAID: Readonly<Record<LineChoice, string>> = {
@@ -23,7 +23,7 @@ const SAID: Readonly<Record<LineChoice, string>> = {
   reject: "Not a line:",
   own: "You own",
   hand: "Handed to the agents:",
-  keep_going: "Keep going:",
+  not_yet: "Not yet:",
 };
 
 /** The developer's choices on one line, as the line panel offers them. Each waits a few seconds with Undo. */

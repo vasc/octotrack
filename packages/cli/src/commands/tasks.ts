@@ -124,6 +124,67 @@ export const taskCommands: Command[] = [
     },
   },
   {
+    path: ["held", "withdraw"],
+    usage: "<REF...>",
+    summary: "Withdraw held questions or tasks on your line that no longer stand",
+    options: { why: { ...STRING, description: "What changed" } },
+    ops: [c.heldWithdraw.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(
+        c.heldWithdraw,
+        compact({ refs: args.requirePositionals("REF"), why: args.str("why") }),
+      );
+      out.result(outcome, () => `Withdrew ${outcome.data.withdrawn.join(", ")}.`);
+    },
+  },
+  {
+    path: ["at"],
+    usage: "[place]",
+    summary: "I'm at a place: home opens its tasks for three hours; with no place, it leaves (the developer)",
+    ops: [c.at.name],
+    async run({ client, out }, args) {
+      const place = args.positionals.join(" ");
+      const outcome = await client.call(c.at, place === "" ? {} : { place });
+      out.result(outcome, () => {
+        const at = outcome.data;
+        if (at === null) return "Not at any place.";
+        const tasks = at.tasks.map((task) => `${r.bold(task.ref)} ${task.title}`).join("\n");
+        return `At ${at.place} until ${at.until.slice(11, 16)}.${tasks === "" ? " Nothing to do here." : `\n${tasks}`}`;
+      });
+    },
+  },
+  {
+    path: ["task", "add"],
+    usage: "<LINE> <title>",
+    summary: "Add a task of your own to a line you own (the developer)",
+    options: { place: { ...STRING, description: "One of your places, if it is done at one" } },
+    ops: [c.taskAdd.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(
+        c.taskAdd,
+        compact({
+          line: args.requirePositional(0, "LINE"),
+          title: args.positionals.slice(1).join(" "),
+          place: args.str("place"),
+        }),
+      );
+      out.result(outcome, () => `${r.bold(outcome.data.ref)} ${outcome.data.title}`);
+    },
+  },
+  {
+    path: ["note", "add"],
+    usage: "<LINE> <text>",
+    summary: "Add a note to a line you own (the developer)",
+    ops: [c.noteAdd.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(c.noteAdd, {
+        line: args.requirePositional(0, "LINE"),
+        body: args.positionals.slice(1).join(" "),
+      });
+      out.result(outcome, () => `Noted on ${outcome.data.line}.`);
+    },
+  },
+  {
     path: ["held", "confirm"],
     usage: "<REF...>",
     summary: "Say held questions or tasks still stand: current for another 7 days",
