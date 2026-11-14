@@ -8,6 +8,9 @@ import { compact, LIST_OPTIONS, listInput, textOption } from "./shared.ts";
 
 const STRING = { type: "string" } as const;
 const MANY = { type: "string", multiple: true } as const;
+/** A question's own wake address gave way to the one an agent registers (docs/DESIGN.md, D13 and D14). */
+const WAKE_GAVE_WAY =
+  "A question no longer takes its own wake address: an answer wakes you at the address you register once, with octo agent register --wake <adapter:address>";
 
 /** Parses `key=Label` or `key=Label::longer description`. */
 export function parseOption(raw: string): { key: string; label: string; description?: string } {
@@ -90,7 +93,10 @@ export const decisionCommands: Command[] = [
       blocks: { ...MANY, description: "Work that cannot proceed until this is decided, repeatable" },
       affects: { ...MANY, description: "Items to re-check once this is decided, repeatable" },
       wait: { type: "boolean", short: "w", description: "Hang until the decision is made, then print it" },
-      wake: { ...STRING, description: "Wake this session when answered, as adapter:address. See octo guide" },
+      wake: {
+        ...STRING,
+        description: "No longer taken: register your wake address once with octo agent register",
+      },
       timeout: { ...STRING, description: "With --wait: give up after this long, exit 124. For example 30m" },
       line: { ...STRING, description: "The line it is asked on. Default: the line you are on" },
       issue: { ...STRING, description: "The issue it concerns. Default: the one you hold on that line" },
@@ -107,6 +113,7 @@ export const decisionCommands: Command[] = [
     ],
     ops: [c.decisionAsk.name],
     async run(ctx, args) {
+      if (args.str("wake") !== undefined) throw new UsageError(WAKE_GAVE_WAY);
       const outcome = await ctx.client.call(
         c.decisionAsk,
         compact({
@@ -120,7 +127,6 @@ export const decisionCommands: Command[] = [
           dueAt: args.str("due"),
           blocks: args.optionalList("blocks"),
           affects: args.optionalList("affects"),
-          wake: args.str("wake"),
           line: args.str("line"),
           issue: args.str("issue"),
           why: args.str("why"),
@@ -365,15 +371,11 @@ export const decisionCommands: Command[] = [
   {
     path: ["decision", "wake"],
     usage: "<REF> [adapter:address]",
-    summary: "Ask to be woken when this is answered, or stop asking with --off",
-    options: { off: { type: "boolean", description: "Do not wake anyone" } },
-    ops: [c.decisionWake.name],
-    async run({ client, out }, args) {
-      const outcome = await client.call(c.decisionWake, {
-        ref: args.requirePositional(0, "REF"),
-        address: args.flag("off") ? null : args.requirePositional(1, "adapter:address"),
-      });
-      out.result(outcome, () => r.renderDecisionBlock(outcome.data));
+    summary: "No longer taken: an answer wakes you at the address you register once",
+    // Kept so that the old habit gets a pointer rather than "unknown command" (docs/DESIGN.md, D13).
+    ops: [],
+    async run() {
+      throw new UsageError(WAKE_GAVE_WAY);
     },
   },
   {

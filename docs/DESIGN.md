@@ -229,7 +229,8 @@ if "we can avoid having the session actively hang on octo".
 - **An inbox any tool can use.** `octo inbox`, `decision pickup` and `decision report` are plain CLI commands keyed on the
   agent's name. An answer moves through not picked up, picked up, and carried out or partly carried out. An agent that answers
   its own question skips this. A changed answer is delivered again.
-- **Waking is opt-in, per decision.** `--wake adapter:address` on asking, or `decision wake` later. The default is the inbox.
+- **Waking is opt-in, per agent.** First it was per decision (`--wake` on asking, or `decision wake` later); since lines
+  (D14, and D13's third audit) it is the wake address an agent registers once. The default is the inbox.
 - **One dispatcher instead of many waits.** A loop in the server wakes sessions, so nothing hangs. It marks a wake before
   running it, so a crash leaves a session unwoken rather than woken twice, and the answer is still in the inbox.
 - **The tracker knows no tool.** It stores an opaque address. An adapter in `~/.octotrack/wake-adapters.json` turns that into
@@ -444,6 +445,18 @@ Decisions made from that:
     D14 holds and shows, and an agent could `pr upsert` any number in the repo with "Fixes PANEL-1" to have it closed.
     _Trade-off:_ a pull request opened just before the deadline but not yet synced is held and shown, not closed;
     closing what is still wanted cannot be undone, and holding costs a click.
+  - _Removed: a question's own wake address._ `decision wake`, `question wake` and `--wake` on asking are gone, as D14
+    says they give way to the wake address an agent registers. A question on no line wakes its asker at the address
+    the asker registered (`agent register --wake`), read when the answer comes, and not at all once its asker is
+    stopped; one asked before keeps the address it was asked with if its asker registered none. The old commands
+    answer with that pointer instead of "unknown". _Why:_ anyone could change any question's address, so an answer
+    resumed whatever session the address named, as the asker, or silenced the asker's wake. Keeping it for questions on
+    no line, guarded to the asker and the developer, was the other choice; it was not kept because it is a second
+    answer to "where is this agent woken", which the registered address already gives, and questions on no line are
+    themselves the older rules going away. _Trade-off:_ an agent on no line that wants to be woken must register an
+    address once, which `octo guide` already asks of every agent.
+  - _A watch is cancelled only by its own agent,_ the developer or the server. _Why:_ any agent could cancel another's
+    watch and so silence its wait.
   - _The developer's own operations, relayed with `--said`, take effect on their own lines._ `task add` and `note add`
     were refused there, as writes to a line no agent may touch, though D14 says every developer operation accepts the
     developer's words.

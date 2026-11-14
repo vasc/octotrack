@@ -660,6 +660,17 @@ describe("what the re-audit found", () => {
     );
   }, 15000);
 
+  test("a question's own wake address gave way to the one an agent registers, and the old habit is told so", async () => {
+    for (const args of [
+      ["decision", "wake", "D-1", "claude:abc"],
+      ["question", "ask", "Which?", "--wake", "claude:abc"],
+    ]) {
+      const result = await octo(args);
+      expect(result.code).toBe(2);
+      expect(result.stdout + result.stderr).toContain("octo agent register --wake");
+    }
+  });
+
   test("an agent's own report is never taken as GitHub's: pr.sync is the server's", async () => {
     const result = await octo([
       "op",

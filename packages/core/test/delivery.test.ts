@@ -120,44 +120,65 @@ describe("reporting back", () => {
   });
 });
 
-describe("asking to be woken", () => {
-  const wakes = () => h.call(c.decisionWakes, {}, "server").map((decision) => decision.ref);
+describe("an answer to a question on no line wakes its asker at the address it registered", () => {
+  const wakes = () =>
+    h.call(c.decisionWakes, {}, "server").map((decision) => [decision.ref, decision.wakeAddress]);
+  const register = (wake: string | null) => h.call(c.agentRegister, { wake }, ASKER);
 
-  test("is not the default: nothing is woken unless the session asked", () => {
+  test("is not the default: nothing is woken unless the asker registered an address", () => {
     answer(ask().ref);
     expect(wakes()).toEqual([]);
   });
 
-  test("a session that asked is due a wake once answered, and not before", () => {
-    const { ref } = ask({ wake: ADDRESS });
+  test("an asker that registered one is due a wake once answered, and not before", () => {
+    register(ADDRESS);
+    const { ref } = ask();
     expect(wakes()).toEqual([]);
     answer(ref);
-    expect(wakes()).toEqual([ref]);
+    expect(wakes()).toEqual([[ref, ADDRESS]]);
   });
 
-  test("a session can opt in later", () => {
+  test("an asker can register after asking", () => {
     const { ref } = ask();
-    h.call(c.decisionWake, { ref, address: ADDRESS }, ASKER);
+    register(ADDRESS);
     answer(ref);
-    expect(wakes()).toEqual([ref]);
+    expect(wakes()).toEqual([[ref, ADDRESS]]);
   });
 
-  test("a session can change its mind", () => {
-    const { ref } = ask({ wake: ADDRESS });
-    h.call(c.decisionWake, { ref, address: null }, ASKER);
+  test("an asker can change its mind", () => {
+    register(ADDRESS);
+    const { ref } = ask();
+    register(null);
+    answer(ref);
+    expect(wakes()).toEqual([]);
+  });
+
+  test("a question asked before keeps the address it was asked with, if its asker registered none", () => {
+    const { ref } = ask();
+    h.driver.run("UPDATE decisions SET wakeAddress = ? WHERE ref = ?", [ADDRESS, ref]);
+    answer(ref);
+    expect(wakes()).toEqual([[ref, ADDRESS]]);
+  });
+
+  test("a stopped asker is not woken", () => {
+    register(ADDRESS);
+    const { ref } = ask();
+    h.developer(c.agentStop, { name: ASKER });
     answer(ref);
     expect(wakes()).toEqual([]);
   });
 
   test("is one attempt: a wake is never sent twice", () => {
-    const { ref } = ask({ wake: ADDRESS });
+    register(ADDRESS);
+    const { ref } = ask();
     answer(ref);
     h.tracker.call(c.decisionWoken, { ref }, SERVER);
     expect(wakes()).toEqual([]);
   });
 
   test("a failed wake is recorded, and the answer stays in the inbox", () => {
-    const { ref } = ask({ wake: ADDRESS });
+    register(ADDRESS);
+    const { ref } = ask();
     answer(ref);
     h.tracker.call(c.decisionWoken, { ref, error: "No wake adapter named claude" }, SERVER);
     expect(wakes()).toEqual([]);
@@ -167,19 +188,21 @@ describe("asking to be woken", () => {
     );
   });
 
-  test("a session that already picked it up is not woken", () => {
-    const { ref } = ask({ wake: ADDRESS });
+  test("an asker that already picked it up is not woken", () => {
+    register(ADDRESS);
+    const { ref } = ask();
     answer(ref);
     h.call(c.decisionPickup, { ref }, ASKER);
     expect(wakes()).toEqual([]);
   });
 
-  test("a changed answer wakes the session again", () => {
-    const { ref } = ask({ wake: ADDRESS });
+  test("a changed answer wakes the asker again", () => {
+    register(ADDRESS);
+    const { ref } = ask();
     answer(ref);
     h.tracker.call(c.decisionWoken, { ref }, SERVER);
     h.developer(c.decisionResolve, { ref, note: "Other way", force: true });
-    expect(wakes()).toEqual([ref]);
+    expect(wakes()).toEqual([[ref, ADDRESS]]);
   });
 
   test.each([
@@ -192,13 +215,12 @@ describe("asking to be woken", () => {
     ":abc",
     "../bin/sh:abc",
   ])("refuses the address %s, which could reach a command line", (wake) => {
-    expect(() => ask({ wake })).toThrow();
+    expect(() => register(wake)).toThrow();
   });
 
-  test("a request cannot bring its own command", () => {
+  test("a question takes no address of its own, so nobody can redirect or silence its asker's wake", () => {
     const { ref } = ask();
-    expect(() =>
-      h.tracker.execute("decision.wake", { ref, address: ADDRESS, command: ["sh"] }, h.as),
-    ).toThrow();
+    expect(() => h.tracker.execute("decision.wake", { ref, address: ADDRESS }, h.as)).toThrow();
+    expect(() => h.tracker.execute("decision.ask", { title: "Q", wake: ADDRESS }, h.as)).toThrow();
   });
 });

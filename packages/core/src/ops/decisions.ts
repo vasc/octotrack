@@ -69,7 +69,6 @@ interface InsertDecision {
   options?: readonly { key: string; label: string; description?: string }[];
   recommendation?: string;
   dueAt?: string;
-  wake?: string;
   line?: string | null;
   issue?: string | null;
   why?: string;
@@ -151,7 +150,8 @@ function insertDecision(ctx: Ctx, input: InsertDecision): Decision {
       input.priority ?? "medium",
       ctx.actor,
       input.dueAt ?? null,
-      input.wake ?? null,
+      // Where its asker is woken is the address the asker registered, read when the answer comes (D14).
+      null,
       input.line ?? null,
       input.issue ?? null,
       input.why ?? null,
@@ -699,24 +699,20 @@ export const decisionOps = [
       undefined,
     );
   }),
-  bind(contracts.decisionWake, (ctx, input) =>
-    transition(
-      ctx,
-      input.ref,
-      "decision.wake_changed",
-      (decision) =>
-        `${decision.ref} ${input.address === null ? "will not wake anyone" : "will wake its session"}`,
-      { wakeAddress: input.address, wokenAt: null, wakeError: null },
-      undefined,
-    ),
-  ),
   bind(contracts.decisionWakes, (ctx) =>
     rows(
       ctx,
-      DecisionRow,
-      // A question on a line wakes whoever holds the line, through its inbox, not the session that asked.
-      "SELECT * FROM decisions WHERE status = 'decided' AND line IS NULL AND wakeAddress IS NOT NULL AND wokenAt IS NULL AND pickedUpAt IS NULL ORDER BY decidedAt",
-    ),
+      DecisionRow.extend({ registered: z.string().nullable() }),
+      // A question on a line wakes whoever holds the line, through its inbox, not the session that asked. One on no
+      // line wakes its asker at the address it registered; one asked before that keeps the address it was asked with.
+      `SELECT d.*, a.wakeAddress AS registered FROM decisions d LEFT JOIN agents a ON a.name = d.requestedBy
+       WHERE d.status = 'decided' AND d.line IS NULL AND d.wokenAt IS NULL AND d.pickedUpAt IS NULL
+         AND (a.name IS NULL OR a.stoppedAt IS NULL) AND COALESCE(a.wakeAddress, d.wakeAddress) IS NOT NULL
+       ORDER BY d.decidedAt`,
+    ).map(({ registered, ...decision }) => ({
+      ...decision,
+      wakeAddress: registered ?? decision.wakeAddress,
+    })),
   ),
   bind(contracts.decisionWoken, (ctx, input) => {
     requireServer(ctx);

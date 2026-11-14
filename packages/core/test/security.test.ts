@@ -58,7 +58,8 @@ describe("only the server records wakes", () => {
 
   test("nor say a question's session was woken", () => {
     const w = world();
-    const asked = w.as(w.agent("legacy"), c.decisionAsk, { title: "Q", wake: "claude:legacy" });
+    w.as(w.agent("legacy"), c.agentRegister, { wake: "claude:legacy" });
+    const asked = w.as(w.agent("legacy"), c.decisionAsk, { title: "Q" });
     expect(w.refused(() => w.as(w.agent("mallory"), c.decisionWoken, { ref: asked.ref })).code).toBe(
       "forbidden",
     );

@@ -42,6 +42,8 @@ export const GITHUB: Caller = { actor: "github", channel: "cli", system: true };
 
 export interface Harness {
   tracker: Tracker;
+  /** The database itself, for a row as an older release left it. */
+  driver: SqlDriver;
   /** Moves the clock, for anything time based. */
   setNow(iso: string): void;
   call<I extends z.ZodType, O extends z.ZodType>(
@@ -59,10 +61,12 @@ export interface Harness {
 
 export function harness(start = "2026-11-07T12:00:00.000Z"): Harness {
   let now = start;
-  const tracker = new Tracker(memoryDriver(), () => now);
+  const driver = memoryDriver();
+  const tracker = new Tracker(driver, () => now);
   const as: Caller = { actor: "agent-a", channel: "cli" };
   return {
     tracker,
+    driver,
     as,
     setNow(iso) {
       now = iso;
