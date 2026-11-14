@@ -10,16 +10,17 @@ export const DEFAULT_VIEW = "Feed";
 
 type PageParam = number | null;
 
-export function useFeed(view: string, query: string) {
+export function useFeed(view: string, query: string, unseen = false) {
   const bootstrap = useBootstrapSnapshot();
-  const seed = view === DEFAULT_VIEW && query === "" ? bootstrap?.feed : undefined;
+  const seed = view === DEFAULT_VIEW && query === "" && !unseen ? bootstrap?.feed : undefined;
   const result = useInfiniteQuery<FeedPage, Error, InfiniteData<FeedPage, PageParam>, string[], PageParam>({
-    queryKey: ["feed", view, query],
+    queryKey: ["feed", view, query, unseen ? "unseen" : "all"],
     queryFn: ({ pageParam }) =>
       callOp(contracts.feedList, {
         view,
         limit: PAGE_SIZE,
         ...(query === "" ? {} : { query }),
+        ...(unseen ? { unseen } : {}),
         ...(pageParam === null ? {} : { before: pageParam }),
       }),
     initialPageParam: null,

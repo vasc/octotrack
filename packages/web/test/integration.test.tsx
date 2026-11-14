@@ -1100,6 +1100,25 @@ describe("lines of work", () => {
     await view.findByRole("article", { name: "Which board?" });
   });
 
+  describe("the log, by what was seen", () => {
+    test("Not seen shows only what changed on a line since it was looked at, and Mark all seen clears it", async () => {
+      seedLines();
+      server.act(c.agentRegister, { repo: "OCT" }, "octo.1");
+      server.act(c.lineTake, { ref: "L-1" }, "octo.1");
+      server.tracker.call(c.seen, {}, asDeveloper);
+      server.later(1);
+      server.act(c.planSet, { line: "L-1", steps: ["Model", "Print"] }, "octo.1");
+      navigate("/log");
+      const view = renderApp(<App />);
+      fireEvent.click(await view.findByRole("button", { name: "Not seen" }));
+      const feed = within(await view.findByRole("feed"));
+      await feed.findByText(/plan/i);
+      await waitFor(() => expect(feed.queryAllByRole("article")).toHaveLength(1));
+      fireEvent.click(view.getByRole("button", { name: "Mark all seen" }));
+      await view.findByText("Nothing new since you last looked.");
+    });
+  });
+
   describe("keys on home", () => {
     const options = [{ key: "a", label: "Yes", description: "Go ahead." }];
     function onLine() {
