@@ -1210,6 +1210,7 @@ p {
 @media (pointer: coarse) {
   .line-link,
   .more-link,
+  .since-link,
   .item-row,
   .top-count,
   .top-urgent,
@@ -1843,6 +1844,17 @@ p {
 
 .line-headline {
   color: var(--ink-2);
+}
+
+/* The headline is out of date by this much: a link to the line, which lists what came after it. */
+.since-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--attention);
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .line-answer {

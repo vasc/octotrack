@@ -81,6 +81,7 @@ export function LinesGallery() {
             waitingOnYou: false,
             held: { questions: 0, tasks: 0 },
             reconfirming: 0,
+            sinceSummary: 0,
             scopedSteps: 4,
             answers: [
               {
@@ -213,6 +214,7 @@ export function LinesGallery() {
             waitingOnYou: false,
             held: { questions: 0, tasks: 1 },
             reconfirming: 0,
+            sinceSummary: 0,
             scopedSteps: 0,
             answers: [],
           }}

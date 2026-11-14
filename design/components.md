@@ -87,7 +87,7 @@ Home is one list: every line in the developer's order, with what each needs from
 | Component          | Kind       | What it is                                                                                                                                                       |
 | ------------------ | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `HomeSection`      | Pure       | A named region of home with its count and what it means                                                                                                          |
-| `WorkingLine`      | Pure       | A line being worked on: its number, title, meta, headline, a case for done, and its items                                                                        |
+| `WorkingLine`      | Pure       | A line being worked on: its number, title, meta, headline with how many changes came after it (a link to the line), a case for done, and its items               |
 | `LineMeta`         | Pure       | One row of facts: who is on it, waiting on you, held work being re-confirmed, its plan step                                                                      |
 | `ForYouRow`        | Pure       | A question or task as one row that opens it                                                                                                                      |
 | `FocusTarget`      | Pure       | One item in home's focus order that the browser can focus: outlined, its numbered choices drawn                                                                  |

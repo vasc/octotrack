@@ -1,3 +1,4 @@
+import { navigate } from "../src/lib/router.ts";
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 import { useState } from "react";
 import { fireEvent, render, waitFor, within } from "@testing-library/react";
@@ -494,6 +495,7 @@ describe("lines of work", () => {
     waitingOnYou: false,
     held: { questions: 0, tasks: 0 },
     reconfirming: 0,
+    sinceSummary: 0,
     scopedSteps: 0,
     answers: [],
     ...overrides,
@@ -521,6 +523,40 @@ describe("lines of work", () => {
     article.getByText(/step 3 of 4, settle board and opening/);
     article.getByText("Printed; the short board fits.");
     article.getByText("child");
+  });
+
+  test("WorkingLine says how many changes came after its summary, as a link that opens the line", () => {
+    navigate("/");
+    const view = render(
+      <WorkingLine
+        index={1}
+        line={line({ headline: "Down to the hotel pick." })}
+        details={details({ sinceSummary: 3 })}
+      >
+        {null}
+      </WorkingLine>,
+    );
+    fireEvent.click(view.getByRole("button", { name: "3 changes since the summary" }));
+    expect(new URLSearchParams(window.location.search).get("ref")).toBe("L-1");
+    view.unmount();
+    const one = render(
+      <WorkingLine
+        index={1}
+        line={line({ headline: "Down to the hotel pick." })}
+        details={details({ sinceSummary: 1 })}
+      >
+        {null}
+      </WorkingLine>,
+    );
+    one.getByRole("button", { name: "1 change since the summary" });
+    one.unmount();
+    expect(
+      render(
+        <WorkingLine index={1} line={line({ headline: "Down to the hotel pick." })} details={details()}>
+          {null}
+        </WorkingLine>,
+      ).queryByRole("button", { name: /since the summary/ }),
+    ).toBeNull();
   });
 
   test("LineMeta says waiting on you only when all the line's work waits on you, else agents on it", () => {
@@ -1716,6 +1752,7 @@ describe("answers on their line", () => {
           waitingOnYou: false,
           held: { questions: 0, tasks: 0 },
           reconfirming: 0,
+          sinceSummary: 0,
           scopedSteps: 0,
           answers: [answer({}), answer({ ref: "D-2", answer: "USB-C", status: "carried_out" })],
         }}
