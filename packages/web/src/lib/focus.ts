@@ -1,7 +1,17 @@
 import type { ForYou, HomeView } from "@octotrack/core/schemas";
 
+/** What an item is known by in focus order: a question's or task's ref; a proposal about a line, by its kind and line. */
 export function refOf(item: ForYou): string {
-  return item.kind === "question" ? item.card.decision.ref : item.task.ref;
+  switch (item.kind) {
+    case "question":
+      return item.card.decision.ref;
+    case "task":
+      return item.task.ref;
+    case "done":
+      return `done:${item.line}`;
+    case "done_when":
+      return `done_when:${item.line}`;
+  }
 }
 
 /** Where focus starts: an urgent question, else the first thing waiting on the first working line that has one. */

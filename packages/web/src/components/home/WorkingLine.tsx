@@ -32,11 +32,6 @@ export function WorkingLine({ index, line, crew, details, reorder, children }: W
           <Markdown text={line.headline} inline />
         </p>
       )}
-      {line.doneProposal === null ? null : (
-        <p className="home-headline">
-          <strong>Proposed done:</strong> {line.doneProposal}
-        </p>
-      )}
       {children}
     </article>
   );

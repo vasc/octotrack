@@ -12,6 +12,7 @@ import { ForYouRow } from "../src/components/home/ForYouRow.tsx";
 import { HomeCounts } from "../src/components/home/HomeCounts.tsx";
 import { HomeSection } from "../src/components/home/HomeSection.tsx";
 import { LineMeta } from "../src/components/home/LineMeta.tsx";
+import { LineProposalCard } from "../src/components/home/LineProposalCard.tsx";
 import { ProposalCard } from "../src/components/home/ProposalCard.tsx";
 import { PushToggle } from "../src/components/home/PushToggle.tsx";
 import { QuietRow } from "../src/components/home/QuietRow.tsx";
@@ -1075,5 +1076,47 @@ describe("tabling and a line's own choices", () => {
     view.getByText("The final print fits.");
     fireEvent.click(view.getByRole("button", { name: "Not yet" }));
     expect(onChoose).toHaveBeenCalledWith("not_yet");
+  });
+});
+
+describe("LineProposalCard", () => {
+  test("a case for done: It is done, or Not yet with what is missing", () => {
+    const onAccept = mock(() => {});
+    const onDecline = mock((_why: string) => {});
+    const view = render(
+      <LineProposalCard
+        kind="done"
+        line="L-1"
+        title="Enclosure"
+        text="Printed and fitted."
+        by="panel"
+        onAccept={onAccept}
+        onDecline={onDecline}
+      />,
+    );
+    view.getByText("Proposed done · L-1 · by panel");
+    fireEvent.click(view.getByRole("button", { name: "Not yet…" }));
+    fireEvent.change(view.getByLabelText("What L-1 still needs"), { target: { value: "The lid rattles" } });
+    fireEvent.click(view.getByRole("button", { name: "Not yet" }));
+    expect(onDecline).toHaveBeenCalledWith("The lid rattles");
+    fireEvent.click(view.getByRole("button", { name: "It is done" }));
+    expect(onAccept).toHaveBeenCalledTimes(1);
+  });
+
+  test("a new done when: Accept, or keep the one there is at once", () => {
+    const onDecline = mock((_why: string) => {});
+    const view = render(
+      <LineProposalCard
+        kind="done_when"
+        line="L-1"
+        title="Enclosure"
+        text="It holds the 30 mm board."
+        by={null}
+        onAccept={() => {}}
+        onDecline={onDecline}
+      />,
+    );
+    fireEvent.click(view.getByRole("button", { name: "Keep the one there is" }));
+    expect(onDecline).toHaveBeenCalledWith("");
   });
 });

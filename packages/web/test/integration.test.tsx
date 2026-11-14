@@ -1096,6 +1096,43 @@ describe("lines of work", () => {
     await view.findByRole("article", { name: "Which board?" });
   });
 
+  describe("an agent's proposals about a working line", () => {
+    function proposed() {
+      seedLines();
+      server.act(c.agentRegister, { repo: "OCT" }, "octo.1");
+      server.act(c.lineTake, { ref: "L-1" }, "octo.1");
+      server.act(c.lineProposeDone, { ref: "L-1", why: "Printed and fitted." }, "octo.1");
+    }
+
+    test("a case for done is the line's first item, and It is done ends the line", async () => {
+      proposed();
+      navigate("/");
+      const view = renderApp(<App />);
+      const card = within(await view.findByRole("article", { name: "Sendspin enclosure is done?" }));
+      fireEvent.click(card.getByRole("button", { name: "It is done" }));
+      await answerNow(view);
+      await waitFor(() =>
+        expect(server.tracker.call(c.lineShow, { ref: "L-1" }, asDeveloper).line.state).toBe("done"),
+      );
+    });
+
+    test("Not yet sends what is missing to the line's owner", async () => {
+      proposed();
+      navigate("/");
+      const view = renderApp(<App />);
+      const card = within(await view.findByRole("article", { name: "Sendspin enclosure is done?" }));
+      fireEvent.click(card.getByRole("button", { name: "Not yet…" }));
+      fireEvent.change(card.getByLabelText("What L-1 still needs"), { target: { value: "The lid rattles" } });
+      fireEvent.click(card.getByRole("button", { name: "Not yet" }));
+      await answerNow(view);
+      await waitFor(() =>
+        expect(server.tracker.call(c.lineShow, { ref: "L-1" }, asDeveloper).line.doneProposal).toBeNull(),
+      );
+      const heard = server.tracker.execute(c.agentList.name, {}, { actor: "octo.1", channel: "cli" }).notices;
+      expect(heard.map((notice) => notice.body).join(" ")).toContain("The lid rattles");
+    });
+  });
+
   describe("Step in", () => {
     function unowned() {
       return server.tracker.call(

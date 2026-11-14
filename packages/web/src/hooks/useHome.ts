@@ -61,6 +61,19 @@ export function useHome() {
     fold: (ref: string, into: string) =>
       choices.make(contracts.lineFold.name, { ref, into }, `Folded ${titleOf(ref)} into ${titleOf(into)}`),
     own: (ref: string) => choices.make(contracts.lineOwn.name, { ref }, `You own ${titleOf(ref)}`),
+    lineDone: (ref: string) => choices.make(contracts.lineDone.name, { ref }, `${titleOf(ref)} is done`),
+    notYet: (ref: string, why: string) =>
+      choices.make(
+        contracts.lineNotYet.name,
+        { ref, ...(why === "" ? {} : { why }) },
+        `${titleOf(ref)} is not done yet`,
+      ),
+    doneWhen: (ref: string, accept: boolean) =>
+      choices.make(
+        contracts.lineDoneWhenAnswer.name,
+        { ref, accept },
+        accept ? `New done when for ${titleOf(ref)}` : `${titleOf(ref)} keeps its done when`,
+      ),
     acceptRecommended: (refs: string[]) =>
       choices.make(
         contracts.lineAcceptRecommended.name,

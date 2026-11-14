@@ -110,6 +110,7 @@ Home is one list: every line in the developer's order, with what each needs from
 | `LineMeta`       | Pure       | One row of facts: who is on it, waiting on you, its plan step                                                                                         |
 | `ForYouRow`      | Pure       | A question or task as one row that opens it                                                                                                           |
 | `ForYouItem`     | Structural | One thing waiting: opened in full with focus, else its row                                                                                            |
+| `LineProposalCard` | Pure     | An agent's proposal about a line, opened: that it is done (It is done, Not yet… asking what is missing), or a new done when (Accept, Keep the one there is) |
 | `TaskCard`       | Pure       | A task opened: where, what to report, and Done… or Can't do it…, each asking for its words                                                            |
 | `StepIn`         | Pure       | A working line nobody could be found for, in red, with Table it… and I'll own it                                                                      |
 | `UpNextRow`      | Pure       | A line up next: what it holds, how far scoping got, its done when, and Start                                                                          |

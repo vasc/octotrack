@@ -31,6 +31,22 @@ export function ForYouRow({ item, onOpen }: { item: ForYou; onOpen(ref: string):
       </div>
     );
   }
+  if (item.kind === "done" || item.kind === "done_when") {
+    const ref = `${item.kind}:${item.line}`;
+    return (
+      <div className="for-you">
+        <span className="for-you-kind">
+          {item.kind === "done" ? "Proposed done" : "Proposed done when"} · {item.line}
+        </span>
+        <span className="for-you-title">
+          <Markdown text={item.text} inline />
+        </span>
+        <button type="button" className="btn" aria-label={`Open ${ref}`} onClick={() => onOpen(ref)}>
+          Open
+        </button>
+      </div>
+    );
+  }
   const { task } = item;
   return (
     <div className="for-you">
