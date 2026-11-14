@@ -60,10 +60,12 @@ export function useDecisionForm(decision: Decision, onPostponed?: (ref: string) 
     setElsewhere,
     submit: () => {
       if (!canSubmit) return;
+      const label = decision.options.find((option) => option.key === chosen)?.label;
       resolve({
         ref: decision.ref,
         option: chosen,
         note: trimmed === "" ? null : trimmed,
+        summary: `Answered ${decision.ref}: ${label ?? trimmed}`,
         ...(elsewhere ? { channel: "out_of_band" as const } : {}),
       });
     },

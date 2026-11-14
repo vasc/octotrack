@@ -290,8 +290,7 @@ Decisions made from that:
   owner search, which offers it first to the owner that wound down.
 - **The dashboard and the runner, as built.** Home is `/` and the feed is the Log at `/log`. Every choice home and the
   line panel make waits five seconds on the server with Undo (`choice.make`); the tracker applies it on the next call
-  or its one-second tick, so closing the tab neither loses nor repeats it. Answers to questions keep their existing
-  flow for now. Drafts are kept on the server as they are typed. The local runner reads `~/.octotrack/agent-setup.json`
+  or its one-second tick, so closing the tab neither loses nor repeats it. Drafts are kept on the server as they are typed. The local runner reads `~/.octotrack/agent-setup.json`
   and does nothing without it; it starts in watch mode (`dryRun`, on unless the file turns it off), recording
   `runner.would_start`. A start runs in a fresh worktree on branch `octo/<name>`, after the repo's setup commands, with
   only `{line}` and `{name}` filled into the developer's command and `OCTO_AGENT` set. A start that exits at once keeps
@@ -689,7 +688,6 @@ The append-only `events` table is the feed and also what event clauses in watche
   have a full page, so a rare filter on a very long log takes several requests.
 - Every waiting agent re-evaluates on every write. With 40 agents hanging, a write takes about 290ms instead of 6ms.
 - PRs are synced for repos that a project names. A PR reported by hand for any other repo is never refreshed.
-- Answers to questions take effect at once; every other choice of the developer's waits five seconds with Undo.
 - Octotrack cannot kill a session it did not start; Stop refuses its writes and tells it.
 - Lists stop at their limit with no paging: the dashboard says so, and the CLI allows `--limit` up to 1000.
 - A decision's `--recommend` may be free text, so a mistyped option key is shown as text rather than refused.

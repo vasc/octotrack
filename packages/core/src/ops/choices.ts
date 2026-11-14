@@ -99,8 +99,10 @@ export const choiceOps = [
 
   bind(contracts.choiceUndo, (ctx, input) => {
     const row = requireChoice(ctx, input.id);
-    if (row.state !== "pending")
+    // A failed choice is dismissed the same way: it never happened, and the developer has read why.
+    if (row.state !== "pending" && row.state !== "failed") {
       throw new OctoError("conflict", `It already ${row.state === "undone" ? "was undone" : "took effect"}`);
+    }
     ctx.sql.run("UPDATE pending_choices SET state = 'undone' WHERE id = ?", [row.id]);
     ctx.visibleChange = true;
     return view(requireChoice(ctx, row.id));
@@ -113,7 +115,11 @@ export const choiceOps = [
   }),
 
   bind(contracts.choiceList, (ctx) =>
-    rows(ctx, ChoiceRow, "SELECT * FROM pending_choices WHERE state = 'pending' ORDER BY id").map(view),
+    rows(
+      ctx,
+      ChoiceRow,
+      "SELECT * FROM pending_choices WHERE state IN ('pending', 'failed') ORDER BY id",
+    ).map(view),
   ),
 
   bind(contracts.draftSave, (ctx, input) => {

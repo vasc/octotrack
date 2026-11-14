@@ -9,7 +9,7 @@ const NO_KEYS: HotkeyMap = {};
 /** The Undo bar on every page, with u undoing the newest choice. */
 export function PendingChoices() {
   const choices = useChoices();
-  const newest = choices.pending.at(-1);
+  const newest = choices.pending.filter((choice) => choice.state === "pending").at(-1);
   const { undo } = choices;
   const keys = useMemo(
     (): HotkeyMap => (newest === undefined ? NO_KEYS : { u: () => undo(newest.id) }),

@@ -16,6 +16,14 @@ async function gone(query: () => Element | null): Promise<void> {
   });
 }
 
+/** Answers wait a few seconds with Undo; Now applies the newest one at once, as a person in a hurry would. */
+async function answerNow(view: {
+  findAllByRole: (role: string, options: { name: string }) => Promise<HTMLElement[]>;
+}) {
+  const buttons = await view.findAllByRole("button", { name: "Now" });
+  fireEvent.click(buttons.at(0) ?? document.body);
+}
+
 function seedDecision(extra: Record<string, unknown> = {}) {
   return server.act(c.decisionAsk, {
     title: "Which queue?",
@@ -57,6 +65,7 @@ describe("the feed", () => {
       target: { value: "Already deployed" },
     });
     fireEvent.click(view.getByRole("button", { name: "Decide" }));
+    await answerNow(view);
 
     await gone(() => view.queryByRole("heading", { name: "Which queue?" }));
 
@@ -70,7 +79,8 @@ describe("the feed", () => {
     });
     await within(view.getByRole("feed")).findByText(/decided: "Redis"/);
     expect(server.act(c.driftList, {}).map((drift) => drift.rule)).toEqual(["decision-project-sync"]);
-    expect(server.calls).toContain("decision.resolve");
+    // The answer went through the Undo window and was applied as the developer, through the dashboard.
+    expect(server.calls).toContain("choice.make");
   });
 
   test("a decision made elsewhere can be marked so while deciding in place", async () => {
@@ -80,6 +90,7 @@ describe("the feed", () => {
     fireEvent.click(view.getByRole("button", { name: /SQS/ }));
     fireEvent.click(view.getByRole("checkbox", { name: "decided elsewhere" }));
     fireEvent.click(view.getByRole("button", { name: "Decide" }));
+    await answerNow(view);
     await waitFor(() =>
       expect(server.act(c.decisionList, { query: `ref:${decision.ref}` })[0]?.channel).toBe("out_of_band"),
     );
@@ -93,6 +104,7 @@ describe("the feed", () => {
     server.act(c.decisionUpdate, { ref: decision.ref, options: [{ key: "kafka", label: "Kafka" }] });
     fireEvent.click(view.getByRole("button", { name: /Redis/ }));
     fireEvent.click(view.getByRole("button", { name: "Decide" }));
+    await answerNow(view);
     const alert = await view.findByRole("alert");
     expect(alert.textContent).toContain('no option "redis"');
     view.getByRole("heading", { name: "Which queue?" });
@@ -119,6 +131,7 @@ describe("the feed", () => {
       expect(view.getByRole("button", { name: /Redis/ }).getAttribute("aria-pressed")).toBe("true"),
     );
     fireEvent.keyDown(window, { key: "Enter" });
+    await answerNow(view);
     await waitFor(() =>
       expect(server.act(c.decisionList, { query: `ref:${decision.ref}` })[0]?.chosenOption).toBe("redis"),
     );
@@ -159,6 +172,7 @@ describe("the feed", () => {
 
     fireEvent.keyDown(window, { key: "1" });
     fireEvent.keyDown(window, { key: "Enter" });
+    await answerNow(view);
     await waitFor(() =>
       expect(server.act(c.decisionList, { query: `ref:${first.ref}` })[0]?.status).toBe("decided"),
     );
@@ -206,6 +220,7 @@ describe("the feed", () => {
       expect(panel.getByRole("button", { name: /SQS/ }).getAttribute("aria-pressed")).toBe("true"),
     );
     fireEvent.keyDown(window, { key: "Enter" });
+    await answerNow(view);
     await waitFor(() =>
       expect(server.act(c.decisionList, { query: `ref:${other.ref}` })[0]?.status).toBe("decided"),
     );
@@ -235,6 +250,7 @@ describe("the feed", () => {
       expect(view.getByRole("button", { name: /SQS/ }).getAttribute("aria-pressed")).toBe("true"),
     );
     fireEvent.keyDown(window, { key: "Enter" });
+    await answerNow(view);
     await waitFor(() =>
       expect(server.act(c.decisionList, { query: `ref:${second.ref}` })[0]?.status).toBe("decided"),
     );
@@ -254,6 +270,7 @@ describe("the feed", () => {
 
     fireEvent.click(view.getByRole("button", { name: /SQS/ }));
     fireEvent.click(view.getByRole("button", { name: "Decide" }));
+    await answerNow(view);
     await waitFor(() =>
       expect(server.act(c.decisionList, { query: `ref:${second.ref}` })[0]?.status).toBe("decided"),
     );
@@ -272,6 +289,7 @@ describe("the feed", () => {
     expect(document.activeElement).toBe(note);
     fireEvent.change(note, { target: { value: "Neither, use Kafka" } });
     fireEvent.click(decide);
+    await answerNow(view);
 
     await waitFor(() =>
       expect(server.act(c.decisionList, { query: `ref:${decision.ref}` })[0]).toMatchObject({
@@ -291,6 +309,7 @@ describe("the feed", () => {
     fireEvent.click(view.getByRole("button", { name: /SQS/ }));
     expect(view.getByRole("button", { name: /Something else/ }).getAttribute("aria-pressed")).toBe("false");
     fireEvent.click(view.getByRole("button", { name: "Decide" }));
+    await answerNow(view);
     await waitFor(() =>
       expect(server.act(c.decisionList, { query: `ref:${decision.ref}` })[0]?.chosenOption).toBe("sqs"),
     );
@@ -669,6 +688,7 @@ describe("the inspector", () => {
     await panel.findByRole("button", { name: /SQS/ });
     fireEvent.click(panel.getByRole("button", { name: /SQS/ }));
     fireEvent.click(panel.getByRole("button", { name: "Decide" }));
+    await answerNow(view);
     await panel.findByText("Decided by");
     panel.getByRole("button", { name: "Reopen" });
 

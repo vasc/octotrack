@@ -104,3 +104,21 @@ describe("drafts", () => {
     expect(w.tracker.call(c.draftGet, { key: "task:OCT-7" }, w.dev).text).toBeNull();
   });
 });
+
+describe("a choice that failed", () => {
+  test("stays listed with why until it is dismissed", () => {
+    const w = world();
+    const doomed = w.tracker.call(
+      c.choiceMake,
+      { op: "line.reject", input: { ref: w.line.ref }, summary: "Not a line" },
+      w.dev,
+    );
+    w.later(6000);
+    w.tracker.applyDueChoices();
+    const listed = w.tracker.call(c.choiceList, {}, w.dev);
+    expect(listed.map((choice) => [choice.id, choice.state])).toEqual([[doomed.id, "failed"]]);
+    expect(listed[0]?.error).toContain("cannot be rejected");
+    w.tracker.call(c.choiceUndo, { id: doomed.id }, w.dev);
+    expect(w.tracker.call(c.choiceList, {}, w.dev)).toEqual([]);
+  });
+});
