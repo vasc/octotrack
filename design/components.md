@@ -102,35 +102,35 @@ right, so there "Nothing to update" is the only answer on offer.
 Home is one list: every line in the developer's order, with what each needs from them in place. See
 [patterns.md](patterns.md) and the E · One list boards on the design canvas.
 
-| Component        | Kind       | What it is                                                                                                                                            |
-| ---------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `HomeCounts`     | Pure       | What waits on the developer: urgent, to answer, to do, to accept, to step in, each going to its first item. Zeros left out |
-| `HomeSection`    | Pure       | A named region of home with its count and what it means                                                                                               |
-| `WorkingLine`    | Pure       | A line being worked on: its number, title, meta, headline, a case for done, and its items                                                             |
-| `LineMeta`       | Pure       | One row of facts: who is on it, waiting on you, its plan step                                                                                         |
-| `ForYouRow`      | Pure       | A question or task as one row that opens it                                                                                                           |
-| `ForYouItem`     | Structural | One thing waiting: opened in full with focus, else its row                                                                                            |
-| `LineProposalCard` | Pure     | An agent's proposal about a line, opened: that it is done (It is done, Not yet… asking what is missing), or a new done when (Accept, Keep the one there is) |
-| `TaskCard`       | Pure       | A task opened: where, what to report, and Done… or Can't do it…, each asking for its words                                                            |
-| `StepIn`         | Pure       | A working line nobody could be found for, in red: why, and the action that fits (Set its checkout…, Try now, Start one anyway), with Table it… and I'll own it |
-| `UpNextRow`      | Pure       | A line up next: what it holds, how far scoping got, its done when, and Start                                                                          |
-| `ProposalCard`   | Pure       | A proposed line with the agent's case, and Start, Up next, Table…, Fold into… (a button per line), Not a line; Drop for a tabled line back to look at |
-| `FoldedSection`  | Pure       | Tabled and done lines folded to one row that names them, until shown                                                                                  |
-| `QuietRow`       | Pure       | A tabled or finished line, opened: why it waits, and Start or Up next                                                                                 |
-| `ReorderButtons` | Pure       | To the top, up and down within a section, in Reorder mode |
-| `HomePage`       | Structural | Home: the header, the focus, and the sections |
-| `WorkingSection` | Structural | Working on: each line with Step in, its first item opened or as a row, the rest one row away, folded on a phone or at a place |
-| `WaitingSections` | Structural | Up next, Proposed, Tabled and Done lately, with the Start sheet for a line that waited |
-| `SpreadThin`     | Pure       | Past six working lines, what spreading thin costs: a nudge, never a cap |
-| `AtPicker`       | Pure       | I'm at…: the developer's places as buttons; Leave once at one |
-| `AtSection`      | Pure       | At a place: every task for it, each with its choices |
-| `TaskItem`       | Structural | A task opened, with what is typed kept as a draft |
-| `StartSheet`     | Structural | Loads what a waiting line holds before it starts |
-| `StartSheetView` | Pure       | Starting a line that waited: its current held items, a done when proposed meanwhile, Start now |
-| `FirstRun`       | Pure       | Before anything is placed: accept the agents' recommended placements in one choice                                                                    |
-| `PushToggle`     | Pure       | Whether this device is buzzed, and Buzz this device to turn it on                                                                                     |
-| `TableForm`      | Pure       | Asks why before tabling, since a tabled line always says why, and an optional date to look again                                                  |
-| `AddLineForm`    | Pure       | A new line with its done-when sentence. It joins the end of up next                                                                                   |
+| Component          | Kind       | What it is                                                                                                                                                     |
+| ------------------ | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `HomeCounts`       | Pure       | What waits on the developer: urgent, to answer, to do, to accept, to step in, each going to its first item. Zeros left out                                     |
+| `HomeSection`      | Pure       | A named region of home with its count and what it means                                                                                                        |
+| `WorkingLine`      | Pure       | A line being worked on: its number, title, meta, headline, a case for done, and its items                                                                      |
+| `LineMeta`         | Pure       | One row of facts: who is on it, waiting on you, its plan step                                                                                                  |
+| `ForYouRow`        | Pure       | A question or task as one row that opens it                                                                                                                    |
+| `ForYouItem`       | Structural | One thing waiting: opened in full with focus, else its row                                                                                                     |
+| `LineProposalCard` | Pure       | An agent's proposal about a line, opened: that it is done (It is done, Not yet… asking what is missing), or a new done when (Accept, Keep the one there is)    |
+| `TaskCard`         | Pure       | A task opened: where, what to report, and Done… or Can't do it…, each asking for its words                                                                     |
+| `StepIn`           | Pure       | A working line nobody could be found for, in red: why, and the action that fits (Set its checkout…, Try now, Start one anyway), with Table it… and I'll own it |
+| `UpNextRow`        | Pure       | A line up next: what it holds, how far scoping got, its done when, and Start                                                                                   |
+| `ProposalCard`     | Pure       | A proposed line with the agent's case, and Start, Up next, Table…, Fold into… (a button per line), Not a line; Drop for a tabled line back to look at          |
+| `FoldedSection`    | Pure       | Tabled and done lines folded to one row that names them, until shown                                                                                           |
+| `QuietRow`         | Pure       | A tabled or finished line, opened: why it waits, and Start or Up next                                                                                          |
+| `ReorderButtons`   | Pure       | To the top, up and down within a section, in Reorder mode                                                                                                      |
+| `HomePage`         | Structural | Home: the header, the focus, and the sections                                                                                                                  |
+| `WorkingSection`   | Structural | Working on: each line with Step in, its first item opened or as a row, the rest one row away, folded on a phone or at a place                                  |
+| `WaitingSections`  | Structural | Up next, Proposed, Tabled and Done lately, with the Start sheet for a line that waited                                                                         |
+| `SpreadThin`       | Pure       | Past six working lines, what spreading thin costs: a nudge, never a cap                                                                                        |
+| `AtPicker`         | Pure       | I'm at…: the developer's places as buttons; Leave once at one                                                                                                  |
+| `AtSection`        | Pure       | At a place: every task for it, each with its choices                                                                                                           |
+| `TaskItem`         | Structural | A task opened, with what is typed kept as a draft                                                                                                              |
+| `StartSheet`       | Structural | Loads what a waiting line holds before it starts                                                                                                               |
+| `StartSheetView`   | Pure       | Starting a line that waited: its current held items, a done when proposed meanwhile, Start now                                                                 |
+| `FirstRun`         | Pure       | Before anything is placed: accept the agents' recommended placements in one choice                                                                             |
+| `PushToggle`       | Pure       | Whether this device is buzzed, and Buzz this device to turn it on                                                                                              |
+| `TableForm`        | Pure       | Asks why before tabling, since a tabled line always says why, and an optional date to look again                                                               |
+| `AddLineForm`      | Pure       | A new line with its done-when sentence. It joins the end of up next                                                                                            |
 
 ## Agents: `agents/`
 
@@ -155,23 +155,23 @@ Home is one list: every line in the developer's order, with what each needs from
 
 Opens from any ref, in the rail, without leaving the page.
 
-| Component        | Kind       | What it is                                                                                 |
-| ---------------- | ---------- | ------------------------------------------------------------------------------------------ |
-| `EntityHeader`   | Pure       | Ref, kind, status, title and close                                                         |
-| `KeyValues`      | Pure       | Label and value pairs. Empty values are left out                                           |
-| `LinkList`       | Pure       | Connections, worded from this item's point of view: "blocked by", not "blocks"             |
-| `HistoryList`    | Pure       | What has happened to this item                                                             |
-| `PrPanel`        | Pure       | A pull request's details                                                                   |
-| `LinePanel`      | Pure       | A line of work: its state, what finishes it, and why it waits if it does                   |
+| Component        | Kind       | What it is                                                                                                 |
+| ---------------- | ---------- | ---------------------------------------------------------------------------------------------------------- |
+| `EntityHeader`   | Pure       | Ref, kind, status, title and close                                                                         |
+| `KeyValues`      | Pure       | Label and value pairs. Empty values are left out                                                           |
+| `LinkList`       | Pure       | Connections, worded from this item's point of view: "blocked by", not "blocks"                             |
+| `HistoryList`    | Pure       | What has happened to this item                                                                             |
+| `PrPanel`        | Pure       | A pull request's details                                                                                   |
+| `LinePanel`      | Pure       | A line of work: its state, what finishes it, and why it waits if it does                                   |
 | `LineActions`    | Pure       | What the developer can do with a line: place, table, finish, own, stop its owner, and answer its proposals |
-| `LinePanelItem`  | Structural | A line in the inspector with its actions, Tell or the developer's own box, marked seen when it opens |
-| `TellBox`        | Pure       | Tell: a free message to the line's owner, named in its label; empty, a nudge               |
-| `OwnWorkBox`     | Pure       | On a line the developer owns, one growing box that adds a task or a note                   |
-| `EntityBody`     | Pure       | Picks the right body for the kind of item                                                  |
-| `DecisionPanel`  | Structural | An open decision as a card, or a closed one as its record                                  |
-| `IssuePanel`     | Structural | An issue's details, with its status select                                                 |
-| `UpdatesSection` | Structural | Updates on this item, and a box to post one                                                |
-| `EntityPanel`    | Structural | Loads it all                                                                               |
+| `LinePanelItem`  | Structural | A line in the inspector with its actions, Tell or the developer's own box, marked seen when it opens       |
+| `TellBox`        | Pure       | Tell: a free message to the line's owner, named in its label; empty, a nudge                               |
+| `OwnWorkBox`     | Pure       | On a line the developer owns, one growing box that adds a task or a note                                   |
+| `EntityBody`     | Pure       | Picks the right body for the kind of item                                                                  |
+| `DecisionPanel`  | Structural | An open decision as a card, or a closed one as its record                                                  |
+| `IssuePanel`     | Structural | An issue's details, with its status select                                                                 |
+| `UpdatesSection` | Structural | Updates on this item, and a box to post one                                                                |
+| `EntityPanel`    | Structural | Loads it all                                                                                               |
 
 ## Also in the language, not components
 
