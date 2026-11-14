@@ -35,10 +35,11 @@ const QUESTION = decisionCard({
 });
 const TASK = issue({
   ref: "OCT-7",
-  title: "Answer one question from the desktop app",
+  title: "Measure the board and its holes",
   assignee: "dev",
-  place: "the Mac",
-  outcome: "Did it wake?",
+  place: "the bench",
+  outcome: "In mm, with your calipers on the real parts.",
+  fields: ["Length", "Holes"],
 });
 
 /** Lines of work: home's sections, a line in the inspector, and what waits on the developer. */
@@ -104,7 +105,17 @@ export function LinesGallery() {
       </Example>
       <Example label="A task, one row, and opened">
         <ForYouRow item={{ kind: "task", task: TASK }} onOpen={NOOP} />
-        <TaskCard task={TASK} words="" onWords={NOOP} why="" onWhy={NOOP} onDone={NOOP} onCant={NOOP} />
+        <TaskCard
+          task={TASK}
+          words=""
+          onWords={NOOP}
+          values={{ Length: "26.0", Holes: "20.3" }}
+          onValue={NOOP}
+          why=""
+          onWhy={NOOP}
+          onDone={NOOP}
+          onCant={NOOP}
+        />
       </Example>
       <Example label="Spread thin">
         <SpreadThin working={8} noOwner={2} waiting={3} />

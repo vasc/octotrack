@@ -4,6 +4,8 @@ import { validateQuery } from "../src/hooks/useFilter.ts";
 import { dayLabel, filterTerm, humanize, splitRefs, timeAgo, timeLabel, toneOf } from "../src/lib/format.ts";
 import { nextFocus } from "../src/lib/focus.ts";
 import { heldOnTabled } from "../src/lib/lines.ts";
+import { taskOutcome } from "../src/lib/tasks.ts";
+import { issue } from "../src/design/fixtures.ts";
 import { closeEntity, navigate, openEntity, setParams } from "../src/lib/router.ts";
 
 describe("suggest", () => {
@@ -161,5 +163,27 @@ describe("heldOnTabled", () => {
 
   test("names only what there is", () => {
     expect(heldOnTabled({ tabled: [{ ref: "L-1" }], lines: { "L-1": held(0, 3) } })).toBe("3 tasks held");
+  });
+});
+
+describe("taskOutcome", () => {
+  const named = issue({ outcome: "In mm", fields: ["Length", "Holes"] });
+
+  test("a task with named outcomes is ready only with every one filled, and sends them trimmed with any note", () => {
+    expect(taskOutcome(named, { Length: "41" }, "")).toBeNull();
+    expect(taskOutcome(named, { Length: "41", Holes: " " }, "")).toBeNull();
+    expect(taskOutcome(named, { Length: " 41 ", Holes: "38" }, "")).toEqual({
+      values: { Length: "41", Holes: "38" },
+    });
+    expect(taskOutcome(named, { Length: "41", Holes: "38", Old: "x" }, " Warped ")).toEqual({
+      values: { Length: "41", Holes: "38" },
+      result: "Warped",
+    });
+  });
+
+  test("a task with one outcome needs words; one of the developer's own needs none", () => {
+    expect(taskOutcome(issue({ outcome: "Grams" }), {}, " ")).toBeNull();
+    expect(taskOutcome(issue({ outcome: "Grams" }), {}, " 212 g ")).toEqual({ result: "212 g" });
+    expect(taskOutcome(issue({ outcome: "" }), {}, "")).toEqual({ result: "Done" });
   });
 });

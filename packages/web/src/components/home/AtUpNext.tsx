@@ -1,3 +1,4 @@
+import type { TaskOutcome } from "../../lib/tasks.ts";
 import type { Issue, Line } from "@octotrack/core/schemas";
 import { timeAgo } from "../../lib/format.ts";
 import { FocusTarget } from "./FocusTarget.tsx";
@@ -21,7 +22,7 @@ export function AtUpNext({
   /** The number of the first up-next line on the list. */
   firstNumber: number;
   focus: string | null;
-  onTaskDone(ref: string, result: string): void;
+  onTaskDone(ref: string, outcome: TaskOutcome): void;
   onTaskCant(ref: string, why: string): void;
 }) {
   if (tasks.length === 0) return null;

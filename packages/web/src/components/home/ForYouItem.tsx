@@ -1,3 +1,4 @@
+import type { TaskOutcome } from "../../lib/tasks.ts";
 import type { ForYou } from "@octotrack/core/schemas";
 import { DecisionCardItem } from "../decisions/DecisionCardItem.tsx";
 import { ForYouRow } from "./ForYouRow.tsx";
@@ -26,7 +27,7 @@ export function ForYouItem({
   /** Whether its keys act: not while its answer waits with Undo. */
   armed: boolean;
   onOpen(ref: string): void;
-  onTaskDone(ref: string, result: string): void;
+  onTaskDone(ref: string, outcome: TaskOutcome): void;
   onTaskCant(ref: string, why: string): void;
   onLineDone(line: string): void;
   onNotYet(line: string, why: string): void;

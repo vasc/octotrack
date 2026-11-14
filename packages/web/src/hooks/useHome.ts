@@ -1,3 +1,4 @@
+import type { TaskOutcome } from "../lib/tasks.ts";
 import { homeLines } from "../lib/lines.ts";
 import { contracts } from "@octotrack/core/contracts";
 import type { HomeView, Line } from "@octotrack/core/schemas";
@@ -130,8 +131,8 @@ export function useHome() {
         { refs },
         `Placing ${refs.length} proposal${refs.length === 1 ? "" : "s"} where their agents recommend`,
       ),
-    taskDone: (ref: string, result: string) =>
-      choices.make(contracts.taskDone.name, { ref, result }, `Sending ${ref} as done`),
+    taskDone: (ref: string, outcome: TaskOutcome) =>
+      choices.make(contracts.taskDone.name, { ref, ...outcome }, `Sending ${ref} as done`),
     taskCant: (ref: string, why: string) =>
       choices.make(contracts.taskCant.name, { ref, why }, `Closing ${ref} as not doable`),
     /** Dragged onto another line: it lands before it. */

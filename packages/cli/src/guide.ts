@@ -79,10 +79,12 @@ their next command, and wakes them if they are asleep. Urgent is for working lin
 A measurement, a login, a play-test: file a task, at one of the developer's places.
 
   octo place list
-  octo task file "Measure the grip" --place "the bench" --outcome "The five numbers the model assumes, in mm"
+  octo task file "Measure the grip" --place "the bench" --outcome "The five numbers the model assumes, in mm" \\
+    --field Length --field Holes --field "USB-C grip" --field Flange --field Clearance
   octo decision ask "Which board?" ... --waits-for PANEL-9     a question the task would settle waits behind it
 
-The task frees the issue you hold. Its outcome comes back to you like an answer.
+The task frees the issue you hold. Name each thing to send back with --field: the developer gets a box for each, and
+Done needs them all. Its outcome comes back to you like an answer, one "Name: value" per field.
 
 ## Proposing lines
 

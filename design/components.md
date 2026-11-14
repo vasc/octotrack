@@ -84,53 +84,54 @@ right, so there "Nothing to update" is the only answer on offer.
 Home is one list: every line in the developer's order, with what each needs from them in place. See
 [patterns.md](patterns.md) and the E · One list boards on the design canvas.
 
-| Component          | Kind       | What it is                                                                                                                                                       |
-| ------------------ | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `HomeSection`      | Pure       | A named region of home with its count and what it means                                                                                                          |
-| `WorkingLine`      | Pure       | A line being worked on: its number, title, meta, headline with how many changes came after it (a link to the line), a case for done, and its items               |
-| `LineMeta`         | Pure       | One row of facts: who is on it, waiting on you, held work being re-confirmed, its plan step                                                                      |
-| `ForYouRow`        | Pure       | A question or task as one row that opens it                                                                                                                      |
-| `FocusTarget`      | Pure       | One item in home's focus order that the browser can focus: outlined, its numbered choices drawn                                                                  |
-| `ForYouItem`       | Structural | One thing waiting: opened in full with focus, else its row                                                                                                       |
-| `LineForYouItem`   | Structural | A working line's item as a focus target, wired to home's actions                                                                                                 |
-| `LineForYou`       | Pure       | What waits on the developer on a working line: the first opened, the rest one row away, or on a phone fold, "N for you"                                          |
-| `AtPlaceItems`     | Pure       | A working line while at a place: that place's tasks open, the focused item open, the rest folded to one sentence                                                 |
-| `MoreForYou`       | Pure       | The rest of what a line needs from you, one link away, saying what it is: "+1 more for you: a task at the Mac"                                                   |
-| `LineProposalCard` | Pure       | An agent's proposal about a line, opened: done, with the done when it meets (Done, Not yet), or a changed done when, old and new with why (Accept, Keep current) |
-| `AnswerStatus`     | Pure       | An answer given on a line lately and what became of it, in one sentence, with Change answer                                                                      |
-| `TaskCard`         | Pure       | A task opened: where, what to report, and Done or Can't do it, each asking for its words                                                                         |
-| `StepIn`           | Pure       | A working line nobody could be found for, in red: why, and the action that fits (Set its checkout, Try now, Start one anyway), with Table it and I'll own it     |
-| `LineStepIn`       | Pure       | Whether a working line shows Step in, and which fixes it offers given how its start went; folded to one row at a place                                           |
-| `CheckoutForm`     | Pure       | Set its checkout: where this machine has a repo, after a clone failed                                                                                            |
-| `UpNextRow`        | Pure       | A line up next: what it holds and how much of it is being re-confirmed, how far scoping got, its done when, and Start                                            |
-| `ProposalCard`     | Pure       | A proposed line with the agent's case, and Start, Up next, Table, Fold into (a button per line), Not a line; Drop for a tabled line back to look at              |
-| `ProposalCase`     | Pure       | Why a proposal should go where its agent recommends and where Up next would put it; for a line back from tabled, the developer's reason                          |
-| `ProposalChoices`  | Pure       | A proposal's numbered choices, the recommended one filled: Start, Up next, Table, Fold into, Not a line; or Drop for a line back from tabled                     |
-| `FoldPicker`       | Pure       | Fold into: the open lines as numbered buttons, never a select                                                                                                    |
-| `FoldedSection`    | Pure       | Tabled and done lines folded to one row that names them, until shown                                                                                             |
-| `QuietRow`         | Pure       | A tabled or finished line, opened: why it waits, and Start or Up next                                                                                            |
-| `LineHandle`       | Pure       | The one reorder control on a line: drag it onto another, or open it for Move to top, Up, Down and To up next                                                     |
-| `Icon`             | Pure       | The few icons, inline, in the text's colour: plus, pin, keyboard, grip, chevron                                                                                  |
-| `HomePage`         | Structural | Home: the header, the focus, and the sections                                                                                                                    |
-| `QuestionList`     | Pure       | Questions apart from the lines: urgent ones at the very top, ones from before lines below every line; a row until focused                                        |
-| `RecordAnswers`    | Structural | Record answers, behind r: answers given elsewhere, one per line, each placed on its question                                                                     |
-| `WorkingSection`   | Structural | Working on: each line with Step in, its first item opened or as a row, the rest one row away, folded on a phone or at a place                                    |
-| `WaitingSections`  | Structural | Up next, Proposed, Tabled and Done lately, with the Start sheet for a line that waited                                                                           |
-| `SpreadThin`       | Pure       | Past six working lines, in Working on's header: how many have no owner and how many wait on you; a nudge, never a cap                                            |
-| `NothingNeedsYou`  | Pure       | The calm state: nothing needs you, who is working, and where the next ask likely comes from                                                                      |
-| `KeyHelp`          | Pure       | Every key on home, as one list behind ?                                                                                                                          |
-| `AtSection`        | Pure       | I'm at a place: where, that everything else is folded, when it ends by itself, and Leave                                                                         |
-| `FoldedItems`      | Pure       | At a place, the rest of a line's items folded to one link: 1 question · 1 task at the Mac, folded                                                                |
-| `AtUpNext`         | Pure       | While you're here, from lines up next: a place's tasks on lines not started yet, each with its choices                                                           |
-| `TaskItem`         | Structural | A task opened, with what is typed kept as a draft                                                                                                                |
-| `StartSheet`       | Structural | Loads what a waiting line holds before it starts                                                                                                                 |
-| `StartSheetView`   | Pure       | Starting a line that waited: a changed done when and held questions, numbered in one run and settled here, the tasks it holds, then Start                        |
-| `DoneWhenChanged`  | Pure       | In the Start sheet, a done when an agent sharpened while the line waited: old and new with why, Accept or Keep current                                           |
-| `HeldQuestion`     | Pure       | In the Start sheet, a question held while the line waited: its options numbered in the sheet's one run                                                           |
-| `FirstRun`         | Pure       | Before anything is placed: what the agents are proposing, and accepting their recommended placements in one choice, with Undo                                    |
-| `PushToggle`       | Pure       | Whether this device is buzzed, and Buzz this device to turn it on                                                                                                |
-| `TableForm`        | Pure       | Tabling a line: why, an optional date to look again, and what tabling holds and winds down                                                                       |
-| `NewLineCard`      | Pure       | A line the developer adds, as E-Propose draws it: what it is, done when, its repos or that it is theirs; Add to up next, Start or Table                          |
+| Component          | Kind       | What it is                                                                                                                                                          |
+| ------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `HomeSection`      | Pure       | A named region of home with its count and what it means                                                                                                             |
+| `WorkingLine`      | Pure       | A line being worked on: its number, title, meta, headline with how many changes came after it (a link to the line), a case for done, and its items                  |
+| `LineMeta`         | Pure       | One row of facts: who is on it, waiting on you, held work being re-confirmed, its plan step                                                                         |
+| `ForYouRow`        | Pure       | A question or task as one row that opens it                                                                                                                         |
+| `FocusTarget`      | Pure       | One item in home's focus order that the browser can focus: outlined, its numbered choices drawn                                                                     |
+| `ForYouItem`       | Structural | One thing waiting: opened in full with focus, else its row                                                                                                          |
+| `LineForYouItem`   | Structural | A working line's item as a focus target, wired to home's actions                                                                                                    |
+| `LineForYou`       | Pure       | What waits on the developer on a working line: the first opened, the rest one row away, or on a phone fold, "N for you"                                             |
+| `AtPlaceItems`     | Pure       | A working line while at a place: that place's tasks open, the focused item open, the rest folded to one sentence                                                    |
+| `MoreForYou`       | Pure       | The rest of what a line needs from you, one link away, saying what it is: "+1 more for you: a task at the Mac"                                                      |
+| `LineProposalCard` | Pure       | An agent's proposal about a line, opened: done, with the done when it meets (Done, Not yet), or a changed done when, old and new with why (Accept, Keep current)    |
+| `AnswerStatus`     | Pure       | An answer given on a line lately and what became of it, in one sentence, with Change answer                                                                         |
+| `TaskCard`         | Pure       | A task opened: where, what to report (one box, or a box per named outcome and a note, with how many are filled), and Done or Can't do it, each asking for its words |
+| `OutcomeFields`    | Pure       | A task's named outcomes, a short box for each in a row, then a note for anything that surprised                                                                     |
+| `StepIn`           | Pure       | A working line nobody could be found for, in red: why, and the action that fits (Set its checkout, Try now, Start one anyway), with Table it and I'll own it        |
+| `LineStepIn`       | Pure       | Whether a working line shows Step in, and which fixes it offers given how its start went; folded to one row at a place                                              |
+| `CheckoutForm`     | Pure       | Set its checkout: where this machine has a repo, after a clone failed                                                                                               |
+| `UpNextRow`        | Pure       | A line up next: what it holds and how much of it is being re-confirmed, how far scoping got, its done when, and Start                                               |
+| `ProposalCard`     | Pure       | A proposed line with the agent's case, and Start, Up next, Table, Fold into (a button per line), Not a line; Drop for a tabled line back to look at                 |
+| `ProposalCase`     | Pure       | Why a proposal should go where its agent recommends and where Up next would put it; for a line back from tabled, the developer's reason                             |
+| `ProposalChoices`  | Pure       | A proposal's numbered choices, the recommended one filled: Start, Up next, Table, Fold into, Not a line; or Drop for a line back from tabled                        |
+| `FoldPicker`       | Pure       | Fold into: the open lines as numbered buttons, never a select                                                                                                       |
+| `FoldedSection`    | Pure       | Tabled and done lines folded to one row that names them, until shown                                                                                                |
+| `QuietRow`         | Pure       | A tabled or finished line, opened: why it waits, and Start or Up next                                                                                               |
+| `LineHandle`       | Pure       | The one reorder control on a line: drag it onto another, or open it for Move to top, Up, Down and To up next                                                        |
+| `Icon`             | Pure       | The few icons, inline, in the text's colour: plus, pin, keyboard, grip, chevron                                                                                     |
+| `HomePage`         | Structural | Home: the header, the focus, and the sections                                                                                                                       |
+| `QuestionList`     | Pure       | Questions apart from the lines: urgent ones at the very top, ones from before lines below every line; a row until focused                                           |
+| `RecordAnswers`    | Structural | Record answers, behind r: answers given elsewhere, one per line, each placed on its question                                                                        |
+| `WorkingSection`   | Structural | Working on: each line with Step in, its first item opened or as a row, the rest one row away, folded on a phone or at a place                                       |
+| `WaitingSections`  | Structural | Up next, Proposed, Tabled and Done lately, with the Start sheet for a line that waited                                                                              |
+| `SpreadThin`       | Pure       | Past six working lines, in Working on's header: how many have no owner and how many wait on you; a nudge, never a cap                                               |
+| `NothingNeedsYou`  | Pure       | The calm state: nothing needs you, who is working, and where the next ask likely comes from                                                                         |
+| `KeyHelp`          | Pure       | Every key on home, as one list behind ?                                                                                                                             |
+| `AtSection`        | Pure       | I'm at a place: where, that everything else is folded, when it ends by itself, and Leave                                                                            |
+| `FoldedItems`      | Pure       | At a place, the rest of a line's items folded to one link: 1 question · 1 task at the Mac, folded                                                                   |
+| `AtUpNext`         | Pure       | While you're here, from lines up next: a place's tasks on lines not started yet, each with its choices                                                              |
+| `TaskItem`         | Structural | A task opened, with what is typed kept as a draft                                                                                                                   |
+| `StartSheet`       | Structural | Loads what a waiting line holds before it starts                                                                                                                    |
+| `StartSheetView`   | Pure       | Starting a line that waited: a changed done when and held questions, numbered in one run and settled here, the tasks it holds, then Start                           |
+| `DoneWhenChanged`  | Pure       | In the Start sheet, a done when an agent sharpened while the line waited: old and new with why, Accept or Keep current                                              |
+| `HeldQuestion`     | Pure       | In the Start sheet, a question held while the line waited: its options numbered in the sheet's one run                                                              |
+| `FirstRun`         | Pure       | Before anything is placed: what the agents are proposing, and accepting their recommended placements in one choice, with Undo                                       |
+| `PushToggle`       | Pure       | Whether this device is buzzed, and Buzz this device to turn it on                                                                                                   |
+| `TableForm`        | Pure       | Tabling a line: why, an optional date to look again, and what tabling holds and winds down                                                                          |
+| `NewLineCard`      | Pure       | A line the developer adds, as E-Propose draws it: what it is, done when, its repos or that it is theirs; Add to up next, Start or Table                             |
 
 ## Agents: `agents/`
 

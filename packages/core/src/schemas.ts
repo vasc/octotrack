@@ -118,6 +118,8 @@ export const Issue = z.object({
   /** A task, which is an issue for the developer: where it is done, and what to report when it is. */
   place: z.string().nullable(),
   outcome: z.string().nullable(),
+  /** A task's named outcomes, each sent back on its own; empty when the outcome is one answer. */
+  fields: z.array(z.string()),
   /** What the developer reported, or why it could not be done. */
   result: z.string().nullable(),
   /** When an agent last said a held task still stands. */

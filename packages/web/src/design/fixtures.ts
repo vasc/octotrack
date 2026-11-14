@@ -128,6 +128,7 @@ export function issue(overrides: Partial<Issue> = {}): Issue {
     step: null,
     place: null,
     outcome: null,
+    fields: [],
     result: null,
     confirmedAt: null,
     version: 1,

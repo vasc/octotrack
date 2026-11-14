@@ -5,6 +5,7 @@ import * as r from "../render.ts";
 import { compact, textOption } from "./shared.ts";
 
 const STRING = { type: "string" } as const;
+const MANY = { type: "string", multiple: true } as const;
 
 export const taskCommands: Command[] = [
   {
@@ -18,8 +19,12 @@ export const taskCommands: Command[] = [
       "body-file": { ...STRING, description: "Read details from a file, - for stdin" },
       line: { ...STRING, description: "The line it waits on. Default: yours" },
       frees: { ...STRING, description: "The issue it frees. Default: the one you hold" },
+      field: { ...MANY, description: "A named outcome, each sent back on its own; repeatable" },
     },
-    examples: ['octo task file "Measure the grip" --place "the bench" --outcome "The five numbers, in mm"'],
+    examples: [
+      'octo task file "Measure the grip" --place "the bench" --outcome "The five numbers, in mm"',
+      'octo task file "Measure the board" --place "the bench" --outcome "In mm" --field Length --field Holes',
+    ],
     ops: [c.taskFile.name],
     async run({ client, out }, args) {
       const place = args.str("place");
@@ -34,6 +39,7 @@ export const taskCommands: Command[] = [
           body: await textOption(args, "body"),
           line: args.str("line"),
           frees: args.str("frees"),
+          fields: args.list("field").length === 0 ? undefined : args.list("field"),
         }),
       );
       out.result(
@@ -45,14 +51,36 @@ export const taskCommands: Command[] = [
   },
   {
     path: ["task", "done"],
-    usage: "<REF> <outcome>",
+    usage: "<REF> [outcome]",
     summary: "Report a task's outcome; it goes to whoever holds the issue it frees (the developer)",
+    options: {
+      value: {
+        ...MANY,
+        description: "A named outcome as Name=value, each one the task asks for; repeatable",
+      },
+    },
+    examples: [
+      "octo task done PANEL-6 41 mm --me",
+      'octo task done PANEL-7 --value "Length=41 mm" --value Holes=38 --me',
+    ],
     ops: [c.taskDone.name],
     async run({ client, out }, args) {
-      const outcome = await client.call(c.taskDone, {
-        ref: args.requirePositional(0, "REF"),
-        result: args.positionals.slice(1).join(" "),
-      });
+      const values = Object.fromEntries(
+        args.list("value").map((pair) => {
+          const at = pair.indexOf("=");
+          if (at <= 0) throw new UsageError(`--value takes Name=value, not "${pair}"`);
+          return [pair.slice(0, at), pair.slice(at + 1)];
+        }),
+      );
+      const note = args.positionals.slice(1).join(" ");
+      const outcome = await client.call(
+        c.taskDone,
+        compact({
+          ref: args.requirePositional(0, "REF"),
+          result: note === "" ? undefined : note,
+          values: Object.keys(values).length === 0 ? undefined : values,
+        }),
+      );
       out.result(outcome, () => `${r.bold(outcome.data.ref)} done.`);
     },
   },

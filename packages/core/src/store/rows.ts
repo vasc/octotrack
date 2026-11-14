@@ -46,7 +46,7 @@ export const PlanStepRow = PlanStep;
 export const LineRepoRow = z.object({ line: z.string(), repo: z.string() });
 export const ClaimRow = LineClaim;
 export const NoticeRow = Notice.extend({ wakes: z.number().transform((value) => value !== 0) });
-export const IssueRow = Issue.extend({ labels: jsonColumn(StringList) });
+export const IssueRow = Issue.extend({ labels: jsonColumn(StringList), fields: jsonColumn(StringList) });
 export const IdeaRow = Idea.extend({ labels: jsonColumn(StringList) });
 export const DecisionRow = Decision.extend({ options: jsonColumn(z.array(DecisionOption)) });
 export const EventRow = FeedEvent.extend({

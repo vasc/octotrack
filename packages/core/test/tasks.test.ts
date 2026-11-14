@@ -135,6 +135,64 @@ describe("tasks: what only the developer can do", () => {
   });
 });
 
+describe("outcome fields", () => {
+  function measured(w: ReturnType<typeof world>) {
+    return w.as(w.owner, c.taskFile, {
+      title: "Measure the five numbers",
+      place: "the bench",
+      outcome: "What the model assumes, in mm.",
+      fields: ["Length", "Holes"],
+    });
+  }
+
+  test("a task names what to send back, and Done sends every one, with a note, to whoever holds what it frees", () => {
+    const w = world();
+    const task = measured(w);
+    expect(task.fields).toEqual(["Length", "Holes"]);
+    const done = w.as(w.dev, c.taskDone, {
+      ref: task.ref,
+      values: { Length: "41 mm", Holes: "38 mm" },
+      result: "The flange was warped.",
+    });
+    expect(done.status).toBe("done");
+    expect(done.result).toBe("- Length: 41 mm\n- Holes: 38 mm\n\nThe flange was warped.");
+    const heard = w
+      .notices(w.owner)
+      .map((notice) => notice.body)
+      .join(" ");
+    expect(heard).toContain("Length: 41 mm; Holes: 38 mm; The flange was warped.");
+  });
+
+  test("Done says which named outcomes are missing, and refuses a name the task does not have", () => {
+    const w = world();
+    const task = measured(w);
+    const missing = w.refusal(() => w.as(w.dev, c.taskDone, { ref: task.ref, values: { Length: "41 mm" } }));
+    expect([missing.code, missing.message]).toEqual(["invalid_input", `${task.ref} still needs: Holes`]);
+    const unknown = w.refusal(() =>
+      w.as(w.dev, c.taskDone, { ref: task.ref, values: { Length: "41", Holes: "38", Width: "9" } }),
+    );
+    expect([unknown.code, unknown.message]).toEqual(["invalid_input", `${task.ref} asks for no Width`]);
+  });
+
+  test("a task's names are distinct, and one with none needs words to be done", () => {
+    const w = world();
+    expect(
+      w.refusal(() =>
+        w.as(w.owner, c.taskFile, {
+          title: "Weigh it",
+          place: "the bench",
+          outcome: "Grams",
+          fields: ["G", "g"],
+        }),
+      ).code,
+    ).toBe("invalid_input");
+    const plain = w.as(w.owner, c.taskFile, { title: "Weigh it", place: "the bench", outcome: "Grams" });
+    expect(plain.fields).toEqual([]);
+    expect(w.refusal(() => w.as(w.dev, c.taskDone, { ref: plain.ref })).code).toBe("invalid_input");
+    expect(w.as(w.dev, c.taskDone, { ref: plain.ref, result: "212 g" }).result).toBe("212 g");
+  });
+});
+
 describe("held work on lines not being worked on", () => {
   test("is current for 7 days after it was asked or re-confirmed, and the next scoper re-confirms the rest", () => {
     const w = world();
