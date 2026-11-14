@@ -40,6 +40,7 @@ import {
   PushSubscription,
   RunnerClose,
   RunnerDue,
+  StartRole,
   RunnerStatus,
   RunnerWorktree,
   PrChecks,
@@ -205,14 +206,19 @@ export const contracts = {
   ),
   runnerDue: read(
     "runner.due",
-    "Working lines due a session the start command runs, up to the cap",
+    "Working lines due a session the start command runs, up to the cap: owners first, then helpers for unclaimed work",
     Empty,
     z.array(RunnerDue),
   ),
   runnerStart: write(
     "runner.start",
     "Record a session being started for a line, and give it its name",
-    z.strictObject({ line: z.string(), repo: z.string(), worktree: z.string().optional() }),
+    z.strictObject({
+      line: z.string(),
+      repo: z.string(),
+      worktree: z.string().optional(),
+      role: StartRole.optional(),
+    }),
     z.object({
       name: z.string(),
       line: z.string(),
@@ -271,8 +277,14 @@ export const contracts = {
   ),
   runnerStopRan: write(
     "runner.stop_ran",
-    "Record that the developer's stop command ran for a stopped agent",
-    z.strictObject({ name: z.string(), code: z.number().int(), output: z.string() }),
+    "Record that the developer's stop command ran for a stopped agent, or in watch mode that it would have",
+    z.strictObject({
+      name: z.string(),
+      /** Its exit code; negative when the runner did not run it, with why in output. */
+      code: z.number().int(),
+      output: z.string(),
+      dry: z.boolean().optional(),
+    }),
     z.object({ name: z.string() }),
   ),
   repoCheckout: write(

@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./build": "./src/build.ts",
+    "./env": "./src/env.ts",
     "./gh": "./src/gh.ts",
     "./paths": "./src/paths.ts"
   },

@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { type AgentWake, type Caller, contracts, type Decision, type Tracker } from "@octotrack/core";
 import { z } from "zod";
+import { childEnv } from "./env.ts";
+import { runProcess } from "./spawn.ts";
 
 const WakeAdapter = z.object({ command: z.array(z.string().min(1)).min(1) });
 const WakeAdapters = z.record(z.string(), WakeAdapter);
@@ -11,7 +13,11 @@ export interface WakeResult {
   stderr: string;
 }
 
-export type WakeRunner = (argv: readonly string[]) => Promise<WakeResult>;
+/** Runs a wake command; `env` says who the woken session is, which is all of its identity it gets. */
+export type WakeRunner = (
+  argv: readonly string[],
+  env: Readonly<Record<string, string>>,
+) => Promise<WakeResult>;
 
 const DISPATCHER: Caller = { actor: "octotrack", channel: "cli", system: true };
 const STDERR_KEPT = 300;
@@ -37,16 +43,13 @@ export function loadWakeAdapters(path: string): WakeAdapters {
   }
 }
 
-/** No shell is involved, so that nothing in an address or a message can be read as a command. */
-export const spawnWake: WakeRunner = async (argv) => {
-  const child = Bun.spawn([...argv], { stdin: "ignore", stdout: "ignore", stderr: "pipe" });
-  const deadline = setTimeout(() => child.kill("SIGKILL"), WAKE_DEADLINE_MS);
-  try {
-    const [exitCode, stderr] = await Promise.all([child.exited, new Response(child.stderr).text()]);
-    return { exitCode, stderr };
-  } finally {
-    clearTimeout(deadline);
-  }
+/**
+ * No shell is involved, so that nothing in an address or a message can be read as a command. The woken session gets
+ * its own name and never the server's: the server may have been started from another agent's shell.
+ */
+export const spawnWake: WakeRunner = async (argv, env) => {
+  const { code, stderr } = await runProcess(argv, { env: childEnv(env), deadlineMs: WAKE_DEADLINE_MS });
+  return { exitCode: code, stderr };
 };
 
 /** Says only that there is an answer. The agent reads it from the tracker, so tracker text never becomes a prompt. */
@@ -92,7 +95,7 @@ export function createWakeDispatcher(options: {
     record(decision.ref);
     try {
       const argv = argvFor(adapter.command, address.slice(split + 1), wakeMessage(decision.ref));
-      const { exitCode, stderr } = await run(argv);
+      const { exitCode, stderr } = await run(argv, { OCTO_AGENT: decision.requestedBy });
       if (exitCode !== 0) {
         record(decision.ref, `Exit ${exitCode}: ${stderr.trim().slice(0, STDERR_KEPT)}`);
       }
@@ -118,6 +121,7 @@ export function createWakeDispatcher(options: {
     try {
       const { exitCode, stderr } = await run(
         argvFor(adapter.command, due.address.slice(split + 1), due.message),
+        { OCTO_AGENT: due.agent },
       );
       if (exitCode !== 0) recordAgent(due.agent, `Exit ${exitCode}: ${stderr.trim().slice(0, STDERR_KEPT)}`);
     } catch (error) {
