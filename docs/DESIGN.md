@@ -295,35 +295,42 @@ Everything below is a design decision made from that, with its reasoning.
   on the line, so some agent takes it.
 - **The developer orders, answers, does, tells, stops and accepts.** Everything else belongs to the agents: issues,
   plans, pull requests, scoping, and keeping each line's summary true. Agents is a roster (name, repo, line and role,
-  last command, wake address, what it is doing) with nothing to act on: what needs the developer is on Lines.
+  last command, wake address, what it is doing) whose only action is Stop, or Lift on a stopped agent: what needs the
+  developer is on Lines. A line's panel also offers Stop on its owner, and I'll own it under More.
 - **Agents register, take, and release, all through commands.** An agent is one named session. Its first command
   registers its name, its repo from the git remote, its checkout path, and a wake address or none. It is running while
-  it has run a command or pushed in the last two hours, idle when running with no claim, and otherwise asleep (with a
-  wake address) or gone. `line take [REF]` is one atomic step that also claims the issue it hands out: the named line if
-  it is free, otherwise the highest working line that has work in the agent's repo and no owner; failing that, a
-  helper's place on the highest owned working line with work in its repo; failing that, scoping the highest unscoped
-  up-next line in its repo. Work is an open issue on the line, in that repo, not blocked, not the developer's, and not
-  claimed by another agent. Every command, every watch poll, and every push that pull request sync sees on an issue it
-  claimed renew its claims; `line release`, or two quiet hours, end them, and Stop ends them all. A lapsed owner that
-  comes back finds its next reply saying it is now a helper, and its summary writes refused. _Why:_ Octotrack sees only
-  commands and pull request sync, so every rule is stated in those; "the top line first" would pile every idle agent
-  onto line one; and one claim rule covers a clean exit, a crash and a session left asleep.
+  it has run a command or pushed in the last two hours, and otherwise asleep (with a wake address) or gone; it is idle
+  when it holds no claim, and reachable when it is in a watch poll or has a wake address. `line take [REF]` is one
+  atomic step that also claims the issue it hands out: the named line if it is free, otherwise the highest working line
+  that has work in the agent's repo and no owner; failing that, a helper's place on the highest owned working line with
+  work in its repo; failing that, scoping the highest unscoped up-next line in its repo. Work is an open issue on the
+  line, in that repo, not blocked, not the developer's, and not claimed by another agent. While all of a line's open
+  work waits on the developer, its owner keeps the line, asleep, and is woken by what the developer sends. While there
+  is agent work, every command, every watch poll, and every push that pull request sync sees on an issue it claimed
+  renew its claims; `line release`, two quiet hours, a failed wake, or Stop end them. A last owner whose first command
+  comes inside its window takes the line back without asking; one that comes back after another agent took the line is
+  told it is now a helper, and its summary writes are refused. _Why:_ Octotrack sees only commands and pull request
+  sync, so every rule is stated in those; "the top line first" would pile every idle agent onto line one; and a crash, a
+  clean exit and a line waiting on the developer each come out right without the developer.
 - **Each working line has one owner.** The owner writes the summary, files questions and tasks, proposes done, and is
   the one a Tell is for. Helpers may work under it, never writing the summary.
 - **Everything sent goes to the line, not the agent.** Answers, Tells and finished tasks wait in the line's inbox. The
-  owner is woken if it left a wake address; with no owner, the last owner is woken and has 10 minutes to take the line
-  back before anyone else is offered it, and otherwise whichever agent takes the line reads the inbox. Every reply to an
-  agent's command carries its unread notices (an answer, a Tell, a wind-down, a Stop), so even an agent that never
-  checks its inbox hears in time. _Why:_ questions stand alone, so any owner can act on their answers, and a dead owner
-  then holds nothing up. The session still decides "if it want to be reawaken", once, by leaving a wake address or not.
-- **A working line with work always gets an owner, without the developer.** In order: the last owner's 10 minutes, then
-  an idle agent with the repo, then one asleep, woken. If none has taken it after 30 minutes, Octotrack runs the start
-  command from the developer's local agent setup, in the checkout of the repo the current step is in, passing only the
-  line's ref so tracker text never becomes a prompt, up to a number of sessions the developer sets. Starting a line runs
-  the same steps at once. The line reaches Step in only when no start command is set (it then offers the command to
-  copy), the start failed, or the cap is reached, with Table it… and I'll own it beside. _Why:_ a line the developer
-  marked working should not sit idle for want of a click the tracker can make. _Trade-off:_ sessions are spent without
-  asking each time; the cap bounds that.
+  owner is woken if it left a wake address; a line with no owner gets one as below, and whoever takes it reads the
+  inbox. Every reply to an agent's command carries its unread notices (an answer, a Tell, a wind-down, a Stop), so even
+  an agent that never checks its inbox hears in time. _Why:_ questions stand alone, so any owner can act on their
+  answers, and a dead owner then holds nothing up. The session still decides "if it want to be reawaken", once, by
+  leaving a wake address or not.
+- **A working line with work always gets an owner, without the developer.** The search starts the moment a working line
+  has work and no owner: on a lapse, a release, Stop, Start, or a failed wake. In order: the last owner, woken, with 10
+  minutes of first refusal; then agents with the repo and no claim that can be reached now, the most recently active
+  first (one in a watch poll gets the offer in its poll reply, one with a wake address is woken; one with neither is
+  skipped). Each step ends as soon as it cannot succeed. When the steps are used up, or 30 minutes after the search
+  began, Octotrack runs the start command from the developer's local agent setup, in the checkout of the repo the
+  current step is in, passing only the line's ref so tracker text never becomes a prompt, up to a number of sessions the
+  developer sets. Starting a line runs the same steps at once. The line reaches Step in only when no start command is
+  set (it then offers the command to copy), the start failed, or the cap is reached, with Table it… and I'll own it
+  beside. _Why:_ a line the developer marked working should not sit idle for want of a click the tracker can make.
+  _Trade-off:_ sessions are spent without asking each time; the cap bounds that.
 - **The developer can own a line.** "I'll own it" makes it theirs: it shows their tasks and notes, added with one
   growing box, and no summary falls due. No agent writes to it until "Hand to an agent…", which asks for its repos.
 - **What agents may write depends on the state.** Working on: anything. Up next: scoping only (done when, plan, held
@@ -348,6 +355,10 @@ Everything below is a design decision made from that, with its reasoning.
   that place's tasks, folds everything else (questions included) to one row per line, adds tasks for that place held on
   up-next lines (never tabled ones), and ends by itself after a few hours. Drift asks agents to turn
   blocked-on-the-developer issues into tasks.
+- **A question a task would settle waits for the task.** When a pending task's outcome would settle a question, the
+  question is linked as blocked by the task, held and not shown, and withdrawn if the outcome settles it; the agent
+  decides the rest. _Why:_ asking the developer what their own measurement is about to answer is the decision the design
+  exists to remove.
 - **Up-next and tabled lines hold their questions, tasks and drift.** Tabling asks for a reason and an optional date to
   look again; on that date the line comes back under Proposed, counted as to accept, with the choices any proposal has
   (Drop in place of Not a line). A tabled line can go back to up next. A held question or task is current when it was
@@ -363,17 +374,21 @@ Everything below is a design decision made from that, with its reasoning.
 - **Summaries stay true without anyone reading history.** A summary opens with a headline written to stand alone; home,
   the log and the phone show only the headline, the line shows the rest. The owner rewrites both at the end of a
   session. They fall due an hour after significant work. Significance is decided by what happened, not by the agent: a
-  plan step changed, an issue closed, a question asked or answered, a pull request merged. Until they are rewritten, a
-  line lists only what is newer than both its summary and the developer's last look, one line each, so nothing is read
-  twice.
+  plan step changed, an issue closed, a question asked or answered, a pull request merged. Until they are rewritten, the
+  line lists everything newer than its summary, one line each, with what the developer has already seen folded to one
+  row; only the log filters by seen.
 - **Agents propose, the developer accepts.** Agents propose a line when they find work with none, or when the developer
   starts something new in conversation. Every proposed line offers the same five choices: Start, Up next, Table… (which
   asks why), Fold into…, Not a line. Agents also propose a line as done, with how "done when" was met; that proposal is
-  the line's first item, on its own row, with Done and Not yet…. Done… on a line asks its owner to close out and make
-  that proposal. Both kinds count in the header as "to accept". A line the developer adds names its repos, or says it is
-  theirs, and goes to up next, starts, or is tabled with one button each. Nothing joins or leaves the list without the
-  developer's yes. On first run, agents propose lines from the tracker's existing projects, splitting where one project
-  held several, and the developer sorts each once.
+  the line's first item, on its own row, with Done and Not yet…. Done… on a line, being the developer's own decision,
+  has the owner close out and ends the line, with how done when was met going to the log; it comes back only if the
+  owner reports done when is not met. Both kinds count in the header as "to accept". A line the developer adds names its
+  repos, or says it is theirs, and goes to up next, starts, or is tabled with one button each. Nothing joins or leaves
+  the list without the developer's yes. On first run, agents propose lines from the tracker's existing projects,
+  splitting where one project held several, and the developer sorts each once.
+- **Done when changes only with the developer's yes.** Agents may sharpen done when while scoping, but a change to it on
+  a line the developer has accepted is an item to accept on that line, with Keep and Revert, and is never folded in the
+  log. _Why:_ done when says what the line is and when it ends.
 - **The log shows what has not been seen,** line by line in order. A line counts as seen once opened, or with Mark all
   seen. Each change is a row, except checks, drift confirmations and re-confirmed questions, which fold into one
   sentence. Up-next and tabled lines are left out unless asked for; refused writes never are.
@@ -391,11 +406,12 @@ Everything below is a design decision made from that, with its reasoning.
   while the answer waits. Tasks never buzz: they wait for "I'm at". _Trade-off:_ Web Push needs the server to reach the
   browser's push service, an outbound connection D10 did not have; nothing new reaches in.
 - **One vocabulary:** line, working on, up next, tabled, done, dropped, proposed; summary, headline, done when, plan,
-  step; agent, owner, last owner, helper, claim, wake address, inbox, running, idle, asleep, gone; issue, pull request,
-  check, ref; question, situation, task, place, held, later, urgent; for you, step in, tell, stop, scope, take, release;
-  log, seen. A line is waiting on you when all its open work waits on the developer, and has no owner when work is left
-  and no agent holds it. Contracts and the CLI use the same words. Refs keep their prefixes, because a ref never changes
-  once written: L-12 is a line, D-34 a question, PANEL-6 an issue in the homepanel repo.
+  step; agent, owner, last owner, helper, claim, wake address, inbox, running, idle, reachable, asleep, gone; issue,
+  pull request, check, ref; question, situation, task, place, held, later, urgent; for you, step in, tell, stop, scope,
+  take, release; log, seen. A line is waiting on you when all its open work waits on the developer, agents on it when an
+  agent has work on it, and has no owner when work is left and no agent holds it. Contracts and the CLI use the same
+  words. Refs keep their prefixes, because a ref never changes once written: L-12 is a line, D-34 a question, PANEL-6 an
+  issue in the homepanel repo.
 
 What it would change in what is built:
 
@@ -407,8 +423,11 @@ What it would change in what is built:
   the developer's last look, which drives "seen". Milestones become plan steps: an ordered list per line, which
   questions and tasks name as what they hold up. Questions gain the urgent reason and any Not urgent; questions and
   tasks gain held and the time they were last confirmed; tasks gain a place and outcome fields. Agents get a table:
-  name, repo, checkout path, wake address, last command, stopped, and unread notices. Refused writes are recorded
-  events. Places live in `~/.octotrack/places`, beside the allowed hosts, edited with `octo place`.
+  name, repo, checkout path, wake address, last command, stopped, started by Octotrack, and unread notices. Each line's
+  inbox is a table of its own: kind (answer, tell, task done), ref, and delivery state. Refused writes are recorded
+  events. "I'm at" is server state with its expiry, so the phone and the Mac agree. Places live in
+  `~/.octotrack/places`, beside the allowed hosts, edited with `octo place`; `~/.octotrack/agent-setup.json` holds each
+  repo's start command, one stop command, and the cap, which counts sessions Octotrack started that are still running.
 - **Operations.** Kept: issue claim and release (take uses them), decisions with pickup and report, drift (keyed on line
   instead of project), watches (a poll renews claims), pull request sync. Changed: projects become lines, `next` becomes
   `line take`, milestones become plan steps, ideas become proposed lines, status updates (U-) become summaries with
