@@ -416,7 +416,8 @@ Decisions made from that:
     ten, and a wake thirty; each is killed at its deadline and reported. Output is read as it comes and raced once the command
     exits, so a child it leaves holding the pipes cannot hang the runner. Only names and refs of the narrow form are
     filled into the developer's commands. A push service that cannot be reached costs that browser its notification
-    and nothing else: the rest are sent and recorded, so a line still buzzes once.
+    and nothing else: the rest are sent and recorded, so a line still buzzes once. (Third audit: unless no browser
+    took it, below.)
   - _Watch mode records only, Stop included._ The stop command is noted once per Stop (`runner.would_stop`) and runs
     when the runner may act, if the agent is still stopped then. Worktrees default to `worktrees` in Octotrack's home,
     so a test install with its own `OCTO_HOME` never works in the live install's.
@@ -497,6 +498,12 @@ Decisions made from that:
     remote runs git only on an absolute path to an existing folder, with a five-second deadline, and remembers at most a
     thousand checkouts; an agent's checkout is tested against the worktrees folder with a path separator, so
     `/wt-panel` is not inside `/wt`.
+  - _A push is given up on after thirty seconds, and one no browser took stays due._ Each send has a deadline (web-push's
+    own `timeout`, and a race in the dispatcher), so one that never answers no longer holds every later notification
+    until a restart. A notification is recorded as sent once some browser's push service took it, or refused it for
+    good; one that no browser took, because no service answered, a timeout, a 429 or a 5xx, stays due and is tried on
+    the next dispatch. _Why:_ a network error lost the notification for good, against D14's "urgent questions always
+    buzz". _Trade-off:_ while every push service is unreachable, each dispatch tries once more, bounded by the deadline.
   - _The developer's own operations, relayed with `--said`, take effect on their own lines._ `task add` and `note add`
     were refused there, as writes to a line no agent may touch, though D14 says every developer operation accepts the
     developer's words.
