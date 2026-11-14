@@ -213,7 +213,13 @@ export const contracts = {
     "runner.start",
     "Record a session being started for a line, and give it its name",
     z.strictObject({ line: z.string(), repo: z.string(), worktree: z.string().optional() }),
-    z.object({ name: z.string(), line: z.string(), repo: z.string() }),
+    z.object({
+      name: z.string(),
+      line: z.string(),
+      repo: z.string(),
+      /** A gone session's worktree handed on for this line, to start in instead of a new one. */
+      worktree: z.string().nullable(),
+    }),
   ),
   runnerExited: write(
     "runner.exited",
@@ -256,6 +262,27 @@ export const contracts = {
     "Record a worktree Octotrack made",
     RunnerWorktree.strict(),
     RunnerWorktree,
+  ),
+  runnerStops: read(
+    "runner.stops",
+    "Agents the developer stopped whose stop command has not run yet",
+    Empty,
+    z.array(z.object({ name: z.string() })),
+  ),
+  runnerStopRan: write(
+    "runner.stop_ran",
+    "Record that the developer's stop command ran for a stopped agent",
+    z.strictObject({ name: z.string(), code: z.number().int(), output: z.string() }),
+    z.object({ name: z.string() }),
+  ),
+  repoCheckout: write(
+    "repo.checkout",
+    "Set a repo's main checkout on this machine, where new worktrees are made (the developer)",
+    z.strictObject({
+      repo: z.string(),
+      path: z.string().refine((path) => path.startsWith("/"), "An absolute path"),
+    }),
+    Project,
   ),
   runnerCleanups: read(
     "runner.cleanups",

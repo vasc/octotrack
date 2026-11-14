@@ -306,7 +306,9 @@ export const claimOps = [
   bind(contracts.agentLift, (ctx, input) => {
     requireDeveloper(ctx, "lift a stop");
     const agent = requireAgent(ctx, input.name);
-    ctx.sql.run("UPDATE agents SET stoppedAt = NULL, stoppedReason = NULL WHERE name = ?", [agent.name]);
+    ctx.sql.run("UPDATE agents SET stoppedAt = NULL, stoppedReason = NULL, stopRanAt = NULL WHERE name = ?", [
+      agent.name,
+    ]);
     emit(ctx, {
       type: "agent.lifted",
       kind: "agent",

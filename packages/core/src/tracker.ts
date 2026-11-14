@@ -14,7 +14,7 @@ import { issueOps } from "./ops/issues.ts";
 import { applyChoice, choiceOps, dueChoices } from "./ops/choices.ts";
 import { claimOps } from "./ops/claims.ts";
 import { pushOps } from "./ops/push.ts";
-import { runnerOps } from "./ops/runner.ts";
+import { makeRoom, runnerOps } from "./ops/runner.ts";
 import { inboxOps } from "./ops/inbox.ts";
 import { taskOps } from "./ops/tasks.ts";
 import { lineOps } from "./ops/lines.ts";
@@ -305,7 +305,10 @@ export class Tracker {
   private settleDeadlines(): void {
     const ctx = this.ctx(SYSTEM);
     const before = currentCursor(ctx);
-    this.sql.transaction(() => settle(ctx));
+    this.sql.transaction(() => {
+      settle(ctx);
+      makeRoom(ctx);
+    });
     const events = this.eventsSince(before);
     if (events.length > 0) this.notify(events);
   }

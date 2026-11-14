@@ -90,6 +90,8 @@ export const Project = z.object({
   description: z.string(),
   status: ProjectStatus,
   repo: z.string().nullable(),
+  /** The main checkout of the repo on this machine, where the runner makes worktrees; set by the developer. */
+  checkout: z.string().nullable(),
   horizon: Horizon,
   targetDate: z.string().nullable(),
   version: z.number().int(),

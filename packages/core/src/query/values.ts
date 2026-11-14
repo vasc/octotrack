@@ -86,6 +86,7 @@ export const EVENT_TYPES = [
   "runner.pr_closed",
   "runner.would_close",
   "line.not_yet",
+  "runner.stop_ran",
 ] as const;
 export type EventTypeName = (typeof EVENT_TYPES)[number];
 

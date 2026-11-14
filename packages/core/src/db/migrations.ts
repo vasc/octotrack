@@ -308,6 +308,10 @@ const MIGRATIONS: readonly Migration[] = [
   ALTER TABLE lines ADD COLUMN startAnyway TEXT;
   CREATE TABLE developer_at (id INTEGER PRIMARY KEY CHECK (id = 1), place TEXT NOT NULL, until TEXT NOT NULL);
   `,
+  `
+  ALTER TABLE projects ADD COLUMN checkout TEXT;
+  ALTER TABLE agents ADD COLUMN stopRanAt TEXT;
+  `,
 ];
 
 const UserVersion = z.object({ user_version: z.number().int() });
