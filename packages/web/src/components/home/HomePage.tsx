@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { type HotkeyMap, useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useHome } from "../../hooks/useHome.ts";
 import { useNarrow } from "../../hooks/useNarrow.ts";
+import { stepInReason } from "../../lib/lines.ts";
 import { DecisionCardItem } from "../decisions/DecisionCardItem.tsx";
 import { AddLineForm } from "../lines/AddLineForm.tsx";
 import { PageHead } from "../ui/PageHead.tsx";
@@ -114,6 +115,9 @@ export function HomePage() {
               const details = home.lines[line.ref];
               const crew = home.crews[line.ref];
               const forYou = details?.forYou ?? [];
+              const start = details?.start ?? null;
+              const stepIn = crew?.search?.step === 3 ? stepInReason(line, home.runner, start) : null;
+              const retryable = start?.state === "failed" || start?.state === "never_took";
               const [first, ...rest] = forYou;
               const open = expanded.has(line.ref) || rest.some((other) => refOf(other) === focus);
               // On a phone, lines past the second fold to one row saying how much waits, unless one of theirs has focus.
@@ -127,7 +131,15 @@ export function HomePage() {
                   {...(details === undefined ? {} : { details })}
                   reorder={reorder(line.title, line.ref, index, home.working.length)}
                 >
-                  {crew?.search?.step === 3 ? <StepIn line={line} onOwn={h.own} onTable={h.table} /> : null}
+                  {stepIn === null ? null : (
+                    <StepIn
+                      line={line}
+                      reason={stepIn}
+                      {...(retryable ? { onRetry: h.retry } : {})}
+                      onOwn={h.own}
+                      onTable={h.table}
+                    />
+                  )}
                   {first === undefined ? null : folded ? (
                     <button type="button" className="chip" onClick={() => setChosen(refOf(first))}>
                       {forYou.length} waiting on you

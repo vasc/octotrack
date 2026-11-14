@@ -139,7 +139,7 @@ export function searchStep(search: Search, now: string): 1 | 2 | 3 {
   return now < later(search.firstUntil ?? search.since, OFFER_STEP_MS) ? 2 : 3;
 }
 
-function searchOf(ctx: Ctx, line: string): Search | null {
+export function searchOf(ctx: Ctx, line: string): Search | null {
   return one(ctx, SearchRow, "SELECT * FROM owner_searches WHERE line = ?", [line]);
 }
 

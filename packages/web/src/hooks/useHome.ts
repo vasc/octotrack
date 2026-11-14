@@ -23,6 +23,7 @@ export function useHome() {
   const home = useOpQuery(contracts.homeShow, {});
   const add = useOpMutation(contracts.lineAdd);
   const order = useOpMutation(contracts.lineOrder);
+  const retry = useOpMutation(contracts.runnerRetry);
   const choices = useChoices();
   const titleOf = (ref: string) =>
     [
@@ -33,7 +34,8 @@ export function useHome() {
     ].find((line) => line.ref === ref)?.title ?? ref;
   return {
     home,
-    failure: add.error ?? order.error,
+    failure: add.error ?? order.error ?? retry.error,
+    retry: (ref: string) => retry.mutate({ line: ref }),
     add: (line: { title: string; doneWhen: string }) => add.mutate({ ...line, where: "up_next" }),
     start: (ref: string) => choices.make(contracts.lineStart.name, { ref }, `Started ${titleOf(ref)}`),
     queue: (ref: string) => choices.make(contracts.lineQueue.name, { ref }, `${titleOf(ref)} is up next`),

@@ -23,6 +23,7 @@ import {
   IssueCard,
   IssueStatus,
   Line,
+  LineStart,
   LineDetail,
   LinePlacement,
   Notice,
@@ -36,6 +37,10 @@ import {
   Place,
   PendingChoice,
   PlanStep,
+  RunnerClose,
+  RunnerDue,
+  RunnerStatus,
+  RunnerWorktree,
   PrChecks,
   PrCard,
   PrMergeable,
@@ -157,6 +162,72 @@ export const DriftAckResult = z.object({ acknowledged: z.array(Drift) });
 const LineRef = z.strictObject({ ref: z.string() });
 
 export const contracts = {
+  runnerReport: write(
+    "runner.report",
+    "How the local runner is set up on this machine. The server says this when it starts",
+    RunnerStatus.strict(),
+    RunnerStatus,
+  ),
+  runnerDue: read(
+    "runner.due",
+    "Working lines due a session the start command runs, up to the cap",
+    Empty,
+    z.array(RunnerDue),
+  ),
+  runnerStart: write(
+    "runner.start",
+    "Record a session being started for a line, and give it its name",
+    z.strictObject({ line: z.string(), repo: z.string(), worktree: z.string().optional() }),
+    z.object({ name: z.string(), line: z.string(), repo: z.string() }),
+  ),
+  runnerExited: write(
+    "runner.exited",
+    "Record that a session Octotrack started has exited, with its code and last output",
+    z.strictObject({ name: z.string(), code: z.number().int(), output: z.string() }),
+    LineStart,
+  ),
+  runnerRetry: write(
+    "runner.retry",
+    "Try now: start a session for a line again without waiting (the developer)",
+    z.strictObject({ line: z.string() }),
+    z.object({ line: z.string() }),
+  ),
+  runnerDry: write(
+    "runner.dry",
+    "Record what the runner would have started, in watch mode",
+    z.strictObject({ line: z.string(), repo: z.string() }),
+    z.object({ line: z.string() }),
+  ),
+  runnerCloses: read(
+    "runner.closes",
+    "Pull requests still open on lines that are done or dropped, once their wind-down is over",
+    Empty,
+    z.array(RunnerClose),
+  ),
+  runnerClosed: write(
+    "runner.closed",
+    "Record that a pull request was closed with its line",
+    z.strictObject({ pr: z.string() }),
+    z.object({ pr: z.string() }),
+  ),
+  runnerWorktree: write(
+    "runner.worktree",
+    "Record a worktree Octotrack made",
+    RunnerWorktree.strict(),
+    RunnerWorktree,
+  ),
+  runnerCleanups: read(
+    "runner.cleanups",
+    "Worktrees Octotrack made that no session uses any more",
+    Empty,
+    z.array(RunnerWorktree),
+  ),
+  runnerRemoved: write(
+    "runner.removed",
+    "Record that a worktree was removed",
+    z.strictObject({ path: z.string() }),
+    z.object({ path: z.string() }),
+  ),
   choiceMake: write(
     "choice.make",
     "Make one of the developer's choices wait a few seconds, with Undo, before it takes effect (the developer)",

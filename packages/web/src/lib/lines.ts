@@ -1,4 +1,4 @@
-import type { Line, LineCrew } from "@octotrack/core/schemas";
+import type { Line, LineCrew, LineStart, RunnerStatus } from "@octotrack/core/schemas";
 
 /** How each state is named on screen. One place, so the inspector, the page and the CLI's words agree. */
 export const LINE_STATE_LABEL: Readonly<Record<Line["state"], string>> = {
@@ -27,4 +27,24 @@ export function crewText(crew: LineCrew | undefined): string[] {
     words.push(`+${crew.helpers.length} helper${crew.helpers.length === 1 ? "" : "s"}`);
   if (crew.scoper !== null) words.push(`${crew.scoper.name} is scoping it`);
   return words;
+}
+
+/**
+ * Why a working line has no owner, and what would fix it, or null while a session is being started for it. Says what
+ * happened in the developer's terms: the setup file, watch mode, the last start's own words.
+ */
+export function stepInReason(line: Line, runner: RunnerStatus, start: LineStart | null): string | null {
+  if (start !== null && (start.state === "starting" || start.state === "running")) return null;
+  if (!runner.configured) {
+    return `No agent took ${line.ref}, and none can be started for it: no start command is set on this machine. Add one to ~/.octotrack/agent-setup.json.`;
+  }
+  if (runner.dryRun) {
+    return `No agent took ${line.ref}. The runner is watching only, so it noted it would start one. Set dryRun to false in ~/.octotrack/agent-setup.json to let it.`;
+  }
+  if (start?.state === "failed") {
+    const said = start.output?.trim().split("\n").at(-1);
+    return `${start.name}, started for it, exited at once${said === undefined || said === "" ? "" : `: ${said}`}. Octotrack tries again by itself, less often each time.`;
+  }
+  if (start?.state === "never_took") return `${start.name} ran but never took ${line.ref}.`;
+  return `No agent took ${line.ref}, and every session Octotrack may run is busy (at most ${runner.cap}).`;
 }

@@ -13,6 +13,7 @@ import { ideaOps } from "./ops/ideas.ts";
 import { issueOps } from "./ops/issues.ts";
 import { applyChoice, choiceOps, dueChoices } from "./ops/choices.ts";
 import { claimOps } from "./ops/claims.ts";
+import { runnerOps } from "./ops/runner.ts";
 import { inboxOps } from "./ops/inbox.ts";
 import { taskOps } from "./ops/tasks.ts";
 import { lineOps } from "./ops/lines.ts";
@@ -78,6 +79,9 @@ const NO_RECONCILE: ReadonlySet<string> = new Set([
   "choice.make",
   "choice.undo",
   "draft.save",
+  "runner.report",
+  "runner.worktree",
+  "runner.removed",
 ]);
 /**
  * Every write notifies, unless it is listed here. It is this way around so that a new operation cannot silently fail to
@@ -104,6 +108,7 @@ const ALL_OPS: readonly BoundOp[] = [
   ...inboxOps,
   ...taskOps,
   ...choiceOps,
+  ...runnerOps,
   ...projectOps,
   ...issueOps,
   ...decisionOps,

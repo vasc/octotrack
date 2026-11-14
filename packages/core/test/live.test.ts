@@ -48,9 +48,11 @@ const DEVELOPER_OPS: ReadonlySet<string> = new Set([
   "choice.undo",
   "choice.now",
   "line.accept_recommended",
+  "runner.retry",
 ]);
 function execute(name: string, input: unknown): void {
-  h.tracker.execute(name, input, DEVELOPER_OPS.has(name) ? { ...h.as, developer: true } : h.as);
+  const caller = name.startsWith("runner.") && name !== "runner.retry" ? { ...h.as, system: true } : h.as;
+  h.tracker.execute(name, input, DEVELOPER_OPS.has(name) ? { ...caller, developer: true } : caller);
 }
 
 beforeEach(() => {
@@ -163,6 +165,17 @@ const EVERY_WRITE: readonly (readonly [string, unknown])[] = [
   ["choice.make", { op: "line.queue", input: { ref: "L-1" }, summary: "Queue A line" }],
   ["choice.now", { id: 2 }],
   ["line.accept_recommended", { refs: ["L-2"] }],
+  ["runner.report", { configured: true, cap: 1, dryRun: false }],
+  ["runner.dry", { line: "L-1", repo: "OCT" }],
+  ["runner.start", { line: "L-1", repo: "OCT", worktree: "/wt/oct.1" }],
+  [
+    "runner.worktree",
+    { path: "/wt/oct.1", repo: "OCT", checkout: "/src/oct", branch: "octo/oct.1", agent: "oct.1" },
+  ],
+  ["runner.exited", { name: "oct.1", code: 1, output: "not logged in" }],
+  ["runner.retry", { line: "L-1" }],
+  ["runner.closed", { pr: "PR-1" }],
+  ["runner.removed", { path: "/wt/oct.1" }],
   ["agent.woken", { name: "agent-a" }],
   // Last: everything above runs as agent-a, which a stop would refuse.
   ["agent.stop", { name: "agent-a" }],

@@ -5,7 +5,14 @@ import { createApp } from "./app.ts";
 import { currentDashboard, dashboardAssets } from "./dashboard.ts";
 import { fetchRepoPrs } from "./gh.ts";
 import { loadAllowedHosts } from "./hosts.ts";
-import { allowedHostsPath, databasePath, serverStoppedPath, wakeAdaptersPath } from "./paths.ts";
+import {
+  agentSetupPath,
+  allowedHostsPath,
+  databasePath,
+  serverStoppedPath,
+  wakeAdaptersPath,
+} from "./paths.ts";
+import { createRunner, loadRunnerConfig } from "./runner.ts";
 import { cachedRemoteOf } from "./remotes.ts";
 import { openSqlite } from "./sqlite.ts";
 import { createWakeDispatcher, loadWakeAdapters } from "./wake.ts";
@@ -13,11 +20,14 @@ import { createWakeDispatcher, loadWakeAdapters } from "./wake.ts";
 const WEB_DIST = join(import.meta.dir, "../../web/dist");
 const SWEEP_INTERVAL_MS = 60_000;
 const CHOICE_TICK_MS = 1000;
+// A line's owner search reaches the runner 30 seconds after it starts; this keeps the wait short without spinning.
+const RUNNER_TICK_MS = 10_000;
 const DEFAULT_PR_SYNC_SECONDS = 120;
 // Long polls hold for 25 seconds and streams ping every 15, so a connection is never idle for this long.
 const IDLE_TIMEOUT_SECONDS = 120;
 
 const GITHUB_CALLER: Caller = { actor: "github", channel: "cli", system: true };
+const OCTOTRACK: Caller = { actor: "octotrack", channel: "cli", system: true };
 
 export function prSyncSeconds(): number {
   const raw = process.env.OCTO_PR_SYNC_SECONDS;
@@ -84,6 +94,16 @@ export function startServer(port: number, hostname = "127.0.0.1"): RunningServer
   const server = Bun.serve({ port, hostname, idleTimeout: IDLE_TIMEOUT_SECONDS, fetch: app.fetch });
 
   const wakes = createWakeDispatcher({ tracker, adapters: loadWakeAdapters(wakeAdaptersPath()) });
+
+  // With no setup file, nothing is started, and home says so where a line needs an owner.
+  const runnerConfig = loadRunnerConfig(agentSetupPath());
+  const runner = runnerConfig === null ? null : createRunner({ tracker, config: runnerConfig });
+  if (runner === null) {
+    tracker.call(contracts.runnerReport, { configured: false, cap: 0, dryRun: true }, OCTOTRACK);
+  }
+  const runOnce = () => {
+    void runner?.tick().catch((error) => console.error("[runner]", error));
+  };
   const stopWakes = wakes.listen();
   // Anything answered while the server was down.
   void wakes.dispatch();
@@ -104,6 +124,7 @@ export function startServer(port: number, hostname = "127.0.0.1"): RunningServer
         console.error("[choices]", error);
       }
     }, CHOICE_TICK_MS),
+    setInterval(runOnce, RUNNER_TICK_MS),
   ];
   const syncSeconds = prSyncSeconds();
   if (syncSeconds > 0) {

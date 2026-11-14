@@ -33,6 +33,11 @@ export function wakeAdaptersPath(): string {
   return join(octoHome(), "wake-adapters.json");
 }
 
+/** The developer's own setup for starting agent sessions. See runner.ts. */
+export function agentSetupPath(): string {
+  return join(octoHome(), "agent-setup.json");
+}
+
 export function serverUrl(): string {
   return (process.env.OCTO_URL ?? `http://127.0.0.1:${DEFAULT_PORT}`).replace(/\/$/, "");
 }
