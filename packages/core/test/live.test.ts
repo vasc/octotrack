@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { contracts as c } from "../src/contracts.ts";
 import type { WatchSpec } from "../src/schemas.ts";
-import { type Harness, harness } from "./helpers.ts";
+import { GITHUB, type Harness, harness } from "./helpers.ts";
 
 let h: Harness;
 let notifications: number;
@@ -69,7 +69,8 @@ const DEVELOPER_OPS: ReadonlySet<string> = new Set([
   "push.unsubscribe",
 ]);
 function execute(name: string, input: unknown): void {
-  const serverOnly = (name.startsWith("runner.") && name !== "runner.retry") || name.endsWith(".woken");
+  const serverOnly =
+    (name.startsWith("runner.") && name !== "runner.retry") || name.endsWith(".woken") || name === "pr.sync";
   const caller = serverOnly ? { ...h.as, system: true } : h.as;
   h.tracker.execute(name, input, DEVELOPER_OPS.has(name) ? { ...caller, developer: true } : caller);
 }
@@ -120,7 +121,6 @@ const EVERY_WRITE: readonly (readonly [string, unknown])[] = [
   ["decision.ask", { title: "New" }],
   ["decision.update", { ref: "D-1", priority: "high" }],
   ["decision.postpone", { ref: "D-1" }],
-  ["decision.wake", { ref: "D-1", address: "test:s" }],
   ["decision.resolve", { ref: "D-1", option: "a" }],
   ["decision.pickup", { ref: "D-1" }],
   ["decision.report", { ref: "D-1", status: "done", note: "Did it" }],
@@ -153,14 +153,15 @@ const EVERY_WRITE: readonly (readonly [string, unknown])[] = [
   ["line.drop", { ref: "L-4" }],
   ["line.reject", { ref: "L-6" }],
   ["line.fold", { ref: "L-3", into: "L-1" }],
+  ["agent.register", { wake: "claude:a", repo: "OCT" }],
+  ["line.take", { ref: "L-1" }],
+  // From the line it took: an agent writes only to the line it is on.
   ["plan.set", { line: "L-1", steps: ["One"] }],
-  ["agent.register", { wake: "claude:a" }],
-  ["line.take", {}],
-  ["line.release", {}],
   ["line.tell", { line: "L-1", body: "Hello" }],
   ["decision.not_urgent", { ref: "D-4" }],
   ["place.add", { name: "the shed" }],
   ["task.file", { line: "L-1", title: "Measure", place: "the bench", outcome: "Numbers", frees: "OCT-1" }],
+  ["line.release", {}],
   ["task.done", { ref: "OCT-2", result: "12 mm" }],
   ["task.cant", { ref: "OCT-3", why: "No scale" }],
   ["held.withdraw", { refs: ["OCT-5"] }],
@@ -185,6 +186,7 @@ const EVERY_WRITE: readonly (readonly [string, unknown])[] = [
   ["runner.report", { configured: true, cap: 1, dryRun: false }],
   ["runner.dry", { line: "L-1", repo: "OCT" }],
   ["runner.start", { line: "L-1", repo: "OCT", worktree: "/wt/oct.1" }],
+  ["runner.spawned", { name: "oct.1", pid: 4242 }],
   [
     "runner.worktree",
     { path: "/wt/oct.1", repo: "OCT", checkout: "/src/oct", branch: "octo/oct.1", agent: "oct.1" },
@@ -252,7 +254,7 @@ describe("every write reaches the dashboard", () => {
 
   test("a sync that changed nothing still updates when it last synced", () => {
     const pr = { repo: "a/b", number: 1, title: "A PR", state: "open" } as const;
-    expect(notified(() => h.call(c.prSync, { prs: [pr] }))).toBe(1);
+    expect(notified(() => h.tracker.call(c.prSync, { prs: [pr] }, GITHUB))).toBe(1);
   });
 
   test("an agent seen for the first time shows up, even from a read, but only the first time", () => {

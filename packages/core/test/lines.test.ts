@@ -140,6 +140,8 @@ describe("lines of work", () => {
       repos: ["PANEL"],
       where: "working",
     });
+    h.call(c.agentRegister, { repo: "PANEL" });
+    h.call(c.lineTake, { ref: line.ref });
     h.call(c.planSet, { line: line.ref, steps: ["Model the base", "Print and test-fit", "Final print"] });
     const issue = h.call(c.issueCreate, {
       project: "PANEL",

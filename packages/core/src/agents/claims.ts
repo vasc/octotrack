@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { OctoError, RefusedWrite } from "../errors.ts";
+import { implementedRefs } from "../refs.ts";
 import type { Line, LineClaim, LineCrew, Notice } from "../schemas.ts";
 import type { EventTypeName } from "../query/values.ts";
 import { applyPatch, emit } from "../store/common.ts";
@@ -386,10 +387,11 @@ export function settle(ctx: Ctx): void {
       changes,
     });
   }
-  // A session that has not taken its line five minutes after it started never will: it stops holding the line's turn.
+  // A session that has not taken its line five minutes after its process started never will: it stops holding the
+  // line's turn. Its worktree and setup, before that, can take as long as they take.
   ctx.sql.run(
     `UPDATE runner_starts SET state = 'never_took', endedAt = ?
-     WHERE state = 'starting' AND startedAt <= ?
+     WHERE state = 'starting' AND spawnedAt IS NOT NULL AND spawnedAt <= ?
        AND NOT EXISTS (SELECT 1 FROM line_claims c WHERE c.agent = runner_starts.name AND c.line = runner_starts.line)`,
     [ctx.now, new Date(Date.parse(ctx.now) - CHECK_IN_MS).toISOString()],
   );
@@ -425,7 +427,42 @@ function listHeldPrs(ctx: Ctx, line: Line): void {
   });
 }
 
+const OpenPrRow = z.object({
+  ref: z.string(),
+  title: z.string(),
+  headRef: z.string(),
+  body: z.string(),
+  headSha: z.string(),
+  issue: z.string(),
+});
+
+/**
+ * The pull requests the runner may close with a line that ended: those open now, as GitHub last reported them, whose
+ * branch or closing keyword names one of the line's issues (D14). One opened or pushed to after this is held and shown,
+ * never closed, and one only an agent reported is never closed, since closing on GitHub cannot be undone.
+ */
+function markPrsToClose(ctx: Ctx, line: Line): void {
+  const open = rows(
+    ctx,
+    OpenPrRow,
+    `SELECT p.ref AS ref, p.title AS title, p.headRef AS headRef, p.body AS body, p.headSha AS headSha, i.ref AS issue
+     FROM prs p JOIN links k ON k.fromRef = p.ref AND k.rel = 'implements' JOIN issues i ON i.ref = k.toRef
+     WHERE i.line = ? AND p.state IN ('open', 'draft') AND p.githubAt IS NOT NULL`,
+    [line.ref],
+  );
+  for (const pr of open) {
+    if (!implementedRefs(pr).includes(pr.issue)) continue;
+    ctx.sql.run("INSERT OR IGNORE INTO line_closing_prs (line, pr, headSha, at) VALUES (?, ?, ?, ?)", [
+      line.ref,
+      pr.ref,
+      pr.headSha,
+      ctx.now,
+    ]);
+  }
+}
+
 export function closeWithLine(ctx: Ctx, line: Line): void {
+  markPrsToClose(ctx, line);
   const open = rows(
     ctx,
     IssueRow,
@@ -561,20 +598,26 @@ export function guardLineWrite(ctx: Ctx, lineRef: string | null, kind: LineWrite
  * An agent writes only to the line it is on, or to a proposal it made itself: nothing of another line's is changed from
  * outside it. The developer and Octotrack itself may write anywhere.
  */
-export function requireOnLineOf(ctx: Ctx, lineRef: string | null, ref: string): void {
+export function requireOnLineOf(ctx: Ctx, lineRef: string | null, ref: string | null): void {
   if (lineRef === null || ctx.developer || ctx.system) return;
   if (claimOf(ctx, ctx.actor)?.line === lineRef) return;
   const line = requireLine(ctx, lineRef);
   if (line.state === "proposed" && line.proposedBy === ctx.actor) return;
   throw new OctoError(
     "forbidden",
-    `${ref} is on ${line.ref}, which you are not on`,
+    // Something new has no ref yet: what is refused is filing it there.
+    ref === null
+      ? `You are not on ${line.ref}, so you cannot write to it`
+      : `${ref} is on ${line.ref}, which you are not on`,
     `Only the agents on ${line.ref} write to it. Take it first if it is yours to work on: octo line take ${line.ref}`,
   );
 }
 
-/** A write to something on a line: allowed by the line's state, and made from the line itself. */
-export function guardOnLine(ctx: Ctx, lineRef: string | null, kind: LineWrite, ref: string): void {
+/**
+ * A write to something on a line: allowed by the line's state, and made from the line itself. `ref` is what is written
+ * to, or null for something new being filed there.
+ */
+export function guardOnLine(ctx: Ctx, lineRef: string | null, kind: LineWrite, ref: string | null): void {
   guardLineWrite(ctx, lineRef, kind);
   requireOnLineOf(ctx, lineRef, ref);
 }

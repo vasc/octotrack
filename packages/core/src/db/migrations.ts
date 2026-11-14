@@ -325,6 +325,27 @@ const MIGRATIONS: readonly Migration[] = [
   `
   CREATE TABLE not_a_line (issue TEXT PRIMARY KEY, line TEXT NOT NULL, at TEXT NOT NULL);
   `,
+  // When GitHub sync last wrote a pull request, so the runner acts only on what GitHub says; and the pull requests
+  // open when a line ended, the only ones the runner may close with it.
+  `
+  ALTER TABLE prs ADD COLUMN githubAt TEXT;
+  CREATE TABLE line_closing_prs (
+    line TEXT NOT NULL,
+    pr TEXT NOT NULL,
+    headSha TEXT NOT NULL,
+    at TEXT NOT NULL,
+    PRIMARY KEY (line, pr)
+  );
+  `,
+  // A start's process: when it was spawned (its check-in runs from then, not from setup), its id, so a restart can
+  // tell whether it still runs, its exit code, and whether it ran and took its line before it ended.
+  `
+  ALTER TABLE runner_starts ADD COLUMN spawnedAt TEXT;
+  ALTER TABLE runner_starts ADD COLUMN pid INTEGER;
+  ALTER TABLE runner_starts ADD COLUMN exitCode INTEGER;
+  ALTER TABLE runner_starts ADD COLUMN ran INTEGER NOT NULL DEFAULT 0;
+  UPDATE runner_starts SET spawnedAt = startedAt;
+  `,
   // A task's named outcomes: what to send back, one box each.
   `
   ALTER TABLE issues ADD COLUMN fields TEXT NOT NULL DEFAULT '[]';

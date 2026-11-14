@@ -205,9 +205,10 @@ command can start the server, and that command's environment says nothing about 
 
 ### D11. PR status comes from `gh`
 
-`octo pr sync` and a background loop in the local server shell out to `gh`, reuse the developer's existing login and
-push results through the `pr.sync` operation. References like `OCT-12` in a PR's title, branch or body become
-`implements` links automatically.
+A background loop in the local server, and `octo pr sync`, which asks the server to run it now, shell out to `gh`, reuse
+the developer's existing login and push results through the `pr.sync` operation, which only the server and the
+developer may call. A ref like `OCT-12` in a PR's branch name, or after a closing keyword in its title or body ("Fixes
+OCT-12", "Closes OCT-3, OCT-4"), becomes an `implements` link automatically; a bare mention does not.
 
 - **Trade-off:** polling (default 120 seconds, each repo three requests) rather than webhooks, since there is no public endpoint on a laptop.
   `pr.upsert` remains available for anything else that wants to report.
@@ -228,7 +229,8 @@ if "we can avoid having the session actively hang on octo".
 - **An inbox any tool can use.** `octo inbox`, `decision pickup` and `decision report` are plain CLI commands keyed on the
   agent's name. An answer moves through not picked up, picked up, and carried out or partly carried out. An agent that answers
   its own question skips this. A changed answer is delivered again.
-- **Waking is opt-in, per decision.** `--wake adapter:address` on asking, or `decision wake` later. The default is the inbox.
+- **Waking is opt-in, per agent.** First it was per decision (`--wake` on asking, or `decision wake` later); since lines
+  (D14, and D13's third audit) it is the wake address an agent registers once. The default is the inbox.
 - **One dispatcher instead of many waits.** A loop in the server wakes sessions, so nothing hangs. It marks a wake before
   running it, so a crash leaves a session unwoken rather than woken twice, and the answer is still in the inbox.
 - **The tracker knows no tool.** It stores an opaque address. An adapter in `~/.octotrack/wake-adapters.json` turns that into
@@ -416,14 +418,101 @@ Decisions made from that:
     command, session and wake the server runs is given only its own: a session its name, a wake the agent woken (or,
     for a question from before lines, its asker). _Why:_ the server is often started by an agent's first command, and a
     woken session would otherwise act as that agent.
-  - _Commands are bounded and answered._ git and gh get two minutes, setup commands thirty, the stop command ten, and a
-    wake thirty; each is killed at its deadline and reported. Output is read as it comes and raced once the command
+  - _Commands are bounded and answered._ git and gh get two minutes, clones and setup commands thirty, the stop command
+    ten, and a wake thirty; each is killed at its deadline and reported. Output is read as it comes and raced once the command
     exits, so a child it leaves holding the pipes cannot hang the runner. Only names and refs of the narrow form are
     filled into the developer's commands. A push service that cannot be reached costs that browser its notification
-    and nothing else: the rest are sent and recorded, so a line still buzzes once.
+    and nothing else: the rest are sent and recorded, so a line still buzzes once. (Third audit: unless no browser
+    took it, below.)
   - _Watch mode records only, Stop included._ The stop command is noted once per Stop (`runner.would_stop`) and runs
     when the runner may act, if the agent is still stopped then. Worktrees default to `worktrees` in Octotrack's home,
     so a test install with its own `OCTO_HOME` never works in the live install's.
+- **What the third audit changed in core, the server and the runner.**
+  - _Scoping a line is writing to it, so it too is done only from the line._ An agent sets a plan, files an issue or a
+    task, rewrites an issue, moves one on or off a line, and asks a question on a line (named, or through the issue it
+    names) only from that line, or on a proposal as its proposer; so is anything filed already linked to work on
+    another line (`blocks`, `--blocked-by`, `--derived-from`, `--waits-for`, `affects`). _Why:_ an agent from another
+    repo could replace a working line's plan, take its issues off it, or put a question in its queue whose answer went
+    to that line's owner, not to the asker.
+  - _Only the server's sync, or the developer, reports what GitHub says._ `pr.sync` refuses agents, and `octo pr sync`
+    asks the server to run its own sync (`POST /api/github/sync`, optionally for named repos, each an owner/name)
+    instead of running `gh` in the agent's shell and reporting the result. _Why:_ any agent could write pull request
+    rows through sync, past the line rules `pr upsert` keeps, and say a repo's sync failed or was fine. _Trade-off:_ the
+    sync runs with the server's `gh` and environment, not the caller's; on this one machine they are the same login.
+    `gh` now runs on the same bounded path as every other command the server runs.
+  - _A pull request implements an issue by its branch name, a closing keyword, or `--issue`,_ as D14 says; a bare
+    mention ("see PANEL-1 for background") no longer links it. Links an earlier mention made stay, but the runner does
+    not act on them (below). _Why:_ every link is a reason the runner may close the pull request on GitHub with a line.
+  - _The runner closes only the pull requests that were open when the line ended, unchanged since, as GitHub reports
+    them._ When a done or dropped line's wind-down ends (or at once, when nobody was on it), Octotrack notes each open
+    pull request whose branch or closing keyword, as GitHub last reported them, names one of the line's issues, with
+    its head commit (`line_closing_prs`). The runner closes only those, and only while the head commit is the same and
+    the row was last written by GitHub sync. Any `pr upsert` marks a row as not confirmed until sync writes it again.
+    _Why:_ it closed every open pull request linked to an ended line, including ones opened after the wind-down, which
+    D14 holds and shows, and an agent could `pr upsert` any number in the repo with "Fixes PANEL-1" to have it closed.
+    _Trade-off:_ a pull request opened just before the deadline but not yet synced is held and shown, not closed;
+    closing what is still wanted cannot be undone, and holding costs a click.
+  - _Removed: a question's own wake address._ `decision wake`, `question wake` and `--wake` on asking are gone, as D14
+    says they give way to the wake address an agent registers. A question on no line wakes its asker at the address
+    the asker registered (`agent register --wake`), read when the answer comes, and not at all once its asker is
+    stopped; one asked before keeps the address it was asked with if its asker registered none. The old commands
+    answer with that pointer instead of "unknown". _Why:_ anyone could change any question's address, so an answer
+    resumed whatever session the address named, as the asker, or silenced the asker's wake. Keeping it for questions on
+    no line, guarded to the asker and the developer, was the other choice; it was not kept because it is a second
+    answer to "where is this agent woken", which the registered address already gives, and questions on no line are
+    themselves the older rules going away. _Trade-off:_ an agent on no line that wants to be woken must register an
+    address once, which `octo guide` already asks of every agent.
+  - _A watch is cancelled only by its own agent,_ the developer or the server. _Why:_ any agent could cancel another's
+    watch and so silence its wait.
+  - _A session that takes its line and leaves at once waits like a failed start._ One that took its line and exited
+    within fifteen minutes of its spawn with no wake address is recorded as failed, with a line saying sessions keep
+    leaving: the next start for the line (with a new name, since that one ran) waits 2, 10, 60 then 360 minutes, and the
+    second such exit in a row raises Step in. A session that ran longer, or kept its line asleep, resets the count.
+    _Why:_ a start command that exits after taking the line, as `claude -p "…octo line take {line}"` does, was replaced
+    every 40 seconds without limit; the cap bounds how many run at once, not how fast they are replaced. _Trade-off:_ a
+    session that does a short job and exits is replaced only after the wait.
+  - _Starting a session has two steps._ `runner.start` reserves the name, the worktree and the line's turn; the runner
+    then makes the checkout, worktree and setup in the background, spawns the process and records it with
+    `runner.spawned`, which starts the five-minute check-in and asks again whether the session should run: a line
+    tabled, owned by the developer or taken by another owner meanwhile, or an agent stopped meanwhile, ends the process
+    at once (`runner.not_started`), uses up nothing and is not retried. _Why:_ the check-in ran from before a setup that
+    may take thirty minutes, so a slow setup was declared never taken and buzzed the phone, and a line tabled during
+    setup still got its session.
+  - _The cap counts processes, not commands._ A start counts from its reservation until its process is seen to exit,
+    however quiet it is; a session Octotrack started that was woken after it exited counts while it is at work (a command
+    or the wake within 15 minutes). _Why:_ counting agents with a command in the last 15 minutes held a slot for a
+    session that had exited, and dropped one silent for 16 minutes that still ran, so the cap was passed.
+  - _Stop ends what the runner started._ Sessions run in a process group of their own; Stop sends it SIGTERM, then
+    SIGKILL after ten seconds, and the developer's `stop` command is only for sessions the runner did not start. The log
+    says which was done. _Why:_ the runner kept no handle on its children, so a stopped session kept running and
+    spending, and the README's `claude -p` start and `tmux` stop could never work together. D14's "Octotrack cannot kill
+    a session" now holds only for sessions it did not start.
+  - _A session outlives a server restart, and is watched by its process id._ Each start records its process id, and
+    its output goes to a log file (`sessions/<name>.log` in Octotrack's home) rather than a pipe, so the session is not cut
+    off when it next writes. On restart, a start whose process still runs keeps its line, its worktree and its slot,
+    and every tick checks it until it ends; one whose process is gone is settled as before. A process with that id that
+    started more than two minutes after the spawn is another one, the id reused, and counts as ended. _Why:_ after a
+    restart, every unexited start was settled as gone, and the next session was handed a worktree a live one still
+    worked in.
+  - _The runner's smaller findings._ A tick no longer waits on a start's worktree and setup, so stops, closes and other
+    starts go on meanwhile; two starts never clone one repo, or add worktrees to one checkout, at once. Clones go under
+    Octotrack's home (`clones`), get the thirty-minute deadline, and are made beside their place and moved there only once
+    whole; a clone in place must have a HEAD. A new session never takes over an `octo/<name>` branch Octotrack did not make
+    for that name; only a retry takes up its own again. Each helper starts in the repo of the work it is there for. Watch
+    mode notes a helper it would start as a helper, once per owner. Names of any language reach the stop command, as
+    agent names may. Each start keeps its exit code. gh runs on the bounded spawn path; the server's look at an agent's
+    remote runs git only on an absolute path to an existing folder, with a five-second deadline, and remembers at most a
+    thousand checkouts; an agent's checkout is tested against the worktrees folder with a path separator, so
+    `/wt-panel` is not inside `/wt`.
+  - _A push is given up on after thirty seconds, and one no browser took stays due._ Each send has a deadline (web-push's
+    own `timeout`, and a race in the dispatcher), so one that never answers no longer holds every later notification
+    until a restart. A notification is recorded as sent once some browser's push service took it, or refused it for
+    good; one that no browser took, because no service answered, a timeout, a 429 or a 5xx, stays due and is tried on
+    the next dispatch. _Why:_ a network error lost the notification for good, against D14's "urgent questions always
+    buzz". _Trade-off:_ while every push service is unreachable, each dispatch tries once more, bounded by the deadline.
+  - _The developer's own operations, relayed with `--said`, take effect on their own lines._ `task add` and `note add`
+    were refused there, as writes to a line no agent may touch, though D14 says every developer operation accepts the
+    developer's words.
 - **Departures, each for a reason.**
   - _The pages from before lines are gone:_ Decisions, Pull requests, Drift, Issues and Repos. Nothing linked to them
     any more, and the issues page changed status through a select with no Undo. Questions are answered on home, a
@@ -663,7 +752,7 @@ you", answers wait in its inbox, and the next answer, finished task or Tell star
   line, and offers Pause the line instead, which moves it to up next. Stop refuses every write under that agent's name,
   ends its claims, sends it a notice, runs the developer's local stop command if one is set, and marks it stopped on
   Agents until lifted. _Trade-off:_ Octotrack cannot kill a session; refusing its writes and telling it is what it can
-  do.
+  do. (D13: since the third audit, it does end the process group of a session its own runner started.)
 - **Questions stand alone.** Asking requires a situation written for someone who has read nothing else, options that say
   what happens if picked, and the reason behind any recommendation. Both are shown wherever a question is open, phone
   included. Background stays folded. _Why:_ "the operator needs to read millions of lines of text to get context on one
@@ -852,7 +941,10 @@ The append-only `events` table is the feed and also what event clauses in watche
   have a full page, so a rare filter on a very long log takes several requests.
 - Every waiting agent re-evaluates on every write. With 40 agents hanging, a write takes about 290ms instead of 6ms.
 - PRs are synced for repos with a GitHub name set. A PR reported by hand for any other repo is never refreshed.
-- Octotrack cannot kill a session it did not start; Stop refuses its writes and tells it.
+- Octotrack cannot kill a session it did not start; Stop refuses its writes and tells it, and runs the developer's
+  stop command if one is set.
+- After a reboot, a session's process id may be reused; one that started more than two minutes after the session's
+  spawn is taken as another process, which a reuse within those two minutes would defeat.
 - Lists stop at their limit with no paging: the dashboard says so, and the CLI allows `--limit` up to 1000.
 - A decision's `--recommend` may be free text, so a mistyped option key is shown as text rather than refused.
 - PR status is only as fresh as the sync interval.

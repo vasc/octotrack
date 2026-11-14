@@ -58,7 +58,8 @@ describe("only the server records wakes", () => {
 
   test("nor say a question's session was woken", () => {
     const w = world();
-    const asked = w.as(w.agent("legacy"), c.decisionAsk, { title: "Q", wake: "claude:legacy" });
+    w.as(w.agent("legacy"), c.agentRegister, { wake: "claude:legacy" });
+    const asked = w.as(w.agent("legacy"), c.decisionAsk, { title: "Q" });
     expect(w.refused(() => w.as(w.agent("mallory"), c.decisionWoken, { ref: asked.ref })).code).toBe(
       "forbidden",
     );
@@ -110,18 +111,15 @@ describe("answering a question on a line is the developer's", () => {
     ).toBe("decided");
   });
 
-  test("a question naming an issue on a line belongs to that line, even from an agent on no line", () => {
+  test("a question naming an issue on a line belongs to that line, so only the agents on it ask it", () => {
     const w = world();
     const issue = w.as(w.dev, c.issueCreate, { project: "PANEL", title: "Base", line: w.line.ref });
-    const asked = w.as(w.agent("visitor"), c.decisionAsk, {
-      title: "Which?",
-      context: "Context.",
-      options: OPTIONS,
-      issue: issue.ref,
-    });
-    expect(asked.line).toBe(w.line.ref);
+    const question = { title: "Which?", context: "Context.", options: OPTIONS, issue: issue.ref };
+    // Its answer would go to whoever holds the line, not to an asker from outside it (third audit, N4).
+    expect(w.refused(() => w.as(w.agent("visitor"), c.decisionAsk, question)).code).toBe("forbidden");
+    expect(w.as(w.agent("panel"), c.decisionAsk, question).line).toBe(w.line.ref);
     expect(
-      w.refused(() => w.as(w.agent("visitor"), c.decisionAsk, { title: "Bare", issue: issue.ref })).code,
+      w.refused(() => w.as(w.agent("panel"), c.decisionAsk, { title: "Bare", issue: issue.ref })).code,
     ).toBe("invalid_input");
   });
 });

@@ -272,8 +272,12 @@ function reviveWatch(ctx: Ctx, watch: Watch): Watch {
   return { ...watch, status: "active" };
 }
 
+/** Only the agent a watch is for, the developer or the server cancels it: another agent would silence its wait. */
 export function cancelWatch(ctx: Ctx, refOrName: string): string {
   const watch = requireWatch(ctx, refOrName);
+  if (watch.agent !== ctx.actor && !ctx.developer && !ctx.system) {
+    throw new OctoError("forbidden", `${watch.ref} is ${watch.agent}'s watch, not yours`);
+  }
   ctx.sql.run("UPDATE watches SET status = 'cancelled' WHERE ref = ? AND status = 'active'", [watch.ref]);
   return watch.ref;
 }

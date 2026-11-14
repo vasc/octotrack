@@ -111,13 +111,32 @@ export const runnerCommands: Command[] = [
     },
   },
   {
+    path: ["runner", "live"],
+    summary: "Sessions Octotrack started whose process has not been seen to exit, with their process ids",
+    ops: [c.runnerLive.name],
+    async run({ client, out }) {
+      const outcome = await client.call(c.runnerLive, {});
+      out.result(outcome, () =>
+        outcome.data.length === 0
+          ? r.dim("None.")
+          : r.table(
+              outcome.data.map((live) => [
+                live.name,
+                live.pid === null ? "not spawned yet" : String(live.pid),
+              ]),
+            ),
+      );
+    },
+  },
+  {
     path: ["runner", "record"],
-    usage: "<report|start|exited|restarted|dry|closed|worktree|removed|stop_ran>",
+    usage: "<report|start|spawned|exited|restarted|dry|closed|worktree|removed|stop_ran>",
     summary: INTERNAL,
     options: { input: { ...STRING, description: "The operation's input, as JSON" } },
     ops: [
       c.runnerReport.name,
       c.runnerStart.name,
+      c.runnerSpawned.name,
       c.runnerExited.name,
       c.runnerRestarted.name,
       c.runnerDry.name,

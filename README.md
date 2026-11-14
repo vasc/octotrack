@@ -168,8 +168,7 @@ until `~/.octotrack/agent-setup.json` exists, and starts in watch mode, only not
 
 ```json
 {
-  "start": ["claude", "-p", "You are {name}. Run: octo line take {line}"],
-  "stop": ["tmux", "kill-session", "-t", "{name}"],
+  "start": ["claude", "-p", "You are {name}. Run: octo line take {line}, then work on it"],
   "cap": 1,
   "dryRun": false,
   "repos": { "PANEL": { "checkout": "/Users/you/src/homepanel", "setup": [["bun", "install"]] } }
@@ -184,17 +183,27 @@ the same way, as the agent being woken.
 Each session runs in a fresh worktree on `octo/<name>`, under `worktrees` (by default `worktrees` in Octotrack's home,
 so `OCTO_HOME` moves it too), made from the repo's main checkout: the one named here, the one set with
 `octo repo checkout PANEL /Users/you/src/homepanel`, one an agent works in whose origin is the repo's GitHub repo, or a
-clone `gh` makes. Worktrees are removed only when clean, pushed and unused. A gone session's worktree goes to the next
-session on its line once nobody else works in it, and a start retried after failing keeps the worktree it had.
+clone `gh` makes under `clones` (by default `clones` in Octotrack's home). A clone is made beside its place and moved
+there only once whole. A new session never takes over a branch Octotrack did not make for it. Worktrees are removed
+only when clean, pushed and unused. A gone session's worktree goes to the next session on its line once nobody else
+works in it, and a start retried after failing keeps the worktree it had. Each session's output goes to
+`sessions/<name>.log` in Octotrack's home (`logs` in the file), and each runs in a process group of its own, so it
+outlives a server restart: the restarted server finds it by its process id and leaves its line and worktree with it.
 
 Owners come first: a working line with no owner gets a session once no agent here took it. Once every working line
-has an owner, spare sessions under the cap start as helpers for the unclaimed work on each line, in line order. The cap
-counts sessions that have not checked in while their process still runs, and Octotrack's sessions that are running. A
-start that exits within its five-minute check-in is retried by itself, later each time; one that ran longer and never
-took its line waits for Try now.
+has an owner, spare sessions under the cap start as helpers for the unclaimed work on each line, in line order, each in
+the repo of its work. The cap counts sessions whose process is alive, from their worktree and setup to their exit,
+however quiet, and sessions Octotrack started that were woken after they exited and are at work. The five-minute
+check-in runs from the moment the session's process starts, and a session whose line was tabled, or found an owner,
+while it was set up is ended at once. A start that exits within its check-in is retried by itself, later each time
+(2, 10, 60, then 360 minutes); one that ran longer and never took its line waits for Try now. So does a session that
+takes its line and exits within fifteen minutes with no wake address: the next one waits as a failed start does, and
+twice in a row asks you to step in, so a start command that exits after taking the line is not run again every minute.
 
-`stop` runs once when the developer stops an agent; in watch mode it is only noted. git and gh are given two minutes,
-setup commands thirty and the stop command ten, then killed.
+Stop ends the whole process group of a session Octotrack started. `stop` is for sessions it did not start, such as
+`["tmux", "kill-session", "-t", "{name}"]` for ones kept in tmux; it runs once when the developer stops an agent. In
+watch mode both are only noted. git and gh are given two minutes, clones and setup commands thirty and the stop
+command ten, then killed.
 
 ## Watching
 

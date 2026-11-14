@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { contracts as c } from "../src/contracts.ts";
 import type { Caller } from "../src/tracker.ts";
 import { Tracker } from "../src/tracker.ts";
-import { memoryDriver } from "./helpers.ts";
+import { GITHUB, memoryDriver } from "./helpers.ts";
 
 const MINUTE = 60_000;
 
@@ -30,6 +30,7 @@ function world() {
     tracker.call(c.runnerReport, { configured: true, cap: value, dryRun: false }, runner);
   return {
     tracker,
+    driver,
     dev,
     runner,
     line,
@@ -125,9 +126,13 @@ describe("closing up after a line ends", () => {
     const line = w.line("Enclosure");
     const issue = w.tracker.call(c.issueCreate, { project: "PANEL", title: "Base", line: line.ref }, w.dev);
     w.tracker.call(
-      c.prUpsert,
-      { repo: "vasc/homepanel", number: 14, title: "Base", state: "open", body: `Fixes ${issue.ref}` },
-      w.runner,
+      c.prSync,
+      {
+        prs: [
+          { repo: "vasc/homepanel", number: 14, title: "Base", state: "open", body: `Fixes ${issue.ref}` },
+        ],
+      },
+      GITHUB,
     );
     w.tracker.call(c.lineDone, { ref: line.ref }, w.dev);
     expect(w.tracker.call(c.runnerCloses, {}, w.runner)).toEqual([]);
@@ -201,7 +206,10 @@ describe("what the runner audit found", () => {
       },
       w.runner,
     );
+    w.tracker.call(c.runnerSpawned, { name: "panel.1", pid: 4242 }, w.runner);
     w.tracker.call(c.lineTake, { ref: line }, w.session("panel.1", "/wt/panel.1"));
+    // It worked a while: one that leaves at once is retried later (third audit, N1).
+    w.later(20);
     w.tracker.call(c.runnerExited, { name: "panel.1", code: 0, output: "" }, w.runner);
   }
 
@@ -210,9 +218,13 @@ describe("what the runner audit found", () => {
     const line = w.line("Enclosure");
     const issue = w.issue(line.ref, "Base");
     w.tracker.call(
-      c.prUpsert,
-      { repo: "vasc/other-repo", number: 99, title: "Other", state: "open", body: `Fixes ${issue.ref}` },
-      w.runner,
+      c.prSync,
+      {
+        prs: [
+          { repo: "vasc/other-repo", number: 99, title: "Other", state: "open", body: `Fixes ${issue.ref}` },
+        ],
+      },
+      GITHUB,
     );
     w.tracker.call(c.lineDone, { ref: line.ref }, w.dev);
     w.later(16);
@@ -227,15 +239,19 @@ describe("what the runner audit found", () => {
     const done = w.issue(ended.ref, "Base");
     const open = w.issue(working.ref, "Bracket");
     w.tracker.call(
-      c.prUpsert,
+      c.prSync,
       {
-        repo: "vasc/homepanel",
-        number: 15,
-        title: "Both",
-        state: "open",
-        body: `Fixes ${done.ref} and ${open.ref}`,
+        prs: [
+          {
+            repo: "vasc/homepanel",
+            number: 15,
+            title: "Both",
+            state: "open",
+            body: `Fixes ${done.ref} and ${open.ref}`,
+          },
+        ],
       },
-      w.runner,
+      GITHUB,
     );
     w.tracker.call(c.lineDone, { ref: ended.ref }, w.dev);
     w.later(16);
@@ -277,6 +293,7 @@ describe("what the runner audit found", () => {
     const line = w.line("Enclosure");
     w.later(1);
     w.tracker.call(c.runnerStart, { line: line.ref, repo: "PANEL" }, w.runner);
+    w.tracker.call(c.runnerSpawned, { name: "panel.1", pid: 4242 }, w.runner);
     w.later(6);
     w.tracker.sweep();
     w.later(34);
@@ -314,7 +331,8 @@ describe("what the runner audit found", () => {
       expect(w.tracker.call(c.lineTake, { ref: first.ref }, w.session(name)).role).toBe(role);
     }
     w.later(16);
-    // The owner is at work; the helper went to sleep.
+    // The owner is at work; the helper's process exited, and it sleeps with its line.
+    w.tracker.call(c.runnerExited, { name: "panel.2", code: 0, output: "" }, w.runner);
     w.tracker.call(c.agentRegister, {}, w.session("panel.1"));
     w.cap(1);
     const second = w.line("Mount");
@@ -391,6 +409,307 @@ describe("what the runner audit found", () => {
     expect(due.map((start) => [start.line, start.role])).toEqual([
       [second.ref, "owner"],
       [first.ref, "helper"],
+    ]);
+  });
+});
+
+describe("closing pull requests only when it is safe (third audit, N2)", () => {
+  const github: Caller = { actor: "github", channel: "cli", system: true };
+  /** A line with one issue, its pull request as GitHub reports it, and the line done with its wind-down over. */
+  function ended(body: (issue: string) => string, headRef = "feature") {
+    const w = world();
+    const line = w.line("Enclosure");
+    const issue = w.issue(line.ref, "Base");
+    const sync = (number: number, text: string, sha = "aaa") =>
+      w.tracker.call(
+        c.prSync,
+        {
+          prs: [
+            {
+              repo: "vasc/homepanel",
+              number,
+              title: "Base",
+              state: "open",
+              body: text,
+              headRef,
+              headSha: sha,
+            },
+          ],
+        },
+        github,
+      );
+    sync(14, body(issue.ref));
+    w.tracker.call(c.lineDone, { ref: line.ref }, w.dev);
+    w.later(16);
+    w.tracker.sweep();
+    const closes = () => w.tracker.call(c.runnerCloses, {}, w.runner).map((close) => close.number);
+    return { w, line, issue, sync, closes };
+  }
+
+  test("a pull request that only mentions an issue does not implement it, so it is never closed with it", () => {
+    const e = ended((issue) => `See ${issue} for background.`);
+    expect(e.closes()).toEqual([]);
+    const shown = e.w.tracker.call(c.entityShow, { ref: "vasc/homepanel#14" }, e.w.dev);
+    expect(shown.links).toEqual([]);
+  });
+
+  test("a closing keyword or the branch name links it, and then it is closed", () => {
+    expect(ended((issue) => `Fixes ${issue}`).closes()).toEqual([14]);
+    expect(ended(() => "The base.", "panel-1-base").closes()).toEqual([14]);
+  });
+
+  test("one opened after the wind-down is shown and held, never closed", () => {
+    const e = ended((issue) => `Fixes ${issue}`);
+    e.sync(40, `Fixes ${e.issue.ref}`);
+    expect(e.closes()).toEqual([14]);
+    const late = e.w.tracker.call(c.feedList, { query: "event:pr.after_wind_down" }, e.w.dev).events;
+    expect(late.map((event) => event.line)).toEqual([e.line.ref]);
+  });
+
+  test("one pushed to after the wind-down is not closed", () => {
+    const e = ended((issue) => `Fixes ${issue}`);
+    e.sync(14, `Fixes ${e.issue.ref}`, "bbb");
+    expect(e.closes()).toEqual([]);
+  });
+
+  test("a pull request an agent reported, and GitHub never confirmed, is not closed", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    const issue = w.issue(line.ref, "Base");
+    w.tracker.call(c.agentRegister, { repo: "PANEL" }, w.session("panel.9"));
+    w.tracker.call(c.lineTake, { ref: line.ref }, w.session("panel.9"));
+    w.tracker.call(
+      c.prUpsert,
+      { repo: "vasc/homepanel", number: 77, title: "Not mine", state: "open", body: `Fixes ${issue.ref}` },
+      w.session("panel.9"),
+    );
+    w.tracker.call(c.lineDone, { ref: line.ref }, w.dev);
+    w.later(16);
+    w.tracker.sweep();
+    expect(w.tracker.call(c.runnerCloses, {}, w.runner)).toEqual([]);
+  });
+});
+
+describe("what the third audit found in the runner", () => {
+  /** A session started for a line and spawned with this process id. */
+  function spawn(w: ReturnType<typeof world>, line: string, pid: number, role: "owner" | "helper" = "owner") {
+    const started = w.tracker.call(c.runnerStart, { line, repo: "PANEL", role }, w.runner);
+    expect(w.tracker.call(c.runnerSpawned, { name: started.name, pid }, w.runner).go).toBe(true);
+    return started.name;
+  }
+  const due = (w: ReturnType<typeof world>) =>
+    w.tracker.call(c.runnerDue, {}, w.runner).map((item) => [item.line, item.name]);
+
+  test("N1: a session that takes its line and leaves at once is not replaced at once, and twice in a row needs the developer", () => {
+    const w = world();
+    w.cap(1);
+    const line = w.line("Enclosure");
+    w.later(1);
+    const first = spawn(w, line.ref, 101);
+    w.tracker.call(c.lineTake, { ref: line.ref }, w.session(first));
+    w.later(1);
+    w.tracker.call(c.runnerExited, { name: first, code: 0, output: "" }, w.runner);
+    w.later(1);
+    expect(due(w)).toEqual([]);
+    w.later(2);
+    expect(due(w)).toEqual([[line.ref, null]]);
+    const second = spawn(w, line.ref, 102);
+    expect(second).not.toBe(first);
+    w.tracker.call(c.lineTake, { ref: line.ref }, w.session(second));
+    w.later(1);
+    w.tracker.call(c.runnerExited, { name: second, code: 0, output: "" }, w.runner);
+    w.later(1);
+    expect(w.tracker.call(c.homeShow, {}, w.dev).lines[line.ref]?.stepIn).toBe(true);
+    expect(w.tracker.call(c.homeShow, {}, w.dev).lines[line.ref]?.start?.output).toContain("keep");
+    w.later(2);
+    expect(due(w)).toEqual([]);
+    w.later(8);
+    expect(due(w)).toEqual([[line.ref, null]]);
+  });
+
+  test("N1: one that worked a while before it left is replaced as soon as the search allows", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    w.later(1);
+    const first = spawn(w, line.ref, 101);
+    w.tracker.call(c.lineTake, { ref: line.ref }, w.session(first));
+    w.later(40);
+    w.tracker.call(c.runnerExited, { name: first, code: 0, output: "" }, w.runner);
+    w.later(1);
+    expect(due(w)).toEqual([[line.ref, null]]);
+    expect(w.tracker.call(c.homeShow, {}, w.dev).lines[line.ref]?.stepIn).toBe(false);
+  });
+
+  test("N6: the check-in clock starts when the session is spawned, not while its worktree and setup are made", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    w.later(1);
+    const started = w.tracker.call(c.runnerStart, { line: line.ref, repo: "PANEL" }, w.runner);
+    w.later(7);
+    w.tracker.sweep();
+    const home = () => w.tracker.call(c.homeShow, {}, w.dev).lines[line.ref];
+    expect([home()?.start?.state, home()?.stepIn]).toEqual(["starting", false]);
+    w.tracker.call(c.runnerSpawned, { name: started.name, pid: 4242 }, w.runner);
+    w.later(4);
+    w.tracker.sweep();
+    expect(home()?.start?.state).toBe("starting");
+    w.later(2);
+    w.tracker.sweep();
+    expect(home()?.start?.state).toBe("never_took");
+  });
+
+  test("N6: a session whose line was tabled while it was set up is told not to go, and is not retried", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    w.later(1);
+    const started = w.tracker.call(c.runnerStart, { line: line.ref, repo: "PANEL" }, w.runner);
+    w.tracker.call(c.lineTable, { ref: line.ref, reason: "Not now" }, w.dev);
+    const spawned = w.tracker.call(c.runnerSpawned, { name: started.name, pid: 4242 }, w.runner);
+    expect(spawned.go).toBe(false);
+    expect(spawned.why).toContain("tabled");
+    w.tracker.call(c.runnerExited, { name: started.name, code: 143, output: "" }, w.runner);
+    w.tracker.call(c.lineStart, { ref: line.ref }, w.dev);
+    w.later(1);
+    expect(w.tracker.call(c.runnerDue, {}, w.runner).map((item) => item.name)).toEqual([null]);
+  });
+
+  test("N6: nor is one whose agent the developer stopped while it was set up", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    w.later(1);
+    const started = w.tracker.call(c.runnerStart, { line: line.ref, repo: "PANEL" }, w.runner);
+    w.tracker.call(c.agentStop, { name: started.name }, w.dev);
+    expect(w.tracker.call(c.runnerSpawned, { name: started.name, pid: 4242 }, w.runner).go).toBe(false);
+  });
+
+  test("N8: a session that went to sleep with a wake address frees its slot at once", () => {
+    const w = world();
+    w.cap(1);
+    const first = w.line("Enclosure");
+    const second = w.line("Mount");
+    w.later(1);
+    const name = spawn(w, first.ref, 101);
+    w.tracker.call(c.agentRegister, { wake: `claude:${name}` }, w.session(name));
+    w.tracker.call(c.lineTake, { ref: first.ref }, w.session(name));
+    w.tracker.call(c.runnerExited, { name, code: 0, output: "" }, w.runner);
+    expect(due(w)).toEqual([[second.ref, null]]);
+  });
+
+  test("N8: a live process keeps its slot however long it is silent", () => {
+    const w = world();
+    w.cap(1);
+    const first = w.line("Enclosure");
+    w.line("Mount");
+    w.later(1);
+    const name = spawn(w, first.ref, 101);
+    w.tracker.call(c.lineTake, { ref: first.ref }, w.session(name));
+    w.later(16);
+    expect(due(w)).toEqual([]);
+  });
+
+  test("N8: an Octotrack session woken after it exited counts while it runs", () => {
+    const w = world();
+    w.cap(1);
+    const first = w.line("Enclosure");
+    w.line("Mount");
+    w.later(1);
+    const name = spawn(w, first.ref, 101);
+    w.tracker.call(c.agentRegister, { wake: `claude:${name}` }, w.session(name));
+    w.tracker.call(c.lineTake, { ref: first.ref }, w.session(name));
+    w.tracker.call(c.runnerExited, { name, code: 0, output: "" }, w.runner);
+    w.later(20);
+    w.tracker.call(c.agentWoken, { name }, w.runner);
+    w.tracker.call(c.agentNote, { note: "Back on it" }, w.session(name));
+    expect(due(w)).toEqual([]);
+  });
+
+  test("N10: after a restart, a session whose process still runs keeps its line, its worktree and its slot", () => {
+    const w = world();
+    w.cap(1);
+    const line = w.line("Enclosure");
+    w.line("Mount");
+    w.later(1);
+    const name = spawn(w, line.ref, 4242);
+    w.tracker.call(c.lineTake, { ref: line.ref }, w.session(name, "/wt/panel.1"));
+    expect(w.tracker.call(c.runnerLive, {}, w.runner)).toEqual([
+      { name, pid: 4242, spawnedAt: "2026-11-14T09:01:00.000Z" },
+    ]);
+    expect(w.tracker.call(c.runnerRestarted, { alive: [name] }, w.runner).settled).toBe(0);
+    const agent = w.tracker.call(c.agentList, {}, w.dev).find((item) => item.name === name);
+    expect([agent?.state, agent?.line]).toEqual(["running", line.ref]);
+    expect(due(w)).toEqual([]);
+    expect(w.tracker.call(c.runnerRestarted, { alive: [] }, w.runner).settled).toBe(1);
+  });
+
+  test("a start that fails at once waits 2, then 10, 60 and 360 minutes", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    w.later(1);
+    for (const wait of [2, 10, 60, 360, 360]) {
+      const started = w.tracker.call(c.runnerStart, { line: line.ref, repo: "PANEL" }, w.runner);
+      expect(started.name).toBe("panel.1");
+      w.tracker.call(c.runnerExited, { name: started.name, code: 1, output: "not logged in" }, w.runner);
+      w.later(wait - 1);
+      expect(due(w)).toEqual([]);
+      w.later(1);
+      expect(due(w)).toEqual([[line.ref, "panel.1"]]);
+    }
+  });
+});
+
+describe("the runner's smaller findings in the third audit (N22)", () => {
+  test("each helper starts in the repo of the work it is there for", () => {
+    const w = world();
+    w.tracker.call(c.projectCreate, { key: "OTHER", name: "Other", repo: "vasc/other" }, w.dev);
+    const line = w.tracker.call(
+      c.lineAdd,
+      { title: "Both", doneWhen: "Done.", repos: ["PANEL", "OTHER"], where: "working" },
+      w.dev,
+    );
+    w.tracker.call(c.issueCreate, { project: "PANEL", title: "Base", line: line.ref }, w.dev);
+    w.tracker.call(c.issueCreate, { project: "OTHER", title: "App", line: line.ref }, w.dev);
+    w.later(1);
+    w.tracker.call(c.agentRegister, { repo: "PANEL" }, w.session("owner"));
+    w.tracker.call(c.lineTake, { ref: line.ref }, w.session("owner"));
+    w.tracker.call(c.issueClaim, { refs: ["PANEL-1"] }, w.session("owner"));
+    w.cap(3);
+    w.tracker.call(c.issueCreate, { project: "PANEL", title: "Lid", line: line.ref }, w.dev);
+    const due = w.tracker.call(c.runnerDue, {}, w.runner);
+    expect(due.map((item) => [item.role, item.repo])).toEqual([
+      ["helper", "OTHER"],
+      ["helper", "PANEL"],
+    ]);
+  });
+
+  test("in watch mode a helper it would start is noted as a helper, and again for a new owner", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    const noted = () =>
+      w.tracker
+        .call(c.feedList, { query: "event:runner.would_start" }, w.dev)
+        .events.map((event) => event.summary);
+    w.tracker.call(c.runnerDry, { line: line.ref, repo: "PANEL" }, w.runner);
+    w.tracker.call(c.agentRegister, { repo: "PANEL" }, w.session("owner"));
+    w.tracker.call(c.lineTake, { ref: line.ref }, w.session("owner"));
+    w.tracker.call(c.runnerDry, { line: line.ref, repo: "PANEL", role: "helper" }, w.runner);
+    w.tracker.call(c.runnerDry, { line: line.ref, repo: "PANEL", role: "helper" }, w.runner);
+    expect(noted()).toHaveLength(2);
+    expect(noted().filter((summary) => summary.includes("a helper"))).toHaveLength(1);
+    w.later(1);
+    w.tracker.call(c.lineRelease, {}, w.session("owner"));
+    w.tracker.call(c.lineTake, { ref: line.ref }, w.session("owner"));
+    w.tracker.call(c.runnerDry, { line: line.ref, repo: "PANEL", role: "helper" }, w.runner);
+    expect(noted().filter((summary) => summary.includes("a helper"))).toHaveLength(2);
+  });
+
+  test("each start keeps its exit code", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    w.later(1);
+    w.tracker.call(c.runnerStart, { line: line.ref, repo: "PANEL" }, w.runner);
+    w.tracker.call(c.runnerExited, { name: "panel.1", code: 3, output: "no" }, w.runner);
+    expect(w.driver.all("SELECT exitCode FROM runner_starts WHERE name = 'panel.1'")).toEqual([
+      { exitCode: 3 },
     ]);
   });
 });

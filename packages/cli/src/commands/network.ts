@@ -1,11 +1,20 @@
 import { contracts as c, parseRepoPrRef } from "@octotrack/core";
-import { fetchRepoPrs } from "@octotrack/server/gh";
+import { z } from "zod";
 import { UsageError } from "../args.ts";
 import type { Command } from "../command.ts";
 import * as r from "../render.ts";
 import { compact, LIST_OPTIONS, listInput } from "./shared.ts";
 
 const STRING = { type: "string" } as const;
+const SyncReply = z.object({
+  cursor: z.number(),
+  data: z.object({
+    repos: z.number(),
+    synced: z.number(),
+    changed: z.array(z.string()),
+    errors: z.array(z.string()),
+  }),
+});
 const MANY = { type: "string", multiple: true } as const;
 
 /** Friendlier names for the relation, some of which read in the opposite direction. */
@@ -75,66 +84,31 @@ export const networkCommands: Command[] = [
   },
   {
     path: ["pr", "sync"],
-    summary: "Pull PR status from GitHub with gh, for one repo or every project with a repo",
-    options: { repo: { ...MANY, description: "owner/name, repeatable. Default: all project repos" } },
+    summary: "Have the server pull PR status from GitHub now, for one repo or every repo a project names",
+    options: {
+      repo: { ...MANY, description: "owner/name, repeatable. Default: every repo a project names" },
+    },
+    // The server runs gh and reports what it found as pull request sync: no command's own report is taken as GitHub's.
     ops: [c.prSync.name],
     async run({ client, out }, args) {
-      let repos = args.list("repo");
+      const repos = args.list("repo");
       if (repos.length === 0) {
         const projects = await client.call(c.projectList, {});
-        repos = [
-          ...new Set(
-            projects.data.flatMap((card) => (card.project.repo === null ? [] : [card.project.repo])),
-          ),
-        ];
+        if (!projects.data.some((card) => card.project.repo !== null))
+          throw new UsageError("No repo to sync. Set one with: octo project update <KEY> --repo owner/name");
       }
-      if (repos.length === 0)
-        throw new UsageError("No repo to sync. Set one with: octo project update <KEY> --repo owner/name");
-      // One unreachable repo must not stop the others from updating.
-      const fetched = await Promise.all(
-        repos.map(async (repo) => {
-          try {
-            const tracked = await client.call(c.prList, {
-              query: `repo:${repo} state:open,draft`,
-              limit: 1000,
-            });
-            const result = await fetchRepoPrs(
-              repo,
-              tracked.data.map((card) => card.pr.number),
-            );
-            return { repo, ...result, error: null };
-          } catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            return { repo, prs: [], warnings: [], error: message };
-          }
-        }),
-      );
-      const failures = fetched.flatMap(({ repo, error }) => (error === null ? [] : [{ repo, error }]));
-      const outcome = await client.call(c.prSync, {
-        prs: fetched.flatMap((result) => result.prs),
-        repos: fetched.filter((result) => result.error === null).map((result) => result.repo),
-        failures: [
-          ...failures,
-          ...fetched.flatMap(({ repo, warnings }) =>
-            warnings.length === 0 ? [] : [{ repo, error: warnings.join("; ") }],
-          ),
-        ],
-      });
-      const errors = [
-        ...failures.map((failure) => failure.error),
-        ...fetched.flatMap((result) => result.warnings),
-      ];
-      const data = { ...outcome.data, errors };
+      const reply = SyncReply.parse(await client.post("/api/github/sync", { repos }));
+      const data = reply.data;
       out.result(
-        { ...outcome, data },
+        { data, driftOpened: [], notices: [], cursor: reply.cursor },
         () =>
           [
-            `Synced ${data.synced} PRs from ${repos.length - failures.length} of ${repos.length} repos, ${data.changed.length} changed.`,
-            ...errors.map((error) => r.red(error)),
+            `Synced ${data.synced} PRs from ${data.repos} repos, ${data.changed.length} changed.`,
+            ...data.errors.map((error) => r.red(error)),
           ].join("\n"),
-        errors.length === 0,
+        data.errors.length === 0,
       );
-      return errors.length === 0 ? 0 : 1;
+      return data.errors.length === 0 ? 0 : 1;
     },
   },
   {
