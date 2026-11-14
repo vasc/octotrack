@@ -1614,9 +1614,9 @@ p {
   min-height: var(--space-24);
 }
 
+/* The note on the left, the button on the right, on one row: the note wraps, the button never drops under it. */
 .tell-foot {
   display: flex;
-  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: var(--space-4);
@@ -1625,7 +1625,10 @@ p {
   font-size: var(--text-xs);
 }
 
-/* A task opened: what to send back, as a form saved as it is typed. */
+.tell-foot .btn {
+  flex-shrink: 0;
+}
+
 /* What to send back: part of the task, not a box inside it, set off by a rule above. */
 .task-form {
   display: flex;
