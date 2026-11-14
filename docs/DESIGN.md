@@ -421,7 +421,7 @@ Decisions made from that:
   - _Watch mode records only, Stop included._ The stop command is noted once per Stop (`runner.would_stop`) and runs
     when the runner may act, if the agent is still stopped then. Worktrees default to `worktrees` in Octotrack's home,
     so a test install with its own `OCTO_HOME` never works in the live install's.
-- **What the third audit changed.**
+- **What the third audit changed in core, the server and the runner.**
   - _Scoping a line is writing to it, so it too is done only from the line._ An agent sets a plan, files an issue or a
     task, rewrites an issue, moves one on or off a line, and asks a question on a line (named, or through the issue it
     names) only from that line, or on a proposal as its proposer; so is anything filed already linked to work on
