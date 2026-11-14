@@ -9,13 +9,13 @@ import { filterEntities } from "../store/docs.ts";
 import { allLines, requireLine, requireProject, summarize } from "../store/entities.ts";
 import { loadGraph } from "../store/graph.ts";
 import { IssueRow, PlanStepRow } from "../store/rows.ts";
-import { afterAdd, afterMove, crewOf, guardLineWrite, windDown } from "../agents/claims.ts";
+import { afterAdd, afterMove, guardLineWrite, windDown } from "../agents/claims.ts";
 import { DEVELOPER } from "../agents/state.ts";
 import { addNotice, claimOf } from "../store/agents.ts";
 import { bind } from "./bind.ts";
+import { buildHome } from "./home.ts";
 import { requireDeveloper } from "./developer.ts";
 
-const DONE_LATELY_MS = 7 * 24 * 60 * 60 * 1000;
 /** Below this gap two ranks are too close to split again, so the section is renumbered. */
 const SMALLEST_GAP = 1e-6;
 
@@ -375,29 +375,7 @@ export const lineOps = [
       .map((entity) => entity.value);
   }),
 
-  bind(contracts.homeShow, (ctx) => {
-    const lines = allLines(ctx);
-    const inState = (state: LineState) => lines.filter((line) => line.state === state);
-    const since = Date.parse(ctx.now) - DONE_LATELY_MS;
-    return {
-      working: inState("working"),
-      upNext: inState("up_next"),
-      proposed: inState("proposed"),
-      tabled: inState("tabled"),
-      doneLately: inState("done")
-        .filter((line) => Date.parse(line.updatedAt) >= since)
-        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
-      crews: Object.fromEntries(
-        lines
-          .filter((line) => line.state !== "dropped")
-          .map((line) => [line.ref, crewOf(ctx, line)] as const)
-          .filter(
-            ([, crew]) =>
-              crew.owner !== null || crew.scoper !== null || crew.helpers.length > 0 || crew.search !== null,
-          ),
-      ),
-    };
-  }),
+  bind(contracts.homeShow, (ctx) => buildHome(ctx)),
 
   bind(contracts.planSet, (ctx, input) => {
     const line = requireLine(ctx, input.line);

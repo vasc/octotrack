@@ -697,8 +697,42 @@ export const LineDetail = z.object({
 });
 export type LineDetail = z.infer<typeof LineDetail>;
 
+/** Something on a line waiting on the developer: a question to answer or a task to do. */
+export const ForYou = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("question"), card: DecisionCard }),
+  z.object({ kind: z.literal("task"), task: Issue }),
+]);
+export type ForYou = z.infer<typeof ForYou>;
+
+/** What home shows for one line beyond the line itself. */
+export const LineHome = z.object({
+  /** The first plan step not done, and how many steps there are. */
+  step: z.object({ position: z.number().int(), of: z.number().int(), title: z.string() }).nullable(),
+  /** On a working line: what waits on the developer, in order. */
+  forYou: z.array(ForYou),
+  /** On a line not being worked on: the questions and tasks it holds. */
+  held: z.object({ questions: z.number().int(), tasks: z.number().int() }),
+  /** How many plan steps scoping has written so far. */
+  scopedSteps: z.number().int(),
+});
+export type LineHome = z.infer<typeof LineHome>;
+
+/** The header's counts, each a door to the first such item. */
+export const HomeCounts = z.object({
+  toAnswer: z.number().int(),
+  toDo: z.number().int(),
+  toAccept: z.number().int(),
+  toStepIn: z.number().int(),
+  urgent: z.number().int(),
+});
+export type HomeCounts = z.infer<typeof HomeCounts>;
+
 /** The home screen: every line, in the developer's order, section by section. */
 export const HomeView = z.object({
+  /** Urgent questions, which stand at the very top, apart from their lines. */
+  urgent: z.array(DecisionCard),
+  lines: z.record(z.string(), LineHome),
+  counts: HomeCounts,
   working: z.array(Line),
   upNext: z.array(Line),
   proposed: z.array(Line),

@@ -4,14 +4,24 @@ import { BatchPanelView } from "../src/components/decisions/BatchPanelView.tsx";
 import { DecisionCardView } from "../src/components/decisions/DecisionCardView.tsx";
 import { DriftItem } from "../src/components/drift/DriftItem.tsx";
 import { LinePanel } from "../src/components/entity/LinePanel.tsx";
+import { FoldedSection } from "../src/components/home/FoldedSection.tsx";
+import { ForYouRow } from "../src/components/home/ForYouRow.tsx";
+import { HomeCounts } from "../src/components/home/HomeCounts.tsx";
+import { HomeSection } from "../src/components/home/HomeSection.tsx";
+import { LineMeta } from "../src/components/home/LineMeta.tsx";
+import { ProposalCard } from "../src/components/home/ProposalCard.tsx";
+import { QuietRow } from "../src/components/home/QuietRow.tsx";
+import { ReorderButtons } from "../src/components/home/ReorderButtons.tsx";
+import { StepIn } from "../src/components/home/StepIn.tsx";
+import { TaskCard } from "../src/components/home/TaskCard.tsx";
+import { UpNextRow } from "../src/components/home/UpNextRow.tsx";
+import { WorkingLine } from "../src/components/home/WorkingLine.tsx";
 import { eventTone, FeedItem } from "../src/components/feed/FeedItem.tsx";
 import { FeedList } from "../src/components/feed/FeedList.tsx";
 import { FilterBar } from "../src/components/feed/FilterBar.tsx";
 import { IdeaRow } from "../src/components/ideas/IdeaRow.tsx";
 import { IssueRow } from "../src/components/issues/IssueRow.tsx";
 import { AddLineForm } from "../src/components/lines/AddLineForm.tsx";
-import { LineRow } from "../src/components/lines/LineRow.tsx";
-import { LineSection } from "../src/components/lines/LineSection.tsx";
 import { SidebarView } from "../src/components/layout/SidebarView.tsx";
 import { ProjectCardView } from "../src/components/projects/ProjectCardView.tsx";
 import { PrGlyphs } from "../src/components/prs/PrGlyphs.tsx";
@@ -23,6 +33,7 @@ import { ListCapNote } from "../src/components/ui/ListCapNote.tsx";
 import { Progress } from "../src/components/ui/Progress.tsx";
 import { RefText } from "../src/components/ui/RefText.tsx";
 import { EmptyState, ErrorState, LoadingState } from "../src/components/ui/states.tsx";
+import type { LineHome } from "@octotrack/core/schemas";
 import type { Tone } from "../src/lib/format.ts";
 import {
   decision,
@@ -572,124 +583,220 @@ describe("small pieces", () => {
 });
 
 describe("lines of work", () => {
-  const actions = () => ({ onMove: mock(() => {}), onTable: mock(() => {}), onOrder: mock(() => {}) });
-
-  test("LineRow offers only the moves its state allows", () => {
-    const working = render(<LineRow line={line()} canMoveUp={false} canMoveDown {...actions()} />);
-    expect(
-      working.getAllByRole("button").map((button) => button.getAttribute("aria-label") ?? button.textContent),
-    ).toEqual([
-      "L-1",
-      "Sendspin enclosure",
-      "Move Sendspin enclosure up",
-      "Move Sendspin enclosure down",
-      "Queue Sendspin enclosure",
-      "Done Sendspin enclosure",
-      "Table Sendspin enclosure",
-    ]);
-    expect(working.getByRole("button", { name: "Move Sendspin enclosure up" }).hasAttribute("disabled")).toBe(
-      true,
-    );
-    working.unmount();
-
-    const done = render(
-      <LineRow line={line({ state: "done" })} canMoveUp={false} canMoveDown={false} {...actions()} />,
-    );
-    expect(done.queryByRole("button", { name: /^(Start|Queue|Done|Table) / })).toBeNull();
+  const card = (overrides: Parameters<typeof decision>[0] = {}) =>
+    decisionCard({ decision: decision(overrides) });
+  const details = (overrides: Partial<LineHome> = {}): LineHome => ({
+    step: null,
+    forYou: [],
+    held: { questions: 0, tasks: 0 },
+    scopedSteps: 0,
+    ...overrides,
   });
 
-  test("LineRow says who is on the line, and when nobody could be found to own it", () => {
-    const owned = render(
-      <LineRow
-        line={line()}
-        crew={{
-          owner: { name: "panel", state: "asleep" },
-          helpers: [{ name: "panel.2", state: "running" }],
-          scoper: null,
-          search: null,
-        }}
-        canMoveUp={false}
-        canMoveDown={false}
-        {...actions()}
-      />,
+  test("HomeCounts names what waits, leaves out what does not, and marks urgent", () => {
+    const view = render(
+      <HomeCounts counts={{ toAnswer: 4, toDo: 0, toAccept: 1, toStepIn: 0, urgent: 1 }} />,
     );
-    owned.getByText("owner panel, asleep");
-    owned.getByText("+1 helper");
-    owned.unmount();
+    expect(view.getByLabelText("Waiting on you").textContent).toBe("1 urgent4 to answer1 to accept");
+    expect(view.getByText("1 urgent").getAttribute("data-urgent")).toBe("true");
+    view.unmount();
+    render(<HomeCounts counts={{ toAnswer: 0, toDo: 0, toAccept: 0, toStepIn: 0, urgent: 0 }} />).getByText(
+      "Nothing waits on you.",
+    );
+  });
+
+  test("WorkingLine shows its place, who is on it, whether it waits on you, its step and its headline", () => {
+    const view = render(
+      <WorkingLine
+        index={2}
+        line={line({ headline: "Printed; the short board fits." })}
+        crew={{ owner: { name: "panel", state: "asleep" }, helpers: [], scoper: null, search: null }}
+        details={details({
+          step: { position: 3, of: 4, title: "settle board and opening" },
+          forYou: [{ kind: "question", card: card() }],
+        })}
+      >
+        <p>child</p>
+      </WorkingLine>,
+    );
+    const article = within(view.getByRole("article", { name: "Sendspin enclosure" }));
+    article.getByText("2");
+    article.getByText("owner panel, asleep");
+    article.getByText("waiting on you");
+    article.getByText("step 3 of 4, settle board and opening");
+    article.getByText("Printed; the short board fits.");
+    article.getByText("child");
+  });
+
+  test("LineMeta says when nobody could be found to own a line, and who is scoping it", () => {
     const empty = render(
-      <LineRow
-        line={line()}
-        crew={{ owner: null, helpers: [], scoper: null, search: { step: 3, since: "" } }}
-        canMoveUp={false}
-        canMoveDown={false}
-        {...actions()}
-      />,
+      <LineMeta crew={{ owner: null, helpers: [], scoper: null, search: { step: 3, since: "" } }} />,
     );
     empty.getByText("no owner: step in");
     empty.unmount();
-    const searching = render(
-      <LineRow
-        line={line({ state: "up_next" })}
+    render(
+      <LineMeta
         crew={{ owner: null, helpers: [], scoper: { name: "garden", state: "running" }, search: null }}
-        canMoveUp={false}
-        canMoveDown={false}
-        {...actions()}
       />,
-    );
-    searching.getByText("garden is scoping it");
+    ).getByText("garden is scoping it");
   });
 
-  test("LineRow shows a proposal's advice and why, and where it came from", () => {
+  test("ForYouRow shows a question's recommendation and why, or a task's place, and opens it", () => {
+    const onOpen = mock(() => {});
+    const question = render(
+      <ForYouRow
+        item={{
+          kind: "question",
+          card: card({ recommendation: "sqs", recommendationWhy: "It is managed." }),
+        }}
+        onOpen={onOpen}
+      />,
+    );
+    question.getByText("Question · D-1");
+    question.getByText("Recommended SQS: It is managed.");
+    fireEvent.click(question.getByRole("button", { name: "Open D-1" }));
+    expect(onOpen).toHaveBeenCalledWith("D-1");
+    question.unmount();
+    render(
+      <ForYouRow
+        item={{
+          kind: "task",
+          task: issue({ ref: "OCT-7", assignee: "dev", place: "the Mac", outcome: "Yes or no" }),
+        }}
+        onOpen={onOpen}
+      />,
+    ).getByText("Task · OCT-7 · at the Mac");
+  });
+
+  test("TaskCard asks for words before Done or Can't do it", () => {
+    const onDone = mock(() => {});
+    const onCant = mock(() => {});
     const view = render(
-      <LineRow
-        line={line({
-          state: "proposed",
-          proposedBy: "panel-widgets",
-          recommendation: "up_next",
-          recommendationWhy: "The base is final.",
-          fromRef: "I-1",
-        })}
-        canMoveUp={false}
-        canMoveDown={false}
-        {...actions()}
+      <TaskCard
+        task={issue({ title: "Measure the grip", place: "the bench", outcome: "Five numbers" })}
+        onDone={onDone}
+        onCant={onCant}
       />,
     );
-    view.getByText("panel-widgets says up next");
-    view.getByText("The base is final.");
-    view.getByText("from before (I-1)");
-    view.getByRole("button", { name: "Not a line Sendspin enclosure" });
+    view.getByText("Report: Five numbers");
+    fireEvent.click(view.getByRole("button", { name: "Done…" }));
+    expect(view.getByRole("button", { name: "Send" }).hasAttribute("disabled")).toBe(true);
+    fireEvent.change(view.getByLabelText("What OCT-1 found"), { target: { value: " 41, 38 " } });
+    fireEvent.click(view.getByRole("button", { name: "Send" }));
+    expect(onDone).toHaveBeenCalledWith("41, 38");
+    fireEvent.click(view.getByRole("button", { name: "Can't do it…" }));
+    fireEvent.change(view.getByLabelText("Why OCT-1 cannot be done"), { target: { value: "No calipers" } });
+    fireEvent.click(view.getByRole("button", { name: "Close it" }));
+    expect(onCant).toHaveBeenCalledWith("No calipers");
   });
 
-  test("tabling asks why and will not table without a reason", () => {
-    const handlers = actions();
-    const view = render(<LineRow line={line()} canMoveUp={false} canMoveDown={false} {...handlers} />);
-    fireEvent.click(view.getByRole("button", { name: "Table Sendspin enclosure" }));
-    expect(view.getByRole("button", { name: "Table it" }).hasAttribute("disabled")).toBe(true);
-    fireEvent.change(view.getByLabelText("Why table Sendspin enclosure"), { target: { value: " Waiting " } });
+  test("StepIn offers to own the line, or to table it with a reason", () => {
+    const onOwn = mock(() => {});
+    const onTable = mock(() => {});
+    const view = render(<StepIn line={line()} onOwn={onOwn} onTable={onTable} />);
+    fireEvent.click(view.getByRole("button", { name: "I'll own it" }));
+    expect(onOwn).toHaveBeenCalledWith("L-1");
+    fireEvent.click(view.getByRole("button", { name: "Table it…" }));
+    fireEvent.change(view.getByLabelText("Why table Sendspin enclosure"), { target: { value: "Later" } });
     fireEvent.click(view.getByRole("button", { name: "Table it" }));
-    expect(handlers.onTable).toHaveBeenCalledWith("L-1", "Waiting");
+    expect(onTable).toHaveBeenCalledWith("L-1", "Later");
   });
 
-  test("LineSection is a named region in order, and is left out when empty with nothing to say", () => {
+  test("UpNextRow says what it holds and how far scoping got, and starts", () => {
+    const onStart = mock(() => {});
     const view = render(
-      <LineSection
-        title="Working on"
-        lines={[line(), line({ ref: "L-2", title: "Digest" })]}
-        {...actions()}
+      <UpNextRow
+        index={6}
+        line={line({ state: "up_next", title: "Wall mount", doneWhen: "it hangs flush." })}
+        details={details({ held: { questions: 0, tasks: 1 } })}
+        onStart={onStart}
       />,
     );
-    const region = within(view.getByRole("region", { name: "Working on" }));
-    expect(
-      region.getAllByRole("button", { name: /^(Sendspin enclosure|Digest)$/ }).map((b) => b.textContent),
-    ).toEqual(["Sendspin enclosure", "Digest"]);
+    view.getByText("1 task held");
+    view.getByText("not scoped yet");
+    view.getByText("Done when it hangs flush.");
+    fireEvent.click(view.getByRole("button", { name: "Start Wall mount" }));
+    expect(onStart).toHaveBeenCalledWith("L-1");
+  });
+
+  test("ProposalCard shows the agent's case and every choice a proposal has", () => {
+    const handlers = {
+      onStart: mock(() => {}),
+      onQueue: mock(() => {}),
+      onTable: mock(() => {}),
+      onFold: mock(() => {}),
+      onReject: mock(() => {}),
+    };
+    const proposal = line({
+      ref: "L-3",
+      title: "Wall mount",
+      state: "proposed",
+      proposedBy: "panel-widgets",
+      recommendation: "up_next",
+      recommendationWhy: "The base is final.",
+    });
+    const view = render(<ProposalCard line={proposal} foldTargets={[line()]} {...handlers} />);
+    view.getByText("panel-widgets says up next: The base is final.");
+    fireEvent.click(view.getByRole("button", { name: "Up next Wall mount" }));
+    expect(handlers.onQueue).toHaveBeenCalledWith("L-3");
+    fireEvent.click(view.getByRole("button", { name: "Not a line: Wall mount" }));
+    expect(handlers.onReject).toHaveBeenCalledWith("L-3");
+    fireEvent.click(view.getByRole("button", { name: "Fold Wall mount" }));
+    fireEvent.change(view.getByLabelText("Fold Wall mount into"), { target: { value: "L-1" } });
+    expect(handlers.onFold).toHaveBeenCalledWith("L-3", "L-1");
     view.unmount();
-    const empty = render(<LineSection title="Tabled" lines={[]} {...actions()} />);
-    expect(empty.queryByRole("region")).toBeNull();
-    empty.unmount();
-    const said = render(
-      <LineSection title="Up next" lines={[]} empty="Nothing is up next." {...actions()} />,
+    const back = render(
+      <ProposalCard
+        line={line({ state: "proposed", tabledReason: "The disk is not tight", lookAgainAt: "2027-02-01" })}
+        foldTargets={[]}
+        {...handlers}
+      />,
     );
-    said.getByText("Nothing is up next.");
+    back.getByText("Back to look at, as you asked: The disk is not tight (2027-02-01)");
+    expect(back.getByRole("button", { name: "Not a line: Sendspin enclosure" }).textContent).toBe("Drop");
+  });
+
+  test("FoldedSection names its lines on one row and shows them only when asked", () => {
+    const view = render(
+      <FoldedSection
+        title="Tabled"
+        lines={[line({ title: "Podcast cleanup" }), line({ ref: "L-2", title: "Bike fit" })]}
+      >
+        <p>the rows</p>
+      </FoldedSection>,
+    );
+    view.getByText("Podcast cleanup, Bike fit");
+    expect(view.queryByText("the rows")).toBeNull();
+    fireEvent.click(view.getByRole("button", { name: "Show" }));
+    view.getByText("the rows");
+  });
+
+  test("QuietRow says why a tabled line waits and brings it back", () => {
+    const onStart = mock(() => {});
+    const view = render(
+      <QuietRow
+        line={line({ state: "tabled", tabledReason: "Not now", lookAgainAt: "2027-01-05" })}
+        onStart={onStart}
+      />,
+    );
+    view.getByText("Not now");
+    view.getByText("look again 2027-01-05");
+    fireEvent.click(view.getByRole("button", { name: "Start Sendspin enclosure" }));
+    expect(onStart).toHaveBeenCalledWith("L-1");
+  });
+
+  test("ReorderButtons cannot move past either end", () => {
+    const view = render(<ReorderButtons title="One" canMoveUp={false} canMoveDown onMove={() => {}} />);
+    expect(view.getByRole("button", { name: "Move One up" }).hasAttribute("disabled")).toBe(true);
+    expect(view.getByRole("button", { name: "Move One down" }).hasAttribute("disabled")).toBe(false);
+  });
+
+  test("HomeSection is a region named by its title", () => {
+    render(
+      <HomeSection title="Working on" count={2}>
+        <p>x</p>
+      </HomeSection>,
+    ).getByRole("region", { name: "Working on" });
   });
 
   test("AddLineForm needs a title and a done-when sentence", () => {

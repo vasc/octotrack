@@ -6,7 +6,7 @@ import { FeedPage } from "./components/feed/FeedPage.tsx";
 import { IdeasPage } from "./components/ideas/IdeasPage.tsx";
 import { IssuesPage } from "./components/issues/IssuesPage.tsx";
 import { AppShell } from "./components/layout/AppShell.tsx";
-import { LinesPage } from "./components/lines/LinesPage.tsx";
+import { HomePage } from "./components/home/HomePage.tsx";
 import { ProjectDetailPage } from "./components/projects/ProjectDetailPage.tsx";
 import { ProjectsPage } from "./components/projects/ProjectsPage.tsx";
 import { PrsPage } from "./components/prs/PrsPage.tsx";
@@ -26,7 +26,7 @@ function Page({ path }: { path: string }) {
     case "/":
       return <FeedPage />;
     case "/lines":
-      return <LinesPage />;
+      return <HomePage />;
     case "/decisions":
       return <DecisionsPage />;
     case "/prs":

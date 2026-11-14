@@ -1,0 +1,109 @@
+import type { Line } from "@octotrack/core/schemas";
+import { useState } from "react";
+import { TableForm } from "../lines/TableForm.tsx";
+
+export type LineChoice = "start" | "queue" | "done" | "drop" | "reject" | "own" | "hand" | "keep_going";
+
+export interface LineActionsProps {
+  line: Line;
+  onChoose(choice: LineChoice): void;
+  onTable(reason: string): void;
+  onDoneWhen(accept: boolean): void;
+}
+
+const CHOICES: Readonly<Record<Line["state"], readonly (readonly [LineChoice, string])[]>> = {
+  working: [
+    ["queue", "Up next"],
+    ["done", "Done"],
+    ["drop", "Drop"],
+  ],
+  up_next: [
+    ["start", "Start"],
+    ["drop", "Drop"],
+  ],
+  tabled: [
+    ["start", "Start"],
+    ["queue", "Up next"],
+    ["drop", "Drop"],
+  ],
+  proposed: [
+    ["start", "Start"],
+    ["queue", "Up next"],
+    ["reject", "Not a line"],
+  ],
+  done: [],
+  dropped: [],
+};
+
+/** Everything the developer can do with a line, from its panel: place it, finish it, own it, and answer its agents. */
+export function LineActions({ line, onChoose, onTable, onDoneWhen }: LineActionsProps) {
+  const [tabling, setTabling] = useState(false);
+  const live = line.state !== "done" && line.state !== "dropped";
+  return (
+    <div className="line-actions">
+      {line.doneWhenProposal === null ? null : (
+        <div className="proposal">
+          <p>
+            <strong>Proposed done when</strong> {line.doneWhenProposal}
+            {line.doneWhenProposedBy === null ? "" : ` (${line.doneWhenProposedBy})`}
+          </p>
+          <div className="decision-actions">
+            <button type="button" className="btn" data-primary="true" onClick={() => onDoneWhen(true)}>
+              Accept
+            </button>
+            <button type="button" className="btn" onClick={() => onDoneWhen(false)}>
+              Keep the one there is
+            </button>
+          </div>
+        </div>
+      )}
+      {line.doneProposal === null ? null : (
+        <div className="proposal">
+          <p>
+            <strong>Proposed done</strong> {line.doneProposal}
+          </p>
+          <div className="decision-actions">
+            <button type="button" className="btn" data-primary="true" onClick={() => onChoose("done")}>
+              It is done
+            </button>
+            <button type="button" className="btn" onClick={() => onChoose("keep_going")}>
+              Keep going
+            </button>
+          </div>
+        </div>
+      )}
+      {!live ? null : tabling ? (
+        <TableForm
+          title={line.title}
+          onTable={(reason) => {
+            onTable(reason);
+            setTabling(false);
+          }}
+          onCancel={() => setTabling(false)}
+        />
+      ) : (
+        <div className="decision-actions">
+          {CHOICES[line.state].map(([choice, label]) => (
+            <button key={choice} type="button" className="btn" onClick={() => onChoose(choice)}>
+              {label}
+            </button>
+          ))}
+          {line.state === "tabled" ? null : (
+            <button type="button" className="btn" onClick={() => setTabling(true)}>
+              Table…
+            </button>
+          )}
+          {line.state !== "working" ? null : line.ownedBy === null ? (
+            <button type="button" className="btn" onClick={() => onChoose("own")}>
+              I'll own it
+            </button>
+          ) : (
+            <button type="button" className="btn" onClick={() => onChoose("hand")}>
+              Hand to an agent
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
