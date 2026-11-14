@@ -103,6 +103,11 @@
   --page-width-narrow: 900px;
   --panel-width: 820px;
   --touch-target: 44px;
+  --control-height: 32px;
+  --icon-size: 16px;
+  /* Where a line's title starts, past its handle and number: what it holds lines up under the title. */
+  --line-gutter: var(--space-12);
+  --line-indent: calc(var(--line-gutter) + var(--space-11) + 2 * var(--space-5));
   --text-input-touch: 16px;
 }
 

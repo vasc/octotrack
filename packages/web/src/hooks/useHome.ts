@@ -1,7 +1,7 @@
 import { contracts } from "@octotrack/core/contracts";
 import type { HomeView, Line } from "@octotrack/core/schemas";
 import { useMemo } from "react";
-import type { Move } from "../components/home/ReorderButtons.tsx";
+import type { Move } from "../components/home/LineHandle.tsx";
 import type { NewLine } from "../components/lines/NewLineCard.tsx";
 import { useChoices } from "./useChoices.ts";
 import { useOpMutation, useOpQuery } from "./useOp.ts";

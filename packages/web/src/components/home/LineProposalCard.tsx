@@ -62,7 +62,7 @@ export function LineProposalCard({ proposal, title, onAccept, onDecline }: LineP
             data-choice="2"
             onClick={() => (done ? setWhy("") : onDecline(""))}
           >
-            {done ? "Not yet…" : "Keep current"}
+            {done ? "Not yet" : "Keep current"}
           </button>
         </div>
       ) : (

@@ -135,13 +135,17 @@ Only what floats over content gets a shadow. Everything else is separated by a l
 One bar on top, one column of reading under it, and any opened ref as a panel over the right of the page, as the
 E · One list boards draw it.
 
-| Token                 | Use for                                                                |
-| --------------------- | ---------------------------------------------------------------------- |
-| `--page-width`        | How wide the bar's content and the page get                            |
-| `--panel-width`       | A line, task or issue opened over the page                             |
-| `--page-width-narrow` | A page of reading in one column: the log                               |
-| `--touch-target`      | The least height of anything tapped on a touch screen                  |
-| `--text-input-touch`  | Text fields on a touch screen. Below 16px, iOS zooms the page on focus |
+| Token                 | Use for                                                                                      |
+| --------------------- | -------------------------------------------------------------------------------------------- |
+| `--page-width`        | How wide the bar's content and the page get                                                  |
+| `--panel-width`       | A line, task or issue opened over the page                                                   |
+| `--page-width-narrow` | A page of reading in one column: the log                                                     |
+| `--touch-target`      | The least height of anything tapped on a touch screen                                        |
+| `--control-height`    | Every control on a desktop: buttons, selects, the bar's pills; one height, so a row lines up |
+| `--icon-size`         | The few icons, beside words or alone in a control that names itself                          |
+| `--line-gutter`       | The handle's column on a line, before its number                                             |
+| `--line-indent`       | Where a line's title starts; what the line holds is indented to it                           |
+| `--text-input-touch`  | Text fields on a touch screen. Below 16px, iOS zooms the page on focus                       |
 
 CSS custom properties cannot be used in media queries, so the breakpoint lives in `packages/web/src/styles.css`:
 

@@ -1,6 +1,6 @@
 import type { HomeView } from "@octotrack/core/schemas";
 import { Fragment, type ReactNode } from "react";
-import type { DragProps } from "../../hooks/useDragOrder.ts";
+import type { DropTarget } from "../../hooks/useDragOrder.ts";
 import type { HomeActions } from "../../hooks/useHome.ts";
 import { lineFocusRef } from "../../lib/focus.ts";
 import { FoldedSection } from "./FoldedSection.tsx";
@@ -29,10 +29,6 @@ function heldNote(home: HomeView): string | undefined {
   return `${parts.join(" and ")} held`;
 }
 
-function withDrag(drag: DragProps | undefined): { drag?: DragProps } {
-  return drag === undefined ? {} : { drag };
-}
-
 /**
  * The lines not being worked on: up next in order, proposals, tabled and done lately. Starting one that waited opens
  * its Start sheet first, which shows what it holds.
@@ -43,8 +39,8 @@ export function WaitingSections({
   focus,
   starting,
   narrow = false,
-  reorder,
-  drag,
+  handle,
+  drop,
   onStarting,
 }: {
   home: HomeView;
@@ -54,8 +50,9 @@ export function WaitingSections({
   starting: string | null;
   /** On a phone, up next and proposals fold to tiles too, as E-Phone draws them. */
   narrow?: boolean;
-  reorder(title: string, ref: string, index: number, count: number): ReactNode;
-  drag(ref: string, section: string): DragProps | undefined;
+  /** A line's handle, which drags it or opens its moves. */
+  handle(title: string, ref: string, index: number, count: number, section: "working" | "up_next"): ReactNode;
+  drop(ref: string, section: "working" | "up_next"): DropTarget;
   onStarting(ref: string | null): void;
 }) {
   const sheet = (ref: string) => {
@@ -103,9 +100,9 @@ export function WaitingSections({
               line={line}
               {...(crew === undefined ? {} : { crew })}
               {...(details === undefined ? {} : { details })}
-              reorder={reorder(line.title, line.ref, index, home.upNext.length)}
+              handle={handle(line.title, line.ref, index, home.upNext.length, "up_next")}
               focused={focus === lineFocusRef(line.ref)}
-              {...withDrag(drag(line.ref, "up_next"))}
+              drop={drop(line.ref, "up_next")}
               onStart={onStarting}
             />
             {sheet(line.ref)}

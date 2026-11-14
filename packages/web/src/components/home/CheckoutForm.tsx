@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-/** Set its checkout…: where this machine already has a repo, an absolute path, after a clone failed. */
+/** Set its checkout: where this machine already has a repo, an absolute path, after a clone failed. */
 export function CheckoutForm({
   repo,
   onSet,

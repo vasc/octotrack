@@ -556,7 +556,7 @@ describe("the inspector", () => {
     fireEvent.click(await panel.findByRole("button", { name: /SQS/ }));
     await answerNow(view);
     await panel.findByText("Decided by");
-    panel.getByRole("button", { name: "Change answer…" });
+    panel.getByRole("button", { name: "Change answer" });
     expect(server.act(c.decisionList, { query: `ref:${decision.ref}` })[0]?.chosenOption).toBe("sqs");
   });
 
@@ -719,9 +719,9 @@ describe("lines of work", () => {
     await upNext.findByText("Wall mount");
     expect(server.tracker.call(c.lineShow, { ref: proposal.ref }, asDeveloper).line.state).toBe("up_next");
 
-    fireEvent.click(view.getByRole("button", { name: "Reorder" }));
     const working = within(view.getByRole("region", { name: "Working on" }));
-    fireEvent.click(working.getByRole("button", { name: "Move Weekly digest up" }));
+    fireEvent.click(working.getByRole("button", { name: "Move Weekly digest" }));
+    fireEvent.click(working.getByRole("menuitem", { name: "Up" }));
     await waitFor(() => {
       const order = within(view.getByRole("region", { name: "Working on" }))
         .getAllByRole("button", { name: /^(Sendspin enclosure|Weekly digest)$/ })
@@ -732,7 +732,7 @@ describe("lines of work", () => {
     // A working line is tabled from its panel, which opens in place.
     fireEvent.click(working.getByRole("button", { name: "Sendspin enclosure" }));
     const panel = within(await view.findByRole("complementary", { name: "L-1" }));
-    fireEvent.click(await panel.findByRole("button", { name: "Table…" }));
+    fireEvent.click(await panel.findByRole("button", { name: "Table" }));
     fireEvent.change(panel.getByLabelText("Why table Sendspin enclosure"), {
       target: { value: "Waiting on the board" },
     });
@@ -820,7 +820,7 @@ describe("lines of work", () => {
       navigate("/");
       const view = renderApp(<App />);
       const opened = within(await view.findByRole("article", { name: "Measure the grip" }));
-      fireEvent.click(opened.getByRole("button", { name: "Can't do it…" }));
+      fireEvent.click(opened.getByRole("button", { name: "Can't do it" }));
       fireEvent.change(opened.getByLabelText(`Why ${task.ref} cannot be done`), {
         target: { value: "The calipers are lost" },
       });
@@ -863,7 +863,7 @@ describe("lines of work", () => {
       await gone(() => view.queryByRole("alert"));
     });
 
-    test("Fold into… folds a proposal into the line chosen, by button", async () => {
+    test("Fold into folds a proposal into the line chosen, by button", async () => {
       const proposal = seedLines();
       navigate("/");
       const view = renderApp(<App />);
@@ -883,7 +883,7 @@ describe("lines of work", () => {
       navigate("/?ref=L-1");
       const view = renderApp(<App />);
       const panel = within(await view.findByRole("complementary", { name: "L-1" }));
-      fireEvent.click(await panel.findByRole("button", { name: "Table…" }));
+      fireEvent.click(await panel.findByRole("button", { name: "Table" }));
       fireEvent.change(panel.getByLabelText("Why table Sendspin enclosure"), {
         target: { value: "Waiting on boards" },
       });
@@ -1093,7 +1093,7 @@ describe("lines of work", () => {
       await view.findByLabelText(`Why ${task.ref} cannot be done`);
     });
 
-    test("? lists every key, and r opens Record answers…", async () => {
+    test("? lists every key, and r opens Record answers", async () => {
       onLine();
       navigate("/");
       const view = renderApp(<App />);
@@ -1142,12 +1142,12 @@ describe("lines of work", () => {
       working.getByText("7 with no owner");
     });
 
-    test("Reorder moves a line to the top in one press", async () => {
+    test("a line's handle moves it to the top", async () => {
       seedLines();
       navigate("/");
       const view = renderApp(<App />);
-      fireEvent.click(await view.findByRole("button", { name: "Reorder" }));
-      fireEvent.click(await view.findByRole("button", { name: "Move Weekly digest to the top" }));
+      fireEvent.click(await view.findByRole("button", { name: "Move Weekly digest" }));
+      fireEvent.click(view.getByRole("menuitem", { name: "Move to top" }));
       await waitFor(() =>
         expect(server.tracker.call(c.homeShow, {}, asDeveloper).working.map((line) => line.title)[0]).toBe(
           "Weekly digest",
@@ -1155,12 +1155,12 @@ describe("lines of work", () => {
       );
     });
 
-    test("a line is dragged by its handle before another, and in Reorder mode sent to up next", async () => {
+    test("a line is dragged by its handle before another, or sent to up next from its menu", async () => {
       seedLines();
       navigate("/");
       const view = renderApp(<App />);
       const working = within(await view.findByRole("region", { name: "Working on" }));
-      fireEvent.dragStart(working.getByRole("article", { name: "Weekly digest" }));
+      fireEvent.dragStart(working.getByRole("button", { name: "Move Weekly digest" }));
       fireEvent.dragOver(working.getByRole("article", { name: "Sendspin enclosure" }));
       fireEvent.drop(working.getByRole("article", { name: "Sendspin enclosure" }));
       await waitFor(() =>
@@ -1169,8 +1169,8 @@ describe("lines of work", () => {
           "Sendspin enclosure",
         ]),
       );
-      fireEvent.click(view.getByRole("button", { name: "Reorder" }));
-      fireEvent.click(await view.findByRole("button", { name: "Move Weekly digest to up next" }));
+      fireEvent.click(view.getByRole("button", { name: "Move Weekly digest" }));
+      fireEvent.click(view.getByRole("menuitem", { name: "To up next" }));
       await answerNow(view);
       await waitFor(() =>
         expect(server.tracker.call(c.homeShow, {}, asDeveloper).upNext.map((line) => line.title)).toContain(
@@ -1222,7 +1222,7 @@ describe("lines of work", () => {
       );
     });
 
-    test("a clone that failed offers Set its checkout…", async () => {
+    test("a clone that failed offers Set its checkout", async () => {
       server.tracker.call(c.runnerReport, { configured: true, cap: 1, dryRun: false }, asServer);
       server.tracker.call(
         c.lineAdd,
@@ -1246,7 +1246,7 @@ describe("lines of work", () => {
       navigate("/");
       const view = renderApp(<App />);
       const note = within(await view.findByRole("note", { name: "Step in on No clone" }));
-      fireEvent.click(note.getByRole("button", { name: "Set its checkout…" }));
+      fireEvent.click(note.getByRole("button", { name: "Set its checkout" }));
       fireEvent.change(note.getByLabelText("Checkout of OCT"), { target: { value: "/code/octotrack" } });
       fireEvent.click(note.getByRole("button", { name: "Set" }));
       await answerNow(view);
@@ -1398,7 +1398,7 @@ describe("lines of work", () => {
       navigate("/?ref=L-1");
       const view = renderApp(<App />);
       const panel = within(await view.findByRole("complementary", { name: "L-1" }));
-      fireEvent.click(await panel.findByRole("button", { name: "Table…" }));
+      fireEvent.click(await panel.findByRole("button", { name: "Table" }));
       fireEvent.change(panel.getByLabelText("Why table Sendspin enclosure"), {
         target: { value: "After the move" },
       });
@@ -1441,7 +1441,7 @@ describe("lines of work", () => {
       navigate(`/?ref=${mine.ref}`);
       const view = renderApp(<App />);
       const panel = within(await view.findByRole("complementary", { name: mine.ref }));
-      fireEvent.click(await panel.findByRole("button", { name: "Hand to an agent…" }));
+      fireEvent.click(await panel.findByRole("button", { name: "Hand to an agent" }));
       fireEvent.click(await panel.findByRole("checkbox", { name: "OCT" }));
       fireEvent.click(panel.getByRole("button", { name: "Hand over" }));
       await answerNow(view);
@@ -1504,13 +1504,13 @@ describe("lines of work", () => {
       );
     });
 
-    test("Change answer… reopens an answered question, from its panel", async () => {
+    test("Change answer reopens an answered question, from its panel", async () => {
       const question = asked();
       server.tracker.call(c.decisionResolve, { ref: question.ref, option: "a" }, asDeveloper);
       navigate(`/?ref=${question.ref}`);
       const view = renderApp(<App />);
       const panel = within(await view.findByRole("complementary", { name: question.ref }));
-      fireEvent.click(await panel.findByRole("button", { name: "Change answer…" }));
+      fireEvent.click(await panel.findByRole("button", { name: "Change answer" }));
       await answerNow(view);
       await waitFor(() =>
         expect(
@@ -1545,7 +1545,7 @@ describe("lines of work", () => {
       navigate("/");
       const view = renderApp(<App />);
       const card = within(await view.findByRole("article", { name: "Sendspin enclosure is done?" }));
-      fireEvent.click(card.getByRole("button", { name: "Not yet…" }));
+      fireEvent.click(card.getByRole("button", { name: "Not yet" }));
       fireEvent.change(card.getByLabelText("What L-1 still needs"), { target: { value: "The lid rattles" } });
       fireEvent.click(card.getByRole("button", { name: "Not yet" }));
       await answerNow(view);
@@ -1579,13 +1579,13 @@ describe("lines of work", () => {
       );
     });
 
-    test("Table it… tables the line with the reason given", async () => {
+    test("Table it tables the line with the reason given", async () => {
       const line = unowned();
       server.later(1);
       navigate("/");
       const view = renderApp(<App />);
       const note = within(await view.findByRole("note", { name: "Step in on Nobody's line" }));
-      fireEvent.click(note.getByRole("button", { name: "Table it…" }));
+      fireEvent.click(note.getByRole("button", { name: "Table it" }));
       fireEvent.change(note.getByRole("textbox"), { target: { value: "Not this month" } });
       fireEvent.click(note.getByRole("button", { name: /^Table/ }));
       await answerNow(view);
