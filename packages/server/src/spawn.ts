@@ -57,6 +57,10 @@ export async function runProcess(
     deadlineMs: number | null;
     /** How much of each stream to keep, for a command whose whole output is read, such as gh's JSON. */
     keep?: number;
+    /** In its own process group, which it leads, so that ending the group ends everything it started. */
+    detached?: boolean;
+    /** Told the process id as soon as it is spawned, before it exits. */
+    onSpawn?: (pid: number) => void;
   },
 ): Promise<Finished> {
   let child: Bun.Subprocess<"ignore", "pipe", "pipe">;
@@ -67,7 +71,9 @@ export async function runProcess(
       stdin: "ignore",
       stdout: "pipe",
       stderr: "pipe",
+      detached: options.detached === true,
     });
+    options.onSpawn?.(child.pid);
   } catch (error) {
     return {
       code: NOT_STARTED,

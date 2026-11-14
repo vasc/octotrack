@@ -412,8 +412,8 @@ Decisions made from that:
     command, session and wake the server runs is given only its own: a session its name, a wake the agent woken (or,
     for a question from before lines, its asker). _Why:_ the server is often started by an agent's first command, and a
     woken session would otherwise act as that agent.
-  - _Commands are bounded and answered._ git and gh get two minutes, setup commands thirty, the stop command ten, and a
-    wake thirty; each is killed at its deadline and reported. Output is read as it comes and raced once the command
+  - _Commands are bounded and answered._ git and gh get two minutes, clones and setup commands thirty, the stop command
+    ten, and a wake thirty; each is killed at its deadline and reported. Output is read as it comes and raced once the command
     exits, so a child it leaves holding the pipes cannot hang the runner. Only names and refs of the narrow form are
     filled into the developer's commands. A push service that cannot be reached costs that browser its notification
     and nothing else: the rest are sent and recorded, so a line still buzzes once.
@@ -457,6 +457,46 @@ Decisions made from that:
     address once, which `octo guide` already asks of every agent.
   - _A watch is cancelled only by its own agent,_ the developer or the server. _Why:_ any agent could cancel another's
     watch and so silence its wait.
+  - _A session that takes its line and leaves at once waits like a failed start._ One that took its line and exited
+    within fifteen minutes of its spawn with no wake address is recorded as failed, with a line saying sessions keep
+    leaving: the next start for the line (with a new name, since that one ran) waits 2, 10, 60 then 360 minutes, and the
+    second such exit in a row raises Step in. A session that ran longer, or kept its line asleep, resets the count.
+    _Why:_ a start command that exits after taking the line, as `claude -p "…octo line take {line}"` does, was replaced
+    every 40 seconds without limit; the cap bounds how many run at once, not how fast they are replaced. _Trade-off:_ a
+    session that does a short job and exits is replaced only after the wait.
+  - _Starting a session has two steps._ `runner.start` reserves the name, the worktree and the line's turn; the runner
+    then makes the checkout, worktree and setup in the background, spawns the process and records it with
+    `runner.spawned`, which starts the five-minute check-in and asks again whether the session should run: a line
+    tabled, owned by the developer or taken by another owner meanwhile, or an agent stopped meanwhile, ends the process
+    at once (`runner.not_started`), uses up nothing and is not retried. _Why:_ the check-in ran from before a setup that
+    may take thirty minutes, so a slow setup was declared never taken and buzzed the phone, and a line tabled during
+    setup still got its session.
+  - _The cap counts processes, not commands._ A start counts from its reservation until its process is seen to exit,
+    however quiet it is; a session Octotrack started that was woken after it exited counts while it is at work (a command
+    or the wake within 15 minutes). _Why:_ counting agents with a command in the last 15 minutes held a slot for a
+    session that had exited, and dropped one silent for 16 minutes that still ran, so the cap was passed.
+  - _Stop ends what the runner started._ Sessions run in a process group of their own; Stop sends it SIGTERM, then
+    SIGKILL after ten seconds, and the developer's `stop` command is only for sessions the runner did not start. The log
+    says which was done. _Why:_ the runner kept no handle on its children, so a stopped session kept running and
+    spending, and the README's `claude -p` start and `tmux` stop could never work together. D14's "Octotrack cannot kill
+    a session" now holds only for sessions it did not start.
+  - _A session outlives a server restart, and is watched by its process id._ Each start records its process id, and
+    its output goes to a log file (`sessions/<name>.log` in Octotrack's home) rather than a pipe, so the session is not cut
+    off when it next writes. On restart, a start whose process still runs keeps its line, its worktree and its slot,
+    and every tick checks it until it ends; one whose process is gone is settled as before. A process with that id that
+    started more than two minutes after the spawn is another one, the id reused, and counts as ended. _Why:_ after a
+    restart, every unexited start was settled as gone, and the next session was handed a worktree a live one still
+    worked in.
+  - _The runner's smaller findings._ A tick no longer waits on a start's worktree and setup, so stops, closes and other
+    starts go on meanwhile; two starts never clone one repo, or add worktrees to one checkout, at once. Clones go under
+    Octotrack's home (`clones`), get the thirty-minute deadline, and are made beside their place and moved there only once
+    whole; a clone in place must have a HEAD. A new session never takes over an `octo/<name>` branch Octotrack did not make
+    for that name; only a retry takes up its own again. Each helper starts in the repo of the work it is there for. Watch
+    mode notes a helper it would start as a helper, once per owner. Names of any language reach the stop command, as
+    agent names may. Each start keeps its exit code. gh runs on the bounded spawn path; the server's look at an agent's
+    remote runs git only on an absolute path to an existing folder, with a five-second deadline, and remembers at most a
+    thousand checkouts; an agent's checkout is tested against the worktrees folder with a path separator, so
+    `/wt-panel` is not inside `/wt`.
   - _The developer's own operations, relayed with `--said`, take effect on their own lines._ `task add` and `note add`
     were refused there, as writes to a line no agent may touch, though D14 says every developer operation accepts the
     developer's words.
@@ -699,7 +739,7 @@ you", answers wait in its inbox, and the next answer, finished task or Tell star
   line, and offers Pause the line instead, which moves it to up next. Stop refuses every write under that agent's name,
   ends its claims, sends it a notice, runs the developer's local stop command if one is set, and marks it stopped on
   Agents until lifted. _Trade-off:_ Octotrack cannot kill a session; refusing its writes and telling it is what it can
-  do.
+  do. (D13: since the third audit, it does end the process group of a session its own runner started.)
 - **Questions stand alone.** Asking requires a situation written for someone who has read nothing else, options that say
   what happens if picked, and the reason behind any recommendation. Both are shown wherever a question is open, phone
   included. Background stays folded. _Why:_ "the operator needs to read millions of lines of text to get context on one
@@ -888,7 +928,10 @@ The append-only `events` table is the feed and also what event clauses in watche
   have a full page, so a rare filter on a very long log takes several requests.
 - Every waiting agent re-evaluates on every write. With 40 agents hanging, a write takes about 290ms instead of 6ms.
 - PRs are synced for repos with a GitHub name set. A PR reported by hand for any other repo is never refreshed.
-- Octotrack cannot kill a session it did not start; Stop refuses its writes and tells it.
+- Octotrack cannot kill a session it did not start; Stop refuses its writes and tells it, and runs the developer's
+  stop command if one is set.
+- After a reboot, a session's process id may be reused; one that started more than two minutes after the session's
+  spawn is taken as another process, which a reuse within those two minutes would defeat.
 - Lists stop at their limit with no paging: the dashboard says so, and the CLI allows `--limit` up to 1000.
 - A decision's `--recommend` may be free text, so a mistyped option key is shown as text rather than refused.
 - PR status is only as fresh as the sync interval.
