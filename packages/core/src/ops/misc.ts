@@ -7,13 +7,13 @@ import type { Counts, Decision, Drift, Issue, StatusUpdate } from "../schemas.ts
 import { countOf, emit, nextNumber, currentCursor } from "../store/common.ts";
 import { type Ctx, rows } from "../store/context.ts";
 import { filterEntities, findEntities, isReady } from "../store/docs.ts";
-import { guardLineWrite } from "../agents/claims.ts";
+import { guardOnLine } from "../agents/claims.ts";
 import { viewOf } from "../store/agents.ts";
 import {
-  type AnyEntity,
   findEntity,
   getDrift,
   getUpdate,
+  lineOfEntity,
   requireEntity,
   requireLine,
   requireProject,
@@ -122,11 +122,15 @@ function describeNext(
   return parts.length === 0 ? "Nothing to do." : `${parts.join("; ")}.`;
 }
 
-/** The line a note is about: the line itself, or the line its issue is on. */
-function lineOfTarget(target: AnyEntity): string | null {
-  if (target.kind === "line") return target.value.ref;
-  if (target.kind === "issue") return target.value.line;
-  return null;
+/** The line a drift is about: the line it names, or the line of the issue or question it names. */
+function lineOfDrift(ctx: Ctx, drift: Drift): string | null {
+  const target = findEntity(ctx, drift.target);
+  return target === null ? null : lineOfEntity(target);
+}
+
+/** Drift on a line is cleared and taken only from that line. */
+function guardDrift(ctx: Ctx, drift: Drift): void {
+  guardOnLine(ctx, lineOfDrift(ctx, drift), "scope", drift.ref);
 }
 
 /** A note on anything: kept as an update, and shown in the log on the line it concerns. */
@@ -141,7 +145,8 @@ function postUpdate(
 ): StatusUpdate {
   const target = input.target === undefined ? null : requireEntity(ctx, input.target);
   const targetRef = target?.value.ref ?? null;
-  guardLineWrite(ctx, target === null ? null : lineOfTarget(target), "scope");
+  const line = target === null ? null : lineOfEntity(target);
+  if (target !== null) guardOnLine(ctx, line, "scope", target.value.ref);
   const project =
     input.project === undefined
       ? target === null
@@ -165,7 +170,7 @@ function postUpdate(
       firstLine.length > UPDATE_SUMMARY_LENGTH
         ? `${firstLine.slice(0, UPDATE_SUMMARY_LENGTH)}...`
         : firstLine,
-    line: target === null ? null : lineOfTarget(target),
+    line,
     related: targetRef === null ? [] : [targetRef],
     attrs: { status: level, level, ...(targetRef === null ? {} : { target: targetRef }) },
   });
@@ -215,7 +220,17 @@ export const miscOps = [
       .map((entity) => entity.value);
   }),
 
-  bind(contracts.driftAck, (ctx, input) => ({ acknowledged: ackDrift(ctx, input) })),
+  bind(contracts.driftAck, (ctx, input) => {
+    for (const raw of input.refs ?? []) {
+      const drift = getDrift(ctx, normalizeRef(raw));
+      if (drift !== null) guardDrift(ctx, drift);
+    }
+    if (input.target !== undefined) {
+      const target = findEntity(ctx, input.target);
+      if (target !== null) guardOnLine(ctx, lineOfEntity(target), "scope", target.value.ref);
+    }
+    return { acknowledged: ackDrift(ctx, input) };
+  }),
 
   // The tracker re-evaluates all rules at the end of every write, so the work happens there.
   bind(contracts.driftClaim, (ctx, input) =>
@@ -223,6 +238,7 @@ export const miscOps = [
       const ref = normalizeRef(rawRef);
       const drift = getDrift(ctx, ref);
       if (drift === null) throw notFound(rawRef);
+      guardDrift(ctx, drift);
       if (drift.claimedBy !== null && drift.claimedBy !== ctx.actor && input.force !== true) {
         throw new OctoError(
           "conflict",

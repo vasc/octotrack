@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { guardLineWrite } from "../agents/claims.ts";
+import { guardLineWrite, guardOnLine } from "../agents/claims.ts";
 import { HELD_CURRENT_MS } from "../agents/held.ts";
 import { DEVELOPER } from "../agents/state.ts";
 import { contracts } from "../contracts.ts";
@@ -272,7 +272,7 @@ export const taskOps = [
       ) {
         throw new OctoError("invalid_input", `${ref} is not a question or task on a line`);
       }
-      guardLineWrite(ctx, entity.value.line, "scope");
+      guardOnLine(ctx, entity.value.line, "scope", entity.value.ref);
       // Re-confirmed, it is current again; on a line being worked on it reaches the developer from now.
       const working = requireLine(ctx, entity.value.line).state === "working";
       ctx.sql.run(

@@ -53,6 +53,7 @@ const DEVELOPER_OPS: ReadonlySet<string> = new Set([
   "line.propose_done",
   "line.not_yet",
   "held.withdraw",
+  "held.confirm",
   "at",
   "seen",
   "task.add",

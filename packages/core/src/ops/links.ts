@@ -3,7 +3,15 @@ import type { EntitySummary, Link, LinkRel } from "../schemas.ts";
 import { emit } from "../store/common.ts";
 import type { Ctx } from "../store/context.ts";
 import { one, rows } from "../store/context.ts";
-import { findEntity, requireEntity, resolveRef, summarize } from "../store/entities.ts";
+import {
+  type AnyEntity,
+  findEntity,
+  lineOfEntity,
+  requireEntity,
+  resolveRef,
+  summarize,
+} from "../store/entities.ts";
+import { guardOnLine } from "../agents/claims.ts";
 import { assertNoBlockCycle, loadGraph } from "../store/graph.ts";
 import { CountRow, LinkRow } from "../store/rows.ts";
 import { bind } from "./bind.ts";
@@ -53,12 +61,26 @@ export function addLink(ctx: Ctx, rawFrom: string, rel: LinkRel, rawTo: string):
   return { fromRef, rel, toRef, createdAt: ctx.now, createdBy: ctx.actor };
 }
 
+/**
+ * A link changes both its ends, a blocks link most of all: what is held behind what. An agent links or unlinks only
+ * what is on the line it is on, or on no line.
+ */
+function guardEnds(ctx: Ctx, from: AnyEntity, toRef: string): void {
+  for (const end of [from, findEntity(ctx, toRef)]) {
+    if (end !== null) guardOnLine(ctx, lineOfEntity(end), "scope", end.value.ref);
+  }
+}
+
 export const linkOps = [
-  bind(contracts.linkAdd, (ctx, input) => addLink(ctx, input.from, input.rel, input.to)),
+  bind(contracts.linkAdd, (ctx, input) => {
+    guardEnds(ctx, requireEntity(ctx, input.from), resolveRef(ctx, input.to));
+    return addLink(ctx, input.from, input.rel, input.to);
+  }),
 
   bind(contracts.linkRemove, (ctx, input) => {
     const fromEntity = requireEntity(ctx, input.from);
     const toRef = resolveRef(ctx, input.to);
+    guardEnds(ctx, fromEntity, toRef);
     const { changes } = ctx.sql.run("DELETE FROM links WHERE fromRef = ? AND rel = ? AND toRef = ?", [
       fromEntity.value.ref,
       input.rel,
