@@ -1,11 +1,11 @@
 import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
 import { assertProjectKey } from "../refs.ts";
-import type { EventAttrs, Milestone, Project } from "../schemas.ts";
-import { applyPatch, assertVersion, emit, nextNumber } from "../store/common.ts";
+import type { EventAttrs, Project } from "../schemas.ts";
+import { applyPatch, assertVersion, emit } from "../store/common.ts";
 import { rows } from "../store/context.ts";
 import { filterEntities } from "../store/docs.ts";
-import { getMilestone, getProject, requireMilestone, requireProject } from "../store/entities.ts";
+import { getProject, requireProject } from "../store/entities.ts";
 import { loadGraph } from "../store/graph.ts";
 import { MilestoneRow, ProjectRow } from "../store/rows.ts";
 import { bind } from "./bind.ts";
@@ -17,10 +17,6 @@ function projectAttrs(project: Project): EventAttrs {
     horizon: project.horizon,
     ...(project.repo === null ? {} : { repo: project.repo }),
   };
-}
-
-function milestoneAttrs(milestone: Milestone): EventAttrs {
-  return { status: milestone.status, horizon: milestone.horizon };
 }
 
 export const projectOps = [
@@ -94,65 +90,6 @@ export const projectOps = [
     return filterEntities(ctx, all, input.query, graph)
       .slice(0, input.limit ?? 200)
       .map((entity) => buildProjectCard(ctx, entity.value, graph));
-  }),
-
-  bind(contracts.milestoneCreate, (ctx, input) => {
-    const project = requireProject(ctx, input.project);
-    const ref = `M-${nextNumber(ctx, "milestone")}`;
-    ctx.sql.run(
-      `INSERT INTO milestones (ref, project, title, description, status, horizon, targetDate, version, createdAt, updatedAt, createdBy)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)`,
-      [
-        ref,
-        project.ref,
-        input.title,
-        input.description ?? "",
-        input.status ?? "planned",
-        input.horizon ?? "none",
-        input.targetDate ?? null,
-        ctx.now,
-        ctx.now,
-        ctx.actor,
-      ],
-    );
-    const milestone = requireMilestone(ctx, ref);
-    emit(ctx, {
-      type: "milestone.created",
-      kind: "milestone",
-      ref,
-      project: project.ref,
-      summary: `Milestone ${ref} created: ${input.title}`,
-      attrs: milestoneAttrs(milestone),
-    });
-    return milestone;
-  }),
-
-  bind(contracts.milestoneUpdate, (ctx, input) => {
-    const current = requireMilestone(ctx, input.ref);
-    assertVersion(current.ref, current.version, input.ifVersion);
-    const changes = applyPatch(ctx, "milestones", current.ref, current, {
-      title: input.title,
-      description: input.description,
-      status: input.status,
-      horizon: input.horizon,
-      targetDate: input.targetDate,
-    });
-    const updated = getMilestone(ctx, current.ref) ?? current;
-    const fields = Object.keys(changes);
-    if (fields.length > 0) {
-      emit(ctx, {
-        type: changes.status ? "milestone.status_changed" : "milestone.updated",
-        kind: "milestone",
-        ref: current.ref,
-        project: current.project,
-        summary: changes.status
-          ? `Milestone ${current.ref} is now ${updated.status}`
-          : `Milestone ${current.ref} updated: ${fields.join(", ")}`,
-        attrs: milestoneAttrs(updated),
-        changes,
-      });
-    }
-    return updated;
   }),
 
   bind(contracts.milestoneList, (ctx, input) => {

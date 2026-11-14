@@ -226,7 +226,7 @@ describe("a follower never sees an event twice, or out of order", () => {
         require: "any",
         clauses: [
           { type: "event", query: "event:status.posted", count: 1 },
-          { type: "event", query: "event:idea.*", count: 1 },
+          { type: "event", query: "event:issue.created", count: 1 },
         ],
       },
     });
@@ -238,8 +238,8 @@ describe("a follower never sees an event twice, or out of order", () => {
             input: { body: `Post ${index}` },
           })),
           ...Array.from({ length: 20 }, (_, index) => ({
-            op: "idea.capture",
-            input: { title: `Idea ${index}` },
+            op: "issue.create",
+            input: { project: "OCT", title: `Issue ${index}` },
           })),
         ],
       },
@@ -274,35 +274,21 @@ describe("what could never be right, continued", () => {
         h.call(c.decisionUpdate, { ref: decision.ref, title: "   " });
       },
     ],
-    [
-      "idea title",
-      () => {
-        const idea = h.call(c.ideaCapture, { title: "I" });
-        h.call(c.ideaUpdate, { ref: idea.ref, title: "   " });
-      },
-    ],
-    [
-      "milestone title",
-      () => {
-        const milestone = h.call(c.milestoneCreate, { project: "OCT", title: "M" });
-        h.call(c.milestoneUpdate, { ref: milestone.ref, title: "   " });
-      },
-    ],
+    ["line title", () => h.developer(c.lineAdd, { title: "   ", doneWhen: "Done.", where: "working" })],
+    ["done when", () => h.developer(c.lineAdd, { title: "L", doneWhen: "   ", where: "working" })],
     ["PR title", () => h.call(c.prUpsert, { repo: "a/b", number: 1, title: "   ", state: "open" })],
   ])("a blank %s", (_label, action) => {
     expect(action).toThrow();
   });
 
   test.each(["5", "2026-02-31", "March 3 2020", "12/25/2099", "banana"])("the date %s", (date) => {
-    expect(() => h.call(c.milestoneCreate, { project: "OCT", title: "M", targetDate: date })).toThrow();
+    expect(() => h.call(c.projectCreate, { key: "XX", name: "X", targetDate: date })).toThrow();
   });
 
   test.each(["2026-12-01", "2026-12-01T10:00:00.000Z", "2026-12-01T10:00:00+01:00"])(
     "the date %s is fine",
     (date) => {
-      expect(h.call(c.milestoneCreate, { project: "OCT", title: "M", targetDate: date }).targetDate).toBe(
-        date,
-      );
+      expect(h.call(c.projectCreate, { key: "XX", name: "X", targetDate: date }).targetDate).toBe(date);
     },
   );
 

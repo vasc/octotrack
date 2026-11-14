@@ -307,13 +307,13 @@ export function waitersByRef(ctx: Ctx): Map<string, string[]> {
   return waiters;
 }
 
-/** Postponed decisions go below everything else, and the last one postponed goes to the very bottom. */
+/** Questions from before lines: oldest first, postponed below the rest, the last one postponed at the very bottom. */
 function compareCards(a: DecisionCard, b: DecisionCard): number {
   const [first, second] = [a.decision.postponedAt, b.decision.postponedAt];
   if (first !== null && second !== null) return first.localeCompare(second);
   if (first !== null) return 1;
   if (second !== null) return -1;
-  return b.score - a.score || a.decision.createdAt.localeCompare(b.decision.createdAt);
+  return a.decision.createdAt.localeCompare(b.decision.createdAt);
 }
 
 function isUrgent(decision: Decision): boolean {

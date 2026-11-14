@@ -3,14 +3,12 @@ import { AgentsPage } from "./components/agents/AgentsPage.tsx";
 import { DecisionsPage } from "./components/decisions/DecisionsPage.tsx";
 import { DriftPage } from "./components/drift/DriftPage.tsx";
 import { FeedPage } from "./components/feed/FeedPage.tsx";
-import { IdeasPage } from "./components/ideas/IdeasPage.tsx";
 import { IssuesPage } from "./components/issues/IssuesPage.tsx";
 import { AppShell } from "./components/layout/AppShell.tsx";
 import { HomePage } from "./components/home/HomePage.tsx";
 import { ProjectDetailPage } from "./components/projects/ProjectDetailPage.tsx";
 import { ProjectsPage } from "./components/projects/ProjectsPage.tsx";
 import { PrsPage } from "./components/prs/PrsPage.tsx";
-import { RoadmapPage } from "./components/roadmap/RoadmapPage.tsx";
 import { EmptyState, LoadingState } from "./components/ui/states.tsx";
 import { useRoute } from "./lib/router.ts";
 
@@ -38,10 +36,6 @@ function Page({ path }: { path: string }) {
       return <IssuesPage />;
     case "/projects":
       return <ProjectsPage />;
-    case "/roadmap":
-      return <RoadmapPage />;
-    case "/ideas":
-      return <IdeasPage />;
     case "/agents":
       return <AgentsPage />;
     default:

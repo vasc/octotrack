@@ -2,10 +2,8 @@ import { DriftItem } from "../components/drift/DriftItem.tsx";
 import { FeedList } from "../components/feed/FeedList.tsx";
 import { FilterBar } from "../components/feed/FilterBar.tsx";
 import { ViewTabs } from "../components/feed/ViewTabs.tsx";
-import { IdeaRow } from "../components/ideas/IdeaRow.tsx";
 import { IssueRow } from "../components/issues/IssueRow.tsx";
-import { RoadmapLaneView } from "../components/roadmap/RoadmapLaneView.tsx";
-import { DesignSection, Example } from "./Example.tsx";
+import { DesignSection } from "./Example.tsx";
 import { drift, event, issue, issueCard } from "./fixtures.ts";
 
 const NOOP = () => {};
@@ -115,50 +113,7 @@ export function ActivityGallery() {
             onStatus={NOOP}
             card={issueCard({ issue: issue({ ref: "OCT-2", status: "done", title: "Finished" }) })}
           />
-          <IdeaRow
-            onHorizon={NOOP}
-            onPromote={NOOP}
-            onReject={NOOP}
-            idea={{
-              ref: "I-1",
-              project: "OCT",
-              title: "Apple Pay at checkout",
-              body: "",
-              status: "captured",
-              horizon: "next",
-              labels: [],
-              promotedTo: null,
-              version: 1,
-              createdAt: "",
-              updatedAt: "",
-              createdBy: "x",
-            }}
-          />
         </div>
-      </DesignSection>
-      <DesignSection title="Roadmap lane">
-        <Example label="One of three">
-          <RoadmapLaneView
-            lane={{
-              horizon: "now",
-              items: [
-                {
-                  ref: "M-1",
-                  kind: "milestone",
-                  title: "Checkout beta",
-                  project: "OCT",
-                  status: "active",
-                  horizon: "now",
-                  targetDate: "2026-12-05",
-                  done: 1,
-                  total: 4,
-                  blockedBy: [],
-                  openDecisions: ["D-3"],
-                },
-              ],
-            }}
-          />
-        </Example>
       </DesignSection>
     </>
   );

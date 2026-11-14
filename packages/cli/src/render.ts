@@ -20,7 +20,6 @@ import type {
   PrCard,
   ProjectCard,
   PullRequest,
-  Roadmap,
   StatusUpdate,
   View,
   Watch,
@@ -339,10 +338,6 @@ export function renderNext(next: NextWork): string {
     add("Still waiting for a decision", renderDecisions(next.awaitingDecisions));
   if (next.ready.length > 0) add("Ready to pick up", renderIssues(next.ready));
   return sections.join("\n");
-}
-
-export function renderRoadmap(roadmap: Roadmap): string {
-  return roadmap.markdown;
 }
 
 function renderBody(detail: EntityDetail): string {

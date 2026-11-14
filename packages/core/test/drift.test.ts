@@ -211,12 +211,9 @@ describe("drift from the wider network", () => {
     expect(rules()).toEqual(["working-while-blocked"]);
   });
 
-  test("a finished milestone and a finished project are flagged", () => {
-    const milestone = h.call(c.milestoneCreate, { project: "OCT", title: "v1" });
-    const issue = h.call(c.issueCreate, { project: "OCT", title: "Thing", milestone: milestone.ref });
+  test("a finished project is flagged", () => {
+    const issue = h.call(c.issueCreate, { project: "OCT", title: "Thing" });
     h.call(c.issueUpdate, { refs: [issue.ref], status: "done" });
-    expect(rules().sort()).toEqual(["milestone-complete", "project-work-complete"]);
-    h.call(c.milestoneUpdate, { ref: milestone.ref, status: "done" });
     expect(rules()).toEqual(["project-work-complete"]);
     h.call(c.projectUpdate, { ref: "OCT", status: "done" });
     expect(rules()).toEqual([]);

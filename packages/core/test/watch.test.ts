@@ -139,15 +139,15 @@ describe("watches", () => {
     expect(h.call(c.watchList, { agent: "agent-b" })).toHaveLength(1);
   });
 
-  test("a live waiter raises a decision in the queue, and stops counting once it goes quiet", () => {
+  test("a live waiter shows on its question's card, and stops counting once it goes quiet", () => {
     const quiet = h.call(c.decisionAsk, { title: "Nobody waiting", priority: "medium" });
     const waited = h.call(c.decisionAsk, { title: "Someone waiting", priority: "medium" });
     h.call(c.watchCreate, { spec: spec({ until: [`ref:${waited.ref} status:decided`] }), ephemeral: true });
 
-    const [top] = h.call(c.decisionQueue, {});
-    expect(top?.decision.ref).toBe(waited.ref);
-    expect(top?.waiters).toEqual(["agent-a"]);
-    expect(top?.reasons).toContain("1 agent waiting");
+    // The order is the developer's; a waiter only says why a question matters.
+    const card = h.call(c.decisionQueue, {}).find((item) => item.decision.ref === waited.ref);
+    expect(card?.waiters).toEqual(["agent-a"]);
+    expect(card?.reasons).toContain("1 agent waiting");
 
     h.setNow("2026-11-07T12:05:00.000Z");
     const later = h.call(c.decisionQueue, {});

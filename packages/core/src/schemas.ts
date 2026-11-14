@@ -558,7 +558,6 @@ export type WatchResult = z.infer<typeof WatchResult>;
 
 export const DecisionCard = z.object({
   decision: Decision,
-  score: z.number(),
   reasons: z.array(z.string()),
   blocks: z.array(EntitySummary),
   affects: z.array(EntitySummary),
@@ -596,35 +595,6 @@ export type ProjectStats = z.infer<typeof ProjectStats>;
 
 export const ProjectCard = z.object({ project: Project, stats: ProjectStats });
 export type ProjectCard = z.infer<typeof ProjectCard>;
-
-export const RoadmapItem = z.object({
-  ref: z.string(),
-  kind: z.enum(["project", "milestone", "idea", "issue"]),
-  title: z.string(),
-  project: z.string().nullable(),
-  status: z.string(),
-  horizon: Horizon,
-  targetDate: z.string().nullable(),
-  done: z.number().int(),
-  total: z.number().int(),
-  blockedBy: z.array(z.string()),
-  openDecisions: z.array(z.string()),
-});
-export type RoadmapItem = z.infer<typeof RoadmapItem>;
-
-export const RoadmapLane = z.object({
-  horizon: z.enum(["now", "next", "later"]),
-  items: z.array(RoadmapItem),
-});
-export type RoadmapLane = z.infer<typeof RoadmapLane>;
-
-export const Roadmap = z.object({
-  generatedAt: z.string(),
-  project: z.string().nullable(),
-  lanes: z.array(RoadmapLane),
-  markdown: z.string(),
-});
-export type Roadmap = z.infer<typeof Roadmap>;
 
 export const Counts = z.object({
   openDecisions: z.number().int(),

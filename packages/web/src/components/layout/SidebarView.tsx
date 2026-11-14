@@ -56,14 +56,7 @@ export function SidebarView({ path, live, counts, projects }: SidebarViewProps) 
           current={path === "/issues"}
           {...(counts === null ? {} : { count: counts.activeIssues })}
         />
-        <NavItem label="Projects" to="/projects" current={path === "/projects"} />
-        <NavItem label="Roadmap" to="/roadmap" current={path === "/roadmap"} />
-        <NavItem
-          label="Ideas"
-          to="/ideas"
-          current={path === "/ideas"}
-          {...(counts === null ? {} : { count: counts.ideas })}
-        />
+        <NavItem label="Repos" to="/projects" current={path === "/projects"} />
         <NavItem
           label="Agents"
           to="/agents"

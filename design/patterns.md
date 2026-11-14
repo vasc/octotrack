@@ -70,7 +70,7 @@ it. From top to bottom: what it is, what to do about it, what is out of date, wh
 
 ## Answering in place
 
-Decisions, drift, issue status, ideas and posting an update can all be done where you see them. A status changes through
+Questions, drift, issue status, tasks and posting an update can all be done where you see them. A status changes through
 a select in the row. Nothing needs a separate form or a modal. There are no modals in this product.
 
 ## Live updates

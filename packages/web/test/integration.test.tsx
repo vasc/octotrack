@@ -743,7 +743,11 @@ describe("other pages", () => {
     server.act(c.projectCreate, { key: "API", name: "Public API" });
     server.act(c.issueCreate, { project: "OCT", title: "Tracker task" });
     server.act(c.issueCreate, { project: "API", title: "Api task" });
-    server.act(c.milestoneCreate, { project: "API", title: "GA", status: "active" });
+    server.tracker.call(
+      c.lineAdd,
+      { title: "GA", doneWhen: "Live.", repos: ["API"], where: "working" },
+      { actor: "dev", channel: "dashboard" },
+    );
     navigate("/projects");
     const view = renderApp(<App />);
     const main = within(view.getByRole("main"));
@@ -758,39 +762,6 @@ describe("other pages", () => {
     navigate("/projects/NOPE");
     const view = renderApp(<App />);
     await view.findByText(/No project named NOPE/);
-  });
-
-  test("the roadmap lays out horizons and can focus on a project", async () => {
-    server.act(c.projectCreate, { key: "API", name: "Public API" });
-    server.act(c.milestoneCreate, { project: "OCT", title: "Tracker beta", status: "active" });
-    server.act(c.milestoneCreate, { project: "API", title: "API beta", status: "active" });
-    server.act(c.ideaCapture, { title: "Later thing", horizon: "later", project: "OCT" });
-    navigate("/roadmap");
-    const view = renderApp(<App />);
-    await view.findByText("Tracker beta");
-    view.getByText("API beta");
-    view.getByText("Later thing");
-    fireEvent.change(view.getByLabelText("Project"), { target: { value: "API" } });
-    await gone(() => view.queryByText("Tracker beta"));
-  });
-
-  test("ideas can be captured, placed and promoted", async () => {
-    navigate("/ideas");
-    const view = renderApp(<App />);
-    await view.findByText("No ideas here.");
-    fireEvent.change(view.getByLabelText("New idea"), { target: { value: "From the dashboard" } });
-    fireEvent.click(view.getByRole("button", { name: "Capture" }));
-    await view.findByRole("button", { name: "From the dashboard" });
-
-    const projectIdea = server.act(c.ideaCapture, { title: "Promotable", project: "OCT" });
-    const source = FakeEventSource.instances[0];
-    if (source === undefined) throw new Error("No event source");
-    act(() => source.emit("change"));
-    const row = await view.findByRole("button", { name: "Promotable" });
-    const promote = within(row.closest(".row") ?? document.body).getByRole("button", { name: "Promote" });
-    fireEvent.click(promote);
-    await waitFor(() => expect(server.act(c.issueList, {})[0]?.issue.title).toBe("Promotable"));
-    expect(server.act(c.ideaList, { query: `ref:${projectIdea.ref}` })[0]?.status).toBe("promoted");
   });
 
   test("agents tells a registered watch apart from one being hung on", async () => {

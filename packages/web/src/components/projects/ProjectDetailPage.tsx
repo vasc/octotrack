@@ -12,21 +12,17 @@ import { PageHead } from "../ui/PageHead.tsx";
 import { Progress } from "../ui/Progress.tsx";
 import { Section } from "../ui/Section.tsx";
 import { EmptyState } from "../ui/states.tsx";
-import { MilestoneList } from "./MilestoneList.tsx";
+import { QuietRow } from "../home/QuietRow.tsx";
 
 const ISSUE_LIMIT = 1000;
 
-/** One project: its decisions, milestones, PRs, issues and activity, all scoped by the same query. */
+/** One repo: its questions, the lines it serves, its PRs, issues and activity, all scoped by the same query. */
 export function ProjectDetailPage({ projectKey }: { projectKey: string }) {
   const { data } = useBootstrap();
   const card = data?.projects.find((item) => item.project.ref === projectKey);
   const scope = `project:${projectKey}`;
   const filter = useFilter();
-  const roadmap = useOpQuery(
-    contracts.roadmapGenerate,
-    { project: projectKey },
-    { enabled: card !== undefined },
-  );
+  const lines = useOpQuery(contracts.lineList, { query: `project:${projectKey} -status:dropped` });
   const prs = useOpQuery(contracts.prList, { query: `${scope} state:open,draft` });
   const issues = useOpQuery(contracts.issueList, { query: scope, limit: ISSUE_LIMIT });
   const update = useOpMutation(contracts.issueUpdate);
@@ -38,8 +34,6 @@ export function ProjectDetailPage({ projectKey }: { projectKey: string }) {
       </div>
     );
   }
-  const milestones =
-    roadmap.data?.lanes.flatMap((lane) => lane.items).filter((item) => item.kind === "milestone") ?? [];
   return (
     <div className="page">
       <PageHead title={card === undefined ? projectKey : `${projectKey} ${card.project.name}`}>
@@ -50,9 +44,13 @@ export function ProjectDetailPage({ projectKey }: { projectKey: string }) {
       )}
       {card === undefined ? null : <Progress done={card.stats.issuesClosed} total={card.stats.issuesTotal} />}
       <QueueSection query={scope} isDefault={false} />
-      {milestones.length === 0 ? null : (
-        <Section title="Milestones">
-          <MilestoneList items={milestones} />
+      {lines.data === undefined || lines.data.length === 0 ? null : (
+        <Section title="Lines in this repo" note={String(lines.data.length)}>
+          <div className="rows">
+            {lines.data.map((line) => (
+              <QuietRow key={line.ref} line={line} />
+            ))}
+          </div>
         </Section>
       )}
       {prs.data === undefined || prs.data.length === 0 ? null : (

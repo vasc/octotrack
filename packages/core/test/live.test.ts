@@ -81,8 +81,6 @@ beforeEach(() => {
   h.call(c.decisionAsk, { title: "Another decision", project: "OCT" });
   h.call(c.decisionAsk, { title: "A third decision", project: "OCT" });
   h.call(c.prUpsert, { repo: "a/b", number: 1, title: "A PR", state: "open" });
-  h.call(c.ideaCapture, { title: "An idea", project: "OCT" });
-  h.call(c.milestoneCreate, { project: "OCT", title: "A milestone" });
   h.call(c.viewSave, { name: "Mine", query: "kind:issue" });
   h.call(c.watchCreate, { spec: SPEC, name: "registered" });
   h.developer(c.lineAdd, { title: "A line", doneWhen: "Done.", where: "working" });
@@ -125,11 +123,6 @@ const EVERY_WRITE: readonly (readonly [string, unknown])[] = [
   ["decision.supersede", { ref: "D-2", by: "D-3" }],
   ["pr.upsert", { repo: "a/b", number: 1, title: "Renamed", state: "open" }],
   ["pr.sync", { prs: [{ repo: "a/b", number: 2, title: "Another", state: "open" }] }],
-  ["idea.capture", { title: "New" }],
-  ["idea.update", { ref: "I-1", horizon: "next" }],
-  ["idea.promote", { ref: "I-1" }],
-  ["milestone.create", { project: "OCT", title: "New" }],
-  ["milestone.update", { ref: "M-1", status: "active" }],
   ["link.add", { from: "OCT-1", rel: "relates", to: "D-1" }],
   ["link.remove", { from: "OCT-1", rel: "relates", to: "D-1" }],
   ["update.post", { body: "Hello", target: "OCT-1" }],

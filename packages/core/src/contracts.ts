@@ -18,7 +18,6 @@ import {
   HomeView,
   Horizon,
   Idea,
-  IdeaStatus,
   Issue,
   IssueCard,
   IssueStatus,
@@ -32,7 +31,6 @@ import {
   Link,
   LinkRel,
   Milestone,
-  MilestoneStatus,
   NextWork,
   Place,
   PendingChoice,
@@ -53,7 +51,6 @@ import {
   ProjectCard,
   ProjectStatus,
   PullRequest,
-  Roadmap,
   StatusUpdate,
   UpdateLevel,
   View,
@@ -736,74 +733,8 @@ export const contracts = {
   ),
   prList: read("pr.list", "List pull requests, those needing attention first", ListInput, z.array(PrCard)),
 
-  ideaCapture: write(
-    "idea.capture",
-    "Capture a future idea",
-    z.strictObject({
-      title: Text,
-      body: z.string().optional(),
-      project: z.string().optional(),
-      status: IdeaStatus.optional(),
-      horizon: Horizon.optional(),
-      labels: z.array(z.string()).optional(),
-    }),
-    Idea,
-  ),
-  ideaUpdate: write(
-    "idea.update",
-    "Update an idea",
-    z.strictObject({
-      ref: z.string(),
-      title: Text.optional(),
-      body: z.string().optional(),
-      project: z.string().nullable().optional(),
-      status: IdeaStatus.optional(),
-      horizon: Horizon.optional(),
-      labels: z.array(z.string()).optional(),
-      ifVersion: IfVersion,
-    }),
-    Idea,
-  ),
-  ideaPromote: write(
-    "idea.promote",
-    "Turn an idea into an issue or a milestone",
-    z.strictObject({
-      ref: z.string(),
-      project: z.string().optional(),
-      as: z.enum(["issue", "milestone"]).optional(),
-      priority: Priority.optional(),
-    }),
-    z.object({ idea: Idea, created: z.string() }),
-  ),
   ideaList: read("idea.list", "List ideas", ListInput, z.array(Idea)),
 
-  milestoneCreate: write(
-    "milestone.create",
-    "Create a milestone",
-    z.strictObject({
-      project: z.string(),
-      title: Text,
-      description: z.string().optional(),
-      status: MilestoneStatus.optional(),
-      horizon: Horizon.optional(),
-      targetDate: DateText.optional(),
-    }),
-    Milestone,
-  ),
-  milestoneUpdate: write(
-    "milestone.update",
-    "Update a milestone",
-    z.strictObject({
-      ref: z.string(),
-      title: Text.optional(),
-      description: z.string().optional(),
-      status: MilestoneStatus.optional(),
-      horizon: Horizon.optional(),
-      targetDate: DateText.nullable().optional(),
-      ifVersion: IfVersion,
-    }),
-    Milestone,
-  ),
   milestoneList: read("milestone.list", "List milestones", ListInput, z.array(Milestone)),
 
   linkAdd: write(
@@ -971,12 +902,6 @@ export const contracts = {
     Agent,
   ),
 
-  roadmapGenerate: read(
-    "roadmap.generate",
-    "Generate a now/next/later roadmap from milestones, projects and ideas",
-    z.strictObject({ project: z.string().optional() }),
-    Roadmap,
-  ),
   next: read(
     "next",
     "What the calling agent should do next: drift, decisions, claimed work, PRs, ready issues",

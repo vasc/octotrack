@@ -86,21 +86,16 @@ The loudest thing in the product.
 `DriftItem` only offers "Updated" for drift caused by an event. Drift about state clears by itself once the state is
 right, so there "Nothing to update" is the only answer on offer.
 
-## Work: `issues/`, `projects/`, `roadmap/`, `ideas/`
+## Work: `issues/`, `projects/`
 
 | Component           | Kind       | What it is                                                                 |
 | ------------------- | ---------- | -------------------------------------------------------------------------- |
 | `IssueRow`          | Pure       | Ref, title, what blocks it, its PRs and labels, and a status select        |
 | `IssueGroups`       | Pure       | Issues by status, whatever is closest to needing attention first           |
 | `ProjectCardView`   | Pure       | Progress, and what needs attention. Counts turn amber only when above zero |
-| `MilestoneList`     | Pure       | A project's milestones with progress                                       |
-| `RoadmapLaneView`   | Pure       | One of now, next or later                                                  |
-| `IdeaRow`           | Pure       | An idea, with where it goes on the roadmap, and promote or reject          |
 | `IssuesPage`        | Structural | All issues                                                                 |
 | `ProjectsPage`      | Structural | All projects                                                               |
 | `ProjectDetailPage` | Structural | One project: decisions, milestones, PRs, issues, activity                  |
-| `RoadmapPage`       | Structural | Three lanes, and a copy as markdown                                        |
-| `IdeasPage`         | Structural | Quick capture, and the list                                                |
 
 ## Home: `home/` and `lines/`
 
@@ -177,4 +172,4 @@ Opens from any ref, in the rail, without leaving the page.
 | `.chip`   | Quiet text that acts: a filter, a link                                         |
 | `.tab`    | One of a set of mutually exclusive views, with `aria-pressed`                  |
 | `.row`    | One line in a list, divided from the next by `--line`                          |
-| `.card`   | Only when something needs to read as an object: a project, a roadmap item      |
+| `.card`   | Only when something needs to read as an object: a repo, a proposal             |

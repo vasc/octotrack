@@ -4,7 +4,6 @@ import { join } from "node:path";
 import { contracts as c } from "../src/contracts.ts";
 import { parseDecisionLines } from "../src/decision-lines.ts";
 import { OctoError } from "../src/errors.ts";
-import { scoreDecision } from "../src/queue.ts";
 import { type Harness, harness } from "./helpers.ts";
 
 let h: Harness;
@@ -272,21 +271,16 @@ ${third.ref} - Neither, doing something else`,
     });
   });
 
-  test("the queue ranks waiting agents, blocked work and priority, and explains itself", () => {
-    expect(
-      scoreDecision({ priority: "low", waiters: 2, blockedOpen: 0, ageHours: 0, overdue: false }).score,
-    ).toBeGreaterThan(
-      scoreDecision({ priority: "medium", waiters: 0, blockedOpen: 0, ageHours: 0, overdue: false }).score,
-    );
+  test("questions from before lines are oldest first, and still say why they matter", () => {
     const low = h.call(c.decisionAsk, { title: "Low", priority: "low" });
     const urgent = h.call(c.decisionAsk, { title: "Urgent", priority: "urgent" });
     const issue = h.call(c.issueCreate, { project: "OCT", title: "Thing" });
     h.call(c.linkAdd, { from: low.ref, rel: "blocks", to: issue.ref });
-    const [top, bottom] = h.call(c.decisionQueue, {});
-    expect(top?.decision.ref).toBe(urgent.ref);
-    expect(top?.reasons).toContain("urgent priority");
-    expect(bottom?.reasons).toContain("blocks 1 open item");
-    expect(bottom?.blocks.map((item) => item.ref)).toEqual([issue.ref]);
+    const [first, second] = h.call(c.decisionQueue, {});
+    expect([first?.decision.ref, second?.decision.ref]).toEqual([low.ref, urgent.ref]);
+    expect(first?.reasons).toContain("blocks 1 open item");
+    expect(first?.blocks.map((item) => item.ref)).toEqual([issue.ref]);
+    expect(second?.reasons).toContain("urgent priority");
   });
 
   test("line parsing rejects what it cannot read", () => {
@@ -401,50 +395,6 @@ describe("feed", () => {
     expect(h.call(c.feedList, { view: "mine" }).events.map((event) => event.ref)).toEqual(["OCT-1"]);
     h.call(c.viewRemove, { name: "Mine" });
     expect(() => h.call(c.feedList, { view: "Mine" })).toThrow("No saved view");
-  });
-});
-
-describe("ideas and roadmap", () => {
-  test("ideas promote to issues and milestones, keeping the trail", () => {
-    const idea = h.call(c.ideaCapture, { title: "Dark launch", project: "OCT", labels: ["growth"] });
-    const { created, idea: promoted } = h.call(c.ideaPromote, { ref: idea.ref });
-    expect(created).toBe("OCT-1");
-    expect(promoted).toMatchObject({ status: "promoted", promotedTo: "OCT-1" });
-    expect(h.call(c.linkList, { ref: created }).map((link) => link.rel)).toEqual(["promoted_to"]);
-    expect(() => h.call(c.ideaPromote, { ref: idea.ref })).toThrow("already promoted");
-
-    const big = h.call(c.ideaCapture, { title: "Big bet" });
-    expect(() => h.call(c.ideaPromote, { ref: big.ref })).toThrow("no project");
-    expect(h.call(c.ideaPromote, { ref: big.ref, project: "OCT", as: "milestone" }).created).toBe("M-1");
-  });
-
-  test("the roadmap places things by horizon, status and date, and renders markdown", () => {
-    const active = h.call(c.milestoneCreate, {
-      project: "OCT",
-      title: "v1",
-      status: "active",
-      targetDate: "2026-12-01",
-    });
-    h.call(c.milestoneCreate, { project: "OCT", title: "v2", targetDate: "2026-11-20" });
-    h.call(c.milestoneCreate, { project: "OCT", title: "v3", targetDate: "2028-01-01" });
-    h.call(c.ideaCapture, { title: "Soon idea", horizon: "next", project: "OCT" });
-    h.call(c.ideaCapture, { title: "Unplaced idea", project: "OCT" });
-    const issue = h.call(c.issueCreate, { project: "OCT", title: "a", milestone: active.ref });
-    h.call(c.issueCreate, { project: "OCT", title: "b", milestone: active.ref, status: "done" });
-    const decision = h.call(c.decisionAsk, { title: "Q", blocks: [issue.ref] });
-
-    const roadmap = h.call(c.roadmapGenerate, {});
-    const titles = (lane: string) =>
-      roadmap.lanes.find((item) => item.horizon === lane)?.items.map((item) => item.title);
-    expect(titles("now")).toEqual(["v1"]);
-    expect(titles("next")).toEqual(["v2", "Soon idea"]);
-    expect(titles("later")).toEqual(["v3"]);
-    const v1 = roadmap.lanes[0]?.items[0];
-    expect(v1).toMatchObject({ done: 1, total: 2, openDecisions: [decision.ref] });
-    expect(roadmap.markdown).toContain(
-      `- **${active.ref}** v1 (1/2 done; target 2026-12-01; waiting on ${decision.ref})`,
-    );
-    expect(h.call(c.roadmapGenerate, { project: "OCT" }).project).toBe("OCT");
   });
 });
 

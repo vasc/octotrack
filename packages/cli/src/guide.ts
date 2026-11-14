@@ -1,66 +1,100 @@
 export const AGENT_GUIDE = `# Octotrack: how to work as an agent
 
-Octotrack is the shared record for one developer and many agents. You write to it through this CLI. The developer
-reads a feed and makes decisions. Keep the record true, and ask rather than guess on anything that is theirs to decide.
+Octotrack is the shared record for one developer and many agents. The developer keeps an ordered list of lines of
+work: what is being worked on, what is up next, what is tabled. You work on one line at a time, keep it true, and ask
+the developer only what is theirs to decide, in words they can act on without reading anything else.
 
-Set your name once so that your work is attributed and your claims are yours:
+Output is JSON when piped, text in a terminal. --json and --text force either. Every reply may carry notices for you
+on stderr (or in \`notices\` in JSON): answers, Tells, a line that needs an owner, a wind-down. Read them; they are
+how you hear things. Every write also returns \`driftOpened\`: things your change just put out of date.
 
-  export OCTO_AGENT=claude-feature-x
+## Who you are
 
-Output is JSON when piped, text in a terminal. --json and --text force either. Every write returns \`driftOpened\`:
-things your change just put out of date. Handle them before moving on.
+One name is one session in one checkout. Set it once, and say how to wake you, or that you cannot be woken:
 
-## The loop
+  export OCTO_AGENT=panel-widgets
+  octo agent register --wake claude:$CLAUDE_CODE_SESSION_ID
+  octo agent register --no-wake --repo GARDEN        when your checkout's remote is not a tracked GitHub repo
 
-  octo next                          what to do now: drift, your decisions, claimed work, ready issues
-  octo issue claim OCT-4             take it, moves it to in_progress
-  octo post "what is happening" --on OCT-4 --level progress
-  octo issue update OCT-4 --status in_review
-  octo drift list                    anything out of date? clear it before stopping
+Your repo is read from your checkout's remote. Names shaped like a ref (GARDEN-2) are refused. You are never the
+developer. When the developer tells you in conversation to do one of their operations (start a line, stop an agent),
+relay their words with \`--said "<exactly what they said>"\`. It is recorded with your name.
 
-## When you need a decision
+## Taking a line
 
-Do not guess at architecture or product calls. Ask, with options and your recommendation:
+  octo lines                        every line, in the developer's order
+  octo line take                    the line you should be on, and what to do next
+  octo line take L-7                that line: owner if it has none, helper if it has, scoper if it is up next
+  octo line release                 leave it
 
-  octo decision ask "Which queue?" -p OCT --kind architecture --priority high \\
-    --context "We need at-least-once delivery for ..." \\
-    -o sqs="SQS::Managed, more expensive" -o redis="Redis::Already deployed" \\
-    --recommend redis --blocks OCT-4 --wait
+With no ref, take puts you where you are needed most in your repo: owner of the highest working line with no owner,
+else helper where there is work, else scoper of an up-next line nobody scoped. Run it again when you finish something:
+it tells you your next issue, or to break the current plan step into issues, or that there is nothing for you and you
+will be woken.
 
---wait hangs until it is answered, then prints the outcome. Set your tool's timeout accordingly, or use --timeout 30m
-(exit 124 when it runs out; the decision stays open and you can \`octo decision wait D-3\` later).
+## The loop, as owner or helper
 
-If you have other work to do in the meantime, do not hang: ask without --wait, keep going, check back.
+  octo issue claim PANEL-4                    only on your line; a helper only in its own repo
+  octo post "what is happening" --on PANEL-4 --level progress
+  octo issue update PANEL-4 --status in_review
+  octo plan set L-7 "Model the base" "Print and test-fit" "Final print"
+  octo issue create "Measure the grip" -p PANEL --line L-7 --step 2
+  octo line summarize L-7 --headline "<one sentence that stands alone>" --summary-file -
+  octo line propose-done L-7 How done when was met
 
-The developer can answer in their own words instead of picking an option, so read the note as well as the
-chosen key. They can also postpone a decision, which only moves it down their queue: it is still open, so keep waiting or
-keep working around it.
+The owner speaks for the line: its summary, its plan, its case for done. A summary falls due an hour after real work
+(a step changed, an issue closed, a question asked or answered), as drift for the owner.
 
-## Hearing the answer
+## What you may write
 
-Nothing pushes an answer at you unless you ask for that, so check when you start or resume:
+  working on               anything, on the line you hold
+  up next                  scoping only (done when, plan, questions, tasks), by the agent that took it to scope
+  proposed                 scoping only, by the agent that proposed it
+  tabled, done, dropped    nothing
 
-  octo inbox                         answers you have not picked up
-  octo decision pickup D-3           you have it
-  octo decision report D-3 "Moved the folder; nothing else changed"
-  octo decision report D-3 "Repo done, host file remains" --partial
+When a working line moves away, you get a wind-down notice: 15 minutes for a hand-off note, reports on answers you
+took, and, for done or dropped, closing or folding its open issues. Then your claim ends. Writes a line's state forbids
+are refused and logged, and three in an hour would stop you.
 
-Report back when you have acted, so that the developer can see their answer was carried out.
+## Asking the developer
 
-If you are going idle and want to continue as soon as there is an answer, ask to be woken. It is your choice, per decision:
+A question stands alone. It needs the situation, written for someone who has read nothing else; options that say what
+happens if picked; and, if you recommend one, why:
 
-  octo decision ask "Which queue?" --wake claude:$CLAUDE_CODE_SESSION_ID
-  octo decision wake D-3 claude:$CLAUDE_CODE_SESSION_ID
-  octo decision wake D-3 --off
+  octo decision ask "Which board goes in?" \\
+    --context "The base is printed for the 26 mm board. The 30 mm one has the better antenna but needs a new model." \\
+    -o a="26 mm::Print as it is; the 30 mm board will not fit" -o b="30 mm::Remodel first, a day's work" \\
+    --recommend a --why "Antenna gain does not matter at two metres"
 
-The address is adapter:address, for an adapter the developer has set up for your tool. A wake only says that an answer
-exists. What to do about it is still up to you, and if it fails the answer waits in your inbox.
+It belongs to your line and the issue you hold; its answer comes back to whoever holds that issue, else the owner, on
+their next command, and wakes them if they are asleep. Urgent is for working lines and three reasons only:
+--urgent time_boxed, costs_money or broken. The developer can send it back as not urgent.
 
-## Logging decisions
+## Things only the developer can do
 
-Log anything decided in conversation instead, so that it is on the record:
+A measurement, a login, a play-test: file a task, at one of the developer's places.
 
-  octo decision record "Use SQLite locally" --chosen SQLite -p OCT --kind architecture
+  octo place list
+  octo task file "Measure the grip" --place "the bench" --outcome "The five numbers the model assumes, in mm"
+  octo decision ask "Which board?" ... --waits-for PANEL-9     a question the task would settle waits behind it
+
+The task frees the issue you hold. Its outcome comes back to you like an answer.
+
+## Proposing lines
+
+  octo line propose "Wall mount" --done-when "It hangs flush, cable hidden" -r PANEL \\
+    --recommend up_next --why "The enclosure's final print moves the mounting points"
+
+Only the developer places lines. Work on no line in your repo shows as unplaced-work drift: put each issue on its line,
+or propose a line for it, and re-propose or reject the proposals that came from before.
+
+## Held work
+
+Questions and tasks on lines nobody is working on are held, and only current for 7 days after they were asked or
+re-confirmed. When you take such a line you are told which are stale:
+
+  octo held list L-7
+  octo held confirm D-12 PANEL-9
 
 ## Watching
 
@@ -108,7 +142,9 @@ Drift means something is out of date and someone must look. It comes from the de
   decision decided              its project and everything it blocks or affects must be re-checked
   issue closed, PR still open   or the reverse: PR merged, issue still open
   blocked issue, blockers gone  or the reverse: working on something still blocked
-  all issues closed             the milestone or project should probably close
+  all issues closed             the repo should probably close
+  issues on no line             one drift per repo: place them on lines, or propose lines for them
+  a summary is due              for a line's owner, an hour after real work
   PR checks failing, conflicts, changes requested, PR with no issue
   in progress with no change for two days
 
@@ -120,7 +156,7 @@ Clear it in one of two ways, with a note. There is no third:
 
 Drift about state, such as a PR still open, clears by itself once you fix the state, so --updated is refused while it
 is still true. --verified says it is correct as it is. With several agents around, take an item first:
-octo drift claim DR-4. Use octo next -p OCT to see only one project.
+octo drift claim DR-4. Use octo next -p OCT to see only one repo.
 
 Some drift clears itself when the state becomes consistent. Connect your own work to the network so that you get told:
 
