@@ -325,6 +325,18 @@ const MIGRATIONS: readonly Migration[] = [
   `
   CREATE TABLE not_a_line (issue TEXT PRIMARY KEY, line TEXT NOT NULL, at TEXT NOT NULL);
   `,
+  // When GitHub sync last wrote a pull request, so the runner acts only on what GitHub says; and the pull requests
+  // open when a line ended, the only ones the runner may close with it.
+  `
+  ALTER TABLE prs ADD COLUMN githubAt TEXT;
+  CREATE TABLE line_closing_prs (
+    line TEXT NOT NULL,
+    pr TEXT NOT NULL,
+    headSha TEXT NOT NULL,
+    at TEXT NOT NULL,
+    PRIMARY KEY (line, pr)
+  );
+  `,
 ];
 
 const UserVersion = z.object({ user_version: z.number().int() });

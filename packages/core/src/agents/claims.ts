@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { OctoError, RefusedWrite } from "../errors.ts";
+import { implementedRefs } from "../refs.ts";
 import type { Line, LineClaim, LineCrew, Notice } from "../schemas.ts";
 import type { EventTypeName } from "../query/values.ts";
 import { applyPatch, emit } from "../store/common.ts";
@@ -425,7 +426,42 @@ function listHeldPrs(ctx: Ctx, line: Line): void {
   });
 }
 
+const OpenPrRow = z.object({
+  ref: z.string(),
+  title: z.string(),
+  headRef: z.string(),
+  body: z.string(),
+  headSha: z.string(),
+  issue: z.string(),
+});
+
+/**
+ * The pull requests the runner may close with a line that ended: those open now, as GitHub last reported them, whose
+ * branch or closing keyword names one of the line's issues (D14). One opened or pushed to after this is held and shown,
+ * never closed, and one only an agent reported is never closed, since closing on GitHub cannot be undone.
+ */
+function markPrsToClose(ctx: Ctx, line: Line): void {
+  const open = rows(
+    ctx,
+    OpenPrRow,
+    `SELECT p.ref AS ref, p.title AS title, p.headRef AS headRef, p.body AS body, p.headSha AS headSha, i.ref AS issue
+     FROM prs p JOIN links k ON k.fromRef = p.ref AND k.rel = 'implements' JOIN issues i ON i.ref = k.toRef
+     WHERE i.line = ? AND p.state IN ('open', 'draft') AND p.githubAt IS NOT NULL`,
+    [line.ref],
+  );
+  for (const pr of open) {
+    if (!implementedRefs(pr).includes(pr.issue)) continue;
+    ctx.sql.run("INSERT OR IGNORE INTO line_closing_prs (line, pr, headSha, at) VALUES (?, ?, ?, ?)", [
+      line.ref,
+      pr.ref,
+      pr.headSha,
+      ctx.now,
+    ]);
+  }
+}
+
 export function closeWithLine(ctx: Ctx, line: Line): void {
+  markPrsToClose(ctx, line);
   const open = rows(
     ctx,
     IssueRow,

@@ -207,8 +207,8 @@ command can start the server, and that command's environment says nothing about 
 
 A background loop in the local server, and `octo pr sync`, which asks the server to run it now, shell out to `gh`, reuse
 the developer's existing login and push results through the `pr.sync` operation, which only the server and the
-developer may call. References like `OCT-12` in a PR's title, branch or body become
-`implements` links automatically.
+developer may call. A ref like `OCT-12` in a PR's branch name, or after a closing keyword in its title or body ("Fixes
+OCT-12", "Closes OCT-3, OCT-4"), becomes an `implements` link automatically; a bare mention does not.
 
 - **Trade-off:** polling (default 120 seconds, each repo three requests) rather than webhooks, since there is no public endpoint on a laptop.
   `pr.upsert` remains available for anything else that wants to report.
@@ -432,6 +432,18 @@ Decisions made from that:
     rows through sync, past the line rules `pr upsert` keeps, and say a repo's sync failed or was fine. _Trade-off:_ the
     sync runs with the server's `gh` and environment, not the caller's; on this one machine they are the same login.
     `gh` now runs on the same bounded path as every other command the server runs.
+  - _A pull request implements an issue by its branch name, a closing keyword, or `--issue`,_ as D14 says; a bare
+    mention ("see PANEL-1 for background") no longer links it. Links an earlier mention made stay, but the runner does
+    not act on them (below). _Why:_ every link is a reason the runner may close the pull request on GitHub with a line.
+  - _The runner closes only the pull requests that were open when the line ended, unchanged since, as GitHub reports
+    them._ When a done or dropped line's wind-down ends (or at once, when nobody was on it), Octotrack notes each open
+    pull request whose branch or closing keyword, as GitHub last reported them, names one of the line's issues, with
+    its head commit (`line_closing_prs`). The runner closes only those, and only while the head commit is the same and
+    the row was last written by GitHub sync. Any `pr upsert` marks a row as not confirmed until sync writes it again.
+    _Why:_ it closed every open pull request linked to an ended line, including ones opened after the wind-down, which
+    D14 holds and shows, and an agent could `pr upsert` any number in the repo with "Fixes PANEL-1" to have it closed.
+    _Trade-off:_ a pull request opened just before the deadline but not yet synced is held and shown, not closed;
+    closing what is still wanted cannot be undone, and holding costs a click.
   - _The developer's own operations, relayed with `--said`, take effect on their own lines._ `task add` and `note add`
     were refused there, as writes to a line no agent may touch, though D14 says every developer operation accepts the
     developer's words.
