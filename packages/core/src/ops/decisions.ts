@@ -16,14 +16,14 @@ import type {
 import type { EventTypeName } from "../query/values.ts";
 import { applyPatch, assertVersion, emit, nextNumber } from "../store/common.ts";
 import type { Ctx } from "../store/context.ts";
-import { rows } from "../store/context.ts";
+import { one, rows } from "../store/context.ts";
 import { filterEntities } from "../store/docs.ts";
 import { allLines, requireDecision, requireIssue, requireLine, requireProject } from "../store/entities.ts";
 import { loadGraph } from "../store/graph.ts";
 import { DecisionRow, IssueRow, WatchRow } from "../store/rows.ts";
 import { toWatch } from "../watch/engine.ts";
 import { z } from "zod";
-import { guardLineWrite } from "../agents/claims.ts";
+import { guardLineWrite, requireOnLineOf } from "../agents/claims.ts";
 import { DEVELOPER } from "../agents/state.ts";
 import { addNotice, claimOf } from "../store/agents.ts";
 import { addToInbox } from "../store/inbox.ts";
@@ -297,6 +297,38 @@ function transition(
   return updated;
 }
 
+const Waiting = z.object({ id: z.number() });
+
+/**
+ * Only an open question is refined, and an agent refines one on a line only from that line, or as its asker, while the
+ * line takes writes. An answer waiting out its Undo is applied by option key, so nothing may change under it.
+ */
+function refineable(ctx: Ctx, current: Decision): void {
+  if (current.status !== "open") {
+    throw new OctoError(
+      "conflict",
+      `${current.ref} is ${current.status}, so it is no longer refined`,
+      "Ask a new question if something changed.",
+    );
+  }
+  if (ctx.developer || ctx.system) return;
+  guardLineWrite(ctx, current.line, "scope");
+  if (current.requestedBy !== ctx.actor) requireOnLineOf(ctx, current.line, current.ref);
+  const waiting = one(
+    ctx,
+    Waiting,
+    "SELECT id FROM pending_choices WHERE state = 'pending' AND json_extract(input, '$.ref') = ? LIMIT 1",
+    [current.ref],
+  );
+  if (waiting !== null) {
+    throw new OctoError(
+      "conflict",
+      `${current.ref} has an answer waiting to take effect, so it is not changed under it`,
+      "Wait a few seconds, then read the answer.",
+    );
+  }
+}
+
 function requireAnswered(ctx: Ctx, ref: string): Decision {
   const current = requireDecision(ctx, ref);
   if (current.status !== "decided") {
@@ -462,6 +494,23 @@ export const decisionOps = [
   bind(contracts.decisionUpdate, (ctx, input) => {
     const current = requireDecision(ctx, input.ref);
     assertVersion(current.ref, current.version, input.ifVersion);
+    refineable(ctx, current);
+    if (current.line !== null && !ctx.developer) {
+      // Refined, it must still stand alone, as it had to when asked.
+      const recommendation =
+        input.recommendation === undefined ? current.recommendation : input.recommendation;
+      const why = input.why ?? current.recommendationWhy;
+      checkStandalone(
+        {
+          title: input.title ?? current.title,
+          context: input.context ?? current.context,
+          options: input.options ?? current.options,
+          ...(recommendation === null ? {} : { recommendation }),
+          ...(why === null ? {} : { why }),
+        },
+        requireLine(ctx, current.line),
+      );
+    }
     const changes = applyPatch(ctx, "decisions", current.ref, current, {
       title: input.title,
       context: input.context,
@@ -473,6 +522,7 @@ export const decisionOps = [
           : requireProject(ctx, input.project).ref,
       options: input.options === undefined ? undefined : normalizeOptions(input.options),
       recommendation: input.recommendation,
+      recommendationWhy: input.why,
       dueAt: input.dueAt,
     });
     const updated = requireDecision(ctx, current.ref);
