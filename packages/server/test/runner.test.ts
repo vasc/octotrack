@@ -1,6 +1,9 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { contracts as c, Tracker } from "@octotrack/core";
-import { createRunner, type RunnerConfig, type RunnerShell } from "../src/runner.ts";
+import { createRunner, processShell, RunnerConfig, type RunnerShell } from "../src/runner.ts";
 import { openSqlite } from "../src/sqlite.ts";
 
 const DEV = { actor: "dev", channel: "dashboard" } as const;
@@ -12,12 +15,14 @@ interface Scripted {
 
 function fakeShell(scripted: Scripted = {}, existing: readonly string[] = []) {
   const ran: string[] = [];
+  const deadlines = new Map<string, number | undefined>();
   const started: { argv: string[]; cwd: string; env: Record<string, string> }[] = [];
   const finish: ((result: { code: number; output: string }) => void)[] = [];
   const shell: RunnerShell = {
-    async run(argv) {
+    async run(argv, _cwd, deadlineMs) {
       const command = argv.join(" ");
       ran.push(command);
+      deadlines.set(command, deadlineMs);
       const match = Object.entries(scripted).find(([prefix]) => command.startsWith(prefix))?.[1];
       return { code: match?.code ?? 0, stdout: match?.stdout ?? "", stderr: match?.stderr ?? "" };
     },
@@ -27,7 +32,7 @@ function fakeShell(scripted: Scripted = {}, existing: readonly string[] = []) {
     },
     exists: (path) => existing.includes(path),
   };
-  return { shell, ran, started, finish };
+  return { shell, ran, started, finish, deadlines };
 }
 
 function world(
@@ -36,7 +41,8 @@ function world(
   options: { existing?: readonly string[]; before?: (tracker: Tracker) => void } = {},
 ) {
   let now = "2026-11-14T09:00:00.000Z";
-  const tracker = new Tracker(openSqlite(":memory:"), () => now);
+  const driver = openSqlite(":memory:");
+  const tracker = new Tracker(driver, () => now);
   tracker.call(c.projectCreate, { key: "PANEL", name: "Panel", repo: "vasc/homepanel" }, DEV);
   const line = tracker.call(
     c.lineAdd,
@@ -62,7 +68,8 @@ function world(
   const later = (minutes: number) => {
     now = new Date(Date.parse(now) + minutes * 60_000).toISOString();
   };
-  return { tracker, line, runner, later, ...fake };
+  const now_ = () => now;
+  return { tracker, driver, line, runner, later, now: now_, ...fake };
 }
 
 describe("the local runner", () => {
@@ -210,6 +217,10 @@ describe("the local runner", () => {
           code: 0,
           stdout: "/src/homepanel/.git\n",
         },
+        "git -C /src/homepanel remote get-url origin": {
+          code: 0,
+          stdout: "https://github.com/vasc/homepanel.git\n",
+        },
       },
       {
         before: (tracker) => {
@@ -286,5 +297,156 @@ describe("the local runner", () => {
     w.tracker.call(c.repoCheckout, { repo: "PANEL", path: "/code/homepanel" }, DEV);
     await w.runner.tick();
     expect(w.ran).toContain("git -C /code/homepanel worktree add -b octo/panel.1 /wt/panel.1");
+  });
+});
+
+const homes: string[] = [];
+afterEach(() => {
+  for (const dir of homes.splice(0)) rmSync(dir, { recursive: true, force: true });
+});
+
+/** Runs with these set in the server's own environment, then puts back what was there. */
+async function withEnv(values: Record<string, string>, body: () => Promise<void> | void): Promise<void> {
+  const saved = new Map(Object.keys(values).map((key) => [key, process.env[key]]));
+  Object.assign(process.env, values);
+  try {
+    await body();
+  } finally {
+    for (const [key, value] of saved) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+}
+
+describe("what the runner audit found", () => {
+  test("commands and sessions it runs never inherit an agent's name or the developer's presence from the server", async () => {
+    const print = ["sh", "-c", 'echo "[$OCTO_AGENT][$OCTO_DEVELOPER]"'];
+    await withEnv({ OCTO_AGENT: "someone-else", OCTO_DEVELOPER: "1" }, async () => {
+      expect((await processShell.run(print)).stdout.trim()).toBe("[][]");
+      const session = processShell.start(print, { cwd: tmpdir(), env: { OCTO_AGENT: "panel.1" } });
+      expect((await session.exited).output.trim()).toBe("[panel.1][]");
+    });
+  });
+
+  test("a checkout an agent works in is used only if its origin is the repo", async () => {
+    const w = world(
+      { repos: {} },
+      {
+        "git -C /work/elsewhere rev-parse --path-format=absolute --git-common-dir": {
+          code: 0,
+          stdout: "/work/elsewhere/.git\n",
+        },
+        "git -C /work/elsewhere remote get-url origin": {
+          code: 0,
+          stdout: "git@github.com:someone/else.git\n",
+        },
+      },
+      {
+        before: (tracker) => {
+          tracker.call(
+            c.agentRegister,
+            { repo: "PANEL" },
+            { actor: "liar", channel: "cli", checkout: "/work/elsewhere" },
+          );
+        },
+      },
+    );
+    await w.runner.tick();
+    expect(w.ran.some((command) => command.startsWith("git -C /work/elsewhere worktree add"))).toBe(false);
+    expect(w.ran).toContain("gh repo clone vasc/homepanel /src/panel");
+  });
+
+  test("worktrees go under the install's own home by default, so a test install never touches the live one's", async () => {
+    const home = mkdtempSync(join(tmpdir(), "octo-runner-home-"));
+    homes.push(home);
+    await withEnv({ OCTO_HOME: home }, () => {
+      expect(RunnerConfig.parse({ start: ["claude"] }).worktrees).toBe(join(home, "worktrees"));
+    });
+  });
+
+  test("a name that is not safe to pass to the stop command is never passed to it", async () => {
+    const w = world({ stop: ["tmux", "kill-session", "-t", "{name}"] });
+    for (const name of ["*", "-rf"]) {
+      w.driver.run("INSERT INTO agents (name, firstSeenAt, lastSeenAt, stoppedAt) VALUES (?, ?, ?, ?)", [
+        name,
+        w.now(),
+        w.now(),
+        w.now(),
+      ]);
+    }
+    w.tracker.call(c.agentRegister, { repo: "PANEL" }, { actor: "panel-a", channel: "cli" });
+    w.tracker.call(c.agentStop, { name: "panel-a" }, DEV);
+    await w.runner.tick();
+    await w.runner.tick();
+    expect(w.ran.filter((command) => command.startsWith("tmux"))).toEqual(["tmux kill-session -t panel-a"]);
+    expect(w.tracker.call(c.runnerStops, {}, RUNNER_CALLER)).toEqual([]);
+  });
+
+  test("setup commands get their own, longer deadline than git and gh", async () => {
+    const w = world();
+    await w.runner.tick();
+    expect(w.deadlines.get("bun install") ?? 0).toBeGreaterThan(
+      w.deadlines.get("git -C /src/homepanel worktree add -b octo/panel.1 /wt/panel.1") ?? 0,
+    );
+  });
+
+  test("a command past its deadline is killed and reported, not waited on", async () => {
+    const begun = Date.now();
+    const ran = await processShell.run(["sleep", "5"], undefined, 200);
+    expect(Date.now() - begun).toBeLessThan(3000);
+    expect(ran.code).not.toBe(0);
+    expect(ran.stderr).toContain("deadline");
+  });
+
+  test("a command whose own child keeps its output open is still answered once it exits", async () => {
+    const begun = Date.now();
+    const ran = await processShell.run(["sh", "-c", "sleep 8 & echo hi"]);
+    expect([ran.code, ran.stdout.trim()]).toEqual([0, "hi"]);
+    const session = processShell.start(["sh", "-c", "sleep 8 & echo started; exit 3"], {
+      cwd: tmpdir(),
+      env: {},
+    });
+    expect(await session.exited).toEqual({ code: 3, output: "started\n" });
+    expect(Date.now() - begun).toBeLessThan(4000);
+  });
+
+  test("in watch mode it does not run the stop command, and notes once that it would", async () => {
+    const w = world({ dryRun: true, stop: ["tmux", "kill-session", "-t", "{name}"] });
+    w.tracker.call(c.agentRegister, { repo: "PANEL" }, { actor: "panel-a", channel: "cli" });
+    w.tracker.call(c.agentStop, { name: "panel-a" }, DEV);
+    await w.runner.tick();
+    await w.runner.tick();
+    expect(w.ran).toEqual([]);
+    expect(w.tracker.call(c.feedList, { query: "event:runner.would_stop" }, DEV).events).toHaveLength(1);
+  });
+
+  test("a retry whose worktree was removed makes it again on the branch its first attempt left", async () => {
+    const w = world(
+      {},
+      {
+        "git -C /src/homepanel worktree add -b octo/panel.1": {
+          code: 255,
+          stderr: "fatal: a branch named 'octo/panel.1' already exists",
+        },
+      },
+    );
+    await w.runner.tick();
+    expect(w.ran).toContain("git -C /src/homepanel worktree add /wt/panel.1 octo/panel.1");
+    expect(w.started.map((session) => session.cwd)).toEqual(["/wt/panel.1"]);
+  });
+
+  test("once the line has an owner, a spare session is started as a helper for its unclaimed work", async () => {
+    const w = world({ cap: 2 });
+    await w.runner.tick();
+    const owner = { actor: "panel.1", channel: "cli" } as const;
+    w.tracker.call(c.lineTake, { ref: w.line.ref }, owner);
+    for (const title of ["Base", "Lid"]) {
+      w.tracker.call(c.issueCreate, { project: "PANEL", title, line: w.line.ref }, DEV);
+    }
+    await w.runner.tick();
+    expect(w.started.map((session) => session.argv[2])).toEqual(["panel.1", "panel.2"]);
+    const started = w.tracker.call(c.feedList, { query: "event:runner.started" }, DEV).events;
+    expect(started.some((event) => event.summary.includes("panel.2 as a helper"))).toBe(true);
   });
 });

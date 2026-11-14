@@ -12,6 +12,7 @@ import {
   WatchWaitResponse,
 } from "@octotrack/core";
 import { BUILD_ID } from "@octotrack/server/build";
+import { withoutIdentity } from "@octotrack/server/env";
 import { serverLogPath, serverStoppedPath } from "@octotrack/server/paths";
 import { z } from "zod";
 import { skewWarning } from "./skew.ts";
@@ -47,6 +48,14 @@ const AnyBody = z.object({ ok: z.literal(false), error: ErrorBody });
 function isLoopback(url: string): boolean {
   const { hostname } = new URL(url);
   return hostname === "127.0.0.1" || hostname === "localhost" || hostname === "[::1]";
+}
+
+/**
+ * The environment a server this command starts runs with: this command's own, less who is calling. The server outlives
+ * the command and runs wakes and sessions for every agent, so it must not act as the agent that started it.
+ */
+export function serverEnvironment(env: Readonly<Record<string, string | undefined>>): Record<string, string> {
+  return withoutIdentity(env);
 }
 
 /** Who is calling beyond a name: the developer themself, or an agent relaying the developer's own words. */
@@ -121,7 +130,7 @@ export class OctoClient {
       const child = spawn(program, [...prefix, "serve", "--port", new URL(this.baseUrl).port || "80"], {
         detached: true,
         stdio: ["ignore", log, log],
-        env: process.env,
+        env: serverEnvironment(process.env),
       });
       child.unref();
     }

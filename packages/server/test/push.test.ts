@@ -85,6 +85,43 @@ describe("buzzing the phone", () => {
   });
 });
 
+describe("a push service that cannot be reached", () => {
+  test("costs only that browser its notification: the others hear it once, and nothing buzzes again", async () => {
+    const tracker = new Tracker(openSqlite(":memory:"));
+    tracker.call(c.projectCreate, { key: "PANEL", name: "Panel" }, DEV);
+    tracker.call(
+      c.lineAdd,
+      { title: "Enclosure", doneWhen: "Done.", repos: ["PANEL"], where: "working" },
+      DEV,
+    );
+    const panel = { actor: "panel", channel: "cli" } as const;
+    tracker.call(c.agentRegister, { repo: "PANEL" }, panel);
+    tracker.call(c.lineTake, { ref: "L-1" }, panel);
+    for (const endpoint of ["https://push.example/offline", "https://push.example/phone"]) {
+      tracker.call(c.pushSubscribe, { endpoint, keys: { p256dh: "BKey", auth: "secret" } }, DEV);
+    }
+    const reached: string[] = [];
+    const send: PushSender = async (subscription) => {
+      if (subscription.endpoint.endsWith("offline")) throw new Error("getaddrinfo ENOTFOUND push.example");
+      reached.push(subscription.endpoint);
+      return { statusCode: 201 };
+    };
+    const dispatcher = createPushDispatcher({ tracker, send });
+    tracker.call(
+      c.decisionAsk,
+      {
+        title: "Which board?",
+        context: "The base is printed.",
+        options: [{ key: "a", label: "26 mm", description: "As it is." }],
+      },
+      panel,
+    );
+    await dispatcher.dispatch();
+    await dispatcher.dispatch();
+    expect(reached).toEqual(["https://push.example/phone"]);
+  });
+});
+
 describe("VAPID keys", () => {
   test("are made once, kept readable only by the developer, and the same on the next start", () => {
     const dir = mkdtempSync(join(tmpdir(), "octo-vapid-"));

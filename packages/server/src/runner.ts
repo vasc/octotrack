@@ -3,6 +3,9 @@ import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { type Caller, contracts, type RunnerDue, type Tracker } from "@octotrack/core";
 import { z } from "zod";
+import { childEnv } from "./env.ts";
+import { octoHome } from "./paths.ts";
+import { runProcess } from "./spawn.ts";
 
 /**
  * The developer's own setup for starting sessions, in `~/.octotrack/agent-setup.json`, edited only on this machine and
@@ -18,8 +21,8 @@ export const RunnerConfig = z.object({
   cap: z.number().int().min(0).default(1),
   /** Watch mode: record what would be started, start nothing. On until the developer turns it off. */
   dryRun: z.boolean().default(true),
-  /** Where new worktrees go. */
-  worktrees: z.string().default(join(homedir(), ".octotrack", "worktrees")),
+  /** Where new worktrees go: under this install's own home, so a test install never works in the live one's. */
+  worktrees: z.string().default(() => join(octoHome(), "worktrees")),
   /** Where a repo with no checkout here is cloned. */
   clones: z.string().default(join(homedir(), "src")),
   repos: z
@@ -43,7 +46,8 @@ export interface RunResult {
 
 /** Everything the runner does outside the tracker. Injected, so tests never run git, gh or a real session. */
 export interface RunnerShell {
-  run(argv: readonly string[], cwd?: string): Promise<RunResult>;
+  /** Runs a command to its end, or kills it at its deadline (by default, the one for git and gh). */
+  run(argv: readonly string[], cwd?: string, deadlineMs?: number): Promise<RunResult>;
   start(
     argv: readonly string[],
     options: { cwd: string; env: Record<string, string> },
@@ -54,7 +58,16 @@ export interface RunnerShell {
 const RUNNER: Caller = { actor: "octotrack", channel: "cli", system: true };
 /** git and gh answer in seconds; this is generous, then the command is given up on. */
 const COMMAND_DEADLINE_MS = 120_000;
+/** A repo's setup, such as installing its dependencies, can take minutes on a cold cache. */
+const SETUP_DEADLINE_MS = 30 * 60_000;
+/** The developer's stop command ends a session; one still going after this is not going to. */
+const STOP_DEADLINE_MS = 10 * 60_000;
 const OUTPUT_KEPT = 4000;
+/**
+ * The only names and refs filled into the developer's commands: the narrow form of a wake address. A name such as `*`
+ * or `-rf` would be read by the command as a pattern or an option.
+ */
+const SAFE_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
 export function loadRunnerConfig(path: string): RunnerConfig | null {
   if (!existsSync(path)) return null;
@@ -66,35 +79,19 @@ export function loadRunnerConfig(path: string): RunnerConfig | null {
   }
 }
 
-/** Runs commands with no shell, so nothing in a name or a path can be read as a command. */
+/**
+ * Runs commands with no shell, so nothing in a name or a path can be read as a command, and with no agent's name or the
+ * developer's presence from the server's own environment: a session is told only its own name.
+ */
 export const processShell: RunnerShell = {
-  async run(argv, cwd) {
-    const child = Bun.spawn([...argv], { cwd, stdin: "ignore", stdout: "pipe", stderr: "pipe" });
-    const deadline = setTimeout(() => child.kill("SIGKILL"), COMMAND_DEADLINE_MS);
-    try {
-      const [code, stdout, stderr] = await Promise.all([
-        child.exited,
-        new Response(child.stdout).text(),
-        new Response(child.stderr).text(),
-      ]);
-      return { code, stdout, stderr };
-    } finally {
-      clearTimeout(deadline);
-    }
+  run(argv, cwd, deadlineMs = COMMAND_DEADLINE_MS) {
+    return runProcess(argv, { ...(cwd === undefined ? {} : { cwd }), env: childEnv(), deadlineMs });
   },
   start(argv, options) {
-    const child = Bun.spawn([...argv], {
-      cwd: options.cwd,
-      env: { ...process.env, ...options.env },
-      stdin: "ignore",
-      stdout: "pipe",
-      stderr: "pipe",
-    });
-    const exited = Promise.all([
-      child.exited,
-      new Response(child.stdout).text(),
-      new Response(child.stderr).text(),
-    ]).then(([code, stdout, stderr]) => ({ code, output: `${stdout}${stderr}`.slice(-OUTPUT_KEPT) }));
+    // A session runs as long as its work takes: only the developer's Stop ends it early.
+    const exited = runProcess(argv, { cwd: options.cwd, env: childEnv(options.env), deadlineMs: null }).then(
+      ({ code, stdout, stderr }) => ({ code, output: `${stdout}${stderr}`.slice(-OUTPUT_KEPT) }),
+    );
     return { exited };
   },
   exists: existsSync,
@@ -130,14 +127,22 @@ export function createRunner(options: {
   // Sessions started before this server did are not watched by anyone now; they are settled, so their lines move on.
   tracker.call(contracts.runnerRestarted, {}, RUNNER);
 
-  const failStart = (due: RunnerDue, worktree: string | undefined, output: string, code = 1) => {
+  const failStart = (due: RunnerDue, output: string, code = 1) => {
     const started = tracker.call(
       contracts.runnerStart,
-      { line: due.line, repo: due.repo, ...(worktree === undefined ? {} : { worktree }) },
+      { line: due.line, repo: due.repo, role: due.role },
       RUNNER,
     );
     tracker.call(contracts.runnerExited, { name: started.name, code, output }, RUNNER);
   };
+
+  /** The GitHub repo a checkout's origin points at, to compare with the one a repo names. */
+  const originOf = async (path: string): Promise<string | null> => {
+    const remote = await shell.run(["git", "-C", path, "remote", "get-url", "origin"]);
+    return remote.code === 0 ? githubSlug(remote.stdout) : null;
+  };
+  const sameRepo = (found: string | null, slug: string | null) =>
+    slug !== null && found !== null && found.toLowerCase() === slug.toLowerCase();
 
   /** The main checkout a path belongs to, so that a new worktree never hangs off another session's worktree. */
   const mainCheckout = async (path: string): Promise<string> => {
@@ -160,21 +165,24 @@ export function createRunner(options: {
     const project = tracker.call(contracts.entityShow, { ref: repo }, RUNNER).entity;
     // The checkout the developer set, from Step in or octo repo checkout.
     if ("checkout" in project && typeof project.checkout === "string") return { path: project.checkout };
+    const slug = "repo" in project && typeof project.repo === "string" ? project.repo : null;
+    // One an agent works in, only if its origin is this repo: an agent says which repo it serves, and could be wrong.
     const known = tracker
       .call(contracts.agentList, {}, RUNNER)
-      .find(
-        (agent) =>
-          agent.repo === repo && agent.checkout !== null && !agent.checkout.startsWith(config.worktrees),
+      .flatMap((agent) =>
+        agent.repo === repo && agent.checkout !== null && !agent.checkout.startsWith(config.worktrees)
+          ? [agent.checkout]
+          : [],
       );
-    if (known !== undefined && known.checkout !== null) return { path: await mainCheckout(known.checkout) };
-    const slug = "repo" in project && typeof project.repo === "string" ? project.repo : null;
+    for (const checkout of new Set(known)) {
+      const main = await mainCheckout(checkout);
+      if (sameRepo(await originOf(main), slug)) return { path: main };
+    }
     const target = join(config.clones, repo.toLowerCase());
     if (shell.exists(target)) {
       // Something else may live at that path; only a clone of this repo will do.
-      const remote = await shell.run(["git", "-C", target, "remote", "get-url", "origin"]);
-      const found = remote.code === 0 ? githubSlug(remote.stdout) : null;
-      if (slug !== null && found !== null && found.toLowerCase() === slug.toLowerCase())
-        return { path: target };
+      const found = await originOf(target);
+      if (sameRepo(found, slug)) return { path: target };
       return {
         error: `${target} is not a clone of ${slug ?? repo}${found === null ? "" : ` (it is ${found})`}; set a checkout for ${repo} in agent-setup.json`,
       };
@@ -193,21 +201,37 @@ export function createRunner(options: {
     }
     const checkout = await checkoutFor(due.repo);
     if ("error" in checkout) {
-      failStart(due, undefined, checkout.error);
+      failStart(due, checkout.error);
       return;
     }
     const name = due.name ?? null;
     const planned = name === null ? null : join(config.worktrees, name);
     const started = tracker.call(
       contracts.runnerStart,
-      { line: due.line, repo: due.repo, ...(planned === null ? {} : { worktree: planned }) },
+      { line: due.line, repo: due.repo, role: due.role, ...(planned === null ? {} : { worktree: planned }) },
       RUNNER,
     );
-    // A gone session's worktree, handed on for this line, else a new one named after the session.
+    if (!SAFE_NAME.test(started.name) || !SAFE_NAME.test(due.line)) {
+      tracker.call(
+        contracts.runnerExited,
+        {
+          name: started.name,
+          code: 1,
+          output: `${started.name} for ${due.line} is not safe to fill into the start command`,
+        },
+        RUNNER,
+      );
+      return;
+    }
+    // A gone session's worktree, handed on for this line, or the one a retry had, else a new one named after it.
     const worktree = started.worktree ?? join(config.worktrees, started.name);
     const branch = `octo/${started.name}`;
     if (started.worktree === null && !shell.exists(worktree)) {
-      const added = await shell.run(["git", "-C", checkout.path, "worktree", "add", "-b", branch, worktree]);
+      let added = await shell.run(["git", "-C", checkout.path, "worktree", "add", "-b", branch, worktree]);
+      // A retry whose worktree was removed meanwhile: its branch is still there, with whatever it had.
+      if (added.code !== 0 && added.stderr.includes("already exists")) {
+        added = await shell.run(["git", "-C", checkout.path, "worktree", "add", worktree, branch]);
+      }
       if (added.code !== 0) {
         tracker.call(
           contracts.runnerExited,
@@ -223,7 +247,7 @@ export function createRunner(options: {
       );
     }
     for (const step of config.repos[due.repo]?.setup ?? []) {
-      const ran = await shell.run(step, worktree);
+      const ran = await shell.run(step, worktree, SETUP_DEADLINE_MS);
       if (ran.code !== 0) {
         tracker.call(
           contracts.runnerExited,
@@ -269,11 +293,30 @@ export function createRunner(options: {
     }
   };
 
-  /** The developer's stop command, once for each agent they stopped. Without one, Stop only refuses its writes. */
+  /**
+   * The developer's stop command, once for each agent they stopped. Without one, Stop only refuses its writes. Watch
+   * mode only notes it, and a name the command could misread is never given to it.
+   */
   const runStops = async () => {
     if (config.stop === undefined) return;
     for (const { name } of tracker.call(contracts.runnerStops, {}, RUNNER)) {
-      const ran = await shell.run(config.stop.map((part) => part.replaceAll("{name}", name)));
+      if (config.dryRun) {
+        tracker.call(contracts.runnerStopRan, { name, code: 0, output: "", dry: true }, RUNNER);
+        continue;
+      }
+      if (!SAFE_NAME.test(name)) {
+        tracker.call(
+          contracts.runnerStopRan,
+          { name, code: -1, output: `${name} is not a name the stop command can be given safely` },
+          RUNNER,
+        );
+        continue;
+      }
+      const ran = await shell.run(
+        config.stop.map((part) => part.replaceAll("{name}", name)),
+        undefined,
+        STOP_DEADLINE_MS,
+      );
       tracker.call(
         contracts.runnerStopRan,
         { name, code: ran.code, output: `${ran.stdout}${ran.stderr}`.slice(-OUTPUT_KEPT) },
@@ -310,7 +353,6 @@ export function createRunner(options: {
       busy = true;
       try {
         for (const due of tracker.call(contracts.runnerDue, {}, RUNNER)) await startOne(due);
-        // Stopping touches only the developer's own sessions, by their own command, so watch mode runs it too.
         await runStops();
         await closeEnded();
         // Watch mode touches nothing on disk.

@@ -176,11 +176,25 @@ until `~/.octotrack/agent-setup.json` exists, and starts in watch mode, only not
 }
 ```
 
-Only `{line}` and `{name}` are filled in, so tracker text never becomes a prompt. Each session runs in a fresh worktree
-on `octo/<name>`, made from the repo's main checkout: the one named here, the one set with
-`octo repo checkout PANEL /Users/you/src/homepanel`, one an agent works in, or a clone `gh` makes. `stop` runs when the
-developer stops an agent. Worktrees are removed only when clean, pushed and unused; a gone session's worktree goes to
-the next session on its line.
+Only `{line}` and `{name}` are filled in, so tracker text never becomes a prompt, and only when they have the narrow
+form of a name (letters, digits, `.`, `_` and `-`, not first), so a name such as `*` or `-rf` never reaches a command.
+A session gets `OCTO_AGENT` set to its own name, and never the server's `OCTO_AGENT` or `OCTO_DEVELOPER`; wakes are run
+the same way, as the agent being woken.
+
+Each session runs in a fresh worktree on `octo/<name>`, under `worktrees` (by default `worktrees` in Octotrack's home,
+so `OCTO_HOME` moves it too), made from the repo's main checkout: the one named here, the one set with
+`octo repo checkout PANEL /Users/you/src/homepanel`, one an agent works in whose origin is the repo's GitHub repo, or a
+clone `gh` makes. Worktrees are removed only when clean, pushed and unused. A gone session's worktree goes to the next
+session on its line once nobody else works in it, and a start retried after failing keeps the worktree it had.
+
+Owners come first: a working line with no owner gets a session once no agent here took it. Once every working line
+has an owner, spare sessions under the cap start as helpers for the unclaimed work on each line, in line order. The cap
+counts sessions that have not checked in while their process still runs, and Octotrack's sessions that are running. A
+start that exits within its five-minute check-in is retried by itself, later each time; one that ran longer and never
+took its line waits for Try now.
+
+`stop` runs once when the developer stops an agent; in watch mode it is only noted. git and gh are given two minutes,
+setup commands thirty and the stop command ten, then killed.
 
 ## Watching
 
