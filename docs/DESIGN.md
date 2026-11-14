@@ -313,6 +313,46 @@ Decisions made from that:
   started keeps its line until the developer releases it from Agents, where its last command shows how long it has been.
 - **Old names keep working for at least a phase** (`decision.*`, `project:`, M-, I- and U- refs), and the riskiest
   automation, the automatic Stop and the runner, first runs in a mode that only records what it would have done.
+- **Who may do what, as built after the audit.** Only the server records wakes, starts, exits and closes. Answering,
+  Later, reopening and recording a question on a line are developer operations an agent may only relay with `--said`;
+  withdrawing one is for the developer, its asker or an agent on its line. Undo, drafts and turning on notifications are
+  the developer's in person, never relayed. A call that names an agent is never the developer on the server either. A
+  wake address is the narrow form, an agent names its repo only once, a repo's GitHub name is the developer's to set
+  and must be owner/name, and a clone already in place is used only if its origin is that repo. Every operation's event
+  quotes `--said` when there is one.
+- **Work follows the line, as built after the audit.** An agent leaving a line returns its open issues to it, noting
+  who last held each, and the next holder is told. Not a line cancels the proposer's new issues and returns older work
+  to no line; Done or Drop on a line nobody holds closes its issues at once. Folding a line moves its inbox with it.
+  Held questions and tasks stay out of the developer's queue until re-confirmed. A session Octotrack started that can
+  be woken keeps its line when its process exits, and only starts still starting or agents still running count against
+  the cap. Every reply carries the agent's notices, batch and watch waits included, and the CLI prints each once.
+- **The rest of D14, as built.** Not yet reaches the owner through the line's inbox. `line propose --urgent` stands
+  first under Proposed. `held withdraw`. I'm at lasts three hours. `seen`, and the Log's Not seen, line by line in
+  order with checks and drift confirmations folded, waiting lines left out unless asked for, refused writes always in;
+  a line also lists what is newer than its summary. `task add` and `note add` on the developer's own lines; tasks on a
+  line with no repo go in a repo named ME. Try now retries every line stopped the same way; Start one anyway starts
+  one past the cap, once; at the cap the lowest helper Octotrack started is asked to make room before the developer
+  is. The developer's stop command runs once per Stop. A gone session's worktree goes to the next session on its line.
+  `repo checkout` sets where worktrees are made from, and the runner otherwise finds the main checkout with
+  `--git-common-dir`. Home has the header counts as links, the spread-thin nudge, To top and To up next, the Start
+  sheet, I'm at, Tell, Stop on the owner, Change answer…, Later and Not urgent, the developer's own box, and every key
+  D14 lists, with `?` showing them. A Stop waiting with Undo offers Pause the line instead, and each line says what
+  became of its recent answers.
+- **Departures, each for a reason.**
+  - _Repos keep their storage name._ The table, contracts and events still say project; what changed is the words
+    people and agents use: `octo repo create`, `list`, `update` and `checkout`, the Repos page, and `repo:` in queries,
+    which takes a repo's key as well as a pull request's owner/name. `project:` keeps working, so saved watches and
+    views need no rewrite. _Why:_ renaming storage changes no behaviour and would break saved watches, views and every
+    agent's habits on the live database at once.
+  - _Old refs resolve through the line they became._ An idea's or milestone's ref opens the proposed line made from
+    it, which records `fromRef`; U- refs stay read-only updates. _Why:_ the line already records where it came from, so
+    an alias table would hold the same fact twice.
+  - _Places live in the database,_ edited only through the developer's `place` operations, not in a file beside the
+    allowed hosts. _Why:_ they are then in the backups and migration rehearsals with everything else.
+  - _Dragging a line is the browser's drag and drop._ On a phone, Reorder's buttons do the same. _Why:_ a touch drag
+    needs a long press that fights scrolling, and the buttons already meet the 44px target size.
+  - _An agent's checkout is its own folder_ (`git rev-parse --show-toplevel`, so a linked worktree for an agent working
+    in one), since one name is one session in one checkout; only the runner needs a repo's main checkout.
 
 ## D14. Lines of work at the centre
 
@@ -666,9 +706,11 @@ What it would change in what is built:
 
 Everything is addressed by a **ref**: `L-4` (line of work), `OCT` (repo, stored as a project), `OCT-12` (issue or
 task), `D-3` (question), `PR-7` or `owner/repo#12` (pull request), `U-9` (status update), `DR-5` (drift), `W-1`
-(watch). `M-2` (milestone) and `I-4` (idea) still resolve, read-only: milestones became plan steps and proposed lines,
-ideas became proposals. Lines, their repos and plan steps, claims, notices, the line inbox, waiting choices, drafts,
-runner starts and worktrees, and Web Push subscriptions each have their own table. Links connect any two refs:
+(watch). `M-2` (milestone) and `I-4` (idea) open the proposed line made from them, where there is one, and otherwise
+the old record, read-only. A repo keeps its GitHub name and, once set, its main checkout. Lines, their repos and plan
+steps, claims, notices, the line inbox, waiting choices, drafts, places, where the developer is, runner starts and
+worktrees, and Web Push subscriptions each have their own table. Lines also keep an urgent reason for an urgent
+proposal, when the developer last looked at them, and a pending Start one anyway. Links connect any two refs:
 
 | Relation       | Meaning                                | Effect                                   |
 | -------------- | -------------------------------------- | ---------------------------------------- |
@@ -688,7 +730,7 @@ The append-only `events` table is the feed and also what event clauses in watche
 - One feed request scans at most 5000 events, so as not to hold up writes. The CLI and dashboard keep asking until they
   have a full page, so a rare filter on a very long log takes several requests.
 - Every waiting agent re-evaluates on every write. With 40 agents hanging, a write takes about 290ms instead of 6ms.
-- PRs are synced for repos that a project names. A PR reported by hand for any other repo is never refreshed.
+- PRs are synced for repos with a GitHub name set. A PR reported by hand for any other repo is never refreshed.
 - Octotrack cannot kill a session it did not start; Stop refuses its writes and tells it.
 - Lists stop at their limit with no paging: the dashboard says so, and the CLI allows `--limit` up to 1000.
 - A decision's `--recommend` may be free text, so a mistyped option key is shown as text rather than refused.
