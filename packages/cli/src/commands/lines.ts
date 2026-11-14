@@ -353,6 +353,16 @@ export const lineCommands: Command[] = [
     },
   },
   {
+    path: ["line", "accept-recommended"],
+    usage: "<REF...>",
+    summary: "Place proposals where their agents recommend; folds are left for you (the developer)",
+    ops: [c.lineAcceptRecommended.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(c.lineAcceptRecommended, { refs: args.requirePositionals("REF") });
+      out.result(outcome, () => r.renderLines(outcome.data));
+    },
+  },
+  {
     path: ["plan", "set"],
     usage: "<LINE> <step>...",
     summary: "Set a line's plan: its steps, in order",

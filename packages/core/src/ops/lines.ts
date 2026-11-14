@@ -572,4 +572,27 @@ export const lineOps = [
     );
     return updated;
   }),
+
+  bind(contracts.lineAcceptRecommended, (ctx, input) => {
+    requireDeveloper(ctx, "place proposals");
+    return input.refs.flatMap((ref): Line[] => {
+      const line = requireLine(ctx, ref);
+      if (line.state !== "proposed") return [];
+      switch (line.recommendation) {
+        case "start":
+          return [move(ctx, line.ref, "start")];
+        case "up_next":
+          return [move(ctx, line.ref, "queue")];
+        case "table":
+          return [
+            move(ctx, line.ref, "table", {
+              tabledReason: line.recommendationWhy ?? "Its agent recommended it",
+            }),
+          ];
+        default:
+          // A fold needs the line to fold into, and no advice needs the developer's own call.
+          return [];
+      }
+    });
+  }),
 ];

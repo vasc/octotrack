@@ -4,7 +4,9 @@ import { fireEvent, render, within } from "@testing-library/react";
 import { BatchPanelView } from "../src/components/decisions/BatchPanelView.tsx";
 import { DecisionCardView } from "../src/components/decisions/DecisionCardView.tsx";
 import { DriftItem } from "../src/components/drift/DriftItem.tsx";
+import { AgentRosterRow } from "../src/components/agents/AgentRosterRow.tsx";
 import { LinePanel } from "../src/components/entity/LinePanel.tsx";
+import { FirstRun } from "../src/components/home/FirstRun.tsx";
 import { FoldedSection } from "../src/components/home/FoldedSection.tsx";
 import { ForYouRow } from "../src/components/home/ForYouRow.tsx";
 import { HomeCounts } from "../src/components/home/HomeCounts.tsx";
@@ -37,7 +39,7 @@ import { Markdown } from "../src/components/ui/Markdown.tsx";
 import { RefText } from "../src/components/ui/RefText.tsx";
 import { TextBox } from "../src/components/ui/TextBox.tsx";
 import { EmptyState, ErrorState, LoadingState } from "../src/components/ui/states.tsx";
-import type { LineHome } from "@octotrack/core/schemas";
+import type { AgentView, LineHome } from "@octotrack/core/schemas";
 import type { Tone } from "../src/lib/format.ts";
 import {
   decision,
@@ -901,5 +903,67 @@ describe("UndoBar", () => {
     expect(onUndo).toHaveBeenCalledWith(2);
     fireEvent.click(view.getAllByRole("button", { name: "Now" })[1] ?? document.body);
     expect(onNow).toHaveBeenCalledWith(1);
+  });
+});
+
+describe("agents and first run", () => {
+  const agent = (overrides: Partial<AgentView> = {}): AgentView => ({
+    name: "panel",
+    note: null,
+    firstSeenAt: "2026-11-14T09:00:00.000Z",
+    lastSeenAt: "2026-11-14T09:00:00.000Z",
+    checkout: "/src/panel",
+    repo: "PANEL",
+    wakeAddress: "claude:abc",
+    startedBy: null,
+    stoppedAt: null,
+    stoppedReason: null,
+    goneAt: null,
+    wokenAt: null,
+    wakeError: null,
+    state: "asleep",
+    line: "L-2",
+    role: "owner",
+    ...overrides,
+  });
+
+  test("AgentRosterRow says where an agent is and how to reach it, and offers Stop or Lift", () => {
+    const onStop = mock((_name: string) => {});
+    const onLift = mock((_name: string) => {});
+    const view = render(<AgentRosterRow agent={agent()} onStop={onStop} onLift={onLift} />);
+    view.getByText("wakes at claude:abc");
+    view.getByText("owner");
+    view.getByText("asleep");
+    fireEvent.click(view.getByRole("button", { name: "Stop panel" }));
+    expect(onStop).toHaveBeenCalledWith("panel");
+    view.unmount();
+    const stopped = render(
+      <AgentRosterRow
+        agent={agent({ state: "stopped", stoppedReason: "Wrong repo", line: null, role: null })}
+        onStop={onStop}
+        onLift={onLift}
+      />,
+    );
+    stopped.getByText("stopped: Wrong repo");
+    fireEvent.click(stopped.getByRole("button", { name: "Lift panel" }));
+    expect(onLift).toHaveBeenCalledWith("panel");
+  });
+
+  test("FirstRun accepts every recommended placement it can, and says how to start with none", () => {
+    const onAccept = mock((_refs: string[]) => {});
+    const view = render(
+      <FirstRun
+        proposals={[
+          line({ ref: "L-1", state: "proposed", recommendation: "up_next" }),
+          line({ ref: "L-2", state: "proposed", recommendation: "fold" }),
+          line({ ref: "L-3", state: "proposed", recommendation: "start" }),
+        ]}
+        onAccept={onAccept}
+      />,
+    );
+    fireEvent.click(view.getByRole("button", { name: "Accept 2 recommended placements" }));
+    expect(onAccept).toHaveBeenCalledWith(["L-1", "L-3"]);
+    view.unmount();
+    render(<FirstRun proposals={[]} onAccept={onAccept} />).getByText("octo guide");
   });
 });

@@ -24,9 +24,10 @@ function Page({ path }: { path: string }) {
   if (project !== undefined) return <ProjectDetailPage key={project} projectKey={project.toUpperCase()} />;
   switch (path) {
     case "/":
-      return <FeedPage />;
     case "/lines":
       return <HomePage />;
+    case "/log":
+      return <FeedPage />;
     case "/decisions":
       return <DecisionsPage />;
     case "/prs":

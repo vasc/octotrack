@@ -123,15 +123,17 @@ Home is one list: every line in the developer's order, with what each needs from
 | `QuietRow`       | Pure       | A tabled or finished line, opened: why it waits, and Start or Up next                        |
 | `ReorderButtons` | Pure       | Up and down within a section, in Reorder mode                                                |
 | `HomePage`       | Structural | Home: the focus, the sections, and every choice                                              |
+| `FirstRun`       | Pure       | Before anything is placed: accept the agents' recommended placements in one choice           |
 | `TableForm`      | Pure       | Asks why before tabling: a tabled line always says why                                       |
 | `AddLineForm`    | Pure       | A new line with its done-when sentence. It joins the end of up next                          |
 
 ## Agents: `agents/`
 
-| Component    | Kind       | What it is                                                |
-| ------------ | ---------- | --------------------------------------------------------- |
-| `WatchRow`   | Pure       | Who is watching what, in the query the agent itself wrote |
-| `AgentsPage` | Structural | Who is waiting now, what is registered, who has been seen |
+| Component        | Kind       | What it is                                                                      |
+| ---------------- | ---------- | ------------------------------------------------------------------------------- |
+| `WatchRow`       | Pure       | Who is watching what, in the query the agent itself wrote                       |
+| `AgentsPage`     | Structural | The roster, then who is waiting now and what is registered                      |
+| `AgentRosterRow` | Pure       | One agent: state, repo, line and role, last command, wake address; Stop or Lift |
 
 ## The frame: `layout/`
 

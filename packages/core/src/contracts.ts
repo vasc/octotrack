@@ -449,6 +449,12 @@ export const contracts = {
     z.strictObject({ ref: z.string(), why: Text.optional() }),
     Line,
   ),
+  lineAcceptRecommended: write(
+    "line.accept_recommended",
+    "Place proposals where their agents recommend, all at once; folds are left for the developer (the developer)",
+    z.strictObject({ refs: z.array(z.string()).min(1) }),
+    z.array(Line),
+  ),
   lineOwn: write(
     "line.own",
     "I'll own it: the line becomes the developer's, and its agents wind down (the developer)",
