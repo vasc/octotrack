@@ -1,61 +1,87 @@
-import { useState } from "react";
 import { contracts } from "@octotrack/core/contracts";
 import type { Line } from "@octotrack/core/schemas";
+import { useState } from "react";
 import { useDraft } from "../../hooks/useDraft.ts";
+import { useHome } from "../../hooks/useHome.ts";
 import { useLineChoices } from "../../hooks/useLineChoices.ts";
 import { useMarkSeen } from "../../hooks/useMarkSeen.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
-import { navigate, useRoute } from "../../lib/router.ts";
+import { useRoute } from "../../lib/router.ts";
 import { ErrorState } from "../ui/states.tsx";
 import { LineActions } from "./LineActions.tsx";
-import { LinePanel } from "./LinePanel.tsx";
+import { LinePanelHead } from "./LinePanelHead.tsx";
+import { OwnerBox } from "./OwnerBox.tsx";
 import { OwnWorkBox } from "./OwnWorkBox.tsx";
+import { PanelForYou } from "./PanelForYou.tsx";
+import { PlanList } from "./PlanList.tsx";
 import { SinceSummary } from "./SinceSummary.tsx";
+import { SummaryBox } from "./SummaryBox.tsx";
 import { TellBox } from "./TellBox.tsx";
 
-/** A line in the inspector: what it is, what the developer can do with it, and what they can say to it. */
+/**
+ * A line opened, as E-Line draws it: where it stands and how to move it, its summary, what it needs from you, its plan
+ * beside what is new and who owns it, and Tell. Opening it marks it seen.
+ */
 export function LinePanelItem({ line }: { line: Line }) {
   const choices = useLineChoices(line);
-  const home = useOpQuery(contracts.homeShow, {});
+  const h = useHome();
+  const shown = useOpQuery(contracts.lineShow, { ref: line.ref });
   const since = useOpQuery(contracts.feedList, { query: `line:${line.ref}`, limit: 50 });
-  // As it was when the panel opened: opening it marks the line seen, which must not fold what is being read now.
-  const [seenAt] = useState(line.seenAt);
-  const projects = useOpQuery(contracts.projectList, {});
   const tell = useDraft(`tell:${line.ref}`);
   const own = useDraft(`own:${line.ref}`);
   useMarkSeen(line.ref);
-  const owner = home.data?.crews[line.ref]?.owner?.name ?? null;
+  // As it was when the panel opened: opening it marks the line seen, which must not fold what is being read now.
+  const [seenAt] = useState(line.seenAt);
   // Opened with t from home: straight to tabling.
   const tabling = useRoute().params.get("act") === "table";
+  const home = h.home.data;
+  const crew = home?.crews[line.ref];
+  const owner = crew?.owner?.name ?? null;
+  const order = home === undefined ? [] : [...home.working, ...home.upNext];
+  const at = order.findIndex((candidate) => candidate.ref === line.ref);
   const live = line.state !== "done" && line.state !== "dropped";
-  const mine = line.ownedBy !== null;
   return (
-    <>
-      <LinePanel line={line} />
+    <div className="line-panel">
+      <LinePanelHead
+        line={line}
+        position={at === -1 ? null : `Line ${at + 1} of ${order.length}`}
+        repos={line.repos.map(h.repoName)}
+      />
       <LineActions
         line={line}
+        owner={owner}
         onChoose={choices.choose}
         onTable={choices.table}
-        onDoneWhen={choices.doneWhen}
-        owner={owner}
-        onStopOwner={choices.stop}
         tabling={tabling}
-        repos={(projects.data ?? []).map((card) => card.project.ref)}
-        onHand={choices.hand}
       />
-      {!live ? null : mine ? (
+      <SummaryBox line={line} owner={owner} />
+      <PanelForYou title={line.title} items={home?.lines[line.ref]?.forYou ?? []} h={h} />
+      <div className="panel-grid">
+        <PlanList steps={shown.data?.steps ?? []} work={shown.data?.work ?? []} />
+        <div className="panel-column">
+          <SinceSummary
+            line={line.ref}
+            events={since.data?.events ?? []}
+            summaryAt={line.summaryAt}
+            seenAt={seenAt}
+          />
+          <OwnerBox
+            line={line}
+            crew={crew}
+            repos={h.repos}
+            onStop={choices.stop}
+            onOwn={() => choices.choose("own")}
+            onHand={choices.hand}
+          />
+        </div>
+      </div>
+      {!live ? null : line.ownedBy !== null ? (
         <OwnWorkBox
           line={line.ref}
           words={own.value}
           onWords={own.change}
-          onTask={(title) => {
-            choices.addTask(title);
-            own.clear();
-          }}
-          onNote={(body) => {
-            choices.addNote(body);
-            own.clear();
-          }}
+          onTask={(title) => void own.flush().then(() => choices.addTask(title))}
+          onNote={(body) => void own.flush().then(() => choices.addNote(body))}
         />
       ) : line.state === "working" ? (
         <TellBox
@@ -63,19 +89,10 @@ export function LinePanelItem({ line }: { line: Line }) {
           to={owner}
           words={tell.value}
           onWords={tell.change}
-          onSend={(words) => {
-            choices.tell(words);
-            tell.clear();
-          }}
+          onSend={(words) => void tell.flush().then(() => choices.tell(words))}
         />
       ) : null}
-      <SinceSummary
-        events={since.data?.events ?? []}
-        summaryAt={line.summaryAt}
-        seenAt={seenAt}
-        onFilter={(term) => navigate(`/log?q=${encodeURIComponent(term)}`)}
-      />
       {choices.failure === null ? null : <ErrorState error={choices.failure} />}
-    </>
+    </div>
   );
 }

@@ -4,8 +4,8 @@ import {
   Channel,
   contracts,
   type ErrorBody,
-  type FeedEvent,
   type Hub,
+  type StreamMessage,
   OctoError,
   SCHEMA_VERSION,
   toErrorBody,
@@ -214,9 +214,9 @@ export function createApp(options: AppOptions): Hono {
     return streamSSE(c, async (stream) => {
       let closed = false;
       let wake: () => void = () => {};
-      const queue: (readonly FeedEvent[])[] = [];
-      const remove = hub.addStream((events) => {
-        queue.push(events);
+      const queue: StreamMessage[] = [];
+      const remove = hub.addStream((message) => {
+        queue.push(message);
         wake();
       });
       stream.onAbort(() => {
@@ -233,9 +233,13 @@ export function createApp(options: AppOptions): Hono {
         await stream.writeSSE({ event: "change", data: JSON.stringify({ events: missed }) });
       try {
         while (!closed) {
-          const batch = queue.shift();
-          if (batch !== undefined) {
-            await stream.writeSSE({ event: "change", data: JSON.stringify({ events: batch }) });
+          const message = queue.shift();
+          if (message !== undefined) {
+            await stream.writeSSE(
+              message.kind === "change"
+                ? { event: "change", data: JSON.stringify({ events: message.events }) }
+                : { event: "draft", data: JSON.stringify({ key: message.key }) },
+            );
             continue;
           }
           const timedOut = await new Promise<boolean>((resolve) => {

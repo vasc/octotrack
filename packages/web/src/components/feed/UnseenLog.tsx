@@ -1,5 +1,8 @@
 import type { FeedEvent, Line } from "@octotrack/core/schemas";
-import { FeedItem } from "./FeedItem.tsx";
+import { timeLabel } from "../../lib/format.ts";
+import { openEntity } from "../../lib/router.ts";
+import { Markdown } from "../ui/Markdown.tsx";
+import { RefText } from "../ui/RefText.tsx";
 
 /** Changes that say little one by one: each line folds them to one sentence. */
 const FOLDED: Readonly<Record<string, readonly [string, string]>> = {
@@ -7,8 +10,8 @@ const FOLDED: Readonly<Record<string, readonly [string, string]>> = {
   "drift.resolved": ["drift confirmation", "drift confirmations"],
 };
 
-/** Shown even on a line left out, since a refused write is something the developer must see. */
-const ALWAYS = "write.refused";
+/** Rule breaks: always shown, at the top, whatever is filtered or left out. */
+const REFUSED: ReadonlySet<string> = new Set(["write.refused", "agent.would_stop", "agent.stopped"]);
 
 function folded(events: readonly FeedEvent[]): string | null {
   const counts = new Map<string, number>();
@@ -22,48 +25,117 @@ function folded(events: readonly FeedEvent[]): string | null {
   return words.length === 0 ? null : words.join(", ");
 }
 
+function Row({ event }: { event: FeedEvent }) {
+  return (
+    <li className="log-row">
+      <span className="muted">{timeLabel(event.ts)}</span>
+      <span>
+        <RefText text={event.summary} />
+      </span>
+    </li>
+  );
+}
+
 /**
- * What changed since the developer last looked, line by line in their order: each change a row, except checks and
- * drift confirmations, which fold into one sentence. Up-next and tabled lines are left out unless asked for; refused
- * writes never are.
+ * What the developer has not seen, as E-Feed draws it: rule breaks at the top, then line by line in their order, each
+ * change a row, with checks and drift confirmations folded into one sentence. Up-next and tabled lines are left out
+ * unless asked for.
  */
 export function UnseenLog({
   events,
   lines,
   includeWaiting,
-  onFilter,
+  onShowWaiting,
 }: {
   events: readonly FeedEvent[];
   /** Every line, in the developer's order. */
   lines: readonly Line[];
   includeWaiting: boolean;
-  onFilter(term: string): void;
+  onShowWaiting(): void;
 }) {
-  const groups = lines.flatMap((line) => {
-    const waiting = line.state !== "working";
-    const own = events.filter(
-      (event) => event.line === line.ref && (!waiting || includeWaiting || event.type === ALWAYS),
-    );
-    return own.length === 0 ? [] : [{ line, events: own }];
-  });
+  const refused = events.filter((event) => REFUSED.has(event.type));
+  const shown = lines.filter((line) => line.state === "working" || includeWaiting);
+  const waiting = lines.filter((line) => line.state !== "working");
+  const loose = events.filter((event) => event.line === null && !REFUSED.has(event.type));
+  const looseRows = loose.filter((event) => FOLDED[event.type] === undefined);
+  const looseSentence = folded(loose);
+  const leftOut = includeWaiting
+    ? 0
+    : events.filter((event) => !REFUSED.has(event.type) && waiting.some((line) => line.ref === event.line))
+        .length;
   return (
-    <div className="feed" role="feed" aria-label="Activity">
-      {groups.map((group) => {
-        const sentence = folded(group.events);
+    <div className="log" role="feed" aria-label="Activity">
+      {refused.length === 0 ? null : (
+        <ul className="log-refused" aria-label="Rule breaks">
+          {refused.map((event) => (
+            <Row key={event.seq} event={event} />
+          ))}
+        </ul>
+      )}
+      {shown.map((line, index) => {
+        const own = events.filter((event) => event.line === line.ref && !REFUSED.has(event.type));
+        const rows = own.filter((event) => FOLDED[event.type] === undefined);
+        const sentence = folded(own);
         return (
-          <section key={group.line.ref} className="feed-group" aria-label={group.line.title}>
-            <div className="feed-day">
-              {group.line.title} <span className="muted">{group.line.ref}</span>
+          <section key={line.ref} className="log-line" aria-label={line.title}>
+            <div className="log-line-head">
+              <span className="line-num">{index + 1}</span>
+              <span>
+                <button type="button" className="line-link" onClick={() => openEntity(line.ref)}>
+                  {line.title}
+                </button>{" "}
+                <span className="mono muted">{line.ref}</span>
+                {own.length === 0 ? <span className="muted"> · nothing new</span> : null}
+                {own.length > 0 && rows.length === 0 ? (
+                  <span className="muted"> · {sentence}, all routine</span>
+                ) : null}
+                {rows.length === 0 || line.headline === null ? null : (
+                  <span className="log-headline">
+                    <Markdown text={line.headline} inline />
+                  </span>
+                )}
+              </span>
+              {rows.length === 0 ? null : <span className="log-unseen">{rows.length} unseen</span>}
             </div>
-            {group.events
-              .filter((event) => FOLDED[event.type] === undefined)
-              .map((event) => (
-                <FeedItem key={event.seq} event={event} onFilter={onFilter} />
-              ))}
-            {sentence === null ? null : <p className="muted feed-folded">{sentence}</p>}
+            {rows.length === 0 ? null : (
+              <ul className="log-rows">
+                {rows.map((event) => (
+                  <Row key={event.seq} event={event} />
+                ))}
+                {sentence === null ? null : <li className="muted">Also routine: {sentence}.</li>}
+              </ul>
+            )}
           </section>
         );
       })}
+      {looseRows.length === 0 ? null : (
+        <section className="log-line" aria-label="On no line">
+          <div className="log-line-head">
+            <span className="line-num" aria-hidden="true">
+              ·
+            </span>
+            <span>On no line</span>
+            <span className="log-unseen">{looseRows.length} unseen</span>
+          </div>
+          <ul className="log-rows">
+            {looseRows.map((event) => (
+              <Row key={event.seq} event={event} />
+            ))}
+            {looseSentence === null ? null : <li className="muted">Also routine: {looseSentence}.</li>}
+          </ul>
+        </section>
+      )}
+      {includeWaiting || waiting.length === 0 ? null : (
+        <p className="log-foot">
+          <span className="muted">
+            Up next and tabled: {leftOut} change{leftOut === 1 ? "" : "s"} left out. Rule breaks show at the
+            top.
+          </span>{" "}
+          <button type="button" className="btn" onClick={onShowWaiting}>
+            Show them
+          </button>
+        </p>
+      )}
     </div>
   );
 }

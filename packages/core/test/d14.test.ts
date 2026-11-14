@@ -198,6 +198,26 @@ describe("seen", () => {
     w.as(w.dev, c.seen, {});
     expect(w.as(w.dev, c.feedList, { unseen: true }).events).toEqual([]);
   });
+  test("changes on no line and rule breaks stay not seen until Mark all seen, whatever lines are opened", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    w.as(w.dev, c.issueCreate, { project: "PANEL", title: "Model the base", line: line.ref });
+    const owner = w.register("owner");
+    w.as(owner, c.lineTake, { ref: line.ref });
+    w.as(w.dev, c.lineTable, { ref: line.ref, reason: "Waiting on the board" });
+    w.as(w.dev, c.seen, {});
+    w.later(16);
+    w.as(w.agent("stray"), c.issueCreate, { project: "PANEL", title: "On no line" });
+    expect(() => w.as(owner, c.issueUpdate, { refs: ["PANEL-1"], body: "late" })).toThrow();
+    w.later(1);
+    w.as(w.dev, c.seen, { line: line.ref });
+    const unseen = w.as(w.dev, c.feedList, { unseen: true }).events.map((event) => event.type);
+    expect(unseen).toContain("issue.created");
+    expect(unseen).toContain("write.refused");
+    w.later(1);
+    w.as(w.dev, c.seen, {});
+    expect(w.as(w.dev, c.feedList, { unseen: true }).events).toEqual([]);
+  });
 });
 
 describe("the developer's own line", () => {
@@ -331,6 +351,18 @@ describe("a repo's checkout", () => {
     expect(() => w.as(w.agent("panel"), c.repoCheckout, { repo: "PANEL", path: "/tmp/evil" })).toThrow();
     expect(() => w.as(w.dev, c.repoCheckout, { repo: "PANEL", path: "relative/path" })).toThrow();
   });
+
+  test("set from Step in, tries the line again in the same choice, so one Undo covers both", () => {
+    const w = world();
+    w.as(w.server, c.runnerReport, { configured: true, cap: 2, dryRun: false });
+    const line = w.line("First");
+    w.later(1);
+    const started = w.as(w.server, c.runnerStart, { line: line.ref, repo: "PANEL" });
+    w.as(w.server, c.runnerExited, { name: started.name, code: 1, output: "no checkout of PANEL" });
+    expect(w.as(w.server, c.runnerDue, {})).toEqual([]);
+    w.as(w.dev, c.repoCheckout, { repo: "PANEL", path: "/src/homepanel", retry: line.ref });
+    expect(w.as(w.server, c.runnerDue, {}).map((due) => due.line)).toEqual([line.ref]);
+  });
 });
 
 describe("proposals on a working line", () => {
@@ -400,6 +432,42 @@ describe("what became of an answer", () => {
     expect(answers()[0]?.status).toBe("carried_out");
     w.later(4 * DAY);
     expect(answers()).toEqual([]);
+  });
+});
+
+describe("questions from before lines", () => {
+  test("show on home below every line, so none is lost", () => {
+    const w = world();
+    const legacy = w.as(w.agent("legacy"), c.decisionAsk, { title: "Old style" });
+    expect(w.as(w.dev, c.homeShow, {}).noLine.map((card) => card.decision.ref)).toEqual([legacy.ref]);
+  });
+});
+
+describe("a line opened", () => {
+  test("lists its work under the plan step it belongs to, each with its pull requests and their checks", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    w.as(w.dev, c.planSet, { line: line.ref, steps: ["Model", "Print"] });
+    const work = w.as(w.dev, c.issueCreate, { project: "PANEL", title: "Base", line: line.ref, step: 1 });
+    w.as(w.server, c.prUpsert, {
+      repo: "vasc/homepanel",
+      number: 14,
+      title: "Base",
+      state: "open",
+      checks: "passing",
+      body: `Fixes ${work.ref}`,
+    });
+    const shown = w.as(w.dev, c.lineShow, { ref: line.ref });
+    expect(shown.work).toEqual([
+      {
+        ref: work.ref,
+        title: "Base",
+        status: "todo",
+        step: 1,
+        assignee: null,
+        prs: [{ ref: "PR-1", repo: "vasc/homepanel", number: 14, state: "open", checks: "passing" }],
+      },
+    ]);
   });
 });
 

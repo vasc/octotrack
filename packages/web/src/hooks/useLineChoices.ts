@@ -47,6 +47,7 @@ export function useLineChoices(line: Line) {
         contracts.lineTell.name,
         { line: line.ref, body },
         body === "" ? `Nudged ${line.title}` : `Told ${line.title}: ${body}`,
+        `tell:${line.ref}`,
       ),
     stop: (name: string) => choices.make(contracts.agentStop.name, { name }, `Stopped ${name}`),
     hand: (repos: string[]) =>
@@ -56,8 +57,18 @@ export function useLineChoices(line: Line) {
         `Handed ${line.title} to the agents`,
       ),
     addTask: (title: string) =>
-      choices.make(contracts.taskAdd.name, { line: line.ref, title }, `Task on ${line.title}: ${title}`),
+      choices.make(
+        contracts.taskAdd.name,
+        { line: line.ref, title },
+        `Task on ${line.title}: ${title}`,
+        `own:${line.ref}`,
+      ),
     addNote: (body: string) =>
-      choices.make(contracts.noteAdd.name, { line: line.ref, body }, `Note on ${line.title}`),
+      choices.make(
+        contracts.noteAdd.name,
+        { line: line.ref, body },
+        `Note on ${line.title}`,
+        `own:${line.ref}`,
+      ),
   };
 }

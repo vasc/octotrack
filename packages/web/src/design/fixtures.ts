@@ -178,20 +178,15 @@ export function drift(overrides: Partial<Drift> = {}): Drift {
 
 export function decisionForm(overrides: Partial<DecisionForm> = {}): DecisionForm {
   return {
-    chosen: null,
-    ownAnswer: false,
-    note: "",
-    elsewhere: false,
-    canSubmit: false,
-    submitting: false,
+    ownWords: null,
     error: null,
-    choose: () => {},
-    chooseOwn: () => {},
+    answer: () => {},
+    openOwn: () => {},
+    closeOwn: () => {},
+    setOwn: () => {},
+    sendOwn: () => {},
     postpone: () => {},
     notUrgent: () => {},
-    setNote: () => {},
-    setElsewhere: () => {},
-    submit: () => {},
     ...overrides,
   };
 }

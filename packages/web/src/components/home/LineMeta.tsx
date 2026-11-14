@@ -1,7 +1,10 @@
 import type { LineCrew, LineHome } from "@octotrack/core/schemas";
 import { crewText } from "../../lib/lines.ts";
 
-/** One line of facts under a line's title: who is on it, whether it waits on you, and its plan step. */
+/**
+ * The facts beside a line's title, each after a dot: who is on it, whether it waits on you, its plan step. No owner
+ * reads in red.
+ */
 export function LineMeta({ crew, details }: { crew?: LineCrew; details?: LineHome }) {
   const facts = [
     ...crewText(crew, details?.stepIn === true),
@@ -12,10 +15,13 @@ export function LineMeta({ crew, details }: { crew?: LineCrew; details?: LineHom
   ];
   if (facts.length === 0) return null;
   return (
-    <p className="home-meta">
+    <span className="line-facts">
       {facts.map((fact) => (
-        <span key={fact}>{fact}</span>
+        <span key={fact} data-tone={fact.startsWith("no owner") ? "bad" : undefined}>
+          {" "}
+          · {fact}
+        </span>
       ))}
-    </p>
+    </span>
   );
 }

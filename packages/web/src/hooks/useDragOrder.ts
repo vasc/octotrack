@@ -9,7 +9,7 @@ export interface DragProps {
 }
 
 /**
- * Dragging a line onto another, in Reorder mode: it lands before the one it is dropped on, within its own section. The
+ * Dragging a line by its handle onto another: it lands before the one it is dropped on, within its own section. The
  * line being dragged is page state; the drop is the developer's order like any other move.
  */
 export function useDragOrder(onDrop: (ref: string, before: string) => void) {

@@ -10,7 +10,9 @@ export function useChoices() {
   return {
     pending: pending.data ?? [],
     failure: make.error ?? undo.error ?? now.error,
-    make: (op: string, input: unknown, summary: string) => make.mutate({ op, input, summary }),
+    /** With a draft, the words typed for it stay kept through Undo, and the server deletes them once it takes effect. */
+    make: (op: string, input: unknown, summary: string, draft?: string) =>
+      make.mutate({ op, input, summary, ...(draft === undefined ? {} : { draft }) }),
     undo: (id: number) => undo.mutate({ id }),
     now: (id: number) => now.mutate({ id }),
   };

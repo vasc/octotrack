@@ -1,60 +1,96 @@
 import { contracts } from "@octotrack/core/contracts";
 import { useChoices } from "../../hooks/useChoices.ts";
-import { useOpMutation, useOpQuery } from "../../hooks/useOp.ts";
-import { PageHead } from "../ui/PageHead.tsx";
-import { Section } from "../ui/Section.tsx";
+import { useHome } from "../../hooks/useHome.ts";
+import { useOpQuery } from "../../hooks/useOp.ts";
+import { usePush } from "../../hooks/usePush.ts";
+import { PushToggle } from "../home/PushToggle.tsx";
 import { EmptyState, ErrorState, LoadingState } from "../ui/states.tsx";
 import { AgentRosterRow } from "./AgentRosterRow.tsx";
-import { WatchRow } from "./WatchRow.tsx";
 
+/**
+ * Who is out there, and where, as E-Agents draws it. The only actions are Stop, Lift on a stopped agent, and Release
+ * on a quiet one; what needs the developer is on Lines.
+ */
 export function AgentsPage() {
   const agents = useOpQuery(contracts.agentList, {});
+  const push = usePush();
   const choices = useChoices();
-  const lift = useOpMutation(contracts.agentLift);
-  const watches = useOpQuery(contracts.watchList, {});
-  const waiting = watches.data?.filter((watch) => watch.waiting) ?? [];
-  const registered = watches.data?.filter((watch) => !watch.waiting) ?? [];
+  const h = useHome();
+  const home = h.home.data;
+  const lines = home === undefined ? [] : [...home.working, ...home.upNext, ...home.tabled, ...home.proposed];
+  function lineFacts(ref: string | null): { lineTitle?: string; waitsOnYou?: boolean } {
+    const line = lines.find((candidate) => candidate.ref === ref);
+    if (line === undefined || home === undefined) return {};
+    return { lineTitle: line.title, waitsOnYou: (home.lines[line.ref]?.forYou.length ?? 0) > 0 };
+  }
   return (
     <div className="page">
-      <PageHead title="Agents" />
+      <div className="log-head">
+        <div>
+          <h1 className="panel-title">Agents</h1>
+          <p className="log-sub">
+            Who is out there, and where. The only action here is Stop, which becomes Lift on a stopped agent;
+            what needs you is on Lines.
+          </p>
+        </div>
+        <PushToggle state={push.state} error={push.error} onTurnOn={() => void push.turnOn()} />
+      </div>
       {agents.isPending ? <LoadingState /> : null}
       {agents.error === null ? null : <ErrorState error={agents.error} />}
-      {lift.error === null ? null : <ErrorState error={lift.error} />}
-      <Section title="Roster" note={String(agents.data?.length ?? "")}>
-        {agents.data?.length === 0 ? (
-          <EmptyState command="export OCTO_AGENT=claude-feature-x">No agent has checked in yet.</EmptyState>
-        ) : null}
-        <div className="rows">
-          {agents.data?.map((agent) => (
-            <AgentRosterRow
-              key={agent.name}
-              agent={agent}
-              onStop={(name) => choices.make(contracts.agentStop.name, { name }, `Stopped ${name}`)}
-              onLift={(name) => lift.mutate({ name })}
-              onRelease={(name) =>
-                choices.make(contracts.agentRelease.name, { name }, `Released ${name} from its line`)
-              }
-            />
-          ))}
+      {choices.failure === null ? null : <ErrorState error={choices.failure} />}
+      {agents.data?.length === 0 ? (
+        <EmptyState command="export OCTO_AGENT=claude-feature-x">No agent has checked in yet.</EmptyState>
+      ) : (
+        <div className="table-box">
+          <table className="agents-table" aria-label="Roster">
+            <thead>
+              <tr>
+                <th scope="col">Agent</th>
+                <th scope="col">Repo</th>
+                <th scope="col">Line</th>
+                <th scope="col">Last command</th>
+                <th scope="col">Wake</th>
+                <th scope="col">Now</th>
+                <th scope="col">
+                  <span className="visually-hidden">Action</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {agents.data?.map((agent) => (
+                <AgentRosterRow
+                  key={agent.name}
+                  agent={agent}
+                  {...(agent.repo === null ? {} : { repo: h.repoName(agent.repo) })}
+                  {...lineFacts(agent.line)}
+                  onStop={(name) => choices.make(contracts.agentStop.name, { name }, `Stopped ${name}`)}
+                  onLift={(name) => choices.make(contracts.agentLift.name, { name }, `Lifted ${name}'s stop`)}
+                  onRelease={(name) =>
+                    choices.make(contracts.agentRelease.name, { name }, `Released ${name} from its line`)
+                  }
+                />
+              ))}
+            </tbody>
+          </table>
         </div>
-      </Section>
-      <Section title="Waiting now" note={String(waiting.length)}>
-        {waiting.length === 0 ? <p className="muted">No agent is hanging on anything.</p> : null}
-        <div className="rows">
-          {waiting.map((watch) => (
-            <WatchRow key={watch.ref} watch={watch} />
-          ))}
-        </div>
-      </Section>
-      {registered.length === 0 ? null : (
-        <Section title="Registered, not polling">
-          <div className="rows">
-            {registered.map((watch) => (
-              <WatchRow key={watch.ref} watch={watch} />
-            ))}
-          </div>
-        </Section>
       )}
+      <div className="agents-notes">
+        <p>
+          <b>States.</b> Running: a command, poll or push in the last 15 minutes. Asleep: not running, with a
+          wake address. Quiet: neither, shown with its last command and Release. Gone: a wake failed, or a
+          session Octotrack started exited with no wake address. Stopped: by you, or by Octotrack after three
+          writes a line's state forbids.
+        </p>
+        <p>
+          <b>Taking.</b> <span className="mono">line take L-7</span> makes it owner, else helper, else says
+          why; never another line. Bare, it finds the highest working line in its repo with no owner, else a
+          helper's place, else scoping.
+        </p>
+        <p>
+          <b>Keeping.</b> Claims end on release, Stop, a failed wake, or the exit of a session Octotrack
+          started; never on a timer, since a line can run for weeks.
+        </p>
+      </div>
     </div>
   );
 }

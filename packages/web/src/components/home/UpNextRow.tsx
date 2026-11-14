@@ -1,9 +1,9 @@
-import { Markdown } from "../ui/Markdown.tsx";
 import type { Line, LineCrew, LineHome } from "@octotrack/core/schemas";
 import type { ReactNode } from "react";
 import type { DragProps } from "../../hooks/useDragOrder.ts";
 import { crewText } from "../../lib/lines.ts";
 import { openEntity } from "../../lib/router.ts";
+import { Markdown } from "../ui/Markdown.tsx";
 
 function heldText(held: LineHome["held"]): string {
   const parts = [
@@ -13,7 +13,10 @@ function heldText(held: LineHome["held"]): string {
   return parts.length === 0 ? "nothing held" : `${parts.join(" and ")} held`;
 }
 
-/** A line up next: what it holds, how far scoping got, what finishes it, and Start. */
+/**
+ * A line up next, one row of the up-next card: its place in the order, what it holds, how far scoping got, what
+ * finishes it, and Start, which opens the Start sheet (Start…) when the line holds something to look at first.
+ */
 export function UpNextRow({
   index,
   line,
@@ -37,26 +40,33 @@ export function UpNextRow({
     details === undefined || details.scopedSteps === 0
       ? "not scoped yet"
       : `scoped: ${details.scopedSteps} step${details.scopedSteps === 1 ? "" : "s"}`;
+  const holds =
+    details !== undefined &&
+    (details.held.questions > 0 || details.held.tasks > 0 || line.doneWhenProposal !== null);
   return (
-    <article className="home-row" aria-label={line.title} data-selected={focused} {...drag}>
-      <span className="home-line-num">{index}</span>
-      <div className="row-stack">
-        <button type="button" className="row-title" onClick={() => openEntity(line.ref)}>
+    <li className="next-row" aria-label={line.title} data-selected={focused} {...drag}>
+      <span className="line-handle" aria-hidden="true" title="Drag to reorder">
+        ⋮⋮
+      </span>
+      <span className="line-num">{index}</span>
+      <span className="next-row-text">
+        <button type="button" className="line-link" onClick={() => openEntity(line.ref)}>
           {line.title}
         </button>
-        <p className="home-meta">
-          {details === undefined ? null : <span>{heldText(details.held)}</span>}
-          <span>{scoping}</span>
+        <span className="line-facts">
+          {details === undefined ? null : <span> · {heldText(details.held)}</span>}
+          <span> · {scoping}</span>
+          {line.doneWhenProposal === null ? null : <span> · done when changed</span>}
           {crewText(crew).map((words) => (
-            <span key={words}>{words}</span>
+            <span key={words}> · {words}</span>
           ))}
-        </p>
+        </span>
         {line.doneWhen === "" ? null : (
-          <p className="muted">
+          <span className="next-row-done">
             Done when <Markdown text={line.doneWhen} inline />
-          </p>
+          </span>
         )}
-      </div>
+      </span>
       {reorder}
       <button
         type="button"
@@ -64,8 +74,8 @@ export function UpNextRow({
         aria-label={`Start ${line.title}`}
         onClick={() => onStart(line.ref)}
       >
-        Start
+        {holds ? "Start…" : "Start"}
       </button>
-    </article>
+    </li>
   );
 }

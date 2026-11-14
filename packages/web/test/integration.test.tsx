@@ -53,133 +53,85 @@ beforeEach(() => {
   navigate("/log");
 });
 
-describe("the feed", () => {
-  test("puts decisions in front, with the feed under them, from one bootstrap", async () => {
-    seedDecision();
-    server.act(c.issueCreate, { project: "OCT", title: "A task" });
-    const view = renderApp(<App />);
-    await view.findByRole("heading", { name: "Which queue?" });
-    await view.findByText(/created: A task/);
-    within(view.getByRole("feed")).getByText(/needs a decision/);
-  });
+describe("the questions page", () => {
+  beforeEach(() => navigate("/decisions"));
 
-  test("deciding in place removes the card, records it, and flows to the feed and to drift", async () => {
+  test("answering in place takes one press, waits with Undo, then records it and flows to drift", async () => {
     const decision = seedDecision();
     const view = renderApp(<App />);
     await view.findByRole("heading", { name: "Which queue?" });
-
     fireEvent.click(view.getByRole("button", { name: /Redis/ }));
-    fireEvent.change(view.getByLabelText(`Note for ${decision.ref}`), {
-      target: { value: "Already deployed" },
-    });
-    fireEvent.click(view.getByRole("button", { name: "Decide" }));
     await answerNow(view);
-
     await gone(() => view.queryByRole("heading", { name: "Which queue?" }));
-
-    const stored = server.act(c.decisionList, { query: `ref:${decision.ref}` })[0];
-    expect(stored).toMatchObject({
+    expect(server.act(c.decisionList, { query: `ref:${decision.ref}` })[0]).toMatchObject({
       status: "decided",
       chosenOption: "redis",
-      resolutionNote: "Already deployed",
       channel: "dashboard",
       decidedBy: "dev",
     });
-    await within(view.getByRole("feed")).findByText(/decided: "Redis"/);
     expect(server.act(c.driftList, {}).map((drift) => drift.rule)).toEqual(["decision-project-sync"]);
     // The answer went through the Undo window and was applied as the developer, through the dashboard.
     expect(server.calls).toContain("choice.make");
   });
 
-  test("a decision made elsewhere can be marked so while deciding in place", async () => {
-    const decision = seedDecision();
-    const view = renderApp(<App />);
-    await view.findByRole("heading", { name: "Which queue?" });
-    fireEvent.click(view.getByRole("button", { name: /SQS/ }));
-    fireEvent.click(view.getByRole("checkbox", { name: "decided elsewhere" }));
-    fireEvent.click(view.getByRole("button", { name: "Decide" }));
-    await answerNow(view);
-    await waitFor(() =>
-      expect(server.act(c.decisionList, { query: `ref:${decision.ref}` })[0]?.channel).toBe("out_of_band"),
-    );
-  });
-
-  test("a refused decision keeps the card on screen and says why", async () => {
+  test("a refused answer says why in the Undo bar, and the question stays open", async () => {
     const decision = seedDecision();
     const view = renderApp(<App />);
     await view.findByRole("heading", { name: "Which queue?" });
     // The agent changed the options after the page loaded, so the choice on screen no longer exists.
     server.act(c.decisionUpdate, { ref: decision.ref, options: [{ key: "kafka", label: "Kafka" }] });
     fireEvent.click(view.getByRole("button", { name: /Redis/ }));
-    fireEvent.click(view.getByRole("button", { name: "Decide" }));
     await answerNow(view);
     const alert = await view.findByRole("alert");
     expect(alert.textContent).toContain('no option "redis"');
-    view.getByRole("heading", { name: "Which queue?" });
     expect(server.act(c.decisionList, { query: `ref:${decision.ref}` })[0]?.status).toBe("open");
   });
 
-  test("a decision someone else just made is refused rather than overwritten", async () => {
+  test("a question someone else just answered is refused rather than overwritten", async () => {
     const decision = seedDecision();
     const view = renderApp(<App />);
     await view.findByRole("heading", { name: "Which queue?" });
     server.act(c.decisionResolve, { ref: decision.ref, option: "sqs" }, "agent-b");
     fireEvent.click(view.getByRole("button", { name: /Redis/ }));
-    fireEvent.click(view.getByRole("button", { name: "Decide" }));
+    await answerNow(view);
     await gone(() => view.queryByRole("heading", { name: "Which queue?" }));
     expect(server.act(c.decisionList, { query: `ref:${decision.ref}` })[0]?.chosenOption).toBe("sqs");
   });
 
-  test("number keys pick an option on the top card and Enter decides", async () => {
+  test("a number key answers the open question with that option", async () => {
     const decision = seedDecision();
     const view = renderApp(<App />);
     await view.findByRole("heading", { name: "Which queue?" });
     fireEvent.keyDown(window, { key: "2" });
-    await waitFor(() =>
-      expect(view.getByRole("button", { name: /Redis/ }).getAttribute("aria-pressed")).toBe("true"),
-    );
-    fireEvent.keyDown(window, { key: "Enter" });
     await answerNow(view);
     await waitFor(() =>
       expect(server.act(c.decisionList, { query: `ref:${decision.ref}` })[0]?.chosenOption).toBe("redis"),
     );
   });
 
-  test("one decision is open at a time so that the feed stays in view, and j and k move between them", async () => {
+  test("one question is open at a time, and j and k move between them", async () => {
     seedDecision({ title: "First", priority: "urgent" });
     seedDecision({ title: "Second", priority: "low" });
     const view = renderApp(<App />);
     await view.findByRole("heading", { name: "First" });
     view.getByRole("button", { name: "Second" });
     expect(view.queryByRole("heading", { name: "Second" }) === null).toBe(true);
-
     fireEvent.keyDown(window, { key: "j" });
     await view.findByRole("heading", { name: "Second" });
-    view.getByRole("button", { name: "First" });
-
     fireEvent.keyDown(window, { key: "k" });
     await view.findByRole("heading", { name: "First" });
-
-    fireEvent.click(view.getByRole("button", { name: "Second" }));
-    await view.findByRole("heading", { name: "Second" });
   });
 
-  test("a re-rank cannot swap the open card, so a keypress cannot land on the wrong decision", async () => {
+  test("a re-rank cannot swap the open question, so a key press cannot land on another", async () => {
     server = startTestServer({ live: true });
     server.act(c.projectCreate, { key: "OCT", name: "Octotrack" });
     const first = seedDecision({ title: "The one being read", priority: "medium" });
     const view = renderApp(<App />);
     await view.findByRole("heading", { name: "The one being read" });
-    fireEvent.change(view.getByLabelText(`Note for ${first.ref}`), { target: { value: "Half typed" } });
-
     const urgent = seedDecision({ title: "Arrived while reading", priority: "urgent" });
     await view.findByRole("button", { name: "Arrived while reading" });
-
     view.getByRole("heading", { name: "The one being read" });
-    expect(view.getByLabelText(`Note for ${first.ref}`).getAttribute("value")).toBe("Half typed");
-
     fireEvent.keyDown(window, { key: "1" });
-    fireEvent.keyDown(window, { key: "Enter" });
     await answerNow(view);
     await waitFor(() =>
       expect(server.act(c.decisionList, { query: `ref:${first.ref}` })[0]?.status).toBe("decided"),
@@ -187,20 +139,160 @@ describe("the feed", () => {
     expect(server.act(c.decisionList, { query: `ref:${urgent.ref}` })[0]?.status).toBe("open");
   });
 
-  test("moving between decisions keeps a half-typed answer", async () => {
+  test("an answer half typed in your own words survives moving between questions", async () => {
     const first = seedDecision({ title: "First", priority: "urgent" });
     seedDecision({ title: "Second", priority: "low" });
     const view = renderApp(<App />);
     await view.findByRole("heading", { name: "First" });
-    fireEvent.change(view.getByLabelText(`Note for ${first.ref}`), { target: { value: "Half typed" } });
+    fireEvent.click(view.getByRole("button", { name: "In my own words" }));
+    fireEvent.change(view.getByLabelText(`Your answer to ${first.ref}`), { target: { value: "Half typed" } });
     fireEvent.keyDown(window, { key: "j" });
     await view.findByRole("heading", { name: "Second" });
     fireEvent.keyDown(window, { key: "k" });
     await view.findByRole("heading", { name: "First" });
-    expect(view.getByLabelText(`Note for ${first.ref}`).getAttribute("value")).toBe("Half typed");
+    expect(view.getByLabelText(`Your answer to ${first.ref}`).textContent).toBe("Half typed");
   });
 
-  test("a filter that matches only far back in a long log finds it instead of claiming nothing matches", async () => {
+  test("with a question open in the panel, the keys answer that one and not the queue's", async () => {
+    const top = seedDecision({ title: "Top of the queue", priority: "urgent" });
+    const other = seedDecision({ title: "Being inspected", priority: "low" });
+    navigate(`/decisions?ref=${other.ref}`);
+    const view = renderApp(<App />);
+    const panel = within(await view.findByRole("complementary", { name: other.ref }));
+    await panel.findByRole("button", { name: /SQS/ });
+    fireEvent.keyDown(window, { key: "1" });
+    await answerNow(view);
+    await waitFor(() =>
+      expect(server.act(c.decisionList, { query: `ref:${other.ref}` })[0]?.status).toBe("decided"),
+    );
+    expect(server.act(c.decisionList, { query: `ref:${top.ref}` })[0]?.status).toBe("open");
+  });
+
+  test("when the open question goes away, the keys do nothing until you say which one you mean", async () => {
+    server = startTestServer({ live: true });
+    server.act(c.projectCreate, { key: "OCT", name: "Octotrack" });
+    const first = seedDecision({ title: "Was open", priority: "urgent" });
+    const second = seedDecision({ title: "Next in line", priority: "low" });
+    const view = renderApp(<App />);
+    await view.findByRole("heading", { name: "Was open" });
+    server.act(c.decisionWithdraw, { ref: first.ref });
+    await view.findByRole("heading", { name: "Next in line" });
+    fireEvent.keyDown(window, { key: "1" });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(server.calls.filter((name) => name === "choice.make")).toHaveLength(0);
+    await view.findByText(/Press j to answer this one/);
+    fireEvent.keyDown(window, { key: "j" });
+    await gone(() => view.queryByText(/Press j to answer this one/));
+    fireEvent.keyDown(window, { key: "1" });
+    await answerNow(view);
+    await waitFor(() =>
+      expect(server.act(c.decisionList, { query: `ref:${second.ref}` })[0]?.status).toBe("decided"),
+    );
+  });
+
+  test("an answer in your own words", async () => {
+    const decision = seedDecision();
+    const view = renderApp(<App />);
+    await view.findByRole("heading", { name: "Which queue?" });
+    fireEvent.click(view.getByRole("button", { name: "In my own words" }));
+    const send = view.getByRole("button", { name: "Send" });
+    expect(send.hasAttribute("disabled")).toBe(true);
+    fireEvent.change(view.getByLabelText(`Your answer to ${decision.ref}`), {
+      target: { value: "Neither, use Kafka" },
+    });
+    fireEvent.click(view.getByRole("button", { name: "Send" }));
+    await answerNow(view);
+    await waitFor(() =>
+      expect(server.act(c.decisionList, { query: `ref:${decision.ref}` })[0]).toMatchObject({
+        status: "decided",
+        chosenOption: null,
+        resolutionNote: "Neither, use Kafka",
+      }),
+    );
+  });
+
+  test("Later moves on to the next question and leaves the one put off last, still open", async () => {
+    const first = seedDecision({ title: "Not ready", priority: "urgent" });
+    seedDecision({ title: "Next in line", priority: "low" });
+    const view = renderApp(<App />);
+    await view.findByRole("heading", { name: "Not ready" });
+    fireEvent.click(view.getByRole("button", { name: "Later" }));
+    await view.findByRole("heading", { name: "Next in line" });
+    await answerNow(view);
+    await waitFor(() =>
+      expect(server.act(c.decisionQueue, {}).map((card) => card.decision.title)).toEqual([
+        "Next in line",
+        "Not ready",
+      ]),
+    );
+    expect(server.act(c.decisionList, { query: `ref:${first.ref}` })[0]?.status).toBe("open");
+  });
+
+  test("the p key puts off the question the keys are armed for", async () => {
+    seedDecision({ title: "Not ready", priority: "urgent" });
+    seedDecision({ title: "Next in line", priority: "low" });
+    const view = renderApp(<App />);
+    await view.findByRole("heading", { name: "Not ready" });
+    fireEvent.keyDown(window, { key: "p" });
+    await answerNow(view);
+    await waitFor(() => expect(server.act(c.decisionQueue, {})[0]?.decision.title).toBe("Next in line"));
+  });
+
+  test("a question put off can be brought back", async () => {
+    const decision = seedDecision({ title: "Not ready" });
+    server.act(c.decisionPostpone, { ref: decision.ref });
+    const view = renderApp(<App />);
+    await view.findByRole("heading", { name: "Not ready" });
+    fireEvent.click(view.getByRole("button", { name: "Bring back" }));
+    await answerNow(view);
+    await waitFor(() =>
+      expect(server.act(c.decisionList, { query: `ref:${decision.ref}` })[0]?.postponedAt).toBeNull(),
+    );
+  });
+
+  test("shows answers nobody has picked up, until the agent does", async () => {
+    server = startTestServer({ live: true });
+    server.act(c.projectCreate, { key: "OCT", name: "Octotrack" });
+    const decision = seedDecision({ title: "Answered already" });
+    server.tracker.call(
+      c.decisionResolve,
+      { ref: decision.ref, option: "sqs" },
+      { actor: "dev", channel: "dashboard" },
+    );
+    navigate("/decisions");
+    const view = renderApp(<App />);
+    await view.findByRole("heading", { name: /Answered, not picked up/ });
+    server.act(c.decisionPickup, { ref: decision.ref });
+    await gone(() => view.queryByRole("heading", { name: /Answered, not picked up/ }));
+    await view.findAllByText("picked up");
+  });
+
+  test("lists every question in the queue", async () => {
+    for (const index of [1, 2, 3, 4, 5, 6, 7, 8, 9]) seedDecision({ title: `Question ${index}` });
+    const view = renderApp(<App />);
+    await view.findByRole("heading", { name: "Question 1" });
+    const queue = view.getByRole("heading", { name: "Question 1" }).closest(".queue");
+    expect(queue?.querySelectorAll(".queue-more")).toHaveLength(8);
+    expect(view.queryByRole("button", { name: /more decisions/ })).toBeNull();
+  });
+
+  test("the open question stays first, so a re-rank cannot move it", async () => {
+    server = startTestServer({ live: true });
+    server.act(c.projectCreate, { key: "OCT", name: "Octotrack" });
+    seedDecision({ title: "Being read", priority: "medium" });
+    const view = renderApp(<App />);
+    const heading = await view.findByRole("heading", { name: "Being read" });
+    const queue = heading.closest(".queue");
+    const openFirst = () => queue?.firstElementChild?.contains(heading) === true;
+    expect(openFirst()).toBe(true);
+    seedDecision({ title: "Outranks it", priority: "urgent" });
+    await view.findByRole("button", { name: "Outranks it" });
+    expect(openFirst()).toBe(true);
+  });
+});
+
+describe("the log", () => {
+  test("a search that matches only far back in a long log finds it instead of claiming nothing matches", async () => {
     server.tracker.batch(
       {
         ops: Array.from({ length: 5100 }, (_, index) => ({
@@ -213,388 +305,41 @@ describe("the feed", () => {
     navigate("/log?q=event%3Aproject.created");
     const view = renderApp(<App />);
     await within(await view.findByRole("feed")).findByText(/Project OCT created/);
-    expect(view.queryByText("Nothing matches this filter.") === null).toBe(true);
+    expect(view.queryByText("Nothing matches this search.") === null).toBe(true);
   });
 
-  test("with the inspector open on a decision, the keys answer that decision and not the queue's", async () => {
-    const top = seedDecision({ title: "Top of the queue", priority: "urgent" });
-    const other = seedDecision({ title: "Being inspected", priority: "low" });
-    navigate(`/log?ref=${other.ref}`);
+  test("a search goes through the whole log, and stays in the URL", async () => {
+    server.act(c.issueCreate, { project: "OCT", title: "A task" });
+    seedDecision();
     const view = renderApp(<App />);
-    const panel = within(await view.findByRole("complementary", { name: other.ref }));
-    await panel.findByRole("button", { name: /SQS/ });
-    fireEvent.keyDown(window, { key: "1" });
-    await waitFor(() =>
-      expect(panel.getByRole("button", { name: /SQS/ }).getAttribute("aria-pressed")).toBe("true"),
-    );
-    fireEvent.keyDown(window, { key: "Enter" });
-    await answerNow(view);
-    await waitFor(() =>
-      expect(server.act(c.decisionList, { query: `ref:${other.ref}` })[0]?.status).toBe("decided"),
-    );
-    expect(server.act(c.decisionList, { query: `ref:${top.ref}` })[0]?.status).toBe("open");
+    await view.findByText(/What you have not seen/);
+    fireEvent.change(view.getByLabelText("Filter"), { target: { value: "kind:issue" } });
+    const feed = within(await view.findByRole("feed"));
+    await feed.findByText(/created: A task/);
+    expect(feed.queryByText(/needs a decision/)).toBeNull();
+    expect(window.location.search).toBe("?q=kind%3Aissue");
   });
 
-  test("when the open decision goes away, the keys do nothing until you say which one you mean", async () => {
-    server = startTestServer({ live: true });
-    server.act(c.projectCreate, { key: "OCT", name: "Octotrack" });
-    const first = seedDecision({ title: "Was open", priority: "urgent" });
-    const second = seedDecision({ title: "Next in line", priority: "low" });
+  test("a half-typed search shows the error", async () => {
     const view = renderApp(<App />);
-    await view.findByRole("heading", { name: "Was open" });
-
-    server.act(c.decisionWithdraw, { ref: first.ref });
-    await view.findByRole("heading", { name: "Next in line" });
-    fireEvent.keyDown(window, { key: "1" });
-    fireEvent.keyDown(window, { key: "Enter" });
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(server.act(c.decisionList, { query: `ref:${second.ref}` })[0]?.status).toBe("open");
-    await view.findByText(/Press j to answer this one/);
-
-    fireEvent.keyDown(window, { key: "j" });
-    await gone(() => view.queryByText(/Press j to answer this one/));
-    fireEvent.keyDown(window, { key: "1" });
-    await waitFor(() =>
-      expect(view.getByRole("button", { name: /SQS/ }).getAttribute("aria-pressed")).toBe("true"),
-    );
-    fireEvent.keyDown(window, { key: "Enter" });
-    await answerNow(view);
-    await waitFor(() =>
-      expect(server.act(c.decisionList, { query: `ref:${second.ref}` })[0]?.status).toBe("decided"),
-    );
+    await view.findByText(/What you have not seen/);
+    fireEvent.change(view.getByLabelText("Filter"), { target: { value: "nope:" } });
+    await view.findByText(/no value|Unknown field/);
   });
 
-  test("on a phone, tapping answers the next card without the keyboard's extra step", async () => {
-    server = startTestServer({ live: true });
-    server.act(c.projectCreate, { key: "OCT", name: "Octotrack" });
-    const first = seedDecision({ title: "Was open", priority: "urgent" });
-    const second = seedDecision({ title: "Next in line", priority: "low" });
-    const view = renderApp(<App />);
-    await view.findByRole("heading", { name: "Was open" });
-
-    server.act(c.decisionWithdraw, { ref: first.ref });
-    await view.findByRole("heading", { name: "Next in line" });
-    expect(view.getByText(/Press j to answer this one/).classList.contains("keyboard-hint")).toBe(true);
-
-    fireEvent.click(view.getByRole("button", { name: /SQS/ }));
-    fireEvent.click(view.getByRole("button", { name: "Decide" }));
-    await answerNow(view);
-    await waitFor(() =>
-      expect(server.act(c.decisionList, { query: `ref:${second.ref}` })[0]?.status).toBe("decided"),
-    );
-  });
-
-  test("when no offered option applies, you can answer in your own words", async () => {
-    const decision = seedDecision();
-    const view = renderApp(<App />);
-    await view.findByRole("heading", { name: "Which queue?" });
-    const decide = view.getByRole("button", { name: "Decide" });
-
-    fireEvent.click(view.getByRole("button", { name: /Something else/ }));
-    expect(decide.hasAttribute("disabled")).toBe(true);
-    const note = view.getByLabelText(`Note for ${decision.ref}`);
-    expect(note.getAttribute("placeholder")).toBe("Your answer");
-    expect(document.activeElement).toBe(note);
-    fireEvent.change(note, { target: { value: "Neither, use Kafka" } });
-    fireEvent.click(decide);
-    await answerNow(view);
-
-    await waitFor(() =>
-      expect(server.act(c.decisionList, { query: `ref:${decision.ref}` })[0]).toMatchObject({
-        status: "decided",
-        chosenOption: null,
-        resolutionNote: "Neither, use Kafka",
-      }),
-    );
-  });
-
-  test("choosing an option after Something else answers with that option", async () => {
-    const decision = seedDecision();
-    const view = renderApp(<App />);
-    await view.findByRole("heading", { name: "Which queue?" });
-
-    fireEvent.click(view.getByRole("button", { name: /Something else/ }));
-    fireEvent.click(view.getByRole("button", { name: /SQS/ }));
-    expect(view.getByRole("button", { name: /Something else/ }).getAttribute("aria-pressed")).toBe("false");
-    fireEvent.click(view.getByRole("button", { name: "Decide" }));
-    await answerNow(view);
-    await waitFor(() =>
-      expect(server.act(c.decisionList, { query: `ref:${decision.ref}` })[0]?.chosenOption).toBe("sqs"),
-    );
-  });
-
-  test("Later moves on to the next decision and leaves the one put off last, still open", async () => {
-    const first = seedDecision({ title: "Not ready", priority: "urgent" });
-    seedDecision({ title: "Next in line", priority: "low" });
-    const view = renderApp(<App />);
-    await view.findByRole("heading", { name: "Not ready" });
-
-    fireEvent.click(view.getByRole("button", { name: "Later" }));
-    await view.findByRole("heading", { name: "Next in line" });
-    await answerNow(view);
-    await view.findAllByText("later");
-    expect(server.act(c.decisionQueue, {}).map((card) => card.decision.title)).toEqual([
-      "Next in line",
-      "Not ready",
-    ]);
-    expect(server.act(c.decisionList, { query: `ref:${first.ref}` })[0]?.status).toBe("open");
-  });
-
-  test("the p key puts off the card the keys are armed for", async () => {
-    seedDecision({ title: "Not ready", priority: "urgent" });
-    seedDecision({ title: "Next in line", priority: "low" });
-    const view = renderApp(<App />);
-    await view.findByRole("heading", { name: "Not ready" });
-    fireEvent.keyDown(window, { key: "p" });
-    await answerNow(view);
-    await waitFor(() => expect(server.act(c.decisionQueue, {})[0]?.decision.title).toBe("Next in line"));
-  });
-
-  test("a postponed decision can be brought back", async () => {
-    const decision = seedDecision({ title: "Not ready" });
-    server.act(c.decisionPostpone, { ref: decision.ref });
-    const view = renderApp(<App />);
-    await view.findByRole("heading", { name: "Not ready" });
-    fireEvent.click(view.getByRole("button", { name: "Bring back" }));
-    await answerNow(view);
-    await waitFor(() =>
-      expect(server.act(c.decisionList, { query: `ref:${decision.ref}` })[0]?.postponedAt).toBeNull(),
-    );
-  });
-
-  test("the decisions page shows answers nobody has picked up, until the agent does", async () => {
-    server = startTestServer({ live: true });
-    server.act(c.projectCreate, { key: "OCT", name: "Octotrack" });
-    const decision = seedDecision({ title: "Answered already" });
-    server.tracker.call(
-      c.decisionResolve,
-      { ref: decision.ref, option: "sqs" },
-      { actor: "dev", channel: "dashboard" },
-    );
-    navigate("/decisions");
-    const view = renderApp(<App />);
-    const section = await view.findByRole("heading", { name: /Answered, not picked up/ });
-    expect(section).not.toBeNull();
-    server.act(c.decisionPickup, { ref: decision.ref });
-    await gone(() => view.queryByRole("heading", { name: /Answered, not picked up/ }));
-    await view.findAllByText("picked up");
-  });
-
-  test("a long queue does not push the feed off the screen", async () => {
-    for (const index of [1, 2, 3, 4, 5, 6, 7, 8, 9]) seedDecision({ title: `Question ${index}` });
-    const view = renderApp(<App />);
-    await view.findByRole("heading", { name: "Question 1" });
-
-    const queue = view.getByRole("heading", { name: "Question 1" }).closest(".queue");
-    expect(queue?.querySelectorAll(".queue-more")).toHaveLength(5);
-    fireEvent.click(view.getByRole("button", { name: "3 more decisions" }));
-    await view.findByRole("heading", { name: "Decisions" });
-  });
-
-  test("the decisions page lists every decision in the queue", async () => {
-    for (const index of [1, 2, 3, 4, 5, 6, 7, 8, 9]) seedDecision({ title: `Question ${index}` });
-    navigate("/decisions");
-    const view = renderApp(<App />);
-    await view.findByRole("heading", { name: "Question 1" });
-
-    const queue = view.getByRole("heading", { name: "Question 1" }).closest(".queue");
-    expect(queue?.querySelectorAll(".queue-more")).toHaveLength(8);
-    expect(view.queryByRole("button", { name: /more decisions/ })).toBeNull();
-  });
-
-  test("the open card stays first, so that a re-rank cannot move the field being typed in", async () => {
-    server = startTestServer({ live: true });
-    server.act(c.projectCreate, { key: "OCT", name: "Octotrack" });
-    const first = seedDecision({ title: "Being typed in", priority: "medium" });
-    const view = renderApp(<App />);
-    await view.findByRole("heading", { name: "Being typed in" });
-    const note = view.getByLabelText(`Note for ${first.ref}`);
-    const queue = note.closest(".queue");
-    const openFirst = () => queue?.firstElementChild?.contains(note) === true;
-    expect(openFirst()).toBe(true);
-
-    seedDecision({ title: "Outranks it", priority: "urgent" });
-    await view.findByRole("button", { name: "Outranks it" });
-    expect(openFirst()).toBe(true);
-  });
-
-  test("a chip for a name with a space still filters on that name", async () => {
+  test("clicking a chip on a row adds it to the search, even a name with a space", async () => {
     server.act(c.issueCreate, { project: "OCT", title: "By a spaced name" }, "my agent");
     server.act(c.issueCreate, { project: "OCT", title: "By another" }, "other");
+    navigate("/log?q=kind%3Aissue");
     const view = renderApp(<App />);
     await view.findByText(/created: By a spaced name/);
     fireEvent.click(view.getAllByRole("button", { name: "my agent" })[0] ?? document.body);
     await gone(() => view.queryByText(/created: By another/));
     view.getByText(/created: By a spaced name/);
-    expect(view.queryByText(/not a|Unknown/) === null).toBe(true);
+    expect(view.getByLabelText("Filter").getAttribute("value") ?? "").toContain('actor:"my agent"');
   });
 
-  test("the filter narrows both the queue and the feed, and stays in the URL", async () => {
-    seedDecision();
-    server.act(c.issueCreate, { project: "OCT", title: "A task" });
-    const view = renderApp(<App />);
-    await view.findByRole("heading", { name: "Which queue?" });
-    fireEvent.change(view.getByLabelText("Filter"), { target: { value: "kind:issue" } });
-    await gone(() => view.queryByRole("heading", { name: "Which queue?" }));
-    await gone(() => within(view.getByRole("feed")).queryByText(/needs a decision/));
-    within(view.getByRole("feed")).getByText(/created: A task/);
-    expect(window.location.search).toBe("?q=kind%3Aissue");
-  });
-
-  test("a half-typed filter shows the error and keeps the last results on screen", async () => {
-    server.act(c.issueCreate, { project: "OCT", title: "A task" });
-    const view = renderApp(<App />);
-    await view.findByText(/created: A task/);
-    fireEvent.change(view.getByLabelText("Filter"), { target: { value: "nope:" } });
-    await view.findByText(/no value|Unknown field/);
-    view.getByText(/created: A task/);
-  });
-
-  test("clicking a chip adds it to the filter", async () => {
-    server.act(c.issueCreate, { project: "OCT", title: "Mine" }, "agent-a");
-    server.act(c.issueCreate, { project: "OCT", title: "Theirs" }, "agent-b");
-    const view = renderApp(<App />);
-    await view.findByText(/created: Mine/);
-    fireEvent.click(view.getAllByRole("button", { name: "agent-b" })[0] ?? document.body);
-    await gone(() => view.queryByText(/created: Mine/));
-    view.getByText(/created: Theirs/);
-    expect(view.getByLabelText("Filter").getAttribute("value") ?? "").toContain("actor:agent-b");
-  });
-
-  test("views switch what is shown", async () => {
-    seedDecision({ kind: "architecture" });
-    server.act(c.issueCreate, { project: "OCT", title: "A task" });
-    const view = renderApp(<App />);
-    await view.findByText(/created: A task/);
-    fireEvent.click(view.getByRole("button", { name: "Architecture" }));
-    await gone(() => view.queryByText(/created: A task/));
-    within(view.getByRole("feed")).getByText(/needs a decision/);
-  });
-
-  test("a push from the stream brings in new work without reloading", async () => {
-    const view = renderApp(<App />);
-    await view.findByText(/Project OCT created/);
-    const source = FakeEventSource.instances[0];
-    if (source === undefined) throw new Error("No event source");
-    act(() => source.emit("hello"));
-    await view.findByText("live");
-
-    seedDecision({ title: "Pushed from an agent" });
-    act(() => source.emit("change"));
-    await view.findByRole("heading", { name: "Pushed from an agent" });
-  });
-
-  test("shows how to start when the tracker is empty", async () => {
-    server = startTestServer();
-    const view = renderApp(<App />);
-    await view.findByText(/Point your agents at the guide/);
-  });
-});
-
-describe("live updates, with nothing but the server's own notifications", () => {
-  function setVisibility(state: "visible" | "hidden"): void {
-    Object.defineProperty(document, "visibilityState", { configurable: true, value: state });
-    document.dispatchEvent(new Event("visibilitychange"));
-  }
-
-  test("a change made by an agent reaches every part of the page without a reload", async () => {
-    server = startTestServer({ live: true });
-    server.act(c.projectCreate, { key: "OCT", name: "Octotrack" });
-    const view = renderApp(<App />);
-    await view.findByText(/Project OCT created/);
-    const rail = within(view.getByRole("complementary", { name: "Overview" }));
-
-    server.act(c.decisionAsk, { title: "Asked by an agent", project: "OCT" });
-    await view.findByRole("heading", { name: "Asked by an agent" });
-    await within(view.getByRole("link", { name: /Decisions/ })).findByText("1");
-
-    server.act(c.prUpsert, {
-      repo: "a/b",
-      number: 1,
-      title: "PR from an agent",
-      state: "open",
-      checks: "failing",
-    });
-    await rail.findByText("PR from an agent");
-    await rail.findByRole("img", { name: "Checks failing" });
-
-    server.act(c.prUpsert, {
-      repo: "a/b",
-      number: 1,
-      title: "PR from an agent",
-      state: "open",
-      checks: "passing",
-    });
-    await rail.findByRole("img", { name: "Checks passing" });
-    expect(rail.queryByRole("img", { name: "Checks failing" }) === null).toBe(true);
-
-    server.act(c.updatePost, { body: "Status from an agent", project: "OCT" });
-    await within(view.getByRole("feed")).findByText("Status from an agent");
-
-    server.act(c.viewSave, { name: "Saved by an agent", query: "kind:pr" });
-    await view.findByRole("button", { name: "Saved by an agent" });
-  });
-
-  test("changes that leave nothing in the feed still reach the page", async () => {
-    server = startTestServer({ live: true });
-    server.act(c.projectCreate, { key: "OCT", name: "Octotrack" });
-    const decision = server.act(c.decisionAsk, { title: "Waited on", project: "OCT" });
-    navigate("/agents");
-    const view = renderApp(<App />);
-    const main = within(view.getByRole("main"));
-    await main.findByText("No agent is hanging on anything.");
-
-    server.act(c.agentNote, { note: "Note from an agent" });
-    await main.findByText("Note from an agent");
-
-    const query = `ref:${decision.ref} status:decided`;
-    const watch = server.act(c.watchCreate, {
-      name: "later",
-      spec: { require: "any", clauses: [{ type: "state", query, mode: "exists" }] },
-    });
-    await main.findByText("Registered, not polling");
-    server.act(c.watchCheck, { refs: [watch.ref] });
-    await gone(() => main.queryByText("No agent is hanging on anything."));
-  });
-
-  test("a change landing between the first load and the stream connecting is not lost", async () => {
-    const view = renderApp(<App />);
-    await view.findByText(/Project OCT created/);
-    seedDecision({ title: "Slipped through the gap" });
-    expect(view.queryByRole("heading", { name: "Slipped through the gap" }) === null).toBe(true);
-    const source = FakeEventSource.instances[0];
-    if (source === undefined) throw new Error("No event source");
-    act(() => source.emit("hello"));
-    await view.findByRole("heading", { name: "Slipped through the gap" });
-  });
-
-  test("a hidden tab gives up its connection and catches up when it comes back", async () => {
-    const view = renderApp(<App />);
-    await view.findByText(/Project OCT created/);
-    expect(FakeEventSource.instances).toHaveLength(1);
-
-    act(() => setVisibility("hidden"));
-    expect(FakeEventSource.instances[0]?.closed).toBe(true);
-    seedDecision({ title: "Asked while hidden" });
-
-    act(() => setVisibility("visible"));
-    const reopened = FakeEventSource.instances[1];
-    if (reopened === undefined) throw new Error("It did not reconnect");
-    act(() => reopened.emit("hello"));
-    await view.findByRole("heading", { name: "Asked while hidden" });
-    setVisibility("visible");
-  });
-
-  test("closing the page closes the stream", async () => {
-    const view = renderApp(<App />);
-    await view.findByText(/Project OCT created/);
-    view.unmount();
-    expect(FakeEventSource.instances.every((source) => source.closed)).toBe(true);
-  });
-});
-
-describe("PR sync problems", () => {
-  test("are shown beside the PRs, then go away once it works again", async () => {
+  test("PR sync problems show at the top of the log, then go away once it works again", async () => {
     server = startTestServer({ live: true });
     server.tracker.call(
       c.projectCreate,
@@ -609,18 +354,118 @@ describe("PR sync problems", () => {
   });
 });
 
-describe("PR status", () => {
-  test("is visible next to the feed, problems first", async () => {
-    server.act(c.prUpsert, { repo: "a/b", number: 1, title: "Fine one", state: "open", checks: "passing" });
-    server.act(c.prUpsert, { repo: "a/b", number: 2, title: "Broken one", state: "open", checks: "failing" });
+describe("live updates, with nothing but the server's own notifications", () => {
+  function setVisibility(state: "visible" | "hidden"): void {
+    Object.defineProperty(document, "visibilityState", { configurable: true, value: state });
+    document.dispatchEvent(new Event("visibilitychange"));
+  }
+  function seedLine() {
+    server.tracker.call(
+      c.lineAdd,
+      { title: "Enclosure", doneWhen: "Done.", repos: ["OCT"], where: "working" },
+      { actor: "dev", channel: "dashboard" },
+    );
+    server.act(c.agentRegister, { repo: "OCT" }, "octo.1");
+    server.act(c.lineTake, { ref: "L-1" }, "octo.1");
+  }
+  const options = [{ key: "a", label: "Yes", description: "Go ahead." }];
+
+  test("a question an agent asks, a pull request it opens and its checks reach the page without a reload", async () => {
+    server = startTestServer({ live: true });
+    server.act(c.projectCreate, { key: "OCT", name: "Octotrack" });
+    seedLine();
+    navigate("/");
     const view = renderApp(<App />);
-    const rail = within(await view.findByRole("complementary", { name: "Overview" }));
-    await rail.findByText("Broken one");
-    const titles = rail.getAllByRole("button").map((button) => button.textContent);
-    expect(titles.indexOf("Broken one")).toBeLessThan(titles.indexOf("Fine one"));
-    rail.getByRole("img", { name: "Checks failing" });
+    await view.findByRole("article", { name: "Enclosure" });
+    const issue = server.act(c.issueCreate, { project: "OCT", title: "Base", line: "L-1" }, "octo.1");
+    server.act(c.decisionAsk, { title: "Asked by an agent", context: "Context.", options }, "octo.1");
+    await view.findByRole("heading", { name: "Asked by an agent" });
+    await view.findByRole("link", { name: "1 to answer" });
+    server.act(c.prUpsert, {
+      repo: "a/b",
+      number: 1,
+      title: "PR from an agent",
+      state: "open",
+      checks: "failing",
+      issues: [issue.ref],
+    });
+    fireEvent.click(view.getByRole("button", { name: "Enclosure" }));
+    const panel = within(await view.findByRole("complementary", { name: "L-1" }));
+    await panel.findByText(/checks failing/);
+    server.act(c.prUpsert, {
+      repo: "a/b",
+      number: 1,
+      title: "PR from an agent",
+      state: "open",
+      checks: "passing",
+    });
+    await panel.findByText(/✓ checks/);
   });
 
+  test("changes that leave nothing in the log still reach the page", async () => {
+    server = startTestServer({ live: true });
+    server.act(c.projectCreate, { key: "OCT", name: "Octotrack" });
+    server.act(c.agentRegister, { repo: "OCT" }, "octo.2");
+    navigate("/agents");
+    const view = renderApp(<App />);
+    const main = within(view.getByRole("main"));
+    await main.findByText("octo.2");
+    server.tracker.call(c.agentStop, { name: "octo.2" }, { actor: "dev", channel: "dashboard" });
+    await main.findByText(/stopped/);
+  });
+
+  test("a change landing between the first load and the stream connecting is not lost", async () => {
+    seedLine();
+    navigate("/");
+    const view = renderApp(<App />);
+    await view.findByRole("article", { name: "Enclosure" });
+    server.act(c.decisionAsk, { title: "Slipped through the gap", context: "C.", options }, "octo.1");
+    expect(view.queryByRole("heading", { name: "Slipped through the gap" }) === null).toBe(true);
+    const source = FakeEventSource.instances[0];
+    if (source === undefined) throw new Error("No event source");
+    act(() => source.emit("hello"));
+    await view.findByRole("heading", { name: "Slipped through the gap" });
+  });
+
+  test("a hidden tab gives up its connection and catches up when it comes back", async () => {
+    seedLine();
+    navigate("/");
+    const view = renderApp(<App />);
+    await view.findByRole("article", { name: "Enclosure" });
+    expect(FakeEventSource.instances).toHaveLength(1);
+    act(() => setVisibility("hidden"));
+    expect(FakeEventSource.instances[0]?.closed).toBe(true);
+    server.act(c.decisionAsk, { title: "Asked while hidden", context: "C.", options }, "octo.1");
+    act(() => setVisibility("visible"));
+    const reopened = FakeEventSource.instances[1];
+    if (reopened === undefined) throw new Error("It did not reconnect");
+    act(() => reopened.emit("hello"));
+    await view.findByRole("heading", { name: "Asked while hidden" });
+    setVisibility("visible");
+  });
+
+  test("a push from the stream brings in new work without reloading", async () => {
+    seedLine();
+    navigate("/");
+    const view = renderApp(<App />);
+    await view.findByRole("article", { name: "Enclosure" });
+    const source = FakeEventSource.instances[0];
+    if (source === undefined) throw new Error("No event source");
+    act(() => source.emit("hello"));
+    server.act(c.decisionAsk, { title: "Pushed from an agent", context: "C.", options }, "octo.1");
+    act(() => source.emit("change"));
+    await view.findByRole("heading", { name: "Pushed from an agent" });
+  });
+
+  test("closing the page closes the stream", async () => {
+    const view = renderApp(<App />);
+    await view.findByRole("navigation", { name: "Main" });
+    view.unmount();
+    expect(FakeEventSource.instances.every((source) => source.closed)).toBe(true);
+  });
+});
+
+describe("PR status", () => {
   test("the page filters and shows what is linked", async () => {
     const issue = server.act(c.issueCreate, { project: "OCT", title: "Thing" });
     server.act(c.prUpsert, { repo: "a/b", number: 1, title: "Open one", state: "open", issues: [issue.ref] });
@@ -674,7 +519,7 @@ describe("decisions out of band", () => {
 });
 
 describe("the inspector", () => {
-  test("opens from any ref, shows connections and history, closes with Escape", async () => {
+  test("opens from any ref, shows what it waits on and what happened, closes with Escape", async () => {
     const issue = server.act(c.issueCreate, {
       project: "OCT",
       title: "Thing to look at",
@@ -687,36 +532,24 @@ describe("the inspector", () => {
     const panel = within(await view.findByRole("complementary", { name: issue.ref }));
     await panel.findByRole("heading", { name: "Thing to look at" });
     panel.getByText("Details here");
-    panel.getByText("blocked by");
+    panel.getByText(/waiting on/);
     expect(panel.getAllByRole("button", { name: "D-1" }).length).toBeGreaterThan(0);
-    panel.getByRole("heading", { name: "History" });
+    panel.getByRole("heading", { name: "Activity · newest first" });
 
     fireEvent.keyDown(window, { key: "Escape" });
-    await view.findByRole("complementary", { name: "Overview" });
+    await gone(() => view.queryByRole("complementary", { name: issue.ref }));
   });
 
-  test("can decide, change status and post an update", async () => {
+  test("a question opened in place answers with one press, then says who answered", async () => {
     const decision = seedDecision();
     navigate(`/?ref=${decision.ref}`);
     const view = renderApp(<App />);
     const panel = within(await view.findByRole("complementary", { name: decision.ref }));
-    await panel.findByRole("button", { name: /SQS/ });
-    fireEvent.click(panel.getByRole("button", { name: /SQS/ }));
-    fireEvent.click(panel.getByRole("button", { name: "Decide" }));
+    fireEvent.click(await panel.findByRole("button", { name: /SQS/ }));
     await answerNow(view);
     await panel.findByText("Decided by");
     panel.getByRole("button", { name: "Change answer…" });
-
-    fireEvent.change(panel.getByLabelText(`Post an update on ${decision.ref}`), {
-      target: { value: "Noted" },
-    });
-    fireEvent.click(panel.getByRole("button", { name: "Post" }));
-    await panel.findAllByText("Noted");
-    expect(server.act(c.updateList, {})[0]).toMatchObject({
-      body: "Noted",
-      target: decision.ref,
-      actor: "dev",
-    });
+    expect(server.act(c.decisionList, { query: `ref:${decision.ref}` })[0]?.chosenOption).toBe("sqs");
   });
 
   test("says when a ref does not exist", async () => {
@@ -799,21 +632,14 @@ describe("other pages", () => {
     await view.findByText(/No project named NOPE/);
   });
 
-  test("agents tells a registered watch apart from one being hung on", async () => {
-    const decision = seedDecision();
-    server.act(c.watchCreate, {
-      spec: {
-        require: "any",
-        clauses: [{ type: "state", query: `ref:${decision.ref} status:decided`, mode: "exists" }],
-      },
-    });
+  test("agents shows each agent's line and its own note on what it is doing", async () => {
+    server.act(c.agentRegister, { repo: "OCT" });
     server.act(c.agentNote, { note: "Writing the queue" });
     navigate("/agents");
     const view = renderApp(<App />);
-    const main = within(view.getByRole("main"));
-    await main.findByText("No agent is hanging on anything.");
-    main.getByText(`ref:${decision.ref} status:decided`);
-    main.getByText("Writing the queue");
+    const roster = within(await view.findByRole("table", { name: "Roster" }));
+    await roster.findByText("Writing the queue");
+    roster.getByText("idle: nothing to take or scope in its repo");
   });
 
   test("an unknown path says so", async () => {
@@ -865,8 +691,9 @@ describe("lines of work", () => {
       .map((b) => b.textContent);
     expect(titles).toEqual(["Sendspin enclosure", "Weekly digest"]);
     const proposed = within(view.getByRole("region", { name: "Proposed" }));
-    proposed.getByText("Wall mount");
-    proposed.getByText(whole("panel-agent says up next: The base is final."));
+    proposed.getByRole("button", { name: "Wall mount" });
+    proposed.getByText(/proposed by panel-agent/);
+    proposed.getByText(whole("Recommended: Up next. The base is final."));
   });
 
   test("the developer places a proposal, reorders, tables with a reason and adds a line", async () => {
@@ -902,15 +729,19 @@ describe("lines of work", () => {
     fireEvent.click(panel.getByRole("button", { name: "Table it" }));
     fireEvent.click(await view.findByRole("button", { name: "Now" }));
     const tabled = within(await view.findByRole("region", { name: "Tabled" }));
-    fireEvent.click(tabled.getByRole("button", { name: "Show" }));
-    await tabled.findByText("Waiting on the board");
+    fireEvent.click(tabled.getByRole("button", { name: /^Tabled/ }));
+    await tabled.findByText(/Waiting on the board/);
 
-    fireEvent.click(view.getByRole("button", { name: "New line…" }));
-    fireEvent.change(view.getByLabelText("New line"), { target: { value: "Garden sensor" } });
-    fireEvent.change(view.getByLabelText("Done when"), { target: { value: "Readings arrive hourly." } });
-    fireEvent.click(await view.findByRole("checkbox", { name: "OCT" }));
-    fireEvent.click(view.getByRole("button", { name: "Add line" }));
-    await within(view.getByRole("region", { name: "Up next" })).findByText("Garden sensor");
+    fireEvent.click(view.getByRole("button", { name: "New line" }));
+    const card = within(await view.findByRole("region", { name: "New line" }));
+    fireEvent.change(card.getByLabelText("What it is"), { target: { value: "Garden sensor" } });
+    fireEvent.change(card.getByLabelText(/Done when/), { target: { value: "Readings arrive hourly." } });
+    fireEvent.change(await card.findByLabelText("Add a repo"), { target: { value: "OCT" } });
+    fireEvent.click(card.getByRole("button", { name: "Add to up next" }));
+    fireEvent.click(await view.findByRole("button", { name: "Now" }));
+    await within(view.getByRole("region", { name: "Up next" })).findByRole("button", {
+      name: "Garden sensor",
+    });
     const added = server.tracker
       .call(c.homeShow, {}, asDeveloper)
       .upNext.find((candidate) => candidate.title === "Garden sensor");
@@ -924,7 +755,7 @@ describe("lines of work", () => {
     navigate("/lines");
     const view = renderApp(<App />);
     const working = within(await view.findByRole("region", { name: "Working on" }));
-    await working.findByText("owner octo.1, running");
+    await working.findByText(/owner octo\.1, running/);
   });
 
   test("what waits on the developer opens in place on its line: the first fully, the rest one row away", async () => {
@@ -946,13 +777,12 @@ describe("lines of work", () => {
     const view = renderApp(<App />);
     const line = within(await view.findByRole("article", { name: "Sendspin enclosure" }));
     await line.findByRole("article", { name: "Which board?" });
-    line.getByText("waiting on you");
-    fireEvent.click(line.getByRole("button", { name: "+1 more for you" }));
+    line.getByText(/waiting on you/);
+    fireEvent.click(line.getByRole("button", { name: "+1 more for you: a task at the bench" }));
     fireEvent.click(line.getByRole("button", { name: `Open ${task.ref}` }));
     const opened = within(await line.findByRole("article", { name: "Measure the grip" }));
-    fireEvent.click(opened.getByRole("button", { name: "Done…" }));
     fireEvent.change(opened.getByLabelText(`What ${task.ref} found`), { target: { value: "41, 38, 12" } });
-    fireEvent.click(opened.getByRole("button", { name: "Send" }));
+    fireEvent.click(opened.getByRole("button", { name: "Send · Done" }));
     fireEvent.click(await view.findByRole("button", { name: "Now" }));
     await waitFor(() =>
       expect(
@@ -1000,13 +830,11 @@ describe("lines of work", () => {
       navigate("/");
       const view = renderApp(<App />);
       const opened = within(await view.findByRole("article", { name: "Measure the grip" }));
-      fireEvent.click(opened.getByRole("button", { name: "Done…" }));
       fireEvent.change(opened.getByLabelText(`What ${task.ref} found`), { target: { value: "41, 38, 12" } });
-      fireEvent.click(opened.getByRole("button", { name: "Send" }));
+      fireEvent.click(opened.getByRole("button", { name: "Send · Done" }));
       fireEvent.click(await view.findByRole("button", { name: "Undo" }));
       await gone(() => view.queryByRole("button", { name: "Undo" }));
-      fireEvent.click(opened.getByRole("button", { name: "Done…" }));
-      expect(opened.getByLabelText(`What ${task.ref} found`).textContent).toBe("41, 38, 12");
+      expect(opened.getByLabelText(`What ${task.ref} found`)).toHaveProperty("value", "41, 38, 12");
     });
 
     test("a choice that fails when it takes effect says why in the Undo bar, until dismissed", async () => {
@@ -1056,7 +884,8 @@ describe("lines of work", () => {
           "Waiting on boards",
         ),
       );
-      fireEvent.click(await panel.findByRole("button", { name: "Drop" }));
+      fireEvent.click(await panel.findByRole("button", { name: "More: drop this line" }));
+      fireEvent.click(panel.getByRole("button", { name: "Drop" }));
       await answerNow(view);
       await waitFor(() =>
         expect(server.tracker.call(c.lineShow, { ref: "L-1" }, asDeveloper).line.state).toBe("dropped"),
@@ -1110,12 +939,13 @@ describe("lines of work", () => {
       server.act(c.planSet, { line: "L-1", steps: ["Model", "Print"] }, "octo.1");
       navigate("/log");
       const view = renderApp(<App />);
-      fireEvent.click(await view.findByRole("button", { name: "Not seen" }));
       const feed = within(await view.findByRole("feed"));
-      await feed.findByText(/plan/i);
-      await waitFor(() => expect(feed.queryAllByRole("article")).toHaveLength(1));
+      const line = within(await feed.findByRole("region", { name: "Sendspin enclosure" }));
+      await line.findByText("1 unseen");
+      line.getByText(/plan/i);
+      within(feed.getByRole("region", { name: "Weekly digest" })).getByText(/nothing new/);
       fireEvent.click(view.getByRole("button", { name: "Mark all seen" }));
-      await view.findByText("Nothing new since you last looked.");
+      await line.findByText(/nothing new/);
     });
   });
 
@@ -1238,9 +1068,9 @@ describe("lines of work", () => {
       navigate("/");
       const view = renderApp(<App />);
       await view.findByRole("article", { name: "Which board?" });
-      fireEvent.click(view.getByRole("button", { name: "1 to do" }));
+      fireEvent.click(view.getByRole("link", { name: "1 to do" }));
       await view.findByRole("article", { name: "Weigh it" });
-      fireEvent.click(view.getByRole("button", { name: "1 to accept" }));
+      fireEvent.click(view.getByRole("link", { name: "1 to accept" }));
       await waitFor(() =>
         expect(view.getByRole("article", { name: "Wall mount" }).getAttribute("data-selected")).toBe("true"),
       );
@@ -1272,12 +1102,11 @@ describe("lines of work", () => {
       );
     });
 
-    test("in Reorder mode a line is dragged before another, or sent to up next", async () => {
+    test("a line is dragged by its handle before another, and in Reorder mode sent to up next", async () => {
       seedLines();
       navigate("/");
       const view = renderApp(<App />);
-      fireEvent.click(await view.findByRole("button", { name: "Reorder" }));
-      const working = within(view.getByRole("region", { name: "Working on" }));
+      const working = within(await view.findByRole("region", { name: "Working on" }));
       fireEvent.dragStart(working.getByRole("article", { name: "Weekly digest" }));
       fireEvent.dragOver(working.getByRole("article", { name: "Sendspin enclosure" }));
       fireEvent.drop(working.getByRole("article", { name: "Sendspin enclosure" }));
@@ -1287,7 +1116,8 @@ describe("lines of work", () => {
           "Sendspin enclosure",
         ]),
       );
-      fireEvent.click(view.getByRole("button", { name: "Move Weekly digest to up next" }));
+      fireEvent.click(view.getByRole("button", { name: "Reorder" }));
+      fireEvent.click(await view.findByRole("button", { name: "Move Weekly digest to up next" }));
       await answerNow(view);
       await waitFor(() =>
         expect(server.tracker.call(c.homeShow, {}, asDeveloper).upNext.map((line) => line.title)).toContain(
@@ -1316,7 +1146,9 @@ describe("lines of work", () => {
       const cards = proposed.getAllByRole("article");
       expect(cards[0]?.getAttribute("aria-label")).toBe("Restore the feed");
       within(cards[0] ?? document.body).getByText("Urgent: something is broken");
-      expect(within(cards[0] ?? document.body).getAllByRole("button")[1]?.textContent).toBe("Start");
+      expect(within(cards[0] ?? document.body).getAllByRole("button")[1]?.textContent).toBe(
+        "Start · recommended",
+      );
     });
 
     test("at the cap, Step in offers Start one anyway", async () => {
@@ -1331,6 +1163,7 @@ describe("lines of work", () => {
       const view = renderApp(<App />);
       const note = within(await view.findByRole("note", { name: "Step in on Capped" }));
       fireEvent.click(note.getByRole("button", { name: "Start one anyway" }));
+      await answerNow(view);
       await waitFor(() =>
         expect(server.tracker.call(c.lineShow, { ref: "L-1" }, asDeveloper).line.startAnyway).not.toBeNull(),
       );
@@ -1363,6 +1196,7 @@ describe("lines of work", () => {
       fireEvent.click(note.getByRole("button", { name: "Set its checkout…" }));
       fireEvent.change(note.getByLabelText("Checkout of OCT"), { target: { value: "/code/octotrack" } });
       fireEvent.click(note.getByRole("button", { name: "Set" }));
+      await answerNow(view);
       await waitFor(() =>
         expect(server.tracker.call(c.entityShow, { ref: "OCT" }, asDeveloper).entity).toMatchObject({
           checkout: "/code/octotrack",
@@ -1379,11 +1213,12 @@ describe("lines of work", () => {
       server.act(c.taskFile, { title: "Measure it", place: "the bench", outcome: "mm" }, "octo.1");
       navigate("/");
       const view = renderApp(<App />);
-      fireEvent.click(await view.findByRole("button", { name: "I'm at…" }));
-      fireEvent.click(await view.findByRole("button", { name: "the bench" }));
+      fireEvent.change(await view.findByRole("combobox", { name: "I'm at" }), {
+        target: { value: "the bench" },
+      });
       const at = within(await view.findByRole("region", { name: "At the bench" }));
       await at.findByRole("article", { name: "Weigh it" });
-      expect(at.getAllByRole("button", { name: "Done…" })).toHaveLength(2);
+      expect(at.getAllByRole("button", { name: "Send · Done" })).toHaveLength(2);
       fireEvent.click(at.getByRole("button", { name: "Leave" }));
       await gone(() => view.queryByRole("region", { name: "At the bench" }));
     });
@@ -1427,7 +1262,8 @@ describe("lines of work", () => {
       fireEvent.change(await panel.findByLabelText("Tell octo.1"), {
         target: { value: "Print it in black" },
       });
-      fireEvent.click(panel.getByRole("button", { name: "Send" }));
+      panel.getByRole("heading", { name: "Tell octo.1" });
+      fireEvent.click(panel.getByRole("button", { name: "Tell" }));
       await answerNow(view);
       await waitFor(() => {
         const heard = server.tracker.execute(
@@ -1754,25 +1590,69 @@ describe("lines of work", () => {
     });
   });
 
-  test("a half-written update is kept on the server, and is there when the panel opens again", async () => {
-    seedLines();
-    navigate("/?ref=L-1");
-    const first = renderApp(<App />);
-    const panel = within(await first.findByRole("complementary", { name: "L-1" }));
-    fireEvent.change(await panel.findByLabelText("Post an update on L-1"), {
-      target: { value: "Half of a thought" },
+  describe("drafts", () => {
+    function owned() {
+      seedLines();
+      server.act(c.agentRegister, { repo: "OCT" }, "octo.1");
+      server.act(c.lineTake, { ref: "L-1" }, "octo.1");
+    }
+
+    test("a half-written Tell is kept on the server, and is there when the panel opens again", async () => {
+      owned();
+      navigate("/?ref=L-1");
+      const first = renderApp(<App />);
+      const panel = within(await first.findByRole("complementary", { name: "L-1" }));
+      fireEvent.change(await panel.findByLabelText("Tell octo.1"), {
+        target: { value: "Half of a thought" },
+      });
+      await waitFor(() =>
+        expect(server.tracker.call(c.draftGet, { key: "tell:L-1" }, asDeveloper).text).toBe(
+          "Half of a thought",
+        ),
+      );
+      first.unmount();
+      const again = renderApp(<App />);
+      const reopened = within(await again.findByRole("complementary", { name: "L-1" }));
+      await waitFor(() =>
+        expect(reopened.getByLabelText("Tell octo.1")).toHaveProperty("value", "Half of a thought"),
+      );
     });
-    await waitFor(() =>
-      expect(server.tracker.call(c.draftGet, { key: "update:L-1" }, asDeveloper).text).toBe(
-        "Half of a thought",
-      ),
-    );
-    first.unmount();
-    const again = renderApp(<App />);
-    const reopened = within(await again.findByRole("complementary", { name: "L-1" }));
-    await waitFor(() =>
-      expect(reopened.getByLabelText("Post an update on L-1")).toHaveProperty("value", "Half of a thought"),
-    );
+
+    test("Undo keeps a Tell's words in the box; once it takes effect, the box empties", async () => {
+      owned();
+      navigate("/?ref=L-1");
+      const view = renderApp(<App />);
+      const panel = within(await view.findByRole("complementary", { name: "L-1" }));
+      fireEvent.change(await panel.findByLabelText("Tell octo.1"), {
+        target: { value: "Print it in black" },
+      });
+      fireEvent.click(panel.getByRole("button", { name: "Tell" }));
+      fireEvent.click(await view.findByRole("button", { name: "Undo" }));
+      await gone(() => view.queryByRole("button", { name: "Undo" }));
+      expect(panel.getByLabelText("Tell octo.1")).toHaveProperty("value", "Print it in black");
+      fireEvent.click(panel.getByRole("button", { name: "Tell" }));
+      await answerNow(view);
+      await waitFor(() => expect(panel.getByLabelText("Tell octo.1")).toHaveProperty("value", ""));
+      expect(server.tracker.call(c.draftGet, { key: "tell:L-1" }, asDeveloper).text).toBeNull();
+    });
+
+    test("words typed on another device appear in a box that does not have focus, and never in one that does", async () => {
+      server = startTestServer({ live: true });
+      server.act(c.projectCreate, { key: "OCT", name: "Octotrack" });
+      owned();
+      navigate("/?ref=L-1");
+      const view = renderApp(<App />);
+      const panel = within(await view.findByRole("complementary", { name: "L-1" }));
+      const box = await panel.findByLabelText("Tell octo.1");
+      server.tracker.call(c.draftSave, { key: "tell:L-1", text: "From the phone" }, asDeveloper);
+      await waitFor(() => expect(box).toHaveProperty("value", "From the phone"));
+      fireEvent.focus(box);
+      server.tracker.call(c.draftSave, { key: "tell:L-1", text: "From the phone, again" }, asDeveloper);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      expect(box).toHaveProperty("value", "From the phone");
+      fireEvent.blur(box);
+      await waitFor(() => expect(box).toHaveProperty("value", "From the phone, again"));
+    });
   });
 
   test("home is the list of lines, at the root, with the log one link away", async () => {
@@ -1804,6 +1684,7 @@ describe("lines of work", () => {
     fireEvent.click(await view.findByRole("button", { name: "Stop octo.1" }));
     fireEvent.click(await view.findByRole("button", { name: "Now" }));
     fireEvent.click(await view.findByRole("button", { name: "Lift octo.1" }));
+    await answerNow(view);
     await view.findByRole("button", { name: "Stop octo.1" });
   });
 
@@ -1910,7 +1791,7 @@ describe("buzzing this device", () => {
     server = startTestServer({ pushKey: "BPublic" });
     const push = fakePush({ permission: "granted", subscribed: existing });
     try {
-      navigate("/");
+      navigate("/agents");
       const view = renderApp(<App />);
       await view.findByText("Buzzing this device for urgent questions and the top two lines");
       await waitFor(() =>
@@ -1927,7 +1808,7 @@ describe("buzzing this device", () => {
     server = startTestServer({ pushKey: "BPublic" });
     const push = fakePush({ permission: "granted", subscribed: null });
     try {
-      navigate("/");
+      navigate("/agents");
       const view = renderApp(<App />);
       fireEvent.click(await view.findByRole("button", { name: "Buzz this device" }));
       await view.findByText("Buzzing this device for urgent questions and the top two lines");

@@ -19,7 +19,7 @@ function pressChoice(number: string): void {
 
 /**
  * Home's keys beyond moving focus: g u to the urgent question, o to open the focused item's line, t to table it, alt
- * with the arrows to move it, the number keys on items other than questions, ? for the list, r to record answers.
+ * with the arrows to move it, the number keys on items other than questions, r to record answers. ? is the shell's.
  */
 export function useHomeKeys(options: {
   home: HomeView | undefined;
@@ -27,12 +27,11 @@ export function useHomeKeys(options: {
   armed: boolean;
   choose(ref: string): void;
   move(line: string, direction: "up" | "down"): void;
-  onHelp(): void;
   onRecord(): void;
 }): HotkeyMap {
-  const { home, focus, armed, choose, move, onHelp, onRecord } = options;
+  const { home, focus, armed, choose, move, onRecord } = options;
   return useMemo((): HotkeyMap => {
-    const always: HotkeyMap = { "?": onHelp, r: onRecord };
+    const always: HotkeyMap = { r: onRecord };
     if (home === undefined) return always;
     const line = lineOf(home, focus);
     const onLine: HotkeyMap =
@@ -55,5 +54,5 @@ export function useHomeKeys(options: {
       ...numbers,
       ...(urgent === null ? {} : { "g u": () => choose(urgent) }),
     };
-  }, [home, focus, armed, choose, move, onHelp, onRecord]);
+  }, [home, focus, armed, choose, move, onRecord]);
 }

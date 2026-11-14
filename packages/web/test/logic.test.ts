@@ -4,7 +4,7 @@ import { validateQuery } from "../src/hooks/useFilter.ts";
 import type { Decision } from "@octotrack/core/schemas";
 import { decision } from "../src/design/fixtures.ts";
 import type { Tone } from "../src/lib/format.ts";
-import { dayLabel, deliveryOf, humanize, splitRefs, timeAgo, toneOf } from "../src/lib/format.ts";
+import { dayLabel, deliveryOf, humanize, splitRefs, timeAgo, timeLabel, toneOf } from "../src/lib/format.ts";
 import { nextFocus } from "../src/lib/focus.ts";
 import { closeEntity, navigate, openEntity, setParams } from "../src/lib/router.ts";
 
@@ -153,5 +153,14 @@ describe("nextFocus", () => {
     expect(nextFocus(null, [], ["D-1", "D-2"], "D-2")).toBe("D-2");
     expect(nextFocus(null, [], ["D-1", "D-2"], "D-5")).toBe("D-1");
     expect(nextFocus(null, [], [], null)).toBeNull();
+  });
+});
+
+describe("timeLabel", () => {
+  test("the time today, the weekday this past week, else the date", () => {
+    const now = new Date(2026, 10, 14, 18, 0).getTime();
+    expect(timeLabel(new Date(2026, 10, 14, 9, 52).toISOString(), now)).toBe("09:52");
+    expect(timeLabel(new Date(2026, 10, 10, 9, 0).toISOString(), now)).toBe("Tue");
+    expect(timeLabel("2026-10-01T09:00:00.000Z", now)).toBe("2026-10-01");
   });
 });

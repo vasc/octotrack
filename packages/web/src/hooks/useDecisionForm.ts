@@ -5,51 +5,52 @@ import { useChoices } from "./useChoices.ts";
 import { useResolveDecision } from "./useResolveDecision.ts";
 
 export interface DecisionForm {
-  chosen: string | null;
-  /** None of the offered options applies, so the note is the answer. */
-  ownAnswer: boolean;
-  note: string;
-  elsewhere: boolean;
-  canSubmit: boolean;
-  submitting: boolean;
+  /** What is typed as an answer in the developer's own words, or null while that box is closed. */
+  ownWords: string | null;
   error: string | null;
-  choose(key: string): void;
-  chooseOwn(): void;
-  /** Later: to the bottom of its line, or back if it is already there. Waits with Undo like every choice. */
+  /** Picks an option, which answers: it waits a few seconds with Undo, like every choice. */
+  answer(key: string): void;
+  openOwn(): void;
+  closeOwn(): void;
+  setOwn(text: string): void;
+  /** Sends what was typed as the answer. */
+  sendOwn(): void;
+  /** Later: to the bottom of its line, or back if it is already there. */
   postpone(): void;
   /** Sends an urgent question back to its place in the line order. */
   notUrgent(): void;
-  setNote(note: string): void;
-  setElsewhere(value: boolean): void;
-  submit(): void;
 }
 
-/** The state of deciding one card: pick an option or answer in your own words, optionally say why, confirm. */
+/** Answering one question: an option in one press, or the developer's own words; Later; Not urgent. */
 export function useDecisionForm(decision: Decision, onPostponed?: (ref: string) => void): DecisionForm {
-  const [chosen, setChosen] = useState<string | null>(null);
-  const [ownAnswer, setOwnAnswer] = useState(false);
-  const [note, setNote] = useState("");
-  const [elsewhere, setElsewhere] = useState(false);
-  const { resolve, isPending, error } = useResolveDecision();
+  const [ownWords, setOwnWords] = useState<string | null>(null);
+  const { resolve, error } = useResolveDecision();
   const choices = useChoices();
-  const trimmed = note.trim();
-  const canSubmit = ownAnswer ? trimmed !== "" : chosen !== null || trimmed !== "";
-
   return {
-    chosen,
-    ownAnswer,
-    note,
-    elsewhere,
-    canSubmit,
-    submitting: isPending,
+    ownWords,
     error: error?.message ?? null,
-    choose: (key) => {
-      setOwnAnswer(false);
-      setChosen((current) => (current === key ? null : key));
+    answer: (key) => {
+      const label = decision.options.find((option) => option.key === key)?.label ?? key;
+      resolve({
+        ref: decision.ref,
+        option: key,
+        note: null,
+        summary: `Sending "${label}" to ${decision.ref}`,
+      });
     },
-    chooseOwn: () => {
-      setChosen(null);
-      setOwnAnswer((current) => !current);
+    openOwn: () => setOwnWords(""),
+    closeOwn: () => setOwnWords(null),
+    setOwn: setOwnWords,
+    sendOwn: () => {
+      const words = ownWords?.trim() ?? "";
+      if (words === "") return;
+      resolve({
+        ref: decision.ref,
+        option: null,
+        note: words,
+        summary: `Sending your words to ${decision.ref}`,
+      });
+      setOwnWords(null);
     },
     postpone: () => {
       const undo = decision.postponedAt !== null;
@@ -62,18 +63,5 @@ export function useDecisionForm(decision: Decision, onPostponed?: (ref: string) 
     },
     notUrgent: () =>
       choices.make(contracts.decisionNotUrgent.name, { ref: decision.ref }, `${decision.ref} is not urgent`),
-    setNote,
-    setElsewhere,
-    submit: () => {
-      if (!canSubmit) return;
-      const label = decision.options.find((option) => option.key === chosen)?.label;
-      resolve({
-        ref: decision.ref,
-        option: chosen,
-        note: trimmed === "" ? null : trimmed,
-        summary: `Answered ${decision.ref}: ${label ?? trimmed}`,
-        ...(elsewhere ? { channel: "out_of_band" as const } : {}),
-      });
-    },
   };
 }

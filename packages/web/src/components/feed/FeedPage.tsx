@@ -5,83 +5,50 @@ import { useFilter } from "../../hooks/useFilter.ts";
 import { useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useMarkAllSeen } from "../../hooks/useMarkSeen.ts";
 import { setParams, useRoute } from "../../lib/router.ts";
-import { QueueSection } from "../decisions/QueueSection.tsx";
-import { PageHead } from "../ui/PageHead.tsx";
-import { PrStrip } from "../prs/PrStrip.tsx";
-import { EmptyState } from "../ui/states.tsx";
+import { SyncFailures } from "../prs/SyncFailures.tsx";
 import { FeedSection } from "./FeedSection.tsx";
 import { FilterBox } from "./FilterBox.tsx";
-import { ViewTabs } from "./ViewTabs.tsx";
 
-/** The primary screen: what needs a decision, then what has been happening, all under one filter. */
+/**
+ * The log, as E-Feed draws it: what the developer has not seen, line by line in their order. A search goes through
+ * the whole log instead.
+ */
 export function FeedPage() {
-  const { data } = useBootstrap();
   const { params } = useRoute();
   const filter = useFilter();
-  const view = params.get("view") ?? DEFAULT_VIEW;
-  const views = data?.views ?? [];
-  const viewQuery = views.find((item) => item.name === view)?.query ?? "";
-  const scope = [viewQuery, filter.query]
-    .filter((part) => part !== "")
-    .map((part) => `(${part})`)
-    .join(" ");
-
-  const unseen = params.get("seen") === "no";
-  const includeWaiting = params.get("waiting") === "yes";
   const seen = useMarkAllSeen();
+  const includeWaiting = params.get("waiting") === "yes";
   const input = useRef<HTMLInputElement>(null);
   useHotkeys({ "/": () => input.current?.focus() });
-
-  const isEmpty = data !== undefined && data.projects.length === 0 && data.feed.events.length === 0;
-
+  const searching = filter.query !== "";
+  const { data: bootstrap } = useBootstrap();
   return (
-    <div className="page">
-      <PageHead title="Log">
-        <button
-          type="button"
-          className="btn"
-          aria-pressed={unseen}
-          onClick={() => setParams({ seen: unseen ? null : "no" })}
-        >
-          Not seen
-        </button>
-        {unseen ? (
-          <button
-            type="button"
-            className="btn"
-            aria-pressed={includeWaiting}
-            onClick={() => setParams({ waiting: includeWaiting ? null : "yes" })}
-          >
-            Waiting lines too
+    <div className="page page--narrow">
+      <div className="log-head">
+        <div>
+          <h1 className="panel-title">Log</h1>
+          <p className="log-sub">
+            {searching
+              ? "Everything that matches, newest first."
+              : "What you have not seen, line by line, in your order. A line counts as seen once you open it, and what you did yourself is never unseen."}
+          </p>
+        </div>
+        <div className="question-actions">
+          <FilterBox filter={filter} inputRef={input} placeholder="Search" />
+          <button type="button" className="btn" onClick={seen.markAll}>
+            Mark all seen
           </button>
-        ) : null}
-        <button type="button" className="btn" onClick={seen.markAll}>
-          Mark all seen
-        </button>
-      </PageHead>
-      <PrStrip cards={data?.prs ?? []} />
-      <FilterBox filter={filter} inputRef={input} />
-      <ViewTabs
-        views={views}
-        active={view}
-        onSelect={(name) => setParams({ view: name === DEFAULT_VIEW ? null : name })}
+        </div>
+      </div>
+      <SyncFailures failures={bootstrap?.syncFailures ?? []} />
+      <FeedSection
+        view={DEFAULT_VIEW}
+        query={filter.query}
+        unseen={!searching}
+        includeWaiting={includeWaiting}
+        onShowWaiting={() => setParams({ waiting: "yes" })}
+        onFilter={filter.addTerm}
       />
-      {isEmpty ? (
-        <EmptyState command={"octo guide\nocto project create OCT Octotrack --repo owner/name"}>
-          Nothing here yet. Point your agents at the guide, or create a project.
-        </EmptyState>
-      ) : (
-        <>
-          <QueueSection query={scope} isDefault={view === DEFAULT_VIEW && filter.query === ""} />
-          <FeedSection
-            view={view}
-            query={filter.query}
-            unseen={unseen}
-            includeWaiting={includeWaiting}
-            onFilter={filter.addTerm}
-          />
-        </>
-      )}
     </div>
   );
 }

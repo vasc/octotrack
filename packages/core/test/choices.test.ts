@@ -70,6 +70,38 @@ describe("every choice waits a few seconds with Undo", () => {
     expect(failed.error).toContain("cannot be rejected");
   });
 
+  test("the draft a choice was typed in is kept through Undo and deleted once it takes effect", () => {
+    const w = world();
+    const draft = (key: string) => w.tracker.call(c.draftGet, { key }, w.dev).text;
+    w.tracker.call(c.draftSave, { key: "tell:L-1", text: "Black, please." }, w.dev);
+    const undone = w.tracker.call(
+      c.choiceMake,
+      { op: "line.start", input: { ref: w.line.ref }, summary: "Started", draft: "tell:L-1" },
+      w.dev,
+    );
+    w.tracker.call(c.choiceUndo, { id: undone.id }, w.dev);
+    expect(draft("tell:L-1")).toBe("Black, please.");
+    const applied = w.tracker.call(
+      c.choiceMake,
+      { op: "line.start", input: { ref: w.line.ref }, summary: "Started", draft: "tell:L-1" },
+      w.dev,
+    );
+    w.tracker.call(c.choiceNow, { id: applied.id }, w.dev);
+    expect(draft("tell:L-1")).toBeNull();
+  });
+
+  test("a choice that fails keeps its draft, so the words can be sent again", () => {
+    const w = world();
+    w.tracker.call(c.draftSave, { key: "own:L-1", text: "Bought the board" }, w.dev);
+    const doomed = w.tracker.call(
+      c.choiceMake,
+      { op: "line.reject", input: { ref: w.line.ref }, summary: "Not a line", draft: "own:L-1" },
+      w.dev,
+    );
+    expect(w.tracker.call(c.choiceNow, { id: doomed.id }, w.dev).state).toBe("failed");
+    expect(w.tracker.call(c.draftGet, { key: "own:L-1" }, w.dev).text).toBe("Bought the board");
+  });
+
   test("only the developer's own operations can wait, and only the developer makes them", () => {
     const w = world();
     const refusal = (run: () => unknown) => {
@@ -120,5 +152,20 @@ describe("a choice that failed", () => {
     expect(listed[0]?.error).toContain("cannot be rejected");
     w.tracker.call(c.choiceUndo, { id: doomed.id }, w.dev);
     expect(w.tracker.call(c.choiceList, {}, w.dev)).toEqual([]);
+  });
+});
+
+describe("drafts follow the developer between devices", () => {
+  test("a draft save sends a notice naming only its key, and refreshes nothing else", () => {
+    const w = world();
+    const drafts: string[] = [];
+    let changes = 0;
+    w.tracker.onDraft((key) => drafts.push(key));
+    w.tracker.subscribe(() => {
+      changes += 1;
+    });
+    w.tracker.call(c.draftSave, { key: "tell:L-1", text: "Black" }, w.dev);
+    expect(drafts).toEqual(["tell:L-1"]);
+    expect(changes).toBe(0);
   });
 });

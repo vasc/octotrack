@@ -37,16 +37,27 @@ export interface FeedInput {
 
 const SeenRow = z.object({ ref: z.string(), seenAt: z.string().nullable() });
 
+/** Rule breaks: they stay not seen until Mark all seen, so opening the line they broke a rule on does not hide them. */
+const RULE_BREAKS: ReadonlySet<string> = new Set(["write.refused", "agent.would_stop", "agent.stopped"]);
+
+/** When the developer last marked everything seen: changes on no line and rule breaks are not seen after it. */
+export const LOG_SEEN_KEY = "logSeenAt";
+
 /**
- * Not seen: a change on a line after the developer last looked at it, made by someone else. Changes on no line are
- * about no line the developer could have looked at, so "not seen" leaves them out.
+ * Not seen: a change made by someone else after the developer last looked. On a line, that is opening the line; for a
+ * change on no line, or a rule break, only Mark all seen counts, since there is no line to open.
  */
 function unseenTest(ctx: Ctx): (event: FeedEvent) => boolean {
   const seen = new Map(
     rows(ctx, SeenRow, "SELECT ref, seenAt FROM lines").map((line) => [line.ref, line.seenAt]),
   );
+  const logSeenAt =
+    one(ctx, z.object({ value: z.string() }), "SELECT value FROM developer_state WHERE key = ?", [
+      LOG_SEEN_KEY,
+    ])?.value ?? null;
   return (event) => {
-    if (event.line === null || event.actor === DEVELOPER) return false;
+    if (event.actor === DEVELOPER) return false;
+    if (event.line === null || RULE_BREAKS.has(event.type)) return logSeenAt === null || event.ts > logSeenAt;
     const at = seen.get(event.line);
     return at === undefined ? false : at === null || event.ts > at;
   };

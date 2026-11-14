@@ -18,8 +18,9 @@ export function TaskItem({
       task={task}
       words={draft.value}
       onWords={(words) => (words === "" ? draft.clear() : draft.change(words))}
-      onDone={(result) => onDone(task.ref, result)}
-      onCant={(why) => onCant(task.ref, why)}
+      // Kept first: a save landing after the task closed would bring a deleted draft back.
+      onDone={(result) => void draft.flush().then(() => onDone(task.ref, result))}
+      onCant={(why) => void draft.flush().then(() => onCant(task.ref, why))}
     />
   );
 }

@@ -59,13 +59,21 @@ export const runnerCommands: Command[] = [
   },
   {
     path: ["repo", "checkout"],
-    usage: "<REPO> <path>",
+    usage: "<REPO> <path> [--retry L-n]",
     summary: "Set a repo's main checkout on this machine, where new worktrees are made (the developer)",
     ops: [c.repoCheckout.name],
+    options: {
+      retry: {
+        type: "string",
+        description: "Then try this line again, with every line stopped the same way",
+      },
+    },
     async run({ client, out }, args) {
+      const retry = args.str("retry");
       const outcome = await client.call(c.repoCheckout, {
         repo: args.requirePositional(0, "REPO"),
         path: args.requirePositional(1, "path"),
+        ...(retry === undefined ? {} : { retry }),
       });
       out.result(
         outcome,

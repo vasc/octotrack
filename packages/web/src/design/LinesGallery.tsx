@@ -1,11 +1,12 @@
 import { LineActions } from "../components/entity/LineActions.tsx";
-import { LinePanel } from "../components/entity/LinePanel.tsx";
+import { LinePanelHead } from "../components/entity/LinePanelHead.tsx";
+import { OwnerBox } from "../components/entity/OwnerBox.tsx";
+import { PlanList } from "../components/entity/PlanList.tsx";
+import { SummaryBox } from "../components/entity/SummaryBox.tsx";
 import { FoldedSection } from "../components/home/FoldedSection.tsx";
 import { ForYouRow } from "../components/home/ForYouRow.tsx";
-import { HomeCounts } from "../components/home/HomeCounts.tsx";
 import { OwnWorkBox } from "../components/entity/OwnWorkBox.tsx";
 import { TellBox } from "../components/entity/TellBox.tsx";
-import { AtPicker } from "../components/home/AtPicker.tsx";
 import { LineProposalCard } from "../components/home/LineProposalCard.tsx";
 import { SpreadThin } from "../components/home/SpreadThin.tsx";
 import { StartSheetView } from "../components/home/StartSheetView.tsx";
@@ -16,7 +17,8 @@ import { TaskCard } from "../components/home/TaskCard.tsx";
 import { UpNextRow } from "../components/home/UpNextRow.tsx";
 import { WorkingLine } from "../components/home/WorkingLine.tsx";
 import { UndoBar } from "../components/layout/UndoBar.tsx";
-import { AddLineForm } from "../components/lines/AddLineForm.tsx";
+import { TopBar } from "../components/layout/TopBar.tsx";
+import { NewLineCard } from "../components/lines/NewLineCard.tsx";
 import { Markdown } from "../components/ui/Markdown.tsx";
 import { TextBox } from "../components/ui/TextBox.tsx";
 import { DesignSection, Example } from "./Example.tsx";
@@ -44,7 +46,20 @@ export function LinesGallery() {
   return (
     <DesignSection title="Lines of work">
       <Example label="What waits on you">
-        <HomeCounts counts={{ toAnswer: 4, toDo: 3, toAccept: 1, toStepIn: 1, urgent: 0 }} onPick={NOOP} />
+        <TopBar
+          path="/"
+          counts={[
+            { key: "toAnswer", label: "to answer", count: 4, to: "D-56" },
+            { key: "toDo", label: "to do", count: 3, to: "OCT-7" },
+            { key: "toAccept", label: "to accept", count: 1, to: "L-6" },
+            { key: "toStepIn", label: "to step in", count: 1, to: "stepin:L-9" },
+          ]}
+          places={["the bench", "the Mac"]}
+          at={null}
+          onAt={NOOP}
+          onNewLine={NOOP}
+          onKeys={NOOP}
+        />
       </Example>
       <Example label="A working line, waiting on you">
         <WorkingLine
@@ -79,9 +94,8 @@ export function LinesGallery() {
         <ForYouRow item={{ kind: "task", task: TASK }} onOpen={NOOP} />
         <TaskCard task={TASK} words="" onWords={NOOP} onDone={NOOP} onCant={NOOP} />
       </Example>
-      <Example label="Spread thin, and I'm at">
+      <Example label="Spread thin">
         <SpreadThin working={8} noOwner={2} waiting={3} />
-        <AtPicker places={["the bench", "the Mac", "the phone"]} at={null} onAt={NOOP} />
       </Example>
       <Example label="Starting a line that waited">
         <StartSheetView
@@ -199,15 +213,51 @@ export function LinesGallery() {
         <UndoBar pending={[pendingChoice()]} onUndo={NOOP} onNow={NOOP} />
       </Example>
       <Example label="Adding a line">
-        <AddLineForm repos={["PANEL", "GARDEN"]} onAdd={NOOP} />
+        <NewLineCard repos={["PANEL", "GARDEN"]} onAdd={NOOP} onCancel={NOOP} />
       </Example>
-      <Example label="A line in the inspector, with what you can do">
-        <LinePanel line={line({ doneProposal: "Printed, fitted, in use." })} />
-        <LineActions
-          line={line({ doneProposal: "Printed, fitted, in use." })}
-          onChoose={NOOP}
-          onTable={NOOP}
-          onDoneWhen={NOOP}
+      <Example label="A line opened: head, moves, summary">
+        <LinePanelHead line={line({ ref: "L-7" })} position="Line 2 of 5" repos={["PANEL"]} />
+        <LineActions line={line()} owner="panel-widgets" onChoose={NOOP} onTable={NOOP} />
+        <SummaryBox
+          line={line({
+            headline: "Printed; the short board fits. One answer and one measurement from the final print.",
+            summary:
+              "The base is printed and the **26 mm board** fits it. **Next:** measure, then print the final base.",
+            summaryAt: "2026-11-14T09:40:00.000Z",
+          })}
+          owner="panel-widgets"
+        />
+      </Example>
+      <Example label="A line's plan, and its owner">
+        <PlanList
+          steps={[
+            { line: "L-7", position: 1, title: "Model the base for both boards", status: "done" },
+            { line: "L-7", position: 2, title: "Settle board and opening", status: "doing" },
+            { line: "L-7", position: 3, title: "Final print and photograph", status: "todo" },
+          ]}
+          work={[
+            {
+              ref: "PANEL-6",
+              title: "Measure the grip",
+              status: "todo",
+              step: 2,
+              assignee: "dev",
+              prs: [{ ref: "PR-4", repo: "vasc/homepanel", number: 14, state: "open", checks: "passing" }],
+            },
+          ]}
+        />
+        <OwnerBox
+          line={line()}
+          crew={{
+            owner: { name: "panel-widgets", state: "asleep" },
+            helpers: [],
+            scoper: null,
+            search: null,
+          }}
+          repos={["PANEL"]}
+          onStop={NOOP}
+          onOwn={NOOP}
+          onHand={NOOP}
         />
       </Example>
     </DesignSection>

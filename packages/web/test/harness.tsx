@@ -9,7 +9,7 @@ import type { z } from "zod";
 /** Stands in for the browser's EventSource, so that a test can push a change whenever it wants to. */
 export class FakeEventSource {
   static instances: FakeEventSource[] = [];
-  private listeners = new Map<string, (() => void)[]>();
+  private listeners = new Map<string, ((event: { data: string }) => void)[]>();
 
   constructor(readonly url: string) {
     FakeEventSource.instances.push(this);
@@ -17,12 +17,12 @@ export class FakeEventSource {
 
   closed = false;
 
-  addEventListener(type: string, listener: () => void): void {
+  addEventListener(type: string, listener: (event: { data: string }) => void): void {
     this.listeners.set(type, [...(this.listeners.get(type) ?? []), listener]);
   }
 
-  emit(type: string): void {
-    for (const listener of this.listeners.get(type) ?? []) listener();
+  emit(type: string, data = "{}"): void {
+    for (const listener of this.listeners.get(type) ?? []) listener({ data });
   }
 
   close(): void {
@@ -59,6 +59,11 @@ export function startTestServer(options: { live?: boolean; pushKey?: string } = 
     tracker.subscribe(() => {
       for (const source of FakeEventSource.instances) {
         if (!source.closed) source.emit("change");
+      }
+    });
+    tracker.onDraft((key) => {
+      for (const source of FakeEventSource.instances) {
+        if (!source.closed) source.emit("draft", JSON.stringify({ key }));
       }
     });
   }

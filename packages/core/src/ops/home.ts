@@ -150,6 +150,7 @@ export function buildHome(ctx: Ctx): HomeView {
     runner: runnerStatus(ctx),
     at: atView(ctx),
     urgent,
+    noLine: queue.filter((card) => card.decision.line === null && !urgent.includes(card)),
     lines: lineDetails,
     counts: {
       toAnswer: queue.length - urgent.length,
