@@ -15,6 +15,7 @@ import { TellBox } from "./TellBox.tsx";
 export function LinePanelItem({ line }: { line: Line }) {
   const choices = useLineChoices(line);
   const home = useOpQuery(contracts.homeShow, {});
+  const projects = useOpQuery(contracts.projectList, {});
   const tell = useDraft(`tell:${line.ref}`);
   const own = useDraft(`own:${line.ref}`);
   useMarkSeen(line.ref);
@@ -34,6 +35,8 @@ export function LinePanelItem({ line }: { line: Line }) {
         owner={owner}
         onStopOwner={choices.stop}
         tabling={tabling}
+        repos={(projects.data ?? []).map((card) => card.project.ref)}
+        onHand={choices.hand}
       />
       {!live ? null : mine ? (
         <OwnWorkBox

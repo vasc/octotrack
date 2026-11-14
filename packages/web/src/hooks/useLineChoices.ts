@@ -10,7 +10,6 @@ const OPS: Readonly<Record<LineChoice, string>> = {
   drop: contracts.lineDrop.name,
   reject: contracts.lineReject.name,
   own: contracts.lineOwn.name,
-  hand: contracts.lineHand.name,
   not_yet: contracts.lineNotYet.name,
 };
 
@@ -21,7 +20,6 @@ const SAID: Readonly<Record<LineChoice, string>> = {
   drop: "Dropped",
   reject: "Not a line:",
   own: "You own",
-  hand: "Handed to the agents:",
   not_yet: "Not yet:",
 };
 
@@ -51,6 +49,12 @@ export function useLineChoices(line: Line) {
         body === "" ? `Nudged ${line.title}` : `Told ${line.title}: ${body}`,
       ),
     stop: (name: string) => choices.make(contracts.agentStop.name, { name }, `Stopped ${name}`),
+    hand: (repos: string[]) =>
+      choices.make(
+        contracts.lineHand.name,
+        { ref: line.ref, ...(repos.length === 0 ? {} : { repos }) },
+        `Handed ${line.title} to the agents`,
+      ),
     addTask: (title: string) =>
       choices.make(contracts.taskAdd.name, { line: line.ref, title }, `Task on ${line.title}: ${title}`),
     addNote: (body: string) =>

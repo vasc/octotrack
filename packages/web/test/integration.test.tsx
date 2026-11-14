@@ -1492,6 +1492,27 @@ describe("lines of work", () => {
       );
     });
 
+    test("handing a line of the developer's own to the agents asks for its repos when it names none", async () => {
+      const mine = server.tracker.call(
+        c.lineAdd,
+        { title: "Tax archive", doneWhen: "Filed.", where: "working" },
+        asDeveloper,
+      );
+      navigate(`/?ref=${mine.ref}`);
+      const view = renderApp(<App />);
+      const panel = within(await view.findByRole("complementary", { name: mine.ref }));
+      fireEvent.click(await panel.findByRole("button", { name: "Hand to an agent…" }));
+      fireEvent.click(await panel.findByRole("checkbox", { name: "OCT" }));
+      fireEvent.click(panel.getByRole("button", { name: "Hand over" }));
+      await answerNow(view);
+      await waitFor(() =>
+        expect(server.tracker.call(c.lineShow, { ref: mine.ref }, asDeveloper).line).toMatchObject({
+          ownedBy: null,
+          repos: ["OCT"],
+        }),
+      );
+    });
+
     test("opening a line marks it seen", async () => {
       seedLines();
       navigate("/?ref=L-1");
@@ -1784,6 +1805,28 @@ describe("lines of work", () => {
     fireEvent.click(await view.findByRole("button", { name: "Now" }));
     fireEvent.click(await view.findByRole("button", { name: "Lift octo.1" }));
     await view.findByRole("button", { name: "Stop octo.1" });
+  });
+
+  test("a Stop on a line's owner can become pausing the line instead", async () => {
+    server.tracker.call(
+      c.lineAdd,
+      { title: "Busy line", doneWhen: "Done.", repos: ["OCT"], where: "working" },
+      asDeveloper,
+    );
+    server.act(c.agentRegister, { repo: "OCT" }, "octo.3");
+    server.act(c.lineTake, { ref: "L-1" }, "octo.3");
+    navigate("/agents");
+    const view = renderApp(<App />);
+    fireEvent.click(await view.findByRole("button", { name: "Stop octo.3" }));
+    fireEvent.click(await view.findByRole("button", { name: "Pause L-1 instead" }));
+    const paused = (await view.findByText("Paused L-1: up next")).closest(".undo-choice");
+    fireEvent.click(
+      within(paused instanceof HTMLElement ? paused : document.body).getByRole("button", { name: "Now" }),
+    );
+    await waitFor(() =>
+      expect(server.tracker.call(c.lineShow, { ref: "L-1" }, asDeveloper).line.state).toBe("up_next"),
+    );
+    expect(server.tracker.call(c.agentList, {}, asDeveloper)[0]?.state).not.toBe("stopped");
   });
 
   test("the agents roster releases a quiet agent's line, with Undo", async () => {

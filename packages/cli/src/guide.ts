@@ -43,7 +43,11 @@ will be woken.
   octo line propose-done L-7 How done when was met
 
 The owner speaks for the line: its summary, its plan, its case for done. A summary falls due an hour after real work
-(a step changed, an issue closed, a question asked or answered), as drift for the owner.
+(a step changed, an issue closed, a question asked or answered), as drift for the owner. If the developer says not yet,
+you hear what is missing in a notice that wakes you.
+
+When every session Octotrack may run is in use and a line needs an owner, a helper Octotrack started is asked to give
+way: finish your current issue, then octo line release.
 
 ## What you may write
 
@@ -86,7 +90,14 @@ The task frees the issue you hold. Its outcome comes back to you like an answer.
     --recommend up_next --why "The enclosure's final print moves the mounting points"
 
 Only the developer places lines. Work on no line in your repo shows as unplaced-work drift: put each issue on its line,
-or propose a line for it, and re-propose or reject the proposals that came from before.
+or propose a line for it, and re-propose or reject the proposals that came from before. An issue that waits on the
+developer is a task: file it, and close the issue.
+
+When something is broken on a line no agent may work on (a done service, say), propose a line for it as urgent. It
+stands first for the developer, with Start first:
+
+  octo line propose "Restore the feed" --done-when "It loads again" -r PANEL --recommend start \\
+    --why "The done line's service stopped answering" --urgent broken
 
 ## Held work
 
@@ -94,7 +105,8 @@ Questions and tasks on lines nobody is working on are held, and only current for
 re-confirmed. When you take such a line you are told which are stale:
 
   octo held list L-7
-  octo held confirm D-12 PANEL-9
+  octo held confirm D-12 PANEL-9                still stands: current for another 7 days
+  octo held withdraw D-14 --why "The wall is decided"      no longer stands
 
 ## Watching
 

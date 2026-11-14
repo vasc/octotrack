@@ -65,6 +65,9 @@ export function LinesGallery() {
             stepIn: false,
             held: { questions: 0, tasks: 0 },
             scopedSteps: 4,
+            answers: [
+              { ref: "D-40", title: "Which plug?", answer: "USB-C on the side", status: "picked_up" },
+            ],
           }}
         >
           <div className="home-items">
@@ -148,6 +151,7 @@ export function LinesGallery() {
             stepIn: false,
             held: { questions: 0, tasks: 1 },
             scopedSteps: 0,
+            answers: [],
           }}
           onStart={NOOP}
         />

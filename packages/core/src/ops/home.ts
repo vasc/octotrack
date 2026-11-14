@@ -1,15 +1,63 @@
+import { z } from "zod";
 import { crewOf } from "../agents/claims.ts";
 import { DEVELOPER } from "../agents/state.ts";
 import type { ForYou, HomeView, Line, LineHome, LineState } from "../schemas.ts";
 import type { Ctx } from "../store/context.ts";
 import { rows } from "../store/context.ts";
 import { allLines } from "../store/entities.ts";
-import { IssueRow, PlanStepRow } from "../store/rows.ts";
+import { DecisionRow, IssueRow, PlanStepRow } from "../store/rows.ts";
 import { buildQueue } from "./decisions.ts";
 import { lineStart, runnerStatus, stepInFor } from "./runner.ts";
 import { atView, heldOn } from "./tasks.ts";
 
 const DONE_LATELY_MS = 7 * 24 * 60 * 60 * 1000;
+/** How long an answer's status shows on its line. */
+const ANSWERS_SHOWN_MS = 3 * 24 * 60 * 60 * 1000;
+const ANSWERS_SHOWN = 3;
+const DeliveredRow = z.object({ ref: z.string().nullable(), deliveredAt: z.string().nullable() });
+
+/**
+ * The answers given on a line lately, and what became of each: waiting in the line's inbox, heard by its agent, carried
+ * out as it reported, or a wake that failed while it waited.
+ */
+function answersOn(ctx: Ctx, line: string): LineHome["answers"] {
+  const since = new Date(Date.parse(ctx.now) - ANSWERS_SHOWN_MS).toISOString();
+  const delivered = new Map(
+    rows(ctx, DeliveredRow, "SELECT ref, deliveredAt FROM line_inbox WHERE line = ? AND kind = 'answer'", [
+      line,
+    ]).map((row) => [row.ref, row.deliveredAt]),
+  );
+  const failedWake =
+    rows(
+      ctx,
+      z.object({ name: z.string() }),
+      `SELECT a.name AS name FROM agents a JOIN line_claims c ON c.agent = a.name
+     WHERE c.line = ? AND a.wakeError IS NOT NULL`,
+      [line],
+    ).length > 0;
+  return rows(
+    ctx,
+    DecisionRow,
+    "SELECT * FROM decisions WHERE line = ? AND status = 'decided' AND decidedAt >= ? ORDER BY decidedAt DESC LIMIT ?",
+    [line, since, ANSWERS_SHOWN],
+  ).map((decision) => {
+    const chosen = decision.options.find((option) => option.key === decision.chosenOption)?.label;
+    const heard = delivered.get(decision.ref) ?? null;
+    return {
+      ref: decision.ref,
+      title: decision.title,
+      answer: chosen ?? decision.resolutionNote ?? "answered",
+      status:
+        decision.reportStatus === "done"
+          ? "carried_out"
+          : heard !== null || decision.pickedUpAt !== null
+            ? "picked_up"
+            : failedWake
+              ? "wake_failed"
+              : "not_picked_up",
+    };
+  });
+}
 
 function openTasks(ctx: Ctx, line: string) {
   return rows(
@@ -86,6 +134,7 @@ export function buildHome(ctx: Ctx): HomeView {
         tasks: held.filter((item) => item.kind === "task").length,
       },
       scopedSteps: steps.length,
+      answers: working ? answersOn(ctx, line.ref) : [],
     };
   };
 

@@ -237,6 +237,7 @@ export function pendingChoice(overrides: Partial<PendingChoice> = {}): PendingCh
     id: 1,
     op: "line.start",
     ref: null,
+    line: null,
     summary: "Started Wall mount",
     dueAt: "",
     state: "pending",

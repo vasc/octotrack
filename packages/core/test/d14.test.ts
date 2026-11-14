@@ -367,4 +367,40 @@ describe("repo: in queries", () => {
   });
 });
 
+describe("a Stop waiting with Undo", () => {
+  test("names the working line its agent owns, so the developer can pause the line instead", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    const owner = w.register("owner");
+    w.as(owner, c.lineTake, { ref: line.ref });
+    w.as(w.dev, c.choiceMake, { op: "agent.stop", input: { name: "owner" }, summary: "Stopped owner" });
+    expect(w.as(w.dev, c.choiceList, {}).map((choice) => choice.line)).toEqual([line.ref]);
+  });
+});
+
+describe("what became of an answer", () => {
+  test("shows on its line: not picked up, then picked up once its agent hears it, then carried out", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    const owner = w.register("owner");
+    w.as(owner, c.lineTake, { ref: line.ref });
+    const asked = w.as(owner, c.decisionAsk, {
+      title: "Which board?",
+      context: "Context.",
+      options: OPTIONS,
+    });
+    w.as(w.dev, c.decisionResolve, { ref: asked.ref, option: "a" });
+    const answers = () => w.as(w.dev, c.homeShow, {}).lines[line.ref]?.answers ?? [];
+    expect(answers()).toEqual([
+      { ref: asked.ref, title: "Which board?", answer: "Yes", status: "not_picked_up" },
+    ]);
+    w.notices(owner);
+    expect(answers()[0]?.status).toBe("picked_up");
+    w.as(owner, c.decisionReport, { ref: asked.ref, status: "done", note: "Printed for the 26 mm board." });
+    expect(answers()[0]?.status).toBe("carried_out");
+    w.later(4 * DAY);
+    expect(answers()).toEqual([]);
+  });
+});
+
 void DAY;

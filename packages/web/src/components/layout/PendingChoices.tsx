@@ -1,3 +1,4 @@
+import { contracts } from "@octotrack/core/contracts";
 import { useMemo } from "react";
 import { useChoices } from "../../hooks/useChoices.ts";
 import { type HotkeyMap, useHotkeys } from "../../hooks/useHotkeys.ts";
@@ -19,7 +20,15 @@ export function PendingChoices() {
   if (choices.pending.length === 0 && choices.failure === null) return null;
   return (
     <>
-      <UndoBar pending={choices.pending} onUndo={choices.undo} onNow={choices.now} />
+      <UndoBar
+        pending={choices.pending}
+        onUndo={choices.undo}
+        onNow={choices.now}
+        onPause={(id, line) => {
+          choices.undo(id);
+          choices.make(contracts.lineQueue.name, { ref: line }, `Paused ${line}: up next`);
+        }}
+      />
       {choices.failure === null ? null : <ErrorState error={choices.failure} />}
     </>
   );
