@@ -289,6 +289,12 @@ const MIGRATIONS: readonly Migration[] = [
     createdAt TEXT NOT NULL, removedAt TEXT
   );
   `,
+  `
+  CREATE TABLE push_subscriptions (endpoint TEXT PRIMARY KEY, p256dh TEXT NOT NULL, auth TEXT NOT NULL, createdAt TEXT NOT NULL);
+  CREATE TABLE push_sent (key TEXT PRIMARY KEY, line TEXT NOT NULL, sentAt TEXT NOT NULL);
+  CREATE TABLE push_lines (line TEXT PRIMARY KEY, buzzedAt TEXT NOT NULL);
+  CREATE TABLE developer_state (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+  `,
 ];
 
 const UserVersion = z.object({ user_version: z.number().int() });

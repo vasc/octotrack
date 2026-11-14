@@ -296,6 +296,12 @@ Decisions made from that:
   only `{line}` and `{name}` filled into the developer's command and `OCTO_AGENT` set. A start that exits at once keeps
   its name and is retried after 2, 10, 60 then 360 minutes; Step in quotes its last line of output and offers Try now.
   Only the server's own runner may record starts, exits and closes.
+- **Phone interruptions, as built.** The dashboard installs as an app (manifest and service worker at the root) and
+  subscribes with "Buzz this device". `web-push` 4 sends the notifications; it was checked to make its keys, encrypt
+  and sign inside the compiled binary. The server makes its VAPID keys once into `~/.octotrack/vapid.json`, readable
+  only by the developer, and asks push services to contact `OCTO_PUSH_CONTACT`, by default an address that names no
+  one. What buzzes is one pure function (`shouldBuzz`); a line's buzz resets whenever the app is in front of the
+  developer, which the dashboard reports on every visit. A tap opens `/?focus=<ref>`.
 - **The developer is present, never inferred.** `--me` on the CLI, or `OCTO_DEVELOPER=1` on an interactive terminal; a
   call that names an agent, by `--agent` or `OCTO_AGENT`, is never the developer, and `--me` with one is a usage error.
 - **Migration is simple and agents clean up.** Projects become repos with the same keys, so every ref stays valid; old

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { useBootstrap } from "../../hooks/useBootstrap.ts";
 import { type HotkeyMap, useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useLiveUpdates } from "../../hooks/useLiveUpdates.ts";
+import { useSeen } from "../../hooks/useSeen.ts";
 import { closeEntity, useRoute } from "../../lib/router.ts";
 import { EntityPanel } from "../entity/EntityPanel.tsx";
 import { ErrorState } from "../ui/states.tsx";
@@ -14,6 +15,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { path, params } = useRoute();
   const { data, error, isPending } = useBootstrap();
   const live = useLiveUpdates();
+  useSeen();
   const entity = params.get("ref");
   const keys = useMemo((): HotkeyMap => (entity === null ? {} : { Escape: closeEntity }), [entity]);
   useHotkeys(keys);

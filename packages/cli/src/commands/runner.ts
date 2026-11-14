@@ -86,4 +86,39 @@ export const runnerCommands: Command[] = [
       out.result(outcome, () => "Recorded.");
     },
   },
+  {
+    path: ["push", "seen"],
+    summary: "Say you have looked, so each line may buzz your phone once more (the developer)",
+    ops: [c.pushSeen.name],
+    async run({ client, out }) {
+      const outcome = await client.call(c.pushSeen, {});
+      out.result(outcome, () => "Noted.");
+    },
+  },
+  {
+    path: ["push", "unsubscribe"],
+    usage: "<endpoint>",
+    summary: "Stop buzzing a browser (the developer)",
+    ops: [c.pushUnsubscribe.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(c.pushUnsubscribe, {
+        endpoint: args.requirePositional(0, "endpoint"),
+      });
+      out.result(outcome, () => "Stopped.");
+    },
+  },
+  {
+    path: ["push", "record"],
+    usage: "<subscribe|subscriptions|due|sent>",
+    summary: "The dashboard and the server record these; from the CLI they are refused or need the developer",
+    options: { input: { ...STRING, description: "The operation's input, as JSON" } },
+    ops: [c.pushSubscribe.name, c.pushSubscriptions.name, c.pushDue.name, c.pushSent.name],
+    async run({ client, out }, args) {
+      const outcome = await client.op(
+        `push.${args.requirePositional(0, "what")}`,
+        JSON.parse(args.str("input") ?? "{}"),
+      );
+      out.result(outcome, () => JSON.stringify(outcome.data, null, 2));
+    },
+  },
 ];

@@ -826,3 +826,21 @@ export const RunnerWorktree = z.object({
   agent: z.string(),
 });
 export type RunnerWorktree = z.infer<typeof RunnerWorktree>;
+
+/** A browser's Web Push subscription, as the Push API gives it. */
+export const PushSubscription = z.object({
+  endpoint: z.string().url(),
+  keys: z.object({ p256dh: z.string().min(1), auth: z.string().min(1) }),
+});
+export type PushSubscription = z.infer<typeof PushSubscription>;
+
+/** A notification due to buzz the developer's phone. It carries no more than the question and its recommendation. */
+export const PushNote = z.object({
+  key: z.string(),
+  line: z.string(),
+  title: z.string(),
+  body: z.string(),
+  /** Where tapping it goes: that question, focused. */
+  url: z.string(),
+});
+export type PushNote = z.infer<typeof PushNote>;

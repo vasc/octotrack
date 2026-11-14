@@ -33,6 +33,11 @@ export function wakeAdaptersPath(): string {
   return join(octoHome(), "wake-adapters.json");
 }
 
+/** The server's Web Push identity. See push.ts. */
+export function vapidPath(): string {
+  return join(octoHome(), "vapid.json");
+}
+
 /** The developer's own setup for starting agent sessions. See runner.ts. */
 export function agentSetupPath(): string {
   return join(octoHome(), "agent-setup.json");

@@ -1452,3 +1452,10 @@ p {
     content: none;
   }
 }
+
+.push-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-xs);
+}

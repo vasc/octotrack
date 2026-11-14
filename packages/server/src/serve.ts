@@ -10,8 +10,10 @@ import {
   allowedHostsPath,
   databasePath,
   serverStoppedPath,
+  vapidPath,
   wakeAdaptersPath,
 } from "./paths.ts";
+import { createPushDispatcher, loadOrCreateVapid, webPushSender } from "./push.ts";
 import { createRunner, loadRunnerConfig } from "./runner.ts";
 import { cachedRemoteOf } from "./remotes.ts";
 import { openSqlite } from "./sqlite.ts";
@@ -28,6 +30,14 @@ const IDLE_TIMEOUT_SECONDS = 120;
 
 const GITHUB_CALLER: Caller = { actor: "github", channel: "cli", system: true };
 const OCTOTRACK: Caller = { actor: "octotrack", channel: "cli", system: true };
+
+/**
+ * Who push services may contact about these notifications. VAPID asks for a mailto: or https: address; set
+ * OCTO_PUSH_CONTACT to one of yours, since nothing about the developer is sent without them choosing to.
+ */
+function pushContact(): string {
+  return process.env.OCTO_PUSH_CONTACT ?? "mailto:octotrack@localhost";
+}
 
 export function prSyncSeconds(): number {
   const raw = process.env.OCTO_PR_SYNC_SECONDS;
@@ -84,12 +94,16 @@ export function startServer(port: number, hostname = "127.0.0.1"): RunningServer
     return { repos: repos.length, synced, errors };
   };
 
+  const vapid = loadOrCreateVapid(vapidPath());
+  const push = createPushDispatcher({ tracker, send: webPushSender(vapid, pushContact()) });
+  const stopPush = push.listen();
   const app = createApp({
     tracker,
     hub,
     assets: dashboardAssets(currentDashboard(WEB_DIST)),
     syncPrs,
     allowedHosts: loadAllowedHosts(allowedHostsPath()),
+    pushKey: vapid.publicKey,
   });
   const server = Bun.serve({ port, hostname, idleTimeout: IDLE_TIMEOUT_SECONDS, fetch: app.fetch });
 
@@ -125,6 +139,8 @@ export function startServer(port: number, hostname = "127.0.0.1"): RunningServer
       }
     }, CHOICE_TICK_MS),
     setInterval(runOnce, RUNNER_TICK_MS),
+    // Step in becomes due by time alone, so notifications are checked on a tick as well as on every change.
+    setInterval(() => void push.dispatch(), RUNNER_TICK_MS),
   ];
   const syncSeconds = prSyncSeconds();
   if (syncSeconds > 0) {
@@ -137,6 +153,7 @@ export function startServer(port: number, hostname = "127.0.0.1"): RunningServer
     stop() {
       for (const timer of timers) clearInterval(timer);
       stopWakes();
+      stopPush();
       server.stop(true);
     },
   };

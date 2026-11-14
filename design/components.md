@@ -124,6 +124,7 @@ Home is one list: every line in the developer's order, with what each needs from
 | `ReorderButtons` | Pure       | Up and down within a section, in Reorder mode                                                |
 | `HomePage`       | Structural | Home: the focus, the sections, and every choice                                              |
 | `FirstRun`       | Pure       | Before anything is placed: accept the agents' recommended placements in one choice           |
+| `PushToggle`     | Pure       | Whether this device is buzzed, and Buzz this device to turn it on                            |
 | `TableForm`      | Pure       | Asks why before tabling: a tabled line always says why                                       |
 | `AddLineForm`    | Pure       | A new line with its done-when sentence. It joins the end of up next                          |
 

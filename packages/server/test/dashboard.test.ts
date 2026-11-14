@@ -43,6 +43,19 @@ describe("serving the dashboard", () => {
     expect(await (await serve("/assets/missing.js"))?.text()).toBe("<html>page</html>");
   });
 
+  test("serves the installable app's own files from the root, always checked again", async () => {
+    const dist = built();
+    writeFileSync(join(dist, "sw.js"), "worker");
+    writeFileSync(join(dist, "manifest.webmanifest"), "{}");
+    const serve = dashboardAssets(fromDist(dist));
+    const worker = await serve("/sw.js");
+    expect(await worker?.text()).toBe("worker");
+    expect(worker?.headers.get("cache-control")).toBe("no-cache");
+    expect((await serve("/manifest.webmanifest"))?.headers.get("content-type")).toBe(
+      "application/manifest+json",
+    );
+  });
+
   test("nothing when no dashboard was built", async () => {
     expect(await dashboardAssets(fromEmbedded(new Map()))("/")).toBeNull();
   });
