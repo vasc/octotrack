@@ -414,3 +414,13 @@ describe("re-confirmed work is in the log", () => {
     ]);
   });
 });
+
+describe("a wake says how many things wait", () => {
+  test("one thing waits", () => {
+    const w = world();
+    const asked = w.ask();
+    w.later(20);
+    w.as(w.dev, c.decisionResolve, { ref: asked, option: "a" });
+    expect(w.as(w.dev, c.agentWakes, {})[0]?.message).toContain("1 thing waits for you");
+  });
+});

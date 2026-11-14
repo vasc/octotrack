@@ -204,14 +204,6 @@ export function waitingOnYou(ctx: Ctx, line: string): boolean {
   return workable === 0;
 }
 
-/** Something reached a line with no owner, so its search starts over, from offering it in replies. */
-export function restartSearch(ctx: Ctx, line: string): void {
-  ctx.sql.run("UPDATE owner_searches SET since = ?, firstOffer = NULL, firstUntil = NULL WHERE line = ?", [
-    ctx.now,
-    line,
-  ]);
-}
-
 /** A last owner that cannot be woken is not waited on: the search moves past offering it the line. */
 export function endFirstOffer(ctx: Ctx, agent: string): void {
   ctx.sql.run("UPDATE owner_searches SET firstUntil = ? WHERE firstOffer = ? AND firstUntil > ?", [
