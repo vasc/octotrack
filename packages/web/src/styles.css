@@ -269,10 +269,11 @@ p {
 
 .filter-input {
   width: 100%;
-  padding: var(--space-3) var(--space-5);
+  min-height: var(--control-height);
+  padding: 0 var(--space-5);
   background: var(--surface);
   border: 1px solid var(--line-strong);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   font-family: var(--mono);
   font-size: var(--text-sm);
   outline: none;
@@ -464,12 +465,14 @@ p {
   background: var(--ink);
 }
 
+/* Text fields are the height of every other control, and as rounded, so a field and its button line up. */
 .field {
   width: 100%;
+  min-height: var(--control-height);
   padding: var(--space-2) var(--space-4);
   background: var(--surface);
   border: 1px solid var(--line-strong);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   outline: none;
 }
 
