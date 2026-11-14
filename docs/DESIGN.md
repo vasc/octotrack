@@ -288,9 +288,10 @@ Decisions made from that:
   for the developer on the line itself; agents write a done when directly only on lines still proposed or up next.
   "I'll own it" winds the agents down like tabling and leaves the line in Working on; handing it back runs the usual
   owner search, which offers it first to the owner that wound down.
-- **The dashboard and the runner, as built.** Home is `/` and the feed is the Log at `/log`. Every choice home and the
-  line panel make waits five seconds on the server with Undo (`choice.make`); the tracker applies it on the next call
-  or its one-second tick, so closing the tab neither loses nor repeats it. Drafts are kept on the server as they are typed. The local runner reads `~/.octotrack/agent-setup.json`
+- **The dashboard and the runner, as built.** Home is `/` and the feed is the Log at `/log`. Every choice the developer
+  makes, answers included, waits five seconds on the server with Undo (`choice.make`); the tracker applies it on the
+  next call or its one-second tick, so closing the tab neither loses nor repeats it, and one that fails stays in the
+  Undo bar with why until dismissed. Drafts are kept on the server as they are typed. The local runner reads `~/.octotrack/agent-setup.json`
   and does nothing without it; it starts in watch mode (`dryRun`, on unless the file turns it off), recording
   `runner.would_start`. A start runs in a fresh worktree on branch `octo/<name>`, after the repo's setup commands, with
   only `{line}` and `{name}` filled into the developer's command and `OCTO_AGENT` set. A start that exits at once keeps
