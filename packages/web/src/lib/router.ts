@@ -47,11 +47,22 @@ export function setParams(patch: Readonly<Record<string, string | null>>, replac
   navigate(`${window.location.pathname}${query === "" ? "" : `?${query}`}`, replace);
 }
 
-/** Opens a ref in the panel; with tell, straight to the line's Tell box. */
+/**
+ * Opens a ref in the panel; with tell, straight to the line's Tell box. Opened from another ref's panel, it remembers
+ * that one, so Esc goes back to it, as E-Issue's task opened from its line does.
+ */
 export function openEntity(ref: string, act: "tell" | null = null): void {
-  setParams({ ref, act });
+  const current = new URLSearchParams(window.location.search).get("ref");
+  setParams({ ref, act, from: current !== null && current !== ref ? current : null });
 }
 
 export function closeEntity(): void {
-  setParams({ ref: null, act: null });
+  setParams({ ref: null, act: null, from: null });
+}
+
+/** Esc on a panel: back to the ref it was opened from, else closed. */
+export function backEntity(): void {
+  const from = new URLSearchParams(window.location.search).get("from");
+  if (from === null) closeEntity();
+  else setParams({ ref: from, act: null, from: null });
 }

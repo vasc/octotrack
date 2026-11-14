@@ -1,5 +1,6 @@
 import type { Line } from "@octotrack/core/schemas";
 import { useState } from "react";
+import { timeAgo } from "../../lib/format.ts";
 import { openEntity } from "../../lib/router.ts";
 import { TableForm } from "../lines/TableForm.tsx";
 import { FoldPicker } from "./FoldPicker.tsx";
@@ -18,6 +19,12 @@ const RECOMMENDED: Readonly<Record<NonNullable<Line["recommendation"]>, string>>
   fold: "Fold into another line",
 };
 
+/** How long ago, as a phrase: "just now", "2h ago". */
+function age(iso: string, now: number): string {
+  const ago = timeAgo(iso, now);
+  return ago === "now" ? "just now" : `${ago} ago`;
+}
+
 export interface ProposalCardProps {
   line: Line;
   focused?: boolean;
@@ -30,6 +37,14 @@ export interface ProposalCardProps {
   onReject(ref: string): void;
   /** For a tabled line back to look at: it was a line, so it is dropped, not rejected. */
   onDrop(ref: string): void;
+  /** Its repos, by their GitHub names. */
+  repos?: readonly string[];
+  /** The first step of the plan its agent wrote, if any. */
+  firstStep?: string | null;
+  /** The last line up next, which an Up next recommendation would put it after. */
+  lastUpNext?: string | null;
+  /** The time now, for how long ago it was proposed. */
+  now?: number;
 }
 
 /**
@@ -46,6 +61,10 @@ export function ProposalCard({
   onFold,
   onReject,
   onDrop,
+  repos = [],
+  firstStep = null,
+  lastUpNext = null,
+  now = Date.now(),
 }: ProposalCardProps) {
   const [mode, setMode] = useState<"table" | "fold" | null>(null);
   const fromTable = line.tabledReason !== null;
@@ -71,7 +90,14 @@ export function ProposalCard({
             {line.title}
           </button>
           <span className="line-facts">
-            {line.proposedBy === null ? null : <span> · proposed by {line.proposedBy}</span>}
+            {line.proposedBy === null ? null : (
+              <span>
+                {" "}
+                · proposed by {line.proposedBy}, {age(line.createdAt, now)}
+              </span>
+            )}
+            {repos.length === 0 ? null : <span className="mono"> · {repos.join(", ")}</span>}
+            {firstStep === null || firstStep === undefined ? null : <span> · first step: {firstStep}</span>}
             {line.fromRef === null ? null : <span> · from before ({line.fromRef})</span>}
             {line.doneWhen === "" ? null : (
               <span>
@@ -88,7 +114,13 @@ export function ProposalCard({
           </p>
         ) : line.recommendation === null ? null : (
           <p className="proposal-case">
-            <b>Recommended: {RECOMMENDED[line.recommendation]}.</b>{" "}
+            <b>
+              Recommended: {RECOMMENDED[line.recommendation]}
+              {line.recommendation === "up_next" && lastUpNext !== null && lastUpNext !== undefined
+                ? `, after ${lastUpNext}`
+                : ""}
+              .
+            </b>{" "}
             {line.recommendationWhy === null ? null : <Markdown text={line.recommendationWhy} inline />}
           </p>
         )}

@@ -124,6 +124,9 @@ export function WaitingSections({
             line={line}
             focused={focus === line.ref}
             foldTargets={[...home.working, ...home.upNext]}
+            repos={line.repos.map(h.repoName)}
+            firstStep={home.lines[line.ref]?.step?.title ?? null}
+            lastUpNext={home.upNext.at(-1)?.title ?? null}
             // A line back from tabled may hold questions and tasks, so it starts through its Start sheet.
             onStart={line.tabledReason === null ? h.start : onStarting}
             onQueue={h.queue}

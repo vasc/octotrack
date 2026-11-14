@@ -818,7 +818,9 @@ describe("lines of work", () => {
           "Waiting on boards",
         ),
       );
-      fireEvent.click(await panel.findByRole("button", { name: "More: drop this line" }));
+      fireEvent.click(
+        await panel.findByRole("button", { name: "More: drop this line, fold it into another" }),
+      );
       fireEvent.click(panel.getByRole("button", { name: "Drop" }));
       await answerNow(view);
       await waitFor(() =>
@@ -1002,7 +1004,7 @@ describe("lines of work", () => {
       await gone(() => view.queryByRole("complementary", { name: "L-1" }));
       fireEvent.keyDown(window, { key: "t" });
       const panel = within(await view.findByRole("complementary", { name: "L-1" }));
-      const box = await panel.findByLabelText("Tell octo.1");
+      const box = await panel.findByLabelText("Message to octo.1");
       expect(document.activeElement).toBe(box);
     });
 
@@ -1389,7 +1391,7 @@ describe("lines of work", () => {
       navigate("/?ref=L-1");
       const view = renderApp(<App />);
       const panel = within(await view.findByRole("complementary", { name: "L-1" }));
-      fireEvent.change(await panel.findByLabelText("Tell octo.1"), {
+      fireEvent.change(await panel.findByLabelText("Message to octo.1"), {
         target: { value: "Print it in black" },
       });
       panel.getByRole("heading", { name: "Tell octo.1" });
@@ -1403,6 +1405,25 @@ describe("lines of work", () => {
         ).notices;
         expect(heard.map((notice) => notice.body).join(" ")).toContain("Print it in black");
       });
+    });
+
+    test("a question in the panel opens on its own with Background, and Esc goes back to the line", async () => {
+      owned();
+      const options = [{ key: "a", label: "Yes", description: "Go ahead." }];
+      const asked = server.act(
+        c.decisionAsk,
+        { title: "Which board?", context: "Context.", options },
+        "octo.1",
+      );
+      navigate("/?ref=L-1");
+      const view = renderApp(<App />);
+      const panel = within(await view.findByRole("complementary", { name: "L-1" }));
+      fireEvent.click(await panel.findByRole("button", { name: "Background" }));
+      await view.findByRole("complementary", { name: asked.ref });
+      fireEvent.keyDown(window, { key: "Escape" });
+      await view.findByRole("complementary", { name: "L-1" });
+      fireEvent.keyDown(window, { key: "Escape" });
+      await gone(() => view.queryByRole("complementary", { name: "L-1" }));
     });
 
     test("Stop is offered on the line's owner", async () => {
@@ -1834,7 +1855,7 @@ describe("lines of work", () => {
       navigate("/?ref=L-1");
       const first = renderApp(<App />);
       const panel = within(await first.findByRole("complementary", { name: "L-1" }));
-      fireEvent.change(await panel.findByLabelText("Tell octo.1"), {
+      fireEvent.change(await panel.findByLabelText("Message to octo.1"), {
         target: { value: "Half of a thought" },
       });
       await waitFor(() =>
@@ -1846,7 +1867,7 @@ describe("lines of work", () => {
       const again = renderApp(<App />);
       const reopened = within(await again.findByRole("complementary", { name: "L-1" }));
       await waitFor(() =>
-        expect(reopened.getByLabelText("Tell octo.1")).toHaveProperty("value", "Half of a thought"),
+        expect(reopened.getByLabelText("Message to octo.1")).toHaveProperty("value", "Half of a thought"),
       );
     });
 
@@ -1855,7 +1876,7 @@ describe("lines of work", () => {
       navigate("/?ref=L-1");
       const view = renderApp(<App />);
       const panel = within(await view.findByRole("complementary", { name: "L-1" }));
-      const box = await panel.findByLabelText("Tell octo.1");
+      const box = await panel.findByLabelText("Message to octo.1");
       fireEvent.change(box, { target: { value: "Print it in black" } });
       fireEvent.keyDown(box, { key: "Enter", metaKey: true });
       await view.findByRole("button", { name: "Undo" });
@@ -1870,16 +1891,16 @@ describe("lines of work", () => {
       navigate("/?ref=L-1");
       const view = renderApp(<App />);
       const panel = within(await view.findByRole("complementary", { name: "L-1" }));
-      fireEvent.change(await panel.findByLabelText("Tell octo.1"), {
+      fireEvent.change(await panel.findByLabelText("Message to octo.1"), {
         target: { value: "Print it in black" },
       });
       fireEvent.click(panel.getByRole("button", { name: "Tell" }));
       fireEvent.click(await view.findByRole("button", { name: "Undo" }));
       await gone(() => view.queryByRole("button", { name: "Undo" }));
-      expect(panel.getByLabelText("Tell octo.1")).toHaveProperty("value", "Print it in black");
+      expect(panel.getByLabelText("Message to octo.1")).toHaveProperty("value", "Print it in black");
       fireEvent.click(panel.getByRole("button", { name: "Tell" }));
       await answerNow(view);
-      await waitFor(() => expect(panel.getByLabelText("Tell octo.1")).toHaveProperty("value", ""));
+      await waitFor(() => expect(panel.getByLabelText("Message to octo.1")).toHaveProperty("value", ""));
       expect(server.tracker.call(c.draftGet, { key: "tell:L-1" }, asDeveloper).text).toBeNull();
     });
 
@@ -1888,7 +1909,7 @@ describe("lines of work", () => {
       navigate("/?ref=L-1");
       const view = renderApp(<App />);
       const panel = within(await view.findByRole("complementary", { name: "L-1" }));
-      const box = await panel.findByLabelText("Tell octo.1");
+      const box = await panel.findByLabelText("Message to octo.1");
       // Draft saves answer slowly here, as over a slow link.
       const fetchNow = globalThis.fetch;
       Object.assign(globalThis, {
@@ -1923,7 +1944,7 @@ describe("lines of work", () => {
       navigate("/?ref=L-1");
       const view = renderApp(<App />);
       const panel = within(await view.findByRole("complementary", { name: "L-1" }));
-      const box = await panel.findByLabelText("Tell octo.1");
+      const box = await panel.findByLabelText("Message to octo.1");
       server.tracker.call(c.draftSave, { key: "tell:L-1", text: "From the phone" }, asDeveloper);
       await waitFor(() => expect(box).toHaveProperty("value", "From the phone"));
       fireEvent.focus(box);

@@ -115,12 +115,19 @@ export function LineActions({
       ) : null}
       {line.state === "proposed" ? move("reject", "Not a line") : null}
       {ended || line.state === "proposed" ? null : mode === "more" ? (
-        move("drop", "Drop")
+        <>
+          {move("drop", "Drop")}
+          {onFold === undefined || foldTargets.length === 0 ? null : (
+            <button type="button" className="btn" onClick={() => setMode("fold")}>
+              Fold into another
+            </button>
+          )}
+        </>
       ) : (
         <button
           type="button"
           className="btn"
-          aria-label="More: drop this line"
+          aria-label="More: drop this line, fold it into another"
           onClick={() => setMode("more")}
         >
           More

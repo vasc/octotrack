@@ -4,7 +4,7 @@ import { type HotkeyMap, useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useLiveUpdates } from "../../hooks/useLiveUpdates.ts";
 import { useSeen } from "../../hooks/useSeen.ts";
 import { useTopBar } from "../../hooks/useTopBar.ts";
-import { closeEntity, navigate, useRoute } from "../../lib/router.ts";
+import { backEntity, navigate, useRoute } from "../../lib/router.ts";
 import { EntityPanel } from "../entity/EntityPanel.tsx";
 import { KeyHelp } from "../home/KeyHelp.tsx";
 import { ErrorState } from "../ui/states.tsx";
@@ -29,11 +29,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   const atPicker = useRef<HTMLSelectElement>(null);
   const { at, setAt } = bar;
   const keys = useMemo((): HotkeyMap => {
-    // Esc closes what is on top: the key list, then a panel, then the place the developer said they are at.
+    // Esc closes what is on top: the key list, then a panel (back to the one it was opened from, if any), then the
+    // place the developer said they are at.
     const closeTop = keysOpen
       ? closeKeys
       : entity !== null
-        ? closeEntity
+        ? backEntity
         : at !== null
           ? () => setAt(null)
           : null;

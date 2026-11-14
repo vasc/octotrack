@@ -20,6 +20,11 @@ export interface WorkingLineProps {
   focused?: boolean;
   /** Where another line can be dropped, to land before this one. */
   drop?: DropTarget;
+  /**
+   * Folded: at a place the line is one row, its title then what it holds; folded on a phone it keeps its facts and
+   * headline but not its answers.
+   */
+  fold?: "at" | "phone" | null;
 }
 
 /**
@@ -35,6 +40,7 @@ export function WorkingLine({
   children,
   focused = false,
   drop,
+  fold = null,
 }: WorkingLineProps) {
   return (
     <li className="line-card-item">
@@ -56,21 +62,23 @@ export function WorkingLine({
                 {line.title}
               </button>
             </h3>
-            {line.ownedBy === null ? null : <span className="line-facts"> · yours</span>}
-            <LineMeta
-              {...(crew === undefined ? {} : { crew })}
-              {...(details === undefined ? {} : { details })}
-            />
-            {line.headline === null ? null : (
+            {fold === "at" || line.ownedBy === null ? null : <span className="line-facts"> · yours</span>}
+            {fold === "at" ? null : (
+              <LineMeta
+                {...(crew === undefined ? {} : { crew })}
+                {...(details === undefined ? {} : { details })}
+              />
+            )}
+            {fold === "at" || line.headline === null ? null : (
               <div className="line-headline">
                 <Markdown text={line.headline} inline />
               </div>
             )}
           </div>
         </div>
-        {(details?.answers ?? []).map((answer) => (
-          <AnswerStatus key={answer.ref} answer={answer} />
-        ))}
+        {fold !== null
+          ? null
+          : (details?.answers ?? []).map((answer) => <AnswerStatus key={answer.ref} answer={answer} />)}
         {children}
       </article>
     </li>

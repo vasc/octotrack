@@ -4,7 +4,7 @@ import { useChoices } from "../../hooks/useChoices.ts";
 import { useDraft } from "../../hooks/useDraft.ts";
 import { useHome } from "../../hooks/useHome.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
-import { closeEntity, openEntity } from "../../lib/router.ts";
+import { backEntity, openEntity } from "../../lib/router.ts";
 import { TaskItem } from "../home/TaskItem.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
 import { RefLink } from "../ui/RefLink.tsx";
@@ -51,7 +51,7 @@ export function IssuePanel({ issue, detail }: { issue: Issue; detail: EntityDeta
           )}
           <span className="mono">{issue.ref}</span>
         </nav>
-        <button type="button" className="btn" aria-label="Close" onClick={closeEntity}>
+        <button type="button" className="btn" aria-label="Close" onClick={backEntity}>
           Esc
         </button>
       </div>

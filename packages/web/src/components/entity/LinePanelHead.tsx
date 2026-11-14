@@ -1,5 +1,5 @@
 import type { Line } from "@octotrack/core/schemas";
-import { closeEntity } from "../../lib/router.ts";
+import { backEntity } from "../../lib/router.ts";
 import { Markdown } from "../ui/Markdown.tsx";
 
 /** The top of a line opened: where it sits in the order, its ref and repos, its title, and what finishes it. */
@@ -27,7 +27,7 @@ export function LinePanelHead({
             </span>
           ))}
         </span>
-        <button type="button" className="btn" aria-label="Close" onClick={closeEntity}>
+        <button type="button" className="btn" aria-label="Close" onClick={backEntity}>
           Esc
         </button>
       </div>

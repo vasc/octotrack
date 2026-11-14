@@ -13,13 +13,21 @@ export interface DecisionCardViewProps {
   selected?: boolean;
   /** Its line's place in the order: an urgent question stands apart from its line, so it names it. */
   line?: LinePlace | null;
+  /** In a line's panel: open the question on its own, with what led to it and what it connects to. */
+  onBackground?: () => void;
 }
 
 /**
  * A question opened: the situation, options that say what happens, the reason for the recommendation directly under
  * them, and the answer in one press. Pure: all state comes in through `form`.
  */
-export function DecisionCardView({ card, form, selected = false, line = null }: DecisionCardViewProps) {
+export function DecisionCardView({
+  card,
+  form,
+  selected = false,
+  line = null,
+  onBackground,
+}: DecisionCardViewProps) {
   const { decision } = card;
   const recommendedAt = decision.options.findIndex((option) => option.key === decision.recommendation);
   const openWork = card.blocks.filter((item) => item.status !== "done" && item.status !== "cancelled");
@@ -115,6 +123,11 @@ export function DecisionCardView({ card, form, selected = false, line = null }: 
           <button type="button" className="btn" onClick={form.postpone}>
             {decision.postponedAt === null ? "Later" : "Bring back"}
           </button>
+          {onBackground === undefined ? null : (
+            <button type="button" className="btn" onClick={onBackground}>
+              Background
+            </button>
+          )}
           {decision.urgentReason === null || decision.notUrgentAt !== null ? null : (
             <button type="button" className="btn" onClick={form.notUrgent}>
               Not urgent
