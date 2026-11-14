@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { type Caller, contracts, type RunnerDue, type Tracker } from "@octotrack/core";
 import { z } from "zod";
 
@@ -98,6 +98,12 @@ export const processShell: RunnerShell = {
   exists: existsSync,
 };
 
+/** The owner/name a git remote URL points at on GitHub, or null for anything else. */
+export function githubSlug(url: string): string | null {
+  const match = /github\.com[:/]([^/\s]+\/[^/\s]+?)(?:\.git)?\/?$/.exec(url.trim());
+  return match?.[1] ?? null;
+}
+
 function fill(command: readonly string[], line: string, name: string): string[] {
   return command.map((part) => part.replaceAll("{line}", line).replaceAll("{name}", name));
 }
@@ -119,6 +125,8 @@ export function createRunner(options: {
   let busy = false;
 
   tracker.call(contracts.runnerReport, { configured: true, cap: config.cap, dryRun: config.dryRun }, RUNNER);
+  // Sessions started before this server did are not watched by anyone now; they are settled, so their lines move on.
+  tracker.call(contracts.runnerRestarted, {}, RUNNER);
 
   const failStart = (due: RunnerDue, worktree: string | undefined, output: string, code = 1) => {
     const started = tracker.call(
@@ -129,7 +137,21 @@ export function createRunner(options: {
     tracker.call(contracts.runnerExited, { name: started.name, code, output }, RUNNER);
   };
 
-  /** A checkout of the repo: the one the developer named, one an agent works in, or a fresh clone. */
+  /** The main checkout a path belongs to, so that a new worktree never hangs off another session's worktree. */
+  const mainCheckout = async (path: string): Promise<string> => {
+    const common = await shell.run([
+      "git",
+      "-C",
+      path,
+      "rev-parse",
+      "--path-format=absolute",
+      "--git-common-dir",
+    ]);
+    const dir = common.stdout.trim();
+    return common.code === 0 && dir.endsWith("/.git") ? dirname(dir) : path;
+  };
+
+  /** A checkout of the repo: the one the developer named, one an agent works in, or a clone of its GitHub repo. */
   const checkoutFor = async (repo: string): Promise<{ path: string } | { error: string }> => {
     const named = config.repos[repo]?.checkout;
     if (named !== undefined) return { path: named };
@@ -139,11 +161,20 @@ export function createRunner(options: {
         (agent) =>
           agent.repo === repo && agent.checkout !== null && !agent.checkout.startsWith(config.worktrees),
       );
-    if (known !== undefined && known.checkout !== null) return { path: known.checkout };
-    const target = join(config.clones, repo.toLowerCase());
-    if (shell.exists(target)) return { path: target };
+    if (known !== undefined && known.checkout !== null) return { path: await mainCheckout(known.checkout) };
     const project = tracker.call(contracts.entityShow, { ref: repo }, RUNNER).entity;
     const slug = "repo" in project && typeof project.repo === "string" ? project.repo : null;
+    const target = join(config.clones, repo.toLowerCase());
+    if (shell.exists(target)) {
+      // Something else may live at that path; only a clone of this repo will do.
+      const remote = await shell.run(["git", "-C", target, "remote", "get-url", "origin"]);
+      const found = remote.code === 0 ? githubSlug(remote.stdout) : null;
+      if (slug !== null && found !== null && found.toLowerCase() === slug.toLowerCase())
+        return { path: target };
+      return {
+        error: `${target} is not a clone of ${slug ?? repo}${found === null ? "" : ` (it is ${found})`}; set a checkout for ${repo} in agent-setup.json`,
+      };
+    }
     if (slug === null) return { error: `${repo} has no GitHub repo to clone, and no checkout is set for it` };
     const cloned = await shell.run(["gh", "repo", "clone", slug, target]);
     return cloned.code === 0
@@ -213,6 +244,10 @@ export function createRunner(options: {
 
   const closeEnded = async () => {
     for (const close of tracker.call(contracts.runnerCloses, {}, RUNNER)) {
+      if (config.dryRun) {
+        tracker.call(contracts.runnerClosed, { pr: close.pr, dry: true }, RUNNER);
+        continue;
+      }
       const state = tracker.call(contracts.lineShow, { ref: close.line }, RUNNER).line.state;
       const closed = await shell.run([
         "gh",
@@ -234,7 +269,17 @@ export function createRunner(options: {
     for (const tree of tracker.call(contracts.runnerCleanups, {}, RUNNER)) {
       const status = await shell.run(["git", "-C", tree.path, "status", "--porcelain"]);
       if (status.code !== 0 || status.stdout.trim() !== "") continue;
-      const unpushed = await shell.run(["git", "-C", tree.path, "rev-list", "--count", "@{u}..HEAD"]);
+      // Commits on no remote at all, which also covers a branch that was never pushed and has no upstream.
+      const unpushed = await shell.run([
+        "git",
+        "-C",
+        tree.path,
+        "rev-list",
+        "--count",
+        "HEAD",
+        "--not",
+        "--remotes",
+      ]);
       if (unpushed.code !== 0 || unpushed.stdout.trim() !== "0") continue;
       const removed = await shell.run(["git", "-C", tree.checkout, "worktree", "remove", tree.path]);
       if (removed.code === 0) tracker.call(contracts.runnerRemoved, { path: tree.path }, RUNNER);
@@ -248,7 +293,8 @@ export function createRunner(options: {
       try {
         for (const due of tracker.call(contracts.runnerDue, {}, RUNNER)) await startOne(due);
         await closeEnded();
-        await removeUnused();
+        // Watch mode touches nothing on disk.
+        if (!config.dryRun) await removeUnused();
       } finally {
         busy = false;
       }

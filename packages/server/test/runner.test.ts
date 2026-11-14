@@ -4,12 +4,13 @@ import { createRunner, type RunnerConfig, type RunnerShell } from "../src/runner
 import { openSqlite } from "../src/sqlite.ts";
 
 const DEV = { actor: "dev", channel: "dashboard" } as const;
+const RUNNER_CALLER = { actor: "octotrack", channel: "cli", system: true } as const;
 
 interface Scripted {
   [command: string]: { code: number; stdout?: string; stderr?: string };
 }
 
-function fakeShell(scripted: Scripted = {}) {
+function fakeShell(scripted: Scripted = {}, existing: readonly string[] = []) {
   const ran: string[] = [];
   const started: { argv: string[]; cwd: string; env: Record<string, string> }[] = [];
   const finish: ((result: { code: number; output: string }) => void)[] = [];
@@ -24,12 +25,16 @@ function fakeShell(scripted: Scripted = {}) {
       started.push({ argv: [...argv], cwd: options.cwd, env: options.env });
       return { exited: new Promise((resolve) => finish.push(resolve)) };
     },
-    exists: () => false,
+    exists: (path) => existing.includes(path),
   };
   return { shell, ran, started, finish };
 }
 
-function world(config: Partial<RunnerConfig> = {}, scripted: Scripted = {}) {
+function world(
+  config: Partial<RunnerConfig> = {},
+  scripted: Scripted = {},
+  options: { existing?: readonly string[]; before?: (tracker: Tracker) => void } = {},
+) {
   let now = "2026-11-14T09:00:00.000Z";
   const tracker = new Tracker(openSqlite(":memory:"), () => now);
   tracker.call(c.projectCreate, { key: "PANEL", name: "Panel", repo: "vasc/homepanel" }, DEV);
@@ -39,7 +44,8 @@ function world(config: Partial<RunnerConfig> = {}, scripted: Scripted = {}) {
     DEV,
   );
   now = "2026-11-14T09:01:00.000Z";
-  const fake = fakeShell(scripted);
+  options.before?.(tracker);
+  const fake = fakeShell(scripted, options.existing);
   const runner = createRunner({
     tracker,
     shell: fake.shell,
@@ -133,7 +139,10 @@ describe("the local runner", () => {
   });
 
   test("removes a worktree it made once nobody uses it and it is clean and pushed", async () => {
-    const w = world({}, { "git -C /wt/panel.1 rev-list --count @{u}..HEAD": { code: 0, stdout: "0\n" } });
+    const w = world(
+      {},
+      { "git -C /wt/panel.1 rev-list --count HEAD --not --remotes": { code: 0, stdout: "0\n" } },
+    );
     await w.runner.tick();
     w.finish[0]?.({ code: 0, output: "" });
     await w.runner.settled();
@@ -148,5 +157,97 @@ describe("the local runner", () => {
     await w.runner.settled();
     await w.runner.tick();
     expect(w.ran.some((command) => command.includes("worktree remove"))).toBe(false);
+  });
+
+  test("keeps a worktree with commits on no remote, even when its branch has no upstream", async () => {
+    const w = world(
+      {},
+      { "git -C /wt/panel.1 rev-list --count HEAD --not --remotes": { code: 0, stdout: "2\n" } },
+    );
+    await w.runner.tick();
+    w.finish[0]?.({ code: 0, output: "" });
+    await w.runner.settled();
+    await w.runner.tick();
+    expect(w.ran.some((command) => command.includes("worktree remove"))).toBe(false);
+  });
+
+  test("in watch mode it closes no pull request and removes no worktree, and notes the close it would make once", async () => {
+    const w = world({ repos: {}, cap: 0, dryRun: true });
+    const issue = w.tracker.call(c.issueCreate, { project: "PANEL", title: "Base", line: w.line.ref }, DEV);
+    w.tracker.call(
+      c.prUpsert,
+      { repo: "vasc/homepanel", number: 14, title: "Base", state: "open", body: `Fixes ${issue.ref}` },
+      { actor: "github", channel: "cli", system: true },
+    );
+    w.tracker.call(c.lineDone, { ref: w.line.ref }, DEV);
+    w.later(16);
+    w.tracker.sweep();
+    await w.runner.tick();
+    await w.runner.tick();
+    expect(w.ran).toEqual([]);
+    expect(w.tracker.call(c.feedList, { query: "event:runner.would_close" }, DEV).events).toHaveLength(1);
+  });
+
+  test("on start it settles sessions from before the server restarted, whose end it can no longer see", () => {
+    const w = world(
+      {},
+      {},
+      {
+        before: (tracker) => {
+          tracker.call(c.runnerReport, { configured: true, cap: 1, dryRun: false }, RUNNER_CALLER);
+          tracker.call(c.runnerStart, { line: "L-1", repo: "PANEL" }, RUNNER_CALLER);
+        },
+      },
+    );
+    expect(w.tracker.call(c.homeShow, {}, DEV).lines[w.line.ref]?.start?.state).toBe("failed");
+  });
+
+  test("a worktree is made from the main checkout, even when the known checkout is itself a worktree", async () => {
+    const w = world(
+      { repos: {} },
+      {
+        "git -C /work/panel-feature rev-parse --path-format=absolute --git-common-dir": {
+          code: 0,
+          stdout: "/src/homepanel/.git\n",
+        },
+      },
+      {
+        before: (tracker) => {
+          tracker.call(
+            c.agentRegister,
+            { repo: "PANEL" },
+            { actor: "dev-session", channel: "cli", checkout: "/work/panel-feature" },
+          );
+        },
+      },
+    );
+    await w.runner.tick();
+    expect(w.ran).toContain("git -C /src/homepanel worktree add -b octo/panel.1 /wt/panel.1");
+  });
+
+  test("a clone already in place is used only if it is of the same GitHub repo", async () => {
+    const w = world(
+      { repos: {} },
+      { "git -C /src/panel remote get-url origin": { code: 0, stdout: "git@github.com:someone/else.git\n" } },
+      { existing: ["/src/panel"] },
+    );
+    await w.runner.tick();
+    expect(w.started).toEqual([]);
+    expect(w.tracker.call(c.homeShow, {}, DEV).lines[w.line.ref]?.start?.output).toContain("someone/else");
+  });
+
+  test("a clone already in place of the same repo is used", async () => {
+    const w = world(
+      { repos: {} },
+      {
+        "git -C /src/panel remote get-url origin": {
+          code: 0,
+          stdout: "https://github.com/vasc/homepanel.git\n",
+        },
+      },
+      { existing: ["/src/panel"] },
+    );
+    await w.runner.tick();
+    expect(w.ran).toContain("git -C /src/panel worktree add -b octo/panel.1 /wt/panel.1");
   });
 });

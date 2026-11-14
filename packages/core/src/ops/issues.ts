@@ -1,6 +1,7 @@
 import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
 import type { EventAttrs, Issue, IssueStatus, Priority } from "../schemas.ts";
+import type { EventTypeName } from "../query/values.ts";
 import { applyPatch, assertVersion, emit, nextNumber } from "../store/common.ts";
 import type { Ctx } from "../store/context.ts";
 import { rows } from "../store/context.ts";
@@ -122,7 +123,7 @@ function emitIssueChange(
   ctx: Ctx,
   updated: Issue,
   changes: ReturnType<typeof applyPatch>,
-  claim?: string,
+  claim?: EventTypeName,
 ): void {
   const fields = Object.keys(changes);
   if (fields.length === 0) return;

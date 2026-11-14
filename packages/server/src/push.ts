@@ -55,6 +55,8 @@ export function createPushDispatcher(options: { tracker: Tracker; send: PushSend
       const due = tracker.call(contracts.pushDue, {}, SERVER);
       if (due.length === 0) return;
       const subscriptions = tracker.call(contracts.pushSubscriptions, {}, SERVER);
+      // Nobody to tell yet: keep them due, for the first phone that subscribes.
+      if (subscriptions.length === 0) return;
       for (const subscription of subscriptions) {
         for (const note of due) {
           const result = await send(

@@ -6,6 +6,7 @@ import {
   readFileSync,
   readlinkSync,
   rmSync,
+  statSync,
   symlinkSync,
   writeFileSync,
 } from "node:fs";
@@ -111,6 +112,18 @@ describe("installing the binary as the live Octotrack", () => {
     expect(readFileSync(binary, "utf8")).toBe("binary one");
     expect(readlinkSync(s.paths.link)).toBe(binary);
     expect(readFileSync(s.paths.plist, "utf8")).toBe(plistAfterFirst);
+  });
+
+  test("rollback puts a new file in the binary's place rather than writing over the one that is running", () => {
+    const s = scene();
+    install(s.built, s.paths, s.run, 501);
+    writeFileSync(s.built, "binary two");
+    install(s.built, s.paths, s.run, 501);
+    const binary = join(s.paths.binDir, "octo");
+    const running = statSync(binary).ino;
+    rollback(s.paths, s.run, 501);
+    expect(statSync(binary).ino).not.toBe(running);
+    expect(readFileSync(binary, "utf8")).toBe("binary one");
   });
 
   test("a LaunchAgent with no program is refused rather than silently left as it was", () => {

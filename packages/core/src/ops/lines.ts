@@ -1,6 +1,7 @@
 import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
 import type { EventAttrs, Line, LinePlacement, LineState, PlanStep } from "../schemas.ts";
+import type { EventTypeName } from "../query/values.ts";
 import { applyPatch, type Changes, emit, nextNumber } from "../store/common.ts";
 import { rankAtEnd } from "../store/ranks.ts";
 import type { Ctx } from "../store/context.ts";
@@ -45,7 +46,7 @@ function lineAttrs(ctx: Ctx, line: Line): EventAttrs {
 
 function emitLine(
   ctx: Ctx,
-  type: string,
+  type: EventTypeName,
   line: Line,
   summary: string,
   changes?: Changes,

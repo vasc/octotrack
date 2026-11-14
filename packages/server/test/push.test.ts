@@ -61,6 +61,20 @@ describe("buzzing the phone", () => {
     ]);
   });
 
+  test("with no browser subscribed nothing counts as sent, so a phone subscribed later still hears what is due", async () => {
+    const w = world();
+    w.tracker.call(c.pushUnsubscribe, { endpoint: "https://push.example/phone" }, DEV);
+    w.ask("Which board?");
+    await w.dispatcher.dispatch();
+    w.tracker.call(
+      c.pushSubscribe,
+      { endpoint: "https://push.example/phone", keys: { p256dh: "BKey", auth: "secret" } },
+      DEV,
+    );
+    await w.dispatcher.dispatch();
+    expect(w.sent.map((sent) => sent.endpoint)).toEqual(["https://push.example/phone"]);
+  });
+
   test("a browser the push service says is gone is forgotten", async () => {
     const w = world(410);
     w.ask("Which board?");

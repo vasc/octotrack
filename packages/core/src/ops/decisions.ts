@@ -13,6 +13,7 @@ import type {
   Priority,
   UrgentReason,
 } from "../schemas.ts";
+import type { EventTypeName } from "../query/values.ts";
 import { applyPatch, assertVersion, emit, nextNumber } from "../store/common.ts";
 import type { Ctx } from "../store/context.ts";
 import { rows } from "../store/context.ts";
@@ -273,7 +274,7 @@ function resolveDecision(ctx: Ctx, input: ResolveInput): Decision {
 function transition(
   ctx: Ctx,
   rawRef: string,
-  type: string,
+  type: EventTypeName,
   summary: (decision: Decision) => string,
   patch: Parameters<typeof applyPatch>[4],
   note: string | undefined,

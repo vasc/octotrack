@@ -145,7 +145,10 @@ export function rollback(
   const binary = join(paths.binDir, "octo");
   for (const path of [binary, paths.plist, paths.wakeAdapters]) {
     if (!existsSync(`${path}${PREVIOUS}`)) continue;
-    copyFileSync(`${path}${PREVIOUS}`, path);
+    // A new file renamed into place: writing over a binary that is running can kill it mid-flight.
+    const incoming = `${path}.next`;
+    copyFileSync(`${path}${PREVIOUS}`, incoming);
+    renameSync(incoming, path);
     restored.push(path);
   }
   const previousLink = join(paths.binDir, `link${PREVIOUS}`);
