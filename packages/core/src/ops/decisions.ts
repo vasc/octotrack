@@ -562,13 +562,19 @@ export const decisionOps = [
   }),
 
   bind(contracts.decisionRecord, (ctx, input) => {
+    // On a line only the developer decides: an agent records a decision there only on their quoted words, which the
+    // log shows. One on no line keeps the rules from before lines, as questions there do.
+    const placed = placeQuestion(ctx, input);
+    if (placed.line !== null) requireDeveloper(ctx, "record a decision on a line");
     const decision = insertDecision(ctx, {
       title: input.title,
       context: input.context,
       kind: input.kind,
-      project: input.project,
+      project: input.project ?? placed.line?.repos[0],
       options: [{ key: "chosen", label: input.chosen }],
       priority: "none",
+      line: placed.line?.ref ?? null,
+      issue: placed.issue,
     });
     for (const target of input.blocks ?? []) addLink(ctx, decision.ref, "blocks", target);
     for (const target of input.affects ?? []) addLink(ctx, decision.ref, "affects", target);
