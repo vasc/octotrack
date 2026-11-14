@@ -17,6 +17,7 @@ export function DecisionCardView({ card, form, selected = false }: DecisionCardV
   const { decision } = card;
   // Tapping "Something else" has to open the keyboard, which only a real focus call inside the tap can do.
   const noteField = useRef<HTMLInputElement>(null);
+  const recommendedAt = decision.options.findIndex((option) => option.key === decision.recommendation);
   const openWork = card.blocks.filter((item) => item.status !== "done" && item.status !== "cancelled");
   return (
     <article className="decision" data-selected={selected} aria-label={decision.title}>
@@ -44,6 +45,12 @@ export function DecisionCardView({ card, form, selected = false }: DecisionCardV
           noteField.current?.focus();
         }}
       />
+      {decision.recommendationWhy === null ? null : (
+        <p className="decision-why">
+          Why
+          {recommendedAt === -1 ? "" : ` ${recommendedAt + 1}`}: {decision.recommendationWhy}
+        </p>
+      )}
       {decision.recommendation !== null &&
       decision.options.every((option) => option.key !== decision.recommendation) ? (
         <p className="muted">Recommendation: {decision.recommendation}</p>
