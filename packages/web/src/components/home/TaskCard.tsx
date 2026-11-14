@@ -5,14 +5,16 @@ import { TextBox } from "../ui/TextBox.tsx";
 
 export interface TaskCardProps {
   task: Issue;
+  /** What is typed so far, kept as a draft by the caller. */
+  words: string;
+  onWords(words: string): void;
   onDone(result: string): void;
   onCant(why: string): void;
 }
 
 /** A task opened: where, what to report, and its two choices, Done and Can't do it, each asking for its words. */
-export function TaskCard({ task, onDone, onCant }: TaskCardProps) {
-  const [mode, setMode] = useState<"done" | "cant" | null>(null);
-  const [words, setWords] = useState("");
+export function TaskCard({ task, words, onWords, onDone, onCant }: TaskCardProps) {
+  const [mode, setMode] = useState<"done" | "cant" | null>(words === "" ? null : "done");
   const ready = words.trim() !== "";
   return (
     <article className="task" aria-label={task.title}>
@@ -40,7 +42,7 @@ export function TaskCard({ task, onDone, onCant }: TaskCardProps) {
             if (!ready) return;
             if (mode === "done") onDone(words.trim());
             else onCant(words.trim());
-            setWords("");
+            onWords("");
             setMode(null);
           }}
         >
@@ -48,7 +50,7 @@ export function TaskCard({ task, onDone, onCant }: TaskCardProps) {
             label={mode === "done" ? `What ${task.ref} found` : `Why ${task.ref} cannot be done`}
             placeholder={mode === "done" ? (task.outcome ?? "What you found") : "Why not"}
             value={words}
-            onChange={setWords}
+            onChange={onWords}
           />
           <button type="submit" className="btn" data-primary="true" disabled={!ready}>
             {mode === "done" ? "Send" : "Close it"}
