@@ -272,6 +272,103 @@ describe("what records the developer's own attention is theirs in person; the re
   });
 });
 
+describe("pull requests on lines that are not being worked on", () => {
+  test("an agent's report for an issue on a tabled or up-next line is refused and counted", () => {
+    const w = world();
+    w.as(w.dev, c.lineTable, { ref: w.line, reason: "Waiting on the board" });
+    w.later(16);
+    const refusal = w.refused(() =>
+      w.as(w.owner, c.prUpsert, {
+        repo: "vasc/homepanel",
+        number: 1,
+        title: `Fixes ${w.issue}`,
+        state: "open",
+      }),
+    );
+    expect(refusal.code).toBe("forbidden");
+    const queued = w.as(w.dev, c.lineAdd, {
+      title: "Next",
+      doneWhen: "Done.",
+      repos: ["PANEL"],
+      where: "up_next",
+    });
+    const next = w.as(w.dev, c.issueCreate, { project: "PANEL", title: "Later", line: queued.ref }).ref;
+    expect(
+      w.refused(() =>
+        w.as(w.owner, c.prUpsert, {
+          repo: "vasc/homepanel",
+          number: 2,
+          title: "Work",
+          issues: [next],
+          state: "open",
+        }),
+      ).code,
+    ).toBe("forbidden");
+    expect(w.events("event:write.refused").map((event) => [event.line, event.attrs.counted])).toEqual([
+      [queued.ref, "yes"],
+      [w.line, "yes"],
+    ]);
+  });
+
+  test("pull request events name the line of the issue they implement", () => {
+    const w = world();
+    w.as(w.owner, c.prUpsert, {
+      repo: "vasc/homepanel",
+      number: 1,
+      title: `Fixes ${w.issue}`,
+      state: "open",
+    });
+    expect(w.events("event:pr.opened")[0]?.line).toBe(w.line);
+  });
+
+  test("one opened or pushed after the wind-down is shown on its line, once per pull request", () => {
+    const w = world();
+    w.as(w.dev, c.lineTable, { ref: w.line, reason: "Waiting on the board" });
+    w.later(16);
+    const pr = (headSha: string) => ({
+      repo: "vasc/homepanel",
+      number: 7,
+      title: `Fixes ${w.issue}`,
+      state: "open" as const,
+      headSha,
+    });
+    w.as(w.github, c.prSync, { prs: [pr("aaa")] });
+    w.as(w.github, c.prSync, { prs: [pr("bbb")] });
+    const late = w.events("event:pr.after_wind_down");
+    expect(late.map((event) => [event.line, event.actor])).toEqual([[w.line, "github"]]);
+    expect(w.as(w.dev, c.feedList, { unseen: true }).events.map((event) => event.type)).toContain(
+      "pr.after_wind_down",
+    );
+  });
+
+  test("a push on a line the developer owns is presumed theirs", () => {
+    const w = world();
+    w.as(w.dev, c.lineOwn, { ref: w.line });
+    w.later(16);
+    w.as(w.github, c.prSync, {
+      prs: [{ repo: "vasc/homepanel", number: 7, title: `Fixes ${w.issue}`, state: "open", headSha: "a" }],
+    });
+    expect(w.events("event:pr.after_wind_down")).toEqual([]);
+  });
+
+  test("pull requests already open at the deadline are held and listed once", () => {
+    const w = world();
+    const opened = w.as(w.owner, c.prUpsert, {
+      repo: "vasc/homepanel",
+      number: 3,
+      title: `Fixes ${w.issue}`,
+      state: "open",
+    });
+    w.as(w.dev, c.lineTable, { ref: w.line, reason: "Waiting on the board" });
+    w.later(16);
+    w.as(w.dev, c.lineList, {});
+    w.later(16);
+    w.as(w.dev, c.lineList, {});
+    const held = w.events("event:line.prs_held");
+    expect(held.map((event) => [event.line, event.related])).toEqual([[w.line, [opened.ref]]]);
+  });
+});
+
 describe("Not a line returns old work for good", () => {
   test("the returned issues are not asked about again", () => {
     const w = world();
@@ -446,5 +543,28 @@ describe("a wake says how many things wait", () => {
     w.later(20);
     w.as(w.dev, c.decisionResolve, { ref: asked, option: "a" });
     expect(w.as(w.dev, c.agentWakes, {})[0]?.message).toContain("1 thing waits for you");
+  });
+});
+
+describe("work on a line makes its summary fall due", () => {
+  const due = (w: ReturnType<typeof world>) =>
+    w.as(w.dev, c.driftList, { query: "rule:summary-due status:open" }).map((drift) => drift.target);
+
+  test("a question asked there", () => {
+    const w = world();
+    w.ask();
+    w.later(61);
+    w.tracker.sweep();
+    expect(due(w)).toEqual([w.line]);
+  });
+
+  test("a pull request merged there", () => {
+    const w = world();
+    w.as(w.github, c.prSync, {
+      prs: [{ repo: "vasc/homepanel", number: 4, title: `Fixes ${w.issue}`, state: "merged" }],
+    });
+    w.later(61);
+    w.tracker.sweep();
+    expect(due(w)).toEqual([w.line]);
   });
 });
