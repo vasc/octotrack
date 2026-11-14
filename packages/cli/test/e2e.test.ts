@@ -741,12 +741,12 @@ describe("several things at once", () => {
 });
 
 describe("pr sync through gh", () => {
-  test("maps real gh output, links issues by mention, and one bad repo does not stop the others", async () => {
+  test("maps real gh output, links issues by closing keyword, and one bad repo does not stop the others", async () => {
     const issue = await data(WithRef, ["issue", "create", "Sync target", "-p", "OCT"]);
     const pr = {
       number: 5,
-      title: `${issue.ref}: from gh`,
-      body: null,
+      title: "From gh",
+      body: `Fixes ${issue.ref}`,
       url: "https://github.com/acme/good/pull/5",
       state: "OPEN",
       isDraft: false,
@@ -884,7 +884,10 @@ describe("everything else, through the CLI", () => {
       "pr",
       "upsert",
       "acme/web#7",
-      `${issue.ref}: landing`,
+      "Landing",
+      // Linked by its branch: a bare mention in the title is background, not a claim to implement it (D14).
+      "--head",
+      `feature/${issue.ref.toLowerCase()}-landing`,
       "--checks",
       "failing",
       "--sha",

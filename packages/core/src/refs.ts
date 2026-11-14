@@ -70,3 +70,32 @@ export function extractIssueRefs(text: string): string[] {
   }
   return [...found];
 }
+
+const ISSUE_IN_TEXT = "[A-Za-z][A-Za-z0-9]{1,5}-\\d+";
+/**
+ * GitHub's closing keywords, each followed by a ref or a list of them ("Fixes OCT-3, OCT-4 and OCT-5"). The list is
+ * read whole, since a pull request named as fixing two issues is wanted while either is.
+ */
+const CLOSING = new RegExp(
+  `\\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\\b:?\\s+(${ISSUE_IN_TEXT}(?:\\s*(?:,|&|\\band\\b)\\s*${ISSUE_IN_TEXT})*)`,
+  "gi",
+);
+
+/** The issues text says it closes: each ref after a closing keyword. */
+export function closingRefs(text: string): string[] {
+  return [...new Set([...text.matchAll(CLOSING)].flatMap((match) => extractIssueRefs(match[1] ?? "")))];
+}
+
+/**
+ * The issues a pull request implements by what it says (D14): those its branch is named after, and those its title or
+ * body names after a closing keyword. A bare mention ("see OCT-3") is background, not a claim to implement it.
+ */
+export function implementedRefs(pr: {
+  title: string;
+  headRef?: string | undefined;
+  body?: string | undefined;
+}): string[] {
+  return [
+    ...new Set([...extractIssueRefs(pr.headRef ?? ""), ...closingRefs(`${pr.title}\n${pr.body ?? ""}`)]),
+  ];
+}

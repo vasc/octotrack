@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { contracts as c } from "../src/contracts.ts";
 import type { Caller } from "../src/tracker.ts";
 import { Tracker } from "../src/tracker.ts";
-import { memoryDriver } from "./helpers.ts";
+import { GITHUB, memoryDriver } from "./helpers.ts";
 
 const MINUTE = 60_000;
 
@@ -125,9 +125,13 @@ describe("closing up after a line ends", () => {
     const line = w.line("Enclosure");
     const issue = w.tracker.call(c.issueCreate, { project: "PANEL", title: "Base", line: line.ref }, w.dev);
     w.tracker.call(
-      c.prUpsert,
-      { repo: "vasc/homepanel", number: 14, title: "Base", state: "open", body: `Fixes ${issue.ref}` },
-      w.runner,
+      c.prSync,
+      {
+        prs: [
+          { repo: "vasc/homepanel", number: 14, title: "Base", state: "open", body: `Fixes ${issue.ref}` },
+        ],
+      },
+      GITHUB,
     );
     w.tracker.call(c.lineDone, { ref: line.ref }, w.dev);
     expect(w.tracker.call(c.runnerCloses, {}, w.runner)).toEqual([]);
@@ -210,9 +214,13 @@ describe("what the runner audit found", () => {
     const line = w.line("Enclosure");
     const issue = w.issue(line.ref, "Base");
     w.tracker.call(
-      c.prUpsert,
-      { repo: "vasc/other-repo", number: 99, title: "Other", state: "open", body: `Fixes ${issue.ref}` },
-      w.runner,
+      c.prSync,
+      {
+        prs: [
+          { repo: "vasc/other-repo", number: 99, title: "Other", state: "open", body: `Fixes ${issue.ref}` },
+        ],
+      },
+      GITHUB,
     );
     w.tracker.call(c.lineDone, { ref: line.ref }, w.dev);
     w.later(16);
@@ -227,15 +235,19 @@ describe("what the runner audit found", () => {
     const done = w.issue(ended.ref, "Base");
     const open = w.issue(working.ref, "Bracket");
     w.tracker.call(
-      c.prUpsert,
+      c.prSync,
       {
-        repo: "vasc/homepanel",
-        number: 15,
-        title: "Both",
-        state: "open",
-        body: `Fixes ${done.ref} and ${open.ref}`,
+        prs: [
+          {
+            repo: "vasc/homepanel",
+            number: 15,
+            title: "Both",
+            state: "open",
+            body: `Fixes ${done.ref} and ${open.ref}`,
+          },
+        ],
       },
-      w.runner,
+      GITHUB,
     );
     w.tracker.call(c.lineDone, { ref: ended.ref }, w.dev);
     w.later(16);
@@ -392,5 +404,82 @@ describe("what the runner audit found", () => {
       [second.ref, "owner"],
       [first.ref, "helper"],
     ]);
+  });
+});
+
+describe("closing pull requests only when it is safe (third audit, N2)", () => {
+  const github: Caller = { actor: "github", channel: "cli", system: true };
+  /** A line with one issue, its pull request as GitHub reports it, and the line done with its wind-down over. */
+  function ended(body: (issue: string) => string, headRef = "feature") {
+    const w = world();
+    const line = w.line("Enclosure");
+    const issue = w.issue(line.ref, "Base");
+    const sync = (number: number, text: string, sha = "aaa") =>
+      w.tracker.call(
+        c.prSync,
+        {
+          prs: [
+            {
+              repo: "vasc/homepanel",
+              number,
+              title: "Base",
+              state: "open",
+              body: text,
+              headRef,
+              headSha: sha,
+            },
+          ],
+        },
+        github,
+      );
+    sync(14, body(issue.ref));
+    w.tracker.call(c.lineDone, { ref: line.ref }, w.dev);
+    w.later(16);
+    w.tracker.sweep();
+    const closes = () => w.tracker.call(c.runnerCloses, {}, w.runner).map((close) => close.number);
+    return { w, line, issue, sync, closes };
+  }
+
+  test("a pull request that only mentions an issue does not implement it, so it is never closed with it", () => {
+    const e = ended((issue) => `See ${issue} for background.`);
+    expect(e.closes()).toEqual([]);
+    const shown = e.w.tracker.call(c.entityShow, { ref: "vasc/homepanel#14" }, e.w.dev);
+    expect(shown.links).toEqual([]);
+  });
+
+  test("a closing keyword or the branch name links it, and then it is closed", () => {
+    expect(ended((issue) => `Fixes ${issue}`).closes()).toEqual([14]);
+    expect(ended(() => "The base.", "panel-1-base").closes()).toEqual([14]);
+  });
+
+  test("one opened after the wind-down is shown and held, never closed", () => {
+    const e = ended((issue) => `Fixes ${issue}`);
+    e.sync(40, `Fixes ${e.issue.ref}`);
+    expect(e.closes()).toEqual([14]);
+    const late = e.w.tracker.call(c.feedList, { query: "event:pr.after_wind_down" }, e.w.dev).events;
+    expect(late.map((event) => event.line)).toEqual([e.line.ref]);
+  });
+
+  test("one pushed to after the wind-down is not closed", () => {
+    const e = ended((issue) => `Fixes ${issue}`);
+    e.sync(14, `Fixes ${e.issue.ref}`, "bbb");
+    expect(e.closes()).toEqual([]);
+  });
+
+  test("a pull request an agent reported, and GitHub never confirmed, is not closed", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    const issue = w.issue(line.ref, "Base");
+    w.tracker.call(c.agentRegister, { repo: "PANEL" }, w.session("panel.9"));
+    w.tracker.call(c.lineTake, { ref: line.ref }, w.session("panel.9"));
+    w.tracker.call(
+      c.prUpsert,
+      { repo: "vasc/homepanel", number: 77, title: "Not mine", state: "open", body: `Fixes ${issue.ref}` },
+      w.session("panel.9"),
+    );
+    w.tracker.call(c.lineDone, { ref: line.ref }, w.dev);
+    w.later(16);
+    w.tracker.sweep();
+    expect(w.tracker.call(c.runnerCloses, {}, w.runner)).toEqual([]);
   });
 });

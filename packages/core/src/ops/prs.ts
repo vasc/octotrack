@@ -2,7 +2,7 @@ import { z } from "zod";
 import { guardLineWrite, windingDown } from "../agents/claims.ts";
 import { contracts, type PrInput } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
-import { extractIssueRefs, normalizeRef } from "../refs.ts";
+import { extractIssueRefs, implementedRefs, normalizeRef } from "../refs.ts";
 import type { EventAttrs, Issue, Line, PullRequest } from "../schemas.ts";
 import type { EventTypeName } from "../query/values.ts";
 import { applyPatch, countOf, emit, nextNumber } from "../store/common.ts";
@@ -40,6 +40,7 @@ function projectForRepo(ctx: Ctx, repo: string, mentioned: readonly string[]): s
   return candidates[0]?.ref ?? null;
 }
 
+/** Any issue the pull request mentions: only to guess which of a repo's projects it belongs to. */
 function mentionsIn(input: PrInput): string[] {
   return extractIssueRefs(`${input.title} ${input.headRef ?? ""} ${input.body ?? ""}`);
 }
@@ -48,7 +49,7 @@ const ToRow = z.object({ toRef: z.string() });
 
 /**
  * The issues a pull request implements, as an upsert will leave them: those it is linked to, those named, and those its
- * text mentions, except a link someone removed on purpose.
+ * branch is named after or its text names after a closing keyword, except a link someone removed on purpose.
  */
 function implementedIssues(ctx: Ctx, prRef: string | null, input: PrInput): Issue[] {
   const linked =
@@ -58,7 +59,7 @@ function implementedIssues(ctx: Ctx, prRef: string | null, input: PrInput): Issu
           (row) => row.toRef,
         );
   const named = (input.issues ?? []).map(normalizeRef);
-  const mentioned = mentionsIn(input).filter(
+  const mentioned = implementedRefs(input).filter(
     (ref) => prRef === null || !wasRemoved(ctx, prRef, "implements", ref),
   );
   return [...new Set([...named, ...linked, ...mentioned])].flatMap((ref) => {
@@ -244,7 +245,9 @@ function upsertPr(ctx: Ctx, input: PrInput): { pr: PullRequest; changed: boolean
   }
   ctx.sql.run("UPDATE prs SET syncedAt = ? WHERE ref = ?", [ctx.now, pr.ref]);
 
-  const mentioned = extractIssueRefs(`${pr.title} ${pr.headRef} ${pr.body}`);
+  // Linked by its branch, a closing keyword or by name only (D14): a bare mention is background, and a link from it
+  // would let the runner close the pull request with a line it only mentioned.
+  const mentioned = implementedRefs(pr);
   for (const issueRef of new Set([...(input.issues ?? []), ...mentioned])) {
     if (input.issues?.includes(issueRef)) {
       addLink(ctx, pr.ref, "implements", issueRef);
@@ -267,7 +270,10 @@ export const prOps = [
     const existing = getPrByNumber(ctx, input.repo, input.number);
     for (const issue of implementedIssues(ctx, existing?.ref ?? null, input))
       guardLineWrite(ctx, issue.line, "work");
-    return upsertPr(ctx, input).pr;
+    const pr = upsertPr(ctx, input).pr;
+    // Reported, not seen on GitHub: until sync confirms it, the runner never closes it.
+    ctx.sql.run("UPDATE prs SET githubAt = NULL WHERE ref = ?", [pr.ref]);
+    return pr;
   }),
 
   bind(contracts.prSync, (ctx, input) => {
@@ -297,6 +303,8 @@ export const prOps = [
     const changed: string[] = [];
     for (const item of input.prs) {
       const result = upsertPr(ctx, item);
+      // What it says now is what GitHub says: the runner may act on it.
+      ctx.sql.run("UPDATE prs SET githubAt = ? WHERE ref = ?", [ctx.now, result.pr.ref]);
       if (result.changed) changed.push(result.pr.ref);
     }
     return { synced: input.prs.length, changed };

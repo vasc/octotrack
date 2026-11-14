@@ -8,6 +8,7 @@ import { openSqlite } from "../src/sqlite.ts";
 
 const DEV = { actor: "dev", channel: "dashboard" } as const;
 const RUNNER_CALLER = { actor: "octotrack", channel: "cli", system: true } as const;
+const GITHUB = { actor: "github", channel: "cli", system: true } as const;
 
 interface Scripted {
   [command: string]: { code: number; stdout?: string; stderr?: string };
@@ -129,9 +130,13 @@ describe("the local runner", () => {
     const w = world({ repos: {}, cap: 0 });
     const issue = w.tracker.call(c.issueCreate, { project: "PANEL", title: "Base", line: w.line.ref }, DEV);
     w.tracker.call(
-      c.prUpsert,
-      { repo: "vasc/homepanel", number: 14, title: "Base", state: "open", body: `Fixes ${issue.ref}` },
-      { actor: "github", channel: "cli", system: true },
+      c.prSync,
+      {
+        prs: [
+          { repo: "vasc/homepanel", number: 14, title: "Base", state: "open", body: `Fixes ${issue.ref}` },
+        ],
+      },
+      GITHUB,
     );
     w.tracker.call(c.lineDone, { ref: w.line.ref }, DEV);
     await w.runner.tick();
@@ -182,9 +187,13 @@ describe("the local runner", () => {
     const w = world({ repos: {}, cap: 0, dryRun: true });
     const issue = w.tracker.call(c.issueCreate, { project: "PANEL", title: "Base", line: w.line.ref }, DEV);
     w.tracker.call(
-      c.prUpsert,
-      { repo: "vasc/homepanel", number: 14, title: "Base", state: "open", body: `Fixes ${issue.ref}` },
-      { actor: "github", channel: "cli", system: true },
+      c.prSync,
+      {
+        prs: [
+          { repo: "vasc/homepanel", number: 14, title: "Base", state: "open", body: `Fixes ${issue.ref}` },
+        ],
+      },
+      GITHUB,
     );
     w.tracker.call(c.lineDone, { ref: w.line.ref }, DEV);
     w.later(16);
