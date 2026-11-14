@@ -5,7 +5,7 @@ import { type HotkeyMap, useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useLinePlace } from "../../hooks/useLinePlace.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
 import { useResolveDecision } from "../../hooks/useResolveDecision.ts";
-import { LoadingState } from "../ui/states.tsx";
+import { ErrorState, LoadingState } from "../ui/states.tsx";
 import { StartSheetView } from "./StartSheetView.tsx";
 
 /**
@@ -55,6 +55,8 @@ export function StartSheet({
   }, [line, current, questions.data, onDoneWhen, resolve, place]);
   useHotkeys(keys);
   if (held.isPending || questions.isPending) return <LoadingState />;
+  const failure = held.error ?? questions.error;
+  if (failure !== null) return <ErrorState error={failure} />;
   return (
     <StartSheetView
       line={line}

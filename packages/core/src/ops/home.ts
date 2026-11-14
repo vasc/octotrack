@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { crewOf } from "../agents/claims.ts";
+import { crewOf, waitingOnYou } from "../agents/claims.ts";
 import { DEVELOPER } from "../agents/state.ts";
 import type { ForYou, HomeView, Line, LineHome, LineState } from "../schemas.ts";
 import type { Ctx } from "../store/context.ts";
@@ -151,6 +151,7 @@ export function buildHome(ctx: Ctx): HomeView {
     return {
       start: lineStart(ctx, line.ref),
       stepIn: stepInFor(ctx, line),
+      waitingOnYou: working && waitingOnYou(ctx, line.ref),
       step:
         current === undefined ? null : { position: current.position, of: steps.length, title: current.title },
       forYou: [...proposals, ...questions, ...tasks],

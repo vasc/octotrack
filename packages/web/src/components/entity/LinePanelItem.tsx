@@ -71,6 +71,8 @@ export function LinePanelItem({ line }: { line: Line }) {
               : choices.choose(choice)
           }
           onTable={choices.table}
+          foldTargets={order.filter((other) => other.ref !== line.ref)}
+          onFold={(into) => h.fold(line.ref, into)}
           held={{
             questions: forYou.filter((item) => item.kind === "question").length,
             tasks: forYou.filter((item) => item.kind === "task").length,

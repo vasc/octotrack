@@ -78,6 +78,7 @@ export function LinesGallery() {
             step: { position: 3, of: 4, title: "settle board and opening" },
             forYou: [{ kind: "question", card: QUESTION }],
             stepIn: false,
+            waitingOnYou: false,
             held: { questions: 0, tasks: 0 },
             scopedSteps: 4,
             answers: [
@@ -208,6 +209,7 @@ export function LinesGallery() {
             step: null,
             forYou: [],
             stepIn: false,
+            waitingOnYou: false,
             held: { questions: 0, tasks: 1 },
             scopedSteps: 0,
             answers: [],

@@ -756,6 +756,8 @@ export const LineHome = z.object({
   forYou: z.array(ForYou),
   /** A working line that needs the developer to step in: nobody could be found and nothing is starting. */
   stepIn: z.boolean(),
+  /** All of a working line's open work waits on the developer: no agent has anything to pick up meanwhile. */
+  waitingOnYou: z.boolean(),
   /** On a line not being worked on: the questions and tasks it holds. */
   held: z.object({ questions: z.number().int(), tasks: z.number().int() }),
   /** How many plan steps scoping has written so far. */

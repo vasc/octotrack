@@ -151,7 +151,7 @@ export function HomePage() {
                   home.working.filter((line) => home.crews[line.ref]?.owner == null && line.ownedBy === null)
                     .length
                 }
-                waiting={home.working.filter((line) => (home.lines[line.ref]?.forYou.length ?? 0) > 0).length}
+                waiting={home.working.filter((line) => home.lines[line.ref]?.waitingOnYou === true).length}
               />
             }
             onFocus={choose}
@@ -172,7 +172,8 @@ export function HomePage() {
             h={h}
             focus={focus}
             starting={starting}
-            narrow={narrow}
+            // At a place everything else folds, up next and proposals included; urgent questions never do.
+            narrow={narrow || at !== null}
             handle={handle}
             drop={drop}
             onStarting={setStarting}

@@ -847,6 +847,19 @@ describe("lines of work", () => {
       expect(opened.getByLabelText(`What ${task.ref} found`)).toHaveProperty("value", "41, 38, 12");
     });
 
+    test("the Undo bar's live region is there before the first choice, so that one is announced too", async () => {
+      seedLines();
+      navigate("/");
+      const view = renderApp(<App />);
+      await view.findByRole("region", { name: "Working on" });
+      const live = view
+        .getAllByRole("status")
+        .find((element) => element.getAttribute("aria-live") === "polite");
+      expect(live?.textContent).toBe("");
+      fireEvent.click(view.getByRole("button", { name: "Start Wall mount" }));
+      await within(live ?? document.body).findByText(/^Starting Wall mount in \d seconds?$/);
+    });
+
     test("a choice that fails when it takes effect says why in the Undo bar, until dismissed", async () => {
       const proposal = seedLines();
       navigate("/");
@@ -1003,6 +1016,43 @@ describe("lines of work", () => {
           "true",
         ),
       );
+    });
+
+    test("? opens the list of keys and Esc closes it, before anything else", async () => {
+      onLine();
+      navigate("/?ref=L-1");
+      const view = renderApp(<App />);
+      await view.findByRole("complementary", { name: "L-1" });
+      fireEvent.keyDown(window, { key: "?" });
+      await view.findByRole("dialog", { name: "Keys" });
+      fireEvent.keyDown(window, { key: "Escape" });
+      await gone(() => view.queryByRole("dialog", { name: "Keys" }));
+      // The key list went first; the panel is still open for the next Esc.
+      view.getByRole("complementary", { name: "L-1" });
+    });
+
+    test("the focused item says Focused, and only it", async () => {
+      onLine();
+      navigate("/");
+      const view = renderApp(<App />);
+      const question = await view.findByRole("article", { name: "Which board?" });
+      expect(within(question).getByText("Focused")).toBeTruthy();
+      expect(view.getAllByText("Focused")).toHaveLength(1);
+    });
+
+    test("a proposal's number keys do nothing more while its choice waits", async () => {
+      seedLines();
+      navigate("/");
+      const view = renderApp(<App />);
+      const card = await view.findByRole("article", { name: "Wall mount" });
+      fireEvent.focus(card);
+      await waitFor(() => expect(card.getAttribute("data-selected")).toBe("true"));
+      fireEvent.keyDown(window, { key: "2" });
+      await view.findByRole("button", { name: "Undo" });
+      fireEvent.keyDown(window, { key: "2" });
+      fireEvent.keyDown(window, { key: "1" });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(server.calls.filter((name) => name === "choice.make")).toHaveLength(1);
     });
 
     test("o or Enter opens the focused item's line, and t opens it at Tell, with the cursor in the box", async () => {
@@ -1951,7 +2001,7 @@ describe("lines of work", () => {
       const view = renderApp(<App />);
       const third = within(await view.findByRole("article", { name: "Third" }));
       within(view.getByRole("article", { name: "Second" })).getByRole("button", { name: "Open D-2" });
-      fireEvent.click(third.getByRole("button", { name: "1 waiting on you" }));
+      fireEvent.click(third.getByRole("button", { name: "1 for you" }));
       await third.findByRole("article", { name: "Third question" });
     } finally {
       Object.assign(window, { matchMedia: realMatchMedia });
