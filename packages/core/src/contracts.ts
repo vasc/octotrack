@@ -520,7 +520,6 @@ export const contracts = {
       dueAt: DateText.optional(),
       blocks: z.array(z.string()).optional(),
       affects: z.array(z.string()).optional(),
-      wake: WakeAddress.optional(),
       /** The line it is asked on. Default: the line the asker is on. */
       line: z.string().optional(),
       /** The issue it concerns. Default: the one the asker holds on that line. */
@@ -781,15 +780,9 @@ export const contracts = {
     z.strictObject({ ref: z.string(), status: DecisionReportStatus, note: Text }),
     Decision,
   ),
-  decisionWake: write(
-    "decision.wake",
-    "Ask to be woken when this is answered, or stop asking with a null address",
-    z.strictObject({ ref: z.string(), address: WakeAddress.nullable() }),
-    Decision,
-  ),
   decisionWakes: read(
     "decision.wakes",
-    "Answered decisions whose session asked to be woken and has not been yet",
+    "Answered questions on no line whose asker can be woken and has not been yet, with where to wake it",
     z.strictObject({}),
     z.array(Decision),
   ),

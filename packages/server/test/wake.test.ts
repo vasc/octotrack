@@ -38,8 +38,10 @@ function setup(result: WakeResult = { exitCode: 0, stderr: "" }) {
       return result;
     },
   });
+  /** Asked on no line by an agent that registered where to wake it, then answered. */
   const askAndAnswer = (wake: string, title = "Which queue?") => {
-    const { ref } = tracker.call(c.decisionAsk, { title, wake }, CALLER);
+    tracker.call(c.agentRegister, { wake }, CALLER);
+    const { ref } = tracker.call(c.decisionAsk, { title }, CALLER);
     tracker.call(c.decisionResolve, { ref, note: "Kafka" }, { actor: "dev", channel: "dashboard" });
     return ref;
   };
@@ -108,8 +110,9 @@ describe("the wake dispatcher", () => {
         throw new Error("No such file");
       },
     });
+    tracker.call(c.agentRegister, { wake: "test:s" }, CALLER);
     const refs = ["a", "b"].map((title) => {
-      const { ref } = tracker.call(c.decisionAsk, { title, wake: "test:s" }, CALLER);
+      const { ref } = tracker.call(c.decisionAsk, { title }, CALLER);
       tracker.call(c.decisionResolve, { ref, note: "x" }, { actor: "dev", channel: "dashboard" });
       return ref;
     });
@@ -123,7 +126,8 @@ describe("the wake dispatcher", () => {
   test("hears about an answer by itself once listening", async () => {
     const { tracker, runs, dispatcher } = setup();
     const stop = dispatcher.listen();
-    const { ref } = tracker.call(c.decisionAsk, { title: "Now?", wake: "test:s" }, CALLER);
+    tracker.call(c.agentRegister, { wake: "test:s" }, CALLER);
+    const { ref } = tracker.call(c.decisionAsk, { title: "Now?" }, CALLER);
     expect(runs).toEqual([]);
     tracker.call(c.decisionResolve, { ref, note: "Yes" }, { actor: "dev", channel: "dashboard" });
     await dispatcher.settled();

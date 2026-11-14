@@ -121,7 +121,6 @@ const EVERY_WRITE: readonly (readonly [string, unknown])[] = [
   ["decision.ask", { title: "New" }],
   ["decision.update", { ref: "D-1", priority: "high" }],
   ["decision.postpone", { ref: "D-1" }],
-  ["decision.wake", { ref: "D-1", address: "test:s" }],
   ["decision.resolve", { ref: "D-1", option: "a" }],
   ["decision.pickup", { ref: "D-1" }],
   ["decision.report", { ref: "D-1", status: "done", note: "Did it" }],
