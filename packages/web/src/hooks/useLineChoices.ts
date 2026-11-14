@@ -2,7 +2,6 @@ import { contracts } from "@octotrack/core/contracts";
 import type { Line } from "@octotrack/core/schemas";
 import type { LineChoice } from "../components/entity/LineActions.tsx";
 import { useChoices } from "./useChoices.ts";
-import { useOpMutation } from "./useOp.ts";
 
 const OPS: Readonly<Record<LineChoice, string>> = {
   start: contracts.lineStart.name,
@@ -29,13 +28,32 @@ const SAID: Readonly<Record<LineChoice, string>> = {
 /** The developer's choices on one line, as the line panel offers them. Each waits a few seconds with Undo. */
 export function useLineChoices(line: Line) {
   const choices = useChoices();
-  const doneWhen = useOpMutation(contracts.lineDoneWhenAnswer);
   return {
-    failure: doneWhen.error ?? choices.failure,
+    failure: choices.failure,
     choose: (choice: LineChoice) =>
       choices.make(OPS[choice], { ref: line.ref }, `${SAID[choice]} ${line.title}`),
-    table: (reason: string) =>
-      choices.make(contracts.lineTable.name, { ref: line.ref, reason }, `Tabled ${line.title}`),
-    doneWhen: (accept: boolean) => doneWhen.mutate({ ref: line.ref, accept }),
+    table: (reason: string, lookAgainAt: string | null) =>
+      choices.make(
+        contracts.lineTable.name,
+        { ref: line.ref, reason, ...(lookAgainAt === null ? {} : { lookAgainAt }) },
+        `Tabled ${line.title}`,
+      ),
+    doneWhen: (accept: boolean) =>
+      choices.make(
+        contracts.lineDoneWhenAnswer.name,
+        { ref: line.ref, accept },
+        accept ? `New done when for ${line.title}` : `${line.title} keeps its done when`,
+      ),
+    tell: (body: string) =>
+      choices.make(
+        contracts.lineTell.name,
+        { line: line.ref, body },
+        body === "" ? `Nudged ${line.title}` : `Told ${line.title}: ${body}`,
+      ),
+    stop: (name: string) => choices.make(contracts.agentStop.name, { name }, `Stopped ${name}`),
+    addTask: (title: string) =>
+      choices.make(contracts.taskAdd.name, { line: line.ref, title }, `Task on ${line.title}: ${title}`),
+    addNote: (body: string) =>
+      choices.make(contracts.noteAdd.name, { line: line.ref, body }, `Note on ${line.title}`),
   };
 }

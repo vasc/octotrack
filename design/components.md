@@ -121,7 +121,7 @@ Home is one list: every line in the developer's order, with what each needs from
 | `HomePage`       | Structural | Home: the focus, the sections, and every choice                                                                                                       |
 | `FirstRun`       | Pure       | Before anything is placed: accept the agents' recommended placements in one choice                                                                    |
 | `PushToggle`     | Pure       | Whether this device is buzzed, and Buzz this device to turn it on                                                                                     |
-| `TableForm`      | Pure       | Asks why before tabling: a tabled line always says why                                                                                                |
+| `TableForm`      | Pure       | Asks why before tabling, since a tabled line always says why, and an optional date to look again                                                  |
 | `AddLineForm`    | Pure       | A new line with its done-when sentence. It joins the end of up next                                                                                   |
 
 ## Agents: `agents/`
@@ -155,8 +155,10 @@ Opens from any ref, in the rail, without leaving the page.
 | `HistoryList`    | Pure       | What has happened to this item                                                             |
 | `PrPanel`        | Pure       | A pull request's details                                                                   |
 | `LinePanel`      | Pure       | A line of work: its state, what finishes it, and why it waits if it does                   |
-| `LineActions`    | Pure       | What the developer can do with a line: place, table, finish, own, and answer its proposals |
-| `LinePanelItem`  | Structural | A line in the inspector with its actions                                                   |
+| `LineActions`    | Pure       | What the developer can do with a line: place, table, finish, own, stop its owner, and answer its proposals |
+| `LinePanelItem`  | Structural | A line in the inspector with its actions, Tell or the developer's own box, marked seen when it opens |
+| `TellBox`        | Pure       | Tell: a free message to the line's owner, named in its label; empty, a nudge               |
+| `OwnWorkBox`     | Pure       | On a line the developer owns, one growing box that adds a task or a note                   |
 | `EntityBody`     | Pure       | Picks the right body for the kind of item                                                  |
 | `DecisionPanel`  | Structural | An open decision as a card, or a closed one as its record                                  |
 | `IssuePanel`     | Structural | An issue's details, with its status select                                                 |

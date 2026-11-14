@@ -56,8 +56,12 @@ export function useHome() {
     queue: (ref: string) => choices.make(contracts.lineQueue.name, { ref }, `${titleOf(ref)} is up next`),
     reject: (ref: string) => choices.make(contracts.lineReject.name, { ref }, `${titleOf(ref)}: not a line`),
     drop: (ref: string) => choices.make(contracts.lineDrop.name, { ref }, `Dropped ${titleOf(ref)}`),
-    table: (ref: string, reason: string) =>
-      choices.make(contracts.lineTable.name, { ref, reason }, `Tabled ${titleOf(ref)}`),
+    table: (ref: string, reason: string, lookAgainAt: string | null = null) =>
+      choices.make(
+        contracts.lineTable.name,
+        { ref, reason, ...(lookAgainAt === null ? {} : { lookAgainAt }) },
+        `Tabled ${titleOf(ref)}`,
+      ),
     fold: (ref: string, into: string) =>
       choices.make(contracts.lineFold.name, { ref, into }, `Folded ${titleOf(ref)} into ${titleOf(into)}`),
     own: (ref: string) => choices.make(contracts.lineOwn.name, { ref }, `You own ${titleOf(ref)}`),

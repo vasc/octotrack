@@ -8,8 +8,11 @@ export type LineChoice = "start" | "queue" | "done" | "drop" | "reject" | "own" 
 export interface LineActionsProps {
   line: Line;
   onChoose(choice: LineChoice): void;
-  onTable(reason: string): void;
+  onTable(reason: string, lookAgainAt: string | null): void;
   onDoneWhen(accept: boolean): void;
+  /** The agent that owns the line, which the developer can stop from here. */
+  owner?: string | null;
+  onStopOwner?: (name: string) => void;
 }
 
 const CHOICES: Readonly<Record<Line["state"], readonly (readonly [LineChoice, string])[]>> = {
@@ -37,7 +40,14 @@ const CHOICES: Readonly<Record<Line["state"], readonly (readonly [LineChoice, st
 };
 
 /** Everything the developer can do with a line, from its panel: place it, finish it, own it, and answer its agents. */
-export function LineActions({ line, onChoose, onTable, onDoneWhen }: LineActionsProps) {
+export function LineActions({
+  line,
+  onChoose,
+  onTable,
+  onDoneWhen,
+  owner = null,
+  onStopOwner,
+}: LineActionsProps) {
   const [tabling, setTabling] = useState(false);
   const live = line.state !== "done" && line.state !== "dropped";
   return (
@@ -76,8 +86,8 @@ export function LineActions({ line, onChoose, onTable, onDoneWhen }: LineActions
       {!live ? null : tabling ? (
         <TableForm
           title={line.title}
-          onTable={(reason) => {
-            onTable(reason);
+          onTable={(reason, lookAgainAt) => {
+            onTable(reason, lookAgainAt);
             setTabling(false);
           }}
           onCancel={() => setTabling(false)}
@@ -92,6 +102,11 @@ export function LineActions({ line, onChoose, onTable, onDoneWhen }: LineActions
           {line.state === "tabled" ? null : (
             <button type="button" className="btn" onClick={() => setTabling(true)}>
               Table…
+            </button>
+          )}
+          {owner === null || onStopOwner === undefined ? null : (
+            <button type="button" className="btn" onClick={() => onStopOwner(owner)}>
+              Stop {owner}
             </button>
           )}
           {line.state !== "working" ? null : line.ownedBy === null ? (
