@@ -349,6 +349,14 @@ export const lineOps = [
                 status: issue.status === "in_progress" ? "todo" : undefined,
               },
         );
+        if (!madeForIt) {
+          // Attested, as D6 attests drift: this work was offered as a line and turned down, so it is not asked about again.
+          ctx.sql.run("INSERT OR REPLACE INTO not_a_line (issue, line, at) VALUES (?, ?, ?)", [
+            issue.ref,
+            line.ref,
+            ctx.now,
+          ]);
+        }
         emit(ctx, {
           type: madeForIt ? "issue.status_changed" : "issue.updated",
           kind: "issue",

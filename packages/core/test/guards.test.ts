@@ -272,6 +272,30 @@ describe("what records the developer's own attention is theirs in person; the re
   });
 });
 
+describe("Not a line returns old work for good", () => {
+  test("the returned issues are not asked about again", () => {
+    const w = world();
+    const old = w.as(w.dev, c.issueCreate, { project: "PANEL", title: "From before" }).ref;
+    const proposer = w.agent("scout");
+    w.as(proposer, c.agentRegister, { repo: "PANEL" });
+    const proposal = w.as(proposer, c.linePropose, {
+      title: "Old things",
+      doneWhen: "Sorted.",
+      repos: ["PANEL"],
+      recommendation: "up_next",
+      why: "They belong together.",
+    });
+    w.as(proposer, c.issueUpdate, { refs: [old], line: proposal.ref });
+    const drift = () => w.as(w.dev, c.driftList, { query: "rule:unplaced-work" }).map((item) => item.message);
+    expect(drift()).toEqual([]);
+    w.as(w.dev, c.lineReject, { ref: proposal.ref });
+    expect(drift()).toEqual([]);
+    const fresh = w.as(w.dev, c.issueCreate, { project: "PANEL", title: "New and loose" }).ref;
+    expect(drift()).toEqual([`1 open issue in PANEL is on no line`]);
+    expect(w.as(w.dev, c.driftList, { query: "rule:unplaced-work" })[0]?.fingerprint).toBe(fresh);
+  });
+});
+
 describe("agents write only to the line they are on", () => {
   test("links: an agent from outside can neither add nor remove them", () => {
     const w = world();

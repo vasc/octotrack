@@ -321,6 +321,10 @@ const MIGRATIONS: readonly Migration[] = [
   ALTER TABLE runner_starts ADD COLUMN exitedAt TEXT;
   UPDATE runner_starts SET exitedAt = COALESCE(endedAt, startedAt) WHERE state NOT IN ('starting', 'running');
   `,
+  // Issues Not a line returned to no line: the drift that asks for a line for work with none leaves them be.
+  `
+  CREATE TABLE not_a_line (issue TEXT PRIMARY KEY, line TEXT NOT NULL, at TEXT NOT NULL);
+  `,
 ];
 
 const UserVersion = z.object({ user_version: z.number().int() });

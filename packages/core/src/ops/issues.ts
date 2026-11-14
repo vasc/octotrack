@@ -215,6 +215,8 @@ export const issueOps = [
         step,
       });
       const updated = requireIssue(ctx, current.ref);
+      // Put on a line again, it is no longer work that was turned down as not a line.
+      if (updated.line !== null) ctx.sql.run("DELETE FROM not_a_line WHERE issue = ?", [updated.ref]);
       emitIssueChange(ctx, updated, changes);
       return updated;
     });
