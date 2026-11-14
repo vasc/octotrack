@@ -387,10 +387,11 @@ export function settle(ctx: Ctx): void {
       changes,
     });
   }
-  // A session that has not taken its line five minutes after it started never will: it stops holding the line's turn.
+  // A session that has not taken its line five minutes after its process started never will: it stops holding the
+  // line's turn. Its worktree and setup, before that, can take as long as they take.
   ctx.sql.run(
     `UPDATE runner_starts SET state = 'never_took', endedAt = ?
-     WHERE state = 'starting' AND startedAt <= ?
+     WHERE state = 'starting' AND spawnedAt IS NOT NULL AND spawnedAt <= ?
        AND NOT EXISTS (SELECT 1 FROM line_claims c WHERE c.agent = runner_starts.name AND c.line = runner_starts.line)`,
     [ctx.now, new Date(Date.parse(ctx.now) - CHECK_IN_MS).toISOString()],
   );

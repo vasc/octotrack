@@ -186,6 +186,7 @@ const EVERY_WRITE: readonly (readonly [string, unknown])[] = [
   ["runner.report", { configured: true, cap: 1, dryRun: false }],
   ["runner.dry", { line: "L-1", repo: "OCT" }],
   ["runner.start", { line: "L-1", repo: "OCT", worktree: "/wt/oct.1" }],
+  ["runner.spawned", { name: "oct.1", pid: 4242 }],
   [
     "runner.worktree",
     { path: "/wt/oct.1", repo: "OCT", checkout: "/src/oct", branch: "octo/oct.1", agent: "oct.1" },

@@ -337,6 +337,15 @@ const MIGRATIONS: readonly Migration[] = [
     PRIMARY KEY (line, pr)
   );
   `,
+  // A start's process: when it was spawned (its check-in runs from then, not from setup), its id, so a restart can
+  // tell whether it still runs, its exit code, and whether it ran and took its line before it ended.
+  `
+  ALTER TABLE runner_starts ADD COLUMN spawnedAt TEXT;
+  ALTER TABLE runner_starts ADD COLUMN pid INTEGER;
+  ALTER TABLE runner_starts ADD COLUMN exitCode INTEGER;
+  ALTER TABLE runner_starts ADD COLUMN ran INTEGER NOT NULL DEFAULT 0;
+  UPDATE runner_starts SET spawnedAt = startedAt;
+  `,
 ];
 
 const UserVersion = z.object({ user_version: z.number().int() });

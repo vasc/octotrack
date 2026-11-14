@@ -225,7 +225,23 @@ export const contracts = {
       repo: z.string(),
       /** A gone session's worktree handed on for this line, to start in instead of a new one. */
       worktree: z.string().nullable(),
+      /** Octotrack made the branch octo/<name> before, for this name: a retry may take it up again, a new start never. */
+      ownBranch: z.boolean(),
     }),
+  ),
+  runnerSpawned: write(
+    "runner.spawned",
+    "Record that a session's process started, which starts its check-in; says whether it should still run",
+    z.strictObject({ name: z.string(), pid: z.number().int().positive() }),
+    z.object({ go: z.boolean(), why: z.string().nullable() }),
+  ),
+  runnerLive: read(
+    "runner.live",
+    "Sessions Octotrack started whose process has not been seen to exit, with their process ids",
+    Empty,
+    z.array(
+      z.object({ name: z.string(), pid: z.number().int().nullable(), spawnedAt: z.string().nullable() }),
+    ),
   ),
   runnerExited: write(
     "runner.exited",
@@ -242,7 +258,7 @@ export const contracts = {
   runnerDry: write(
     "runner.dry",
     "Record what the runner would have started, in watch mode",
-    z.strictObject({ line: z.string(), repo: z.string() }),
+    z.strictObject({ line: z.string(), repo: z.string(), role: StartRole.optional() }),
     z.object({ line: z.string() }),
   ),
   runnerCloses: read(
@@ -259,8 +275,8 @@ export const contracts = {
   ),
   runnerRestarted: write(
     "runner.restarted",
-    "Settle sessions from before a server restart, whose ends the runner did not see",
-    Empty,
+    "Settle sessions from before a server restart whose process is gone; those named alive are watched by process id",
+    z.strictObject({ alive: z.array(z.string()).optional() }),
     z.object({ settled: z.number().int() }),
   ),
   runnerWorktree: write(
@@ -277,13 +293,17 @@ export const contracts = {
   ),
   runnerStopRan: write(
     "runner.stop_ran",
-    "Record that the developer's stop command ran for a stopped agent, or in watch mode that it would have",
+    "Record what Stop did on this machine for a stopped agent: its process ended, the stop command run; or in watch mode what it would have done",
     z.strictObject({
       name: z.string(),
       /** Its exit code; negative when the runner did not run it, with why in output. */
       code: z.number().int(),
       output: z.string(),
       dry: z.boolean().optional(),
+      /** The runner ended the session's process group itself: one it started. */
+      ended: z.boolean().optional(),
+      /** False when no stop command is set, so only the process was ended. */
+      command: z.boolean().optional(),
     }),
     z.object({ name: z.string() }),
   ),
