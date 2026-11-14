@@ -202,3 +202,46 @@ describe("a question on a line is refined only by its asker or the agents on its
     );
   });
 });
+
+describe("the developer's and the server's names are not agents' names", () => {
+  test("an agent cannot call itself dev or octotrack", () => {
+    const w = world();
+    for (const name of ["dev", "octotrack"]) {
+      const refusal = w.refused(() => w.tracker.execute(c.lineTake.name, { ref: w.line }, w.agent(name)));
+      expect(refusal.code).toBe("invalid_input");
+    }
+    expect(w.as(w.dev, c.agentList, {}).map((agent) => agent.name)).not.toContain("dev");
+  });
+
+  test("a new name is letters, digits, dots, dashes, underscores and inner spaces, from a letter or digit, at most 64", () => {
+    const w = world();
+    for (const name of ["*", "-rf", "--all", "tab\there", "trailing ", ".hidden", "a;b", "x".repeat(65)]) {
+      expect(w.refused(() => w.as(w.agent(name), c.agentRegister, { repo: "PANEL" })).code).toBe(
+        "invalid_input",
+      );
+    }
+    for (const name of [
+      "meals",
+      "octotrack.3",
+      "panel_2",
+      "a-b.c",
+      "9lives",
+      "my agent",
+      "agénte-日本",
+      "x".repeat(64),
+    ]) {
+      expect(w.as(w.agent(name), c.agentRegister, { repo: "PANEL" }).name).toBe(name);
+    }
+  });
+
+  test("an agent registered before the rule keeps working", () => {
+    const w = world();
+    w.driver.run("INSERT INTO agents (name, firstSeenAt, lastSeenAt, repo) VALUES (?, ?, ?, ?)", [
+      "old agent",
+      "2026-11-01T00:00:00.000Z",
+      "2026-11-01T00:00:00.000Z",
+      "PANEL",
+    ]);
+    expect(w.as(w.agent("old agent"), c.agentRegister, {}).name).toBe("old agent");
+  });
+});

@@ -26,3 +26,18 @@ export function looksLikeRef(name: string): boolean {
 
 /** The name the developer acts under, from the dashboard or the CLI with --me. Tasks are issues assigned to it. */
 export const DEVELOPER = "dev";
+
+/**
+ * Names that say who acted in the log without being agents: the developer, Octotrack itself, and pull request sync. An
+ * agent under one of them would pass for it, so none may be used, by a new agent or an old one.
+ */
+export const RESERVED_NAMES: ReadonlySet<string> = new Set([DEVELOPER, "octotrack", "github"]);
+
+/**
+ * A new agent's name: letters and digits of any language, dots, dashes, underscores and inner spaces, from a letter or
+ * digit, at most 64. Names reach wake addresses and the developer's stop command, as one argument with no shell, so
+ * nothing a glob or an option parser reads specially (`*`, a leading dash) may be in one.
+ */
+export function isAgentName(name: string): boolean {
+  return /^[\p{L}\p{N}](?:[\p{L}\p{N} ._-]{0,62}[\p{L}\p{N}._-])?$/u.test(name);
+}
