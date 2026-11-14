@@ -59,10 +59,18 @@ export function createPushDispatcher(options: { tracker: Tracker; send: PushSend
       if (subscriptions.length === 0) return;
       for (const subscription of subscriptions) {
         for (const note of due) {
-          const result = await send(
-            subscription,
-            JSON.stringify({ title: note.title, body: note.body, url: note.url }),
-          );
+          // One browser's push service failing costs that browser this notification, nothing more: the others still
+          // hear it, and it is recorded as sent, since a line buzzes at most once (D14).
+          let result: { statusCode: number };
+          try {
+            result = await send(
+              subscription,
+              JSON.stringify({ title: note.title, body: note.body, url: note.url }),
+            );
+          } catch (error) {
+            console.error(`[push] ${subscription.endpoint}:`, error);
+            break;
+          }
           if (GONE.has(result.statusCode)) {
             tracker.call(contracts.pushUnsubscribe, { endpoint: subscription.endpoint }, SERVER);
             break;

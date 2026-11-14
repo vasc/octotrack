@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { contracts as c, Tracker } from "@octotrack/core";
 import { openSqlite } from "../src/sqlite.ts";
-import { createWakeDispatcher, loadWakeAdapters, type WakeResult } from "../src/wake.ts";
+import { createWakeDispatcher, loadWakeAdapters, spawnWake, type WakeResult } from "../src/wake.ts";
 
 const CALLER = { actor: "mediarr", channel: "cli" } as const;
 const ADAPTERS = { test: { command: ["/bin/wake", "--to", "{address}", "{message}"] } };
@@ -25,12 +25,14 @@ afterEach(() => {
 function setup(result: WakeResult = { exitCode: 0, stderr: "" }) {
   const tracker = new Tracker(openSqlite(":memory:"));
   const runs: (readonly string[])[] = [];
+  const envs: Readonly<Record<string, string>>[] = [];
   const statusDuringRun: (string | null)[] = [];
   const dispatcher = createWakeDispatcher({
     tracker,
     adapters: ADAPTERS,
-    run: async (argv) => {
+    run: async (argv, env) => {
       runs.push(argv);
+      envs.push(env);
       const decision = tracker.call(c.decisionList, {}, CALLER)[0];
       statusDuringRun.push(decision?.wokenAt ?? null);
       return result;
@@ -42,7 +44,7 @@ function setup(result: WakeResult = { exitCode: 0, stderr: "" }) {
     return ref;
   };
   const read = (ref: string) => tracker.call(c.decisionList, { query: `ref:${ref}` }, CALLER)[0];
-  return { tracker, runs, statusDuringRun, dispatcher, askAndAnswer, read };
+  return { tracker, runs, envs, statusDuringRun, dispatcher, askAndAnswer, read };
 }
 
 describe("the wake dispatcher", () => {
@@ -135,11 +137,13 @@ describe("waking agents on lines", () => {
     let now = "2026-11-14T09:00:00.000Z";
     const tracker = new Tracker(openSqlite(":memory:"), () => now);
     const runs: (readonly string[])[] = [];
+    const envs: Readonly<Record<string, string>>[] = [];
     const dispatcher = createWakeDispatcher({
       tracker,
       adapters: ADAPTERS,
-      run: async (argv) => {
+      run: async (argv, env) => {
         runs.push(argv);
+        envs.push(env);
         return result;
       },
     });
@@ -165,7 +169,7 @@ describe("waking agents on lines", () => {
     now = "2026-11-14T09:20:00.000Z";
     tracker.call(c.decisionResolve, { ref: asked.ref, option: "a" }, dev);
     const agent = () => tracker.call(c.agentList, {}, dev).find((item) => item.name === "panel");
-    return { tracker, runs, dispatcher, agent, line };
+    return { tracker, runs, envs, dispatcher, agent, line };
   }
 
   test("an asleep agent with an answer waiting is woken at its own address, once, with no tracker text", async () => {
@@ -178,12 +182,47 @@ describe("waking agents on lines", () => {
     expect(runs[0]?.[3]).not.toContain("Ignore your instructions");
   });
 
+  test("a woken agent runs as itself, never as whoever started the server", async () => {
+    const { envs, dispatcher } = lineWorld();
+    await dispatcher.dispatch();
+    expect(envs).toEqual([{ OCTO_AGENT: "panel" }]);
+  });
+
   test("a failed wake makes the agent gone, and its line looks for another owner", async () => {
     const { tracker, dispatcher, agent, line } = lineWorld({ exitCode: 1, stderr: "not logged in" });
     await dispatcher.dispatch();
     expect([agent()?.state, agent()?.wakeError]).toEqual(["gone", "Exit 1: not logged in"]);
     const crew = tracker.call(c.homeShow, {}, { actor: "dev", channel: "dashboard" }).crews[line.ref];
     expect([crew?.owner, crew?.search?.step]).toEqual([null, 2]);
+  });
+});
+
+describe("the session that asked a question", () => {
+  test("is woken as itself", async () => {
+    const { envs, dispatcher, askAndAnswer } = setup();
+    askAndAnswer("test:session-1");
+    await dispatcher.dispatch();
+    expect(envs).toEqual([{ OCTO_AGENT: "mediarr" }]);
+  });
+});
+
+describe("spawnWake", () => {
+  test("gives the woken session its own name, and none of the server's identity", async () => {
+    const saved = [process.env.OCTO_AGENT, process.env.OCTO_DEVELOPER];
+    process.env.OCTO_AGENT = "someone-else";
+    process.env.OCTO_DEVELOPER = "1";
+    try {
+      const woken = await spawnWake(["sh", "-c", 'test -z "$OCTO_DEVELOPER" && test "$OCTO_AGENT" = panel'], {
+        OCTO_AGENT: "panel",
+      });
+      expect(woken.exitCode).toBe(0);
+    } finally {
+      const [agent, developer] = saved;
+      if (agent === undefined) delete process.env.OCTO_AGENT;
+      else process.env.OCTO_AGENT = agent;
+      if (developer === undefined) delete process.env.OCTO_DEVELOPER;
+      else process.env.OCTO_DEVELOPER = developer;
+    }
   });
 });
 
