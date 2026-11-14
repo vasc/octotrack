@@ -32,6 +32,14 @@ export function StepIn({
 }: StepInProps) {
   const [mode, setMode] = useState<"table" | "checkout" | null>(null);
   const [path, setPath] = useState("");
+  const offered = [
+    checkoutRepo !== undefined && onCheckout !== undefined ? "checkout" : null,
+    onRetry === undefined ? null : "retry",
+    onAnyway === undefined ? null : "anyway",
+    "table",
+    "own",
+  ].filter((action) => action !== null);
+  const number = (action: string) => String(offered.indexOf(action) + 1);
   return (
     <div className="step-in" role="note" aria-label={`Step in on ${line.title}`} data-selected={focused}>
       <p>
@@ -72,25 +80,49 @@ export function StepIn({
         </form>
       ) : (
         <div className="decision-actions">
+          {/* Numbered in the order drawn, for the number keys. */}
           {checkoutRepo === undefined || onCheckout === undefined ? null : (
-            <button type="button" className="btn" data-primary="true" onClick={() => setMode("checkout")}>
+            <button
+              type="button"
+              className="btn"
+              data-primary="true"
+              data-choice={number("checkout")}
+              onClick={() => setMode("checkout")}
+            >
               Set its checkout…
             </button>
           )}
           {onRetry === undefined ? null : (
-            <button type="button" className="btn" data-primary="true" onClick={() => onRetry(line.ref)}>
+            <button
+              type="button"
+              className="btn"
+              data-primary="true"
+              data-choice={number("retry")}
+              onClick={() => onRetry(line.ref)}
+            >
               Try now
             </button>
           )}
           {onAnyway === undefined ? null : (
-            <button type="button" className="btn" data-primary="true" onClick={() => onAnyway(line.ref)}>
+            <button
+              type="button"
+              className="btn"
+              data-primary="true"
+              data-choice={number("anyway")}
+              onClick={() => onAnyway(line.ref)}
+            >
               Start one anyway
             </button>
           )}
-          <button type="button" className="btn" onClick={() => setMode("table")}>
+          <button
+            type="button"
+            className="btn"
+            data-choice={number("table")}
+            onClick={() => setMode("table")}
+          >
             Table it…
           </button>
-          <button type="button" className="btn" onClick={() => onOwn(line.ref)}>
+          <button type="button" className="btn" data-choice={number("own")} onClick={() => onOwn(line.ref)}>
             I'll own it
           </button>
         </div>

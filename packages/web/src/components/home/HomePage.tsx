@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useHome } from "../../hooks/useHome.ts";
 import { useHomeFocus } from "../../hooks/useHomeFocus.ts";
+import { useHomeKeys } from "../../hooks/useHomeKeys.ts";
 import { useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useNarrow } from "../../hooks/useNarrow.ts";
 import { usePush } from "../../hooks/usePush.ts";
 import { firstOf } from "../../lib/focus.ts";
 import { useRoute } from "../../lib/router.ts";
+import { BatchPanel } from "../decisions/BatchPanel.tsx";
 import { DecisionCardItem } from "../decisions/DecisionCardItem.tsx";
 import { AddLineForm } from "../lines/AddLineForm.tsx";
 import { PageHead } from "../ui/PageHead.tsx";
@@ -15,6 +17,7 @@ import { AtSection } from "./AtSection.tsx";
 import { FirstRun } from "./FirstRun.tsx";
 import { HomeCounts } from "./HomeCounts.tsx";
 import { HomeSection } from "./HomeSection.tsx";
+import { KeyHelp } from "./KeyHelp.tsx";
 import { PushToggle } from "./PushToggle.tsx";
 import { ReorderButtons } from "./ReorderButtons.tsx";
 import { SpreadThin } from "./SpreadThin.tsx";
@@ -36,7 +39,20 @@ export function HomePage() {
   const { focus, armed, choose, keys } = useHomeFocus(home, asked, h.held);
   const [reordering, setReordering] = useState(false);
   const [starting, setStarting] = useState<string | null>(null);
+  const [help, setHelp] = useState(false);
+  const [recording, setRecording] = useState(false);
   useHotkeys(keys);
+  useHotkeys(
+    useHomeKeys({
+      home,
+      focus,
+      armed,
+      choose,
+      move: h.reorder,
+      onHelp: () => setHelp(true),
+      onRecord: () => setRecording(true),
+    }),
+  );
   const reorder = (title: string, ref: string, index: number, count: number) =>
     reordering ? (
       <ReorderButtons
@@ -61,7 +77,21 @@ export function HomePage() {
         >
           {reordering ? "Done reordering" : "Reorder"}
         </button>
+        <button
+          type="button"
+          className="btn"
+          aria-pressed={recording}
+          onClick={() => setRecording(!recording)}
+        >
+          Record answers…
+        </button>
       </PageHead>
+      {help ? <KeyHelp onClose={() => setHelp(false)} /> : null}
+      {recording ? (
+        <section className="home-section" aria-label="Record answers">
+          <BatchPanel />
+        </section>
+      ) : null}
       {home === undefined ? null : (
         <>
           <HomeCounts

@@ -4,6 +4,7 @@ import { useDraft } from "../../hooks/useDraft.ts";
 import { useLineChoices } from "../../hooks/useLineChoices.ts";
 import { useMarkSeen } from "../../hooks/useMarkSeen.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
+import { useRoute } from "../../lib/router.ts";
 import { ErrorState } from "../ui/states.tsx";
 import { LineActions } from "./LineActions.tsx";
 import { LinePanel } from "./LinePanel.tsx";
@@ -18,6 +19,8 @@ export function LinePanelItem({ line }: { line: Line }) {
   const own = useDraft(`own:${line.ref}`);
   useMarkSeen(line.ref);
   const owner = home.data?.crews[line.ref]?.owner?.name ?? null;
+  // Opened with t from home: straight to tabling.
+  const tabling = useRoute().params.get("act") === "table";
   const live = line.state !== "done" && line.state !== "dropped";
   const mine = line.ownedBy !== null;
   return (
@@ -30,6 +33,7 @@ export function LinePanelItem({ line }: { line: Line }) {
         onDoneWhen={choices.doneWhen}
         owner={owner}
         onStopOwner={choices.stop}
+        tabling={tabling}
       />
       {!live ? null : mine ? (
         <OwnWorkBox

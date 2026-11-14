@@ -47,10 +47,10 @@ export function setParams(patch: Readonly<Record<string, string | null>>, replac
   navigate(`${window.location.pathname}${query === "" ? "" : `?${query}`}`, replace);
 }
 
-export function openEntity(ref: string): void {
-  setParams({ ref });
+export function openEntity(ref: string, act: "table" | null = null): void {
+  setParams({ ref, act });
 }
 
 export function closeEntity(): void {
-  setParams({ ref: null });
+  setParams({ ref: null, act: null });
 }

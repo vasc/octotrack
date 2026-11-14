@@ -40,10 +40,15 @@ export function LineProposalCard({
       </div>
       {why === null ? (
         <div className="decision-actions">
-          <button type="button" className="btn" data-primary="true" onClick={onAccept}>
+          <button type="button" className="btn" data-primary="true" data-choice="1" onClick={onAccept}>
             {done ? "It is done" : "Accept"}
           </button>
-          <button type="button" className="btn" onClick={() => (done ? setWhy("") : onDecline(""))}>
+          <button
+            type="button"
+            className="btn"
+            data-choice="2"
+            onClick={() => (done ? setWhy("") : onDecline(""))}
+          >
             {done ? "Not yet…" : "Keep the one there is"}
           </button>
         </div>

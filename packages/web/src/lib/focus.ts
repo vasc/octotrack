@@ -99,3 +99,37 @@ export function nextFocus(
   }
   return fallback !== null && after.includes(fallback) ? fallback : (after[0] ?? null);
 }
+
+/** A line itself, in focus: reached with Shift J and K, so a line with nothing for the developer can be acted on. */
+export function lineFocusRef(line: string): string {
+  return `line:${line}`;
+}
+
+/** The lines Shift J and K walk: working on, then up next. */
+export function lineRefs(home: HomeView): string[] {
+  return [...home.working, ...home.upNext].map((line) => line.ref);
+}
+
+/** The line whatever has focus belongs to, which o, t and alt with the arrows act on. */
+export function lineOf(home: HomeView, focus: string | null): string | null {
+  if (focus === null) return null;
+  for (const prefix of ["line:", "stepin:", "done:", "done_when:"]) {
+    if (focus.startsWith(prefix)) return focus.slice(prefix.length);
+  }
+  if (home.proposed.some((line) => line.ref === focus)) return focus;
+  const urgent = home.urgent.find((card) => card.decision.ref === focus);
+  if (urgent !== undefined) return urgent.decision.line;
+  for (const line of home.working) {
+    if ((home.lines[line.ref]?.forYou ?? []).some((item) => refOf(item) === focus)) return line.ref;
+  }
+  return null;
+}
+
+/** Whether the focused item is a question, which takes its own number keys for its options. */
+export function isQuestion(home: HomeView, focus: string | null): boolean {
+  if (focus === null) return false;
+  if (home.urgent.some((card) => card.decision.ref === focus)) return true;
+  return home.working.some((line) =>
+    (home.lines[line.ref]?.forYou ?? []).some((item) => item.kind === "question" && refOf(item) === focus),
+  );
+}

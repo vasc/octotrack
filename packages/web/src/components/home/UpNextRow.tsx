@@ -19,6 +19,7 @@ export function UpNextRow({
   crew,
   details,
   reorder,
+  focused = false,
   onStart,
 }: {
   index: number;
@@ -26,6 +27,7 @@ export function UpNextRow({
   crew?: LineCrew;
   details?: LineHome;
   reorder?: ReactNode;
+  focused?: boolean;
   onStart(ref: string): void;
 }) {
   const scoping =
@@ -33,7 +35,7 @@ export function UpNextRow({
       ? "not scoped yet"
       : `scoped: ${details.scopedSteps} step${details.scopedSteps === 1 ? "" : "s"}`;
   return (
-    <article className="home-row" aria-label={line.title}>
+    <article className="home-row" aria-label={line.title} data-selected={focused}>
       <span className="home-line-num">{index}</span>
       <div className="row-stack">
         <button type="button" className="row-title" onClick={() => openEntity(line.ref)}>
