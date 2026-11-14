@@ -133,3 +133,79 @@ describe("VAPID keys", () => {
     expect(loadOrCreateVapid(path)).toEqual(first);
   });
 });
+
+describe("what the third audit found in sending pushes", () => {
+  function oneBrowser(send: PushSender, sendDeadlineMs?: number) {
+    const tracker = new Tracker(openSqlite(":memory:"));
+    tracker.call(c.projectCreate, { key: "PANEL", name: "Panel" }, DEV);
+    tracker.call(
+      c.lineAdd,
+      { title: "Enclosure", doneWhen: "Done.", repos: ["PANEL"], where: "working" },
+      DEV,
+    );
+    const panel = { actor: "panel", channel: "cli" } as const;
+    tracker.call(c.agentRegister, { repo: "PANEL" }, panel);
+    tracker.call(c.lineTake, { ref: "L-1" }, panel);
+    tracker.call(
+      c.pushSubscribe,
+      { endpoint: "https://push.example/phone", keys: { p256dh: "BKey", auth: "secret" } },
+      DEV,
+    );
+    const ask = (title: string, urgent = false) =>
+      tracker.call(
+        c.decisionAsk,
+        {
+          title,
+          context: "The base is printed.",
+          options: [{ key: "a", label: "26 mm", description: "As it is." }],
+          ...(urgent ? { urgent: "costs_money" as const } : {}),
+        },
+        panel,
+      );
+    const dispatcher = createPushDispatcher({
+      tracker,
+      send,
+      ...(sendDeadlineMs === undefined ? {} : { sendDeadlineMs }),
+    });
+    return { ask, dispatcher };
+  }
+
+  test("N14: a send that never answers is given up on, so the next urgent question still buzzes", async () => {
+    const titles: string[] = [];
+    let first = true;
+    const send: PushSender = (_subscription, payload) => {
+      if (first) {
+        first = false;
+        return new Promise(() => undefined);
+      }
+      titles.push(JSON.parse(payload).title);
+      return Promise.resolve({ statusCode: 201 });
+    };
+    const w = oneBrowser(send, 50);
+    w.ask("Which board?");
+    const begun = Date.now();
+    await w.dispatcher.dispatch();
+    expect(Date.now() - begun).toBeLessThan(2000);
+    w.ask("Order the parts today?", true);
+    await w.dispatcher.dispatch();
+    expect(titles).toContain("Order the parts today?");
+  });
+
+  test("a notification no browser could be sent stays due, and is sent once a push service answers", async () => {
+    let online = false;
+    const reached: string[] = [];
+    const send: PushSender = async (_subscription, payload) => {
+      if (!online) throw new Error("getaddrinfo ENOTFOUND push.example");
+      reached.push(JSON.parse(payload).title);
+      return { statusCode: 201 };
+    };
+    const w = oneBrowser(send);
+    w.ask("Order the parts today?", true);
+    await w.dispatcher.dispatch();
+    expect(reached).toEqual([]);
+    online = true;
+    await w.dispatcher.dispatch();
+    await w.dispatcher.dispatch();
+    expect(reached).toEqual(["Order the parts today?"]);
+  });
+});
