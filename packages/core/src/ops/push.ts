@@ -95,7 +95,8 @@ export const pushOps = [
   }),
 
   bind(contracts.pushSeen, (ctx) => {
-    requireDeveloper(ctx, "say the app was opened");
+    // Only the developer opening the app resets the buzz: an agent saying they looked would silence the phone.
+    requireDeveloperInPerson(ctx, "say the app was opened");
     ctx.sql.run(
       "INSERT INTO developer_state (key, value) VALUES ('lastOpenedAt', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
       [ctx.now],

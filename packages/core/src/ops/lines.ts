@@ -17,7 +17,7 @@ import { addToInbox } from "../store/inbox.ts";
 import { bind } from "./bind.ts";
 import { LOG_SEEN_KEY } from "./feed.ts";
 import { buildHome } from "./home.ts";
-import { requireDeveloper } from "./developer.ts";
+import { requireDeveloper, requireDeveloperInPerson } from "./developer.ts";
 
 /** Below this gap two ranks are too close to split again, so the section is renumbered. */
 const SMALLEST_GAP = 1e-6;
@@ -686,7 +686,8 @@ export const lineOps = [
   }),
 
   bind(contracts.seen, (ctx, input) => {
-    requireDeveloper(ctx, "mark lines as seen");
+    // What the developer has seen, only they can say: marked on an agent's word, it would be hidden from them.
+    requireDeveloperInPerson(ctx, "mark lines as seen");
     const where = input.line === undefined ? "" : " WHERE ref = ?";
     const params = input.line === undefined ? [ctx.now] : [ctx.now, requireLine(ctx, input.line).ref];
     const count = input.line === undefined ? allLines(ctx).length : 1;

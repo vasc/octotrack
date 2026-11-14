@@ -70,6 +70,8 @@ export const EVENT_TYPES = [
   "line.look_again",
   "decision.not_urgent",
   "task.done",
+  "place.added",
+  "place.removed",
   "task.cant",
   "line.summarized",
   "line.done_when_set",
@@ -92,7 +94,19 @@ export const EVENT_TYPES = [
 export type EventTypeName = (typeof EVENT_TYPES)[number];
 
 export const QUERY_VALUES: Readonly<Record<string, readonly string[]>> = {
-  kind: ["line", "project", "issue", "decision", "pr", "milestone", "idea", "update", "drift", "agent"],
+  kind: [
+    "line",
+    "project",
+    "issue",
+    "decision",
+    "pr",
+    "milestone",
+    "idea",
+    "update",
+    "drift",
+    "agent",
+    "place",
+  ],
   status: [
     "planned",
     "active",
