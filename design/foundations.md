@@ -108,13 +108,14 @@ The names are multiples of the unit: `--space-4` is four units.
 
 ## Shape
 
-| Token          | Use for                                 |
-| -------------- | --------------------------------------- |
-| `--radius-sm`  | Small marks, progress bars, badges      |
-| `--radius-md`  | Buttons, inputs, options, repo chips    |
-| `--radius-lg`  | Questions, tasks and rows under a line  |
-| `--radius-xl`  | Line cards, the Up next card, proposals |
-| `--radius-2xl` | Panels and the new line card            |
+| Token           | Use for                                             |
+| --------------- | --------------------------------------------------- |
+| `--radius-sm`   | Small marks, progress bars, badges                  |
+| `--radius-md`   | Buttons, inputs, options, repo chips                |
+| `--radius-lg`   | Questions, tasks and rows under a line              |
+| `--radius-xl`   | Line cards, the Up next card, proposals             |
+| `--radius-2xl`  | Panels and the new line card                        |
+| `--radius-pill` | Pills: the header counts, a group read as one thing |
 
 ## Elevation
 

@@ -36,6 +36,9 @@ const PAGE_NAMES: Readonly<Record<string, string>> = {
 
 /** Lines, Log and Agents, what waits on the developer, where they are, and New line. One bar on every page. */
 export function TopBar({ path, counts, places, at, onAt, onNewLine, onKeys, atRef }: TopBarProps) {
+  // Urgent stands apart, in front; the rest are one quiet group.
+  const urgent = counts.find((count) => count.key === "urgent");
+  const waiting = counts.filter((count) => count.key !== "urgent");
   return (
     <header className="top-bar">
       <div className="top-bar-inner">
@@ -49,22 +52,11 @@ export function TopBar({ path, counts, places, at, onAt, onNewLine, onKeys, atRe
           <NavItem label="Log" to="/log" current={path === "/log"} />
           <NavItem label="Agents" to="/agents" current={path === "/agents"} />
         </nav>
-        {counts.length === 0 ? null : (
+        {urgent === undefined ? null : <CountLinkView count={urgent} className="top-urgent" />}
+        {waiting.length === 0 ? null : (
           <span className="top-counts" role="status" aria-label="Waiting on you">
-            {counts.map((count) => (
-              <a
-                key={count.key}
-                className="top-count"
-                data-count={count.key}
-                href={count.to === null ? "/" : `/?focus=${count.to}`}
-                onClick={(event) => {
-                  if (event.metaKey || event.ctrlKey) return;
-                  event.preventDefault();
-                  navigate(count.to === null ? "/" : `/?focus=${encodeURIComponent(count.to)}`);
-                }}
-              >
-                {count.count} {count.label}
-              </a>
+            {waiting.map((count) => (
+              <CountLinkView key={count.key} count={count} className="top-count" />
             ))}
           </span>
         )}
@@ -96,5 +88,24 @@ export function TopBar({ path, counts, places, at, onAt, onNewLine, onKeys, atRe
         </button>
       </div>
     </header>
+  );
+}
+
+/** One count: its number in its tone, then its words; it opens the first such item, focused. */
+function CountLinkView({ count, className }: { count: CountLink; className: string }) {
+  const to = count.to === null ? "/" : `/?focus=${encodeURIComponent(count.to)}`;
+  return (
+    <a
+      className={className}
+      data-count={count.key}
+      href={to}
+      onClick={(event) => {
+        if (event.metaKey || event.ctrlKey) return;
+        event.preventDefault();
+        navigate(to);
+      }}
+    >
+      <b className="top-count-n">{count.count}</b> <span>{count.label}</span>
+    </a>
   );
 }

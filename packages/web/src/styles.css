@@ -107,26 +107,65 @@ p {
   font-variant-numeric: tabular-nums;
 }
 
+/* What waits on the developer, as one quiet group: each count a bold number in its tone, then plain words. */
 .top-counts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3) var(--space-7);
+  display: inline-flex;
+  align-items: stretch;
   font-size: var(--text-sm);
-  font-weight: var(--weight-semibold);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
 }
 
 .top-count {
-  color: var(--attention);
-  text-decoration: underline;
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-6);
+  color: var(--ink-2);
+  text-decoration: none;
 }
 
-.top-count[data-count="toAccept"] {
+.top-count + .top-count {
+  border-left: 1px solid var(--line);
+}
+
+.top-count:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.top-count-n {
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+  color: var(--attention);
+}
+
+.top-count[data-count="toAccept"] .top-count-n {
   color: var(--info);
 }
 
-.top-count[data-count="toStepIn"],
-.top-count[data-count="urgent"] {
+.top-count[data-count="toStepIn"] .top-count-n {
   color: var(--bad);
+}
+
+/* Urgent stands apart, in front of the group, in red. */
+.top-urgent {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-6);
+  font-size: var(--text-sm);
+  color: var(--bad);
+  background: var(--bad-soft);
+  border: 1px solid var(--bad-line);
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+}
+
+.top-urgent .top-count-n {
+  font-weight: var(--weight-bold);
 }
 
 .top-page {
@@ -1325,9 +1364,27 @@ p {
   .keyboard-hint {
     display: none;
   }
+  /* On a phone, as E-Phone draws it: four cells across, the number above its words. */
+  .top-counts {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    border-radius: var(--radius-lg);
+  }
   .top-count {
     min-height: var(--touch-target);
-    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: var(--space-2);
+    font-size: var(--text-xs);
+  }
+  .top-count-n {
+    font-size: var(--text-heading);
+  }
+  .top-urgent {
+    min-height: var(--touch-target);
     align-items: center;
   }
 }
@@ -2212,7 +2269,6 @@ p {
   font-family: var(--mono);
   font-size: var(--text-xs);
   color: var(--ink-3);
-  margin-right: var(--space-2);
 }
 
 .feed-folded {
