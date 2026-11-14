@@ -213,9 +213,19 @@ describe("the developer's and the server's names are not agents' names", () => {
     expect(w.as(w.dev, c.agentList, {}).map((agent) => agent.name)).not.toContain("dev");
   });
 
-  test("a new name is letters, digits, dots, dashes, underscores and inner spaces, from a letter or digit, at most 64", () => {
+  test("a new name is letters, digits, dots, dashes and underscores, from a letter or digit, at most 64", () => {
     const w = world();
-    for (const name of ["*", "-rf", "--all", "tab\there", "trailing ", ".hidden", "a;b", "x".repeat(65)]) {
+    for (const name of [
+      "*",
+      "-rf",
+      "--all",
+      "tab\there",
+      "trailing ",
+      "my agent",
+      ".hidden",
+      "a;b",
+      "x".repeat(65),
+    ]) {
       expect(w.refused(() => w.as(w.agent(name), c.agentRegister, { repo: "PANEL" })).code).toBe(
         "invalid_input",
       );
@@ -226,7 +236,6 @@ describe("the developer's and the server's names are not agents' names", () => {
       "panel_2",
       "a-b.c",
       "9lives",
-      "my agent",
       "agénte-日本",
       "x".repeat(64),
     ]) {

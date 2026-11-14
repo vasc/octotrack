@@ -34,10 +34,10 @@ export const DEVELOPER = "dev";
 export const RESERVED_NAMES: ReadonlySet<string> = new Set([DEVELOPER, "octotrack", "github"]);
 
 /**
- * A new agent's name: letters and digits of any language, dots, dashes, underscores and inner spaces, from a letter or
+ * A new agent's name: letters and digits of any language, dots, dashes and underscores, from a letter or
  * digit, at most 64. Names reach wake addresses and the developer's stop command, as one argument with no shell, so
  * nothing a glob or an option parser reads specially (`*`, a leading dash) may be in one.
  */
 export function isAgentName(name: string): boolean {
-  return /^[\p{L}\p{N}](?:[\p{L}\p{N} ._-]{0,62}[\p{L}\p{N}._-])?$/u.test(name);
+  return /^[\p{L}\p{N}](?:[\p{L}\p{N}._-]{0,62}[\p{L}\p{N}._-])?$/u.test(name);
 }

@@ -8,6 +8,7 @@ import { RefText } from "../ui/RefText.tsx";
 const FOLDED: Readonly<Record<string, readonly [string, string]>> = {
   "pr.checks_changed": ["check change", "check changes"],
   "drift.resolved": ["drift confirmation", "drift confirmations"],
+  "held.confirmed": ["re-confirmation", "re-confirmations"],
 };
 
 /** Rule breaks: always shown, at the top, whatever is filtered or left out. */

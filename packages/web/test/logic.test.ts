@@ -4,7 +4,16 @@ import { validateQuery } from "../src/hooks/useFilter.ts";
 import type { Decision } from "@octotrack/core/schemas";
 import { decision } from "../src/design/fixtures.ts";
 import type { Tone } from "../src/lib/format.ts";
-import { dayLabel, deliveryOf, humanize, splitRefs, timeAgo, timeLabel, toneOf } from "../src/lib/format.ts";
+import {
+  dayLabel,
+  deliveryOf,
+  filterTerm,
+  humanize,
+  splitRefs,
+  timeAgo,
+  timeLabel,
+  toneOf,
+} from "../src/lib/format.ts";
 import { nextFocus } from "../src/lib/focus.ts";
 import { closeEntity, navigate, openEntity, setParams } from "../src/lib/router.ts";
 
@@ -162,5 +171,13 @@ describe("timeLabel", () => {
     expect(timeLabel(new Date(2026, 10, 14, 9, 52).toISOString(), now)).toBe("09:52");
     expect(timeLabel(new Date(2026, 10, 10, 9, 0).toISOString(), now)).toBe("Tue");
     expect(timeLabel("2026-10-01T09:00:00.000Z", now)).toBe("2026-10-01");
+  });
+});
+
+describe("filterTerm", () => {
+  test("quotes a value with a space, as an agent named before names were narrowed may have, and its quotes", () => {
+    expect(filterTerm("actor", "panel")).toBe("actor:panel");
+    expect(filterTerm("actor", "my agent")).toBe('actor:"my agent"');
+    expect(filterTerm("actor", 'say "hi"')).toBe('actor:"say \\"hi\\""');
   });
 });

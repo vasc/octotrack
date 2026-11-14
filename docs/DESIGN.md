@@ -447,10 +447,10 @@ Decisions made from that:
   - _Notes still take U- refs._ `update.post` writes a new update, as `note add` does on the developer's own lines,
     while U- refs from before stay read only. _Why:_ notes are how agents report progress on an issue, the stale-work
     drift reads them as activity, and the dashboard posts them; only the old status updates became summaries.
-  - _A new agent's name may hold inner spaces._ D14 sets no form for names; new ones are letters and digits of any
-    language, dots, dashes, underscores and inner spaces, from a letter or digit, at most 64, and names from before
-    keep working. _Why:_ a name reaches the developer's stop command as one argument with no shell, so only a glob
-    (`*`) or a leading dash could do harm there, while a space does none and names with spaces were already in use.
+  - _New agent names are narrow:_ letters and digits of any language, dots, dashes and underscores, from a letter or
+    digit, at most 64; `dev`, `octotrack` and `github` are reserved; names from before keep working, spaces included.
+    _Why:_ a name is filled into the developer's start and stop commands and written into queries, where a glob, a
+    leading dash or a space would each need care; D14 sets no form for names, so the narrow one costs nothing.
 
 ## D14. Lines of work at the centre
 
