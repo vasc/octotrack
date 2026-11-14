@@ -13,16 +13,22 @@ function OpenDecision({ decision }: { decision: Decision }) {
   const queue = useOpQuery(contracts.decisionQueue, { query: `ref:${decision.ref}` });
   const choices = useChoices();
   const [card] = queue.data ?? [];
+  // While its answer waits with Undo, its keys stand down, so a second key press cannot send a second answer.
+  const waiting = choices.pending.some((choice) => choice.state === "pending" && choice.ref === decision.ref);
   return (
     <>
-      {/* The decision being inspected is the one the keys answer. The queue stands down while this is open. */}
-      {card === undefined ? null : <DecisionCardItem card={card} active />}
+      {/* The decision being inspected is the one the keys answer. Home stands down while this is open. */}
+      {card === undefined ? null : <DecisionCardItem card={card} active armed={!waiting} />}
       <div>
         <button
           type="button"
           className="btn"
           onClick={() =>
-            choices.make(contracts.decisionWithdraw.name, { ref: decision.ref }, `Withdrew ${decision.ref}`)
+            choices.make(
+              contracts.decisionWithdraw.name,
+              { ref: decision.ref },
+              `Withdrawing ${decision.ref}`,
+            )
           }
         >
           Withdraw

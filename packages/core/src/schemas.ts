@@ -854,6 +854,8 @@ export const PendingChoice = z.object({
   ref: z.string().nullable(),
   /** For a Stop: the working line its agent owns, which then looks for another owner, or can be paused instead. */
   line: z.string().nullable(),
+  /** The draft its words were typed in, so the box can show they are on their way and not send them twice. */
+  draft: z.string().nullable(),
   summary: z.string(),
   dueAt: z.string(),
   state: z.enum(["pending", "applied", "undone", "failed"]),

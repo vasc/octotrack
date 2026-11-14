@@ -179,6 +179,7 @@ export function drift(overrides: Partial<Drift> = {}): Drift {
 export function decisionForm(overrides: Partial<DecisionForm> = {}): DecisionForm {
   return {
     ownWords: null,
+    sending: false,
     error: null,
     answer: () => {},
     openOwn: () => {},
@@ -234,6 +235,7 @@ export function pendingChoice(overrides: Partial<PendingChoice> = {}): PendingCh
     op: "line.start",
     ref: null,
     line: null,
+    draft: null,
     summary: "Starting Wall mount",
     dueAt: "2026-11-14T09:00:05.000Z",
     state: "pending",

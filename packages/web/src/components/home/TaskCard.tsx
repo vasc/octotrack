@@ -8,18 +8,32 @@ export interface TaskCardProps {
   /** What is typed so far, kept as a draft by the caller. */
   words: string;
   onWords(words: string): void;
+  /** Why it cannot be done, kept apart from what was found, so neither is sent as the other. */
+  why: string;
+  onWhy(why: string): void;
   onDone(result: string): void;
   onCant(why: string): void;
+  /** Its Done or Can't do it is waiting with Undo: neither is sent again. */
+  sending?: boolean;
 }
 
 /**
  * A task opened: where, what it is, and what to send back, as a form saved as it is typed. 1 · Done sends it; 2 · Can't
  * do it… asks why and closes it as not done. A task of the developer's own has nothing to send back: Done is enough.
  */
-export function TaskCard({ task, words, onWords, onDone, onCant }: TaskCardProps) {
+export function TaskCard({
+  task,
+  words,
+  onWords,
+  why,
+  onWhy,
+  onDone,
+  onCant,
+  sending = false,
+}: TaskCardProps) {
   const [cant, setCant] = useState(false);
   const own = task.outcome === "";
-  const ready = own || words.trim() !== "";
+  const ready = (own || words.trim() !== "") && !sending;
   return (
     <article className="task" aria-label={task.title}>
       <p className="for-you-kind">
@@ -34,7 +48,7 @@ export function TaskCard({ task, words, onWords, onDone, onCant }: TaskCardProps
         onSubmit={(event) => {
           event.preventDefault();
           if (cant) {
-            if (words.trim() !== "") onCant(words.trim());
+            if (why.trim() !== "" && !sending) onCant(why.trim());
             return;
           }
           // The words stay a draft until the task closes, which deletes it: an Undo must not lose them.
@@ -54,15 +68,20 @@ export function TaskCard({ task, words, onWords, onDone, onCant }: TaskCardProps
             <TextBox
               label={cant ? `Why ${task.ref} cannot be done` : `What ${task.ref} found`}
               placeholder={cant ? "Why not" : (task.outcome ?? "What you found")}
-              value={words}
-              onChange={onWords}
+              value={cant ? why : words}
+              onChange={cant ? onWhy : onWords}
             />
           </>
         )}
         <div className="question-actions">
           {cant ? (
             <>
-              <button type="submit" className="btn" data-primary="true" disabled={words.trim() === ""}>
+              <button
+                type="submit"
+                className="btn"
+                data-primary="true"
+                disabled={why.trim() === "" || sending}
+              >
                 Close it
               </button>
               <button type="button" className="btn" onClick={() => setCant(false)}>

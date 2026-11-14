@@ -35,6 +35,8 @@ export function useTopBar() {
     counts,
     places: (places.data ?? []).map((place) => place.name),
     at: data?.at?.place ?? null,
+    /** Why saying where the developer is did not work. */
+    error: at.error,
     setAt: (place: string | null) => at.mutate(place === null ? {} : { place }),
   };
 }
