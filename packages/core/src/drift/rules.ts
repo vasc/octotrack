@@ -257,42 +257,6 @@ function prRules(ctx: Ctx, graph: GraphSnapshot): DesiredDrift[] {
 
 function rollupRules(ctx: Ctx): DesiredDrift[] {
   const desired: DesiredDrift[] = [];
-  const milestones = rows(
-    ctx,
-    Rollup,
-    `SELECT m.ref, m.status, m.targetDate, m.project,
-       COUNT(i.ref) AS total,
-       COALESCE(SUM(CASE WHEN i.status IN ('done', 'cancelled') THEN 1 ELSE 0 END), 0) AS closed
-     FROM milestones m LEFT JOIN issues i ON i.milestone = m.ref
-     WHERE m.status IN ('planned', 'active') GROUP BY m.ref`,
-  );
-  for (const milestone of milestones) {
-    if (milestone.total > 0 && milestone.closed === milestone.total) {
-      desired.push({
-        rule: "milestone-complete",
-        dedupeKey: `milestone-complete:${milestone.ref}`,
-        fingerprint: String(milestone.total),
-        target: milestone.ref,
-        cause: null,
-        project: milestone.project,
-        message: `Every issue in ${milestone.ref} is closed but it is still ${milestone.status}`,
-        suggestion: `octo milestone update ${milestone.ref} --status done, or: ${ack(milestone.ref)}`,
-      });
-    }
-    // Compared by day: a milestone due today is not late yet.
-    if (milestone.targetDate !== null && milestone.targetDate.slice(0, 10) < ctx.now.slice(0, 10)) {
-      desired.push({
-        rule: "milestone-overdue",
-        dedupeKey: `milestone-overdue:${milestone.ref}`,
-        fingerprint: milestone.targetDate,
-        target: milestone.ref,
-        cause: null,
-        project: milestone.project,
-        message: `${milestone.ref} is past its target date of ${milestone.targetDate}`,
-        suggestion: `octo milestone update ${milestone.ref} --target-date <date>, or: ${ack(milestone.ref)}`,
-      });
-    }
-  }
   const projects = rows(
     ctx,
     Rollup,

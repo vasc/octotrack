@@ -60,7 +60,7 @@ export function decision(overrides: Partial<Decision> = {}): Decision {
 }
 
 export function decisionCard(overrides: Partial<DecisionCard> = {}): DecisionCard {
-  return { decision: decision(), score: 90, reasons: [], blocks: [], affects: [], waiters: [], ...overrides };
+  return { decision: decision(), reasons: [], blocks: [], affects: [], waiters: [], ...overrides };
 }
 
 export function pr(overrides: Partial<PullRequest> = {}): PullRequest {

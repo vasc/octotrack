@@ -2,7 +2,8 @@ import { contracts as c } from "@octotrack/core";
 import { OctoClient } from "./client.ts";
 
 /**
- * Made-up data that exercises every part of the dashboard: a ranked queue, failing PRs, drift, a roadmap.
+ * Made-up data that exercises every part of the dashboard: lines in the developer's order, agents on them, questions,
+ * a task, failing PRs, drift and proposals.
  * Goes through the normal operations under several agent names, as real work would.
  */
 export async function seedDemo(
@@ -13,7 +14,7 @@ export async function seedDemo(
   const api = as("claude-api");
   const web = as("claude-web");
   const infra = as("codex-infra");
-  const you = as("dev");
+  const you = new OctoClient(base.baseUrl, "dev", [], false, { developer: true });
 
   await planner.call(c.projectCreate, {
     key: "SHOP",
@@ -36,22 +37,43 @@ export async function seedDemo(
     horizon: "later",
   });
 
-  const beta = await planner.call(c.milestoneCreate, {
-    project: "SHOP",
+  const beta = await you.call(c.lineAdd, {
     title: "Checkout beta",
-    status: "active",
-    targetDate: "2026-12-05",
+    doneWhen: "Invited customers can pay, with tax, from a cart that survives a refresh.",
+    repos: ["SHOP"],
+    where: "working",
   });
-  await planner.call(c.milestoneCreate, {
-    project: "SHOP",
-    title: "Catalog migration",
-    targetDate: "2026-11-28",
-  });
-  await planner.call(c.milestoneCreate, {
-    project: "API",
+  await you.call(c.lineAdd, {
     title: "v2 general availability",
-    status: "active",
-    targetDate: "2027-01-15",
+    doneWhen: "Every v2 endpoint is authenticated, rate limited and documented.",
+    repos: ["API"],
+    where: "working",
+  });
+  await you.call(c.lineAdd, {
+    title: "Catalog migration",
+    doneWhen: "The catalog is served from the new stack and the old one is off.",
+    repos: ["SHOP"],
+    where: "up_next",
+  });
+  await you.call(c.lineAdd, {
+    title: "Observability",
+    doneWhen: "Every request carries a trace ID from the edge to the database.",
+    repos: ["OPS"],
+    where: "tabled",
+    reason: "Not until the beta ships",
+    lookAgainAt: "2027-01-10",
+  });
+  await you.call(c.placeAdd, { name: "the Mac" });
+  for (const [agent, repo] of [
+    [web, "SHOP"],
+    [api, "API"],
+  ] as const) {
+    await agent.call(c.agentRegister, { repo });
+    await agent.call(c.lineTake, {});
+  }
+  await web.call(c.planSet, {
+    line: beta.data.ref,
+    steps: ["Cart and checkout form", "Payments and tax", "Invite list and launch"],
   });
 
   const issue = async (
@@ -63,24 +85,24 @@ export async function seedDemo(
 
   const payments = await issue(planner, "SHOP", "Payment provider integration", {
     priority: "urgent",
-    milestone: beta.data.ref,
+    line: beta.data.ref,
     labels: ["payments"],
     body: "Blocked until the provider is chosen.",
   });
   const cart = await issue(web, "SHOP", "Cart state survives a refresh", {
     status: "in_progress",
     assignee: "claude-web",
-    milestone: beta.data.ref,
+    line: beta.data.ref,
     labels: ["frontend"],
   });
   const taxes = await issue(planner, "SHOP", "Tax calculation by region", {
-    milestone: beta.data.ref,
+    line: beta.data.ref,
     priority: "high",
   });
   const checkoutUi = await issue(web, "SHOP", "Checkout form validation", {
     status: "done",
     assignee: "claude-web",
-    milestone: beta.data.ref,
+    line: beta.data.ref,
     labels: ["frontend"],
   });
   const auth = await issue(api, "API", "Token based authentication", {
@@ -238,23 +260,25 @@ export async function seedDemo(
     level: "warning",
   });
 
-  await planner.call(c.ideaCapture, {
+  await planner.call(c.linePropose, {
     title: "Apple Pay at checkout",
-    project: "SHOP",
-    horizon: "next",
-    labels: ["payments"],
+    doneWhen: "Apple Pay works on every checkout path, on iPhone and Mac.",
+    repos: ["SHOP"],
+    recommendation: "up_next",
+    why: "Half of the beta's invited customers are on iPhone, and the provider supports it at no cost.",
   });
-  await planner.call(c.ideaCapture, {
-    title: "Saved carts across devices",
-    project: "SHOP",
-    horizon: "later",
-  });
-  await api.call(c.ideaCapture, {
+  await api.call(c.linePropose, {
     title: "Client SDKs generated from the spec",
-    project: "API",
-    horizon: "later",
+    doneWhen: "TypeScript and Python SDKs publish on every API release.",
+    repos: ["API"],
+    recommendation: "table",
+    why: "Nobody asked for them yet; the spec changes weekly until GA.",
   });
-  await infra.call(c.ideaCapture, { title: "Weekly digest of slow endpoints", status: "exploring" });
+  await web.call(c.taskFile, {
+    title: "Try checkout on your phone",
+    place: "the Mac",
+    outcome: "Whether the form is usable at arm's length, and anything that got in the way.",
+  });
 
   await you.call(c.decisionRecord, {
     title: "Ship the beta behind an invite list",

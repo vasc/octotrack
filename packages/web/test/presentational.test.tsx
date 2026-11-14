@@ -23,7 +23,6 @@ import { WorkingLine } from "../src/components/home/WorkingLine.tsx";
 import { eventTone, FeedItem } from "../src/components/feed/FeedItem.tsx";
 import { FeedList } from "../src/components/feed/FeedList.tsx";
 import { FilterBar } from "../src/components/feed/FilterBar.tsx";
-import { IdeaRow } from "../src/components/ideas/IdeaRow.tsx";
 import { IssueRow } from "../src/components/issues/IssueRow.tsx";
 import { AddLineForm } from "../src/components/lines/AddLineForm.tsx";
 import { SidebarView } from "../src/components/layout/SidebarView.tsx";
@@ -32,7 +31,6 @@ import { ProjectCardView } from "../src/components/projects/ProjectCardView.tsx"
 import { PrGlyphs } from "../src/components/prs/PrGlyphs.tsx";
 import { PrRow } from "../src/components/prs/PrRow.tsx";
 import { PrStrip } from "../src/components/prs/PrStrip.tsx";
-import { RoadmapLaneView } from "../src/components/roadmap/RoadmapLaneView.tsx";
 import { SyncFailures } from "../src/components/prs/SyncFailures.tsx";
 import { ListCapNote } from "../src/components/ui/ListCapNote.tsx";
 import { Progress } from "../src/components/ui/Progress.tsx";
@@ -439,47 +437,6 @@ describe("IssueRow", () => {
   });
 });
 
-describe("IdeaRow", () => {
-  const idea = {
-    ref: "I-1",
-    project: "OCT",
-    title: "Big idea",
-    body: "",
-    status: "captured" as const,
-    horizon: "none" as const,
-    labels: [],
-    promotedTo: null,
-    version: 1,
-    createdAt: "",
-    updatedAt: "",
-    createdBy: "x",
-  };
-  const handlers = { onHorizon: () => {}, onPromote: () => {}, onReject: () => {} };
-
-  test("a live idea can be placed, promoted or rejected", () => {
-    const onHorizon = mock(() => {});
-    const onPromote = mock(() => {});
-    const view = render(<IdeaRow idea={idea} {...handlers} onHorizon={onHorizon} onPromote={onPromote} />);
-    fireEvent.change(view.getByLabelText("Roadmap horizon of I-1"), { target: { value: "next" } });
-    expect(onHorizon).toHaveBeenCalledWith("I-1", "next");
-    fireEvent.click(view.getByRole("button", { name: "Promote" }));
-    expect(onPromote).toHaveBeenCalledWith("I-1");
-  });
-
-  test("promotion needs a project", () => {
-    const view = render(<IdeaRow idea={{ ...idea, project: null }} {...handlers} />);
-    expect(view.getByRole("button", { name: "Promote" }).hasAttribute("disabled")).toBe(true);
-  });
-
-  test("a promoted idea links to what it became and has no actions", () => {
-    const view = render(
-      <IdeaRow idea={{ ...idea, status: "promoted", promotedTo: "OCT-9" }} {...handlers} />,
-    );
-    view.getByRole("button", { name: "OCT-9" });
-    expect(view.queryByRole("button", { name: "Promote" })).toBeNull();
-  });
-});
-
 describe("SidebarView", () => {
   const counts = {
     openDecisions: 4,
@@ -497,12 +454,20 @@ describe("SidebarView", () => {
     const link = view.getByRole("link", { name: /Decisions/ });
     expect(link.getAttribute("aria-current")).toBe("page");
     within(link).getByText("4");
-    expect(view.getByRole("link", { name: "Ideas" })).toBeTruthy();
+    // Lines first; roadmap and ideas are gone, since lines replaced both.
+    expect(
+      view
+        .getAllByRole("link")
+        .map((item) => item.textContent)
+        .slice(0, 2),
+    ).toEqual(["Lines", "Log"]);
+    view.getByRole("link", { name: "Repos" });
+    expect(view.queryByRole("link", { name: "Ideas" })).toBeNull();
     view.getByText("live");
   });
 });
 
-describe("ProjectCardView and roadmap", () => {
+describe("ProjectCardView", () => {
   test("a project card shows progress and what needs attention", () => {
     const view = render(
       <ProjectCardView
@@ -536,40 +501,6 @@ describe("ProjectCardView and roadmap", () => {
     expect(view.getByText("2 decisions").className).toBe("stat-hot");
     expect(view.getByText("0 blocked").className).toBe("");
     expect(view.getByRole("progressbar").getAttribute("aria-valuenow")).toBe("25");
-  });
-
-  test("a roadmap lane shows items, progress and what they wait on", () => {
-    const view = render(
-      <RoadmapLaneView
-        lane={{
-          horizon: "now",
-          items: [
-            {
-              ref: "M-1",
-              kind: "milestone",
-              title: "Beta",
-              project: "OCT",
-              status: "active",
-              horizon: "now",
-              targetDate: "2026-12-01",
-              done: 1,
-              total: 2,
-              blockedBy: [],
-              openDecisions: ["D-3"],
-            },
-          ],
-        }}
-      />,
-    );
-    view.getByRole("heading", { name: "Now" });
-    view.getByText("Beta");
-    view.getByText("1/2 done");
-    view.getByText("2026-12-01");
-    view.getByRole("button", { name: "D-3" });
-  });
-
-  test("an empty lane says so", () => {
-    render(<RoadmapLaneView lane={{ horizon: "later", items: [] }} />).getByText("Nothing here.");
   });
 });
 

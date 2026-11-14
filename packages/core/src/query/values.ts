@@ -68,8 +68,6 @@ export const QUERY_VALUES: Readonly<Record<string, readonly string[]>> = {
     "pr-without-issue",
     "unplaced-work",
     "summary-due",
-    "milestone-complete",
-    "milestone-overdue",
     "project-work-complete",
     "project-closed-open-work",
     "decision-outcome",

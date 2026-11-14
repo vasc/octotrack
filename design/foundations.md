@@ -122,7 +122,7 @@ Three columns: navigation, the feed, and a rail for what should stay in view.
 | `--sidebar-width-narrow` | Navigation, below the first breakpoint                                 |
 | `--rail-width`           | The rail: PR status, drift, the inspector                              |
 | `--page-width`           | How wide a column of reading gets                                      |
-| `--page-width-wide`      | Pages laid out in columns, such as the roadmap                         |
+| `--page-width-wide`      | Pages laid out in columns side by side                                 |
 | `--touch-target`         | The least height of anything tapped on a touch screen                  |
 | `--text-input-touch`     | Text fields on a touch screen. Below 16px, iOS zooms the page on focus |
 

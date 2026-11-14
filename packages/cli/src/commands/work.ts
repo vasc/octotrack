@@ -15,21 +15,6 @@ const projectFields = {
   "target-date": { ...STRING, description: "Target date, YYYY-MM-DD" },
 };
 
-const milestoneFields = {
-  desc: { ...STRING, description: "Description" },
-  status: { ...STRING, description: "planned, active, done, cancelled" },
-  horizon: { ...STRING, description: "now, next, later, none. Otherwise derived from status and date" },
-  "target-date": { ...STRING, description: "Target date, YYYY-MM-DD" },
-};
-
-const ideaFields = {
-  body: { ...STRING, description: "Details" },
-  "body-file": { ...STRING, description: "Read details from a file, - for stdin" },
-  project: { ...STRING, short: "p", description: "Project key" },
-  status: { ...STRING, description: "captured, exploring, planned, promoted, rejected" },
-  horizon: { ...STRING, description: "now, next, later, none. Anything but none puts it on the roadmap" },
-};
-
 export const workCommands: Command[] = [
   {
     path: ["project", "create"],
@@ -246,33 +231,6 @@ export const workCommands: Command[] = [
     },
   },
   {
-    path: ["milestone", "create"],
-    usage: "<title>",
-    summary: "Create a milestone",
-    options: {
-      ...milestoneFields,
-      project: { ...STRING, short: "p", description: "Project key (required)" },
-    },
-    examples: ['octo milestone create "Public beta" -p OCT --status active --target-date 2026-12-01'],
-    ops: [c.milestoneCreate.name],
-    async run({ client, out }, args) {
-      const project = args.str("project");
-      if (project === undefined) throw new UsageError("Missing --project");
-      const outcome = await client.call(
-        c.milestoneCreate,
-        compact({
-          project,
-          title: args.requirePositional(0, "title"),
-          description: args.str("desc"),
-          status: args.str("status"),
-          horizon: args.str("horizon"),
-          targetDate: args.str("target-date"),
-        }),
-      );
-      out.result(outcome, () => `${r.bold(outcome.data.ref)} ${outcome.data.title}`);
-    },
-  },
-  {
     path: ["milestone", "list"],
     usage: "[QUERY]",
     summary: "List milestones",
@@ -281,55 +239,6 @@ export const workCommands: Command[] = [
     async run({ client, out }, args) {
       const outcome = await client.call(c.milestoneList, listInput(args, ["project"]));
       out.result(outcome, () => r.renderMilestones(outcome.data));
-    },
-  },
-  {
-    path: ["milestone", "update"],
-    usage: "<REF>",
-    summary: "Update a milestone",
-    options: {
-      ...milestoneFields,
-      title: { ...STRING, description: "New title" },
-      "no-target-date": { type: "boolean", description: "Remove the target date" },
-      "if-version": { ...STRING, description: "Only if still at this version" },
-    },
-    ops: [c.milestoneUpdate.name],
-    async run({ client, out }, args) {
-      const outcome = await client.call(
-        c.milestoneUpdate,
-        compact({
-          ref: args.requirePositional(0, "REF"),
-          title: args.str("title"),
-          description: args.str("desc"),
-          status: args.str("status"),
-          horizon: args.str("horizon"),
-          targetDate: args.flag("no-target-date") ? null : args.str("target-date"),
-          ifVersion: args.int("if-version"),
-        }),
-      );
-      out.result(outcome, () => `${r.bold(outcome.data.ref)} ${outcome.data.status}`);
-    },
-  },
-  {
-    path: ["idea", "add"],
-    usage: "<title>",
-    summary: "Capture a future idea",
-    options: { ...ideaFields, label: { ...MANY, short: "l", description: "Label, repeatable" } },
-    examples: ['octo idea add "Slack digest of open decisions" -p OCT --horizon later'],
-    ops: [c.ideaCapture.name],
-    async run({ client, out }, args) {
-      const outcome = await client.call(
-        c.ideaCapture,
-        compact({
-          title: args.requirePositional(0, "title"),
-          body: await textOption(args, "body"),
-          project: args.str("project"),
-          status: args.str("status"),
-          horizon: args.str("horizon"),
-          labels: args.optionalList("label"),
-        }),
-      );
-      out.result(outcome, () => `${r.bold(outcome.data.ref)} ${outcome.data.title}`);
     },
   },
   {
@@ -345,58 +254,6 @@ export const workCommands: Command[] = [
     async run({ client, out }, args) {
       const outcome = await client.call(c.ideaList, listInput(args, ["project", "status"]));
       out.result(outcome, () => r.renderIdeas(outcome.data));
-    },
-  },
-  {
-    path: ["idea", "update"],
-    usage: "<REF>",
-    summary: "Update an idea",
-    options: {
-      ...ideaFields,
-      title: { ...STRING, description: "New title" },
-      label: { ...MANY, short: "l", description: "Replace labels, repeatable" },
-      "no-project": { type: "boolean", description: "Detach from its project" },
-      "if-version": { ...STRING, description: "Only if still at this version" },
-    },
-    ops: [c.ideaUpdate.name],
-    async run({ client, out }, args) {
-      const outcome = await client.call(
-        c.ideaUpdate,
-        compact({
-          ref: args.requirePositional(0, "REF"),
-          title: args.str("title"),
-          body: await textOption(args, "body"),
-          project: args.flag("no-project") ? null : args.str("project"),
-          status: args.str("status"),
-          horizon: args.str("horizon"),
-          labels: args.optionalList("label"),
-          ifVersion: args.int("if-version"),
-        }),
-      );
-      out.result(outcome, () => `${r.bold(outcome.data.ref)} ${outcome.data.status}`);
-    },
-  },
-  {
-    path: ["idea", "promote"],
-    usage: "<REF>",
-    summary: "Turn an idea into an issue or milestone",
-    options: {
-      project: { ...STRING, short: "p", description: "Project key, if the idea has none" },
-      as: { ...STRING, description: "issue (default) or milestone" },
-      priority: { ...STRING, description: "Priority of the new issue" },
-    },
-    ops: [c.ideaPromote.name],
-    async run({ client, out }, args) {
-      const outcome = await client.call(
-        c.ideaPromote,
-        compact({
-          ref: args.requirePositional(0, "REF"),
-          project: args.str("project"),
-          as: args.str("as"),
-          priority: args.str("priority"),
-        }),
-      );
-      out.result(outcome, () => `${outcome.data.idea.ref} promoted to ${r.bold(outcome.data.created)}`);
     },
   },
 ];

@@ -89,22 +89,6 @@ export const systemCommands: Command[] = [
     },
   },
   {
-    path: ["roadmap"],
-    summary: "Generate a now/next/later roadmap from milestones, projects and ideas",
-    options: {
-      project: { ...STRING, short: "p", description: "Limit to one project" },
-      write: { ...STRING, description: "Write the markdown to this file" },
-    },
-    examples: ["octo roadmap -p OCT", "octo roadmap --write ROADMAP.md"],
-    ops: [c.roadmapGenerate.name],
-    async run({ client, out }, args) {
-      const outcome = await client.call(c.roadmapGenerate, compact({ project: args.str("project") }));
-      const file = args.str("write");
-      if (file !== undefined) await Bun.write(file, outcome.data.markdown);
-      out.result(outcome, () => (file === undefined ? r.renderRoadmap(outcome.data) : `Wrote ${file}.`));
-    },
-  },
-  {
     path: ["agent", "list"],
     summary: "Every agent: its state, repo, line and role, and its last command",
     ops: [c.agentList.name],

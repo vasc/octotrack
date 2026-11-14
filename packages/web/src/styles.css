@@ -795,31 +795,6 @@ p {
   color: var(--attention);
 }
 
-/* Roadmap */
-
-.lanes {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-6);
-}
-
-.lane {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  min-width: 0;
-}
-
-.lane-title {
-  font-weight: var(--weight-semibold);
-  padding-bottom: var(--space-2);
-  border-bottom: 2px solid var(--line-strong);
-}
-
-.lane[data-horizon="now"] .lane-title {
-  border-color: var(--attention-line);
-}
-
 /* Inspector */
 
 .detail {
@@ -1126,9 +1101,6 @@ p {
   }
   .row {
     flex-wrap: wrap;
-  }
-  .lanes {
-    grid-template-columns: minmax(0, 1fr);
   }
 }
 

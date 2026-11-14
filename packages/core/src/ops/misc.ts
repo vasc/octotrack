@@ -2,7 +2,6 @@ import { contracts } from "../contracts.ts";
 import { ackDrift } from "../drift/engine.ts";
 import { notFound, OctoError } from "../errors.ts";
 import { parseQuery, QUERY_FIELDS } from "../query/index.ts";
-import { generateRoadmap } from "../roadmap.ts";
 import type { Counts, Decision, Drift, Issue } from "../schemas.ts";
 import { countOf, emit, nextNumber, currentCursor } from "../store/common.ts";
 import { type Ctx, rows } from "../store/context.ts";
@@ -265,14 +264,6 @@ export const miscOps = [
     if (agent === undefined) throw new OctoError("internal", `Agent ${ctx.actor} is unknown`);
     return agent;
   }),
-
-  bind(contracts.roadmapGenerate, (ctx, input) =>
-    generateRoadmap(
-      ctx,
-      input.project === undefined ? null : requireProject(ctx, input.project).ref,
-      loadGraph(ctx),
-    ),
-  ),
 
   bind(contracts.next, (ctx, input) => {
     const agent = input.agent ?? ctx.actor;

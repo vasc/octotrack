@@ -283,14 +283,6 @@ describe("drift has to be earned", () => {
     expect(openRules()).not.toContain("stale-in-progress");
   });
 
-  test("a milestone due today is not overdue yet", () => {
-    h.call(c.milestoneCreate, { project: "OCT", title: "Today", targetDate: "2026-11-07" });
-    expect(openRules()).not.toContain("milestone-overdue");
-    h.setNow("2026-11-08T00:00:01.000Z");
-    h.tracker.sweep();
-    expect(openRules()).toContain("milestone-overdue");
-  });
-
   test("agents can take drift so that others leave it alone", () => {
     closedIssueOpenPr();
     const [drift] = h.call(c.driftList, { query: "rule:issue-closed-pr-open" });
@@ -311,10 +303,7 @@ describe("input that could never be right is refused", () => {
       "a nonsense decision date",
       () => h.call(c.decisionRecord, { title: "Q", chosen: "x", decidedAt: "nope" }),
     ],
-    [
-      "a nonsense target date",
-      () => h.call(c.milestoneCreate, { project: "OCT", title: "M", targetDate: "soon" }),
-    ],
+    ["a nonsense target date", () => h.call(c.projectCreate, { key: "XX", name: "X", targetDate: "soon" })],
   ])("%s", (_label, action) => {
     expect(action).toThrow();
   });

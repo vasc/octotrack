@@ -414,12 +414,22 @@ describe("what the audit found", () => {
     expect((await octo(["feed", "-actor:nobody", "--limit", "1"])).code).toBe(0);
     const note = await octo(["post", "A status", "-p", "OCT"]);
     expect(note.code).toBe(0);
-    const dashed = await octo(["idea", "add", "-1 is the wrong index", "--body", "-starts with a dash"]);
+    const dashed = await octo([
+      "issue",
+      "create",
+      "-1 is the wrong index",
+      "-p",
+      "OCT",
+      "--body",
+      "-starts with a dash",
+    ]);
     expect(dashed.code).toBe(0);
     const body = await data(z.object({ body: z.string() }), [
-      "idea",
-      "add",
+      "issue",
+      "create",
       "Dash body",
+      "-p",
+      "OCT",
       "--body",
       "-starts with a dash",
     ]);
@@ -662,12 +672,12 @@ describe("several things at once", () => {
 
   test("batch accepts one JSON op per line, and keep-going keeps what worked", async () => {
     const lines = [
-      JSON.stringify({ op: "idea.capture", input: { title: "Kept idea" } }),
+      JSON.stringify({ op: "issue.create", input: { project: "OCT", title: "Kept issue" } }),
       JSON.stringify({ op: "nope.nope" }),
     ].join("\n");
     const result = await octo(["batch", "--keep-going"], "agent-a", lines);
     expect(result.code).toBe(1);
-    expect((await data(z.array(WithRef), ["find", '"Kept idea"'])).length).toBe(1);
+    expect((await data(z.array(WithRef), ["find", '"Kept issue"'])).length).toBe(1);
   });
 
   test("bulk arguments and competing claims", async () => {
@@ -869,27 +879,13 @@ describe("everything else, through the CLI", () => {
     ).toContain("checks failing");
     expect((await octo(["show", "acme/web#7", "--text"])).stdout).toContain(issue.ref);
 
-    const milestone = await data(WithRef, [
-      "milestone",
-      "create",
-      "Launch",
-      "-p",
-      "WEB",
-      "--status",
-      "active",
-    ]);
-    await octo(["issue", "update", issue.ref, "-m", milestone.ref]);
-
-    const idea = await data(WithRef, ["idea", "add", "Newsletter", "-p", "WEB", "--horizon", "next"]);
-    const roadmap = await octo(["roadmap", "-p", "WEB", "--text"]);
-    expect(roadmap.stdout).toContain("Launch");
-    expect(roadmap.stdout).toContain("Newsletter");
-    const roadmapFile = join(home, "ROADMAP.md");
-    await octo(["roadmap", "--write", roadmapFile]);
-    expect(await Bun.file(roadmapFile).text()).toContain("# Roadmap");
-
-    const promoted = await data(z.object({ created: z.string() }), ["idea", "promote", idea.ref]);
-    expect(promoted.created).toMatch(/^WEB-/);
+    const launch = await data(
+      WithRef,
+      ["line", "add", "Launch", "--done-when", "It is live.", "-r", "WEB", "--where", "working", "--me"],
+      "",
+    );
+    await octo(["issue", "update", issue.ref, "--line", launch.ref]);
+    expect((await octo(["line", "show", launch.ref, "--text"])).stdout).toContain(issue.ref);
 
     const other = await data(WithRef, ["issue", "create", "Depends", "-p", "WEB"]);
     await octo(["link", "add", other.ref, "depends-on", issue.ref]);
@@ -922,9 +918,9 @@ describe("everything else, through the CLI", () => {
   }, 30000);
 
   test("raw op reaches anything, with input as a flag or on stdin", async () => {
-    const flag = await octo(["op", "idea.capture", "--input", '{"title":"From a flag"}']);
+    const flag = await octo(["op", "issue.create", "--input", '{"project":"OCT","title":"From a flag"}']);
     expect(flag.code).toBe(0);
-    const piped = await octo(["op", "idea.capture"], "agent-a", '{"title":"From stdin"}');
+    const piped = await octo(["op", "issue.create"], "agent-a", '{"project":"OCT","title":"From stdin"}');
     expect(piped.code).toBe(0);
     expect(piped.stdout).toContain("From stdin");
   });
@@ -964,7 +960,10 @@ describe("lines of work from the CLI", () => {
     );
     await data(Line, ["line", "order", second.ref, "--top", "--me"], "");
     const home = await data(Home, ["lines", "--me"], "");
-    expect(home.working.map((line) => line.ref).slice(0, 2)).toEqual([second.ref, first.ref]);
+    // Lines added by earlier tests share this server; what matters is that the moved one is first, ahead of the other.
+    const order = home.working.map((line) => line.ref);
+    expect(order[0]).toBe(second.ref);
+    expect(order.indexOf(second.ref)).toBeLessThan(order.indexOf(first.ref));
 
     const proposal = await data(
       Line,
