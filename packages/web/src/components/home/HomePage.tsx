@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useHome } from "../../hooks/useHome.ts";
 import { useHomeFocus } from "../../hooks/useHomeFocus.ts";
 import { useDragOrder } from "../../hooks/useDragOrder.ts";
 import { useHomeKeys } from "../../hooks/useHomeKeys.ts";
-import { useHotkeys } from "../../hooks/useHotkeys.ts";
+import { type HotkeyMap, useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useNarrow } from "../../hooks/useNarrow.ts";
 import { usePush } from "../../hooks/usePush.ts";
 import { firstOf } from "../../lib/focus.ts";
@@ -43,6 +43,8 @@ export function HomePage() {
   const [help, setHelp] = useState(false);
   const [recording, setRecording] = useState(false);
   useHotkeys(keys);
+  const closeHelp = useCallback(() => setHelp(false), []);
+  useHotkeys(useMemo((): HotkeyMap => (help ? { Escape: closeHelp } : {}), [help, closeHelp]));
   useHotkeys(
     useHomeKeys({
       home,
