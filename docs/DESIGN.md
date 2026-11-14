@@ -281,14 +281,14 @@ Everything below is a design decision made from that, with its reasoning.
   board and opening", taken from the plan, written by no one) and the first thing waiting on the developer, with the
   rest one row away ("+2 more for you"); only the focused item opens fully, with what each option does and, directly
   under the options, the reason for the recommendation. That keeps five lines on about one screen. An urgent question
-  sits at the very top, in red, distinct from focus. Below it, "Step in" holds only two kinds of trouble: an agent
-  writing where it may not, and a working line that has work and no owner and could not be given one. Unfocused
-  questions show their title and recommendation as one row that opens them; answer buttons appear only on the focused,
-  opened question. Up-next rows show their done when and how far scoping got; the tabled row names its lines; done lines
-  stay a few days under Done lately. The header counts what is waiting (to answer, to do, to accept, to step in), and
-  each count links to the first such item in focus order. Past six working lines, the header also says what spreading
-  thin is costing (lines with no owner, lines waiting on you): a nudge to table, never a cap. _Why:_ the first drafts
-  stacked a queue above the list, so the same lines were read twice and the lines were not at the centre.
+  sits at the very top, in red, distinct from focus. Below it, "Step in" holds one kind of trouble: a working line that
+  has work and no owner and could not be given one. Unfocused questions show their title and recommendation as one row
+  that opens them; answer buttons appear only on the focused, opened question. Up-next rows show their done when and how
+  far scoping got; the tabled row names its lines; done lines stay a few days under Done lately. The header counts what
+  is waiting (to answer, to do, to accept, to step in), and each count links to the first such item in focus order. Past
+  six working lines, the header also says what spreading thin is costing (lines with no owner, lines waiting on you): a
+  nudge to table, never a cap. _Why:_ the first drafts stacked a queue above the list, so the same lines were read twice
+  and the lines were not at the centre.
 - **Any ref opens in place.** A task or an issue opens in the same panel as its line, from the list, the log or a
   summary. A task shows what to send back as a form: Done sends what is filled, and Can't do it… asks why and closes it
   as not done. An issue shows its pull request with its checks, and plan steps show them too. Everything written, by
@@ -301,18 +301,21 @@ Everything below is a design decision made from that, with its reasoning.
   last command, wake address, what it is doing) whose only action is Stop, or Lift on a stopped agent: what needs the
   developer is on Lines. A line's panel also offers Stop on its owner and I'll own it, beside the owner.
 - **Agents register, take, and release, all through commands.** An agent is one named session. Its first command
-  registers its name, its repo from the git remote, and a wake address or none. It is running while it has run a command
-  or pushed in the last 15 minutes, and otherwise asleep if it has a wake address, or gone after two quiet hours without
-  one; it is idle when it holds no claim, and reachable when it is in a watch poll or has a wake address. `line take
-  [REF]` is one atomic step that also claims the issue it hands out: the named line if it is free, otherwise the highest
-  working line that has work in the agent's repo and no owner; failing that, a helper's place on the highest owned
-  working line with work in its repo; failing that, scoping the highest unscoped up-next line in its repo. Work is an
-  open issue on the line, in that repo, not blocked, not the developer's, and not claimed by another agent. While all of
-  a line's open work waits on the developer or is claimed by helpers, an owner that can be reached (a wake address, or a
-  watch poll) keeps the line and is woken by what the developer sends; one that cannot loses it after two quiet hours
-  like any other. While there is agent work, every command, every watch poll, and every push that pull request sync sees
-  on an issue it claimed renew its claims; `line release`, two quiet hours, a failed wake, or Stop end them. A lapsed
-  owner that comes back after another agent took the line is told it is now a helper, and its summary writes are
+  registers its name, its repo and checkout (the CLI reports its git top-level directory, and the server records it only
+  after reading that directory's remote itself), and a wake address or none. A name is one agent: registering a known
+  name means that agent is resuming, the CLI refuses writes under the default name, and sessions Octotrack starts get a
+  name it makes from the repo key (octotrack-3). An agent holds one claim at a time. It is running while it has run a
+  command or pushed in the last 15 minutes, and otherwise asleep if it has a wake address, or gone after two quiet hours
+  without one; it is idle when it holds no claim, and reachable when it is in a watch poll or has a wake address. `line
+  take [REF]` is one atomic step that also claims the issue it hands out: the named line if it is free, otherwise the
+  highest working line that has work in the agent's repo and no owner; failing that, a helper's place on the highest
+  owned working line with work in its repo; failing that, scoping the highest unscoped up-next line in its repo. Work is
+  an open issue on the line, in that repo, not blocked, not the developer's, and not claimed by another agent. While all
+  of a line's open work waits on the developer or is claimed by helpers, an owner that can be reached (a wake address,
+  or a watch poll) keeps the line and is woken by what the developer sends; one that cannot loses it after two quiet
+  hours like any other. While there is agent work, every command, every watch poll, and every push that pull request
+  sync sees on an issue it claimed renew its claims; `line release`, two quiet hours, a failed wake, or Stop end them. A
+  lapsed owner that comes back after another agent took the line is told it is now a helper, and its summary writes are
   refused. _Why:_ Octotrack sees only commands and pull request sync, so every rule is stated in those; "the top line
   first" would pile every idle agent onto line one; and a crash, a clean exit and a line waiting on the developer each
   come out right without the developer.
@@ -326,20 +329,24 @@ Everything below is a design decision made from that, with its reasoning.
   leaving a wake address or not.
 - **A working line with work always gets an owner, without the developer.** The search starts the moment a working line
   has work and no owner. After a lapse, or on Start of a line that had an owner, the last owner is woken first, with 10
-  minutes of first refusal; its first command inside them takes the line back. Release, Stop and a failed wake skip that
-  step, since D12 never wakes twice. Next, an agent with the repo that is in a watch poll gets the offer in its poll
-  reply, the most recently active first; agents are not woken for lines they never held, because a fresh session carries
-  no unrelated context. Last, Octotrack runs the start command, up to a number of sessions the developer sets. Stopped
+  minutes of first refusal; its first command inside them takes the line back. Release and Stop skip that step because
+  the agent left or was stopped, and a failed wake skips it because D12 never wakes twice. Next, every idle agent with
+  the repo that is in a watch poll gets the offer at once, its poll ending with it; the first `line take` wins, and if
+  none comes within one poll cycle, about 30 seconds, the search moves on. Agents are not woken for lines they never
+  held, because a fresh session carries no unrelated context; since D12 avoids sessions hanging on Octotrack, this step
+  will rarely fire. Last, Octotrack runs the start command, passing the line's ref and the name it made, up to a number
+  of sessions the developer sets. A start has worked only when that session runs `line take` within 5 minutes, and
+  counts toward the cap until then; one that does not is not tried again for that line until the developer acts. Stopped
   agents are never offered a line. The same search finds a helper whenever a working line has unclaimed work in a repo
   no agent on the line holds, and a reachable owner keeps its line while every open item is the developer's or claimed
   by a helper. The start command is one command in `~/.octotrack/agent-setup.json`, with optional per-repo overrides,
   edited only on the developer's machine and never by an operation, as D12 requires. It runs in the repo's checkout,
   from the repos table, of the repo that holds the line's first unclaimed work in plan order, after checking that the
-  checkout's git remote matches, and passes only the line's ref, so tracker text never becomes a prompt. The line
-  reaches Step in only when this machine has no checkout of the repo, the start failed, or the cap is reached, with
-  Table it… and I'll own it beside. _Why:_ a line the developer marked working should not sit idle for want of a click
-  the tracker can make. _Trade-off:_ sessions are spent without asking each time, and a sleeping agent is not reused;
-  the cap bounds the cost.
+  checkout's git remote matches, and passes only the ref and the name, so tracker text never becomes a prompt. The line
+  reaches Step in only for one of four reasons: no start command is set, no agent has run in the repo on this machine so
+  there is no checkout, a start never checked in, or the cap is reached; Set its checkout… and Table it… and I'll own it
+  sit beside. _Why:_ a line the developer marked working should not sit idle for want of a click the tracker can make.
+  _Trade-off:_ sessions are spent without asking each time, and a sleeping agent is not reused; the cap bounds the cost.
 - **The developer can own a line.** "I'll own it" makes it theirs, after the same 15-minute wind-down as tabling: it
   shows their tasks and notes, added with one growing box, and no summary falls due. The agents' open issues and pull
   requests stay on the line as held for an agent, and no agent writes to it until "Hand to an agent…", which asks for
@@ -352,11 +359,12 @@ Everything below is a design decision made from that, with its reasoning.
   drift is discarded, and anything still open is listed once in the log. A write refused after that is recorded and
   always shown in the log. So is a pull request for an issue on a line that is not working, when pull request sync sees
   that issue's ref in the branch name or after a closing keyword (Fixes, Closes), counted once per pull request; it is
-  put on the issue's claimant, else the line's last owner, and with neither it stays in the log. Three refusals in an
-  hour put the agent under Step in with Stop. Wind-down notices reach helpers too. Stop refuses every write under that
-  agent's name, ends its claims, sends it a notice, runs the developer's local stop command if one is set, and marks it
-  stopped on Agents until lifted. _Trade-off:_ Octotrack cannot kill a session; refusing its writes and telling it is
-  what it can do.
+  put on the issue's claimant, else the line's last owner, and with neither it stays in the log. On the third refusal in
+  an hour, Octotrack stops the agent itself, says so in the log, and leaves Lift on Agents, since asking the developer
+  to click Stop would add nothing. Wind-down notices reach helpers too. Stop refuses every write under that agent's
+  name, ends its claims, sends it a notice, runs the developer's local stop command if one is set, and marks it stopped
+  on Agents until lifted. _Trade-off:_ Octotrack cannot kill a session; refusing its writes and telling it is what it
+  can do.
 - **Questions stand alone.** Asking requires a situation written for someone who has read nothing else, options that say
   what happens if picked, and the reason behind any recommendation. Both are shown wherever a question is open, phone
   included. Background stays folded. _Why:_ "the operator needs to read millions of lines of text to get context on one
@@ -366,9 +374,11 @@ Everything below is a design decision made from that, with its reasoning.
   on Vasco"), and nobody is told. A task is an issue assigned to the developer, with a place and an outcome, so it
   always has a ref, and it waits on its line in the developer's order. Places are a fixed list the developer owns (the
   bench, the Mac, the phone, the house), and the CLI refuses any other. "I'm at" keeps the same list and order, opens
-  that place's tasks, folds everything else (questions included) to one row per line, adds tasks for that place held on
-  up-next lines (never tabled ones), and ends by itself after a few hours. Drift asks agents to turn
-  blocked-on-the-developer issues into tasks.
+  that place's tasks, folds everything else (questions included) to one row per line, adds current tasks for that place
+  held on up-next lines (asked or re-confirmed in the last 7 days, never on tabled ones), and ends by itself after a few
+  hours. Drift asks agents to turn blocked-on-the-developer issues into tasks.
+- **Tasks act like questions.** A task's choices are Done… (its outcome form) and Can't do it…, the same everywhere; on
+  home only the focused task shows them, and other tasks are one row that opens them.
 - **A question a task would settle waits for the task.** When a pending task's outcome would settle a question, the
   question is linked as blocked by the task, held and not shown, and withdrawn if the outcome settles it; the agent
   decides the rest. _Why:_ asking the developer what their own measurement is about to answer is the decision the design
@@ -406,8 +416,9 @@ Everything below is a design decision made from that, with its reasoning.
   folded in the log. It sits on the line's row, up next included, and puts that row in the j and k order while it waits.
   _Why:_ done when says what the line is and when it ends.
 - **The log shows what has not been seen,** line by line in order. A line counts as seen once opened, or with Mark all
-  seen. Each change is a row, except checks, drift confirmations and re-confirmed questions, which fold into one
-  sentence. Up-next and tabled lines are left out unless asked for; refused writes never are.
+  seen, and the developer's own actions are never unseen. Each change is a row, except checks, drift confirmations and
+  re-confirmed questions, which fold into one sentence. Up-next and tabled lines are left out unless asked for; refused
+  writes never are.
 - **State changes are buttons, never radio buttons,** so no arrow key can table a line. Reorder buttons are at least
   30px tall; every target on the phone is at least 44px.
 - **Keys move the browser's own focus.** j and k move focus between items, top to bottom as drawn: an urgent question,
@@ -429,7 +440,8 @@ Everything below is a design decision made from that, with its reasoning.
   stopped, lift, scope, take, release, wind-down; log, seen. A line is waiting on you when all its open work waits on
   the developer, agents on it when an agent has work on it, and has no owner when work is left and no agent holds it.
   Contracts and the CLI use the same words. Refs keep their prefixes, because a ref never changes once written: L-12 is
-  a line, D-34 a question, PANEL-6 an issue in the homepanel repo.
+  a line, D-34 a question, PANEL-6 an issue in the homepanel repo. A line's ref shows beside its name on the line, the
+  log and Agents, so it can be given to an agent in conversation.
 
 What it would change in what is built:
 
