@@ -83,7 +83,7 @@ function ClosedDecision({ decision }: { decision: Decision }) {
             )
           }
         >
-          {decision.status === "decided" ? "Change answer…" : "Reopen"}
+          {decision.status === "decided" ? "Change answer" : "Reopen"}
         </button>
       </div>
     </>

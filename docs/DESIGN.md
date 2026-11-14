@@ -334,8 +334,8 @@ Decisions made from that:
   one past the cap, once; at the cap the lowest helper Octotrack started is asked to make room before the developer
   is. The developer's stop command runs once per Stop. A gone session's worktree goes to the next session on its line.
   `repo checkout` sets where worktrees are made from, and the runner otherwise finds the main checkout with
-  `--git-common-dir`. Home has the header counts as links, the spread-thin nudge, To top and To up next, the Start
-  sheet, I'm at, Tell, Stop on the owner, Change answer…, Later and Not urgent, the developer's own box, and every key
+  `--git-common-dir`. Home has the header counts as one group of links, the spread-thin nudge, To top and To up next, the Start
+  sheet, I'm at, Tell, Stop on the owner, Change answer, Later and Not urgent, the developer's own box, and every key
   D14 lists, with `?` showing them. A Stop waiting with Undo offers Pause the line instead, and each line says what
   became of its recent answers.
 - **Departures, each for a reason.**
@@ -349,8 +349,9 @@ Decisions made from that:
     an alias table would hold the same fact twice.
   - _Places live in the database,_ edited only through the developer's `place` operations, not in a file beside the
     allowed hosts. _Why:_ they are then in the backups and migration rehearsals with everything else.
-  - _Dragging a line is the browser's drag and drop._ On a phone, Reorder's buttons do the same. _Why:_ a touch drag
-    needs a long press that fights scrolling, and the buttons already meet the 44px target size.
+  - _Dragging a line is the browser's drag and drop, by its handle, and the handle is also a button_ that opens Move to
+    top, Up, Down and To up next. _Why:_ a touch drag needs a long press that fights scrolling, a keyboard and a screen
+    reader cannot drag, and a separate Reorder mode was a second control for the same job, so the one handle does both.
   - _An agent's checkout is its own folder_ (`git rev-parse --show-toplevel`, so a linked worktree for an agent working
     in one), since one name is one session in one checkout; only the runner needs a repo's main checkout.
 
@@ -386,8 +387,8 @@ Everything below is a design decision made from that, with its reasoning.
   Nothing sits above lines. A line names one or more repos; one repo can serve several lines, and looking at one repo is
   a `repo:` filter on the log and in queries, not a layer or a screen. _Trade-off:_ no grouping to fold many lines
   under. A filter covers that until a long list shows it is needed.
-- **One order drives everything.** The developer orders the lines by drag handle, by a Reorder mode (to top, up, down,
-  to up next), or with alt and the arrow keys. That order decides what reaches the developer first, which line an agent
+- **One order drives everything.** The developer orders the lines by each line's handle, dragged or opened for its
+  moves (to top, up, down, to up next), or with alt and the arrow keys. That order decides what reaches the developer first, which line an agent
   takes on, and the order of the log. Within a line, questions and tasks follow the plan step they hold up, and Later
   moves one to the bottom of its own line. _Why:_ a computed score competed with the developer's own priorities and had
   to be second-guessed. _Trade-off:_ a pressing question on a low line waits, so urgent jumps the order. Urgent is for
@@ -415,7 +416,7 @@ Everything below is a design decision made from that, with its reasoning.
   and the lines were not at the centre.
 - **Any ref opens in place.** A task or an issue opens in the same panel as its line, from the list, the log or a
   summary. A task shows what to send back as a form, saved as it is typed so it can be finished another day or on
-  another device: Done sends it, and Can't do it… asks why and closes it as not done. An issue shows its pull request
+  another device: Done sends it, and Can't do it asks why and closes it as not done. An issue shows its pull request
   with its checks, and plan steps show them too. Everything written, by agents or the developer, is markdown, and every
   box grows as you type. _Why:_ the developer named "lack of markdown support, issues having too small of a ui, updates
   not having auto growing input box", and pull request status has to be visible without leaving the line. Checks are
@@ -441,7 +442,7 @@ Everything below is a design decision made from that, with its reasoning.
   developer says to an agent in conversation, the agent relays: every developer operation, answering and proposing a
   line to start or queue included, accepts `--said "<the developer's words>"` from an agent and then takes effect
   (channel `out_of_band`); the log shows it, never folded, naming the agent and quoting the words, and the opposite
-  command or Change answer… undoes it. Without `--said`, an agent's developer operation is refused with that hint and
+  command or Change answer undoes it. Without `--said`, an agent's developer operation is refused with that hint and
   never counted toward the automatic stop. Agent operations need a registered name, and Octotrack numbers the sessions
   it starts upward from the repo's name (octotrack.3), never reusing one. Who holds a line is one table of claims (line,
   agent, and a role of owner, helper or scoper); an agent is on one line at a time and claims issues only there: an owner
@@ -510,15 +511,15 @@ you", answers wait in its inbox, and the next answer, finished task or Tell star
   Octotrack keeps each start's exit code and last lines of output. The line gets a Step in item only when no start
   command is set, a clone failed, a start keeps failing or never checked in, or the cap is reached with every counted
   session an owner; the item shows that output, says what to do ("claude is not logged in on this Mac: log it in"), and
-  offers the action that fits (the file and line to add, then Try now, when no start command is set; Set its checkout…
+  offers the action that fits (the file and line to add, then Try now, when no start command is set; Set its checkout
   when a clone failed; Try now, which retries every line stopped the same way, when a start keeps failing or never
-  checked in; Start one anyway at the cap), with Table it… and I'll own it beside. _Why:_ a line the developer marked
+  checked in; Start one anyway at the cap), with Table it and I'll own it beside. _Why:_ a line the developer marked
   working should not sit idle for want of a click the tracker can make. _Trade-off:_ sessions are spent without asking
   each time, and a sleeping agent is not reused; the cap bounds the cost.
 - **The developer can own a line.** "I'll own it" makes it theirs, and it stays in Working on, marked yours, its tasks
   counted in to do, after the same 15-minute wind-down as tabling: it shows their tasks and notes, added with one
   growing box, and no summary falls due. The agents' open issues and pull requests stay on the line as held for an agent
-  (pull requests open at the deadline included), and no agent writes to it until "Hand to an agent…", which asks for
+  (pull requests open at the deadline included), and no agent writes to it until "Hand to an agent", which asks for
   repos only when the line has none and then runs the usual owner search, with Undo.
 - **What agents may write depends on the state.** Working on: anything. Proposed: scoping only, by the agent that
   proposed it. Up next: scoping only (done when, plan, held questions and tasks), by an agent that took it to scope;
@@ -557,7 +558,7 @@ you", answers wait in its inbox, and the next answer, finished task or Tell star
   same list and order, opens that place's tasks, folds everything else (questions included) to one row per line, adds
   current tasks for that place held on up-next lines (asked or re-confirmed in the last 7 days, never on tabled ones),
   and ends by itself after a few hours. Drift asks agents to turn blocked-on-the-developer issues into tasks.
-- **Tasks act like questions.** A task's choices are Done… (its outcome form) and Can't do it…, the same everywhere; on
+- **Tasks act like questions.** A task's choices are Done (its outcome form) and Can't do it, the same everywhere; on
   home only the focused task shows them, and other tasks are one row that opens them. "I'm at" is the one exception: at
   a place, every task for it shows its choices.
 - **A question a task would settle waits for the task.** When a pending task's outcome would settle a question, the
@@ -574,7 +575,7 @@ you", answers wait in its inbox, and the next answer, finished task or Tell star
 - **Every choice can be undone, and answers say what became of them.** Every choice, by key or tap, waits a few seconds
   with Undo before it takes effect: an answer, Start, Table, Done, Stop. The Undo bar is a polite live region that says
   the choice and "u to undo". An answer then shows one status sentence on its line: not picked up, picked up, carried
-  out, or that a wake failed. After that, Change answer… reopens the question and sends the new answer as replacing the
+  out, or that a wake failed. After that, Change answer reopens the question and sends the new answer as replacing the
   old; if the old one was carried out, the owner reverts or adapts. _Why:_ state changes are reachable by number keys,
   so a stray key must cost nothing. An answer closes one question; Tell is a free message that closes nothing: to the
   owner, or, opened from an issue, into the line's inbox with that ref, for whoever holds the issue, and the box names
@@ -588,9 +589,9 @@ you", answers wait in its inbox, and the next answer, finished task or Tell star
 - **Agents propose, the developer accepts.** Agents propose a line when they find work with none, or when the developer
   starts something new in conversation. Every proposed line comes with the agent's recommended placement (start; up
   next, and where; table, and why; or fold into a line) and a one-line why, shown like a question's recommendation, and
-  offers the same five choices: Start, Up next, Table… (which asks why), Fold into…, Not a line. Agents also propose a
+  offers the same five choices: Start, Up next, Table (which asks why), Fold into, Not a line. Agents also propose a
   line as done, with how "done when" was met; that proposal is the line's first item, on its own row, with Done and Not
-  yet…. Done… on a line is the developer's own decision and final: the owner closes out, and its closing note says how
+  yet…. Done on a line is the developer's own decision and final: the owner closes out, and its closing note says how
   done when was met, or what is not. Both kinds count in the header as "to accept". A line the developer adds names its
   repos, or says it is theirs, and goes to up next, starts, or is tabled with one button each. Nothing joins or leaves
   the list without the developer's yes. On first run, migration makes today's projects into repos only, since the
@@ -602,7 +603,7 @@ you", answers wait in its inbox, and the next answer, finished task or Tell star
 - **Not a line ends new work, and returns old work.** On a proposal for work the proposer created, "Not a line" closes
   its issues, and the local runner closes its pull requests, with the proposer noting the branch; on a proposal made
   from issues that already existed, it returns them to no line. Either way it is recorded as an attestation (D6), so the
-  drift that asks for a line for work with none stays satisfied and the same work is not proposed again. "Fold into…" is
+  drift that asks for a line for work with none stays satisfied and the same work is not proposed again. "Fold into" is
   how to keep the work.
 - **Done when changes only with the developer's yes.** A change to done when is a proposal: the old text stays in force,
   and done is judged against it, until the developer accepts. On a working line it is an item to accept, with Accept and
@@ -613,11 +614,12 @@ you", answers wait in its inbox, and the next answer, finished task or Tell star
   seen, and the developer's own actions are never unseen. Each change is a row, except checks, drift confirmations and
   re-confirmed questions, which fold into one sentence. Up-next and tabled lines are left out unless asked for; refused
   writes never are.
-- **State changes are buttons, never radio buttons,** so no arrow key can table a line. Reorder buttons are at least
-  30px tall; every target on the phone is at least 44px.
+- **State changes are buttons, never radio buttons,** so no arrow key can table a line. Every control on a desktop is
+  32px tall; every target on the phone is at least 44px. Buttons say what they do, with no ellipsis for one that asks
+  first, and the few icons stand beside words or alone in a control that names itself.
 - **Keys move the browser's own focus.** j and k move focus between items, top to bottom as drawn: an urgent question,
   the lines with their items, then Proposed. Tab moves within the focused item, and 1–9 pick its numbered choices,
-  numbered in the order drawn, sheets included: an option, a step-in action, a proposal's choice, Done… or Can't do it…,
+  numbered in the order drawn, sheets included: an option, a step-in action, a proposal's choice, Done or Can't do it,
   Accept or Keep current, Done or Not yet. There is only one focus, marked with a dark outline and the word Focused, so
   a key never acts on an item other than the one in focus. Live updates never move it: new items appear without taking
   focus. After a choice, focus goes to the line's next item for you, then the next line; after Later, to the next item.
@@ -643,7 +645,7 @@ you", answers wait in its inbox, and the next answer, finished task or Tell star
 What it would change in what is built:
 
 - **Refs.** Lines get their own refs (L-12). Every existing ref stays valid. Today's project keys become repo keys, so
-  PANEL-6 is an issue in vasc/homepanel, on whichever line its line field names, and Fold into… moves it without
+  PANEL-6 is an issue in vasc/homepanel, on whichever line its line field names, and Fold into moves it without
   changing its ref. Old milestone, idea and status-update refs resolve as aliases: M-2 to its line's plan step, I-4 to
   the proposed line it became, U-9 to a past summary, read only. Issues on a developer's line with no repo take one
   fixed prefix, ME. Of the link kinds, `blocks` now also holds a question behind the task that settles it instead of
@@ -668,7 +670,7 @@ What it would change in what is built:
   definition as the agent states. Outcome fields and drafts of answers and Tells are saved on the server as they are
   typed, per item, so they follow the developer between devices.
 - **Operations.** Kept: issue claim and release (take uses them), decisions with pickup and report, `decision batch` for
-  answers given elsewhere (on Lines too, as Record answers… behind r, each placed on its line), drift (keyed on line
+  answers given elsewhere (on Lines too, as Record answers behind r, each placed on its line), drift (keyed on line
   instead of project, or on repo for work on no line), watches (a poll renews claims and receives offers), pull request
   sync, which stays read only. Changed: projects become repos and lines; the `project:` query key becomes `repo:`,
   `line:` is added, and existing watches are rewritten to `repo:`; `next` becomes `line take`; milestones become plan

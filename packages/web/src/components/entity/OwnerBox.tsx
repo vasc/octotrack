@@ -3,7 +3,7 @@ import { useState } from "react";
 
 /**
  * Who speaks for the line: its owner and how it is, its helpers; Stop on the owner, and I'll own it; or, on a line the
- * developer owns, Hand to an agent…, which asks for repos only when the line names none.
+ * developer owns, Hand to an agent, which asks for repos only when the line names none.
  */
 export function OwnerBox({
   line,
@@ -61,7 +61,7 @@ export function OwnerBox({
               // A line that names its repos goes straight back; one that names none asks which first.
               onClick={() => (line.repos.length > 0 ? onHand([]) : setHanding([]))}
             >
-              Hand to an agent…
+              Hand to an agent
             </button>
           )}
         </div>

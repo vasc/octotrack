@@ -138,7 +138,7 @@ export function ProposalCard({
             data-primary={recommended("table")}
             onClick={() => setMode("table")}
           >
-            Table…
+            Table
           </button>
           {foldTargets.length === 0 ? null : (
             <button
@@ -149,7 +149,7 @@ export function ProposalCard({
               data-primary={recommended("fold")}
               onClick={() => setMode("fold")}
             >
-              Fold into…
+              Fold into
             </button>
           )}
           {fromTable ? (

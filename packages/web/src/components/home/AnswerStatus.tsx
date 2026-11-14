@@ -21,7 +21,7 @@ function status(answer: Answer): string {
 }
 
 /**
- * One answer given on a line lately, and what became of it, in one sentence as E-States writes it; Change answer…
+ * One answer given on a line lately, and what became of it, in one sentence as E-States writes it; Change answer
  * opens the question, which reopens it and sends the new answer as replacing the old.
  */
 export function AnswerStatus({ answer }: { answer: Answer }) {
@@ -33,10 +33,10 @@ export function AnswerStatus({ answer }: { answer: Answer }) {
       <button
         type="button"
         className="more-link"
-        aria-label={`Change answer… ${answer.ref}`}
+        aria-label={`Change answer ${answer.ref}`}
         onClick={() => openEntity(answer.ref)}
       >
-        Change answer…
+        Change answer
       </button>
     </p>
   );

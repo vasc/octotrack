@@ -86,6 +86,7 @@ p {
 .nav-item {
   display: inline-flex;
   align-items: center;
+  min-height: var(--control-height);
   gap: var(--space-3);
   padding: var(--space-3) var(--space-6);
   border-radius: var(--radius-md);
@@ -107,7 +108,7 @@ p {
   font-variant-numeric: tabular-nums;
 }
 
-/* What waits on the developer, as one quiet group: each count a bold number in its tone, then plain words. */
+/* What waits on the developer, as one quiet group: each count a bold number, then plain words. */
 .top-counts {
   display: inline-flex;
   align-items: stretch;
@@ -120,9 +121,10 @@ p {
 
 .top-count {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-6);
+  min-height: calc(var(--control-height) - 2px);
+  padding: 0 var(--space-6);
   color: var(--ink-2);
   text-decoration: none;
 }
@@ -136,26 +138,20 @@ p {
   color: var(--ink);
 }
 
+/* One colour: the numbers in ink, the words quieter. Only urgent, apart, is red. */
 .top-count-n {
   font-weight: var(--weight-bold);
   font-variant-numeric: tabular-nums;
-  color: var(--attention);
-}
-
-.top-count[data-count="toAccept"] .top-count-n {
-  color: var(--info);
-}
-
-.top-count[data-count="toStepIn"] .top-count-n {
-  color: var(--bad);
+  color: var(--ink);
 }
 
 /* Urgent stands apart, in front of the group, in red. */
 .top-urgent {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-6);
+  min-height: var(--control-height);
+  padding: 0 var(--space-6);
   font-size: var(--text-sm);
   color: var(--bad);
   background: var(--bad-soft);
@@ -180,13 +176,7 @@ p {
   gap: var(--space-4);
 }
 
-.top-at {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  font-size: var(--text-sm);
-  color: var(--ink-3);
-}
+
 
 .main {
   flex: 1;
@@ -420,16 +410,17 @@ p {
 }
 
 .btn {
-  padding: var(--space-3) var(--space-6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  min-height: var(--control-height);
+  padding: 0 var(--space-6);
   background: var(--surface);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-md);
   cursor: pointer;
   white-space: nowrap;
-}
-
-.btn-mono {
-  font-family: var(--mono);
 }
 
 /* A choice that sends something now, in the color of what it acts on. */
@@ -487,11 +478,61 @@ p {
 }
 
 .select {
-  padding: var(--space-1) var(--space-2);
+  min-height: var(--control-height);
+  padding: 0 var(--space-4);
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius-md);
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
+}
+
+.icon {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  flex-shrink: 0;
+}
+
+/* An icon alone in a control that names itself: square, the height of every control. */
+.btn-icon {
+  width: var(--control-height);
+  padding: 0;
+  color: var(--ink-2);
+}
+
+/* I'm at: a pin, the place, and the select's own arrow, in one control the height of the rest. */
+.picker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-height);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--ink-2);
+}
+
+.picker > .icon {
+  position: absolute;
+  pointer-events: none;
+}
+
+.picker > .icon:first-child {
+  left: var(--space-5);
+}
+
+.picker > .icon:last-child {
+  right: var(--space-4);
+}
+
+.picker select {
+  appearance: none;
+  min-height: var(--control-height);
+  padding: 0 calc(var(--space-6) + var(--icon-size)) 0 calc(var(--space-7) + var(--icon-size));
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: var(--text-sm);
+  cursor: pointer;
 }
 
 .state {
@@ -1241,7 +1282,7 @@ p {
     gap: var(--space-3) var(--space-6);
   }
   .brand-name,
-  .top-actions .btn-mono {
+  .top-actions .btn-icon {
     display: none;
   }
   /* The bar on a phone, as E-Phone draws it: the page and New, then the counts, then where you are. */
@@ -1280,16 +1321,18 @@ p {
     color: var(--ink);
     font-weight: var(--weight-bold);
   }
+  /* The bar's own order on a phone: New beside the page's name, I'm at across the width under the counts. */
   .top-actions {
+    display: contents;
+  }
+  .picker {
     order: 3;
-    margin-left: 0;
     width: 100%;
+    min-height: var(--touch-target);
   }
-  .top-at {
+  .picker select {
     flex: 1;
-  }
-  .top-at .select {
-    flex: 1;
+    min-height: var(--touch-target);
   }
   .main {
     padding-bottom: var(--space-32);
@@ -1583,14 +1626,13 @@ p {
 }
 
 /* A task opened: what to send back, as a form saved as it is typed. */
+/* What to send back: part of the task, not a box inside it, set off by a rule above. */
 .task-form {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  padding: var(--space-7) var(--space-8);
-  border: 1px solid var(--attention-line);
-  border-radius: var(--radius-lg);
-  background: var(--attention-soft);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--line-faint);
 }
 
 .task-outcome {
@@ -1851,16 +1893,71 @@ p {
 
 .line-card-head {
   display: grid;
-  grid-template-columns: var(--space-9) var(--space-11) minmax(0, 1fr) auto;
+  grid-template-columns: var(--line-gutter) var(--space-11) minmax(0, 1fr) auto;
   gap: var(--space-5);
   align-items: baseline;
 }
 
+.line-gutter {
+  position: relative;
+  align-self: start;
+}
+
+/* The one reorder control: drag it, or open it for its moves. Quiet until the line is hovered or it has focus. */
 .line-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--line-gutter);
+  height: var(--line-gutter);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
   color: var(--ink-3);
-  letter-spacing: -2px;
   cursor: grab;
-  user-select: none;
+}
+
+.line-handle:hover,
+.line-handle[aria-expanded="true"] {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.menu {
+  position: absolute;
+  top: calc(var(--line-gutter) + var(--space-2));
+  left: 0;
+  z-index: var(--z-popover);
+  min-width: calc(var(--space-32) * 2);
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-popover);
+}
+
+.menu-item {
+  min-height: var(--control-height);
+  padding: 0 var(--space-5);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  text-align: left;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.menu-item:hover:not(:disabled),
+.menu-item:focus-visible {
+  background: var(--surface-2);
+}
+
+.menu-item:disabled {
+  color: var(--ink-3);
+  cursor: default;
 }
 
 .line-num {
@@ -1900,14 +1997,14 @@ p {
 }
 
 .line-answer {
-  margin-left: var(--space-24);
+  margin-left: var(--line-indent);
   font-size: var(--text-sm);
   color: var(--ink-3);
 }
 
 /* What a line needs from you, under it, aligned with its title. */
 .line-items {
-  margin-left: var(--space-24);
+  margin-left: var(--line-indent);
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -2041,7 +2138,7 @@ p {
 
 .next-row {
   display: grid;
-  grid-template-columns: var(--space-9) var(--space-11) minmax(0, 1fr) auto auto;
+  grid-template-columns: var(--line-gutter) var(--space-11) minmax(0, 1fr) auto;
   gap: var(--space-5);
   align-items: center;
   padding: var(--space-5) var(--space-9);

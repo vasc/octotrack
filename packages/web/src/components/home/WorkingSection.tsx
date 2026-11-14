@@ -1,6 +1,6 @@
 import type { HomeView } from "@octotrack/core/schemas";
 import { type ReactNode, useState } from "react";
-import type { DragProps } from "../../hooks/useDragOrder.ts";
+import type { DropTarget } from "../../hooks/useDragOrder.ts";
 import type { HomeActions } from "../../hooks/useHome.ts";
 import { lineFocusRef, refOf, stepInRef } from "../../lib/focus.ts";
 import { stepInReason } from "../../lib/lines.ts";
@@ -12,10 +12,6 @@ import { HomeSection } from "./HomeSection.tsx";
 import { MoreForYou } from "./MoreForYou.tsx";
 import { StepIn } from "./StepIn.tsx";
 import { WorkingLine } from "./WorkingLine.tsx";
-
-function withDrag(drag: DragProps | undefined): { drag?: DragProps } {
-  return drag === undefined ? {} : { drag };
-}
 
 /** A clone that failed says so in its output: the fix is a checkout this machine already has. */
 const CLONE_FAILED = /clone|checkout is set/i;
@@ -32,8 +28,8 @@ export function WorkingSection({
   armed,
   foldFrom,
   at,
-  reorder,
-  drag,
+  handle,
+  drop,
   actions,
   onFocus,
   onPostponed,
@@ -46,8 +42,9 @@ export function WorkingSection({
   foldFrom: number;
   /** I'm at this place: its tasks open on their lines and everything else folds. */
   at: string | null;
-  reorder(title: string, ref: string, index: number, count: number): ReactNode;
-  drag(ref: string, section: string): DragProps | undefined;
+  /** A line's handle, which drags it or opens its moves. */
+  handle(title: string, ref: string, index: number, count: number, section: "working" | "up_next"): ReactNode;
+  drop(ref: string, section: "working" | "up_next"): DropTarget;
   /** What acts on the whole section: Reorder. */
   actions: ReactNode;
   onFocus(ref: string): void;
@@ -104,12 +101,12 @@ export function WorkingSection({
             <WorkingLine
               key={line.ref}
               focused={focus === lineFocusRef(line.ref)}
-              {...withDrag(drag(line.ref, "working"))}
+              drop={drop(line.ref, "working")}
               index={index + 1}
               line={line}
               {...(crew === undefined ? {} : { crew })}
               {...(details === undefined ? {} : { details })}
-              reorder={reorder(line.title, line.ref, index, home.working.length)}
+              handle={handle(line.title, line.ref, index, home.working.length, "working")}
             >
               {stepIn === null ? null : at !== null && focus !== stepInRef(line.ref) ? (
                 <div className="line-items">

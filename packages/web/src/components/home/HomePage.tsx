@@ -20,7 +20,7 @@ import { FocusTarget } from "./FocusTarget.tsx";
 import { NothingNeedsYou } from "./NothingNeedsYou.tsx";
 import { ForYouRow } from "./ForYouRow.tsx";
 import { HomeSection } from "./HomeSection.tsx";
-import { ReorderButtons } from "./ReorderButtons.tsx";
+import { LineHandle } from "./LineHandle.tsx";
 import { SpreadThin } from "./SpreadThin.tsx";
 import { WaitingSections } from "./WaitingSections.tsx";
 import { WorkingSection } from "./WorkingSection.tsx";
@@ -49,7 +49,6 @@ export function HomePage() {
   const inspecting = params.get("ref") !== null || starting !== null;
   const armed = focusState.armed && !inspecting;
   const keys = inspecting ? NO_KEYS : focusState.keys;
-  const [reordering, setReordering] = useState(false);
   const [recording, setRecording] = useState(false);
   useHotkeys(keys);
   useHotkeys(
@@ -64,17 +63,24 @@ export function HomePage() {
     }),
   );
   const dragFor = useDragOrder(h.dropBefore);
-  const drag = (ref: string, section: string) => (reordering ? undefined : dragFor(ref, section));
-  const reorder = (title: string, ref: string, index: number, count: number) =>
-    reordering ? (
-      <ReorderButtons
-        title={title}
-        canMoveUp={index > 0}
-        canMoveDown={index < count - 1}
-        canQueue={home?.working.some((line) => line.ref === ref) === true}
-        onMove={(direction) => h.reorder(ref, direction)}
-      />
-    ) : null;
+  const drop = (ref: string, section: "working" | "up_next") => dragFor(ref, section).target;
+  // Each line's handle is the one way to reorder: drag it, or open it for its moves.
+  const handle = (
+    title: string,
+    ref: string,
+    index: number,
+    count: number,
+    section: "working" | "up_next",
+  ) => (
+    <LineHandle
+      title={title}
+      canMoveUp={index > 0}
+      canMoveDown={index < count - 1}
+      canQueue={section === "working"}
+      drag={dragFor(ref, section).handle}
+      onMove={(direction) => h.reorder(ref, direction)}
+    />
+  );
   const at = home?.at ?? null;
   const now = useClock(false);
 
@@ -136,30 +142,17 @@ export function HomePage() {
             // On a phone, lines past the second fold to one row each; at a place, everything but its tasks does.
             foldFrom={narrow ? PHONE_OPEN_LINES : Number.POSITIVE_INFINITY}
             at={at?.place ?? null}
-            reorder={reorder}
-            drag={drag}
+            handle={handle}
+            drop={drop}
             actions={
-              <>
-                <SpreadThin
-                  working={home.working.length}
-                  noOwner={
-                    home.working.filter(
-                      (line) => home.crews[line.ref]?.owner == null && line.ownedBy === null,
-                    ).length
-                  }
-                  waiting={
-                    home.working.filter((line) => (home.lines[line.ref]?.forYou.length ?? 0) > 0).length
-                  }
-                />
-                <button
-                  type="button"
-                  className="btn"
-                  aria-pressed={reordering}
-                  onClick={() => setReordering(!reordering)}
-                >
-                  {reordering ? "Done reordering" : "Reorder"}
-                </button>
-              </>
+              <SpreadThin
+                working={home.working.length}
+                noOwner={
+                  home.working.filter((line) => home.crews[line.ref]?.owner == null && line.ownedBy === null)
+                    .length
+                }
+                waiting={home.working.filter((line) => (home.lines[line.ref]?.forYou.length ?? 0) > 0).length}
+              />
             }
             onFocus={choose}
             onPostponed={skip}
@@ -180,8 +173,8 @@ export function HomePage() {
             focus={focus}
             starting={starting}
             narrow={narrow}
-            reorder={reorder}
-            drag={drag}
+            handle={handle}
+            drop={drop}
             onStarting={setStarting}
           />
           {home.noLine.length === 0 ? null : (

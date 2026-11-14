@@ -1,7 +1,7 @@
 import type { Line } from "@octotrack/core/schemas";
 
 /**
- * Fold into…: the open lines a proposal could join, as numbered buttons, never a select an arrow key could change. The
+ * Fold into: the open lines a proposal could join, as numbered buttons, never a select an arrow key could change. The
  * number keys pick one while the proposal has focus.
  */
 export function FoldPicker({

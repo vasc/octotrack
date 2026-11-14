@@ -20,7 +20,7 @@ import { LineProposalCard } from "../src/components/home/LineProposalCard.tsx";
 import { ProposalCard } from "../src/components/home/ProposalCard.tsx";
 import { PushToggle } from "../src/components/home/PushToggle.tsx";
 import { QuietRow } from "../src/components/home/QuietRow.tsx";
-import { ReorderButtons } from "../src/components/home/ReorderButtons.tsx";
+import { LineHandle } from "../src/components/home/LineHandle.tsx";
 import { StepIn } from "../src/components/home/StepIn.tsx";
 import { TaskCard } from "../src/components/home/TaskCard.tsx";
 import { UpNextRow } from "../src/components/home/UpNextRow.tsx";
@@ -688,7 +688,7 @@ describe("lines of work", () => {
     fireEvent.change(view.getByLabelText("What OCT-1 found"), { target: { value: " 41, 38 " } });
     fireEvent.click(view.getByRole("button", { name: "Done" }));
     expect(onDone).toHaveBeenCalledWith("41, 38");
-    fireEvent.click(view.getByRole("button", { name: "Can't do it…" }));
+    fireEvent.click(view.getByRole("button", { name: "Can't do it" }));
     fireEvent.change(view.getByLabelText("Why OCT-1 cannot be done"), { target: { value: "No calipers" } });
     fireEvent.click(view.getByRole("button", { name: "Close it" }));
     expect(onCant).toHaveBeenCalledWith("No calipers");
@@ -712,7 +712,7 @@ describe("lines of work", () => {
     expect(onRetry).toHaveBeenCalledWith("L-1");
     fireEvent.click(view.getByRole("button", { name: "I'll own it" }));
     expect(onOwn).toHaveBeenCalledWith("L-1");
-    fireEvent.click(view.getByRole("button", { name: "Table it…" }));
+    fireEvent.click(view.getByRole("button", { name: "Table it" }));
     fireEvent.change(view.getByLabelText("Why table Sendspin enclosure"), { target: { value: "Later" } });
     fireEvent.click(view.getByRole("button", { name: "Table it" }));
     expect(onTable).toHaveBeenCalledWith("L-1", "Later", null);
@@ -731,7 +731,7 @@ describe("lines of work", () => {
     view.getByText(/1 task held/);
     view.getByText(/not scoped yet/);
     // It holds something, so Start opens the Start sheet first.
-    expect(view.getByRole("button", { name: "Start Wall mount" }).textContent).toBe("Start…");
+    expect(view.getByRole("button", { name: "Start Wall mount" }).textContent).toBe("Start");
     view.getByText(whole("Done when it hangs flush."));
     fireEvent.click(view.getByRole("button", { name: "Start Wall mount" }));
     expect(onStart).toHaveBeenCalledWith("L-1");
@@ -812,12 +812,6 @@ describe("lines of work", () => {
     view.getByText("look again 2027-01-05");
     fireEvent.click(view.getByRole("button", { name: "Start Sendspin enclosure" }));
     expect(onStart).toHaveBeenCalledWith("L-1");
-  });
-
-  test("ReorderButtons cannot move past either end", () => {
-    const view = render(<ReorderButtons title="One" canMoveUp={false} canMoveDown onMove={() => {}} />);
-    expect(view.getByRole("button", { name: "Move One up" }).hasAttribute("disabled")).toBe(true);
-    expect(view.getByRole("button", { name: "Move One down" }).hasAttribute("disabled")).toBe(false);
   });
 
   test("HomeSection is a region named by its title", () => {
@@ -941,7 +935,7 @@ describe("a line opened", () => {
         onHand={onHand}
       />,
     );
-    fireEvent.click(mine.getByRole("button", { name: "Hand to an agent…" }));
+    fireEvent.click(mine.getByRole("button", { name: "Hand to an agent" }));
     fireEvent.click(mine.getByRole("checkbox", { name: "OCT" }));
     fireEvent.click(mine.getByRole("button", { name: "Hand over" }));
     expect(onHand).toHaveBeenCalledWith(["OCT"]);
@@ -1285,9 +1279,9 @@ describe("tabling and a line's own choices", () => {
       view.getAllByRole("button").map((button) => button.textContent);
     const working = render(<LineActions line={line()} owner="panel" {...props} />);
     working.getByText("Working on");
-    expect(names(working)).toEqual(["Move to up next", "Table…", "Done…", "More"]);
+    expect(names(working)).toEqual(["Move to up next", "Table", "Done", "More"]);
     working.getByText(/give panel 15 minutes to wind down/);
-    fireEvent.click(working.getByRole("button", { name: "Done…" }));
+    fireEvent.click(working.getByRole("button", { name: "Done" }));
     fireEvent.click(working.getByRole("button", { name: "Done" }));
     expect(onChoose).toHaveBeenCalledWith("done");
     fireEvent.click(working.getByRole("button", { name: "More: drop this line" }));
@@ -1295,7 +1289,7 @@ describe("tabling and a line's own choices", () => {
     expect(onChoose).toHaveBeenCalledWith("drop");
     working.unmount();
     const proposed = render(<LineActions line={line({ state: "proposed" })} {...props} />);
-    expect(names(proposed)).toEqual(["Start", "Up next", "Table…", "Not a line"]);
+    expect(names(proposed)).toEqual(["Start", "Up next", "Table", "Not a line"]);
     proposed.unmount();
     const done = render(<LineActions line={line({ state: "done" })} {...props} />);
     expect(done.queryAllByRole("button")).toHaveLength(0);
@@ -1323,7 +1317,7 @@ describe("LineProposalCard", () => {
     view.getByText("Proposed as done · octotrack-builder");
     view.getByText(whole('Done when "an answer reaches whoever owns its line": met.'));
     view.getByText("The owner was woken from the inbox and reported it carried out.");
-    fireEvent.click(view.getByRole("button", { name: "Not yet…" }));
+    fireEvent.click(view.getByRole("button", { name: "Not yet" }));
     fireEvent.change(view.getByLabelText("What L-12 still needs"), { target: { value: "One real wake" } });
     fireEvent.click(view.getByRole("button", { name: "Not yet" }));
     expect(onDecline).toHaveBeenCalledWith("One real wake");
@@ -1590,7 +1584,7 @@ describe("home's smaller pieces", () => {
         onTable={() => {}}
       />,
     );
-    fireEvent.click(clone.getByRole("button", { name: "Set its checkout…" }));
+    fireEvent.click(clone.getByRole("button", { name: "Set its checkout" }));
     fireEvent.change(clone.getByLabelText("Checkout of PANEL"), { target: { value: "/src/panel" } });
     fireEvent.click(clone.getByRole("button", { name: "Set" }));
     expect(onCheckout).toHaveBeenCalledWith("L-1", "PANEL", "/src/panel");
@@ -1604,13 +1598,33 @@ describe("home's smaller pieces", () => {
   });
 });
 
-describe("ReorderButtons in full", () => {
-  test("a working line can also go to the top or to up next", () => {
+describe("LineHandle", () => {
+  test("is the one way to reorder: drag it, or open it for Top, Up, Down and To up next", () => {
     const onMove = mock((_direction: string) => {});
-    const view = render(<ReorderButtons title="One" canMoveUp canMoveDown canQueue onMove={onMove} />);
-    fireEvent.click(view.getByRole("button", { name: "Move One to the top" }));
-    fireEvent.click(view.getByRole("button", { name: "Move One to up next" }));
-    expect(onMove.mock.calls).toEqual([["top"], ["up_next"]]);
+    const view = render(<LineHandle title="One" canMoveUp canMoveDown canQueue onMove={onMove} />);
+    const handle = view.getByRole("button", { name: "Move One" });
+    expect(handle.getAttribute("draggable")).toBe("true");
+    expect(handle.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(handle);
+    const menu = within(view.getByRole("menu", { name: "Move One" }));
+    expect(menu.getAllByRole("menuitem").map((item) => item.textContent)).toEqual([
+      "Move to top",
+      "Up",
+      "Down",
+      "To up next",
+    ]);
+    fireEvent.click(menu.getByRole("menuitem", { name: "To up next" }));
+    expect(onMove.mock.calls).toEqual([["up_next"]]);
+    expect(view.queryByRole("menu")).toBeNull();
+  });
+
+  test("cannot move past either end, and Escape closes it", () => {
+    const view = render(<LineHandle title="One" canMoveUp={false} canMoveDown onMove={() => {}} />);
+    fireEvent.click(view.getByRole("button", { name: "Move One" }));
+    expect(view.getByRole("menuitem", { name: "Up" }).hasAttribute("disabled")).toBe(true);
+    expect(view.queryByRole("menuitem", { name: "To up next" })).toBeNull();
+    fireEvent.keyDown(view.getByRole("menu"), { key: "Escape" });
+    expect(view.queryByRole("menu")).toBeNull();
   });
 });
 
@@ -1652,9 +1666,9 @@ describe("answers on their line", () => {
     );
   });
 
-  test("AnswerStatus offers Change answer…, which opens the question", () => {
+  test("AnswerStatus offers Change answer, which opens the question", () => {
     const view = render(<AnswerStatus answer={answer({ status: "carried_out" })} />);
-    view.getByRole("button", { name: "Change answer… D-34" });
+    view.getByRole("button", { name: "Change answer D-34" });
   });
 
   test("WorkingLine shows each answer given lately", () => {

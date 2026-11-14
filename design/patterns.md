@@ -15,10 +15,10 @@ there is one column.
 `/lines` is every line of work in the developer's order: working on, up next, proposed, then tabled and done lately
 folded to one row each. A working line shows who is on it, its plan step and its headline, then the first thing
 waiting on the developer; the rest are one row away (`+2 more for you`). Only the focused item opens in full: a
-question as its card, a task with Done… and Can't do it…. Focus starts on an urgent question, else on the first thing
+question as its card, a task with Done and Can't do it. Focus starts on an urgent question, else on the first thing
 waiting, and moves when a row is opened. A working line no agent could be found for shows Step in, in red, on its own
 line, so the line is read once. Placing a line, tabling it, finishing it and owning it happen from its panel, which
-opens in place from its title. The order changes in Reorder mode.
+opens in place from its title. The order changes from each line's handle: drag it, or open it for its moves.
 
 ## The feed page
 

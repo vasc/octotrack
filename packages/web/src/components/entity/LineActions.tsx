@@ -16,7 +16,7 @@ export interface LineActionsProps {
 }
 
 /**
- * Where a line stands and how to move it, as E-Line draws it: its state, the moves that state allows (Done… asks
+ * Where a line stands and how to move it, as E-Line draws it: its state, the moves that state allows (Done asks
  * before it ends the line), the rarer ones under More, and what a move away does to its agents.
  */
 export function LineActions({ line, owner = null, onChoose, onTable, held }: LineActionsProps) {
@@ -75,12 +75,12 @@ export function LineActions({ line, owner = null, onChoose, onTable, held }: Lin
       {line.state === "tabled" || line.state === "proposed" ? move("queue", "Up next") : null}
       {ended || line.state === "tabled" ? null : (
         <button type="button" className="btn" onClick={() => setMode("table")}>
-          Table…
+          Table
         </button>
       )}
       {line.state === "working" ? (
         <button type="button" className="btn" onClick={() => setMode("done")}>
-          Done…
+          Done
         </button>
       ) : null}
       {line.state === "proposed" ? move("reject", "Not a line") : null}
@@ -98,7 +98,7 @@ export function LineActions({ line, owner = null, onChoose, onTable, held }: Lin
       )}
       {line.state === "working" && owner !== null ? (
         <span className="line-moves-note">
-          Up next, Table, Done…, Drop and I'll own it give {owner} 15 minutes to wind down. Table asks why;
+          Up next, Table, Done, Drop and I'll own it give {owner} 15 minutes to wind down. Table asks why;
           Done and Drop also close or fold what is open.
         </span>
       ) : null}

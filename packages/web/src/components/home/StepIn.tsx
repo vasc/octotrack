@@ -82,7 +82,7 @@ export function StepIn({
               data-choice={number("checkout")}
               onClick={() => setMode("checkout")}
             >
-              Set its checkout…
+              Set its checkout
             </button>
           )}
           {onRetry === undefined ? null : (
@@ -113,7 +113,7 @@ export function StepIn({
             data-choice={number("table")}
             onClick={() => setMode("table")}
           >
-            Table it…
+            Table it
           </button>
           <button type="button" className="btn" data-choice={number("own")} onClick={() => onOwn(line.ref)}>
             I'll own it

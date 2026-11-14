@@ -4,7 +4,7 @@ export const HOME_KEYS: readonly (readonly [string, string])[] = [
   ["J K", "next and previous line, Working on then Up next"],
   [
     "1–9",
-    "the focused item's numbered choice: an option, a step-in action, a proposal's choice, Done… or Can't do it…, Accept or Keep current, Done or Not yet",
+    "the focused item's numbered choice: an option, a step-in action, a proposal's choice, Done or Can't do it, Accept or Keep current, Done or Not yet",
   ],
   ["w", "answer in my own words"],
   ["l", "later"],

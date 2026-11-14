@@ -122,7 +122,7 @@ export function NewLineCard({
               Start
             </button>
             <button type="button" className="btn" disabled={!ready} onClick={() => setTabling(true)}>
-              Table…
+              Table
             </button>
             <button type="button" className="btn" data-quiet="true" onClick={onCancel}>
               Cancel

@@ -9,7 +9,7 @@ const ENTER = "Enter";
 
 /**
  * Picks the focused item's numbered choice, as drawn: a question numbers its own options, so this is for every other
- * item (a step-in action, a proposal's choice, Done… or Can't do it…, Accept or Keep). The page draws the numbers;
+ * item (a step-in action, a proposal's choice, Done or Can't do it, Accept or Keep). The page draws the numbers;
  * the key presses the button it names, as a click would.
  */
 function pressChoice(page: HTMLElement | null, focus: string, number: string): void {

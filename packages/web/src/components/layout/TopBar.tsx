@@ -1,6 +1,7 @@
 import type { HomeCounts } from "@octotrack/core/schemas";
 import type { Ref } from "react";
 import { navigate } from "../../lib/router.ts";
+import { Icon } from "../ui/Icon.tsx";
 import { NavItem } from "./NavItem.tsx";
 
 /** The header counts, each a link to the first such item in focus order. Zeros are left out. */
@@ -62,11 +63,11 @@ export function TopBar({ path, counts, places, at, onAt, onNewLine, onKeys, atRe
         )}
         <span className="top-actions">
           {places.length === 0 ? null : (
-            <label className="top-at">
-              I'm at
+            <span className="picker">
+              <Icon name="pin" />
               <select
                 ref={atRef}
-                className="select"
+                aria-label="I'm at"
                 value={at ?? ALL_PLACES}
                 onChange={(event) => onAt(event.target.value === ALL_PLACES ? null : event.target.value)}
               >
@@ -77,21 +78,29 @@ export function TopBar({ path, counts, places, at, onAt, onNewLine, onKeys, atRe
                   </option>
                 ))}
               </select>
-            </label>
+              <Icon name="chevron" />
+            </span>
           )}
-          <button type="button" className="btn btn-mono" aria-label="Keyboard shortcuts" onClick={onKeys}>
-            ?
+          <button type="button" className="btn top-new" onClick={onNewLine}>
+            <Icon name="plus" />
+            New line
+          </button>
+          <button
+            type="button"
+            className="btn btn-icon"
+            aria-label="Keyboard shortcuts"
+            title="Keyboard shortcuts (?)"
+            onClick={onKeys}
+          >
+            <Icon name="keyboard" />
           </button>
         </span>
-        <button type="button" className="btn top-new" onClick={onNewLine}>
-          New line
-        </button>
       </div>
     </header>
   );
 }
 
-/** One count: its number in its tone, then its words; it opens the first such item, focused. */
+/** One count: its number, then its words; it opens the first such item, focused. */
 function CountLinkView({ count, className }: { count: CountLink; className: string }) {
   const to = count.to === null ? "/" : `/?focus=${encodeURIComponent(count.to)}`;
   return (

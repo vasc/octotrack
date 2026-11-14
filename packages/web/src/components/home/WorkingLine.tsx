@@ -1,6 +1,6 @@
 import type { Line, LineCrew, LineHome } from "@octotrack/core/schemas";
 import type { ReactNode } from "react";
-import type { DragProps } from "../../hooks/useDragOrder.ts";
+import type { DropTarget } from "../../hooks/useDragOrder.ts";
 import { openEntity } from "../../lib/router.ts";
 import { AnswerStatus } from "./AnswerStatus.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
@@ -12,14 +12,14 @@ export interface WorkingLineProps {
   line: Line;
   crew?: LineCrew;
   details?: LineHome;
-  /** Reorder controls, shown in Reorder mode. */
-  reorder?: ReactNode;
+  /** Its handle: drag it onto another line, or open it to move the line. */
+  handle?: ReactNode;
   /** What waits on the developer, and Step in. */
   children?: ReactNode;
   /** The line itself has focus, reached with Shift J and K. */
   focused?: boolean;
-  /** How the line is dragged onto another. */
-  drag?: DragProps;
+  /** Where another line can be dropped, to land before this one. */
+  drop?: DropTarget;
 }
 
 /**
@@ -31,13 +31,11 @@ export function WorkingLine({
   line,
   crew,
   details,
-  reorder,
+  handle,
   children,
   focused = false,
-  drag,
+  drop,
 }: WorkingLineProps) {
-  // In Reorder mode a line is one row: its number, its title and the buttons that move it.
-  const compact = reorder !== undefined && reorder !== null;
   return (
     <li className="line-card-item">
       <article
@@ -46,12 +44,10 @@ export function WorkingLine({
         data-selected={focused}
         data-focus-ref={lineFocusRef(line.ref)}
         tabIndex={-1}
-        {...drag}
+        {...drop}
       >
         <div className="line-card-head">
-          <span className="line-handle" aria-hidden="true" title="Drag to reorder">
-            ⋮⋮
-          </span>
+          <span className="line-gutter">{handle}</span>
           <span className="line-num">{index}</span>
           <div className="line-card-text">
             <h3 className="line-card-title">
@@ -59,25 +55,22 @@ export function WorkingLine({
                 {line.title}
               </button>
             </h3>
-            {compact || line.ownedBy === null ? null : <span className="line-facts"> · yours</span>}
-            {compact ? null : (
-              <LineMeta
-                {...(crew === undefined ? {} : { crew })}
-                {...(details === undefined ? {} : { details })}
-              />
-            )}
-            {compact || line.headline === null ? null : (
+            {line.ownedBy === null ? null : <span className="line-facts"> · yours</span>}
+            <LineMeta
+              {...(crew === undefined ? {} : { crew })}
+              {...(details === undefined ? {} : { details })}
+            />
+            {line.headline === null ? null : (
               <div className="line-headline">
                 <Markdown text={line.headline} inline />
               </div>
             )}
           </div>
-          {reorder}
         </div>
-        {compact
-          ? null
-          : (details?.answers ?? []).map((answer) => <AnswerStatus key={answer.ref} answer={answer} />)}
-        {compact ? null : children}
+        {(details?.answers ?? []).map((answer) => (
+          <AnswerStatus key={answer.ref} answer={answer} />
+        ))}
+        {children}
       </article>
     </li>
   );

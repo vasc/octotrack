@@ -75,15 +75,15 @@ export function TaskCard({ task, words, onWords, onDone, onCant }: TaskCardProps
                 Done
               </button>
               <button type="button" className="btn" data-choice="2" onClick={() => setCant(true)}>
-                Can't do it…
+                Can't do it
               </button>
             </>
           )}
         </div>
         {own || cant ? null : (
           <span className="muted">
-            Saved as you type, so you can finish on another day or device. Done sends it; Can't do it… asks
-            why and closes the task as not done.
+            Saved as you type, so you can finish on another day or device. Done sends it; Can't do it asks why
+            and closes the task as not done.
           </span>
         )}
       </form>
