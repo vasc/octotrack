@@ -1,4 +1,11 @@
-import type { Line, LineCrew, LineStart, RunnerStatus } from "@octotrack/core/schemas";
+import type {
+  HomeView,
+  Line,
+  LineCrew,
+  LineStart,
+  RunnerStatus,
+  UrgentReason,
+} from "@octotrack/core/schemas";
 
 /** How each state is named on screen. One place, so the inspector, the page and the CLI's words agree. */
 export const LINE_STATE_LABEL: Readonly<Record<Line["state"], string>> = {
@@ -39,7 +46,7 @@ export function crewText(crew: LineCrew | undefined, stepIn = false): string[] {
 export function stepInReason(line: Line, runner: RunnerStatus, start: LineStart | null): string | null {
   if (start !== null && (start.state === "starting" || start.state === "running")) return null;
   if (!runner.configured) {
-    return `No agent took ${line.ref}, and none can be started for it: no start command is set on this machine. Add one to ~/.octotrack/agent-setup.json.`;
+    return `No agent took ${line.ref}, and none can be started for it: no start command is set on this machine. Add "start": ["claude", "-p", "You are {name}. Run: octo line take {line}"] to ~/.octotrack/agent-setup.json, then Try now.`;
   }
   if (runner.dryRun) {
     return `No agent took ${line.ref}. The runner is watching only, so it noted it would start one. Set dryRun to false in ~/.octotrack/agent-setup.json to let it.`;
@@ -50,4 +57,33 @@ export function stepInReason(line: Line, runner: RunnerStatus, start: LineStart 
   }
   if (start?.state === "never_took") return `${start.name} ran but never took ${line.ref}.`;
   return `No agent took ${line.ref}, and every session Octotrack may run is busy (at most ${runner.cap}).`;
+}
+
+/** Why something is urgent, in the words the boards use: one of a fixed set. */
+export const URGENT_REASON: Readonly<Record<UrgentReason, string>> = {
+  broken: "something broken",
+  time_boxed: "time-boxed",
+  costs_money: "costs money",
+};
+
+/** Agents running on lines now, each counted once. */
+export function runningAgents(home: HomeView): number {
+  const names = new Set(
+    Object.values(home.crews).flatMap((crew) =>
+      [crew.owner, crew.scoper, ...crew.helpers].flatMap((agent) =>
+        agent !== null && agent.state === "running" ? [agent.name] : [],
+      ),
+    ),
+  );
+  return names.size;
+}
+
+/** Where the next ask likely comes from: the first working line with a step still to do. */
+export function nextAsk(home: HomeView): { title: string; step: string | null } | null {
+  for (const line of home.working) {
+    const step = home.lines[line.ref]?.step;
+    if (step != null) return { title: line.title, step: step.title };
+  }
+  const first = home.working[0];
+  return first === undefined ? null : { title: first.title, step: null };
 }

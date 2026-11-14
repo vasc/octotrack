@@ -28,6 +28,10 @@ import { WorkingLine } from "../src/components/home/WorkingLine.tsx";
 import { eventTone, FeedItem } from "../src/components/feed/FeedItem.tsx";
 import { FeedList } from "../src/components/feed/FeedList.tsx";
 import { UnseenLog } from "../src/components/feed/UnseenLog.tsx";
+import { AnswerStatus } from "../src/components/home/AnswerStatus.tsx";
+import { NothingNeedsYou } from "../src/components/home/NothingNeedsYou.tsx";
+import { AtSection } from "../src/components/home/AtSection.tsx";
+import { foldedText } from "../src/components/home/FoldedItems.tsx";
 import { SinceSummary } from "../src/components/entity/SinceSummary.tsx";
 import { FilterBar } from "../src/components/feed/FilterBar.tsx";
 import { IssueRow } from "../src/components/issues/IssueRow.tsx";
@@ -657,9 +661,9 @@ describe("lines of work", () => {
     const onCant = mock(() => {});
     const view = render(<TypingTask onDone={onDone} onCant={onCant} />);
     view.getByText("Five numbers");
-    expect(view.getByRole("button", { name: "Send · Done" }).hasAttribute("disabled")).toBe(true);
+    expect(view.getByRole("button", { name: "Done" }).hasAttribute("disabled")).toBe(true);
     fireEvent.change(view.getByLabelText("What OCT-1 found"), { target: { value: " 41, 38 " } });
-    fireEvent.click(view.getByRole("button", { name: "Send · Done" }));
+    fireEvent.click(view.getByRole("button", { name: "Done" }));
     expect(onDone).toHaveBeenCalledWith("41, 38");
     fireEvent.click(view.getByRole("button", { name: "Can't do it…" }));
     fireEvent.change(view.getByLabelText("Why OCT-1 cannot be done"), { target: { value: "No calipers" } });
@@ -949,24 +953,83 @@ describe("written text", () => {
 });
 
 describe("UndoBar", () => {
-  test("lists waiting choices newest first, says u undoes the newest, and offers Undo and Now", () => {
+  const NOW = Date.parse("2026-11-14T09:00:00.000Z");
+  const due = (seconds: number) => new Date(NOW + seconds * 1000).toISOString();
+
+  test("says each waiting choice and when it takes effect, newest first, with Undo, and u for the newest", () => {
     const onUndo = mock((_id: number) => {});
-    const onNow = mock((_id: number) => {});
-    const choice = (id: number, summary: string) => pendingChoice({ id, summary });
     const view = render(
       <UndoBar
-        pending={[choice(1, "Started Wall mount"), choice(2, "Tabled Trip")]}
+        now={NOW}
+        lines={{}}
+        pending={[
+          pendingChoice({ id: 1, summary: "Starting Wall mount", dueAt: due(1) }),
+          pendingChoice({ id: 2, summary: 'Sending "26 mm" to Sendspin enclosure', dueAt: due(8) }),
+        ]}
         onUndo={onUndo}
-        onNow={onNow}
       />,
     );
-    const rows = view.getAllByRole("button", { name: "Undo" });
-    expect(rows).toHaveLength(2);
+    view.getByText('Sending "26 mm" to Sendspin enclosure in 8 seconds');
+    view.getByText("Starting Wall mount in 1 second");
     view.getByText("u to undo");
-    fireEvent.click(rows[0] ?? document.body);
+    expect(view.queryByRole("button", { name: "Now" })).toBeNull();
+    fireEvent.click(view.getAllByRole("button", { name: "Undo" })[0] ?? document.body);
     expect(onUndo).toHaveBeenCalledWith(2);
-    fireEvent.click(view.getAllByRole("button", { name: "Now" })[1] ?? document.body);
-    expect(onNow).toHaveBeenCalledWith(1);
+  });
+
+  test("a Stop of a line's owner says what happens to the line, and offers to pause the line instead", () => {
+    const onPause = mock((_id: number, _line: string) => {});
+    const stop = pendingChoice({
+      id: 3,
+      op: "agent.stop",
+      summary: "Stopping panel-widgets",
+      line: "L-7",
+      dueAt: due(8),
+    });
+    const waits = render(
+      <UndoBar
+        now={NOW}
+        lines={{ "L-7": { title: "Sendspin enclosure", waitsOnYou: true } }}
+        pending={[stop]}
+        onUndo={() => {}}
+        onPause={onPause}
+      />,
+    );
+    waits.getByText(
+      whole(
+        "Stopping panel-widgets in 8 seconds. Sendspin enclosure waits on you, so no new session starts until you answer.",
+      ),
+    );
+    fireEvent.click(waits.getByRole("button", { name: "Pause the line instead" }));
+    expect(onPause).toHaveBeenCalledWith(3, "L-7");
+    waits.unmount();
+    render(
+      <UndoBar
+        now={NOW}
+        lines={{ "L-7": { title: "Sendspin enclosure", waitsOnYou: false } }}
+        pending={[stop]}
+        onUndo={() => {}}
+      />,
+    ).getByText(
+      whole("Stopping panel-widgets in 8 seconds. Sendspin enclosure then looks for another owner."),
+    );
+  });
+
+  test("a choice that failed says why until dismissed", () => {
+    const onUndo = mock((_id: number) => {});
+    const view = render(
+      <UndoBar
+        now={NOW}
+        lines={{}}
+        pending={[
+          pendingChoice({ id: 4, summary: "Starting Wall mount", state: "failed", error: "It is done." }),
+        ]}
+        onUndo={onUndo}
+      />,
+    );
+    expect(view.getByRole("alert").textContent).toBe("Starting Wall mount did not happen: It is done.");
+    fireEvent.click(view.getByRole("button", { name: "Dismiss" }));
+    expect(onUndo).toHaveBeenCalledWith(4);
   });
 });
 
@@ -1073,13 +1136,16 @@ describe("agents and first run", () => {
           line({ ref: "L-2", state: "proposed", recommendation: "fold" }),
           line({ ref: "L-3", state: "proposed", recommendation: "start" }),
         ]}
+        repos={15}
         onAccept={onAccept}
       />,
     );
-    fireEvent.click(view.getByRole("button", { name: "Accept 2 recommended placements" }));
+    view.getByText(/^Your 15 repos have no lines yet\. Agents with each repo propose real lines/);
+    fireEvent.click(view.getByRole("button", { name: "Accept recommended placements" }));
     expect(onAccept).toHaveBeenCalledWith(["L-1", "L-3"]);
+    view.getByText("with Undo");
     view.unmount();
-    render(<FirstRun proposals={[]} onAccept={onAccept} />).getByText("octo guide");
+    render(<FirstRun proposals={[]} repos={0} onAccept={onAccept} />).getByText("octo guide");
   });
 });
 
@@ -1142,8 +1208,9 @@ describe("UndoBar when a choice failed", () => {
             error: 'D-3 has no option "redis"',
           }),
         ]}
+        now={0}
+        lines={{}}
         onUndo={onUndo}
-        onNow={() => {}}
       />,
     );
     expect(view.getByRole("alert").textContent).toContain('no option "redis"');
@@ -1165,6 +1232,27 @@ describe("tabling and a line's own choices", () => {
     expect(onTable).toHaveBeenCalledWith("After the move", null);
     fireEvent.click(view.getByRole("button", { name: "Cancel" }));
     expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  test("TableForm says what tabling does to what the line holds and to its agents, and when it comes back", () => {
+    const view = render(
+      <TableForm
+        title="Podcast cleanup"
+        held={{ questions: 2, tasks: 0 }}
+        owner="mediarr"
+        onTable={() => {}}
+        onCancel={() => {}}
+      />,
+    );
+    view.getByRole("heading", { name: "Table Podcast cleanup" });
+    expect(document.activeElement).toBe(view.getByLabelText("Why table Podcast cleanup"));
+    view.getByText(
+      /^Its 2 questions are held, and so is its drift\. mediarr and any helpers are told to wind down/,
+    );
+    fireEvent.change(view.getByLabelText("Look again on"), { target: { value: "2027-02-01" } });
+    view.getByText(
+      /^On 2027-02-01 it comes back under Proposed, counted in "to accept", with your reason beside it/,
+    );
   });
 
   test("LineActions offers the moves each state allows, the rare ones under More, and asks before Done", () => {
@@ -1192,48 +1280,97 @@ describe("tabling and a line's own choices", () => {
 });
 
 describe("LineProposalCard", () => {
-  test("a case for done: It is done, or Not yet with what is missing", () => {
+  test("a case for done says which done when it meets and why, then Done or Not yet with what is missing", () => {
     const onAccept = mock(() => {});
     const onDecline = mock((_why: string) => {});
     const view = render(
       <LineProposalCard
-        kind="done"
-        line="L-1"
-        title="Enclosure"
-        text="Printed and fitted."
-        by="panel"
+        proposal={{
+          kind: "done",
+          line: "L-12",
+          text: "The owner was woken from the inbox and reported it carried out.",
+          by: "octotrack-builder",
+          doneWhen: "an answer reaches whoever owns its line",
+        }}
+        title="Answer delivery"
         onAccept={onAccept}
         onDecline={onDecline}
       />,
     );
-    view.getByText("Proposed done · L-1 · by panel");
+    view.getByText("Proposed as done · octotrack-builder");
+    view.getByText(whole('Done when "an answer reaches whoever owns its line": met.'));
+    view.getByText("The owner was woken from the inbox and reported it carried out.");
     fireEvent.click(view.getByRole("button", { name: "Not yet…" }));
-    fireEvent.change(view.getByLabelText("What L-1 still needs"), { target: { value: "The lid rattles" } });
+    fireEvent.change(view.getByLabelText("What L-12 still needs"), { target: { value: "One real wake" } });
     fireEvent.click(view.getByRole("button", { name: "Not yet" }));
-    expect(onDecline).toHaveBeenCalledWith("The lid rattles");
-    fireEvent.click(view.getByRole("button", { name: "It is done" }));
+    expect(onDecline).toHaveBeenCalledWith("One real wake");
+    fireEvent.click(view.getByRole("button", { name: "Done" }));
     expect(onAccept).toHaveBeenCalledTimes(1);
   });
 
-  test("a new done when: Accept, or keep the one there is at once", () => {
+  test("a changed done when quotes the old and the new, with why; Keep current keeps the old at once", () => {
     const onDecline = mock((_why: string) => {});
     const view = render(
       <LineProposalCard
-        kind="done_when"
-        line="L-1"
-        title="Enclosure"
-        text="It holds the 30 mm board."
-        by={null}
+        proposal={{
+          kind: "done_when",
+          line: "L-4",
+          text: "…on, and CI fails on a new cast",
+          by: "firmware",
+          was: "the panel firmware builds with the no-casts rule on",
+          why: "without CI, casts creep back.",
+        }}
+        title="Firmware without casts"
         onAccept={() => {}}
         onDecline={onDecline}
       />,
     );
-    fireEvent.click(view.getByRole("button", { name: "Keep the one there is" }));
+    view.getByText("Done when changed · firmware");
+    view.getByText(
+      whole(
+        '"the panel firmware builds with the no-casts rule on" became "…on, and CI fails on a new cast". Why: without CI, casts creep back.',
+      ),
+    );
+    expect(view.getByRole("button", { name: "Accept" }).getAttribute("data-choice")).toBe("1");
+    fireEvent.click(view.getByRole("button", { name: "Keep current" }));
     expect(onDecline).toHaveBeenCalledWith("");
   });
 });
 
 describe("a question's own choices", () => {
+  test("an urgent question says so, why, and which line it stands apart from, in red", () => {
+    const view = render(
+      <DecisionCardView
+        form={decisionForm()}
+        card={decisionCard({ decision: decision({ ref: "D-60", urgentReason: "broken" }) })}
+        line={{ ref: "L-5", number: 3, title: "Quiet household trial" }}
+        selected
+      />,
+    );
+    const article = view.getByRole("article");
+    expect(article.getAttribute("data-urgent")).toBe("true");
+    const strip = article.querySelector(".question-strip")?.textContent ?? "";
+    expect(strip).toContain("Focused");
+    expect(strip).toContain("Urgent");
+    expect(strip).toContain("Something broken");
+    expect(strip).toContain("3 · Quiet household trial · D-60");
+  });
+
+  test("ForYouRow marks an urgent question red, with its reason", () => {
+    const view = render(
+      <ForYouRow
+        item={{
+          kind: "question",
+          card: decisionCard({ decision: decision({ ref: "D-60", urgentReason: "time_boxed" }) }),
+        }}
+        onOpen={() => {}}
+      />,
+    );
+    const row = view.getByRole("button", { name: "Open D-60" });
+    expect(row.getAttribute("data-urgent")).toBe("true");
+    expect(row.textContent).toContain("Urgent · time-boxed · D-60");
+  });
+
   test("Later moves it to the bottom of its line; Not urgent shows only on an urgent question", () => {
     const later = mock(() => {});
     const notUrgent = mock(() => {});
@@ -1296,31 +1433,124 @@ describe("saying something to a line", () => {
   });
 });
 
-describe("home's smaller pieces", () => {
-  test("SpreadThin says nothing up to six working lines, then what it costs", () => {
-    expect(render(<SpreadThin working={6} noOwner={3} waiting={2} />).container.textContent).toBe("");
-    render(<SpreadThin working={8} noOwner={1} waiting={2} />).getByText(
-      /8 lines are being worked on: 1 has no owner, 2 wait on you/,
+describe("I'm at a place", () => {
+  test("AtSection says everything else is folded and when it ends by itself, with Leave", () => {
+    const onLeave = mock(() => {});
+    const now = Date.parse("2026-11-14T09:00:00.000Z");
+    const view = render(
+      <AtSection
+        at={{ place: "the bench", until: "2026-11-14T13:00:00.000Z", tasks: [] }}
+        now={now}
+        onLeave={onLeave}
+      />,
+    );
+    view.getByRole("heading", { name: "At the bench." });
+    view.getByText("Everything else is folded. Ends by itself in 4 hours.");
+    fireEvent.click(view.getByRole("button", { name: "Leave" }));
+    expect(onLeave).toHaveBeenCalledTimes(1);
+  });
+
+  test("foldedText counts what a folded line holds, tasks by their place", () => {
+    const task = (ref: string, place: string | null) => ({
+      kind: "task" as const,
+      task: issue({ ref, place }),
+    });
+    expect(
+      foldedText([
+        { kind: "question", card: decisionCard() },
+        task("PANEL-1", "the Mac"),
+        task("PANEL-2", "the Mac"),
+        task("PANEL-3", null),
+      ]),
+    ).toBe("1 question · 2 tasks at the Mac · 1 task");
+  });
+});
+
+describe("NothingNeedsYou", () => {
+  test("is the calm state: says nothing needs you, who is working, and where the next ask likely comes from", () => {
+    const view = render(
+      <NothingNeedsYou working={3} next={{ title: "Sendspin enclosure", step: "model the opening" }} />,
+    );
+    view.getByRole("heading", { name: "Nothing needs you." });
+    view.getByText(
+      "Three agents are working. The likely next ask is on Sendspin enclosure, at its step: model the opening.",
     );
   });
 
-  test("StartSheetView lists what a line holds and asks about a changed done when before Start now", () => {
+  test("says so plainly when no agent is working and no line has a next step", () => {
+    const view = render(<NothingNeedsYou working={0} next={null} />);
+    view.getByText("No agent is working right now.");
+  });
+});
+
+describe("home's smaller pieces", () => {
+  test("SpreadThin says nothing up to six working lines, then what spreading thin costs, in the header", () => {
+    expect(render(<SpreadThin working={6} noOwner={3} waiting={2} />).container.textContent).toBe("");
+    const view = render(<SpreadThin working={9} noOwner={3} waiting={2} />);
+    view.getByText("3 with no owner");
+    view.getByText("2 waiting on you");
+    expect(view.getByText("3 with no owner").getAttribute("data-tone")).toBe("bad");
+    view.getByLabelText(/^9 lines are being worked on: 3 with no owner, 2 waiting on you/);
+  });
+
+  test("StartSheetView settles a changed done when and a held question before Start, numbering every choice", () => {
     const onStart = mock(() => {});
     const onDoneWhen = mock((_accept: boolean) => {});
+    const onAnswer = mock((_ref: string, _key: string, _label: string) => {});
+    const question = decision({
+      ref: "D-4",
+      title: "Checked conversions, or typed helpers?",
+      context: "Checked conversions are quicker; helpers take a day.",
+      options: [
+        { key: "a", label: "Checked conversions", description: "Stops at the first bad value." },
+        { key: "b", label: "Typed helpers", description: "Short call sites." },
+      ],
+      recommendation: "a",
+      recommendationWhy: "a bad value should fail loudly.",
+    });
     const view = render(
       <StartSheetView
-        line={line({ title: "Mount", doneWhenProposal: "It hangs flush." })}
-        held={[{ ref: "D-4", kind: "question", title: "Which wall?", line: "L-1", current: true, since: "" }]}
+        line={line({
+          title: "Firmware without casts",
+          doneWhen: "it builds with the no-casts rule on",
+          doneWhenProposal: "…on, and CI fails on a new cast",
+          doneWhenWhy: "without CI, casts creep back.",
+        })}
+        held={[
+          { ref: "D-4", kind: "question", title: question.title, line: "L-1", current: true, since: "" },
+          { ref: "PANEL-9", kind: "task", title: "Measure the studs", line: "L-1", current: true, since: "" },
+        ]}
+        questions={[question]}
         onDoneWhen={onDoneWhen}
+        onAnswer={onAnswer}
         onStart={onStart}
         onCancel={() => {}}
       />,
     );
-    view.getByRole("dialog", { name: "Start Mount" });
-    view.getByText("Which wall?");
+    view.getByRole("dialog", { name: "Start Firmware without casts" });
+    view.getByRole("heading", { name: "Start Firmware without casts" });
+    view.getByText(
+      whole(
+        '"it builds with the no-casts rule on" became "…on, and CI fails on a new cast". Why: without CI, casts creep back.',
+      ),
+    );
+    const numbers = view.getAllByRole("button").flatMap((button) => {
+      const number = button.getAttribute("data-choice");
+      return number === null ? [] : [[number, button.textContent]];
+    });
+    expect(numbers).toEqual([
+      ["1", "Accept"],
+      ["2", "Keep current"],
+      ["3", "Checked conversions · recommended"],
+      ["4", "Typed helpers"],
+    ]);
+    view.getByText(whole("Why 3: a bad value should fail loudly."));
+    view.getByText("Measure the studs");
     fireEvent.click(view.getByRole("button", { name: "Keep current" }));
     expect(onDoneWhen).toHaveBeenCalledWith(false);
-    fireEvent.click(view.getByRole("button", { name: "Start now" }));
+    fireEvent.click(view.getByRole("button", { name: "Typed helpers" }));
+    expect(onAnswer).toHaveBeenCalledWith("D-4", "b", "Typed helpers");
+    fireEvent.click(view.getByRole("button", { name: "Start" }));
     expect(onStart).toHaveBeenCalledTimes(1);
   });
 
@@ -1361,25 +1591,50 @@ describe("ReorderButtons in full", () => {
   });
 });
 
-describe("UndoBar for a Stop", () => {
-  test("says the line will look for another owner, and offers to pause the line instead", () => {
-    const onPause = mock((_id: number, _line: string) => {});
-    const view = render(
-      <UndoBar
-        pending={[pendingChoice({ id: 7, op: "agent.stop", summary: "Stopped panel", line: "L-1" })]}
-        onUndo={() => {}}
-        onNow={() => {}}
-        onPause={onPause}
-      />,
-    );
-    view.getByText(/L-1 then looks for another owner/);
-    fireEvent.click(view.getByRole("button", { name: "Pause L-1 instead" }));
-    expect(onPause).toHaveBeenCalledWith(7, "L-1");
-  });
-});
-
 describe("answers on their line", () => {
-  test("WorkingLine says what became of each answer given lately, one sentence each", () => {
+  const answer = (overrides: Partial<LineHome["answers"][number]>): LineHome["answers"][number] => ({
+    ref: "D-34",
+    title: "Which board?",
+    answer: "26 mm",
+    status: "not_picked_up",
+    by: null,
+    at: null,
+    note: null,
+    unwoken: null,
+    ...overrides,
+  });
+
+  test("AnswerStatus says what became of an answer in one sentence, as E-States writes it", () => {
+    const sentence = (item: LineHome["answers"][number]) => {
+      const view = render(<AnswerStatus answer={item} />);
+      const text = view.container.querySelector(".line-answer-text")?.textContent;
+      view.unmount();
+      return text;
+    };
+    expect(sentence(answer({}))).toBe("D-34 answered: 26 mm · not picked up yet");
+    expect(
+      sentence(
+        answer({
+          status: "picked_up",
+          by: "panel-widgets",
+          at: new Date(Date.now() - 4 * 60_000).toISOString(),
+        }),
+      ),
+    ).toBe("D-34 answered: 26 mm · picked up by panel-widgets, 4m");
+    expect(sentence(answer({ status: "carried_out", note: "model set to the short board" }))).toBe(
+      "D-34 answered: 26 mm · ✓ carried out: model set to the short board",
+    );
+    expect(sentence(answer({ status: "wake_failed", unwoken: "panel-widgets" }))).toBe(
+      "D-34 answered: 26 mm · panel-widgets could not be woken; finding an owner",
+    );
+  });
+
+  test("AnswerStatus offers Change answer…, which opens the question", () => {
+    const view = render(<AnswerStatus answer={answer({ status: "carried_out" })} />);
+    view.getByRole("button", { name: "Change answer… D-34" });
+  });
+
+  test("WorkingLine shows each answer given lately", () => {
     const view = render(
       <WorkingLine
         index={1}
@@ -1391,15 +1646,11 @@ describe("answers on their line", () => {
           stepIn: false,
           held: { questions: 0, tasks: 0 },
           scopedSteps: 0,
-          answers: [
-            { ref: "D-3", title: "Which board?", answer: "26 mm", status: "not_picked_up" },
-            { ref: "D-2", title: "Which plug?", answer: "USB-C", status: "carried_out" },
-          ],
+          answers: [answer({}), answer({ ref: "D-2", answer: "USB-C", status: "carried_out" })],
         }}
       />,
     );
-    view.getByText("You answered D-3, Which board?: 26 mm. Not picked up yet.");
-    view.getByText("You answered D-2, Which plug?: USB-C. Carried out.");
+    expect(view.container.querySelectorAll(".line-answer")).toHaveLength(2);
   });
 });
 

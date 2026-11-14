@@ -9,6 +9,8 @@ export interface ResolveInput {
   channel?: Channel;
   /** What the answer is, in words, for the Undo bar. */
   summary: string;
+  /** The draft the words were typed in, kept through Undo. */
+  draft?: string;
 }
 
 /**
@@ -30,6 +32,7 @@ export function useResolveDecision() {
           ...(input.channel === undefined ? {} : { channel: input.channel }),
         },
         input.summary,
+        input.draft,
       );
     },
   };

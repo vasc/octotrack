@@ -3,7 +3,7 @@ import { crewOf } from "../agents/claims.ts";
 import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
 import { shouldBuzz } from "../push/buzz.ts";
-import type { Line, PushNote } from "../schemas.ts";
+import type { Line, PushNote, UrgentReason } from "../schemas.ts";
 import type { Ctx } from "../store/context.ts";
 import { one, rows } from "../store/context.ts";
 import { allLines } from "../store/entities.ts";
@@ -37,17 +37,34 @@ function sent(ctx: Ctx, key: string): boolean {
   return one(ctx, z.object({ key: z.string() }), "SELECT key FROM push_sent WHERE key = ?", [key]) !== null;
 }
 
-/** What a notification says: the question and the recommendation, never more of the tracker than that. */
-function questionNote(line: Line, decision: z.infer<typeof DecisionRow>, urgent: boolean): PushNote {
+const URGENT_WORDS: Readonly<Record<UrgentReason, string>> = {
+  broken: "something broken",
+  time_boxed: "time-boxed",
+  costs_money: "costs money",
+};
+
+/**
+ * What a notification says, as E-States draws it: the question as the title; under it, the line by its number and,
+ * when there is one, the recommendation and why. Never more of the tracker than that.
+ */
+function questionNote(
+  line: Line,
+  number: number,
+  decision: z.infer<typeof DecisionRow>,
+  urgent: boolean,
+): PushNote {
   const recommended = decision.options.find((option) => option.key === decision.recommendation);
+  const where = `Line ${number}, ${line.title}`;
+  const why =
+    recommended === undefined
+      ? (decision.context.split("\n")[0] ?? "")
+      : `Recommended ${recommended.label}${decision.recommendationWhy === null ? "" : `: ${decision.recommendationWhy}`}`;
+  const reason = decision.urgentReason === null ? "" : `, ${URGENT_WORDS[decision.urgentReason]}`;
   return {
     key: `${urgent ? "urgent" : "question"}:${line.ref}:${decision.ref}`,
     line: line.ref,
-    title: `${urgent ? "Urgent" : line.title}: ${decision.title}`,
-    body:
-      recommended === undefined
-        ? (decision.context.split("\n")[0] ?? "")
-        : `Recommended: ${recommended.label}${decision.recommendationWhy === null ? "" : `, ${decision.recommendationWhy}`}`,
+    title: decision.title,
+    body: `${urgent ? `Urgent${reason} · ` : ""}${where} · ${why}`,
     url: `/?focus=${decision.ref}`,
   };
 }
@@ -99,7 +116,7 @@ export const pushOps = [
       const lineBuzzedAt = buzzedAt(ctx, line.ref);
       for (const decision of open.filter((item) => item.line === line.ref)) {
         const urgent = decision.urgentReason !== null && decision.notUrgentAt === null;
-        const note = questionNote(line, decision, urgent);
+        const note = questionNote(line, lineIndex + 1, decision, urgent);
         if (sent(ctx, note.key)) continue;
         // One notification per line until the app is opened: the first unsent question carries it.
         const buzzedLine = notes.some((other) => other.line === line.ref && !other.key.startsWith("urgent:"));

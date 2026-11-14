@@ -2,15 +2,10 @@ import type { Line, LineCrew, LineHome } from "@octotrack/core/schemas";
 import type { ReactNode } from "react";
 import type { DragProps } from "../../hooks/useDragOrder.ts";
 import { openEntity } from "../../lib/router.ts";
+import { AnswerStatus } from "./AnswerStatus.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
 import { LineMeta } from "./LineMeta.tsx";
-
-const ANSWER_STATUS: Readonly<Record<LineHome["answers"][number]["status"], string>> = {
-  not_picked_up: "Not picked up yet.",
-  picked_up: "Picked up.",
-  carried_out: "Carried out.",
-  wake_failed: "Its agent could not be woken.",
-};
+import { lineFocusRef } from "../../lib/focus.ts";
 
 export interface WorkingLineProps {
   index: number;
@@ -41,9 +36,18 @@ export function WorkingLine({
   focused = false,
   drag,
 }: WorkingLineProps) {
+  // In Reorder mode a line is one row: its number, its title and the buttons that move it.
+  const compact = reorder !== undefined && reorder !== null;
   return (
     <li className="line-card-item">
-      <article className="line-card" aria-label={line.title} data-selected={focused} {...drag}>
+      <article
+        className="line-card"
+        aria-label={line.title}
+        data-selected={focused}
+        data-focus-ref={lineFocusRef(line.ref)}
+        tabIndex={-1}
+        {...drag}
+      >
         <div className="line-card-head">
           <span className="line-handle" aria-hidden="true" title="Drag to reorder">
             ⋮⋮
@@ -55,12 +59,14 @@ export function WorkingLine({
                 {line.title}
               </button>
             </h3>
-            {line.ownedBy === null ? null : <span className="line-facts"> · yours</span>}
-            <LineMeta
-              {...(crew === undefined ? {} : { crew })}
-              {...(details === undefined ? {} : { details })}
-            />
-            {line.headline === null ? null : (
+            {compact || line.ownedBy === null ? null : <span className="line-facts"> · yours</span>}
+            {compact ? null : (
+              <LineMeta
+                {...(crew === undefined ? {} : { crew })}
+                {...(details === undefined ? {} : { details })}
+              />
+            )}
+            {compact || line.headline === null ? null : (
               <div className="line-headline">
                 <Markdown text={line.headline} inline />
               </div>
@@ -68,12 +74,10 @@ export function WorkingLine({
           </div>
           {reorder}
         </div>
-        {(details?.answers ?? []).map((answer) => (
-          <p key={answer.ref} className="line-answer">
-            You answered {answer.ref}, {answer.title}: {answer.answer}. {ANSWER_STATUS[answer.status]}
-          </p>
-        ))}
-        {children}
+        {compact
+          ? null
+          : (details?.answers ?? []).map((answer) => <AnswerStatus key={answer.ref} answer={answer} />)}
+        {compact ? null : children}
       </article>
     </li>
   );

@@ -101,7 +101,9 @@ export function IssuePanel({ issue, detail }: { issue: Issue; detail: EntityDeta
                     choices.make(
                       contracts.lineTell.name,
                       { line: issue.line ?? "", body: words, issue: issue.ref },
-                      words === "" ? `Nudged ${issue.ref}` : `Told ${issue.ref}: ${words}`,
+                      words === ""
+                        ? `Nudging whoever holds ${issue.ref}`
+                        : `Telling whoever holds ${issue.ref}: ${words}`,
                       `tell:${issue.ref}`,
                     ),
                   )

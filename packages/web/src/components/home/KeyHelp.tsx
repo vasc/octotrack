@@ -1,19 +1,22 @@
-/** Every key on home, as one list behind ?. */
+/** Every key, as one list behind ?, in E-States' words. */
 export const HOME_KEYS: readonly (readonly [string, string])[] = [
-  ["j k", "next and previous item"],
-  ["J K", "next and previous line, working on then up next"],
-  ["1–9", "the focused item's choices, in the order drawn"],
-  ["Enter", "send the focused question's answer"],
-  ["p", "later: the focused question to the bottom of its line"],
-  ["u", "undo the last choice while it waits"],
-  ["g u", "the urgent question"],
-  ["o", "open the focused item's line"],
-  ["t", "table the focused item's line"],
-  ["Alt ↑ ↓", "move the focused item's line up or down"],
-  ["r", "record answers given elsewhere"],
-  ["/", "filter, on the log"],
-  ["Esc", "close the panel"],
-  ["?", "this list"],
+  ["j k", "next and previous thing for you, across lines"],
+  ["J K", "next and previous line, Working on then Up next"],
+  [
+    "1–9",
+    "the focused item's numbered choice: an option, a step-in action, a proposal's choice, Done… or Can't do it…, Accept or Keep current, Done or Not yet",
+  ],
+  ["w", "answer in my own words"],
+  ["l", "later"],
+  ["u", "undo the last choice, while it waits"],
+  ["o ↵", "open the line of whatever is focused"],
+  ["t", "tell the focused line's owner"],
+  ["alt ↑ ↓", "move the focused line in the order"],
+  ["g p", "choose where I'm at"],
+  ["esc", "leave I'm at, close a line"],
+  ["g u", "go to an urgent question"],
+  ["/", "search"],
+  ["r", "record answers given elsewhere, in a batch: D-3 a Went with postgres"],
 ];
 
 export function KeyHelp({ onClose }: { onClose(): void }) {

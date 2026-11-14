@@ -34,7 +34,12 @@ export function FeedPage() {
           </p>
         </div>
         <div className="question-actions">
-          <FilterBox filter={filter} inputRef={input} placeholder="Search" />
+          <FilterBox
+            filter={filter}
+            inputRef={input}
+            placeholder="Search"
+            autoFocus={params.get("find") === "1"}
+          />
           <button type="button" className="btn" onClick={seen.markAll}>
             Mark all seen
           </button>

@@ -1,6 +1,6 @@
 export type Move = "top" | "up" | "down" | "up_next";
 
-/** To the top, up and down within a section, shown in Reorder mode. */
+/** Top, Up and Down within a section, and To up next for a working line, as words, shown in Reorder mode. */
 export function ReorderButtons({
   title,
   canMoveUp,
@@ -24,7 +24,7 @@ export function ReorderButtons({
         disabled={!canMoveUp}
         onClick={() => onMove("top")}
       >
-        ⤒
+        Top
       </button>
       <button
         type="button"
@@ -33,7 +33,7 @@ export function ReorderButtons({
         disabled={!canMoveUp}
         onClick={() => onMove("up")}
       >
-        ↑
+        Up
       </button>
       <button
         type="button"
@@ -42,7 +42,7 @@ export function ReorderButtons({
         disabled={!canMoveDown}
         onClick={() => onMove("down")}
       >
-        ↓
+        Down
       </button>
       {canQueue ? (
         <button

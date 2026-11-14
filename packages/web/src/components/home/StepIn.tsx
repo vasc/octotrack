@@ -1,6 +1,8 @@
 import type { Line } from "@octotrack/core/schemas";
 import { useState } from "react";
 import { TableForm } from "../lines/TableForm.tsx";
+import { CheckoutForm } from "./CheckoutForm.tsx";
+import { stepInRef } from "../../lib/focus.ts";
 
 export interface StepInProps {
   line: Line;
@@ -31,7 +33,6 @@ export function StepIn({
   onTable,
 }: StepInProps) {
   const [mode, setMode] = useState<"table" | "checkout" | null>(null);
-  const [path, setPath] = useState("");
   const offered = [
     checkoutRepo !== undefined && onCheckout !== undefined ? "checkout" : null,
     onRetry === undefined ? null : "retry",
@@ -41,7 +42,14 @@ export function StepIn({
   ].filter((action) => action !== null);
   const number = (action: string) => String(offered.indexOf(action) + 1);
   return (
-    <div className="step-in" role="note" aria-label={`Step in on ${line.title}`} data-selected={focused}>
+    <div
+      className="step-in"
+      role="note"
+      aria-label={`Step in on ${line.title}`}
+      data-selected={focused}
+      data-focus-ref={stepInRef(line.ref)}
+      tabIndex={-1}
+    >
       <p>
         <span className="step-in-label">Step in</span> {reason}
       </p>
@@ -55,29 +63,14 @@ export function StepIn({
           onCancel={() => setMode(null)}
         />
       ) : mode === "checkout" && checkoutRepo !== undefined && onCheckout !== undefined ? (
-        <form
-          className="composer"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!path.startsWith("/")) return;
+        <CheckoutForm
+          repo={checkoutRepo}
+          onSet={(path) => {
             onCheckout(line.ref, checkoutRepo, path);
             setMode(null);
           }}
-        >
-          <input
-            className="field"
-            aria-label={`Checkout of ${checkoutRepo}`}
-            placeholder="/Users/you/src/repo"
-            value={path}
-            onChange={(event) => setPath(event.target.value)}
-          />
-          <button type="submit" className="btn" data-primary="true" disabled={!path.startsWith("/")}>
-            Set
-          </button>
-          <button type="button" className="btn" onClick={() => setMode(null)}>
-            Cancel
-          </button>
-        </form>
+          onCancel={() => setMode(null)}
+        />
       ) : (
         <div className="decision-actions">
           {/* Numbered in the order drawn, for the number keys. */}

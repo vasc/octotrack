@@ -63,10 +63,12 @@ export function AgentsPage() {
                   agent={agent}
                   {...(agent.repo === null ? {} : { repo: h.repoName(agent.repo) })}
                   {...lineFacts(agent.line)}
-                  onStop={(name) => choices.make(contracts.agentStop.name, { name }, `Stopped ${name}`)}
-                  onLift={(name) => choices.make(contracts.agentLift.name, { name }, `Lifted ${name}'s stop`)}
+                  onStop={(name) => choices.make(contracts.agentStop.name, { name }, `Stopping ${name}`)}
+                  onLift={(name) =>
+                    choices.make(contracts.agentLift.name, { name }, `Lifting ${name}'s stop`)
+                  }
                   onRelease={(name) =>
-                    choices.make(contracts.agentRelease.name, { name }, `Released ${name} from its line`)
+                    choices.make(contracts.agentRelease.name, { name }, `Releasing ${name} from its line`)
                   }
                 />
               ))}

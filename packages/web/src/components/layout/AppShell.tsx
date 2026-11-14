@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
 import { useBootstrap } from "../../hooks/useBootstrap.ts";
 import { type HotkeyMap, useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useLiveUpdates } from "../../hooks/useLiveUpdates.ts";
@@ -25,13 +25,25 @@ export function AppShell({ children }: { children: ReactNode }) {
   const openKeys = useCallback(() => setKeysOpen(true), []);
   const closeKeys = useCallback(() => setKeysOpen(false), []);
   const entity = params.get("ref");
-  const keys = useMemo(
-    (): HotkeyMap => ({
+  // The picker is the browser's to focus; g p reaches it through its element.
+  const atPicker = useRef<HTMLSelectElement>(null);
+  const { at, setAt } = bar;
+  const keys = useMemo((): HotkeyMap => {
+    // Esc closes what is on top: the key list, then a panel, then the place the developer said they are at.
+    const closeTop = keysOpen
+      ? closeKeys
+      : entity !== null
+        ? closeEntity
+        : at !== null
+          ? () => setAt(null)
+          : null;
+    return {
       "?": openKeys,
-      ...(keysOpen ? { Escape: closeKeys } : entity === null ? {} : { Escape: closeEntity }),
-    }),
-    [entity, keysOpen, openKeys, closeKeys],
-  );
+      "g p": () => atPicker.current?.focus(),
+      ...(path === "/log" ? {} : { "/": () => navigate("/log?find=1") }),
+      ...(closeTop === null ? {} : { Escape: closeTop }),
+    };
+  }, [entity, keysOpen, openKeys, closeKeys, at, setAt, path]);
   useHotkeys(keys);
   return (
     <div className="shell">
@@ -43,6 +55,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         onAt={bar.setAt}
         onNewLine={() => navigate("/?new=1")}
         onKeys={openKeys}
+        atRef={atPicker}
       />
       <main className="main">
         {keysOpen ? <KeyHelp onClose={closeKeys} /> : null}

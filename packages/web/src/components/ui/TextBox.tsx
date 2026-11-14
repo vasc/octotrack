@@ -7,13 +7,15 @@ export interface TextBoxProps {
   placeholder?: string;
   /** Called on Cmd or Ctrl and Enter, so that a long note can be sent without reaching for the mouse. */
   onSubmit?: () => void;
+  /** Takes the cursor when it appears, as when a key opened it. */
+  autoFocus?: boolean;
 }
 
 /**
  * Grows with what is typed, so a long note is never written through a slot. Markdown is welcome. While it has focus it
  * keeps showing what was typed in it, so a draft arriving from another device never changes the text under the cursor.
  */
-export function TextBox({ label, value, onChange, placeholder, onSubmit }: TextBoxProps) {
+export function TextBox({ label, value, onChange, placeholder, onSubmit, autoFocus = false }: TextBoxProps) {
   const [held, setHeld] = useState<string | null>(null);
   const grow = (event: ChangeEvent<HTMLTextAreaElement>) => {
     // Browsers without field-sizing still grow: the height is only known once the text is laid out.
@@ -36,6 +38,8 @@ export function TextBox({ label, value, onChange, placeholder, onSubmit }: TextB
       aria-label={label}
       placeholder={placeholder}
       rows={1}
+      // biome-ignore lint/a11y/noAutofocus: only when the developer pressed a key to write here
+      autoFocus={autoFocus}
       value={held ?? value}
       onFocus={() => setHeld(value)}
       onBlur={() => setHeld(null)}

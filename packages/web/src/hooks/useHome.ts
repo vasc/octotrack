@@ -39,11 +39,22 @@ export function useHome() {
   const places = useOpQuery(contracts.placeList, {});
   const choices = useChoices();
   const { pending } = choices;
-  // Items whose choice waits with Undo: home holds them still and disarms their keys until it takes effect.
+  // Items whose choice waits with Undo: home holds them still and disarms their keys until it takes effect. A choice
+  // about a line holds every item that stands for it: the line itself, its Step in, and its done proposals.
   const held = useMemo(
     () =>
       new Set(
-        pending.flatMap((choice) => (choice.state === "pending" && choice.ref !== null ? [choice.ref] : [])),
+        pending.flatMap((choice) =>
+          choice.state === "pending" && choice.ref !== null
+            ? [
+                choice.ref,
+                `line:${choice.ref}`,
+                `stepin:${choice.ref}`,
+                `done:${choice.ref}`,
+                `done_when:${choice.ref}`,
+              ]
+            : [],
+        ),
       ),
     [pending],
   );
@@ -72,7 +83,7 @@ export function useHome() {
       choices.make(
         contracts.repoCheckout.name,
         { repo, path, retry: line },
-        `${repo} is at ${path}; trying ${titleOf(line)} again`,
+        `Setting ${repoNames.get(repo) ?? repo}'s checkout to ${path}, then trying ${titleOf(line)} again`,
       ),
     at: (place: string | null) => at.mutate(place === null ? {} : { place }),
     repos,
@@ -82,47 +93,50 @@ export function useHome() {
         contracts.lineAdd.name,
         line,
         line.where === "working"
-          ? `Started ${line.title}`
+          ? `Starting ${line.title}`
           : line.where === "tabled"
-            ? `Tabled ${line.title}`
-            : `${line.title} is up next`,
+            ? `Tabling ${line.title}`
+            : `Adding ${line.title} to up next`,
       ),
-    start: (ref: string) => choices.make(contracts.lineStart.name, { ref }, `Started ${titleOf(ref)}`),
-    queue: (ref: string) => choices.make(contracts.lineQueue.name, { ref }, `${titleOf(ref)} is up next`),
-    reject: (ref: string) => choices.make(contracts.lineReject.name, { ref }, `${titleOf(ref)}: not a line`),
-    drop: (ref: string) => choices.make(contracts.lineDrop.name, { ref }, `Dropped ${titleOf(ref)}`),
+    start: (ref: string) => choices.make(contracts.lineStart.name, { ref }, `Starting ${titleOf(ref)}`),
+    queue: (ref: string) =>
+      choices.make(contracts.lineQueue.name, { ref }, `Moving ${titleOf(ref)} to up next`),
+    reject: (ref: string) =>
+      choices.make(contracts.lineReject.name, { ref }, `Turning down ${titleOf(ref)}: not a line`),
+    drop: (ref: string) => choices.make(contracts.lineDrop.name, { ref }, `Dropping ${titleOf(ref)}`),
     table: (ref: string, reason: string, lookAgainAt: string | null = null) =>
       choices.make(
         contracts.lineTable.name,
         { ref, reason, ...(lookAgainAt === null ? {} : { lookAgainAt }) },
-        `Tabled ${titleOf(ref)}`,
+        `Tabling ${titleOf(ref)}`,
       ),
     fold: (ref: string, into: string) =>
-      choices.make(contracts.lineFold.name, { ref, into }, `Folded ${titleOf(ref)} into ${titleOf(into)}`),
-    own: (ref: string) => choices.make(contracts.lineOwn.name, { ref }, `You own ${titleOf(ref)}`),
-    lineDone: (ref: string) => choices.make(contracts.lineDone.name, { ref }, `${titleOf(ref)} is done`),
+      choices.make(contracts.lineFold.name, { ref, into }, `Folding ${titleOf(ref)} into ${titleOf(into)}`),
+    own: (ref: string) => choices.make(contracts.lineOwn.name, { ref }, `Taking ${titleOf(ref)} as yours`),
+    lineDone: (ref: string) =>
+      choices.make(contracts.lineDone.name, { ref }, `Closing ${titleOf(ref)} as done`),
     notYet: (ref: string, why: string) =>
       choices.make(
         contracts.lineNotYet.name,
         { ref, ...(why === "" ? {} : { why }) },
-        `${titleOf(ref)} is not done yet`,
+        `Telling ${titleOf(ref)}'s owner it is not done yet`,
       ),
     doneWhen: (ref: string, accept: boolean) =>
       choices.make(
         contracts.lineDoneWhenAnswer.name,
         { ref, accept },
-        accept ? `New done when for ${titleOf(ref)}` : `${titleOf(ref)} keeps its done when`,
+        accept ? `Accepting the new done when for ${titleOf(ref)}` : `Keeping ${titleOf(ref)}'s done when`,
       ),
     acceptRecommended: (refs: string[]) =>
       choices.make(
         contracts.lineAcceptRecommended.name,
         { refs },
-        `Placed ${refs.length} proposal${refs.length === 1 ? "" : "s"} where their agents recommend`,
+        `Placing ${refs.length} proposal${refs.length === 1 ? "" : "s"} where their agents recommend`,
       ),
     taskDone: (ref: string, result: string) =>
-      choices.make(contracts.taskDone.name, { ref, result }, `${ref} done`),
+      choices.make(contracts.taskDone.name, { ref, result }, `Sending ${ref} as done`),
     taskCant: (ref: string, why: string) =>
-      choices.make(contracts.taskCant.name, { ref, why }, `${ref} cannot be done`),
+      choices.make(contracts.taskCant.name, { ref, why }, `Closing ${ref} as not doable`),
     /** Dragged onto another line: it lands before it. */
     dropBefore: (ref: string, before: string) => order.mutate({ ref, before }),
     reorder(ref: string, direction: Move) {
@@ -131,7 +145,7 @@ export function useHome() {
         return;
       }
       if (direction === "up_next") {
-        choices.make(contracts.lineQueue.name, { ref }, `${titleOf(ref)} is up next`);
+        choices.make(contracts.lineQueue.name, { ref }, `Moving ${titleOf(ref)} to up next`);
         return;
       }
       const data = home.data;

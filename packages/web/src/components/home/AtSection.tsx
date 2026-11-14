@@ -1,34 +1,27 @@
 import type { AtView } from "@octotrack/core/schemas";
-import { TaskItem } from "./TaskItem.tsx";
 
-/** I'm at a place: every task for it, each with its choices, until the developer leaves or it ends by itself. */
-export function AtSection({
-  at,
-  onLeave,
-  onTaskDone,
-  onTaskCant,
-}: {
-  at: AtView;
-  onLeave(): void;
-  onTaskDone(ref: string, result: string): void;
-  onTaskCant(ref: string, why: string): void;
-}) {
+/** Hours left until I'm at ends by itself, in whole hours, at least one. */
+function hoursLeft(until: string, now: number): number {
+  return Math.max(1, Math.round((Date.parse(until) - now) / 3_600_000));
+}
+
+/**
+ * I'm at a place, as E-States draws it: the list stays in its order, every task for the place opens on its line, and
+ * everything else folds. It ends by itself, or with Leave.
+ */
+export function AtSection({ at, now, onLeave }: { at: AtView; now: number; onLeave(): void }) {
+  const hours = hoursLeft(at.until, now);
   return (
-    <section className="home-section" aria-label={`At ${at.place}`}>
-      <div className="section-head">
-        <h2 className="section-title">
-          At {at.place} <small>until {at.until.slice(11, 16)}</small>
-        </h2>
-        <button type="button" className="btn" onClick={onLeave}>
-          Leave
-        </button>
+    <section className="at-head" aria-label={`At ${at.place}`}>
+      <div>
+        <h2 className="calm-title">At {at.place}.</h2>
+        <p className="muted">
+          Everything else is folded. Ends by itself in {hours} hour{hours === 1 ? "" : "s"}.
+        </p>
       </div>
-      {at.tasks.length === 0 ? <p className="muted">Nothing to do here.</p> : null}
-      <div className="home-items">
-        {at.tasks.map((task) => (
-          <TaskItem key={task.ref} task={task} onDone={onTaskDone} onCant={onTaskCant} />
-        ))}
-      </div>
+      <button type="button" className="btn" onClick={onLeave}>
+        Leave
+      </button>
     </section>
   );
 }

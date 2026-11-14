@@ -1,18 +1,40 @@
 import type { PendingChoice } from "@octotrack/core/schemas";
 
+/** What the Undo bar needs to know about a line a Stop would leave without its owner. */
+export interface UndoLine {
+  title: string;
+  /** All its open work waits on the developer, so the owner search holds off until they answer. */
+  waitsOnYou: boolean;
+}
+
+function inSeconds(dueAt: string, now: number): string {
+  const seconds = Math.max(1, Math.ceil((Date.parse(dueAt) - now) / 1000));
+  return `in ${seconds} second${seconds === 1 ? "" : "s"}`;
+}
+
+/** What a Stop does to the line its owner leaves, as E-States says it. */
+function afterStop(line: UndoLine): string {
+  return line.waitsOnYou
+    ? `${line.title} waits on you, so no new session starts until you answer.`
+    : `${line.title} then looks for another owner.`;
+}
+
 /**
- * Choices still waiting to take effect, newest first, each with Undo and Now; and any that failed when applied, with
- * why, until dismissed. Announced politely to screen readers.
+ * Choices still waiting to take effect, newest first, each saying what it does and when, with Undo; and any that
+ * failed when applied, with why, until dismissed. Announced politely to screen readers.
  */
 export function UndoBar({
   pending,
+  now,
+  lines,
   onUndo,
-  onNow,
   onPause,
 }: {
   pending: readonly PendingChoice[];
+  /** The time now, in milliseconds, for the countdown. */
+  now: number;
+  lines: Readonly<Record<string, UndoLine>>;
   onUndo(id: number): void;
-  onNow(id: number): void;
   /** A Stop of a line's owner: undo it, and move the line to up next instead. */
   onPause?: (id: number, line: string) => void;
 }) {
@@ -20,37 +42,38 @@ export function UndoBar({
   const newest = waiting.at(-1)?.id;
   return (
     <div className="undo-bar" role="status" aria-live="polite">
-      {[...pending].reverse().map((choice) =>
-        choice.state === "failed" ? (
-          <div key={choice.id} className="undo-choice" data-failed="true">
-            <span role="alert">
-              Could not: {choice.summary}. {choice.error ?? ""}
-            </span>
-            <button type="button" className="btn" onClick={() => onUndo(choice.id)}>
-              Dismiss
-            </button>
-          </div>
-        ) : (
+      {[...pending].reverse().map((choice) => {
+        if (choice.state === "failed") {
+          return (
+            <div key={choice.id} className="undo-choice" data-failed="true">
+              <span role="alert">
+                {choice.summary} did not happen: {choice.error ?? "no reason was given"}
+              </span>
+              <button type="button" className="btn" onClick={() => onUndo(choice.id)}>
+                Dismiss
+              </button>
+            </div>
+          );
+        }
+        const line = choice.line === null ? undefined : lines[choice.line];
+        return (
           <div key={choice.id} className="undo-choice">
-            <span>{choice.summary}</span>
-            {choice.line === null ? null : (
-              <span className="muted">{choice.line} then looks for another owner</span>
-            )}
+            <span>
+              {choice.summary} {inSeconds(choice.dueAt, now)}
+              {line === undefined ? "" : `. ${afterStop(line)}`}
+            </span>
             {choice.id === newest ? <span className="muted">u to undo</span> : null}
             {choice.line === null || onPause === undefined ? null : (
               <button type="button" className="btn" onClick={() => onPause(choice.id, choice.line ?? "")}>
-                Pause {choice.line} instead
+                Pause the line instead
               </button>
             )}
             <button type="button" className="btn" onClick={() => onUndo(choice.id)}>
               Undo
             </button>
-            <button type="button" className="btn" onClick={() => onNow(choice.id)}>
-              Now
-            </button>
           </div>
-        ),
-      )}
+        );
+      })}
     </div>
   );
 }

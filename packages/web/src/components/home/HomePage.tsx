@@ -1,17 +1,23 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useBrowserFocus } from "../../hooks/useBrowserFocus.ts";
+import { useClock } from "../../hooks/useClock.ts";
 import { useDragOrder } from "../../hooks/useDragOrder.ts";
 import { useHome } from "../../hooks/useHome.ts";
 import { useHomeFocus } from "../../hooks/useHomeFocus.ts";
 import { useHomeKeys } from "../../hooks/useHomeKeys.ts";
 import { useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useNarrow } from "../../hooks/useNarrow.ts";
+import { nextAsk, runningAgents } from "../../lib/lines.ts";
 import { setParams, useRoute } from "../../lib/router.ts";
 import { BatchPanel } from "../decisions/BatchPanel.tsx";
 import { DecisionCardItem } from "../decisions/DecisionCardItem.tsx";
 import { NewLineCard } from "../lines/NewLineCard.tsx";
 import { ErrorState, LoadingState } from "../ui/states.tsx";
 import { AtSection } from "./AtSection.tsx";
+import { AtUpNext } from "./AtUpNext.tsx";
 import { FirstRun } from "./FirstRun.tsx";
+import { FocusTarget } from "./FocusTarget.tsx";
+import { NothingNeedsYou } from "./NothingNeedsYou.tsx";
 import { ForYouRow } from "./ForYouRow.tsx";
 import { HomeSection } from "./HomeSection.tsx";
 import { ReorderButtons } from "./ReorderButtons.tsx";
@@ -34,17 +40,21 @@ export function HomePage() {
   const narrow = useNarrow();
   const home = h.home.data;
   const focusState = useHomeFocus(home, asked, h.held);
-  const { focus, choose } = focusState;
-  // With a ref open in the panel, the panel takes the keys and home stands down, so one key never answers twice.
-  const inspecting = params.get("ref") !== null;
+  const { focus, choose, follow, skip } = focusState;
+  const page = useRef<HTMLDivElement>(null);
+  useBrowserFocus(page, focus, focusState.moved, follow);
+  const [starting, setStarting] = useState<string | null>(null);
+  // With a ref open in the panel, or a Start sheet open, that takes the keys and home stands down, so one key never
+  // answers twice.
+  const inspecting = params.get("ref") !== null || starting !== null;
   const armed = focusState.armed && !inspecting;
   const keys = inspecting ? NO_KEYS : focusState.keys;
   const [reordering, setReordering] = useState(false);
-  const [starting, setStarting] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
   useHotkeys(keys);
   useHotkeys(
     useHomeKeys({
+      page,
       home,
       focus: inspecting ? null : focus,
       armed,
@@ -66,9 +76,10 @@ export function HomePage() {
       />
     ) : null;
   const at = home?.at ?? null;
+  const now = useClock(false);
 
   return (
-    <div className="page">
+    <div className="page" ref={page}>
       <h1 className="visually-hidden">Lines</h1>
       {adding ? (
         <NewLineCard
@@ -93,29 +104,27 @@ export function HomePage() {
       {h.home.error === null ? null : <ErrorState error={h.home.error} />}
       {home === undefined ? null : (
         <>
-          <SpreadThin
-            working={home.working.length}
-            noOwner={
-              home.working.filter((line) => home.crews[line.ref]?.owner == null && line.ownedBy === null)
-                .length
-            }
-            waiting={home.working.filter((line) => (home.lines[line.ref]?.forYou.length ?? 0) > 0).length}
-          />
           {home.working.length === 0 && home.upNext.length === 0 ? (
-            <FirstRun proposals={home.proposed} onAccept={h.acceptRecommended} />
+            <FirstRun proposals={home.proposed} repos={h.repos.length} onAccept={h.acceptRecommended} />
+          ) : Object.values(home.counts).every((count) => count === 0) ? (
+            <NothingNeedsYou working={runningAgents(home)} next={nextAsk(home)} />
           ) : null}
-          {at === null ? null : (
-            <AtSection at={at} onLeave={() => h.at(null)} onTaskDone={h.taskDone} onTaskCant={h.taskCant} />
-          )}
+          {at === null ? null : <AtSection at={at} now={now} onLeave={() => h.at(null)} />}
           {home.urgent.length === 0 ? null : (
             <HomeSection title="Urgent" count={home.urgent.length}>
               {home.urgent.map((card) => (
-                <DecisionCardItem
+                <FocusTarget
                   key={card.decision.ref}
-                  card={card}
-                  active={card.decision.ref === focus && !inspecting}
-                  armed={armed && card.decision.ref === focus}
-                />
+                  focusRef={card.decision.ref}
+                  focused={card.decision.ref === focus}
+                >
+                  {/* Opened only with focus, like any question, so a key meant for another never answers it. */}
+                  {card.decision.ref === focus ? (
+                    <DecisionCardItem card={card} active={!inspecting} armed={armed} onPostponed={skip} />
+                  ) : (
+                    <ForYouRow item={{ kind: "question", card }} onOpen={choose} />
+                  )}
+                </FocusTarget>
               ))}
             </HomeSection>
           )}
@@ -124,22 +133,47 @@ export function HomePage() {
             h={h}
             focus={focus}
             armed={armed}
-            // At a place, everything else folds to one row per line; on a phone, lines past the second do.
-            foldFrom={at !== null ? 0 : narrow ? PHONE_OPEN_LINES : Number.POSITIVE_INFINITY}
+            // On a phone, lines past the second fold to one row each; at a place, everything but its tasks does.
+            foldFrom={narrow ? PHONE_OPEN_LINES : Number.POSITIVE_INFINITY}
+            at={at?.place ?? null}
             reorder={reorder}
             drag={drag}
             actions={
-              <button
-                type="button"
-                className="btn"
-                aria-pressed={reordering}
-                onClick={() => setReordering(!reordering)}
-              >
-                {reordering ? "Done reordering" : "Reorder"}
-              </button>
+              <>
+                <SpreadThin
+                  working={home.working.length}
+                  noOwner={
+                    home.working.filter(
+                      (line) => home.crews[line.ref]?.owner == null && line.ownedBy === null,
+                    ).length
+                  }
+                  waiting={
+                    home.working.filter((line) => (home.lines[line.ref]?.forYou.length ?? 0) > 0).length
+                  }
+                />
+                <button
+                  type="button"
+                  className="btn"
+                  aria-pressed={reordering}
+                  onClick={() => setReordering(!reordering)}
+                >
+                  {reordering ? "Done reordering" : "Reorder"}
+                </button>
+              </>
             }
             onFocus={choose}
+            onPostponed={skip}
           />
+          {at === null ? null : (
+            <AtUpNext
+              tasks={at.tasks.filter((task) => home.upNext.some((line) => line.ref === task.line))}
+              lines={home.upNext}
+              firstNumber={home.working.length + 1}
+              focus={focus}
+              onTaskDone={h.taskDone}
+              onTaskCant={h.taskCant}
+            />
+          )}
           <WaitingSections
             home={home}
             h={h}
@@ -157,13 +191,19 @@ export function HomePage() {
               note="from before lines; their agents should put each on its line"
             >
               <div className="line-items" data-flush="true">
-                {home.noLine.map((card) =>
-                  card.decision.ref === focus ? (
-                    <DecisionCardItem key={card.decision.ref} card={card} active armed={armed} />
-                  ) : (
-                    <ForYouRow key={card.decision.ref} item={{ kind: "question", card }} onOpen={choose} />
-                  ),
-                )}
+                {home.noLine.map((card) => (
+                  <FocusTarget
+                    key={card.decision.ref}
+                    focusRef={card.decision.ref}
+                    focused={card.decision.ref === focus}
+                  >
+                    {card.decision.ref === focus ? (
+                      <DecisionCardItem card={card} active={!inspecting} armed={armed} onPostponed={skip} />
+                    ) : (
+                      <ForYouRow item={{ kind: "question", card }} onOpen={choose} />
+                    )}
+                  </FocusTarget>
+                ))}
               </div>
             </HomeSection>
           )}

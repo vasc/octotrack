@@ -1,5 +1,6 @@
 import type { ForYou } from "@octotrack/core/schemas";
 import { refOf } from "../../lib/focus.ts";
+import { URGENT_REASON } from "../../lib/lines.ts";
 import { Markdown } from "../ui/Markdown.tsx";
 
 /** Something waiting on the developer, as one row that opens it: what it is, its title, and the case for it. */
@@ -10,6 +11,7 @@ export function ForYouRow({ item, onOpen }: { item: ForYou; onOpen(ref: string):
       type="button"
       className="item-row"
       data-kind={item.kind}
+      data-urgent={item.kind === "question" && item.card.decision.urgentReason !== null}
       aria-label={`Open ${ref}`}
       onClick={() => onOpen(ref)}
     >
@@ -26,7 +28,11 @@ function rowText(item: ForYou) {
       const recommended = decision.options.find((option) => option.key === decision.recommendation);
       return (
         <>
-          <span className="item-kind">Question · {decision.ref}</span> <b>{decision.title}</b>{" "}
+          <span className="item-kind">
+            {decision.urgentReason === null ? "Question" : `Urgent · ${URGENT_REASON[decision.urgentReason]}`}{" "}
+            · {decision.ref}
+          </span>{" "}
+          <b>{decision.title}</b>{" "}
           {recommended === undefined ? null : (
             <span className="item-note">
               Recommended {recommended.label}

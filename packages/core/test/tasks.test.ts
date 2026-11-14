@@ -199,6 +199,39 @@ describe("done when and done are the developer's to accept", () => {
     expect(w.notices(w.owner).map((notice) => [notice.kind, notice.wakes])).toEqual([["done_when", false]]);
   });
 
+  test("on an up-next line a scoper's done when waits, with why, for the Start sheet; on its own proposal it is written", () => {
+    const w = world();
+    const queued = w.as(w.dev, c.lineAdd, {
+      title: "Firmware without casts",
+      doneWhen: "It builds with the no-casts rule on.",
+      repos: ["PANEL"],
+      where: "up_next",
+    });
+    const scoper = { actor: "scoper", channel: "cli" } as const;
+    w.as(scoper, c.agentRegister, { repo: "PANEL" });
+    w.as(scoper, c.lineTake, { ref: queued.ref });
+    w.as(scoper, c.lineDoneWhen, {
+      ref: queued.ref,
+      doneWhen: "It builds with the rule on, and CI fails on a new cast.",
+      why: "Without CI, casts creep back.",
+    });
+    const line = w.as(w.dev, c.lineShow, { ref: queued.ref }).line;
+    expect(line.doneWhen).toBe("It builds with the no-casts rule on.");
+    expect([line.doneWhenProposal, line.doneWhenWhy]).toEqual([
+      "It builds with the rule on, and CI fails on a new cast.",
+      "Without CI, casts creep back.",
+    ]);
+    const proposed = w.as(scoper, c.linePropose, {
+      title: "Cast audit",
+      doneWhen: "Listed.",
+      repos: ["PANEL"],
+      recommendation: "up_next",
+      why: "Casts keep coming back.",
+    });
+    w.as(scoper, c.lineDoneWhen, { ref: proposed.ref, doneWhen: "Listed, with each one's fix." });
+    expect(w.as(w.dev, c.lineShow, { ref: proposed.ref }).line.doneWhen).toBe("Listed, with each one's fix.");
+  });
+
   test("an owner proposes done; the developer finishes the line or says not yet", () => {
     const w = world();
     w.as(w.owner, c.lineProposeDone, { ref: w.line, why: "Printed, fitted, and in use." });

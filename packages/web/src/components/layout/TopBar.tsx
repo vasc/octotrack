@@ -1,4 +1,5 @@
 import type { HomeCounts } from "@octotrack/core/schemas";
+import type { Ref } from "react";
 import { navigate } from "../../lib/router.ts";
 import { NavItem } from "./NavItem.tsx";
 
@@ -20,6 +21,8 @@ export interface TopBarProps {
   onAt(place: string | null): void;
   onNewLine(): void;
   onKeys(): void;
+  /** The I'm at picker, which g p focuses. */
+  atRef?: Ref<HTMLSelectElement>;
 }
 
 const ALL_PLACES = "";
@@ -32,7 +35,7 @@ const PAGE_NAMES: Readonly<Record<string, string>> = {
 };
 
 /** Lines, Log and Agents, what waits on the developer, where they are, and New line. One bar on every page. */
-export function TopBar({ path, counts, places, at, onAt, onNewLine, onKeys }: TopBarProps) {
+export function TopBar({ path, counts, places, at, onAt, onNewLine, onKeys, atRef }: TopBarProps) {
   return (
     <header className="top-bar">
       <div className="top-bar-inner">
@@ -70,6 +73,7 @@ export function TopBar({ path, counts, places, at, onAt, onNewLine, onKeys }: To
             <label className="top-at">
               I'm at
               <select
+                ref={atRef}
                 className="select"
                 value={at ?? ALL_PLACES}
                 onChange={(event) => onAt(event.target.value === ALL_PLACES ? null : event.target.value)}

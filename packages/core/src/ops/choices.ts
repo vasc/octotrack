@@ -31,6 +31,26 @@ const WRITES: ReadonlySet<string> = new Set(
 );
 
 const Target = z.object({ ref: z.string() });
+const Retried = z.object({ line: z.string() });
+const CheckedOut = z.object({ retry: z.string() });
+
+/**
+ * What a choice is about, so home can hold that item still while it waits: the ref it names, or for a Try now, Start
+ * one anyway or Set its checkout, the line that Step in is on.
+ */
+function targetOf(op: string, input: unknown): string | null {
+  const target = Target.safeParse(input);
+  if (target.success) return target.data.ref;
+  if (op === contracts.runnerRetry.name) {
+    const retried = Retried.safeParse(input);
+    return retried.success ? retried.data.line : null;
+  }
+  if (op === contracts.repoCheckout.name) {
+    const checkedOut = CheckedOut.safeParse(input);
+    return checkedOut.success ? checkedOut.data.retry : null;
+  }
+  return null;
+}
 const Stopping = z.object({ name: z.string() });
 
 /** The working line a Stop would leave without its owner. */
@@ -44,11 +64,10 @@ function lineLeft(ctx: Ctx, row: ChoiceRow): string | null {
 }
 
 function view(ctx: Ctx, row: ChoiceRow): PendingChoice {
-  const target = Target.safeParse(JSON.parse(row.input));
   return {
     id: row.id,
     op: row.op,
-    ref: target.success ? target.data.ref : null,
+    ref: targetOf(row.op, JSON.parse(row.input)),
     line: lineLeft(ctx, row),
     summary: row.summary,
     dueAt: row.dueAt,

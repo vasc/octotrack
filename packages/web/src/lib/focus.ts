@@ -14,10 +14,15 @@ export function refOf(item: ForYou): string {
   }
 }
 
-/** Where focus starts: an urgent question, else the first thing waiting on the first working line that has one. */
+/**
+ * Where focus starts: an urgent question; else, at a place, its first task; else the first thing waiting on the first
+ * working line that has one.
+ */
 export function defaultFocus(home: HomeView): string | null {
   const urgent = home.urgent[0];
   if (urgent !== undefined) return urgent.decision.ref;
+  const here = home.at?.tasks[0];
+  if (here !== undefined) return here.ref;
   for (const line of home.working) {
     const first = home.lines[line.ref]?.forYou[0];
     if (first !== undefined) return refOf(first);
@@ -41,6 +46,10 @@ export function orderedRefs(home: HomeView): string[] {
       ...(home.lines[line.ref]?.stepIn === true ? [stepInRef(line.ref)] : []),
       ...(home.lines[line.ref]?.forYou ?? []).map(refOf),
     ]),
+    // I'm at a place: its tasks on lines up next, drawn under the working lines.
+    ...(home.at?.tasks ?? [])
+      .filter((task) => home.upNext.some((line) => line.ref === task.line))
+      .map((task) => task.ref),
     ...home.proposed.map((line) => line.ref),
     ...home.noLine.map((card) => card.decision.ref),
   ];
@@ -123,7 +132,7 @@ export function lineOf(home: HomeView, focus: string | null): string | null {
   for (const line of home.working) {
     if ((home.lines[line.ref]?.forYou ?? []).some((item) => refOf(item) === focus)) return line.ref;
   }
-  return null;
+  return home.at?.tasks.find((task) => task.ref === focus)?.line ?? null;
 }
 
 /** Whether the focused item is a question, which takes its own number keys for its options. */
@@ -133,4 +142,49 @@ export function isQuestion(home: HomeView, focus: string | null): boolean {
   return home.working.some((line) =>
     (home.lines[line.ref]?.forYou ?? []).some((item) => item.kind === "question" && refOf(item) === focus),
   );
+}
+
+/**
+ * Where j (forward) or k (back) goes from what has focus. From an item, the next or previous one. From a line itself,
+ * reached with Shift J and K, the first thing for the developer on or after that line, or the last one before it, so j
+ * never jumps back to the top. With nothing focused, the first or the last.
+ */
+export function stepFocus(
+  home: HomeView,
+  focus: string | null,
+  order: readonly string[],
+  forward: boolean,
+): string | null {
+  if (order.length === 0) return null;
+  const at = focus === null ? -1 : order.indexOf(focus);
+  if (at !== -1) return order[Math.min(Math.max(at + (forward ? 1 : -1), 0), order.length - 1)] ?? null;
+  const line = focus?.startsWith("line:") === true ? focus.slice("line:".length) : null;
+  if (line === null) return (forward ? order[0] : order.at(-1)) ?? null;
+  const lines = lineRefs(home);
+  const position = lines.indexOf(line);
+  // Where each item is drawn: urgent questions above every line, then line by line, then what is on no line.
+  const place = (ref: string): number => {
+    if (home.urgent.some((card) => card.decision.ref === ref)) return -1;
+    const owner = lineOf(home, ref);
+    const index = owner === null ? -1 : lines.indexOf(owner);
+    return index === -1 ? Number.POSITIVE_INFINITY : index;
+  };
+  return forward
+    ? (order.find((ref) => place(ref) >= position) ?? order.at(-1) ?? null)
+    : ([...order].reverse().find((ref) => place(ref) < position) ?? order[0] ?? null);
+}
+
+/**
+ * Where Shift J (forward) or Shift K (back) goes: the next or previous line, working on then up next. From something on
+ * no line, it goes by where that is drawn: an urgent question sits above every line, a proposal below them all.
+ */
+export function stepLineFocus(home: HomeView, focus: string | null, forward: boolean): string | null {
+  const lines = lineRefs(home).map(lineFocusRef);
+  if (lines.length === 0) return null;
+  const current = lineOf(home, focus);
+  const at = current === null ? -1 : lines.indexOf(lineFocusRef(current));
+  if (at !== -1) return lines[Math.min(Math.max(at + (forward ? 1 : -1), 0), lines.length - 1)] ?? null;
+  const above = focus === null || home.urgent.some((card) => card.decision.ref === focus);
+  if (above) return lines[0] ?? null;
+  return forward ? null : (lines.at(-1) ?? null);
 }

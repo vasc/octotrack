@@ -503,6 +503,7 @@ export const lineOps = [
         doneWhen: input.doneWhen,
         doneWhenProposal: null,
         doneWhenProposedBy: null,
+        doneWhenWhy: null,
       });
       const updated = requireLine(ctx, line.ref);
       emitLine(ctx, "line.done_when_set", updated, `${updated.ref} is done when: ${input.doneWhen}`, changes);
@@ -519,8 +520,9 @@ export const lineOps = [
       );
     }
     guardLineWrite(ctx, line.ref, "scope");
-    // A line still being proposed or scoped has no accepted done when to change, so its agent writes it directly.
-    const direct = line.state === "proposed" || line.state === "up_next";
+    // A proposed line's done when is still its agent's own words, so it writes it directly. Any other line's is the
+    // developer's to accept: on a working line as an item for them, on a waiting one in its Start sheet.
+    const direct = line.state === "proposed";
     const changes = applyPatch(
       ctx,
       "lines",
@@ -528,7 +530,7 @@ export const lineOps = [
       line,
       direct
         ? { doneWhen: input.doneWhen }
-        : { doneWhenProposal: input.doneWhen, doneWhenProposedBy: ctx.actor },
+        : { doneWhenProposal: input.doneWhen, doneWhenProposedBy: ctx.actor, doneWhenWhy: input.why ?? null },
     );
     const updated = requireLine(ctx, line.ref);
     emitLine(
@@ -550,6 +552,7 @@ export const lineOps = [
       ...(input.accept ? { doneWhen: line.doneWhenProposal } : {}),
       doneWhenProposal: null,
       doneWhenProposedBy: null,
+      doneWhenWhy: null,
     });
     if (line.doneWhenProposedBy !== null) {
       addNotice(

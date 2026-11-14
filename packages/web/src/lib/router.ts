@@ -47,7 +47,8 @@ export function setParams(patch: Readonly<Record<string, string | null>>, replac
   navigate(`${window.location.pathname}${query === "" ? "" : `?${query}`}`, replace);
 }
 
-export function openEntity(ref: string, act: "table" | null = null): void {
+/** Opens a ref in the panel; with tell, straight to the line's Tell box. */
+export function openEntity(ref: string, act: "tell" | null = null): void {
   setParams({ ref, act });
 }
 

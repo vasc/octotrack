@@ -95,6 +95,7 @@
   --shadow-focus: 0 0 0 2px var(--ink);
   --z-popover: 10;
   --z-panel: 20;
+  --z-undo: 30;
 
   /* Layout */
   --page-width: 1180px;

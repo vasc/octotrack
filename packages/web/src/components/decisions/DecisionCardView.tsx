@@ -1,5 +1,7 @@
 import type { DecisionCard } from "@octotrack/core/schemas";
 import type { DecisionForm } from "../../hooks/useDecisionForm.ts";
+import type { LinePlace } from "../../hooks/useLinePlace.ts";
+import { URGENT_REASON } from "../../lib/lines.ts";
 import { Markdown } from "../ui/Markdown.tsx";
 import { RefLink } from "../ui/RefLink.tsx";
 import { TextBox } from "../ui/TextBox.tsx";
@@ -9,26 +11,45 @@ export interface DecisionCardViewProps {
   form: DecisionForm;
   /** The one item with focus: the keys answer this question. */
   selected?: boolean;
+  /** Its line's place in the order: an urgent question stands apart from its line, so it names it. */
+  line?: LinePlace | null;
 }
 
 /**
  * A question opened: the situation, options that say what happens, the reason for the recommendation directly under
  * them, and the answer in one press. Pure: all state comes in through `form`.
  */
-export function DecisionCardView({ card, form, selected = false }: DecisionCardViewProps) {
+export function DecisionCardView({ card, form, selected = false, line = null }: DecisionCardViewProps) {
   const { decision } = card;
   const recommendedAt = decision.options.findIndex((option) => option.key === decision.recommendation);
   const openWork = card.blocks.filter((item) => item.status !== "done" && item.status !== "cancelled");
   const columns = Math.min(Math.max(decision.options.length, 1), 3);
   return (
-    <article className="question" data-selected={selected} aria-label={decision.title}>
+    <article
+      className="question"
+      data-selected={selected}
+      data-urgent={decision.urgentReason !== null}
+      aria-label={decision.title}
+    >
       <div className="question-strip">
         {selected ? <span className="question-focused">Focused</span> : null}
-        <span className="question-kind">
-          {decision.urgentReason === null ? "Question" : "Urgent question"}
-        </span>
-        <RefLink value={decision.ref} />
-        {openWork.length === 0 ? (
+        {decision.urgentReason === null ? (
+          <span className="question-kind">Question</span>
+        ) : (
+          <>
+            <span className="question-kind">Urgent</span>
+            <span className="question-kind">{capitalized(URGENT_REASON[decision.urgentReason])}</span>
+          </>
+        )}
+        {decision.urgentReason !== null && line !== null ? (
+          <span>
+            {line.number === null ? "" : `${line.number} · `}
+            {line.title} · <RefLink value={decision.ref} />
+          </span>
+        ) : (
+          <RefLink value={decision.ref} />
+        )}
+        {decision.urgentReason !== null ? null : openWork.length === 0 ? (
           <span>asked by {decision.requestedBy}</span>
         ) : (
           <span>
@@ -114,6 +135,7 @@ export function DecisionCardView({ card, form, selected = false }: DecisionCardV
             value={form.ownWords}
             onChange={form.setOwn}
             onSubmit={form.sendOwn}
+            autoFocus
           />
           <div className="question-actions">
             <button type="submit" className="btn" data-primary="true" disabled={form.ownWords.trim() === ""}>
@@ -132,4 +154,8 @@ export function DecisionCardView({ card, form, selected = false }: DecisionCardV
       )}
     </article>
   );
+}
+
+function capitalized(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
