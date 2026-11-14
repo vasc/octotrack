@@ -56,15 +56,16 @@ The loudest thing in the product.
 
 ## The feed: `feed/`
 
-| Component     | Kind       | What it is                                                                  |
-| ------------- | ---------- | --------------------------------------------------------------------------- |
-| `FeedItem`    | Pure       | One line: a tone mark, a sentence, and chips that add a filter              |
-| `FeedList`    | Pure       | Items, with a heading where the day changes                                 |
-| `FilterBar`   | Pure       | The query box, with suggestions. A bad query shows why, and results stay up |
-| `ViewTabs`    | Pure       | Saved filters                                                               |
-| `FilterBox`   | Structural | A `FilterBar` given suggestions from the tracker's own data                 |
-| `FeedSection` | Structural | Loads and pages through the feed                                            |
-| `FeedPage`    | Structural | The primary screen. See [patterns](patterns.md#the-feed-page)               |
+| Component     | Kind       | What it is                                                                                                                                                |
+| ------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `FeedItem`    | Pure       | One line: a tone mark, a sentence, and chips that add a filter                                                                                            |
+| `FeedList`    | Pure       | Items, with a heading where the day changes                                                                                                               |
+| `UnseenLog`   | Pure       | Not seen: line by line in the developer's order, checks and drift confirmations folded, waiting lines left out unless asked for, refused writes always in |
+| `FilterBar`   | Pure       | The query box, with suggestions. A bad query shows why, and results stay up                                                                               |
+| `ViewTabs`    | Pure       | Saved filters                                                                                                                                             |
+| `FilterBox`   | Structural | A `FilterBar` given suggestions from the tracker's own data                                                                                               |
+| `FeedSection` | Structural | Loads and pages through the feed                                                                                                                          |
+| `FeedPage`    | Structural | The primary screen. See [patterns](patterns.md#the-feed-page)                                                                                             |
 
 ## Pull requests: `prs/`
 
@@ -168,6 +169,7 @@ Opens from any ref, in the rail, without leaving the page.
 | `LinePanelItem`  | Structural | A line in the inspector with its actions, Tell or the developer's own box, marked seen when it opens       |
 | `TellBox`        | Pure       | Tell: a free message to the line's owner, named in its label; empty, a nudge                               |
 | `OwnWorkBox`     | Pure       | On a line the developer owns, one growing box that adds a task or a note                                   |
+| `SinceSummary`   | Pure       | Until a line's summary is rewritten: everything newer, one row each, with what was seen folded to one row  |
 | `EntityBody`     | Pure       | Picks the right body for the kind of item                                                                  |
 | `DecisionPanel`  | Structural | An open decision as a card, or a closed one as its record                                                  |
 | `IssuePanel`     | Structural | An issue's details, with its status select                                                                 |

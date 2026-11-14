@@ -1,20 +1,25 @@
+import { useState } from "react";
 import { contracts } from "@octotrack/core/contracts";
 import type { Line } from "@octotrack/core/schemas";
 import { useDraft } from "../../hooks/useDraft.ts";
 import { useLineChoices } from "../../hooks/useLineChoices.ts";
 import { useMarkSeen } from "../../hooks/useMarkSeen.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
-import { useRoute } from "../../lib/router.ts";
+import { navigate, useRoute } from "../../lib/router.ts";
 import { ErrorState } from "../ui/states.tsx";
 import { LineActions } from "./LineActions.tsx";
 import { LinePanel } from "./LinePanel.tsx";
 import { OwnWorkBox } from "./OwnWorkBox.tsx";
+import { SinceSummary } from "./SinceSummary.tsx";
 import { TellBox } from "./TellBox.tsx";
 
 /** A line in the inspector: what it is, what the developer can do with it, and what they can say to it. */
 export function LinePanelItem({ line }: { line: Line }) {
   const choices = useLineChoices(line);
   const home = useOpQuery(contracts.homeShow, {});
+  const since = useOpQuery(contracts.feedList, { query: `line:${line.ref}`, limit: 50 });
+  // As it was when the panel opened: opening it marks the line seen, which must not fold what is being read now.
+  const [seenAt] = useState(line.seenAt);
   const projects = useOpQuery(contracts.projectList, {});
   const tell = useDraft(`tell:${line.ref}`);
   const own = useDraft(`own:${line.ref}`);
@@ -64,6 +69,12 @@ export function LinePanelItem({ line }: { line: Line }) {
           }}
         />
       ) : null}
+      <SinceSummary
+        events={since.data?.events ?? []}
+        summaryAt={line.summaryAt}
+        seenAt={seenAt}
+        onFilter={(term) => navigate(`/log?q=${encodeURIComponent(term)}`)}
+      />
       {choices.failure === null ? null : <ErrorState error={choices.failure} />}
     </>
   );

@@ -27,6 +27,7 @@ export function FeedPage() {
     .join(" ");
 
   const unseen = params.get("seen") === "no";
+  const includeWaiting = params.get("waiting") === "yes";
   const seen = useMarkAllSeen();
   const input = useRef<HTMLInputElement>(null);
   useHotkeys({ "/": () => input.current?.focus() });
@@ -44,6 +45,16 @@ export function FeedPage() {
         >
           Not seen
         </button>
+        {unseen ? (
+          <button
+            type="button"
+            className="btn"
+            aria-pressed={includeWaiting}
+            onClick={() => setParams({ waiting: includeWaiting ? null : "yes" })}
+          >
+            Waiting lines too
+          </button>
+        ) : null}
         <button type="button" className="btn" onClick={seen.markAll}>
           Mark all seen
         </button>
@@ -62,7 +73,13 @@ export function FeedPage() {
       ) : (
         <>
           <QueueSection query={scope} isDefault={view === DEFAULT_VIEW && filter.query === ""} />
-          <FeedSection view={view} query={filter.query} unseen={unseen} onFilter={filter.addTerm} />
+          <FeedSection
+            view={view}
+            query={filter.query}
+            unseen={unseen}
+            includeWaiting={includeWaiting}
+            onFilter={filter.addTerm}
+          />
         </>
       )}
     </div>
