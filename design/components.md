@@ -122,6 +122,7 @@ Home is one list: every line in the developer's order, with what each needs from
 | `WorkingSection`   | Structural | Working on: each line with Step in, its first item opened or as a row, the rest one row away, folded on a phone or at a place                                  |
 | `WaitingSections`  | Structural | Up next, Proposed, Tabled and Done lately, with the Start sheet for a line that waited                                                                         |
 | `SpreadThin`       | Pure       | Past six working lines, what spreading thin costs: a nudge, never a cap                                                                                        |
+| `KeyHelp`          | Pure       | Every key on home, as one list behind ?                                                                                                                        |
 | `AtPicker`         | Pure       | I'm at…: the developer's places as buttons; Leave once at one                                                                                                  |
 | `AtSection`        | Pure       | At a place: every task for it, each with its choices                                                                                                           |
 | `TaskItem`         | Structural | A task opened, with what is typed kept as a draft                                                                                                              |

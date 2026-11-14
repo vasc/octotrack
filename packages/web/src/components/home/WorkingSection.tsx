@@ -1,7 +1,7 @@
 import type { HomeView } from "@octotrack/core/schemas";
 import { type ReactNode, useState } from "react";
 import type { HomeActions } from "../../hooks/useHome.ts";
-import { refOf, stepInRef } from "../../lib/focus.ts";
+import { lineFocusRef, refOf, stepInRef } from "../../lib/focus.ts";
 import { stepInReason } from "../../lib/lines.ts";
 import { ForYouItem } from "./ForYouItem.tsx";
 import { HomeSection } from "./HomeSection.tsx";
@@ -53,23 +53,30 @@ export function WorkingSection({
         const open = expanded.has(line.ref) || rest.some((other) => refOf(other) === focus);
         const folded = index >= foldFrom && !forYou.some((other) => refOf(other) === focus);
         const item = (forYouItem: (typeof forYou)[number]) => (
-          <ForYouItem
+          <div
             key={refOf(forYouItem)}
-            item={forYouItem}
-            title={line.title}
-            focused={refOf(forYouItem) === focus}
-            armed={armed}
-            onOpen={onFocus}
-            onTaskDone={h.taskDone}
-            onTaskCant={h.taskCant}
-            onLineDone={h.lineDone}
-            onNotYet={h.notYet}
-            onDoneWhen={h.doneWhen}
-          />
+            className="focus-wrap"
+            data-selected={refOf(forYouItem) === focus}
+            aria-current={refOf(forYouItem) === focus ? "true" : undefined}
+          >
+            <ForYouItem
+              item={forYouItem}
+              title={line.title}
+              focused={refOf(forYouItem) === focus}
+              armed={armed}
+              onOpen={onFocus}
+              onTaskDone={h.taskDone}
+              onTaskCant={h.taskCant}
+              onLineDone={h.lineDone}
+              onNotYet={h.notYet}
+              onDoneWhen={h.doneWhen}
+            />
+          </div>
         );
         return (
           <WorkingLine
             key={line.ref}
+            focused={focus === lineFocusRef(line.ref)}
             index={index + 1}
             line={line}
             {...(crew === undefined ? {} : { crew })}

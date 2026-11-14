@@ -13,6 +13,8 @@ export interface LineActionsProps {
   /** The agent that owns the line, which the developer can stop from here. */
   owner?: string | null;
   onStopOwner?: (name: string) => void;
+  /** Opened with t: tabling first. */
+  tabling?: boolean;
 }
 
 const CHOICES: Readonly<Record<Line["state"], readonly (readonly [LineChoice, string])[]>> = {
@@ -47,8 +49,9 @@ export function LineActions({
   onDoneWhen,
   owner = null,
   onStopOwner,
+  tabling: startTabling = false,
 }: LineActionsProps) {
-  const [tabling, setTabling] = useState(false);
+  const [tabling, setTabling] = useState(startTabling);
   const live = line.state !== "done" && line.state !== "dropped";
   return (
     <div className="line-actions">

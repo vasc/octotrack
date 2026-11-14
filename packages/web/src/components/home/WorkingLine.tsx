@@ -13,12 +13,22 @@ export interface WorkingLineProps {
   reorder?: ReactNode;
   /** What waits on the developer, and Step in. */
   children?: ReactNode;
+  /** The line itself has focus, reached with Shift J and K. */
+  focused?: boolean;
 }
 
 /** A line being worked on: its place in the order, who is on it, its headline, and what it needs from you. */
-export function WorkingLine({ index, line, crew, details, reorder, children }: WorkingLineProps) {
+export function WorkingLine({
+  index,
+  line,
+  crew,
+  details,
+  reorder,
+  children,
+  focused = false,
+}: WorkingLineProps) {
   return (
-    <article className="home-line" aria-label={line.title}>
+    <article className="home-line" aria-label={line.title} data-selected={focused}>
       <div className="home-line-head">
         <span className="home-line-num">{index}</span>
         <button type="button" className="home-line-title" onClick={() => openEntity(line.ref)}>

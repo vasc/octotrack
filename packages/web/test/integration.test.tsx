@@ -1100,6 +1100,112 @@ describe("lines of work", () => {
     await view.findByRole("article", { name: "Which board?" });
   });
 
+  describe("keys on home", () => {
+    const options = [{ key: "a", label: "Yes", description: "Go ahead." }];
+    function onLine() {
+      seedLines();
+      server.act(c.agentRegister, { repo: "OCT" }, "octo.1");
+      server.act(c.lineTake, { ref: "L-1" }, "octo.1");
+      server.act(c.decisionAsk, { title: "Which board?", context: "Context.", options }, "octo.1");
+    }
+    const selected = (element: HTMLElement) =>
+      element.closest("[data-selected]")?.getAttribute("data-selected");
+
+    test("g then u goes to the urgent question, and undoes nothing", async () => {
+      onLine();
+      const board = server.act(
+        c.decisionAsk,
+        { title: "Which plug?", context: "Context.", options },
+        "octo.1",
+      );
+      server.act(
+        c.decisionAsk,
+        { title: "Order now?", context: "Stock.", options, urgent: "costs_money" },
+        "octo.1",
+      );
+      navigate(`/?focus=${board.ref}`);
+      const view = renderApp(<App />);
+      await view.findByRole("article", { name: "Which plug?" });
+      fireEvent.keyDown(window, { key: "g" });
+      fireEvent.keyDown(window, { key: "u" });
+      await waitFor(() =>
+        expect(view.getByRole("article", { name: "Order now?" }).getAttribute("data-selected")).toBe("true"),
+      );
+    });
+
+    test("Shift J steps to the next line, even one with nothing for the developer", async () => {
+      onLine();
+      navigate("/");
+      const view = renderApp(<App />);
+      await view.findByRole("article", { name: "Which board?" });
+      fireEvent.keyDown(window, { key: "J", shiftKey: true });
+      await waitFor(() =>
+        expect(view.getByRole("article", { name: "Weekly digest" }).getAttribute("data-selected")).toBe(
+          "true",
+        ),
+      );
+    });
+
+    test("o opens the focused item's line, and t opens its tabling", async () => {
+      onLine();
+      navigate("/");
+      const view = renderApp(<App />);
+      await view.findByRole("article", { name: "Which board?" });
+      fireEvent.keyDown(window, { key: "o" });
+      await view.findByRole("complementary", { name: "L-1" });
+      fireEvent.keyDown(window, { key: "Escape" });
+      await gone(() => view.queryByRole("complementary", { name: "L-1" }));
+      fireEvent.keyDown(window, { key: "t" });
+      const panel = within(await view.findByRole("complementary", { name: "L-1" }));
+      await panel.findByLabelText("Why table Sendspin enclosure");
+    });
+
+    test("alt and the arrows move the focused item's line", async () => {
+      onLine();
+      navigate("/");
+      const view = renderApp(<App />);
+      await view.findByRole("article", { name: "Which board?" });
+      fireEvent.keyDown(window, { key: "ArrowDown", altKey: true });
+      await waitFor(() =>
+        expect(server.tracker.call(c.homeShow, {}, asDeveloper).working.map((line) => line.ref)).toEqual([
+          "L-2",
+          "L-1",
+        ]),
+      );
+    });
+
+    test("number keys pick a focused task's choices in the order drawn", async () => {
+      seedLines();
+      server.act(c.agentRegister, { repo: "OCT" }, "octo.1");
+      server.act(c.lineTake, { ref: "L-1" }, "octo.1");
+      server.tracker.call(c.placeAdd, { name: "the bench" }, asDeveloper);
+      const task = server.act(
+        c.taskFile,
+        { title: "Weigh it", place: "the bench", outcome: "Grams" },
+        "octo.1",
+      );
+      navigate("/");
+      const view = renderApp(<App />);
+      const card = await view.findByRole("article", { name: "Weigh it" });
+      expect(selected(card)).toBe("true");
+      fireEvent.keyDown(window, { key: "2" });
+      await view.findByLabelText(`Why ${task.ref} cannot be done`);
+    });
+
+    test("? lists every key, and r opens Record answers…", async () => {
+      onLine();
+      navigate("/");
+      const view = renderApp(<App />);
+      await view.findByRole("article", { name: "Which board?" });
+      fireEvent.keyDown(window, { key: "?" });
+      const help = within(await view.findByRole("dialog", { name: "Keys" }));
+      help.getByText("g u");
+      fireEvent.click(help.getByRole("button", { name: "Close" }));
+      fireEvent.keyDown(window, { key: "r" });
+      await view.findByRole("region", { name: "Record answers" });
+    });
+  });
+
   describe("home's header and sections", () => {
     const options = [{ key: "a", label: "Yes", description: "Go ahead." }];
 

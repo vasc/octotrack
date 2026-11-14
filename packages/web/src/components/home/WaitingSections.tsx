@@ -1,6 +1,7 @@
 import type { HomeView } from "@octotrack/core/schemas";
 import type { ReactNode } from "react";
 import type { HomeActions } from "../../hooks/useHome.ts";
+import { lineFocusRef } from "../../lib/focus.ts";
 import { FoldedSection } from "./FoldedSection.tsx";
 import { HomeSection } from "./HomeSection.tsx";
 import { ProposalCard } from "./ProposalCard.tsx";
@@ -62,6 +63,7 @@ export function WaitingSections({
                   {...(crew === undefined ? {} : { crew })}
                   {...(details === undefined ? {} : { details })}
                   reorder={reorder(line.title, line.ref, index, home.upNext.length)}
+                  focused={focus === lineFocusRef(line.ref)}
                   onStart={onStarting}
                 />
                 {sheet(line.ref)}

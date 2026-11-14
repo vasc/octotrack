@@ -108,6 +108,7 @@ export function ProposalCard({
             type="button"
             className="btn"
             aria-label={`Start ${line.title}`}
+            data-choice="1"
             onClick={() => onStart(line.ref)}
           >
             Start
@@ -116,6 +117,7 @@ export function ProposalCard({
             type="button"
             className="btn"
             aria-label={`Up next ${line.title}`}
+            data-choice="2"
             onClick={() => onQueue(line.ref)}
           >
             Up next
@@ -124,6 +126,7 @@ export function ProposalCard({
             type="button"
             className="btn"
             aria-label={`Table ${line.title}`}
+            data-choice="3"
             onClick={() => setMode("table")}
           >
             Table…
@@ -133,6 +136,7 @@ export function ProposalCard({
               type="button"
               className="btn"
               aria-label={`Fold ${line.title}`}
+              data-choice="4"
               onClick={() => setMode("fold")}
             >
               Fold into…
@@ -143,6 +147,7 @@ export function ProposalCard({
               type="button"
               className="btn"
               aria-label={`Drop ${line.title}`}
+              data-choice={foldTargets.length === 0 ? "4" : "5"}
               onClick={() => onDrop(line.ref)}
             >
               Drop
@@ -152,6 +157,7 @@ export function ProposalCard({
               type="button"
               className="btn"
               aria-label={`Not a line: ${line.title}`}
+              data-choice={foldTargets.length === 0 ? "4" : "5"}
               onClick={() => onReject(line.ref)}
             >
               Not a line

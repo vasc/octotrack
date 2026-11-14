@@ -31,10 +31,16 @@ export function TaskCard({ task, words, onWords, onDone, onCant }: TaskCardProps
       {task.body === "" ? null : <Markdown text={task.body} />}
       {mode === null ? (
         <div className="decision-actions">
-          <button type="button" className="btn" data-primary="true" onClick={() => setMode("done")}>
+          <button
+            type="button"
+            className="btn"
+            data-primary="true"
+            data-choice="1"
+            onClick={() => setMode("done")}
+          >
             Done…
           </button>
-          <button type="button" className="btn" onClick={() => setMode("cant")}>
+          <button type="button" className="btn" data-choice="2" onClick={() => setMode("cant")}>
             Can't do it…
           </button>
         </div>
