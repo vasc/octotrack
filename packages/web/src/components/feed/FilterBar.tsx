@@ -7,6 +7,8 @@ export interface FilterBarProps {
   suggestions: readonly Suggestion[];
   placeholder?: string;
   inputRef?: React.Ref<HTMLInputElement>;
+  /** Takes the cursor when it appears, as when / brought the developer here. */
+  autoFocus?: boolean;
   onChange(value: string): void;
 }
 
@@ -17,7 +19,15 @@ function complete(value: string, term: string): string {
 }
 
 /** The query box. Pure: suggestions come in from outside and it only keeps track of which one is highlighted. */
-export function FilterBar({ value, error, suggestions, placeholder, inputRef, onChange }: FilterBarProps) {
+export function FilterBar({
+  value,
+  error,
+  suggestions,
+  placeholder,
+  inputRef,
+  autoFocus = false,
+  onChange,
+}: FilterBarProps) {
   const [active, setActive] = useState(0);
   const [focused, setFocused] = useState(false);
   const open = focused && suggestions.length > 0;
@@ -33,6 +43,8 @@ export function FilterBar({ value, error, suggestions, placeholder, inputRef, on
     <div className="filter">
       <input
         ref={inputRef}
+        // biome-ignore lint/a11y/noAutofocus: only when the developer pressed / to search
+        autoFocus={autoFocus}
         className="filter-input"
         aria-label="Filter"
         aria-invalid={error !== null}

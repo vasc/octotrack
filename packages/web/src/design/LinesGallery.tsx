@@ -81,7 +81,16 @@ export function LinesGallery() {
             held: { questions: 0, tasks: 0 },
             scopedSteps: 4,
             answers: [
-              { ref: "D-40", title: "Which plug?", answer: "USB-C on the side", status: "picked_up" },
+              {
+                ref: "D-40",
+                title: "Which plug?",
+                answer: "USB-C on the side",
+                status: "carried_out",
+                by: "panel-widgets",
+                at: "2026-11-14T08:40:00.000Z",
+                note: "model set to the short board",
+                unwoken: null,
+              },
             ],
           }}
         >
@@ -111,7 +120,21 @@ export function LinesGallery() {
               since: "",
             },
           ]}
+          questions={[
+            decision({
+              ref: "D-41",
+              title: "Which wall?",
+              context: "The hall has studs at 40 cm; the study is brick.",
+              options: [
+                { key: "a", label: "The hall", description: "Screws into the studs." },
+                { key: "b", label: "The study", description: "Needs plugs." },
+              ],
+              recommendation: "a",
+              recommendationWhy: "the studs hold it without plugs.",
+            }),
+          ]}
           onDoneWhen={NOOP}
+          onAnswer={NOOP}
           onStart={NOOP}
           onCancel={NOOP}
         />
@@ -122,15 +145,37 @@ export function LinesGallery() {
       </Example>
       <Example label="A case for done, one row, and opened">
         <ForYouRow
-          item={{ kind: "done", line: "L-1", text: "Printed, fitted and in use.", by: "panel" }}
+          item={{
+            kind: "done",
+            line: "L-1",
+            text: "Printed, fitted and in use.",
+            by: "panel",
+            doneWhen: "a printed case holds the board",
+          }}
           onOpen={NOOP}
         />
         <LineProposalCard
-          kind="done"
-          line="L-1"
-          title="Sendspin enclosure"
-          text="Printed, fitted and in use: the board sits flush and the plug goes in."
-          by="panel-widgets"
+          proposal={{
+            kind: "done",
+            line: "L-12",
+            text: "The owner, asleep in a terminal session, was woken from the line's inbox and reported it carried out.",
+            by: "octotrack-builder",
+            doneWhen: "an answer reaches whoever owns its line",
+          }}
+          title="Answer delivery"
+          onAccept={NOOP}
+          onDecline={NOOP}
+        />
+        <LineProposalCard
+          proposal={{
+            kind: "done_when",
+            line: "L-4",
+            text: "…on, and CI fails on a new cast",
+            by: "firmware",
+            was: "the panel firmware builds with the no-casts rule on",
+            why: "without CI, casts creep back.",
+          }}
+          title="Firmware without casts"
           onAccept={NOOP}
           onDecline={NOOP}
         />
@@ -210,7 +255,17 @@ export function LinesGallery() {
         <TextBox label="A note" value={"A longer note,\nover two lines."} onChange={NOOP} />
       </Example>
       <Example label="Choices waiting, with Undo">
-        <UndoBar pending={[pendingChoice()]} onUndo={NOOP} onNow={NOOP} />
+        <UndoBar
+          pending={[
+            pendingChoice({
+              summary: 'Sending "26 mm" to Sendspin enclosure',
+              dueAt: "2026-11-14T09:00:08.000Z",
+            }),
+          ]}
+          now={Date.parse("2026-11-14T09:00:00.000Z")}
+          lines={{}}
+          onUndo={NOOP}
+        />
       </Example>
       <Example label="Adding a line">
         <NewLineCard repos={["PANEL", "GARDEN"]} onAdd={NOOP} onCancel={NOOP} />

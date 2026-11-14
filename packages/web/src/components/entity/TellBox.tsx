@@ -7,10 +7,12 @@ export interface TellBoxProps {
   words: string;
   onWords(words: string): void;
   onSend(words: string): void;
+  /** Opened with t: the box takes the cursor. */
+  focus?: boolean;
 }
 
 /** Tell: a free message to whoever owns the line, closing nothing. Empty, it is a nudge. */
-export function TellBox({ line, to, words, onWords, onSend }: TellBoxProps) {
+export function TellBox({ line, to, words, onWords, onSend, focus = false }: TellBoxProps) {
   const send = () => onSend(words.trim());
   const who = to ?? `whoever takes ${line}`;
   return (
@@ -23,7 +25,7 @@ export function TellBox({ line, to, words, onWords, onSend }: TellBoxProps) {
           send();
         }}
       >
-        <TextBox label={`Tell ${who}`} value={words} onChange={onWords} onSubmit={send} />
+        <TextBox label={`Tell ${who}`} value={words} onChange={onWords} onSubmit={send} autoFocus={focus} />
         <div className="tell-foot">
           <span className="muted">
             A message, not an answer: it closes nothing. Markdown works; the box grows as you type. It goes to

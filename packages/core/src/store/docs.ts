@@ -108,6 +108,7 @@ export function entityDoc(entity: AnyEntity, graph: GraphSnapshot): QueryDoc {
         {
           status: [entity.value.status],
           project: present(entity.value.project),
+          line: present(entity.value.line),
           priority: [entity.value.priority],
           type: [entity.value.kind],
           actor: [entity.value.requestedBy],

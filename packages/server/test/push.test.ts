@@ -53,8 +53,8 @@ describe("buzzing the phone", () => {
       {
         endpoint: "https://push.example/phone",
         payload: {
-          title: "Enclosure: Which board?",
-          body: "Recommended: 26 mm, Proven.",
+          title: "Which board?",
+          body: "Line 1, Enclosure · Recommended 26 mm: Proven.",
           url: `/?focus=${asked.ref}`,
         },
       },

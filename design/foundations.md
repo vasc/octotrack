@@ -127,6 +127,7 @@ Only what floats over content gets a shadow. Everything else is separated by a l
 | `--shadow-focus`   | The one focus on home: the line or item the keys act on |
 | `--z-popover`      | Above the page                                          |
 | `--z-panel`        | Above popovers                                          |
+| `--z-undo`         | Above an open panel: a choice made there shows its Undo |
 
 ## Layout
 

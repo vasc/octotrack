@@ -79,7 +79,7 @@ function ClosedDecision({ decision }: { decision: Decision }) {
             choices.make(
               contracts.decisionReopen.name,
               { ref: decision.ref },
-              `Reopened ${decision.ref} to change it`,
+              `Reopening ${decision.ref} to change its answer`,
             )
           }
         >

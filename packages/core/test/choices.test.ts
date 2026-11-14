@@ -155,6 +155,28 @@ describe("a choice that failed", () => {
   });
 });
 
+describe("what a waiting choice is about", () => {
+  test("names its ref, or the line a Try now is for, so home can hold that item still", () => {
+    const w = world();
+    const start = w.tracker.call(
+      c.choiceMake,
+      { op: "line.start", input: { ref: w.line.ref }, summary: "Starting" },
+      w.dev,
+    );
+    const retry = w.tracker.call(
+      c.choiceMake,
+      { op: "runner.retry", input: { line: w.line.ref, same: true }, summary: "Trying again" },
+      w.dev,
+    );
+    const tell = w.tracker.call(
+      c.choiceMake,
+      { op: "line.tell", input: { line: w.line.ref, body: "Hi" }, summary: "Telling" },
+      w.dev,
+    );
+    expect([start.ref, retry.ref, tell.ref]).toEqual([w.line.ref, w.line.ref, null]);
+  });
+});
+
 describe("drafts follow the developer between devices", () => {
   test("a draft save sends a notice naming only its key, and refreshes nothing else", () => {
     const w = world();

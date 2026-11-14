@@ -59,7 +59,9 @@ export function WaitingSections({
   onStarting(ref: string | null): void;
 }) {
   const sheet = (ref: string) => {
-    const line = [...home.upNext, ...home.tabled].find((candidate) => candidate.ref === ref);
+    const line = [...home.upNext, ...home.tabled, ...home.proposed].find(
+      (candidate) => candidate.ref === ref,
+    );
     return starting !== ref || line === undefined ? null : (
       <StartSheet
         line={line}
@@ -115,18 +117,21 @@ export function WaitingSections({
   const proposals = (
     <>
       {home.proposed.map((line) => (
-        <ProposalCard
-          key={line.ref}
-          line={line}
-          focused={focus === line.ref}
-          foldTargets={[...home.working, ...home.upNext]}
-          onStart={h.start}
-          onQueue={h.queue}
-          onTable={h.table}
-          onFold={h.fold}
-          onReject={h.reject}
-          onDrop={h.drop}
-        />
+        <Fragment key={line.ref}>
+          <ProposalCard
+            line={line}
+            focused={focus === line.ref}
+            foldTargets={[...home.working, ...home.upNext]}
+            // A line back from tabled may hold questions and tasks, so it starts through its Start sheet.
+            onStart={line.tabledReason === null ? h.start : onStarting}
+            onQueue={h.queue}
+            onTable={h.table}
+            onFold={h.fold}
+            onReject={h.reject}
+            onDrop={h.drop}
+          />
+          {sheet(line.ref)}
+        </Fragment>
       ))}
     </>
   );

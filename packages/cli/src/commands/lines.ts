@@ -274,13 +274,16 @@ export const lineCommands: Command[] = [
   },
   {
     path: ["line", "done-when"],
-    usage: "<REF> <sentence>",
-    summary: "Set a line's done when (the developer), or propose a new one (its owner or scoper)",
+    usage: "<REF> <sentence> [--why <reason>]",
+    summary: "Set a line's done when (the developer), or propose a new one with why (its owner or scoper)",
     ops: [c.lineDoneWhen.name],
+    options: { why: { type: "string", description: "Why the new done when is better (agents)" } },
     async run({ client, out }, args) {
+      const why = args.str("why");
       const outcome = await client.call(c.lineDoneWhen, {
         ref: args.requirePositional(0, "REF"),
         doneWhen: args.positionals.slice(1).join(" "),
+        ...(why === undefined ? {} : { why }),
       });
       out.result(outcome, () =>
         outcome.data.doneWhenProposal === null

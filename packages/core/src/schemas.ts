@@ -176,6 +176,8 @@ export const Line = z.object({
   /** A done when an agent proposed, waiting for the developer to accept it or keep the one there is. */
   doneWhenProposal: z.string().nullable(),
   doneWhenProposedBy: z.string().nullable(),
+  /** Why the agent proposes it. */
+  doneWhenWhy: z.string().nullable(),
   /** The owner's case that the line is done, waiting for the developer. */
   doneProposal: z.string().nullable(),
   doneProposedBy: z.string().nullable(),
@@ -712,9 +714,24 @@ export const ForYou = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("question"), card: DecisionCard }),
   z.object({ kind: z.literal("task"), task: Issue }),
   /** The owner's case that the line is done: Done, or Not yet. */
-  z.object({ kind: z.literal("done"), line: z.string(), text: z.string(), by: z.string().nullable() }),
+  z.object({
+    kind: z.literal("done"),
+    line: z.string(),
+    text: z.string(),
+    by: z.string().nullable(),
+    /** The done when the case says is met. */
+    doneWhen: z.string(),
+  }),
   /** A new done when an agent proposes: Accept, or Keep the one there is. */
-  z.object({ kind: z.literal("done_when"), line: z.string(), text: z.string(), by: z.string().nullable() }),
+  z.object({
+    kind: z.literal("done_when"),
+    line: z.string(),
+    text: z.string(),
+    by: z.string().nullable(),
+    /** The done when it would replace, and why. */
+    was: z.string(),
+    why: z.string().nullable(),
+  }),
 ]);
 export type ForYou = z.infer<typeof ForYou>;
 
@@ -750,6 +767,13 @@ export const LineHome = z.object({
       title: z.string(),
       answer: z.string(),
       status: z.enum(["not_picked_up", "picked_up", "carried_out", "wake_failed"]),
+      /** The agent that heard it, and when. */
+      by: z.string().nullable(),
+      at: z.string().nullable(),
+      /** What the agent reported it did with it, once carried out. */
+      note: z.string().nullable(),
+      /** The agent it waited for that could not be woken, while nobody has heard it. */
+      unwoken: z.string().nullable(),
     }),
   ),
 });

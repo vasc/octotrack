@@ -88,11 +88,12 @@ export function startTestServer(options: { live?: boolean; pushKey?: string } = 
   };
 }
 
-export function renderApp(ui: ReactNode): RenderResult {
+/** The page, and its query client, so a test can refresh what the page shows as a change notice would. */
+export function renderApp(ui: ReactNode): RenderResult & { client: QueryClient } {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: Number.POSITIVE_INFINITY } },
   });
-  return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
+  return Object.assign(render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>), { client });
 }
 
 export { contracts };

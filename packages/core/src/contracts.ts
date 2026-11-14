@@ -611,8 +611,8 @@ export const contracts = {
   ),
   lineDoneWhen: write(
     "line.done_when",
-    "Set a line's done when (the developer), or propose a new one (its agents)",
-    z.strictObject({ ref: z.string(), doneWhen: Text }),
+    "Set a line's done when (the developer), or propose a new one, with why (its agents)",
+    z.strictObject({ ref: z.string(), doneWhen: Text, why: z.string().trim().min(1).optional() }),
     Line,
   ),
   lineDoneWhenAnswer: write(

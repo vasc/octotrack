@@ -16,6 +16,7 @@ export function ForYouItem({
   onLineDone,
   onNotYet,
   onDoneWhen,
+  onPostponed,
 }: {
   item: ForYou;
   /** The line's title, for proposals about the line itself. */
@@ -29,21 +30,26 @@ export function ForYouItem({
   onLineDone(line: string): void;
   onNotYet(line: string, why: string): void;
   onDoneWhen(line: string, accept: boolean): void;
+  onPostponed?: (ref: string) => void;
 }) {
   if (!focused) return <ForYouRow item={item} onOpen={onOpen} />;
   switch (item.kind) {
     case "question":
-      return <DecisionCardItem card={item.card} active armed={armed} />;
+      return (
+        <DecisionCardItem
+          card={item.card}
+          active
+          armed={armed}
+          {...(onPostponed === undefined ? {} : { onPostponed })}
+        />
+      );
     case "task":
       return <TaskItem task={item.task} onDone={onTaskDone} onCant={onTaskCant} />;
     case "done":
       return (
         <LineProposalCard
-          kind="done"
-          line={item.line}
+          proposal={item}
           title={title}
-          text={item.text}
-          by={item.by}
           onAccept={() => onLineDone(item.line)}
           onDecline={(why) => onNotYet(item.line, why)}
         />
@@ -51,11 +57,8 @@ export function ForYouItem({
     case "done_when":
       return (
         <LineProposalCard
-          kind="done_when"
-          line={item.line}
+          proposal={item}
           title={title}
-          text={item.text}
-          by={item.by}
           onAccept={() => onDoneWhen(item.line, true)}
           onDecline={() => onDoneWhen(item.line, false)}
         />

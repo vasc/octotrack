@@ -2,6 +2,7 @@ import { contracts } from "@octotrack/core/contracts";
 import type { Line } from "@octotrack/core/schemas";
 import { useState } from "react";
 import { useDraft } from "../../hooks/useDraft.ts";
+import { StartSheet } from "../home/StartSheet.tsx";
 import { useHome } from "../../hooks/useHome.ts";
 import { useLineChoices } from "../../hooks/useLineChoices.ts";
 import { useMarkSeen } from "../../hooks/useMarkSeen.ts";
@@ -32,14 +33,16 @@ export function LinePanelItem({ line }: { line: Line }) {
   useMarkSeen(line.ref);
   // As it was when the panel opened: opening it marks the line seen, which must not fold what is being read now.
   const [seenAt] = useState(line.seenAt);
-  // Opened with t from home: straight to tabling.
-  const tabling = useRoute().params.get("act") === "table";
+  const [starting, setStarting] = useState(false);
+  // Opened with t from home: straight to Tell.
+  const telling = useRoute().params.get("act") === "tell";
   const home = h.home.data;
   const crew = home?.crews[line.ref];
   const owner = crew?.owner?.name ?? null;
   const order = home === undefined ? [] : [...home.working, ...home.upNext];
   const at = order.findIndex((candidate) => candidate.ref === line.ref);
   const live = line.state !== "done" && line.state !== "dropped";
+  const forYou = home?.lines[line.ref]?.forYou ?? [];
   return (
     <div className="line-panel">
       <LinePanelHead
@@ -47,15 +50,35 @@ export function LinePanelItem({ line }: { line: Line }) {
         position={at === -1 ? null : `Line ${at + 1} of ${order.length}`}
         repos={line.repos.map(h.repoName)}
       />
-      <LineActions
-        line={line}
-        owner={owner}
-        onChoose={choices.choose}
-        onTable={choices.table}
-        tabling={tabling}
-      />
+      {starting ? (
+        <StartSheet
+          line={line}
+          onDoneWhen={h.doneWhen}
+          onStart={(ref) => {
+            h.start(ref);
+            setStarting(false);
+          }}
+          onCancel={() => setStarting(false)}
+        />
+      ) : (
+        <LineActions
+          line={line}
+          owner={owner}
+          // A line that waited may hold questions and tasks, so Start goes through its Start sheet.
+          onChoose={(choice) =>
+            choice === "start" && (line.state === "up_next" || line.state === "tabled")
+              ? setStarting(true)
+              : choices.choose(choice)
+          }
+          onTable={choices.table}
+          held={{
+            questions: forYou.filter((item) => item.kind === "question").length,
+            tasks: forYou.filter((item) => item.kind === "task").length,
+          }}
+        />
+      )}
       <SummaryBox line={line} owner={owner} />
-      <PanelForYou title={line.title} items={home?.lines[line.ref]?.forYou ?? []} h={h} />
+      <PanelForYou title={line.title} items={forYou} h={h} />
       <div className="panel-grid">
         <PlanList steps={shown.data?.steps ?? []} work={shown.data?.work ?? []} />
         <div className="panel-column">
@@ -89,6 +112,7 @@ export function LinePanelItem({ line }: { line: Line }) {
           to={owner}
           words={tell.value}
           onWords={tell.change}
+          focus={telling}
           onSend={(words) => void tell.flush().then(() => choices.tell(words))}
         />
       ) : null}

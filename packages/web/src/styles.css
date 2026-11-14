@@ -2208,7 +2208,7 @@ p {
 
 /* The focused item's numbered choices, drawn by the number its key presses. */
 [data-selected="true"] [data-choice]::before {
-  content: attr(data-choice);
+  content: attr(data-choice) " · ";
   font-family: var(--mono);
   font-size: var(--text-xs);
   color: var(--ink-3);
@@ -2223,6 +2223,11 @@ p {
 .reorder {
   display: inline-flex;
   gap: var(--space-2);
+}
+
+/* At least 30px tall, as E-States asks; touch screens make every button a full target already. */
+.reorder .btn {
+  min-height: var(--space-16);
 }
 
 .line-actions {
@@ -2303,8 +2308,11 @@ p {
 
 /* Choices wait a few seconds with Undo */
 
+/* Over everything, an open panel included: a choice made anywhere shows its Undo. */
 .undo-bar {
-  position: sticky;
+  position: fixed;
+  left: 0;
+  right: 0;
   bottom: var(--space-4);
   margin: 0 auto;
   max-width: var(--page-width);
@@ -2312,7 +2320,12 @@ p {
   flex-direction: column;
   gap: var(--space-2);
   padding: 0 var(--space-10);
-  z-index: var(--z-popover);
+  z-index: var(--z-undo);
+  pointer-events: none;
+}
+
+.undo-choice {
+  pointer-events: auto;
 }
 
 .undo-choice {
@@ -2385,4 +2398,143 @@ p {
 .undo-choice[data-failed="true"] {
   border-color: var(--bad);
   background: var(--bad-soft);
+}
+
+/* An urgent question stands at the very top, in red, apart from its line (E-States 8). */
+.question[data-urgent="true"] {
+  border-color: var(--bad-line);
+  background: var(--bad-soft);
+}
+
+.question[data-urgent="true"][data-selected="true"] {
+  border-color: var(--bad);
+}
+
+.question[data-urgent="true"] .question-kind {
+  color: var(--bad);
+}
+
+.item-row[data-urgent="true"] {
+  border-color: var(--bad-line);
+  background: var(--bad-soft);
+}
+
+.item-row[data-urgent="true"] .item-kind {
+  color: var(--bad);
+}
+
+/* Nothing needs you: the calmest screen, and the most common good state (E-States 1). */
+.calm {
+  padding: var(--space-8) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.calm-title {
+  margin: 0;
+  font-size: var(--text-heading);
+  font-weight: var(--weight-bold);
+  color: var(--ink);
+}
+
+/* I'm at a place: where, when it ends, and Leave (E-States 4). */
+.at-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-8);
+  padding: var(--space-6) 0;
+}
+
+/* A proposal about the line itself: done, or a changed done when (E-States 9). */
+.line-proposal {
+  background: var(--surface);
+  border: 1px solid var(--info-line);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.focus-wrap[data-selected="true"] > .line-proposal {
+  border: 2px solid var(--ink);
+}
+
+.line-proposal-claim {
+  margin: 0;
+  color: var(--ink);
+}
+
+.panel-label[data-tone="info"] {
+  color: var(--info);
+}
+
+/* Tabling a line: why, when to look again, and what it does (E-States 6). */
+.table-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.table-form .question-title,
+.start-sheet-title {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+}
+
+.start-sheet-part {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+
+/* The sheet's choices are numbered in one run, whatever has focus. */
+.start-sheet [data-choice]::before {
+  content: attr(data-choice) " · ";
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+}
+
+/* What spreading thin costs, in Working on's header (E-States 7). */
+.spread-thin {
+  display: inline-flex;
+  gap: var(--space-3);
+}
+
+.spread-thin-cost {
+  font-weight: var(--weight-bold);
+}
+
+.spread-thin-cost[data-tone="bad"] {
+  color: var(--bad);
+}
+
+.spread-thin-cost[data-tone="attention"] {
+  color: var(--attention);
+}
+
+.line-answer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: baseline;
+}
+
+.line-answer[data-status="carried_out"] .line-answer-text {
+  color: var(--good);
+}
+
+.line-answer[data-status="wake_failed"] .line-answer-text {
+  color: var(--bad);
+}
+
+/* A focused item shows focus with its own dark border; the browser's ring around it would draw a second one. */
+[data-focus-ref]:focus-visible {
+  outline: none;
 }

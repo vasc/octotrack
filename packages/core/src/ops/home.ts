@@ -14,27 +14,34 @@ const DONE_LATELY_MS = 7 * 24 * 60 * 60 * 1000;
 /** How long an answer's status shows on its line. */
 const ANSWERS_SHOWN_MS = 3 * 24 * 60 * 60 * 1000;
 const ANSWERS_SHOWN = 3;
-const DeliveredRow = z.object({ ref: z.string().nullable(), deliveredAt: z.string().nullable() });
+const DeliveredRow = z.object({
+  ref: z.string().nullable(),
+  deliveredTo: z.string().nullable(),
+  deliveredAt: z.string().nullable(),
+});
+const GoneRow = z.object({ ref: z.string(), ts: z.string() });
 
 /**
- * The answers given on a line lately, and what became of each: waiting in the line's inbox, heard by its agent, carried
- * out as it reported, or a wake that failed while it waited.
+ * The answers given on a line lately, and what became of each: waiting in the line's inbox, heard by an agent (which,
+ * and when), carried out as it reported, or waiting after the agent it was for could not be woken.
  */
 function answersOn(ctx: Ctx, line: string): LineHome["answers"] {
   const since = new Date(Date.parse(ctx.now) - ANSWERS_SHOWN_MS).toISOString();
   const delivered = new Map(
-    rows(ctx, DeliveredRow, "SELECT ref, deliveredAt FROM line_inbox WHERE line = ? AND kind = 'answer'", [
-      line,
-    ]).map((row) => [row.ref, row.deliveredAt]),
-  );
-  const failedWake =
     rows(
       ctx,
-      z.object({ name: z.string() }),
-      `SELECT a.name AS name FROM agents a JOIN line_claims c ON c.agent = a.name
-     WHERE c.line = ? AND a.wakeError IS NOT NULL`,
+      DeliveredRow,
+      "SELECT ref, deliveredTo, deliveredAt FROM line_inbox WHERE line = ? AND kind = 'answer'",
       [line],
-    ).length > 0;
+    ).map((row) => [row.ref, row]),
+  );
+  // Agents on this line that could not be woken, newest first: a wake that fails ends the claim, so the log says who.
+  const gone = rows(
+    ctx,
+    GoneRow,
+    "SELECT ref, ts FROM events WHERE type = 'agent.gone' AND line = ? ORDER BY seq DESC",
+    [line],
+  );
   return rows(
     ctx,
     DecisionRow,
@@ -42,7 +49,11 @@ function answersOn(ctx: Ctx, line: string): LineHome["answers"] {
     [line, since, ANSWERS_SHOWN],
   ).map((decision) => {
     const chosen = decision.options.find((option) => option.key === decision.chosenOption)?.label;
-    const heard = delivered.get(decision.ref) ?? null;
+    const inbox = delivered.get(decision.ref);
+    const heardAt = inbox?.deliveredAt ?? decision.pickedUpAt;
+    const heardBy = inbox?.deliveredAt == null ? decision.pickedUpBy : (inbox.deliveredTo ?? null);
+    const unwoken =
+      heardAt === null ? (gone.find((event) => event.ts >= (decision.decidedAt ?? ""))?.ref ?? null) : null;
     return {
       ref: decision.ref,
       title: decision.title,
@@ -50,11 +61,15 @@ function answersOn(ctx: Ctx, line: string): LineHome["answers"] {
       status:
         decision.reportStatus === "done"
           ? "carried_out"
-          : heard !== null || decision.pickedUpAt !== null
+          : heardAt !== null
             ? "picked_up"
-            : failedWake
+            : unwoken !== null
               ? "wake_failed"
               : "not_picked_up",
+      by: heardAt === null ? null : heardBy,
+      at: heardAt,
+      note: decision.reportStatus === "done" ? decision.reportNote : null,
+      unwoken,
     };
   });
 }
@@ -109,7 +124,15 @@ export function buildHome(ctx: Ctx): HomeView {
       ? [
           ...(line.doneProposal === null
             ? []
-            : [{ kind: "done" as const, line: line.ref, text: line.doneProposal, by: line.doneProposedBy }]),
+            : [
+                {
+                  kind: "done" as const,
+                  line: line.ref,
+                  text: line.doneProposal,
+                  by: line.doneProposedBy,
+                  doneWhen: line.doneWhen,
+                },
+              ]),
           ...(line.doneWhenProposal === null
             ? []
             : [
@@ -118,6 +141,8 @@ export function buildHome(ctx: Ctx): HomeView {
                   line: line.ref,
                   text: line.doneWhenProposal,
                   by: line.doneWhenProposedBy,
+                  was: line.doneWhen,
+                  why: line.doneWhenWhy,
                 },
               ]),
         ]

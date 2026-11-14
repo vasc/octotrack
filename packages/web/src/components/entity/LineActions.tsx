@@ -11,27 +11,23 @@ export interface LineActionsProps {
   owner?: string | null;
   onChoose(choice: LineChoice): void;
   onTable(reason: string, lookAgainAt: string | null): void;
-  /** Opened with t: tabling first. */
-  tabling?: boolean;
+  /** What waits on the developer on the line, which tabling holds. */
+  held?: { questions: number; tasks: number };
 }
 
 /**
  * Where a line stands and how to move it, as E-Line draws it: its state, the moves that state allows (Done… asks
  * before it ends the line), the rarer ones under More, and what a move away does to its agents.
  */
-export function LineActions({
-  line,
-  owner = null,
-  onChoose,
-  onTable,
-  tabling: startTabling = false,
-}: LineActionsProps) {
-  const [mode, setMode] = useState<"table" | "done" | "more" | null>(startTabling ? "table" : null);
+export function LineActions({ line, owner = null, onChoose, onTable, held }: LineActionsProps) {
+  const [mode, setMode] = useState<"table" | "done" | "more" | null>(null);
   const ended = line.state === "done" || line.state === "dropped";
   if (mode === "table") {
     return (
       <TableForm
         title={line.title}
+        owner={owner}
+        {...(held === undefined ? {} : { held })}
         onTable={(reason, lookAgainAt) => {
           onTable(reason, lookAgainAt);
           setMode(null);

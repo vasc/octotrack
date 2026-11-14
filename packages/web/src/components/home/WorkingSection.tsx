@@ -4,6 +4,9 @@ import type { DragProps } from "../../hooks/useDragOrder.ts";
 import type { HomeActions } from "../../hooks/useHome.ts";
 import { lineFocusRef, refOf, stepInRef } from "../../lib/focus.ts";
 import { stepInReason } from "../../lib/lines.ts";
+import { FocusTarget } from "./FocusTarget.tsx";
+import { FoldedItems } from "./FoldedItems.tsx";
+import { TaskItem } from "./TaskItem.tsx";
 import { ForYouItem } from "./ForYouItem.tsx";
 import { HomeSection } from "./HomeSection.tsx";
 import { MoreForYou } from "./MoreForYou.tsx";
@@ -28,10 +31,12 @@ export function WorkingSection({
   focus,
   armed,
   foldFrom,
+  at,
   reorder,
   drag,
   actions,
   onFocus,
+  onPostponed,
 }: {
   home: HomeView;
   h: HomeActions;
@@ -39,11 +44,15 @@ export function WorkingSection({
   armed: boolean;
   /** Lines from this index on fold to one row. */
   foldFrom: number;
+  /** I'm at this place: its tasks open on their lines and everything else folds. */
+  at: string | null;
   reorder(title: string, ref: string, index: number, count: number): ReactNode;
   drag(ref: string, section: string): DragProps | undefined;
   /** What acts on the whole section: Reorder. */
   actions: ReactNode;
   onFocus(ref: string): void;
+  /** Later sent a question to the bottom of its line: focus moves on from it. */
+  onPostponed(ref: string): void;
 }) {
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   return (
@@ -71,11 +80,10 @@ export function WorkingSection({
           const open = expanded.has(line.ref) || rest.some((other) => refOf(other) === focus);
           const folded = index >= foldFrom && !forYou.some((other) => refOf(other) === focus);
           const item = (forYouItem: (typeof forYou)[number]) => (
-            <div
+            <FocusTarget
               key={refOf(forYouItem)}
-              className="focus-wrap"
-              data-selected={refOf(forYouItem) === focus}
-              aria-current={refOf(forYouItem) === focus ? "true" : undefined}
+              focusRef={refOf(forYouItem)}
+              focused={refOf(forYouItem) === focus}
             >
               <ForYouItem
                 item={forYouItem}
@@ -88,8 +96,9 @@ export function WorkingSection({
                 onLineDone={h.lineDone}
                 onNotYet={h.notYet}
                 onDoneWhen={h.doneWhen}
+                onPostponed={onPostponed}
               />
-            </div>
+            </FocusTarget>
           );
           return (
             <WorkingLine
@@ -102,13 +111,19 @@ export function WorkingSection({
               {...(details === undefined ? {} : { details })}
               reorder={reorder(line.title, line.ref, index, home.working.length)}
             >
-              {stepIn === null ? null : (
+              {stepIn === null ? null : at !== null && focus !== stepInRef(line.ref) ? (
+                <div className="line-items">
+                  <button type="button" className="more-link" onClick={() => onFocus(stepInRef(line.ref))}>
+                    Step in, folded
+                  </button>
+                </div>
+              ) : (
                 <div className="line-items">
                   <StepIn
                     line={line}
                     reason={stepIn}
                     focused={focus === stepInRef(line.ref)}
-                    {...(failed && !cloneFailed ? { onRetry: h.retry } : {})}
+                    {...((failed && !cloneFailed) || !home.runner.configured ? { onRetry: h.retry } : {})}
                     {...(atCap ? { onAnyway: h.anyway } : {})}
                     {...(cloneFailed && repo !== undefined
                       ? { checkoutRepo: repo, onCheckout: h.setCheckout }
@@ -118,7 +133,38 @@ export function WorkingSection({
                   />
                 </div>
               )}
-              {first === undefined ? null : folded ? (
+              {at !== null ? (
+                <div className="line-items">
+                  {forYou.map((other) => {
+                    const here = other.kind === "task" && other.task.place === at;
+                    // This place's tasks open with their choices; anything else opens only with focus.
+                    if (here)
+                      return (
+                        <FocusTarget
+                          key={refOf(other)}
+                          focusRef={refOf(other)}
+                          focused={refOf(other) === focus}
+                        >
+                          <TaskItem task={other.task} onDone={h.taskDone} onCant={h.taskCant} />
+                        </FocusTarget>
+                      );
+                    return refOf(other) === focus ? item(other) : null;
+                  })}
+                  <FoldedItems
+                    items={forYou.filter(
+                      (other) =>
+                        !(other.kind === "task" && other.task.place === at) && refOf(other) !== focus,
+                    )}
+                    onOpen={() => {
+                      const rest = forYou.find(
+                        (other) =>
+                          !(other.kind === "task" && other.task.place === at) && refOf(other) !== focus,
+                      );
+                      if (rest !== undefined) onFocus(refOf(rest));
+                    }}
+                  />
+                </div>
+              ) : first === undefined ? null : folded ? (
                 <div className="line-items">
                   <button type="button" className="more-link" onClick={() => onFocus(refOf(first))}>
                     {forYou.length} waiting on you

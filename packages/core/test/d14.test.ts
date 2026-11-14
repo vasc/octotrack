@@ -424,14 +424,64 @@ describe("what became of an answer", () => {
     w.as(w.dev, c.decisionResolve, { ref: asked.ref, option: "a" });
     const answers = () => w.as(w.dev, c.homeShow, {}).lines[line.ref]?.answers ?? [];
     expect(answers()).toEqual([
-      { ref: asked.ref, title: "Which board?", answer: "Yes", status: "not_picked_up" },
+      {
+        ref: asked.ref,
+        title: "Which board?",
+        answer: "Yes",
+        status: "not_picked_up",
+        by: null,
+        at: null,
+        note: null,
+        unwoken: null,
+      },
     ]);
+    w.later(4);
     w.notices(owner);
-    expect(answers()[0]?.status).toBe("picked_up");
+    expect(answers()[0]).toMatchObject({ status: "picked_up", by: "owner", at: "2026-11-14T09:04:00.000Z" });
     w.as(owner, c.decisionReport, { ref: asked.ref, status: "done", note: "Printed for the 26 mm board." });
-    expect(answers()[0]?.status).toBe("carried_out");
+    expect(answers()[0]).toMatchObject({ status: "carried_out", note: "Printed for the 26 mm board." });
     w.later(4 * DAY);
     expect(answers()).toEqual([]);
+  });
+});
+
+describe("an answer whose owner could not be woken", () => {
+  test("names the agent that could not be woken", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    w.as(w.agent("owner"), c.agentRegister, { repo: "PANEL", wake: "claude:abc" });
+    const owner = w.agent("owner");
+    w.as(owner, c.lineTake, { ref: line.ref });
+    const asked = w.as(owner, c.decisionAsk, {
+      title: "Which board?",
+      context: "Context.",
+      options: OPTIONS,
+    });
+    w.as(w.dev, c.decisionResolve, { ref: asked.ref, option: "a" });
+    w.as(w.server, c.agentWoken, { name: "owner", error: "no such session" });
+    expect(w.as(w.dev, c.homeShow, {}).lines[line.ref]?.answers[0]).toMatchObject({
+      status: "wake_failed",
+      unwoken: "owner",
+    });
+  });
+});
+
+describe("finding a line's questions", () => {
+  test("line: finds the questions on a line", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    const other = w.line("Trip");
+    const owner = w.register("owner");
+    w.as(owner, c.lineTake, { ref: line.ref });
+    const asked = w.as(owner, c.decisionAsk, {
+      title: "Which board?",
+      context: "Context.",
+      options: OPTIONS,
+    });
+    expect(w.as(w.dev, c.decisionList, { query: `line:${line.ref} status:open` }).map((d) => d.ref)).toEqual([
+      asked.ref,
+    ]);
+    expect(w.as(w.dev, c.decisionList, { query: `line:${other.ref}` })).toEqual([]);
   });
 });
 

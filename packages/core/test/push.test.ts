@@ -64,8 +64,9 @@ describe("push notifications", () => {
     const asked = w.ask("L-1", "Which board?");
     w.ask("L-3", "Not on a top line");
     const due = w.tracker.call(c.pushDue, {}, w.server);
-    expect(due.map((note) => [note.title, note.url])).toEqual([
-      ["First: Which board?", `/?focus=${asked.ref}`],
+    // As E-States draws it: the question is the title; the line and the recommendation come under it.
+    expect(due.map((note) => [note.title, note.body, note.url])).toEqual([
+      ["Which board?", "Line 1, First · Context.", `/?focus=${asked.ref}`],
     ]);
     w.tracker.call(c.pushSent, { keys: due.map((note) => note.key) }, w.server);
     w.ask("L-1", "Another on the same line");
@@ -74,14 +75,16 @@ describe("push notifications", () => {
     // Second has no owner, so by now it asks the developer to step in too; this is about First.
     w.later(1);
     const again = w.tracker.call(c.pushDue, {}, w.server).map((note) => note.title);
-    expect(again.filter((title) => title.startsWith("First"))).toEqual(["First: Another on the same line"]);
+    expect(again.filter((title) => !title.startsWith("Step in"))).toEqual(["Another on the same line"]);
   });
 
   test("urgent always buzzes, even on a line that just did", () => {
     const w = world();
     w.ask("L-3", "Order now?", true);
     const due = w.tracker.call(c.pushDue, {}, w.server);
-    expect(due.map((note) => note.title)).toEqual(["Urgent: Order now?"]);
+    expect(due.map((note) => [note.title, note.body])).toEqual([
+      ["Order now?", "Urgent, something broken · Line 3, Third · Context."],
+    ]);
   });
 
   test("a top line that needs the developer to step in buzzes too", () => {

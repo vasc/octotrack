@@ -314,6 +314,7 @@ const MIGRATIONS: readonly Migration[] = [
   `,
   `
   ALTER TABLE pending_choices ADD COLUMN draft TEXT;
+  ALTER TABLE lines ADD COLUMN doneWhenWhy TEXT;
   `,
 ];
 

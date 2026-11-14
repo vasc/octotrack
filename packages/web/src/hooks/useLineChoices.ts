@@ -13,14 +13,15 @@ const OPS: Readonly<Record<LineChoice, string>> = {
   not_yet: contracts.lineNotYet.name,
 };
 
-const SAID: Readonly<Record<LineChoice, string>> = {
-  start: "Started",
-  queue: "Up next:",
-  done: "Done:",
-  drop: "Dropped",
-  reject: "Not a line:",
-  own: "You own",
-  not_yet: "Not yet:",
+/** What each choice is doing while it waits, as the Undo bar says it. */
+const SAID: Readonly<Record<LineChoice, (title: string) => string>> = {
+  start: (title) => `Starting ${title}`,
+  queue: (title) => `Moving ${title} to up next`,
+  done: (title) => `Closing ${title} as done`,
+  drop: (title) => `Dropping ${title}`,
+  reject: (title) => `Turning down ${title}: not a line`,
+  own: (title) => `Taking ${title} as yours`,
+  not_yet: (title) => `Telling ${title}'s owner it is not done yet`,
 };
 
 /** The developer's choices on one line, as the line panel offers them. Each waits a few seconds with Undo. */
@@ -28,46 +29,45 @@ export function useLineChoices(line: Line) {
   const choices = useChoices();
   return {
     failure: choices.failure,
-    choose: (choice: LineChoice) =>
-      choices.make(OPS[choice], { ref: line.ref }, `${SAID[choice]} ${line.title}`),
+    choose: (choice: LineChoice) => choices.make(OPS[choice], { ref: line.ref }, SAID[choice](line.title)),
     table: (reason: string, lookAgainAt: string | null) =>
       choices.make(
         contracts.lineTable.name,
         { ref: line.ref, reason, ...(lookAgainAt === null ? {} : { lookAgainAt }) },
-        `Tabled ${line.title}`,
+        `Tabling ${line.title}`,
       ),
     doneWhen: (accept: boolean) =>
       choices.make(
         contracts.lineDoneWhenAnswer.name,
         { ref: line.ref, accept },
-        accept ? `New done when for ${line.title}` : `${line.title} keeps its done when`,
+        accept ? `Accepting the new done when for ${line.title}` : `Keeping ${line.title}'s done when`,
       ),
     tell: (body: string) =>
       choices.make(
         contracts.lineTell.name,
         { line: line.ref, body },
-        body === "" ? `Nudged ${line.title}` : `Told ${line.title}: ${body}`,
+        body === "" ? `Nudging ${line.title}'s owner` : `Telling ${line.title}'s owner: ${body}`,
         `tell:${line.ref}`,
       ),
-    stop: (name: string) => choices.make(contracts.agentStop.name, { name }, `Stopped ${name}`),
+    stop: (name: string) => choices.make(contracts.agentStop.name, { name }, `Stopping ${name}`),
     hand: (repos: string[]) =>
       choices.make(
         contracts.lineHand.name,
         { ref: line.ref, ...(repos.length === 0 ? {} : { repos }) },
-        `Handed ${line.title} to the agents`,
+        `Handing ${line.title} to the agents`,
       ),
     addTask: (title: string) =>
       choices.make(
         contracts.taskAdd.name,
         { line: line.ref, title },
-        `Task on ${line.title}: ${title}`,
+        `Adding a task to ${line.title}: ${title}`,
         `own:${line.ref}`,
       ),
     addNote: (body: string) =>
       choices.make(
         contracts.noteAdd.name,
         { line: line.ref, body },
-        `Note on ${line.title}`,
+        `Adding a note to ${line.title}`,
         `own:${line.ref}`,
       ),
   };

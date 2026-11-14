@@ -4,6 +4,7 @@ import type { DragProps } from "../../hooks/useDragOrder.ts";
 import { crewText } from "../../lib/lines.ts";
 import { openEntity } from "../../lib/router.ts";
 import { Markdown } from "../ui/Markdown.tsx";
+import { lineFocusRef } from "../../lib/focus.ts";
 
 function heldText(held: LineHome["held"]): string {
   const parts = [
@@ -40,11 +41,20 @@ export function UpNextRow({
     details === undefined || details.scopedSteps === 0
       ? "not scoped yet"
       : `scoped: ${details.scopedSteps} step${details.scopedSteps === 1 ? "" : "s"}`;
+  // In Reorder mode a line is one row: its number, its title and the buttons that move it.
+  const compact = reorder !== undefined && reorder !== null;
   const holds =
     details !== undefined &&
     (details.held.questions > 0 || details.held.tasks > 0 || line.doneWhenProposal !== null);
   return (
-    <li className="next-row" aria-label={line.title} data-selected={focused} {...drag}>
+    <li
+      className="next-row"
+      aria-label={line.title}
+      data-selected={focused}
+      data-focus-ref={lineFocusRef(line.ref)}
+      tabIndex={-1}
+      {...drag}
+    >
       <span className="line-handle" aria-hidden="true" title="Drag to reorder">
         ⋮⋮
       </span>
@@ -53,29 +63,33 @@ export function UpNextRow({
         <button type="button" className="line-link" onClick={() => openEntity(line.ref)}>
           {line.title}
         </button>
-        <span className="line-facts">
-          {details === undefined ? null : <span> · {heldText(details.held)}</span>}
-          <span> · {scoping}</span>
-          {line.doneWhenProposal === null ? null : <span> · done when changed</span>}
-          {crewText(crew).map((words) => (
-            <span key={words}> · {words}</span>
-          ))}
-        </span>
-        {line.doneWhen === "" ? null : (
+        {compact ? null : (
+          <span className="line-facts">
+            {details === undefined ? null : <span> · {heldText(details.held)}</span>}
+            <span> · {scoping}</span>
+            {line.doneWhenProposal === null ? null : <span> · done when changed</span>}
+            {crewText(crew).map((words) => (
+              <span key={words}> · {words}</span>
+            ))}
+          </span>
+        )}
+        {compact || line.doneWhen === "" ? null : (
           <span className="next-row-done">
             Done when <Markdown text={line.doneWhen} inline />
           </span>
         )}
       </span>
       {reorder}
-      <button
-        type="button"
-        className="btn"
-        aria-label={`Start ${line.title}`}
-        onClick={() => onStart(line.ref)}
-      >
-        {holds ? "Start…" : "Start"}
-      </button>
+      {compact ? null : (
+        <button
+          type="button"
+          className="btn"
+          aria-label={`Start ${line.title}`}
+          onClick={() => onStart(line.ref)}
+        >
+          {holds ? "Start…" : "Start"}
+        </button>
+      )}
     </li>
   );
 }

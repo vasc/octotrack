@@ -2,6 +2,7 @@ import type { Line } from "@octotrack/core/schemas";
 import { useState } from "react";
 import { openEntity } from "../../lib/router.ts";
 import { TableForm } from "../lines/TableForm.tsx";
+import { FoldPicker } from "./FoldPicker.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
 
 const URGENT: Readonly<Record<NonNullable<Line["urgentReason"]>, string>> = {
@@ -56,6 +57,8 @@ export function ProposalCard({
       className="proposal-card"
       aria-label={line.title}
       data-selected={focused}
+      data-focus-ref={line.ref}
+      tabIndex={-1}
       data-urgent={line.urgentReason !== null}
     >
       <div className="proposal-text">
@@ -99,23 +102,12 @@ export function ProposalCard({
           onCancel={() => setMode(null)}
         />
       ) : mode === "fold" ? (
-        <fieldset className="choice-group">
-          <legend className="muted">Fold {line.title} into</legend>
-          {foldTargets.map((target) => (
-            <button
-              key={target.ref}
-              type="button"
-              className="btn"
-              aria-label={`Fold ${line.title} into ${target.title}`}
-              onClick={() => onFold(line.ref, target.ref)}
-            >
-              {target.ref} {target.title}
-            </button>
-          ))}
-          <button type="button" className="btn" onClick={() => setMode(null)}>
-            Cancel
-          </button>
-        </fieldset>
+        <FoldPicker
+          title={line.title}
+          targets={foldTargets}
+          onFold={(into) => onFold(line.ref, into)}
+          onCancel={() => setMode(null)}
+        />
       ) : (
         <div className="proposal-choices">
           <button

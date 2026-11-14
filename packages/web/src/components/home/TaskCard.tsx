@@ -72,7 +72,7 @@ export function TaskCard({ task, words, onWords, onDone, onCant }: TaskCardProps
           ) : (
             <>
               <button type="submit" className="btn" data-tone="attention" data-choice="1" disabled={!ready}>
-                {own ? "Done" : "Send · Done"}
+                Done
               </button>
               <button type="button" className="btn" data-choice="2" onClick={() => setCant(true)}>
                 Can't do it…

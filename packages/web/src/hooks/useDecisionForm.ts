@@ -2,6 +2,8 @@ import { contracts } from "@octotrack/core/contracts";
 import type { Decision } from "@octotrack/core/schemas";
 import { useState } from "react";
 import { useChoices } from "./useChoices.ts";
+import { useDraft } from "./useDraft.ts";
+import { useLinePlace } from "./useLinePlace.ts";
 import { useResolveDecision } from "./useResolveDecision.ts";
 
 export interface DecisionForm {
@@ -23,11 +25,17 @@ export interface DecisionForm {
 
 /** Answering one question: an option in one press, or the developer's own words; Later; Not urgent. */
 export function useDecisionForm(decision: Decision, onPostponed?: (ref: string) => void): DecisionForm {
-  const [ownWords, setOwnWords] = useState<string | null>(null);
+  const key = `answer:${decision.ref}`;
+  // Words typed as an answer are a draft on the server, like a Tell: they follow the developer between devices.
+  const draft = useDraft(key);
+  const [writing, setWriting] = useState(false);
   const { resolve, error } = useResolveDecision();
   const choices = useChoices();
+  const line = useLinePlace(decision.line);
+  const to = line?.title ?? decision.ref;
+  const open = writing || draft.value !== "";
   return {
-    ownWords,
+    ownWords: open ? draft.value : null,
     error: error?.message ?? null,
     answer: (key) => {
       const label = decision.options.find((option) => option.key === key)?.label ?? key;
@@ -35,33 +43,43 @@ export function useDecisionForm(decision: Decision, onPostponed?: (ref: string) 
         ref: decision.ref,
         option: key,
         note: null,
-        summary: `Sending "${label}" to ${decision.ref}`,
+        summary: `Sending "${label}" to ${to}`,
       });
     },
-    openOwn: () => setOwnWords(""),
-    closeOwn: () => setOwnWords(null),
-    setOwn: setOwnWords,
+    openOwn: () => setWriting(true),
+    closeOwn: () => {
+      setWriting(false);
+      draft.clear();
+    },
+    setOwn: draft.change,
     sendOwn: () => {
-      const words = ownWords?.trim() ?? "";
+      const words = draft.value.trim();
       if (words === "") return;
-      resolve({
-        ref: decision.ref,
-        option: null,
-        note: words,
-        summary: `Sending your words to ${decision.ref}`,
-      });
-      setOwnWords(null);
+      setWriting(false);
+      void draft.flush().then(() =>
+        resolve({
+          ref: decision.ref,
+          option: null,
+          note: words,
+          summary: `Sending your words to ${to}`,
+          draft: key,
+        }),
+      );
     },
     postpone: () => {
       const undo = decision.postponedAt !== null;
       choices.make(
         contracts.decisionPostpone.name,
         { ref: decision.ref, ...(undo ? { undo } : {}) },
-        undo ? `Brought back ${decision.ref}` : `${decision.ref} later`,
+        undo ? `Bringing back ${decision.ref}` : `Putting ${decision.ref} off until later`,
       );
       if (!undo) onPostponed?.(decision.ref);
     },
     notUrgent: () =>
-      choices.make(contracts.decisionNotUrgent.name, { ref: decision.ref }, `${decision.ref} is not urgent`),
+      choices.make(
+        contracts.decisionNotUrgent.name,
+        { ref: decision.ref },
+        `Returning ${decision.ref} to its line, not urgent`,
+      ),
   };
 }
