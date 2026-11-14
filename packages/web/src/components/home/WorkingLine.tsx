@@ -42,6 +42,7 @@ export function WorkingLine({
         className="line-card"
         aria-label={line.title}
         data-selected={focused}
+        aria-current={focused ? "true" : undefined}
         data-focus-ref={lineFocusRef(line.ref)}
         tabIndex={-1}
         {...drop}

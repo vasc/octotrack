@@ -57,6 +57,7 @@ export function ProposalCard({
       className="proposal-card"
       aria-label={line.title}
       data-selected={focused}
+      aria-current={focused ? "true" : undefined}
       data-focus-ref={line.ref}
       tabIndex={-1}
       data-urgent={line.urgentReason !== null}

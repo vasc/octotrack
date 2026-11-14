@@ -17,7 +17,7 @@ two pull against each other, the earlier one wins.
 ## 1. Attention is the scarce thing, and it has one color
 
 One person reads what many agents write. The design's job is to make clear what needs that person, and the rest can
-recede. So amber means exactly one thing: this needs you. A new decision, an open card, a count in the sidebar. It is
+recede. So amber means exactly one thing: this needs you. A question, a task, what to send back. It is
 never decoration, never a brand color and never just emphasis, because the first time it means something else it stops
 working.
 
@@ -26,7 +26,7 @@ _In practice:_ a screen with nothing waiting should have almost no color at all.
 ## 2. Decide here
 
 A decision should take seconds, and should not take a trip anywhere. The question, the context, the options, the
-recommendation and why it ranks where it does are all on the card, and so is the answer.
+recommendation and why, and the line it holds up are all on the card, and so is the answer: one press, with Undo.
 
 _In practice:_ no separate decision page is needed to decide. `1`, `Enter`, done.
 

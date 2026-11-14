@@ -33,9 +33,9 @@ Say why it is empty, and how to change that.
 
 Good news can be stated flatly. There is no need to celebrate it.
 
-## Sentences in the feed
+## Sentences in the log
 
-A feed entry is a sentence with the ref first, so that the eye can run down the left edge.
+A log entry is a sentence with the ref first, so that the eye can run down the left edge.
 
 ```text
 D-3 decided: "Redis" on "Which queue?"
@@ -47,9 +47,9 @@ OCT-4 moved to done: Add a queue
 
 | Use                              | For                                     | Not                        |
 | -------------------------------- | --------------------------------------- | -------------------------- |
-| Decision                         | Something only the developer can answer | Ticket, request            |
+| Question                         | Something only the developer can answer | Ticket, decision request   |
 | Drift                            | A record that may be out of date        | Staleness, sync issue      |
-| Needs you                        | The queue of decisions                  | Inbox, action items        |
+| Waiting on you                   | What lines need from the developer      | Inbox, action items        |
 | Agent                            | An AI working through the CLI           | Bot, worker                |
 | Waiting                          | An agent hanging on something right now | Blocked, which is for work |
 | Blocked                          | Work that cannot move yet               | Stuck                      |
@@ -58,7 +58,9 @@ OCT-4 moved to done: Add a queue
 ## Mechanics
 
 - Sentence case everywhere, including buttons and headings.
-- Buttons are verbs, or say the state you are declaring: `Decide`, `Promote`, `Updated`, `Nothing to update`.
+- Buttons are verbs, or say the state you are declaring: `Start`, `Table`, `Updated`, `Nothing to update`. No
+  ellipsis for a button that asks something first.
+- A choice waiting with Undo is said as it happens: `Sending "26 mm" to Sendspin enclosure in 5 seconds`.
 - No exclamation marks, no "please", no "oops", no emoji.
 - No "successfully". If it worked, the page shows it.
 - Refs and commands are always written exactly as they are typed.

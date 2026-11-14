@@ -22,6 +22,8 @@ export function FoldPicker({
         <button
           key={target.ref}
           type="button"
+          // biome-ignore lint/a11y/noAutofocus: opened to choose one, so the first choice takes the cursor
+          autoFocus={index === 0}
           className="btn"
           aria-label={`Fold ${title} into ${target.title}`}
           data-choice={index < 9 ? String(index + 1) : undefined}

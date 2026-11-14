@@ -147,24 +147,28 @@ describe("a finger can use it", () => {
     ".nav-item",
     ".btn",
     ".tab",
-    ".option",
-    ".queue-more-title",
     ".field",
     ".filter-input",
+    ".select",
     ".detail-close",
     ".check",
     ".chip:not(.chip--static)",
-    ".pr-strip",
+    ".line-link",
+    ".more-link",
+    ".item-row",
+    ".top-count",
+    ".top-urgent",
+    ".menu-item",
+    ".row-title",
+    ".tile-head",
+    ".repo-chip-remove",
   ])("%s is tall enough to tap", (selector) => {
     expect(rulesFor(selector)).toContain("min-height: var(--touch-target)");
   });
 
-  test.each([".option kbd", ".keyboard-hint"])(
-    "%s, which only keyboards can act on, is hidden",
-    (selector) => {
-      expect(rulesFor(selector)).toContain("display: none");
-    },
-  );
+  test.each([".top-keys"])("%s, which only keyboards can act on, is hidden", (selector) => {
+    expect(rulesFor(selector)).toContain("display: none");
+  });
 
   test("reading text grows on touch screens", () => {
     const tokenCoarse = /@media \(pointer: coarse\) \{([\s\S]*?)\n\}/.exec(tokensCss)?.[1] ?? "";

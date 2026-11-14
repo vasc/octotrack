@@ -53,12 +53,17 @@ export function TopBar({ path, counts, places, at, onAt, onNewLine, onKeys, atRe
           <NavItem label="Log" to="/log" current={path === "/log"} />
           <NavItem label="Agents" to="/agents" current={path === "/agents"} />
         </nav>
-        {urgent === undefined ? null : <CountLinkView count={urgent} className="top-urgent" />}
-        {waiting.length === 0 ? null : (
-          <span className="top-counts" role="status" aria-label="Waiting on you">
-            {waiting.map((count) => (
-              <CountLinkView key={count.key} count={count} className="top-count" />
-            ))}
+        {counts.length === 0 ? null : (
+          // One announced region for everything that waits, urgent first and apart, the rest one quiet group.
+          <span className="top-waiting" role="status" aria-label="Waiting on you">
+            {urgent === undefined ? null : <CountLinkView count={urgent} className="top-urgent" />}
+            {waiting.length === 0 ? null : (
+              <span className="top-counts">
+                {waiting.map((count) => (
+                  <CountLinkView key={count.key} count={count} className="top-count" />
+                ))}
+              </span>
+            )}
           </span>
         )}
         <span className="top-actions">
@@ -87,7 +92,7 @@ export function TopBar({ path, counts, places, at, onAt, onNewLine, onKeys, atRe
           </button>
           <button
             type="button"
-            className="btn btn-icon"
+            className="btn btn-icon top-keys"
             aria-label="Keyboard shortcuts"
             title="Keyboard shortcuts (?)"
             onClick={onKeys}

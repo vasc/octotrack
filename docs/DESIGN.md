@@ -412,6 +412,11 @@ Decisions made from that:
     when the runner may act, if the agent is still stopped then. Worktrees default to `worktrees` in Octotrack's home,
     so a test install with its own `OCTO_HOME` never works in the live install's.
 - **Departures, each for a reason.**
+  - _The pages from before lines are gone:_ Decisions, Pull requests, Drift, Issues and Repos. Nothing linked to them
+    any more, and the issues page changed status through a select with no Undo. Questions are answered on home, a
+    pull request shows on the issue it implements, drift on what it is about, and an architecture decision is found
+    with a Log search (`type:architecture`); repos are kept with `octo repo`. _Why:_ the boards have only Lines, Log
+    and Agents, and a page nothing links to still has to keep every rule.
   - _No rail, no saved views on the Log, no watches on Agents._ The boards have none: the Log is what has not been
     seen, line by line, with a search over everything; Agents is the roster. _Why:_ the boards are the agreed design,
     and each of these repeated something a page already shows. PR sync problems, which the rail showed, head the Log.
@@ -426,7 +431,7 @@ Decisions made from that:
   - _Inter is not bundled;_ the stack falls back to the system font. _Why:_ no web font is loaded by the dashboard, so
     it starts with nothing fetched from outside the machine.
   - _Repos keep their storage name._ The table, contracts and events still say project; what changed is the words
-    people and agents use: `octo repo create`, `list`, `update` and `checkout`, the Repos page, and `repo:` in queries,
+    people and agents use: `octo repo create`, `list`, `update` and `checkout`, and `repo:` in queries,
     which takes a repo's key as well as a pull request's owner/name. `project:` keeps working, so saved watches and
     views need no rewrite. _Why:_ renaming storage changes no behaviour and would break saved watches, views and every
     agent's habits on the live database at once.
