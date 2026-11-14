@@ -99,15 +99,29 @@ right, so there "Nothing to update" is the only answer on offer.
 | `RoadmapPage`       | Structural | Three lanes, and a copy as markdown                                        |
 | `IdeasPage`         | Structural | Quick capture, and the list                                                |
 
-## Lines of work: `lines/`
+## Home: `home/` and `lines/`
 
-| Component     | Kind       | What it is                                                                                |
-| ------------- | ---------- | ----------------------------------------------------------------------------------------- |
-| `LineRow`     | Pure       | One line: ref, title, repos, an agent's advice or the reason it waits, and its moves      |
-| `LineSection` | Pure       | A titled section of lines in the developer's order. Left out when empty unless it says so |
-| `TableForm`   | Pure       | Asks why before tabling: a tabled line always says why                                    |
-| `AddLineForm` | Pure       | A new line with its done-when sentence. It joins the end of up next                       |
-| `LinesPage`   | Structural | Every line, section by section                                                            |
+Home is one list: every line in the developer's order, with what each needs from them in place. See
+[patterns.md](patterns.md) and the E · One list boards on the design canvas.
+
+| Component        | Kind       | What it is                                                                                   |
+| ---------------- | ---------- | -------------------------------------------------------------------------------------------- |
+| `HomeCounts`     | Pure       | What waits on the developer: urgent, to answer, to do, to accept, to step in. Zeros left out |
+| `HomeSection`    | Pure       | A named region of home with its count and what it means                                      |
+| `WorkingLine`    | Pure       | A line being worked on: its number, title, meta, headline, a case for done, and its items    |
+| `LineMeta`       | Pure       | One row of facts: who is on it, waiting on you, its plan step                                |
+| `ForYouRow`      | Pure       | A question or task as one row that opens it                                                  |
+| `ForYouItem`     | Structural | One thing waiting: opened in full with focus, else its row                                   |
+| `TaskCard`       | Pure       | A task opened: where, what to report, and Done… or Can't do it…, each asking for its words   |
+| `StepIn`         | Pure       | A working line nobody could be found for, in red, with Table it… and I'll own it             |
+| `UpNextRow`      | Pure       | A line up next: what it holds, how far scoping got, its done when, and Start                 |
+| `ProposalCard`   | Pure       | A proposed line with the agent's case, and Start, Up next, Table…, Fold into…, Not a line    |
+| `FoldedSection`  | Pure       | Tabled and done lines folded to one row that names them, until shown                         |
+| `QuietRow`       | Pure       | A tabled or finished line, opened: why it waits, and Start or Up next                        |
+| `ReorderButtons` | Pure       | Up and down within a section, in Reorder mode                                                |
+| `HomePage`       | Structural | Home: the focus, the sections, and every choice                                              |
+| `TableForm`      | Pure       | Asks why before tabling: a tabled line always says why                                       |
+| `AddLineForm`    | Pure       | A new line with its done-when sentence. It joins the end of up next                          |
 
 ## Agents: `agents/`
 
@@ -129,19 +143,21 @@ right, so there "Nothing to update" is the only answer on offer.
 
 Opens from any ref, in the rail, without leaving the page.
 
-| Component        | Kind       | What it is                                                                     |
-| ---------------- | ---------- | ------------------------------------------------------------------------------ |
-| `EntityHeader`   | Pure       | Ref, kind, status, title and close                                             |
-| `KeyValues`      | Pure       | Label and value pairs. Empty values are left out                               |
-| `LinkList`       | Pure       | Connections, worded from this item's point of view: "blocked by", not "blocks" |
-| `HistoryList`    | Pure       | What has happened to this item                                                 |
-| `PrPanel`        | Pure       | A pull request's details                                                       |
-| `LinePanel`      | Pure       | A line of work: its state, what finishes it, and why it waits if it does       |
-| `EntityBody`     | Pure       | Picks the right body for the kind of item                                      |
-| `DecisionPanel`  | Structural | An open decision as a card, or a closed one as its record                      |
-| `IssuePanel`     | Structural | An issue's details, with its status select                                     |
-| `UpdatesSection` | Structural | Updates on this item, and a box to post one                                    |
-| `EntityPanel`    | Structural | Loads it all                                                                   |
+| Component        | Kind       | What it is                                                                                 |
+| ---------------- | ---------- | ------------------------------------------------------------------------------------------ |
+| `EntityHeader`   | Pure       | Ref, kind, status, title and close                                                         |
+| `KeyValues`      | Pure       | Label and value pairs. Empty values are left out                                           |
+| `LinkList`       | Pure       | Connections, worded from this item's point of view: "blocked by", not "blocks"             |
+| `HistoryList`    | Pure       | What has happened to this item                                                             |
+| `PrPanel`        | Pure       | A pull request's details                                                                   |
+| `LinePanel`      | Pure       | A line of work: its state, what finishes it, and why it waits if it does                   |
+| `LineActions`    | Pure       | What the developer can do with a line: place, table, finish, own, and answer its proposals |
+| `LinePanelItem`  | Structural | A line in the inspector with its actions                                                   |
+| `EntityBody`     | Pure       | Picks the right body for the kind of item                                                  |
+| `DecisionPanel`  | Structural | An open decision as a card, or a closed one as its record                                  |
+| `IssuePanel`     | Structural | An issue's details, with its status select                                                 |
+| `UpdatesSection` | Structural | Updates on this item, and a box to post one                                                |
+| `EntityPanel`    | Structural | Loads it all                                                                               |
 
 ## Also in the language, not components
 

@@ -857,8 +857,7 @@ describe("lines of work", () => {
     expect(titles).toEqual(["Sendspin enclosure", "Weekly digest"]);
     const proposed = within(view.getByRole("region", { name: "Proposed" }));
     proposed.getByText("Wall mount");
-    proposed.getByText(/panel-agent says up next/);
-    proposed.getByText("The base is final.");
+    proposed.getByText("panel-agent says up next: The base is final.");
   });
 
   test("the developer places a proposal, reorders, tables with a reason and adds a line", async () => {
@@ -866,11 +865,12 @@ describe("lines of work", () => {
     navigate("/lines");
     const view = renderApp(<App />);
     const proposed = within(await view.findByRole("region", { name: "Proposed" }));
-    fireEvent.click(proposed.getByRole("button", { name: "Queue Wall mount" }));
+    fireEvent.click(proposed.getByRole("button", { name: "Up next Wall mount" }));
     const upNext = within(await view.findByRole("region", { name: "Up next" }));
     await upNext.findByText("Wall mount");
     expect(server.tracker.call(c.lineShow, { ref: proposal.ref }, asDeveloper).line.state).toBe("up_next");
 
+    fireEvent.click(view.getByRole("button", { name: "Reorder" }));
     const working = within(view.getByRole("region", { name: "Working on" }));
     fireEvent.click(working.getByRole("button", { name: "Move Weekly digest up" }));
     await waitFor(() => {
@@ -880,12 +880,16 @@ describe("lines of work", () => {
       expect(order).toEqual(["Weekly digest", "Sendspin enclosure"]);
     });
 
-    fireEvent.click(working.getByRole("button", { name: "Table Sendspin enclosure" }));
-    fireEvent.change(working.getByLabelText("Why table Sendspin enclosure"), {
+    // A working line is tabled from its panel, which opens in place.
+    fireEvent.click(working.getByRole("button", { name: "Sendspin enclosure" }));
+    const panel = within(await view.findByRole("complementary", { name: "L-1" }));
+    fireEvent.click(await panel.findByRole("button", { name: "Table…" }));
+    fireEvent.change(panel.getByLabelText("Why table Sendspin enclosure"), {
       target: { value: "Waiting on the board" },
     });
-    fireEvent.click(working.getByRole("button", { name: "Table it" }));
+    fireEvent.click(panel.getByRole("button", { name: "Table it" }));
     const tabled = within(await view.findByRole("region", { name: "Tabled" }));
+    fireEvent.click(tabled.getByRole("button", { name: "Show" }));
     await tabled.findByText("Waiting on the board");
 
     fireEvent.change(view.getByLabelText("New line"), { target: { value: "Garden sensor" } });
@@ -903,6 +907,36 @@ describe("lines of work", () => {
     const view = renderApp(<App />);
     const working = within(await view.findByRole("region", { name: "Working on" }));
     await working.findByText("owner octo.1, running");
+  });
+
+  test("what waits on the developer opens in place on its line: the first fully, the rest one row away", async () => {
+    seedLines();
+    server.act(c.agentRegister, { repo: "OCT" }, "octo.1");
+    server.act(c.lineTake, { ref: "L-1" }, "octo.1");
+    server.tracker.call(c.placeAdd, { name: "the bench" }, asDeveloper);
+    const options = [
+      { key: "a", label: "26 mm", description: "Print as it is." },
+      { key: "b", label: "30 mm", description: "Remodel first." },
+    ];
+    server.act(c.decisionAsk, { title: "Which board?", context: "The base is printed.", options }, "octo.1");
+    const task = server.act(
+      c.taskFile,
+      { title: "Measure the grip", place: "the bench", outcome: "Five numbers" },
+      "octo.1",
+    );
+    navigate("/lines");
+    const view = renderApp(<App />);
+    const line = within(await view.findByRole("article", { name: "Sendspin enclosure" }));
+    await line.findByRole("article", { name: "Which board?" });
+    line.getByText("waiting on you");
+    fireEvent.click(line.getByRole("button", { name: "+1 more for you" }));
+    fireEvent.click(line.getByRole("button", { name: `Open ${task.ref}` }));
+    const opened = within(await line.findByRole("article", { name: "Measure the grip" }));
+    fireEvent.click(opened.getByRole("button", { name: "Done…" }));
+    fireEvent.change(opened.getByLabelText(`What ${task.ref} found`), { target: { value: "41, 38, 12" } });
+    fireEvent.click(opened.getByRole("button", { name: "Send" }));
+    await waitFor(() => expect(server.calls).toContain("task.done"));
+    await gone(() => line.queryByRole("button", { name: `Open ${task.ref}` }));
   });
 
   test("a line opens in the inspector with what finishes it", async () => {
