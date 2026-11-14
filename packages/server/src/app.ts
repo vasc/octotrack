@@ -18,6 +18,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { streamSSE } from "hono/streaming";
 import { z } from "zod";
 import { BUILD_ID } from "./build.ts";
+import type { PrSync } from "./prsync.ts";
 
 export interface AppOptions {
   tracker: Tracker;
@@ -28,8 +29,8 @@ export interface AppOptions {
   build?: string;
   /** The Web Push public key browsers subscribe with; none means notifications are off. */
   pushKey?: string;
-  /** Pulls PR state from GitHub now. Only available where `gh` can run. */
-  syncPrs?: () => Promise<{ repos: number; synced: number; errors: string[] }>;
+  /** Pulls PR state from GitHub now, for these repos or every repo a project names. Only where `gh` can run. */
+  syncPrs?: PrSync;
   /** Hostnames accepted in the Host header. See docs/DESIGN.md, D10. */
   allowedHosts?: readonly string[];
   /** How long a stream stays quiet before sending a keepalive. */
@@ -41,6 +42,7 @@ const DEFAULT_HOLD_MS = 25_000;
 const SSE_RETRY_MS = 1000;
 
 const OpBody = z.object({ input: z.unknown().optional() });
+const SyncBody = z.object({ repos: z.array(z.string()).optional() });
 
 function statusFor(code: string): ContentfulStatusCode {
   switch (code) {
@@ -206,7 +208,9 @@ export function createApp(options: AppOptions): Hono {
   app.post("/api/github/sync", async (c) => {
     if (syncPrs === undefined)
       throw new OctoError("invalid_input", "PR sync is not available on this server");
-    return c.json({ ok: true, data: await syncPrs(), driftOpened: [], cursor: tracker.cursor() });
+    // Anyone may ask: the server fetches from GitHub itself, and only it reports what GitHub says.
+    const body = SyncBody.parse(await c.req.json());
+    return c.json({ ok: true, data: await syncPrs(body.repos), driftOpened: [], cursor: tracker.cursor() });
   });
 
   app.get("/api/stream", (c) => {

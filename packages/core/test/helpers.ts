@@ -37,6 +37,9 @@ export function memoryDriver(): SqlDriver {
   };
 }
 
+/** Pull request sync, as the server runs it: the only caller besides the developer that reports what GitHub says. */
+export const GITHUB: Caller = { actor: "github", channel: "cli", system: true };
+
 export interface Harness {
   tracker: Tracker;
   /** Moves the clock, for anything time based. */

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { guardLineWrite, windingDown } from "../agents/claims.ts";
 import { contracts, type PrInput } from "../contracts.ts";
+import { OctoError } from "../errors.ts";
 import { extractIssueRefs, normalizeRef } from "../refs.ts";
 import type { EventAttrs, Issue, Line, PullRequest } from "../schemas.ts";
 import type { EventTypeName } from "../query/values.ts";
@@ -270,6 +271,15 @@ export const prOps = [
   }),
 
   bind(contracts.prSync, (ctx, input) => {
+    // What GitHub says is reported by the server's own sync, or by the developer: an agent could otherwise write any
+    // pull request, past the line rules pr.upsert keeps, and say a repo's sync is failing or fine.
+    if (!ctx.system && !ctx.developer) {
+      throw new OctoError(
+        "forbidden",
+        "Only the server's pull request sync reports what GitHub says",
+        "Ask the server to sync now: octo pr sync. To report your own pull request: octo pr upsert.",
+      );
+    }
     for (const repo of input.repos ?? []) {
       ctx.sql.run(
         `INSERT INTO github_sync (repo, lastOkAt, error, updatedAt) VALUES (?, ?, NULL, ?)

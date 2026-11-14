@@ -19,7 +19,7 @@ import {
   Channel,
   LineState,
 } from "../src/schemas.ts";
-import { type Harness, harness } from "./helpers.ts";
+import { GITHUB, type Harness, harness } from "./helpers.ts";
 
 let h: Harness;
 
@@ -349,9 +349,9 @@ describe("pull requests and links", () => {
 
   test("sync failures are visible until the repo syncs again", () => {
     h.developer(c.projectUpdate, { ref: "OCT", repo: "a/b" });
-    h.call(c.prSync, { prs: [], failures: [{ repo: "a/b", error: "Boom" }] });
+    h.tracker.call(c.prSync, { prs: [], failures: [{ repo: "a/b", error: "Boom" }] }, GITHUB);
     expect(h.call(c.dashboardBootstrap, {}).syncFailures).toMatchObject([{ repo: "a/b", error: "Boom" }]);
-    h.call(c.prSync, { prs: [], repos: ["a/b"] });
+    h.tracker.call(c.prSync, { prs: [], repos: ["a/b"] }, GITHUB);
     expect(h.call(c.dashboardBootstrap, {}).syncFailures).toEqual([]);
   });
 });

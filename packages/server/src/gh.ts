@@ -1,5 +1,7 @@
 import type { PrChecks, PrInput, PrMergeable, PrReview, PrState } from "@octotrack/core";
 import { z } from "zod";
+import { childEnv } from "./env.ts";
+import { runProcess } from "./spawn.ts";
 
 const GH_FIELDS = [
   "number",
@@ -31,6 +33,8 @@ const LIST_LIMITS: readonly { state: string; limit: number }[] = [
 const MAX_INDIVIDUAL_LOOKUPS = 20;
 /** A busy repo answers in about six seconds. Past this it is stuck, and a stuck sync must not block all later ones. */
 const DEFAULT_GH_TIMEOUT_MS = 30_000;
+/** gh's JSON is read whole, and fifty pull requests with their bodies run to megabytes. */
+const GH_OUTPUT_KEPT = 64 * 1024 * 1024;
 
 function ghTimeoutMs(): number {
   const parsed = Number(process.env.OCTO_GH_TIMEOUT_MS);
@@ -143,28 +147,16 @@ export function selectRelevant(
   );
 }
 
+/**
+ * Runs gh on the bounded path every command the server runs takes: killed at its deadline, answered once it exits even
+ * when a child it left holds the pipes, and never given an agent's name or the developer's presence.
+ */
 async function runGh(args: readonly string[]): Promise<string> {
-  const proc = Bun.spawn(["gh", ...args], { stdout: "pipe", stderr: "pipe" });
   const limit = ghTimeoutMs();
-  const output = Promise.all([
-    new Response(proc.stdout).text(),
-    new Response(proc.stderr).text(),
-    proc.exited,
-  ]);
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const expired = new Promise<null>((resolve) => {
-    timer = setTimeout(() => resolve(null), limit);
-  });
-  // A race, not a wait for the pipes to close: a child that outlives gh can hold them open however hard gh is killed.
-  const finished = await Promise.race([output, expired]);
-  clearTimeout(timer);
-  if (finished === null) {
-    proc.kill("SIGKILL");
-    throw new Error(`gh did not answer within ${limit}ms`);
-  }
-  const [stdout, stderr, exitCode] = finished;
-  if (exitCode !== 0) throw new Error(stderr.trim() || `gh exited with ${exitCode}`);
-  return stdout;
+  const ran = await runProcess(["gh", ...args], { env: childEnv(), deadlineMs: limit, keep: GH_OUTPUT_KEPT });
+  if (ran.timedOut) throw new Error(`gh did not answer within ${limit}ms`);
+  if (ran.code !== 0) throw new Error(ran.stderr.trim() || `gh exited with ${ran.code}`);
+  return ran.stdout;
 }
 
 async function listByState(repo: string, state: string, limit: number): Promise<GhPr[]> {
