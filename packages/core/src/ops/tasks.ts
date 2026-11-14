@@ -4,16 +4,17 @@ import { HELD_CURRENT_MS } from "../agents/held.ts";
 import { DEVELOPER } from "../agents/state.ts";
 import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
-import type { HeldItem, Issue, Place } from "../schemas.ts";
+import type { AtView, HeldItem, Issue, Place } from "../schemas.ts";
 import { claimOf } from "../store/agents.ts";
 import { applyPatch, emit } from "../store/common.ts";
 import type { Ctx } from "../store/context.ts";
 import { one, rows } from "../store/context.ts";
-import { findEntity, requireIssue, requireLine } from "../store/entities.ts";
+import { allLines, findEntity, requireIssue, requireLine } from "../store/entities.ts";
 import { addToInbox } from "../store/inbox.ts";
 import { DecisionRow, IssueRow } from "../store/rows.ts";
 import { bind } from "./bind.ts";
 import { requireDeveloper } from "./developer.ts";
+import { withdrawQuestion } from "./decisions.ts";
 import { createIssue } from "./issues.ts";
 import { addLink } from "./links.ts";
 
@@ -89,6 +90,50 @@ function closeTask(ctx: Ctx, task: Issue, status: "done" | "cancelled", result: 
     changes,
   });
   return requireIssue(ctx, task.ref);
+}
+
+/** I'm at a place lasts this long, then ends by itself: being at the bench is an afternoon, not a setting. */
+const AT_LASTS_MS = 3 * 60 * 60 * 1000;
+/** Issues on a developer's line with no repo go in one project of their own. */
+const OWN_PROJECT = "ME";
+
+function ownProject(ctx: Ctx): string {
+  ctx.sql.run(
+    `INSERT OR IGNORE INTO projects (ref, name, description, status, repo, horizon, targetDate, version, createdAt, updatedAt, createdBy)
+     VALUES (?, ?, ?, 'active', NULL, 'none', NULL, 1, ?, ?, ?)`,
+    [OWN_PROJECT, "Mine", "The developer's own work, on lines with no repo", ctx.now, ctx.now, ctx.actor],
+  );
+  return OWN_PROJECT;
+}
+
+const AtRow = z.object({ place: z.string(), until: z.string() });
+
+/**
+ * Where the developer is, if they said so lately, with that place's tasks: open ones on working lines, and current held
+ * ones on up-next lines, which can be done while there. Never tabled lines'. In the developer's order.
+ */
+export function atView(ctx: Ctx): AtView | null {
+  const at = one(ctx, AtRow, "SELECT place, until FROM developer_at WHERE id = 1");
+  if (at === null || at.until <= ctx.now) return null;
+  const order = new Map(
+    allLines(ctx).map((line, index) => [line.ref, { index, state: line.state }] as const),
+  );
+  const tasks = rows(
+    ctx,
+    IssueRow,
+    `SELECT * FROM issues WHERE assignee = ? AND place = ? AND outcome IS NOT NULL AND status NOT IN ('done', 'cancelled')
+       AND line IS NOT NULL ORDER BY createdAt`,
+    [DEVELOPER, at.place],
+  ).filter((task) => {
+    const line = task.line === null ? undefined : order.get(task.line);
+    if (line === undefined) return false;
+    if (line.state === "working") return task.heldAt === null;
+    return line.state === "up_next" && isCurrent(task.confirmedAt ?? task.createdAt, ctx.now);
+  });
+  const rank = (task: Issue) => (task.line === null ? 0 : (order.get(task.line)?.index ?? 0));
+  const working = (task: Issue) => (task.line === null ? false : order.get(task.line)?.state === "working");
+  tasks.sort((a, b) => Number(working(b)) - Number(working(a)) || rank(a) - rank(b));
+  return { place: at.place, until: at.until, tasks };
 }
 
 function isCurrent(since: string, now: string): boolean {
@@ -232,5 +277,78 @@ export const taskOps = [
     }
     ctx.visibleChange = true;
     return [...lines].flatMap((line) => heldOn(ctx, line)).filter((item) => input.refs.includes(item.ref));
+  }),
+
+  bind(contracts.heldWithdraw, (ctx, input) => {
+    const withdrawn: string[] = [];
+    for (const ref of input.refs) {
+      const entity = findEntity(ctx, ref);
+      if (
+        entity === null ||
+        (entity.kind !== "decision" && entity.kind !== "issue") ||
+        entity.value.line === null
+      ) {
+        throw new OctoError("invalid_input", `${ref} is not a question or task on a line`);
+      }
+      // Withdrawing is scoping: refused to anyone not on the line, as any other write there.
+      guardLineWrite(ctx, entity.value.line, "scope");
+      if (!ctx.developer && claimOf(ctx, ctx.actor)?.line !== entity.value.line) {
+        throw new OctoError(
+          "forbidden",
+          `${entity.value.ref} is on ${entity.value.line}, which you are not on`,
+        );
+      }
+      if (entity.kind === "decision") withdrawQuestion(ctx, entity.value.ref, input.why);
+      else
+        closeTask(
+          ctx,
+          requireTask(ctx, entity.value.ref),
+          "cancelled",
+          input.why ?? "Withdrawn: it no longer stands",
+        );
+      withdrawn.push(entity.value.ref);
+    }
+    return { withdrawn };
+  }),
+
+  bind(contracts.taskAdd, (ctx, input) => {
+    requireDeveloper(ctx, "add a task of their own");
+    const line = requireLine(ctx, input.line);
+    if (line.ownedBy !== DEVELOPER) {
+      throw new OctoError(
+        "conflict",
+        `${line.ref} is not yours`,
+        "Your own tasks go on lines you own. On an agent's line, agents file tasks for you.",
+      );
+    }
+    const task = createIssue(ctx, {
+      project: line.repos[0] ?? ownProject(ctx),
+      title: input.title,
+      ...(input.body === undefined ? {} : { body: input.body }),
+      assignee: DEVELOPER,
+      line: line.ref,
+    });
+    // Nothing to report back to anyone: the outcome is empty, and Done needs no words.
+    ctx.sql.run("UPDATE issues SET place = ?, outcome = '' WHERE ref = ?", [
+      input.place === undefined ? null : requirePlace(ctx, input.place),
+      task.ref,
+    ]);
+    return requireIssue(ctx, task.ref);
+  }),
+
+  bind(contracts.at, (ctx, input) => {
+    requireDeveloper(ctx, "say where they are");
+    if (input.place === undefined) {
+      ctx.sql.run("DELETE FROM developer_at");
+    } else {
+      const place = requirePlace(ctx, input.place);
+      const until = new Date(Date.parse(ctx.now) + AT_LASTS_MS).toISOString();
+      ctx.sql.run(
+        "INSERT INTO developer_at (id, place, until) VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET place = excluded.place, until = excluded.until",
+        [place, until],
+      );
+    }
+    ctx.visibleChange = true;
+    return atView(ctx);
   }),
 ];

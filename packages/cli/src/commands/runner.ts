@@ -30,10 +30,18 @@ export const runnerCommands: Command[] = [
     path: ["runner", "retry"],
     usage: "<LINE>",
     summary: "Try now: start a session for a line again without waiting (the developer)",
+    options: {
+      same: { type: "boolean", description: "Also every other line whose start stopped the same way" },
+      anyway: { type: "boolean", description: "Start one anyway, past the cap, once" },
+    },
     ops: [c.runnerRetry.name],
     async run({ client, out }, args) {
-      const outcome = await client.call(c.runnerRetry, { line: args.requirePositional(0, "LINE") });
-      out.result(outcome, () => `Trying ${outcome.data.line} again.`);
+      const outcome = await client.call(c.runnerRetry, {
+        line: args.requirePositional(0, "LINE"),
+        ...(args.flag("same") ? { same: true } : {}),
+        ...(args.flag("anyway") ? { anyway: true } : {}),
+      });
+      out.result(outcome, () => `Trying ${outcome.data.lines.join(", ")} again.`);
     },
   },
   {

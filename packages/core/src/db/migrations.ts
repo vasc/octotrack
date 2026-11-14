@@ -302,6 +302,12 @@ const MIGRATIONS: readonly Migration[] = [
   ALTER TABLE decisions ADD COLUMN heldAt TEXT;
   ALTER TABLE runner_closes ADD COLUMN dry INTEGER NOT NULL DEFAULT 0;
   `,
+  `
+  ALTER TABLE lines ADD COLUMN urgentReason TEXT;
+  ALTER TABLE lines ADD COLUMN seenAt TEXT;
+  ALTER TABLE lines ADD COLUMN startAnyway TEXT;
+  CREATE TABLE developer_at (id INTEGER PRIMARY KEY CHECK (id = 1), place TEXT NOT NULL, until TEXT NOT NULL);
+  `,
 ];
 
 const UserVersion = z.object({ user_version: z.number().int() });

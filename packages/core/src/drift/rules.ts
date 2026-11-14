@@ -302,6 +302,36 @@ const Unplaced = z.object({ project: z.string(), refs: z.string() });
  * rather than by the developer, and without flooding anyone with one drift per issue.
  */
 function lineRules(ctx: Ctx): DesiredDrift[] {
+  const unplaced = unplacedWork(ctx);
+  const covered = new Set(unplaced.map((drift) => drift.project));
+  // A repo whose only work is proposals from before still needs its agents to sort them, with nothing else to prompt it.
+  const fromBefore = rows(
+    ctx,
+    Unplaced,
+    `SELECT r.repo AS project, group_concat(l.ref, ' ') AS refs
+     FROM lines l JOIN line_repos r ON r.line = l.ref AND r.position = 0
+     WHERE l.state = 'proposed' AND l.fromRef IS NOT NULL
+     GROUP BY r.repo ORDER BY r.repo`,
+  )
+    .filter((group) => !covered.has(group.project))
+    .map((group): DesiredDrift => {
+      const refs = group.refs.split(" ").sort();
+      const count = refs.length;
+      return {
+        rule: "unplaced-work",
+        dedupeKey: `unplaced-work:${group.project}`,
+        fingerprint: refs.join(","),
+        target: group.project,
+        cause: null,
+        project: group.project,
+        message: `${count} proposal${count === 1 ? "" : "s"} from before in ${group.project} wait${count === 1 ? "s" : ""} to be re-proposed or rejected`,
+        suggestion: `Re-propose each as a line with a recommendation (octo line propose), or say why it is not one in a new proposal's why; the developer rejects the old one. Or: ${ack(group.project)}`,
+      };
+    });
+  return [...unplaced, ...fromBefore];
+}
+
+function unplacedWork(ctx: Ctx): DesiredDrift[] {
   return rows(
     ctx,
     Unplaced,
@@ -320,7 +350,7 @@ function lineRules(ctx: Ctx): DesiredDrift[] {
       cause: null,
       project: group.project,
       message: `${count} open issue${count === 1 ? "" : "s"} in ${group.project} ${count === 1 ? "is" : "are"} on no line`,
-      suggestion: `Put each on its line (octo issue update <REF> --line L-n), or propose a line for them (octo line propose). Then re-propose or reject the proposals from before: octo lines. Or: ${ack(group.project)}`,
+      suggestion: `Put each on its line (octo issue update <REF> --line L-n), or propose a line for them (octo line propose). An issue that waits on the developer (a measurement, a login, a play-test) is a task: file it with octo task file and close the issue. Then re-propose or reject the proposals from before: octo lines. Or: ${ack(group.project)}`,
     };
   });
 }

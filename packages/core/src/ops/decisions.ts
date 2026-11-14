@@ -385,6 +385,41 @@ export function buildQueue(ctx: Ctx, query: string | undefined) {
     .sort(compare);
 }
 
+/**
+ * A question that no longer stands, withdrawn by whoever may: the developer, its asker, or an agent on its line. Any
+ * other agent is refused, so nobody clears a line's questions from outside it.
+ */
+export function withdrawQuestion(ctx: Ctx, ref: string, note: string | undefined): Decision {
+  const current = requireDecision(ctx, ref);
+  if (current.status !== "open") {
+    throw new OctoError(
+      "conflict",
+      `${current.ref} is ${current.status}, only open decisions can be withdrawn`,
+    );
+  }
+  if (
+    current.line !== null &&
+    !ctx.developer &&
+    ctx.said === null &&
+    current.requestedBy !== ctx.actor &&
+    claimOf(ctx, ctx.actor)?.line !== current.line
+  ) {
+    throw new OctoError(
+      "forbidden",
+      `${current.ref} is on ${current.line}, which you are not on`,
+      "Only the developer, the agent that asked, or an agent on that line can withdraw it.",
+    );
+  }
+  return transition(
+    ctx,
+    ref,
+    "decision.withdrawn",
+    (decision) => `${decision.ref} withdrawn: ${decision.title}`,
+    { status: "withdrawn" },
+    note,
+  );
+}
+
 export const decisionOps = [
   bind(contracts.decisionAsk, (ctx, input) => {
     const placed = placeQuestion(ctx, input);
@@ -614,23 +649,7 @@ export const decisionOps = [
     });
     return requireDecision(ctx, current.ref);
   }),
-  bind(contracts.decisionWithdraw, (ctx, input) => {
-    const current = requireDecision(ctx, input.ref);
-    if (current.status !== "open") {
-      throw new OctoError(
-        "conflict",
-        `${current.ref} is ${current.status}, only open decisions can be withdrawn`,
-      );
-    }
-    return transition(
-      ctx,
-      input.ref,
-      "decision.withdrawn",
-      (decision) => `${decision.ref} withdrawn: ${decision.title}`,
-      { status: "withdrawn" },
-      input.note,
-    );
-  }),
+  bind(contracts.decisionWithdraw, (ctx, input) => withdrawQuestion(ctx, input.ref, input.note)),
 
   bind(contracts.decisionSupersede, (ctx, input) => {
     const replacement = requireDecision(ctx, input.by);

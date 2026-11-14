@@ -97,6 +97,12 @@ function activeSessions(ctx: Ctx): number {
  * not all wait on the developer, and the runner cannot help (not set up, watching only, a start that keeps failing or
  * never took the line, or every session busy). One rule, so home, the runner and notifications agree.
  */
+/** What stopped a start, so that Try now can retry every line stopped the same way: its last line of output. */
+function stoppedBy(start: { state: string; output: string | null }): string {
+  if (start.state === "never_took") return "never took";
+  return start.output?.trim().split("\n").at(-1)?.trim() ?? "";
+}
+
 export function stepInFor(ctx: Ctx, line: Line): boolean {
   if (line.state !== "working" || line.ownedBy !== null) return false;
   const search = searchOf(ctx, line.ref);
@@ -110,6 +116,8 @@ export function stepInFor(ctx: Ctx, line: Line): boolean {
   if (start?.state === "never_took") return true;
   // A first failure is retried by itself in minutes; a start that keeps failing needs the developer.
   if (start?.state === "failed") return start.attempts >= 2;
+  // Started anyway, past the cap: a session is on its way.
+  if (line.startAnyway !== null) return false;
   return status.cap - activeSessions(ctx) <= 0;
 }
 
@@ -169,8 +177,12 @@ export const runnerOps = [
       if (last !== null && (last.state === "starting" || last.state === "never_took")) return [];
       if (last?.state === "failed" && last.nextTryAt !== null && last.nextTryAt > ctx.now) return [];
       const repo = repoFor(ctx, line.ref, line.repos);
-      if (repo === null || slots <= 0) return [];
-      slots -= 1;
+      if (repo === null) return [];
+      // Start one anyway: past the cap, once, without taking a slot from another line.
+      if (line.startAnyway === null) {
+        if (slots <= 0) return [];
+        slots -= 1;
+      }
       const retry = last?.state === "failed";
       return [
         { line: line.ref, repo, name: retry ? last.name : null, attempt: retry ? last.attempts + 1 : 1 },
@@ -186,6 +198,7 @@ export const runnerOps = [
     const retry = last !== null && last.state === "failed";
     // A start that failed at once used up nothing, so its retry keeps the name.
     const name = retry ? last.name : freshName(ctx, repo);
+    ctx.sql.run("UPDATE lines SET startAnyway = NULL WHERE ref = ?", [line.ref]);
     const worktree = input.worktree ?? null;
     ctx.sql.run(
       `INSERT INTO agents (name, firstSeenAt, lastSeenAt, checkout, repo, startedBy) VALUES (?, ?, ?, ?, ?, 'octotrack')
@@ -268,12 +281,27 @@ export const runnerOps = [
   bind(contracts.runnerRetry, (ctx, input) => {
     requireDeveloper(ctx, "start a session again");
     const line = requireLine(ctx, input.line);
-    ctx.sql.run(
-      "UPDATE runner_starts SET state = 'failed', nextTryAt = ? WHERE line = ? AND state IN ('failed', 'never_took')",
-      [ctx.now, line.ref],
-    );
+    const last = latestStart(ctx, "line", line.ref);
+    // Try now on one stopped line retries every line stopped the same way: one fix, such as logging in, fixes all.
+    const lines =
+      input.same === true && last !== null && (last.state === "failed" || last.state === "never_took")
+        ? allLines(ctx, "WHERE state = 'working'")
+            .filter((other) => {
+              const theirs = latestStart(ctx, "line", other.ref);
+              return theirs !== null && theirs.state === last.state && stoppedBy(theirs) === stoppedBy(last);
+            })
+            .map((other) => other.ref)
+        : [line.ref];
+    for (const ref of lines) {
+      ctx.sql.run(
+        "UPDATE runner_starts SET state = 'failed', nextTryAt = ? WHERE line = ? AND state IN ('failed', 'never_took')",
+        [ctx.now, ref],
+      );
+    }
+    if (input.anyway === true)
+      ctx.sql.run("UPDATE lines SET startAnyway = ? WHERE ref = ?", [ctx.now, line.ref]);
     ctx.visibleChange = true;
-    return { line: line.ref };
+    return { lines };
   }),
 
   bind(contracts.runnerDry, (ctx, input) => {

@@ -143,6 +143,9 @@ export type LinePlacement = z.infer<typeof LinePlacement>;
 export const LineSource = z.enum(["developer", "agent", "migration"]);
 export type LineSource = z.infer<typeof LineSource>;
 
+export const UrgentReason = z.enum(["time_boxed", "costs_money", "broken"]);
+export type UrgentReason = z.infer<typeof UrgentReason>;
+
 export const Line = z.object({
   ref: z.string(),
   title: z.string(),
@@ -174,6 +177,12 @@ export const Line = z.object({
   /** The owner's case that the line is done, waiting for the developer. */
   doneProposal: z.string().nullable(),
   doneProposedBy: z.string().nullable(),
+  /** A proposal for something broken on a line no agent may work on: it stands first, counted as urgent. */
+  urgentReason: UrgentReason.nullable(),
+  /** When the developer last looked at the line: the log's "not seen" starts after it. */
+  seenAt: z.string().nullable(),
+  /** Start one anyway: the next session for this line may start past the cap, once. */
+  startAnyway: z.string().nullable(),
   repos: z.array(z.string()),
   version: z.number().int(),
   createdAt: z.string(),
@@ -204,8 +213,6 @@ export const DecisionReportStatus = z.enum(["done", "partial"]);
 export type DecisionReportStatus = z.infer<typeof DecisionReportStatus>;
 
 /** The only reasons a question may jump the developer's order. */
-export const UrgentReason = z.enum(["time_boxed", "costs_money", "broken"]);
-export type UrgentReason = z.infer<typeof UrgentReason>;
 
 export const Decision = z.object({
   ref: z.string(),
@@ -460,9 +467,12 @@ export const NoticeKind = z.enum([
   "task_done",
   "task_cant",
   "done_when",
+  // Kept for notices sent before Not yet went through the line's inbox.
   "keep_going",
   "held_stale",
   "released",
+  "not_yet",
+  "release_asked",
 ]);
 export type NoticeKind = z.infer<typeof NoticeKind>;
 
@@ -725,8 +735,13 @@ export type HomeCounts = z.infer<typeof HomeCounts>;
 export const RunnerStatus = z.object({ configured: z.boolean(), cap: z.number().int(), dryRun: z.boolean() });
 export type RunnerStatus = z.infer<typeof RunnerStatus>;
 
+/** I'm at a place: that place's tasks, current held ones on up-next lines included, until it ends by itself. */
+export const AtView = z.object({ place: z.string(), until: z.string(), tasks: z.array(Issue) });
+export type AtView = z.infer<typeof AtView>;
+
 export const HomeView = z.object({
   runner: RunnerStatus,
+  at: AtView.nullable(),
   /** Urgent questions, which stand at the very top, apart from their lines. */
   urgent: z.array(DecisionCard),
   lines: z.record(z.string(), LineHome),

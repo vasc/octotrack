@@ -54,6 +54,7 @@ export const observeCommands: Command[] = [
       before: { ...STRING, description: "Older than this sequence number, for paging" },
       after: { ...STRING, description: "Newer than this sequence number" },
       follow: { type: "boolean", short: "f", description: "Keep streaming new matching events" },
+      unseen: { type: "boolean", description: "Only what changed on a line since you last looked at it" },
       since: { ...STRING, description: "With --follow: start after this cursor, from an earlier result" },
       timeout: WATCH_OPTIONS.timeout,
     },
@@ -92,6 +93,7 @@ export const observeCommands: Command[] = [
             limit: Math.min(limit - events.length, FEED_PAGE_MAX),
             before,
             after: args.int("after"),
+            ...(args.flag("unseen") ? { unseen: true } : {}),
           }),
         );
         events.push(...page.data.events);

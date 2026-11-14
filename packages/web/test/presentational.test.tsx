@@ -1072,7 +1072,7 @@ describe("tabling and a line's own choices", () => {
     fireEvent.click(view.getByRole("button", { name: "Keep the one there is" }));
     expect(onDoneWhen).toHaveBeenCalledWith(false);
     view.getByText("The final print fits.");
-    fireEvent.click(view.getByRole("button", { name: "Keep going" }));
-    expect(onChoose).toHaveBeenCalledWith("keep_going");
+    fireEvent.click(view.getByRole("button", { name: "Not yet" }));
+    expect(onChoose).toHaveBeenCalledWith("not_yet");
   });
 });

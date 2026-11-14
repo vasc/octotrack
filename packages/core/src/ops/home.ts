@@ -7,7 +7,7 @@ import { allLines } from "../store/entities.ts";
 import { IssueRow, PlanStepRow } from "../store/rows.ts";
 import { buildQueue } from "./decisions.ts";
 import { lineStart, runnerStatus, stepInFor } from "./runner.ts";
-import { heldOn } from "./tasks.ts";
+import { atView, heldOn } from "./tasks.ts";
 
 const DONE_LATELY_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -74,8 +74,14 @@ export function buildHome(ctx: Ctx): HomeView {
   const open = lines.filter((line) => line.state !== "done" && line.state !== "dropped");
   const lineDetails = Object.fromEntries(open.map((line) => [line.ref, details(line)] as const));
   const working = inState("working");
+  // An urgent proposal, for something broken where no agent may work, stands first under Proposed.
+  const proposed = inState("proposed").sort(
+    (a, b) => Number(b.urgentReason !== null) - Number(a.urgentReason !== null),
+  );
+  const urgentProposals = proposed.filter((line) => line.urgentReason !== null).length;
   return {
     runner: runnerStatus(ctx),
+    at: atView(ctx),
     urgent,
     lines: lineDetails,
     counts: {
@@ -85,11 +91,11 @@ export function buildHome(ctx: Ctx): HomeView {
         inState("proposed").length +
         lines.filter((line) => line.doneWhenProposal !== null || line.doneProposal !== null).length,
       toStepIn: working.filter((line) => lineDetails[line.ref]?.stepIn === true).length,
-      urgent: urgent.length,
+      urgent: urgent.length + urgentProposals,
     },
     working,
     upNext: inState("up_next"),
-    proposed: inState("proposed"),
+    proposed,
     tabled: inState("tabled"),
     doneLately: inState("done")
       .filter((line) => Date.parse(line.updatedAt) >= since)

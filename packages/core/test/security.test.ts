@@ -89,6 +89,19 @@ describe("answering a question on a line is the developer's", () => {
     expect(event?.attrs.said).toBe("yes, go ahead");
   });
 
+  test("an agent off the line cannot withdraw its questions; the asker and the developer can", () => {
+    const w = world();
+    const asked = w.as(w.agent("panel"), c.decisionAsk, {
+      title: "Which?",
+      context: "Context.",
+      options: OPTIONS,
+    });
+    expect(w.refused(() => w.as(w.agent("mallory"), c.decisionWithdraw, { ref: asked.ref })).code).toBe(
+      "forbidden",
+    );
+    expect(w.as(w.agent("panel"), c.decisionWithdraw, { ref: asked.ref }).status).toBe("withdrawn");
+  });
+
   test("a question from before lines keeps the older rules", () => {
     const w = world();
     const asked = w.as(w.agent("legacy"), c.decisionAsk, { title: "Old style" });
