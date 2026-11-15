@@ -9,7 +9,12 @@ function bindings(params: readonly SqlValue[]): SQLQueryBindings[] {
 export function openSqlite(path: string): SqlDriver {
   const db = new Database(path, { create: true, strict: true });
   db.exec("PRAGMA journal_mode = WAL");
-  db.exec("PRAGMA synchronous = NORMAL");
+  // A write the tracker has answered as done survives the machine stopping: each commit is synced, and on macOS synced
+  // to the disk itself rather than the drive's cache. Writes are few, so the cost is unseen; a restart once lost a
+  // quarter of an hour of agents' work under NORMAL.
+  db.exec("PRAGMA synchronous = FULL");
+  db.exec("PRAGMA fullfsync = ON");
+  db.exec("PRAGMA checkpoint_fullfsync = ON");
   db.exec("PRAGMA foreign_keys = ON");
   db.exec("PRAGMA busy_timeout = 5000");
   let depth = 0;

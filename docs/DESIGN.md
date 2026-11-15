@@ -68,6 +68,10 @@ a test). The Hono app is runtime-neutral.
 - **Trade-off:** synchronous core means a port to D1 would be a rewrite of the storage layer. Accepted because
   an asynchronous driver would have forced mutexes around every transaction locally, for a target that fits
   worse anyway.
+- **Durable on answer:** locally the database runs in WAL mode with `synchronous = FULL` and `fullfsync`, so a write the
+  tracker has answered as done survives the machine stopping. Under `NORMAL` a restart on 15 November took back a
+  quarter of an hour of agents' writes that had each been acknowledged. Writes are few, so the cost of a full sync per
+  commit does not show.
 - **Not done:** no Worker entry exists yet. Only the seams are in place.
 
 ### D4. A single query language for feed, lists and watches
