@@ -99,6 +99,7 @@ Home is one list: every line in the developer's order, with what each needs from
 | `LineProposalCard` | Pure       | An agent's proposal about a line, opened: done, with the done when it meets (Done, Not yet), or a changed done when, old and new with why (Accept, Keep current)    |
 | `AnswerStatus`     | Pure       | An answer given on a line lately and what became of it, in one sentence, with Change answer                                                                         |
 | `TaskCard`         | Pure       | A task opened: where, what to report (one box, or a box per named outcome and a note, with how many are filled), and Done or Can't do it, each asking for its words |
+| `TaskClosed`       | Pure       | A task that has closed, opened again: how it closed and when, and what was sent back or why not; nothing to send again                                              |
 | `OutcomeFields`    | Pure       | A task's named outcomes, a short box for each in a row, then a note for anything that surprised                                                                     |
 | `StepIn`           | Pure       | A working line nobody could be found for, in red: why, and the action that fits (Set its checkout, Try now, Start one anyway), with Table it and I'll own it        |
 | `LineStepIn`       | Pure       | Whether a working line shows Step in, and which fixes it offers given how its start went; folded to one row at a place                                              |

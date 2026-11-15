@@ -2181,6 +2181,30 @@ describe("lines of work", () => {
       expect(heard.map((notice) => notice.body).join(" ")).toContain("41, 38, 12");
     });
 
+    test("a closed task says how it closed and what was sent, and offers nothing to send again", async () => {
+      const { task } = withIssue();
+      server.tracker.call(c.taskDone, { ref: task.ref, result: "41, 38 and 12 mm" }, asDeveloper);
+      navigate(`/?ref=${task.ref}`);
+      const view = renderApp(<App />);
+      const panel = within(await view.findByRole("complementary", { name: task.ref }));
+      const closed = within(await panel.findByRole("region", { name: "How it closed" }));
+      closed.getByText(/Done/);
+      closed.getByText("41, 38 and 12 mm");
+      expect(panel.queryByRole("button", { name: "Done" })).toBeNull();
+      expect(panel.queryByRole("button", { name: "Can't do it" })).toBeNull();
+    });
+
+    test("a task that could not be done says why", async () => {
+      const { task } = withIssue();
+      server.tracker.call(c.taskCant, { ref: task.ref, why: "The calipers are lost" }, asDeveloper);
+      navigate(`/?ref=${task.ref}`);
+      const view = renderApp(<App />);
+      const panel = within(await view.findByRole("complementary", { name: task.ref }));
+      const closed = within(await panel.findByRole("region", { name: "How it closed" }));
+      closed.getByText(/Could not be done/);
+      closed.getByText("The calipers are lost");
+    });
+
     test("an issue shows its line and step, who holds it, its pull requests' checks, and Tell reaches its holder", async () => {
       const { issue, task } = withIssue();
       server.act(c.prUpsert, {

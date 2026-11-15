@@ -5,6 +5,7 @@ import { useDraft } from "../../hooks/useDraft.ts";
 import { useHome } from "../../hooks/useHome.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
 import { backEntity, openEntity } from "../../lib/router.ts";
+import { TaskClosed } from "../home/TaskClosed.tsx";
 import { TaskItem } from "../home/TaskItem.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
 import { RefLink } from "../ui/RefLink.tsx";
@@ -26,6 +27,7 @@ export function IssuePanel({ issue, detail }: { issue: Issue; detail: EntityDeta
   const line = issue.line === null ? null : h.lineOf(issue.line);
   // A task is an issue for the developer with something to report: "dev" is the name the developer acts under.
   const task = issue.assignee === "dev" && issue.outcome !== null;
+  const open = issue.status !== "done" && issue.status !== "cancelled";
   const frees = detail.links
     .filter((link) => link.fromRef === issue.ref && link.rel === "blocks")
     .map((link) => link.toRef);
@@ -51,7 +53,11 @@ export function IssuePanel({ issue, detail }: { issue: Issue; detail: EntityDeta
         </button>
       </div>
       {task ? (
-        <TaskItem task={issue} onDone={h.taskDone} onCant={h.taskCant} />
+        open ? (
+          <TaskItem task={issue} onDone={h.taskDone} onCant={h.taskCant} />
+        ) : (
+          <TaskClosed task={issue} />
+        )
       ) : (
         <>
           <div className="question-strip">

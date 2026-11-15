@@ -11,6 +11,13 @@ export function timeAgo(iso: string, now: number = Date.now()): string {
   return iso.slice(0, 10);
 }
 
+/** How long ago, as words that stand after a verb: "just now", "5m ago", "2d ago", or "on 2026-10-01". */
+export function sinceText(iso: string, now: number = Date.now()): string {
+  const ago = timeAgo(iso, now);
+  if (ago === "now") return "just now";
+  return ago === iso.slice(0, 10) ? `on ${ago}` : `${ago} ago`;
+}
+
 export function dayLabel(iso: string, now: number = Date.now()): string {
   const day = iso.slice(0, 10);
   if (day === new Date(now).toISOString().slice(0, 10)) return "Today";
