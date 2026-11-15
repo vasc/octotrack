@@ -117,7 +117,7 @@ Home is one list: every line in the developer's order, with what each needs from
 | `LineHandle`       | Pure       | The one reorder control on a line: drag it onto another, or open it for Move to top, Up, Down and To up next                                                        |
 | `Icon`             | Pure       | The few icons, inline, in the text's colour: plus, pin, keyboard, grip, chevron                                                                                     |
 | `HomePage`         | Structural | Home: the header, the focus, and the sections                                                                                                                       |
-| `QuestionList`     | Pure       | Questions apart from the lines: urgent ones at the very top, ones from before lines below every line; a row until focused                                           |
+| `QuestionList`     | Structural | Questions apart from the lines: urgent ones at the very top, ones from before lines below every line; a row until focused                                           |
 | `RecordAnswers`    | Structural | Record answers, behind r: answers given elsewhere, one per line, each placed on its question                                                                        |
 | `WorkingSection`   | Structural | Working on: each line with Step in, its first item opened or as a row, the rest one row away, folded on a phone or at a place                                       |
 | `WaitingSections`  | Structural | Up next, Proposed, Tabled and Done lately, with the Start sheet for a line that waited                                                                              |
@@ -175,7 +175,7 @@ Opens from any ref as a panel over the right of the page, so the list keeps its 
 | `TellBox`        | Pure       | Tell: a free message to the line's owner, named in its label; empty, a nudge                                                                                     |
 | `OwnWorkBox`     | Pure       | On a line the developer owns, one growing box that adds a task or a note                                                                                         |
 | `SinceSummary`   | Pure       | Until a line's summary is rewritten: everything newer, one row each, with what was seen folded to one row                                                        |
-| `EntityBody`     | Pure       | Picks the right body for the kind of item                                                                                                                        |
+| `EntityBody`     | Structural | Picks the right body for the kind of item, a question's with its queue                                                                                           |
 | `DecisionPanel`  | Structural | An open decision as a card, or a closed one as its record                                                                                                        |
 | `IssuePanel`     | Structural | A task or an issue opened in place, as E-Issue: a task's form and what it frees, or how it closed; an issue's waits, pull requests, activity and Tell; its drift |
 | `OpenDrift`      | Structural | What is out of date about the open line, issue or item, each answered with Undo; a refusal says why in the Undo bar                                              |

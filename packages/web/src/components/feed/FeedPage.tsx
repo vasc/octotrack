@@ -6,7 +6,6 @@ import { useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useMarkAllSeen } from "../../hooks/useMarkSeen.ts";
 import { setParams, useRoute } from "../../lib/router.ts";
 import { SyncFailures } from "../prs/SyncFailures.tsx";
-import { ErrorState } from "../ui/states.tsx";
 import { FeedSection } from "./FeedSection.tsx";
 import { FilterBox } from "./FilterBox.tsx";
 
@@ -46,7 +45,6 @@ export function FeedPage() {
           </button>
         </div>
       </div>
-      {seen.error === null ? null : <ErrorState error={seen.error} />}
       <SyncFailures failures={bootstrap?.syncFailures ?? []} />
       <FeedSection
         view={DEFAULT_VIEW}
