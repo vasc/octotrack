@@ -178,7 +178,8 @@ until `~/.octotrack/agent-setup.json` exists, and starts in watch mode, only not
 Only `{line}` and `{name}` are filled in, so tracker text never becomes a prompt, and only when they have the narrow
 form of a name (letters, digits, `.`, `_` and `-`, not first), so a name such as `*` or `-rf` never reaches a command.
 A session gets `OCTO_AGENT` set to its own name, and never the server's `OCTO_AGENT` or `OCTO_DEVELOPER`; wakes are run
-the same way, as the agent being woken.
+the same way, as the agent being woken. A wake gets thirty minutes, then is ended with everything it started, the
+resumed session included; the session keeps its line and is woken again later. Stop ends a wake still running.
 
 Each session runs in a fresh worktree on `octo/<name>`, under `worktrees` (by default `worktrees` in Octotrack's home,
 so `OCTO_HOME` moves it too), made from the repo's main checkout: the one named here, the one set with

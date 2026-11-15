@@ -358,6 +358,23 @@ afterEach(() => {
 });
 
 /** A fresh folder for session logs, removed after the test. */
+/** Whether a process has ended, waiting up to two seconds for it to be reaped. */
+async function gone(pid: number): Promise<boolean> {
+  const deadline = Date.now() + 2000;
+  for (;;) {
+    try {
+      process.kill(pid, 0);
+    } catch {
+      return true;
+    }
+    if (Date.now() > deadline) {
+      process.kill(pid, "SIGKILL");
+      return false;
+    }
+    await Bun.sleep(20);
+  }
+}
+
 function logsDir(): string {
   const dir = mkdtempSync(join(tmpdir(), "octo-runner-logs-"));
   homes.push(dir);
@@ -829,6 +846,33 @@ describe("sessions as real processes (third audit, N9 and N10)", () => {
 });
 
 describe("what the fourth audit found in the local runner", () => {
+  test("A1: a command past its deadline is killed with everything it started, leaving no process behind", async () => {
+    const pidFile = join(logsDir(), "child.pid");
+    const ran = await processShell.run(["sh", "-c", `sleep 30 & echo $! > ${pidFile}; wait`], undefined, 500);
+    expect(ran.code).toBe(124);
+    const child = Number((await Bun.file(pidFile).text()).trim());
+    expect(child).toBeGreaterThan(0);
+    expect(await gone(child)).toBe(true);
+  });
+
+  test("A1: Stop ends a wake still running for a session, and runs no stop command for it", async () => {
+    const w = world({ stop: ["tmux", "kill-session", "-t", "{name}"] }, {}, { living: [4242] });
+    w.tracker.call(
+      c.agentRegister,
+      { repo: "PANEL", wake: "claude:abc" },
+      { actor: "panel-a", channel: "cli" },
+    );
+    w.tracker.call(c.agentWoken, { name: "panel-a" }, RUNNER_CALLER);
+    w.tracker.call(c.agentWoken, { name: "panel-a", pid: 4242 }, RUNNER_CALLER);
+    w.tracker.call(c.agentStop, { name: "panel-a" }, DEV);
+    await w.tick();
+    await w.tick();
+    expect(w.ended).toEqual([4242]);
+    expect(w.ran.filter((command) => command.startsWith("tmux"))).toEqual([]);
+    const ran = w.tracker.call(c.feedList, { query: "event:runner.stop_ran" }, DEV).events;
+    expect(ran.map((event) => event.summary)).toEqual(["Ended panel-a's process"]);
+  });
+
   test("A4: a pull request gh fails to close is said in the Log, and not asked of gh again every tick", async () => {
     const w = world(
       { repos: {}, cap: 0 },

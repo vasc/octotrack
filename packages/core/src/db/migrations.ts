@@ -360,6 +360,10 @@ const MIGRATIONS: readonly Migration[] = [
     nextTryAt TEXT NOT NULL
   );
   `,
+  // The process a wake runs, while it runs: the cap counts it, and Stop ends it.
+  `
+  ALTER TABLE agents ADD COLUMN wakePid INTEGER;
+  `,
 ];
 
 const UserVersion = z.object({ user_version: z.number().int() });

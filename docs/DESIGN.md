@@ -432,7 +432,18 @@ Decisions made from that:
   - _Commands are bounded and answered._ The runner's git and gh get two minutes, clones and setup commands thirty, the
     stop command ten, and a wake thirty; pull request sync's gh calls get thirty seconds each (`OCTO_GH_TIMEOUT_MS`),
     since a busy repo answers in about six and a stuck call must not hold every later sync (fourth audit, A25: this
-    said two minutes for all gh). Each is killed at its deadline and reported. Output is read as it comes and raced once the command
+    said two minutes for all gh). Each is killed at its deadline and reported. (Fourth audit, A1:) a command with a
+    deadline runs in a process group of its own and is killed with everything it started. A wake killed at its
+    deadline reached its session, so it is recorded as ended (`agent.woken` with `ended: deadline`, and
+    `agent.wake_ended` in the Log), not as a failed wake: the agent keeps its line, asleep, and is woken again when
+    something waits. While a wake runs, its process id is recorded: the cap counts the woken session for as long, up
+    to the wake's deadline, however silent it is, and Stop ends the wake's process group as it does a session's.
+    _Why:_ the deadline killed only the adapter, so the `claude` it resumed kept working, unseen, while the wake was
+    recorded as failed ("Exit 124"): the agent was declared gone, its claim ended, a new session was started for the
+    line and handed the orphan's worktree, Stop could not reach it, and the cap stopped counting it after fifteen
+    minutes. A clone or setup command cut short likewise left git writing into a folder the runner then removed.
+    _Trade-off:_ a session woken for longer than thirty minutes is cut off mid-work, though resumable; the deadline
+    is what keeps a wake from holding a process for good. Output is read as it comes and raced once the command
     exits, so a child it leaves holding the pipes cannot hang the runner. Only names and refs of the narrow form are
     filled into the developer's commands. A push service that cannot be reached costs that browser its notification
     and nothing else: the rest are sent and recorded, so a line still buzzes once. (Third audit: unless no browser
@@ -964,8 +975,9 @@ The append-only `events` table is the feed and also what event clauses in watche
   have a full page, so a rare filter on a very long log takes several requests.
 - Every waiting agent re-evaluates on every write. With 40 agents hanging, a write takes about 290ms instead of 6ms.
 - PRs are synced for repos with a GitHub name set. A PR reported by hand for any other repo is never refreshed.
-- Octotrack cannot kill a session it did not start; Stop refuses its writes and tells it, and runs the developer's
-  stop command if one is set.
+- Octotrack cannot kill a session it did not start, unless the server is running a wake for it; Stop refuses its
+  writes and tells it, and runs the developer's stop command if one is set. Stop ends processes only while the local
+  runner is set up.
 - After a reboot, a session's process id may be reused; one that started more than two minutes after the session's
   spawn is taken as another process, which a reuse within those two minutes would defeat.
 - Lists stop at their limit with no paging: the dashboard says so, and the CLI allows `--limit` up to 1000.

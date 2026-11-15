@@ -44,9 +44,20 @@ async function within<T>(promise: Promise<T>, ms: number): Promise<T | null> {
   }
 }
 
+/** Kills a process group, or the one process when it leads none. */
+function killGroup(child: { pid: number; kill(signal: "SIGKILL"): void }): void {
+  try {
+    process.kill(-child.pid, "SIGKILL");
+  } catch {
+    child.kill("SIGKILL");
+  }
+}
+
 /**
- * Runs a command with no shell, so nothing in a name or a path can be read as a command. It is killed at its deadline,
- * if it has one, and answered once it exits even when something it started keeps its output open: the pipes are raced,
+ * Runs a command with no shell, so nothing in a name or a path can be read as a command. A command with a deadline runs
+ * in a process group of its own and is killed with everything it started when the deadline comes: killing only the
+ * command left what it ran working on, such as the session a wake adapter resumes or the git a clone started (fourth
+ * audit, A1). It is answered once it exits even when something it started keeps its output open: the pipes are raced,
  * never waited on, as in gh.ts.
  */
 export async function runProcess(
@@ -57,7 +68,10 @@ export async function runProcess(
     deadlineMs: number | null;
     /** How much of each stream to keep, for a command whose whole output is read, such as gh's JSON. */
     keep?: number;
-    /** In its own process group, which it leads, so that ending the group ends everything it started. */
+    /**
+     * In its own process group, which it leads, so that ending the group ends everything it started. Always so for a
+     * command with a deadline.
+     */
     detached?: boolean;
     /** Told the process id as soon as it is spawned, before it exits. */
     onSpawn?: (pid: number) => void;
@@ -71,7 +85,7 @@ export async function runProcess(
       stdin: "ignore",
       stdout: "pipe",
       stderr: "pipe",
-      detached: options.detached === true,
+      detached: options.detached === true || options.deadlineMs !== null,
     });
     options.onSpawn?.(child.pid);
   } catch (error) {
@@ -86,7 +100,7 @@ export async function runProcess(
   const stderr = gather(child.stderr, STREAM_KEPT);
   const code =
     options.deadlineMs === null ? await child.exited : await within(child.exited, options.deadlineMs);
-  if (code === null) child.kill("SIGKILL");
+  if (code === null) killGroup(child);
   await within(Promise.all([stdout.done, stderr.done]), OUTPUT_GRACE_MS);
   if (code === null) {
     const seconds = Math.round((options.deadlineMs ?? 0) / 1000);
