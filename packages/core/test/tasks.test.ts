@@ -563,3 +563,31 @@ describe("taking a line names what waits to be re-confirmed", () => {
     expect(taken.notices.map((notice) => notice.kind)).not.toContain("held_stale");
   });
 });
+
+describe("an agent withdrawing a task", () => {
+  test("is logged as withdrawn, by the agent, and is not delivered as the developer's Can't do it", () => {
+    const w = world();
+    const task = w.as(w.owner, c.taskFile, {
+      title: "Measure the grip",
+      place: "the bench",
+      outcome: "In mm",
+    });
+    w.notices(w.owner);
+    w.as(w.owner, c.heldWithdraw, { refs: [task.ref], why: "Found it in the datasheet" });
+    const events = w.as(w.dev, c.feedList, { query: `ref:${task.ref}` }).events;
+    expect(events.map((event) => [event.type, event.actor, event.summary])).toContainEqual([
+      "task.withdrawn",
+      "panel",
+      `${task.ref} withdrawn by panel: Found it in the datasheet`,
+    ]);
+    expect(events.map((event) => event.type)).not.toContain("task.cant");
+    expect(
+      w
+        .notices(w.owner)
+        .map((notice) => notice.body)
+        .join(" "),
+    ).not.toContain("could not be done");
+    const closed = w.as(w.dev, c.issueList, { query: `ref:${task.ref}` })[0]?.issue;
+    expect([closed?.status, closed?.result]).toEqual(["cancelled", "Withdrawn: Found it in the datasheet"]);
+  });
+});
