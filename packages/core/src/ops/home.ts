@@ -8,7 +8,7 @@ import { allLines } from "../store/entities.ts";
 import { DecisionRow, IssueRow, PlanStepRow } from "../store/rows.ts";
 import { buildQueue } from "./decisions.ts";
 import { lineStart, runnerStatus, stepInFor } from "./runner.ts";
-import { atView, heldOn, reconfirmingOn } from "./tasks.ts";
+import { atView, heldCount, heldOn, reconfirmingOn } from "./tasks.ts";
 
 const DONE_LATELY_MS = 7 * 24 * 60 * 60 * 1000;
 /** How long an answer's status shows on its line. */
@@ -157,6 +157,9 @@ export function buildHome(ctx: Ctx): HomeView {
               ]),
         ]
       : [];
+    // A waiting line holds what Start would show: its current items. A line the developer owns holds every question
+    // and task its agents left, for an agent to take up when the developer hands it back.
+    const owned = line.ownedBy !== null;
     const held = working ? [] : heldOn(ctx, line.ref).filter((item) => item.current);
     return {
       start: lineStart(ctx, line.ref),
@@ -165,11 +168,16 @@ export function buildHome(ctx: Ctx): HomeView {
       step:
         current === undefined ? null : { position: current.position, of: steps.length, title: current.title },
       forYou: [...proposals, ...questions, ...tasks],
-      held: {
-        questions: held.filter((item) => item.kind === "question").length,
-        tasks: held.filter((item) => item.kind === "task").length,
-      },
-      reconfirming: line.state === "working" || line.state === "up_next" ? reconfirmingOn(ctx, line.ref) : 0,
+      held:
+        working && owned
+          ? heldCount(ctx, line.ref)
+          : {
+              questions: held.filter((item) => item.kind === "question").length,
+              tasks: held.filter((item) => item.kind === "task").length,
+            },
+      // Only an agent re-confirms, and none may write to a line the developer owns, so there nothing is re-confirming.
+      reconfirming:
+        !owned && (line.state === "working" || line.state === "up_next") ? reconfirmingOn(ctx, line.ref) : 0,
       sinceSummary: line.summaryAt === null ? 0 : changesSince(ctx, line.ref, line.summaryAt),
       scopedSteps: steps.length,
       answers: working ? answersOn(ctx, line.ref) : [],

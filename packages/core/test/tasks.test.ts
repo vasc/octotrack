@@ -421,3 +421,87 @@ describe("folding carries whether questions and tasks are held", () => {
     ]);
   });
 });
+
+describe("the agents' questions and tasks on a line the developer owns", () => {
+  test("are held for an agent: counted as held, never as to answer, to do or re-confirming", () => {
+    const w = world();
+    const asked = w.as(w.owner, c.decisionAsk, {
+      title: "Which board?",
+      context: SITUATION,
+      options: OPTIONS,
+    });
+    const task = w.as(w.owner, c.taskFile, {
+      title: "Measure the grip",
+      place: "the bench",
+      outcome: "In mm",
+    });
+    w.as(w.dev, c.lineOwn, { ref: w.line });
+    const late = w.as(w.owner, c.decisionAsk, { title: "Which plug?", context: SITUATION, options: OPTIONS });
+    const mine = w.as(w.dev, c.taskAdd, { line: w.line, title: "Sand the lid" });
+    w.later(8 * DAY);
+    const home = w.as(w.dev, c.homeShow, {});
+    const line = home.lines[w.line];
+    expect(line?.forYou.map((item) => (item.kind === "task" ? item.task.ref : item.kind))).toEqual([
+      mine.ref,
+    ]);
+    expect([line?.held, line?.reconfirming]).toEqual([{ questions: 2, tasks: 1 }, 0]);
+    expect([home.counts.toAnswer, home.counts.toDo]).toEqual([0, 1]);
+    expect(w.as(w.dev, c.heldList, { line: w.line }).map((item) => item.ref)).toEqual([
+      asked.ref,
+      late.ref,
+      task.ref,
+      mine.ref,
+    ]);
+  });
+
+  test("handed back, current ones reach the developer again; the developer's own tasks were never held", () => {
+    const w = world();
+    const asked = w.as(w.owner, c.decisionAsk, {
+      title: "Which board?",
+      context: SITUATION,
+      options: OPTIONS,
+    });
+    w.as(w.dev, c.lineOwn, { ref: w.line });
+    const mine = w.as(w.dev, c.taskAdd, { line: w.line, title: "Sand the lid" });
+    w.later(DAY);
+    w.as(w.dev, c.lineHand, { ref: w.line });
+    w.as(w.dev, c.lineOwn, { ref: w.line });
+    const owned = w.as(w.dev, c.homeShow, {});
+    expect(
+      owned.lines[w.line]?.forYou.map((item) => (item.kind === "task" ? item.task.ref : item.kind)),
+    ).toEqual([mine.ref]);
+    w.as(w.dev, c.lineHand, { ref: w.line });
+    const handed = w.as(w.dev, c.homeShow, {});
+    expect(
+      handed.lines[w.line]?.forYou.map((item) =>
+        item.kind === "question" ? item.card.decision.ref : item.kind === "task" ? item.task.ref : item.kind,
+      ),
+    ).toEqual([asked.ref, mine.ref]);
+  });
+});
+
+describe("a line waits on the developer", () => {
+  test("only for what reaches them: held questions waiting to be re-confirmed wait on an agent", () => {
+    const w = world();
+    w.as(w.owner, c.decisionAsk, { title: "Which board?", context: SITUATION, options: OPTIONS });
+    w.as(w.dev, c.issueUpdate, { refs: ["PANEL-1"], status: "done" });
+    expect(w.as(w.dev, c.homeShow, {}).lines[w.line]?.waitingOnYou).toBe(true);
+    w.as(w.dev, c.lineQueue, { ref: w.line });
+    w.later(8 * DAY);
+    w.as(w.dev, c.lineStart, { ref: w.line });
+    const line = w.as(w.dev, c.homeShow, {}).lines[w.line];
+    expect([line?.reconfirming, line?.waitingOnYou]).toEqual([1, false]);
+  });
+});
+
+describe("taking a line names what waits to be re-confirmed", () => {
+  test("only what is held: an old question that reaches the developer already needs nobody's re-confirmation", () => {
+    const w = world();
+    w.as(w.owner, c.decisionAsk, { title: "Which board?", context: SITUATION, options: OPTIONS });
+    w.later(8 * DAY);
+    const helper = w.agent("garden");
+    w.as(helper, c.agentRegister, { repo: "PANEL" });
+    const taken = w.tracker.execute(c.lineTake.name, { ref: w.line }, helper);
+    expect(taken.notices.map((notice) => notice.kind)).not.toContain("held_stale");
+  });
+});

@@ -10,7 +10,7 @@ import { one, placeholders, rows } from "../store/context.ts";
 import { allLines, getIssue, requireLine, requireProject, summarize } from "../store/entities.ts";
 import { IssueRow, PlanStepRow } from "../store/rows.ts";
 import { bind } from "./bind.ts";
-import { heldOn } from "./tasks.ts";
+import { staleHeldOn } from "./tasks.ts";
 import { requireDeveloper } from "./developer.ts";
 
 const CountRow = z.object({ n: z.number() });
@@ -151,14 +151,15 @@ function claimLine(ctx: Ctx, agent: Agent, line: Line, role: ClaimRole): TakeRes
   const current = claimOf(ctx, agent.name);
   if (current !== null && current.line !== line.ref) endClaim(ctx, agent.name, "switch");
   setClaim(ctx, agent.name, line, role);
-  const stale = heldOn(ctx, line.ref).filter((item) => !item.current);
+  // Only what is held waits for it: an old question that reaches the developer already needs nobody's word.
+  const stale = staleHeldOn(ctx, line.ref);
   if (stale.length > 0) {
     addNotice(
       ctx,
       agent.name,
       "held_stale",
       line.ref,
-      `Held on ${line.ref} for more than 7 days, so it does not reach the developer until you re-confirm or withdraw: ${stale.map((item) => item.ref).join(", ")}. Re-confirm with octo held confirm <REF>.`,
+      `Held on ${line.ref} for more than 7 days, so it does not reach the developer until you re-confirm or withdraw: ${stale.join(", ")}. Re-confirm with octo held confirm <REF>.`,
       false,
     );
   }
