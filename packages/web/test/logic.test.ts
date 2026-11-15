@@ -21,9 +21,9 @@ import {
   tellSummary,
   undoLines,
 } from "../src/lib/lines.ts";
-import { askedText, cantSummary, doneSummary, isTask, taskOutcome } from "../src/lib/tasks.ts";
+import { askedText, cantSummary, doneSummary, howClosed, isTask, taskOutcome } from "../src/lib/tasks.ts";
 import { issueLinks } from "../src/lib/links.ts";
-import { decision, decisionCard, issue } from "../src/design/fixtures.ts";
+import { decision, decisionCard, event, issue } from "../src/design/fixtures.ts";
 import { closeEntity, navigate, openEntity, setParams } from "../src/lib/router.ts";
 
 describe("suggest", () => {
@@ -356,5 +356,18 @@ describe("dayWord", () => {
     expect(dayWord("2026-11-13T08:00:00.000Z", now)).toBe("yesterday");
     expect(dayWord("2026-11-10T09:00:00.000Z", now)).toBe("Tuesday");
     expect(dayWord("2026-10-01T09:00:00.000Z", now)).toBe("2026-10-01");
+  });
+});
+
+describe("howClosed", () => {
+  test("a task's closing, from its history, newest first: done, could not be done, or withdrawn and by whom", () => {
+    const at = (type: string, actor: string, seq: number) => event({ seq, type, actor, ref: "OCT-1" });
+    expect(howClosed([at("task.withdrawn", "octo.1", 3), at("issue.created", "octo.1", 1)])).toEqual({
+      how: "withdrawn",
+      by: "octo.1",
+    });
+    expect(howClosed([at("task.cant", "dev", 2)])).toEqual({ how: "cant", by: "dev" });
+    expect(howClosed([at("task.done", "dev", 2)])).toEqual({ how: "done", by: "dev" });
+    expect(howClosed([at("issue.created", "octo.1", 1)])).toBeNull();
   });
 });

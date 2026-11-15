@@ -4,6 +4,7 @@ import { OutcomeFields } from "../src/components/home/OutcomeFields.tsx";
 import { LineBox } from "../src/components/ui/LineBox.tsx";
 import { Loaded } from "../src/components/ui/Loaded.tsx";
 import { TaskFrees } from "../src/components/entity/TaskFrees.tsx";
+import { TaskClosed } from "../src/components/home/TaskClosed.tsx";
 import type { TaskOutcome } from "../src/lib/tasks.ts";
 import { describe, expect, mock, test } from "bun:test";
 import { useState } from "react";
@@ -2763,5 +2764,52 @@ describe("useHeldValue, through TextBox", () => {
     expect(box).toHaveProperty("value", "");
     view.rerender(<TextBox label="Note" value="New words" onChange={() => {}} />);
     expect(box).toHaveProperty("value", "");
+  });
+});
+
+describe("TaskClosed", () => {
+  const closedAt = new Date(Date.now() - 2 * 3_600_000).toISOString();
+
+  test("done, with what was sent back", () => {
+    const view = render(
+      <TaskClosed
+        task={issue({ status: "done", outcome: "In mm", result: "41 mm", closedAt })}
+        closed={{ how: "done", by: "dev" }}
+      />,
+    );
+    view.getByText("Done 2h ago");
+    view.getByText("41 mm");
+  });
+
+  test("a task of the developer's own says Done once", () => {
+    const view = render(
+      <TaskClosed
+        task={issue({ status: "done", outcome: "", result: "Done", closedAt })}
+        closed={{ how: "done", by: "dev" }}
+      />,
+    );
+    expect(view.getAllByText(/Done/)).toHaveLength(1);
+  });
+
+  test("could not be done, with why", () => {
+    const view = render(
+      <TaskClosed
+        task={issue({ status: "cancelled", result: "No calipers", closedAt })}
+        closed={{ how: "cant", by: "dev" }}
+      />,
+    );
+    view.getByText("Could not be done 2h ago");
+    view.getByText("No calipers");
+  });
+
+  test("withdrawn by an agent, said as such, never as the developer turning it down", () => {
+    const view = render(
+      <TaskClosed
+        task={issue({ status: "cancelled", result: "Not needed after all", closedAt })}
+        closed={{ how: "withdrawn", by: "octo.1" }}
+      />,
+    );
+    view.getByText("Withdrawn by octo.1 2h ago");
+    expect(view.queryByText(/Could not be done/)).toBeNull();
   });
 });
