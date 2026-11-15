@@ -20,7 +20,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { path, params } = useRoute();
   const { data, error, isPending } = useBootstrap();
   const bar = useTopBar();
-  useLiveUpdates();
+  const live = useLiveUpdates();
   useSeen();
   const [keysOpen, setKeysOpen] = useState(false);
   const openKeys = useCallback(() => setKeysOpen(true), []);
@@ -65,6 +65,12 @@ export function AppShell({ children }: { children: ReactNode }) {
       />
       <KeysHeldProvider value={keysOpen}>
         <main className="main">
+          {/* What is shown no longer updates by itself: said quietly, as patterns.md asks of anything stale. */}
+          {live === "offline" ? (
+            <p className="muted" role="status">
+              Not live: reconnecting. What is shown may be out of date.
+            </p>
+          ) : null}
           {keysOpen ? <KeyHelp onClose={closeKeys} /> : null}
           {bar.error === null ? null : <ErrorState error={bar.error} />}
           {isPending ? null : error !== null && data === undefined ? <ErrorState error={error} /> : children}

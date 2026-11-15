@@ -447,6 +447,21 @@ describe("live updates, with nothing but the server's own notifications", () => 
     await view.findByRole("heading", { name: "Slipped through the gap" });
   });
 
+  test("a lost connection says so quietly, until it is back", async () => {
+    seedLine();
+    navigate("/");
+    const view = renderApp(<App />);
+    await view.findByRole("article", { name: "Enclosure" });
+    const source = FakeEventSource.instances[0];
+    if (source === undefined) throw new Error("No event source");
+    act(() => source.emit("hello"));
+    expect(view.queryByText(/Not live/)).toBeNull();
+    act(() => source.emit("error"));
+    await view.findByText("Not live: reconnecting. What is shown may be out of date.");
+    act(() => source.emit("hello"));
+    await gone(() => view.queryByText(/Not live/));
+  });
+
   test("a hidden tab gives up its connection and catches up when it comes back", async () => {
     seedLine();
     navigate("/");
