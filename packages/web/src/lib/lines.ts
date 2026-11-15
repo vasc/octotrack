@@ -152,3 +152,10 @@ export function undoLines(home: {
     ]),
   );
 }
+
+/** The lines the log groups by, in its order: what is moving first, then what waits (E-Feed). */
+export function logLines(home: HomeView | undefined): readonly Line[] {
+  return home === undefined
+    ? []
+    : [...home.working, ...home.proposed, ...home.doneLately, ...home.upNext, ...home.tabled];
+}

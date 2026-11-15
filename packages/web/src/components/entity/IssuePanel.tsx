@@ -89,7 +89,12 @@ export function IssuePanel({ issue, detail }: { issue: Issue; detail: EntityDeta
         )
       ) : (
         <>
-          <PullRequestBox prs={(prs.data ?? []).map((card) => card.pr)} holder={issue.assignee} />
+          <PullRequestBox
+            prs={(prs.data ?? []).map((card) => card.pr)}
+            holder={issue.assignee}
+            loading={prs.isPending}
+            error={prs.error}
+          />
           <ActivityList events={detail.history} />
           {issue.line === null ? null : (
             <TellBox

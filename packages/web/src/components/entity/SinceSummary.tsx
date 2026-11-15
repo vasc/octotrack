@@ -12,6 +12,7 @@ export function SinceSummary({
   events,
   summaryAt,
   seenAt,
+  more,
 }: {
   line: string;
   /** The line's events, newest first. */
@@ -19,6 +20,8 @@ export function SinceSummary({
   summaryAt: string | null;
   /** When the developer last looked at the line, as it was when the panel opened. */
   seenAt: string | null;
+  /** Older changes exist past the page loaded: the count is a floor, and the rest are in the Log. */
+  more: boolean;
 }) {
   const newer = events.filter((event) => summaryAt === null || event.ts > summaryAt);
   const unseen = newer.filter((event) => seenAt === null || event.ts > seenAt);
@@ -27,6 +30,7 @@ export function SinceSummary({
     <section className="panel-section" aria-label="New since the summary">
       <h2 className="panel-label">
         {summaryAt === null ? "So far" : "New since the summary"} · {newer.length}
+        {more ? "+" : ""}
       </h2>
       <div className="since-list">
         {unseen.map((event) => (
@@ -35,7 +39,10 @@ export function SinceSummary({
           </span>
         ))}
         {seen === 0 ? null : <span className="muted">{seen} you have seen</span>}
-        <span className="muted">Everything newer than the summary; any you have seen fold to one row.</span>
+        <span className="muted">
+          Everything newer than the summary; any you have seen fold to one row.
+          {more ? " These are only the newest; the rest are in the Log." : ""}
+        </span>
         <a
           href={`/log?q=line:${line}`}
           className="panel-link"

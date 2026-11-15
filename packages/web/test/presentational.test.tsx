@@ -2,6 +2,7 @@ import { navigate } from "../src/lib/router.ts";
 import { HeldDecision } from "../src/components/decisions/HeldDecision.tsx";
 import { OutcomeFields } from "../src/components/home/OutcomeFields.tsx";
 import { LineBox } from "../src/components/ui/LineBox.tsx";
+import { Loaded } from "../src/components/ui/Loaded.tsx";
 import type { TaskOutcome } from "../src/lib/tasks.ts";
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 import { useState } from "react";
@@ -1887,8 +1888,10 @@ describe("SinceSummary", () => {
         events={events}
         summaryAt="2026-11-14T09:00:00.000Z"
         seenAt="2026-11-14T10:45:00.000Z"
+        more={false}
       />,
     );
+    expect(view.queryByText(/only the newest/)).toBeNull();
     view.getByText("Plan set");
     view.getByText("Base made");
     view.getByText("1 you have seen");
@@ -1970,6 +1973,17 @@ const forYouDone = {
 };
 
 describe("PullRequestBox", () => {
+  test("says it is loading, or why it could not load, instead of None yet", () => {
+    const loading = render(<PullRequestBox prs={[]} holder={null} loading />);
+    loading.getByRole("status");
+    expect(loading.queryByText("None yet.")).toBeNull();
+    loading.unmount();
+    const failed = render(<PullRequestBox prs={[]} holder={null} error={new Error("gh is down")} />);
+    failed.getByRole("alert");
+    failed.getByText("gh is down");
+    expect(failed.queryByText("None yet.")).toBeNull();
+  });
+
   test("shows each pull request with its link, checks, size, opened date and state", () => {
     const view = render(
       <PullRequestBox
@@ -2698,5 +2712,46 @@ describe("one-line boxes", () => {
     expect(box.style.height).toMatch(/px$/);
     view.rerender(<TextBox label="Note" value="" onChange={() => {}} />);
     expect(box.style.height).not.toMatch(/px$/);
+  });
+});
+
+describe("SinceSummary, past one page", () => {
+  test("says only the newest are here and the rest are in the Log", () => {
+    const view = render(
+      <SinceSummary
+        line="L-1"
+        events={[event({ seq: 2, line: "L-1", ts: "2026-11-14T10:00:00.000Z", summary: "Plan set" })]}
+        summaryAt="2026-11-14T09:00:00.000Z"
+        seenAt={null}
+        more
+      />,
+    );
+    view.getByText(/1\+/);
+    view.getByText(/These are only the newest; the rest are in the Log./);
+  });
+});
+
+describe("Loaded", () => {
+  test("says what is loading, then why it failed, and shows its part only once it is there", () => {
+    const loading = render(
+      <Loaded pending error={null} label="Loading the plan">
+        <p>Plan</p>
+      </Loaded>,
+    );
+    loading.getByText("Loading the plan...");
+    expect(loading.queryByText("Plan")).toBeNull();
+    loading.unmount();
+    const failed = render(
+      <Loaded pending={false} error={new Error("Boom")} label="Loading the plan">
+        <p>Plan</p>
+      </Loaded>,
+    );
+    failed.getByRole("alert");
+    failed.unmount();
+    render(
+      <Loaded pending={false} error={null} label="Loading the plan">
+        <p>Plan</p>
+      </Loaded>,
+    ).getByText("Plan");
   });
 });
