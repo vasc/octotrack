@@ -6,7 +6,13 @@ How components combine, and why.
 
 One bar on top: Octotrack, Lines, Log and Agents; what waits on you, as one quiet group of counts with urgent apart in
 red; I'm at, New line and the keys. Under it, the page. Any ref opens as a panel over the right of the page, so the
-page keeps its place behind it. Below 720px the pages become tabs at the bottom and the counts four cells across.
+page keeps its place behind it. Below 720px the pages become tabs at the bottom, the page you are on filled with the
+accent, and the bar above is one row: what waits, wrapping in its own column, then a plus for New line and the theme.
+The bar does not name the page, since its tab does. The tabs sit right on the browser's own bar, with only the home
+indicator's room below them, and the page leaves room for the tabs and no more.
+
+A menu or a list of suggestions closes when focus moves out of it or on a tap elsewhere, never on a blur that moves
+focus nowhere: Safari gives a tapped button no focus, so that blur comes under every tap on an item.
 
 ## Home: one list of lines
 

@@ -284,6 +284,40 @@ describe("FilterBar", () => {
     expect(onChange).toHaveBeenCalledWith("status:open kind:issue ");
   });
 
+  test("a tap on a suggestion in Safari, where the input blurs before the tap arrives, still completes it", () => {
+    const onChange = mock(() => {});
+    const view = render(
+      <FilterBar value="kind:" error={null} suggestions={suggestions} onChange={onChange} />,
+    );
+    const input = view.getByLabelText("Filter");
+    fireEvent.focus(input);
+    const issue = view.getByText("kind:issue");
+    fireEvent.pointerDown(issue);
+    fireEvent.blur(input, { relatedTarget: null });
+    fireEvent.mouseDown(issue);
+    expect(onChange).toHaveBeenCalledWith("kind:issue ");
+  });
+
+  test("the suggestions close on a tap elsewhere, on Esc, and when focus moves on", () => {
+    const view = render(
+      <div>
+        <FilterBar value="kind:" error={null} suggestions={suggestions} onChange={() => {}} />
+        <button type="button">Elsewhere</button>
+      </div>,
+    );
+    const input = view.getByLabelText("Filter");
+    const elsewhere = view.getByRole("button", { name: "Elsewhere" });
+    fireEvent.focus(input);
+    fireEvent.pointerDown(elsewhere);
+    expect(view.queryByText("kind:issue")).toBeNull();
+    fireEvent.focus(input);
+    fireEvent.keyDown(input, { key: "Escape" });
+    expect(view.queryByText("kind:issue")).toBeNull();
+    fireEvent.focus(input);
+    fireEvent.blur(input, { relatedTarget: elsewhere });
+    expect(view.queryByText("kind:issue")).toBeNull();
+  });
+
   test("arrow keys and Tab pick a suggestion", () => {
     const onChange = mock(() => {});
     const view = render(<FilterBar value="ki" error={null} suggestions={suggestions} onChange={onChange} />);
@@ -451,6 +485,26 @@ describe("TopBar", () => {
     const urgent = view.getByRole("link", { name: "1 urgent" });
     expect(status.querySelector(".top-counts")?.contains(urgent)).toBe(false);
     expect(urgent.querySelector(".top-count-n")?.textContent).toBe("1");
+  });
+
+  test("names the page once: its tab, never a title above it as well", () => {
+    const view = render(
+      <TopBar
+        appearance={{ palette: "paper", mode: "system" }}
+        onPalette={() => {}}
+        onMode={() => {}}
+        path="/"
+        counts={counts}
+        places={[]}
+        at={null}
+        onAt={() => {}}
+        onNewLine={() => {}}
+        onKeys={() => {}}
+      />,
+    );
+    const bar = view.getByRole("banner");
+    expect((bar.textContent ?? "").split("Lines").length - 1).toBe(1);
+    expect(within(bar).getByRole("link", { name: "Lines" }).getAttribute("aria-current")).toBe("page");
   });
 
   test("leaves out I'm at when the developer has no places, and the counts when nothing waits", () => {
@@ -2943,5 +2997,47 @@ describe("AppearanceMenu", () => {
       within(view.getByRole("menu", { name: "Appearance" })).getByRole("menuitemradio", { name: "Dark" }),
     );
     expect(onMode).toHaveBeenCalledWith("dark");
+  });
+
+  test("a tap on a theme in Safari, which gives a tapped button no focus, still picks it", () => {
+    const onPalette = mock((_palette: string) => {});
+    const view = render(
+      <AppearanceMenu
+        appearance={{ palette: "paper", mode: "system" }}
+        onPalette={onPalette}
+        onMode={() => {}}
+      />,
+    );
+    fireEvent.click(view.getByRole("button", { name: "Appearance: Paper, as the system" }));
+    const menu = within(view.getByRole("menu", { name: "Appearance" }));
+    const forest = menu.getByRole("menuitemradio", { name: "Forest" });
+    // Safari: the item that had focus loses it, and nothing receives it, before the tap's click arrives.
+    fireEvent.pointerDown(forest);
+    fireEvent.blur(menu.getByRole("menuitemradio", { name: "Paper" }), { relatedTarget: null });
+    fireEvent.click(forest);
+    expect(onPalette).toHaveBeenCalledWith("forest");
+  });
+
+  test("a tap outside the menu, or focus moving out of it, closes it", () => {
+    const view = render(
+      <div>
+        <AppearanceMenu
+          appearance={{ palette: "paper", mode: "system" }}
+          onPalette={() => {}}
+          onMode={() => {}}
+        />
+        <button type="button">Elsewhere</button>
+      </div>,
+    );
+    const open = () =>
+      fireEvent.click(view.getByRole("button", { name: "Appearance: Paper, as the system" }));
+    open();
+    fireEvent.pointerDown(view.getByRole("button", { name: "Elsewhere" }));
+    expect(view.queryByRole("menu", { name: "Appearance" })).toBeNull();
+    open();
+    fireEvent.blur(view.getByRole("menuitemradio", { name: "Paper" }), {
+      relatedTarget: view.getByRole("button", { name: "Elsewhere" }),
+    });
+    expect(view.queryByRole("menu", { name: "Appearance" })).toBeNull();
   });
 });

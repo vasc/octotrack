@@ -61,6 +61,9 @@ further down, each marked _Replaced_ there.
   hued theme's dark ground is a deep shade of its hue, dark tints are mixed from a neutral grey so they keep their hue,
   and the phone fills the page you are on with the accent. Before, every theme showed a blue proposal edge and, on a
   phone in dark, looked like every other.
+- **A phone's bar names no page, and a tap in Safari reaches its menu item.** The tab says where you are; the bar is one
+  row of what waits beside a plus and the theme; the tab bar sits on the browser's own bar. Menus close on focus moving
+  out or a tap elsewhere, not on a blur to nowhere, which is what Safari does under every tap.
 - **I'm at is a menu of places, never a select,** so no arrow key changes where you are.
 - **The key list is the one modal,** so no key acts behind it. The Start sheet opens in place.
 - **A lost connection is said quietly:** "Not live: reconnecting" under the bar until it returns.

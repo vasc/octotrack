@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { focusLeft, useCloseOnOutsideTap } from "../../hooks/useCloseOnOutsideTap.ts";
 import type { Suggestion } from "../../hooks/useSuggestions.ts";
 
 export interface FilterBarProps {
@@ -30,6 +31,8 @@ export function FilterBar({
 }: FilterBarProps) {
   const [active, setActive] = useState(0);
   const [focused, setFocused] = useState(false);
+  const wrap = useRef<HTMLDivElement>(null);
+  useCloseOnOutsideTap(wrap, focused, setFocused);
   const open = focused && suggestions.length > 0;
   const highlighted = Math.min(active, suggestions.length - 1);
 
@@ -40,7 +43,7 @@ export function FilterBar({
   };
 
   return (
-    <div className="filter">
+    <div className="filter" ref={wrap}>
       <input
         ref={inputRef}
         // biome-ignore lint/a11y/noAutofocus: only when the developer pressed / to search
@@ -57,9 +60,12 @@ export function FilterBar({
           onChange(event.target.value);
         }}
         onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
+        onBlur={(event) => {
+          if (focusLeft(wrap, event.relatedTarget)) setFocused(false);
+        }}
         onKeyDown={(event) => {
           if (event.key === "Escape") {
+            setFocused(false);
             event.currentTarget.blur();
             return;
           }

@@ -33,13 +33,6 @@ export interface TopBarProps {
   onMode(mode: Mode): void;
 }
 
-const PAGE_NAMES: Readonly<Record<string, string>> = {
-  "/": "Lines",
-  "/lines": "Lines",
-  "/log": "Log",
-  "/agents": "Agents",
-};
-
 /** Lines, Log and Agents, what waits on the developer, where they are, and New line. One bar on every page. */
 export function TopBar({
   path,
@@ -61,10 +54,6 @@ export function TopBar({
     <header className="top-bar">
       <div className="top-bar-inner">
         <span className="brand-name">Octotrack</span>
-        {/* On a phone the pages are tabs at the bottom, so the bar names the page instead of the product. */}
-        <span className="top-page" aria-hidden="true">
-          {PAGE_NAMES[path] ?? "Octotrack"}
-        </span>
         <nav aria-label="Main" className="top-nav">
           <NavItem label="Lines" to="/" current={path === "/" || path === "/lines"} />
           <NavItem label="Log" to="/log" current={path === "/log"} />
@@ -92,10 +81,18 @@ export function TopBar({
               {...(atRef === undefined ? {} : { buttonRef: atRef })}
             />
           )}
-          {/* "New" alone on a phone, as E-Phone writes it; its name is always New line. */}
-          <button type="button" className="btn top-new" aria-label="New line" onClick={onNewLine}>
+          {/* A plus alone on a phone, beside the theme, so what waits keeps the room; its name is always New line. */}
+          <button
+            type="button"
+            className="btn top-new"
+            aria-label="New line"
+            title="New line"
+            onClick={onNewLine}
+          >
             <Icon name="plus" />
-            New<span className="top-new-more"> line</span>
+            <span className="top-new-word">
+              New<span className="top-new-more"> line</span>
+            </span>
           </button>
           <AppearanceMenu appearance={appearance} onPalette={onPalette} onMode={onMode} />
           <button

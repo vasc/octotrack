@@ -418,6 +418,17 @@ Decisions made from that:
   black; dark tints are mixed from a neutral grey, since a hue mixed into a ground of another hue turns into a third;
   and the phone fills the page you are on with the accent, as a wide screen does. `bun test design` checks each of
   these, and a tap on a phone flashes the accent instead of the browser's blue-grey.
+
+  The developer then said "Themes don't change anything on mobile", "My phone is not in dark mode", and "I told you to
+  fix the white space on mobile sizes and stop repeating lines both at the bottom and at the top". In Safari a tapped
+  button takes no focus, so the menu's open item blurred with nothing receiving focus, the menu read that as focus
+  leaving and closed under the tap, and no theme (nor I'm at) could be picked on an iPhone; Chrome's phone emulation
+  focuses the tapped button, which is why it passed there. _Decided:_ menus and the filter's suggestions close when
+  focus moves to something outside them or on a tap outside them, never on a blur that moves focus nowhere
+  (`useCloseOnOutsideTap`); the phone's bar no longer names the page, which the filled tab already does, and is one row
+  of what waits beside a plus for New line and the theme; the tab bar drops its fixed band of padding for the home
+  indicator's own inset; and the page's bottom padding is the tab bar's height, not twice it. Checked in Safari in the
+  iOS Simulator, not only in a narrowed desktop browser.
 - **Focus is a border, with the keys beside it, not a word.** The developer, looking at the built home: "focused text on
   lines is unnecessary, reminding about j an k shortcuts to the side would be better, in a subtle way". The word
   Focused, which the boards draw over the focused item, is gone; the item keeps its border, in the theme's accent, and out in the margin
