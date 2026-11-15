@@ -201,7 +201,7 @@ describe("taskOutcome", () => {
   test("a task with one outcome needs words; one of the developer's own needs none", () => {
     expect(taskOutcome(issue({ outcome: "Grams" }), {}, " ")).toBeNull();
     expect(taskOutcome(issue({ outcome: "Grams" }), {}, " 212 g ")).toEqual({ result: "212 g" });
-    expect(taskOutcome(issue({ outcome: "" }), {}, "")).toEqual({ result: "Done" });
+    expect(taskOutcome(issue({ outcome: "" }), {}, "")).toEqual({});
   });
 });
 
@@ -262,7 +262,7 @@ describe("how a task's choices read in the Undo bar", () => {
       ),
     ).toBe('Sending "Length 41 mm, Holes 38 mm" to Sendspin enclosure');
     expect(doneSummary(task, { result: "26 mm" }, null)).toBe('Sending "26 mm" for OCT-1');
-    expect(doneSummary(issue({ title: "Sweep the shed", outcome: "" }), { result: "Done" }, null)).toBe(
+    expect(doneSummary(issue({ title: "Sweep the shed", outcome: "" }), {}, null)).toBe(
       'Marking "Sweep the shed" done',
     );
   });

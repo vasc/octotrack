@@ -105,7 +105,7 @@ Home is one list: every line in the developer's order, with what each needs from
 | `TaskClosed`       | Pure       | A task that has closed, opened again: how it closed and when, and what was sent back or why not; nothing to send again                                              |
 | `OutcomeFields`    | Pure       | A task's named outcomes, a short box for each in a row, then a note for anything that surprised                                                                     |
 | `StepIn`           | Pure       | A working line nobody could be found for, in red: why, and the action that fits (Set its checkout, Try now, Start one anyway), with Table it and I'll own it        |
-| `LineStepIn`       | Pure       | Whether a working line shows Step in, and which fixes it offers given how its start went; folded to one row at a place                                              |
+| `LineStepIn`       | Pure       | Step in for a working line, from the server's reason and its kind: the action that fits the kind, or folded at a place to "Step in: a start keeps failing"          |
 | `CheckoutForm`     | Pure       | Set its checkout: where this machine has a repo, after a clone failed                                                                                               |
 | `UpNextRow`        | Pure       | A line up next: what it holds and how much of it is being re-confirmed, how far scoping got, its done when, and Start                                               |
 | `ProposalCard`     | Pure       | A proposed line with the agent's case, and Start, Up next, Table, Fold into (a button per line), Not a line; Drop for a tabled line back to look at                 |

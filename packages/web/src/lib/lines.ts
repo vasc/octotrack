@@ -4,8 +4,7 @@ import type {
   Line,
   LineCrew,
   LineHome,
-  LineStart,
-  RunnerStatus,
+  StepInKind,
   UrgentReason,
 } from "@octotrack/core/schemas";
 
@@ -33,29 +32,6 @@ export function crewText(crew: LineCrew | undefined, stepIn = false): string[] {
     words.push(`+${crew.helpers.length} helper${crew.helpers.length === 1 ? "" : "s"}`);
   if (crew.scoper !== null) words.push(`${crew.scoper.name} is scoping it`);
   return words;
-}
-
-/**
- * Why a working line has no owner, and what would fix it, or null while a session is being started for it. Says what
- * happened in the developer's terms: the setup file, watch mode, the last start's own words.
- */
-export function stepInReason(line: Line, runner: RunnerStatus, start: LineStart | null): string | null {
-  if (start !== null && (start.state === "starting" || start.state === "running")) return null;
-  if (!runner.configured) {
-    return `No agent took ${line.ref}, and none can be started for it: no start command is set on this machine. Add "start": ["claude", "-p", "You are {name}. Run: octo line take {line}"] to ~/.octotrack/agent-setup.json, then Try now.`;
-  }
-  if (runner.dryRun) {
-    return `No agent took ${line.ref}. The runner is watching only, so it noted it would start one. Set dryRun to false in ~/.octotrack/agent-setup.json to let it.`;
-  }
-  if (start?.state === "failed" && start.took) {
-    return `${start.name} took ${line.ref} and left soon after, with no way to wake it. Octotrack starts the next one less often each time: keep the session running, or have it register a wake address (octo agent register --wake).`;
-  }
-  if (start?.state === "failed") {
-    const said = start.output?.trim().split("\n").at(-1);
-    return `${start.name}, started for it, exited at once${said === undefined || said === "" ? "" : `: ${said}`}. Octotrack tries again by itself, less often each time.`;
-  }
-  if (start?.state === "never_took") return `${start.name} ran but never took ${line.ref}.`;
-  return `No agent took ${line.ref}, and every session Octotrack may run is busy (at most ${runner.cap}).`;
 }
 
 /** Why something is urgent, in the words the boards use: one of a fixed set. */
@@ -179,3 +155,27 @@ export function forYouCounts(items: readonly ForYou[]): { questions: number; tas
 export function tellSummary(to: string, words: string): string {
   return words === "" ? `Nudging ${to}` : `Telling ${to}: ${words}`;
 }
+
+/** What can fix each reason a line needs the developer, beside Table it and I'll own it, which always fit. */
+export const STEP_IN_ACTIONS: Readonly<Record<StepInKind, "retry" | "anyway" | "checkout" | null>> = {
+  no_start_command: "retry",
+  watch_only: null,
+  failing: "retry",
+  left: "retry",
+  never_took: "retry",
+  clone_failed: "checkout",
+  no_repo: null,
+  at_cap: "anyway",
+};
+
+/** Each reason in a few words, for Step in folded to a row, as E-States 4 writes it. */
+export const STEP_IN_SHORT: Readonly<Record<StepInKind, string>> = {
+  no_start_command: "nothing can start a session",
+  watch_only: "the runner is only watching",
+  failing: "a start keeps failing",
+  left: "sessions keep leaving",
+  never_took: "a session never took it",
+  clone_failed: "its checkout could not be made",
+  no_repo: "it names no repo",
+  at_cap: "every session is busy",
+};

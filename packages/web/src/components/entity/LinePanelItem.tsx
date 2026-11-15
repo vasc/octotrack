@@ -1,3 +1,4 @@
+import { sinceSummaryQuery } from "@octotrack/core/query";
 import { forYouCounts, linePosition } from "../../lib/lines.ts";
 import { contracts } from "@octotrack/core/contracts";
 import type { Drift, Line } from "@octotrack/core/schemas";
@@ -33,7 +34,8 @@ export function LinePanelItem({ line, drift }: { line: Line; drift: readonly Dri
   const { waiting: choicesWaiting } = useChoices();
   const h = useHome();
   const shown = useOpQuery(contracts.lineShow, { ref: line.ref });
-  const since = useOpQuery(contracts.feedList, { query: `line:${line.ref}`, limit: 50 });
+  // The same changes home counts: not the developer's own moves, which need no telling.
+  const since = useOpQuery(contracts.feedList, { query: sinceSummaryQuery(line.ref), limit: 50 });
   const tell = useDraft(`tell:${line.ref}`);
   const own = useDraft(`own:${line.ref}`);
   const unmarked = useMarkSeen(line.ref);
@@ -111,6 +113,7 @@ export function LinePanelItem({ line, drift }: { line: Line; drift: readonly Dri
             onOwn={() => choices.choose("own")}
             onHand={choices.hand}
             waitingOnYou={home?.lines[line.ref]?.waitingOnYou === true}
+            stepIn={home?.lines[line.ref]?.stepInReason ?? null}
           />
         </div>
       </div>

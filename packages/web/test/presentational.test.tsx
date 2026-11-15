@@ -80,11 +80,10 @@ import type {
   Issue,
   LineCrew,
   LineHome,
-  LineStart,
+  StepInKind,
   Link,
 } from "@octotrack/core/schemas";
 import type { Tone } from "../src/lib/format.ts";
-import { stepInReason } from "../src/lib/lines.ts";
 import {
   decision,
   decisionCard,
@@ -931,6 +930,13 @@ describe("a line opened", () => {
     );
     asleep.unmount();
     render(<OwnerBox {...props} crew={crew("running")} waitingOnYou={false} />).getByText(/is running now/);
+    // With no owner: still being looked for, or why none can be found, as Step in says.
+    render(<OwnerBox {...props} crew={undefined} />).getByText(
+      "No agent owns it yet. Octotrack is looking for one.",
+    );
+    render(<OwnerBox {...props} crew={undefined} stepIn="It names no repo to work in." />).getByText(
+      "No agent owns it yet, and none can be found: It names no repo to work in.",
+    );
   });
 
   test("OwnerBox offers Stop on the owner and I'll own it, or Hand to an agent on a line of yours", () => {
@@ -1191,42 +1197,6 @@ describe("agents and first run", () => {
     view.getByText("with Undo");
     view.unmount();
     render(<FirstRun proposals={[]} repos={0} onAccept={onAccept} />).getByText("octo guide");
-  });
-});
-
-describe("why a line needs the developer to step in", () => {
-  const runner = { configured: true, cap: 1, dryRun: false };
-  const start = (overrides: Partial<LineStart> = {}): LineStart => ({
-    name: "panel.2",
-    state: "failed",
-    output: "Error\nclaude: not logged in",
-    attempts: 1,
-    at: "",
-    nextTryAt: null,
-    took: false,
-    ...overrides,
-  });
-
-  test("says what to do when sessions keep taking the line and leaving, without calling that exiting at once", () => {
-    expect(stepInReason(line(), runner, start({ took: true, output: null }))).toBe(
-      "panel.2 took L-1 and left soon after, with no way to wake it. Octotrack starts the next one less often each time: keep the session running, or have it register a wake address (octo agent register --wake).",
-    );
-  });
-
-  test("says what to do when nothing can start a session, or when the runner only watches", () => {
-    expect(stepInReason(line(), { ...runner, configured: false }, null)).toContain("agent-setup.json");
-    expect(stepInReason(line(), { ...runner, dryRun: true }, null)).toContain("watching only");
-  });
-
-  test("quotes the last words of a start that failed, and says nothing while one is starting", () => {
-    expect(stepInReason(line(), runner, start())).toBe(
-      "panel.2, started for it, exited at once: claude: not logged in. Octotrack tries again by itself, less often each time.",
-    );
-    expect(stepInReason(line(), runner, start({ state: "never_took" }))).toBe(
-      "panel.2 ran but never took L-1.",
-    );
-    expect(stepInReason(line(), runner, start({ state: "starting" }))).toBeNull();
-    expect(stepInReason(line(), runner, null)).toContain("at most 1");
   });
 });
 
@@ -2218,24 +2188,11 @@ describe("ActivityList", () => {
 });
 
 describe("LineStepIn", () => {
-  const runner = { configured: true, cap: 2, dryRun: false };
-  const start = (overrides: Partial<LineStart> = {}): LineStart => ({
-    name: "panel.2",
-    state: "failed",
-    output: "Error\nclaude: not logged in",
-    attempts: 1,
-    at: "",
-    nextTryAt: null,
-    took: false,
-    ...overrides,
-  });
   const stepIn = (
-    props: Partial<Parameters<typeof LineStepIn>[0]> & { h: HomeActions },
+    props: Partial<Parameters<typeof LineStepIn>[0]> & { h: HomeActions; kind: StepInKind | null },
   ): Parameters<typeof LineStepIn>[0] => ({
     line: line(),
-    start: null,
-    needed: true,
-    runner,
+    reason: props.kind === null ? null : "Why, as the server words it.",
     focused: false,
     folded: false,
     onFocus: () => {},
@@ -2246,63 +2203,56 @@ describe("LineStepIn", () => {
       .getAllByRole("button")
       .map((button) => button.textContent);
 
-  test("is nothing when the server says no step in is needed, or while a session is starting", () => {
-    const h = homeActions();
-    expect(
-      render(<LineStepIn {...stepIn({ h, needed: false, runner: { ...runner, configured: false } })} />)
-        .container.textContent,
-    ).toBe("");
-    expect(
-      render(<LineStepIn {...stepIn({ h, start: start({ state: "starting" }) })} />).container.textContent,
-    ).toBe("");
+  test("is nothing when the server sends no reason to step in", () => {
+    expect(render(<LineStepIn {...stepIn({ h: homeActions(), kind: null })} />).container.textContent).toBe(
+      "",
+    );
   });
 
-  test("with no start command set, offers Try now, Table it and I'll own it", () => {
+  test("says the server's reason, and offers what fits each kind beside Table it and I'll own it", () => {
+    const cases: readonly (readonly [StepInKind, readonly string[]])[] = [
+      ["no_start_command", ["Try now", "Table it", "I'll own it"]],
+      ["failing", ["Try now", "Table it", "I'll own it"]],
+      ["left", ["Try now", "Table it", "I'll own it"]],
+      ["never_took", ["Try now", "Table it", "I'll own it"]],
+      ["clone_failed", ["Set its checkout", "Table it", "I'll own it"]],
+      ["at_cap", ["Start one anyway", "Table it", "I'll own it"]],
+      ["watch_only", ["Table it", "I'll own it"]],
+      ["no_repo", ["Table it", "I'll own it"]],
+    ];
+    for (const [kind, offered] of cases) {
+      const view = render(<LineStepIn {...stepIn({ h: homeActions(), kind })} />);
+      view.getByText("Why, as the server words it.");
+      // The kind rides along, so a failure says which one offered the wrong choices.
+      expect({ kind, offered: choices(view) }).toEqual({ kind, offered: [...offered] });
+      view.unmount();
+    }
+  });
+
+  test("Try now, Start one anyway, I'll own it and Table it go to home's actions", () => {
     const h = homeActions();
-    const view = render(<LineStepIn {...stepIn({ h, runner: { ...runner, configured: false } })} />);
-    view.getByText(/no start command is set on this machine/);
-    expect(choices(view)).toEqual(["Try now", "Table it", "I'll own it"]);
-    fireEvent.click(view.getByRole("button", { name: "Try now" }));
+    const failing = render(<LineStepIn {...stepIn({ h, kind: "failing" })} />);
+    fireEvent.click(failing.getByRole("button", { name: "Try now" }));
     expect(h.retry).toHaveBeenCalledWith("L-1");
-    fireEvent.click(view.getByRole("button", { name: "I'll own it" }));
+    fireEvent.click(failing.getByRole("button", { name: "I'll own it" }));
     expect(h.own).toHaveBeenCalledWith("L-1");
-  });
-
-  test("after a start failed, offers Try now, and tables with a reason", () => {
-    const h = homeActions();
-    const view = render(<LineStepIn {...stepIn({ h, start: start() })} />);
-    view.getByText(/exited at once: claude: not logged in/);
-    expect(choices(view)).toEqual(["Try now", "Table it", "I'll own it"]);
-    fireEvent.click(view.getByRole("button", { name: "Try now" }));
-    expect(h.retry).toHaveBeenCalledWith("L-1");
-    fireEvent.click(view.getByRole("button", { name: "Table it" }));
-    fireEvent.change(view.getByLabelText("Why table Sendspin enclosure"), {
+    fireEvent.click(failing.getByRole("button", { name: "Table it" }));
+    fireEvent.change(failing.getByLabelText("Why table Sendspin enclosure"), {
       target: { value: "After the move" },
     });
-    fireEvent.click(view.getByRole("button", { name: "Table it" }));
+    fireEvent.click(failing.getByRole("button", { name: "Table it" }));
     expect(h.table).toHaveBeenCalledWith("L-1", "After the move", null);
+    failing.unmount();
+    const busy = render(<LineStepIn {...stepIn({ h, kind: "at_cap" })} />);
+    fireEvent.click(busy.getByRole("button", { name: "Start one anyway" }));
+    expect(h.anyway).toHaveBeenCalledWith("L-1");
   });
 
-  test("after a session ran but never took the line, offers Try now too", () => {
-    const view = render(
-      <LineStepIn {...stepIn({ h: homeActions(), start: start({ state: "never_took", output: null }) })} />,
-    );
-    view.getByText(/panel.2 ran but never took L-1/);
-    expect(choices(view)).toEqual(["Try now", "Table it", "I'll own it"]);
-  });
-
-  test("after a clone failed, offers Set its checkout instead of Try now, and sets the line's first repo", () => {
+  test("after a failed checkout, Set its checkout sets the line's first repo, and does not retry by itself", () => {
     const h = homeActions();
     const view = render(
-      <LineStepIn
-        {...stepIn({
-          h,
-          line: line({ repos: ["PANEL", "FIRMWARE"] }),
-          start: start({ output: "Cloning into PANEL\nfatal: clone failed: repository not found" }),
-        })}
-      />,
+      <LineStepIn {...stepIn({ h, kind: "clone_failed", line: line({ repos: ["PANEL", "FIRMWARE"] }) })} />,
     );
-    expect(choices(view)).toEqual(["Set its checkout", "Table it", "I'll own it"]);
     fireEvent.click(view.getByRole("button", { name: "Set its checkout" }));
     fireEvent.change(view.getByRole("textbox", { name: "Checkout of PANEL" }), {
       target: { value: "/Users/me/src/panel" },
@@ -2310,38 +2260,19 @@ describe("LineStepIn", () => {
     fireEvent.click(view.getByRole("button", { name: "Set" }));
     expect(h.setCheckout).toHaveBeenCalledWith("L-1", "PANEL", "/Users/me/src/panel");
     expect(h.retry).not.toHaveBeenCalled();
-    expect(choices(view)).toEqual(["Set its checkout", "Table it", "I'll own it"]);
   });
 
-  test("at the cap, offers Start one anyway and no Try now", () => {
-    const h = homeActions();
-    const view = render(<LineStepIn {...stepIn({ h })} />);
-    view.getByText(/every session Octotrack may run is busy \(at most 2\)/);
-    expect(choices(view)).toEqual(["Start one anyway", "Table it", "I'll own it"]);
-    fireEvent.click(view.getByRole("button", { name: "Start one anyway" }));
-    expect(h.anyway).toHaveBeenCalledWith("L-1");
-  });
-
-  test("with a runner that only watches, offers only Table it and I'll own it", () => {
-    const view = render(
-      <LineStepIn {...stepIn({ h: homeActions(), runner: { ...runner, dryRun: true } })} />,
-    );
-    view.getByText(/watching only/);
-    expect(choices(view)).toEqual(["Table it", "I'll own it"]);
-  });
-
-  test("folded at a place, is one row until it has focus, and the row moves focus to it", () => {
+  test("folded at a place, is one row saying why in a few words, until it has focus", () => {
     const onFocus = mock((_ref: string) => {});
     const h = homeActions();
-    const view = render(<LineStepIn {...stepIn({ h, folded: true, onFocus })} />);
+    const view = render(<LineStepIn {...stepIn({ h, kind: "failing", folded: true, onFocus })} />);
     expect(view.queryByRole("note")).toBeNull();
-    fireEvent.click(view.getByRole("button", { name: "Step in, folded" }));
+    fireEvent.click(view.getByRole("button", { name: "Step in: a start keeps failing" }));
     expect(onFocus).toHaveBeenCalledWith("stepin:L-1");
     view.unmount();
-    const focused = render(<LineStepIn {...stepIn({ h, folded: true, focused: true })} />);
+    const focused = render(<LineStepIn {...stepIn({ h, kind: "failing", folded: true, focused: true })} />);
     const note = focused.getByRole("note", { name: "Step in on Sendspin enclosure" });
     expect(note.getAttribute("aria-current")).toBe("true");
-    expect(focused.queryByRole("button", { name: "Step in, folded" })).toBeNull();
   });
 });
 
