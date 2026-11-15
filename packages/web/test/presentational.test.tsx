@@ -1195,7 +1195,14 @@ describe("why a line needs the developer to step in", () => {
     attempts: 1,
     at: "",
     nextTryAt: null,
+    took: false,
     ...overrides,
+  });
+
+  test("says what to do when sessions keep taking the line and leaving, without calling that exiting at once", () => {
+    expect(stepInReason(line(), runner, start({ took: true, output: null }))).toBe(
+      "panel.2 took L-1 and left soon after, with no way to wake it. Octotrack starts the next one less often each time: keep the session running, or have it register a wake address (octo agent register --wake).",
+    );
   });
 
   test("says what to do when nothing can start a session, or when the runner only watches", () => {
@@ -2255,6 +2262,7 @@ describe("LineStepIn", () => {
     attempts: 1,
     at: "",
     nextTryAt: null,
+    took: false,
     ...overrides,
   });
   const stepIn = (

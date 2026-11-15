@@ -746,6 +746,8 @@ export const LineStart = z.object({
   attempts: z.number().int(),
   at: z.string(),
   nextTryAt: z.string().nullable(),
+  /** It took its line before it ended: a failed one left soon after, with no way to wake it. */
+  took: z.boolean(),
 });
 export type LineStart = z.infer<typeof LineStart>;
 
