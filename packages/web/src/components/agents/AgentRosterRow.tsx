@@ -93,10 +93,10 @@ export function AgentRosterRow({
   return (
     <tr aria-label={agent.name} data-state={agent.state}>
       <th scope="row">{agent.name}</th>
-      <td className="mono">{repo ?? agent.repo ?? "none"}</td>
-      <td>
+      <td className="mono agent-repo">{repo ?? agent.repo ?? "none"}</td>
+      <td className="agent-line">
         {shown === null ? (
-          <span className="muted">none</span>
+          <span className="muted">no line</span>
         ) : (
           <>
             <button type="button" className="line-link mono" onClick={() => openEntity(shown)}>
@@ -107,8 +107,10 @@ export function AgentRosterRow({
           </>
         )}
       </td>
-      <td className="muted">{agent.start === null ? <TimeAgo iso={agent.lastSeenAt} /> : "never"}</td>
-      <td className="muted">{wakeText(agent)}</td>
+      <td className="muted agent-last">
+        {agent.start === null ? <TimeAgo iso={agent.lastSeenAt} /> : "never"}
+      </td>
+      <td className="muted agent-wake">{wakeText(agent)}</td>
       <td className="agent-now">
         {agent.start === null ? nowText(agent, waitsOnYou) : startText(agent.start, now)}
         {agent.note === null ? null : <span className="agent-note">{agent.note}</span>}

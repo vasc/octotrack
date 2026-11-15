@@ -2415,6 +2415,53 @@ p {
   .line-card-text > .line-facts[data-separated="true"] > span:first-child::before {
     content: none;
   }
+  /* A log row takes the card's width on a phone: the time above its words, not beside them. */
+  .log-rows {
+    padding-left: var(--space-9);
+  }
+  .log-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  /* The roster as one card per agent on a phone: its name and action, what it is doing, then its line and when it
+     last ran a command. Its repo and wake address are for a wider screen. */
+  .agents-table,
+  .agents-table tbody {
+    display: block;
+  }
+  .agents-table thead,
+  .agents-table .agent-repo,
+  .agents-table .agent-wake {
+    display: none;
+  }
+  .agents-table tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-2) var(--space-6);
+    padding: var(--space-6) var(--space-8);
+    border-bottom: 1px solid var(--line);
+  }
+  .agents-table tr:last-child {
+    border-bottom: 0;
+  }
+  .agents-table th,
+  .agents-table td {
+    padding: 0;
+    border: 0;
+  }
+  .agents-table .agent-actions {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    align-self: start;
+  }
+  .agents-table .agent-now,
+  .agents-table .agent-line,
+  .agents-table .agent-last {
+    grid-column: 1;
+  }
+  .agents-table .agent-last::before {
+    content: "last command ";
+  }
   /* The bar names the page already, so Log and Agents do not name it again; search takes the width. */
   .log-head .panel-title {
     display: none;
