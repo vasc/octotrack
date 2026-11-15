@@ -167,6 +167,15 @@ function holdWork(ctx: Ctx, line: string): void {
   );
 }
 
+/**
+ * Questions and tasks that arrived on a line from elsewhere (a fold) take the line's own state: held if nobody works on
+ * it, or, on a line being worked on, reaching the developer at once when current and waiting to be re-confirmed when not.
+ */
+export function settleHeldWork(ctx: Ctx, line: Line): void {
+  if (line.state === "working") releaseCurrentWork(ctx, line.ref);
+  else holdWork(ctx, line.ref);
+}
+
 /** When a line starts, held work that is still current reaches the developer; stale work waits to be re-confirmed. */
 function releaseCurrentWork(ctx: Ctx, line: string): void {
   const since = new Date(Date.parse(ctx.now) - HELD_CURRENT_MS).toISOString();
