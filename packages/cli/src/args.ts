@@ -6,6 +6,8 @@ export interface OptionSpec {
   type: "string" | "boolean";
   short?: string;
   multiple?: boolean;
+  /** Older long names that still work, read as this option: --project for --repo. */
+  aliases?: readonly string[];
   description: string;
 }
 
@@ -71,10 +73,22 @@ function disambiguate(argv: readonly string[], specs: OptionSpecs): string[] {
       spec.short === undefined ? [] : [[spec.short, name] as const],
     ),
   );
+  const aliasOf = new Map(
+    Object.entries(specs).flatMap(([name, spec]) =>
+      (spec.aliases ?? []).map((alias) => [alias, name] as const),
+    ),
+  );
+  /** An older long name, with or without its value after =, as the option it is now. */
+  const current = (token: string): string => {
+    const [long = "", ...value] = token.slice(2).split("=");
+    const name = aliasOf.get(long);
+    return name === undefined ? token : [`--${name}`, ...value].join("=");
+  };
   const options: string[] = [];
   const positionals: string[] = [];
   for (let index = 0; index < argv.length; index += 1) {
-    const token = argv[index] ?? "";
+    const given = argv[index] ?? "";
+    const token = given.startsWith("--") ? current(given) : given;
     if (token === "--") {
       positionals.push(...argv.slice(index + 1));
       break;

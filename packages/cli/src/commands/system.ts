@@ -76,14 +76,14 @@ export const systemCommands: Command[] = [
     summary: "What this agent should do now",
     options: {
       for: { ...STRING, description: "Ask on behalf of another agent" },
-      project: { ...STRING, short: "p", description: "Only this project" },
+      repo: { ...STRING, short: "p", aliases: ["project"], description: "Only this repo" },
       limit: { ...STRING, description: "How many items per section" },
     },
     ops: [c.next.name],
     async run({ client, out }, args) {
       const outcome = await client.call(
         c.next,
-        compact({ agent: args.str("for"), project: args.str("project"), limit: args.int("limit") }),
+        compact({ agent: args.str("for"), project: args.str("repo"), limit: args.int("limit") }),
       );
       out.result(outcome, () => r.renderNext(outcome.data));
     },

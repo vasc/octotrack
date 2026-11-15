@@ -38,7 +38,7 @@ will be woken.
   octo post "what is happening" --on PANEL-4 --level progress
   octo issue update PANEL-4 --status in_review
   octo plan set L-7 "Model the base" "Print and test-fit" "Final print"
-  octo issue create "Measure the grip" -p PANEL --line L-7 --step 2
+  octo issue create "Measure the grip" --repo PANEL --line L-7 --step 2
   octo line summarize L-7 --headline "<one sentence that stands alone>" --summary-file -
   octo line propose-done L-7 How done when was met
 
@@ -173,7 +173,7 @@ Clear it in one of two ways, with a note. There is no third:
 
 Drift about state, such as a PR still open, clears by itself once you fix the state, so --updated is refused while it
 is still true. --verified says it is correct as it is. With several agents around, take an item first:
-octo drift claim DR-4. Use octo next -p OCT to see only one repo.
+octo drift claim DR-4. Use octo next --repo OCT to see only one repo.
 
 Some drift clears itself when the state becomes consistent. Connect your own work to the network so that you get told:
 
