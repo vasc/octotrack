@@ -36,7 +36,7 @@ export function AtUpNext({
             <FocusTarget
               key={task.ref}
               focusRef={task.ref}
-              label={focusLabel({ kind: "task", task })}
+              label={focusLabel({ kind: "task", task, frees: null })}
               focused={task.ref === focus}
             >
               <p className="muted">

@@ -56,6 +56,12 @@ function requireTask(ctx: Ctx, ref: string): Issue {
 }
 
 /** The issue a task frees: the one it blocks. */
+/** The issue a task frees, by ref and title, for home to name beside the task. */
+export function freedIssue(ctx: Ctx, task: string): { ref: string; title: string } | null {
+  const ref = freedBy(ctx, task);
+  return ref === null ? null : { ref, title: requireIssue(ctx, ref).title };
+}
+
 function freedBy(ctx: Ctx, task: string): string | null {
   return (
     one(
@@ -397,6 +403,8 @@ export const taskOps = [
       ...(input.body === undefined ? {} : { body: input.body }),
       assignee: DEVELOPER,
       line: line.ref,
+      // It holds up what the issue it frees holds up: that issue's plan step, on this line.
+      ...(frees !== null && frees.line === line.ref && frees.step !== null ? { step: frees.step } : {}),
     });
     // Filed on a line no agent works on (in a wind-down), it is held until one does.
     ctx.sql.run("UPDATE issues SET place = ?, outcome = ?, fields = ?, heldAt = ? WHERE ref = ?", [
