@@ -1,6 +1,6 @@
 import type { HomeView } from "@octotrack/core/schemas";
 import { type RefObject, useMemo } from "react";
-import { firstOf, focusItem, isQuestion, lineOf } from "../lib/focus.ts";
+import { firstOf, focusItem, isQuestion, lineOf, pressNumbered } from "../lib/focus.ts";
 import { openEntity } from "../lib/router.ts";
 import type { HotkeyMap } from "./useHotkeys.ts";
 
@@ -14,8 +14,7 @@ const ENTER = "Enter";
  */
 function pressChoice(page: HTMLElement | null, focus: string, number: string): void {
   const item = page === null ? undefined : focusItem(page, focus);
-  const button = item?.querySelector(`[data-choice="${number}"]`);
-  if (button instanceof HTMLButtonElement && !button.disabled) button.click();
+  if (item !== undefined) pressNumbered(item, number);
 }
 
 /**
