@@ -1,10 +1,19 @@
 import { describe, expect, test } from "bun:test";
 import { suggest } from "../src/hooks/useSuggestions.ts";
 import { validateQuery } from "../src/hooks/useFilter.ts";
-import { dayLabel, filterTerm, humanize, splitRefs, timeAgo, timeLabel, toneOf } from "../src/lib/format.ts";
+import {
+  dayLabel,
+  filterTerm,
+  humanize,
+  sinceText,
+  splitRefs,
+  timeAgo,
+  timeLabel,
+  toneOf,
+} from "../src/lib/format.ts";
 import { nextFocus } from "../src/lib/focus.ts";
 import { heldOnTabled, lineFacts, undoLines } from "../src/lib/lines.ts";
-import { taskOutcome } from "../src/lib/tasks.ts";
+import { askedText, taskOutcome } from "../src/lib/tasks.ts";
 import { issue } from "../src/design/fixtures.ts";
 import { closeEntity, navigate, openEntity, setParams } from "../src/lib/router.ts";
 
@@ -207,5 +216,25 @@ describe("whether a line waits on the developer", () => {
       "L-1": { title: "Enclosure", waitsOnYou: false },
       "L-2": { title: "Mount", waitsOnYou: true },
     });
+  });
+});
+
+describe("sinceText", () => {
+  const now = Date.parse("2026-11-14T12:00:00.000Z");
+  test("reads after a verb at every age", () => {
+    expect(sinceText("2026-11-14T11:59:40.000Z", now)).toBe("just now");
+    expect(sinceText("2026-11-14T11:55:00.000Z", now)).toBe("5m ago");
+    expect(sinceText("2026-11-12T12:00:00.000Z", now)).toBe("2d ago");
+    expect(sinceText("2026-10-01T12:00:00.000Z", now)).toBe("on 2026-10-01");
+  });
+});
+
+describe("askedText", () => {
+  const now = Date.parse("2026-11-14T12:00:00.000Z");
+  test("says when a task was asked, or re-confirmed if later", () => {
+    expect(askedText({ createdAt: "2026-11-14T10:00:00.000Z", confirmedAt: null }, now)).toBe("asked 2h ago");
+    expect(
+      askedText({ createdAt: "2026-11-01T10:00:00.000Z", confirmedAt: "2026-11-14T11:59:50.000Z" }, now),
+    ).toBe("re-confirmed just now");
   });
 });

@@ -1,6 +1,6 @@
 import type { TaskOutcome } from "../../lib/tasks.ts";
 import type { Issue, Line } from "@octotrack/core/schemas";
-import { timeAgo } from "../../lib/format.ts";
+import { askedText } from "../../lib/tasks.ts";
 import { FocusTarget } from "./FocusTarget.tsx";
 import { TaskItem } from "./TaskItem.tsx";
 
@@ -37,7 +37,7 @@ export function AtUpNext({
             <FocusTarget key={task.ref} focusRef={task.ref} focused={task.ref === focus}>
               <p className="muted">
                 {line === undefined ? "" : `${firstNumber + at} ${line.title}, up next · `}
-                {task.ref} · asked {timeAgo(task.createdAt)} ago
+                {task.ref} · {askedText(task)}
               </p>
               <TaskItem task={task} onDone={onTaskDone} onCant={onTaskCant} />
             </FocusTarget>
