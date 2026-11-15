@@ -1,4 +1,5 @@
 import { whenText } from "../src/lib/format.ts";
+import { AUTO_STOP_REASON } from "@octotrack/core/schemas";
 import { navigate } from "../src/lib/router.ts";
 import { HeldDecision } from "../src/components/decisions/HeldDecision.tsx";
 import { OutcomeFields } from "../src/components/home/OutcomeFields.tsx";
@@ -1166,6 +1167,28 @@ describe("agents and first run", () => {
     row.getByText("retried since Tuesday, each exits at once (exit 1)");
   });
 
+  test("AgentRosterRow tells the developer's Stop from Octotrack's, as E-Agents does", () => {
+    const row = (overrides: Partial<AgentView>) =>
+      render(
+        <table>
+          <tbody>
+            <AgentRosterRow
+              agent={agent({ state: "stopped", ...overrides })}
+              onStop={() => {}}
+              onLift={() => {}}
+              onRelease={() => {}}
+            />
+          </tbody>
+        </table>,
+      );
+    const stoppedAt = new Date(2026, 10, 14, 10, 2).toISOString();
+    const mine = row({ stoppedAt, stoppedReason: null });
+    mine.getByText(`stopped by you ${whenText(stoppedAt)}`);
+    mine.unmount();
+    const theirs = row({ stoppedAt, stoppedReason: AUTO_STOP_REASON });
+    theirs.getByText(`stopped by Octotrack ${whenText(stoppedAt)}, after 3 writes a line's state forbids`);
+  });
+
   test("AgentRosterRow names the line a gone agent last owned", () => {
     const view = render(
       <table>
@@ -1219,7 +1242,7 @@ describe("agents and first run", () => {
         onRelease={() => {}}
       />,
     );
-    stopped.getByText("stopped: Wrong repo");
+    stopped.getByText("stopped by you: Wrong repo");
     fireEvent.click(stopped.getByRole("button", { name: "Lift panel" }));
     expect(onLift).toHaveBeenCalledWith("panel");
   });

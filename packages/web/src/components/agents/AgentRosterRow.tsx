@@ -1,6 +1,7 @@
 import type { AgentView } from "@octotrack/core/schemas";
 import { openEntity } from "../../lib/router.ts";
-import { dayWord } from "../../lib/format.ts";
+import { AUTO_STOP_REASON } from "@octotrack/core/schemas";
+import { dayWord, whenText } from "../../lib/format.ts";
 import { TimeAgo } from "../ui/TimeAgo.tsx";
 
 /** What an agent is doing now, in a few words, as E-Agents writes it. */
@@ -9,8 +10,13 @@ function nowText(agent: AgentView, waitsOnYou: boolean): string {
     return `${agent.state}; its line waits on you`;
   }
   switch (agent.state) {
-    case "stopped":
-      return agent.stoppedReason === null ? "stopped" : `stopped: ${agent.stoppedReason}`;
+    case "stopped": {
+      const when = agent.stoppedAt === null ? "" : ` ${whenText(agent.stoppedAt)}`;
+      if (agent.stoppedReason === AUTO_STOP_REASON) {
+        return `stopped by Octotrack${when}, after 3 writes a line's state forbids`;
+      }
+      return `stopped by you${when}${agent.stoppedReason === null ? "" : `: ${agent.stoppedReason}`}`;
+    }
     case "gone":
       return agent.wakeError === null ? "gone" : `gone: its wake failed (${agent.wakeError})`;
     case "quiet":

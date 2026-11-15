@@ -1,3 +1,4 @@
+import { AUTO_STOP_REASON } from "./schemas.ts";
 import { z } from "zod";
 import type { BatchOp, BatchRequest, BatchResult, Contract, ErrorBody } from "./contracts.ts";
 import { contracts } from "./contracts.ts";
@@ -379,7 +380,7 @@ export class Tracker {
       if (AUTO_STOP_ACTS) {
         ctx.sql.run("UPDATE agents SET stoppedAt = ?, stoppedReason = ? WHERE name = ?", [
           ctx.now,
-          "a third write in an hour that a line's state forbids",
+          AUTO_STOP_REASON,
           ctx.actor,
         ]);
       }
