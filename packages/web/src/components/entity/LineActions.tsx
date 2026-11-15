@@ -4,7 +4,7 @@ import { LINE_STATE_LABEL } from "../../lib/lines.ts";
 import { FoldPicker } from "../home/FoldPicker.tsx";
 import { TableForm } from "../lines/TableForm.tsx";
 
-export type LineChoice = "start" | "queue" | "done" | "drop" | "reject" | "own";
+import type { LineChoice } from "../../lib/said.ts";
 
 export interface LineActionsProps {
   line: Line;
