@@ -8,10 +8,11 @@ import {
   waitingOnYou,
   windingDown,
 } from "../agents/claims.ts";
-import { agentState, RUNNING_WINDOW_MS } from "../agents/state.ts";
+import { agentState, RUNNING_WINDOW_MS, WAKE_DEADLINE_MS } from "../agents/state.ts";
 import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
-import type { Line, LineStart, RunnerDue, RunnerStatus, StartRole } from "../schemas.ts";
+import { StartCause } from "../schemas.ts";
+import type { Line, LineStart, RunnerDue, RunnerStatus, StartRole, StepInKind } from "../schemas.ts";
 import { addNotice, claimOf, claimsOn, getAgent } from "../store/agents.ts";
 import { emit, nextNumber } from "../store/common.ts";
 import type { Ctx } from "../store/context.ts";
@@ -53,6 +54,8 @@ const StartRow = z.object({
   exitCode: z.number().int().nullable(),
   /** It ran and took its line: its name is used up, so a retry after it gets a new one. */
   ran: z.number().int(),
+  /** What stopped it before it ran, when the runner knows: no usable checkout of the repo. */
+  cause: StartCause.nullable(),
 });
 type StartRow = z.infer<typeof StartRow>;
 const SettingRow = z.object({ key: z.string(), value: z.string() });
@@ -141,9 +144,9 @@ function whyNotSpawn(ctx: Ctx, start: StartRow): string | null {
 /**
  * Sessions whose process is alive as far as Octotrack knows, which is what counts against the cap (D14): every start
  * whose process has not been seen to exit, from its worktree and setup to its end, however silent; and sessions
- * Octotrack started that were woken after their process exited and are at work. One that went to sleep with a wake
- * address keeps its line but holds no process. A command in the last 15 minutes is no sign of a process: it may have
- * exited just after.
+ * Octotrack started that were woken after their process exited and are at work, or whose wake's process still runs,
+ * however silent (fourth audit, A1), up to the wake's deadline. One that went to sleep with a wake address keeps its
+ * line but holds no process. A command in the last 15 minutes is no sign of a process: it may have exited just after.
  */
 function liveSessions(ctx: Ctx): Set<string> {
   const live = rows(ctx, StartRow, "SELECT * FROM runner_starts WHERE exitedAt IS NULL").map(
@@ -151,14 +154,17 @@ function liveSessions(ctx: Ctx): Set<string> {
   );
   const woken = rows(
     ctx,
-    AgentRow,
+    AgentRow.extend({ wakePid: z.number().int().nullable() }),
     `SELECT a.* FROM agents a
      WHERE a.startedBy = 'octotrack' AND a.goneAt IS NULL AND a.stoppedAt IS NULL AND a.wokenAt IS NOT NULL
        AND a.wakeError IS NULL
        AND a.wokenAt > COALESCE((SELECT MAX(s.exitedAt) FROM runner_starts s WHERE s.name = a.name), '')`,
   )
     .filter((agent) => {
-      // Woken lately, or at work since: a wake's process ends unseen, so silence after it is taken as its end.
+      const since = Date.parse(ctx.now) - (agent.wokenAt === null ? 0 : Date.parse(agent.wokenAt));
+      // Its wake's process runs: a server restart may leave its end unrecorded, so only until its deadline.
+      if (agent.wakePid !== null && since <= WAKE_DEADLINE_MS) return true;
+      // Woken lately, or at work since: silence after its wake ended is taken as the session's end.
       const latest = Math.max(
         Date.parse(agent.lastSeenAt),
         agent.wokenAt === null ? 0 : Date.parse(agent.wokenAt),
@@ -171,6 +177,65 @@ function liveSessions(ctx: Ctx): Set<string> {
 
 function activeSessions(ctx: Ctx): number {
   return liveSessions(ctx).size;
+}
+
+/** How the developer sent a session away from its line, by the notice it was given, said as its exit's reason. */
+const SENT_AWAY: Readonly<Record<string, (line: string) => string>> = {
+  stop: () => "stopped by the developer",
+  released: () => "released by the developer",
+  wind_down: (line) => `after ${line} moved on`,
+};
+
+/**
+ * Whether the developer sent a session away since it started: stopped it, released it from its line, or moved its line
+ * on (tabled, done, dropped or theirs, which winds it down). Its exit soon after is then not leaving at once, and is
+ * never held against the next start (fourth audit, A2). An agent's own release is not: a session that takes its line
+ * and releases it at once would otherwise be replaced every minute, as one that takes it and exits was (N1).
+ */
+function sentAwayFrom(ctx: Ctx, start: StartRow): string | null {
+  const notice = one(
+    ctx,
+    z.object({ kind: z.string(), line: z.string().nullable() }),
+    `SELECT kind, line FROM notices WHERE agent = ? AND kind IN ('stop', 'released', 'wind_down') AND createdAt >= ?
+     ORDER BY id DESC LIMIT 1`,
+    [start.name, start.startedAt],
+  );
+  if (notice === null) return null;
+  return SENT_AWAY[notice.kind]?.(notice.line ?? start.line) ?? null;
+}
+
+/**
+ * A pull request the runner could not close on GitHub, for want of permission, an archived repo or the network: tried
+ * again after 2, 10, 60 then every 360 minutes, as a failing start is, and said in the Log once, with gh's last line,
+ * rather than retried every tick in silence (fourth audit, A4).
+ */
+function closeFailed(ctx: Ctx, pr: string, line: string | null, error: string): { pr: string } {
+  const before = one(
+    ctx,
+    z.object({ attempts: z.number().int() }),
+    "SELECT attempts FROM runner_close_failures WHERE pr = ?",
+    [pr],
+  );
+  const attempts = (before?.attempts ?? 0) + 1;
+  const said = error.trim().split("\n").at(-1)?.trim() ?? "";
+  ctx.sql.run(
+    `INSERT INTO runner_close_failures (pr, attempts, error, at, nextTryAt) VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT(pr) DO UPDATE SET attempts = excluded.attempts, error = excluded.error, at = excluded.at,
+       nextTryAt = excluded.nextTryAt`,
+    [pr, attempts, said, ctx.now, new Date(Date.parse(ctx.now) + retryWait(attempts)).toISOString()],
+  );
+  if (before === null) {
+    emit(ctx, {
+      type: "runner.pr_close_failed",
+      kind: "pr",
+      ref: pr,
+      project: null,
+      line,
+      summary: `Could not close ${pr} on GitHub with ${line ?? "its line"}${said === "" ? "" : `: ${said}`}. Trying again later.`,
+      attrs: {},
+    });
+  }
+  return { pr };
 }
 
 /** What stopped a start, so that Try now can retry every line stopped the same way: its last line of output. */
@@ -214,7 +279,7 @@ function lowestRunningHelper(ctx: Ctx): { agent: string; line: string; since: st
 type OwnerStart =
   | { kind: "not_needed" }
   | { kind: "on_its_way" }
-  | { kind: "never_took" }
+  | { kind: "never_took"; last: StartRow }
   | { kind: "retrying"; last: StartRow }
   | { kind: "no_repo" }
   | { kind: "ready"; repo: string; last: StartRow | null };
@@ -230,7 +295,7 @@ function ownerStart(ctx: Ctx, line: Line): OwnerStart {
   if (startingOn(ctx, line.ref) > 0) return { kind: "on_its_way" };
   const last = latestOn(ctx, line.ref, "owner");
   if (last?.state === "never_took" && (last.nextTryAt === null || last.nextTryAt > ctx.now))
-    return { kind: "never_took" };
+    return { kind: "never_took", last };
   if (last?.state === "failed" && last.nextTryAt !== null && last.nextTryAt > ctx.now)
     return { kind: "retrying", last };
   const repo = repoFor(ctx, line.ref, line.repos);
@@ -276,6 +341,17 @@ function helpersWanted(
   return count > 0 ? { repos: work.slice(coming).map((item) => item.project), count, last } : null;
 }
 
+/**
+ * Whether the developer's Start one anyway still stands for a line: it was asked for the search under way, and is spent
+ * once that search ends, by an agent taking the line or the line leaving working on, as it is by a start or by watch
+ * mode noting it. Kept from an earlier search, it would pass the cap days later, unasked (fourth audit, A3).
+ */
+function startsAnyway(ctx: Ctx, line: Line): boolean {
+  if (line.startAnyway === null) return false;
+  const search = searchOf(ctx, line.ref);
+  return search !== null && line.startAnyway >= search.since;
+}
+
 /** A line whose owner is still being looked for among agents already here: a session started now could take its turn. */
 function seekingOwner(ctx: Ctx, line: Line): boolean {
   if (line.ownedBy !== null || claimsOn(ctx, line.ref).some((claim) => claim.role === "owner")) return false;
@@ -301,8 +377,8 @@ export function makeRoom(ctx: Ctx): void {
   const status = runnerStatus(ctx);
   if (!status.configured || status.dryRun || status.cap - activeSessions(ctx) > 0) return;
   // Start one anyway goes past the cap, so it needs no room.
-  const line = allLines(ctx, "WHERE state = 'working' AND startAnyway IS NULL").find(
-    (candidate) => ownerStart(ctx, candidate).kind === "ready",
+  const line = allLines(ctx, "WHERE state = 'working'").find(
+    (candidate) => !startsAnyway(ctx, candidate) && ownerStart(ctx, candidate).kind === "ready",
   );
   const helper = lowestRunningHelper(ctx);
   if (line === undefined || helper === null) return;
@@ -323,25 +399,84 @@ export function makeRoom(ctx: Ctx): void {
   );
 }
 
+/** Why the developer is asked to step in: its kind, for the fixes that fit, and its words. */
+interface StepIn {
+  kind: StepInKind;
+  reason: string;
+}
+
 /**
- * Whether a working line needs the developer to step in: no owner was found, nothing is starting for it, its work does
- * not all wait on the developer, and the runner cannot help (not set up, watching only, a start that keeps failing or
- * never took the line, nowhere to start one, or every session busy with no helper to give way). One rule, so home, the
- * runner and notifications agree.
+ * Why a working line needs the developer to step in, or null if it does not: no owner was found, nothing is starting
+ * for it, its work does not all wait on the developer, and the runner cannot help (not set up, watching only, a start
+ * that keeps failing or never took the line, nowhere to start one, or every session busy with no helper to give way).
+ * One rule, so home, the runner and notifications agree, and the dashboard shows the reason and offers the fixes the
+ * server decided rather than working them out again (fourth audit, A20).
  */
-export function stepInFor(ctx: Ctx, line: Line): boolean {
+function stepInOf(ctx: Ctx, line: Line): StepIn | null {
   const start = ownerStart(ctx, line);
-  if (start.kind === "not_needed" || start.kind === "on_its_way") return false;
+  if (start.kind === "not_needed" || start.kind === "on_its_way") return null;
   const status = runnerStatus(ctx);
-  if (!status.configured || status.dryRun) return true;
-  if (start.kind === "never_took" || start.kind === "no_repo") return true;
+  if (!status.configured) {
+    return {
+      kind: "no_start_command",
+      reason: `No agent took ${line.ref}, and none can be started for it: no start command is set on this machine. Add "start": ["claude", "-p", "You are {name}. Run: octo line take {line}"] to ~/.octotrack/agent-setup.json, then Try now.`,
+    };
+  }
+  if (status.dryRun) {
+    return {
+      kind: "watch_only",
+      reason: `No agent took ${line.ref}. The runner is watching only, so it noted it would start one. Set dryRun to false in ~/.octotrack/agent-setup.json to let it.`,
+    };
+  }
+  if (start.kind === "never_took") {
+    return { kind: "never_took", reason: `${start.last.name} ran but never took ${line.ref}.` };
+  }
+  if (start.kind === "no_repo") {
+    return {
+      kind: "no_repo",
+      reason: `No agent took ${line.ref}, and none can be started for it: it names no repo to work in. Give it a repo, or take it on yourself.`,
+    };
+  }
   // A first failure is retried by itself in minutes; a start that keeps failing needs the developer.
-  if (start.last?.state === "failed") return start.last.attempts >= 2;
+  if (start.last?.state === "failed") {
+    if (start.last.attempts < 2) return null;
+    if (start.last.ran === 1) {
+      return {
+        kind: "left",
+        reason: `${start.last.name} took ${line.ref} and left soon after, with no way to wake it. Octotrack starts the next one less often each time: keep the session running, or have it register a wake address (octo agent register --wake).`,
+      };
+    }
+    const said = start.last.output?.trim().split("\n").at(-1)?.trim() ?? "";
+    return {
+      // The runner says when it found no usable checkout; nothing is read into the output.
+      kind: start.last.cause === "checkout" ? "clone_failed" : "failing",
+      reason: `${start.last.name}, started for it, exited at once${said === "" ? "" : `: ${said}`}. Octotrack tries again by itself, less often each time.`,
+    };
+  }
   // Started anyway, past the cap: a session is on its way.
-  if (line.startAnyway !== null) return false;
+  if (startsAnyway(ctx, line)) return null;
   // At the cap with a running helper Octotrack started, that helper gives way instead: only owners everywhere needs
   // the developer.
-  return status.cap - activeSessions(ctx) <= 0 && lowestRunningHelper(ctx) === null;
+  if (status.cap - activeSessions(ctx) > 0 || lowestRunningHelper(ctx) !== null) return null;
+  return {
+    kind: "at_cap",
+    reason: `No agent took ${line.ref}, and every session Octotrack may run is busy (at most ${status.cap}).`,
+  };
+}
+
+/** Why a working line needs the developer to step in, in their terms, or null if it does not. */
+export function stepInReason(ctx: Ctx, line: Line): string | null {
+  return stepInOf(ctx, line)?.reason ?? null;
+}
+
+/** The kind of that reason, for the fixes that fit, or null if there is none. */
+export function stepInKind(ctx: Ctx, line: Line): StepInKind | null {
+  return stepInOf(ctx, line)?.kind ?? null;
+}
+
+/** Whether a working line needs the developer to step in: whenever there is a reason to. */
+export function stepInFor(ctx: Ctx, line: Line): boolean {
+  return stepInOf(ctx, line) !== null;
 }
 
 /** The repo of the current step's first unclaimed issue, else the line's first-listed repo. */
@@ -426,7 +561,7 @@ export const runnerOps = [
       const start = ownerStart(ctx, line);
       if (start.kind !== "ready") return [];
       // Start one anyway: past the cap, once, without taking a slot from another line.
-      if (line.startAnyway === null) {
+      if (!startsAnyway(ctx, line)) {
         if (slots <= 0) return [];
         slots -= 1;
       }
@@ -587,8 +722,11 @@ export const runnerOps = [
     // A session that took its line and can be woken is only asleep: it keeps its line (D14's agent states). Any
     // other is gone, and what it held is offered on.
     const keeps = took && agent !== null && agent.wakeAddress !== null;
-    // One that took its line and left at once, with no way to wake it, waits like a failed start before the next.
-    const leftAtOnce = took && !keeps && sinceSpawn < LEFT_AT_ONCE_MS;
+    // The developer stopped it, released it, or moved its line on: it was sent away rather than leaving by itself.
+    const sentAway = took ? sentAwayFrom(ctx, start) : null;
+    // One that took its line and left at once by itself, with no way to wake it, waits like a failed start before the
+    // next.
+    const leftAtOnce = took && !keeps && sentAway === null && sinceSpawn < LEFT_AT_ONCE_MS;
     const state: LineStart["state"] = leftAtOnce
       ? "failed"
       : took
@@ -607,8 +745,8 @@ export const runnerOps = [
       : null;
     const kept = told === null ? output : `${output === null ? "" : `${output}\n`}${told}`;
     ctx.sql.run(
-      "UPDATE runner_starts SET state = ?, output = ?, endedAt = ?, exitedAt = ?, nextTryAt = ?, exitCode = ?, ran = ? WHERE id = ?",
-      [state, kept, ctx.now, ctx.now, nextTryAt, input.code, took ? 1 : 0, start.id],
+      "UPDATE runner_starts SET state = ?, output = ?, endedAt = ?, exitedAt = ?, nextTryAt = ?, exitCode = ?, ran = ?, cause = ? WHERE id = ?",
+      [state, kept, ctx.now, ctx.now, nextTryAt, input.code, took ? 1 : 0, input.cause ?? null, start.id],
     );
     const claim = keeps ? claimOf(ctx, input.name) : endClaim(ctx, input.name, "exit");
     if (agent !== null && !keeps) {
@@ -626,7 +764,7 @@ export const runnerOps = [
           ? `${input.name} exited at once (code ${input.code}); trying again later${output === null ? "" : `: ${output.split("\n").at(-1) ?? ""}`}`
           : state === "never_took"
             ? `${input.name} ran but never took ${start.line}${input.code === 0 ? "" : ` (code ${input.code})`}`
-            : `${input.name} exited (code ${input.code})`,
+            : `${input.name} exited (code ${input.code})${sentAway === null ? "" : `, ${sentAway}`}`,
       attrs: { status: state },
     });
     return {
@@ -671,6 +809,8 @@ export const runnerOps = [
     requireRunner(ctx);
     const line = requireLine(ctx, input.line);
     const role = input.role ?? "owner";
+    // Watch mode notes a Start one anyway as it would start it, and so spends it: it is not kept for later (A3).
+    if (role === "owner") ctx.sql.run("UPDATE lines SET startAnyway = NULL WHERE ref = ?", [line.ref]);
     // Once per search for an owner, or for helpers once per owner, not once a tick (third audit, N22).
     const since =
       role === "owner"
@@ -719,8 +859,10 @@ export const runnerOps = [
              AND (i2.status NOT IN ('done', 'cancelled')
                OR (l2.ref IS NOT NULL AND (l2.state NOT IN ('done', 'dropped') OR l2.windDownUntil IS NOT NULL))))
          AND p.ref NOT IN (SELECT pr FROM runner_closes WHERE dry = 0)
+         AND p.ref NOT IN (SELECT pr FROM runner_close_failures WHERE nextTryAt > ?)
        GROUP BY p.ref, p.repo, p.number
        ORDER BY p.ref`,
+      [ctx.now],
     ),
   ),
 
@@ -733,6 +875,9 @@ export const runnerOps = [
       [input.pr],
     )[0];
     const dry = input.dry === true;
+    if (input.error !== undefined && !dry)
+      return closeFailed(ctx, input.pr, close?.line ?? null, input.error);
+    ctx.sql.run("DELETE FROM runner_close_failures WHERE pr = ?", [input.pr]);
     const before = one(ctx, z.object({ dry: z.number() }), "SELECT dry FROM runner_closes WHERE pr = ?", [
       input.pr,
     ]);
@@ -823,9 +968,13 @@ export const runnerOps = [
   bind(contracts.runnerStops, (ctx) =>
     rows(
       ctx,
-      z.object({ name: z.string() }),
-      "SELECT name FROM agents WHERE stoppedAt IS NOT NULL AND stopRanAt IS NULL ORDER BY stoppedAt",
-    ),
+      z.object({ name: z.string(), wakePid: z.number().int().nullable(), wokenAt: z.string().nullable() }),
+      "SELECT name, wakePid, wokenAt FROM agents WHERE stoppedAt IS NOT NULL AND stopRanAt IS NULL ORDER BY stoppedAt",
+    ).map(({ name, wakePid, wokenAt }) => ({
+      name,
+      // A wake still running for it is a process the server started, so Stop ends it (fourth audit, A1).
+      wake: wakePid === null || wokenAt === null ? null : { pid: wakePid, since: wokenAt },
+    })),
   ),
 
   bind(contracts.runnerStopRan, (ctx, input) => {

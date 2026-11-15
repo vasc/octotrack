@@ -358,6 +358,23 @@ afterEach(() => {
 });
 
 /** A fresh folder for session logs, removed after the test. */
+/** Whether a process has ended, waiting up to two seconds for it to be reaped. */
+async function gone(pid: number): Promise<boolean> {
+  const deadline = Date.now() + 2000;
+  for (;;) {
+    try {
+      process.kill(pid, 0);
+    } catch {
+      return true;
+    }
+    if (Date.now() > deadline) {
+      process.kill(pid, "SIGKILL");
+      return false;
+    }
+    await Bun.sleep(20);
+  }
+}
+
 function logsDir(): string {
   const dir = mkdtempSync(join(tmpdir(), "octo-runner-logs-"));
   homes.push(dir);
@@ -825,5 +842,95 @@ describe("sessions as real processes (third audit, N9 and N10)", () => {
     expect(await processShell.alive(pid, "2026-01-01T00:00:00.000Z")).toBe(false);
     processShell.end(pid);
     await session.exited;
+  });
+});
+
+describe("what the fourth audit found in the local runner", () => {
+  test("A1: a command past its deadline is killed with everything it started, leaving no process behind", async () => {
+    const pidFile = join(logsDir(), "child.pid");
+    const ran = await processShell.run(["sh", "-c", `sleep 30 & echo $! > ${pidFile}; wait`], undefined, 500);
+    expect(ran.code).toBe(124);
+    const child = Number((await Bun.file(pidFile).text()).trim());
+    expect(child).toBeGreaterThan(0);
+    expect(await gone(child)).toBe(true);
+  });
+
+  test("A1: Stop ends a wake still running for a session, and runs no stop command for it", async () => {
+    const w = world({ stop: ["tmux", "kill-session", "-t", "{name}"] }, {}, { living: [4242] });
+    w.tracker.call(
+      c.agentRegister,
+      { repo: "PANEL", wake: "claude:abc" },
+      { actor: "panel-a", channel: "cli" },
+    );
+    w.tracker.call(c.agentWoken, { name: "panel-a" }, RUNNER_CALLER);
+    w.tracker.call(c.agentWoken, { name: "panel-a", pid: 4242 }, RUNNER_CALLER);
+    w.tracker.call(c.agentStop, { name: "panel-a" }, DEV);
+    await w.tick();
+    await w.tick();
+    expect(w.ended).toEqual([4242]);
+    expect(w.ran.filter((command) => command.startsWith("tmux"))).toEqual([]);
+    const ran = w.tracker.call(c.feedList, { query: "event:runner.stop_ran" }, DEV).events;
+    expect(ran.map((event) => event.summary)).toEqual(["Ended panel-a's process"]);
+  });
+
+  test("A4: a pull request gh fails to close is said in the Log, and not asked of gh again every tick", async () => {
+    const w = world(
+      { repos: {}, cap: 0 },
+      {
+        "gh pr close": {
+          code: 1,
+          stderr: "GraphQL: Resource not accessible by integration (closePullRequest)",
+        },
+      },
+    );
+    const issue = w.tracker.call(c.issueCreate, { project: "PANEL", title: "Base", line: w.line.ref }, DEV);
+    w.tracker.call(
+      c.prSync,
+      {
+        prs: [
+          { repo: "vasc/homepanel", number: 14, title: "Base", state: "open", body: `Fixes ${issue.ref}` },
+        ],
+      },
+      GITHUB,
+    );
+    w.tracker.call(c.lineDone, { ref: w.line.ref }, DEV);
+    w.later(16);
+    w.tracker.sweep();
+    await w.tick();
+    await w.tick();
+    const closes = () => w.ran.filter((command) => command.startsWith("gh pr close"));
+    expect(closes()).toHaveLength(1);
+    const failed = w.tracker.call(c.feedList, { query: "event:runner.pr_close_failed" }, DEV).events;
+    expect(failed.map((event) => event.summary)).toEqual([
+      `Could not close PR-1 on GitHub with ${w.line.ref}: GraphQL: Resource not accessible by integration (closePullRequest). Trying again later.`,
+    ]);
+    w.later(2);
+    await w.tick();
+    expect(closes()).toHaveLength(2);
+  });
+
+  test("a start that found no checkout says so on the start, so Step in offers to set one, not a guess from output", async () => {
+    const w = world(
+      { repos: {} },
+      { "gh repo clone": { code: 1, stderr: "GraphQL: Could not resolve to a Repository" } },
+    );
+    await w.tick();
+    w.later(3);
+    await w.tick();
+    const home = w.tracker.call(c.homeShow, {}, DEV).lines[w.line.ref];
+    expect([home?.start?.attempts, home?.stepInKind]).toEqual([2, "clone_failed"]);
+  });
+
+  test("A23: Stop ends a session the runner started, and does not also run the stop command for it", async () => {
+    const w = world({ stop: ["tmux", "kill-session", "-t", "{name}"] });
+    await w.tick();
+    w.tracker.call(c.lineTake, { ref: w.line.ref }, { actor: "panel.1", channel: "cli" });
+    w.tracker.call(c.agentStop, { name: "panel.1" }, DEV);
+    await w.tick();
+    await w.tick();
+    expect(w.ended).toEqual([1001]);
+    expect(w.ran.filter((command) => command.startsWith("tmux"))).toEqual([]);
+    const ran = w.tracker.call(c.feedList, { query: "event:runner.stop_ran" }, DEV).events;
+    expect(ran.map((event) => event.summary)).toEqual(["Ended panel.1's process"]);
   });
 });

@@ -178,7 +178,8 @@ until `~/.octotrack/agent-setup.json` exists, and starts in watch mode, only not
 Only `{line}` and `{name}` are filled in, so tracker text never becomes a prompt, and only when they have the narrow
 form of a name (letters, digits, `.`, `_` and `-`, not first), so a name such as `*` or `-rf` never reaches a command.
 A session gets `OCTO_AGENT` set to its own name, and never the server's `OCTO_AGENT` or `OCTO_DEVELOPER`; wakes are run
-the same way, as the agent being woken.
+the same way, as the agent being woken. A wake gets thirty minutes, then is ended with everything it started, the
+resumed session included; the session keeps its line and is woken again later. Stop ends a wake still running.
 
 Each session runs in a fresh worktree on `octo/<name>`, under `worktrees` (by default `worktrees` in Octotrack's home,
 so `OCTO_HOME` moves it too), made from the repo's main checkout: the one named here, the one set with
@@ -197,13 +198,14 @@ however quiet, and sessions Octotrack started that were woken after they exited 
 check-in runs from the moment the session's process starts, and a session whose line was tabled, or found an owner,
 while it was set up is ended at once. A start that exits within its check-in is retried by itself, later each time
 (2, 10, 60, then 360 minutes); one that ran longer and never took its line waits for Try now. So does a session that
-takes its line and exits within fifteen minutes with no wake address: the next one waits as a failed start does, and
-twice in a row asks you to step in, so a start command that exits after taking the line is not run again every minute.
+takes its line and exits by itself within fifteen minutes with no wake address (one you stopped or released, or
+whose line you moved on, did not leave by itself): the next one waits as a failed start does, and twice in a row asks
+you to step in, so a start command that exits after taking the line is not run again every minute.
 
 Stop ends the whole process group of a session Octotrack started. `stop` is for sessions it did not start, such as
 `["tmux", "kill-session", "-t", "{name}"]` for ones kept in tmux; it runs once when the developer stops an agent. In
-watch mode both are only noted. git and gh are given two minutes, clones and setup commands thirty and the stop
-command ten, then killed.
+watch mode both are only noted. The runner's git and gh are given two minutes, clones and setup commands thirty and the
+stop command ten, then killed; pull request sync gives each gh call thirty seconds (`OCTO_GH_TIMEOUT_MS`).
 
 ## Watching
 

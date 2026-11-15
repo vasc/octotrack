@@ -4,7 +4,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { contracts as c, Tracker } from "@octotrack/core";
 import { openSqlite } from "../src/sqlite.ts";
-import { createWakeDispatcher, loadWakeAdapters, spawnWake, type WakeResult } from "../src/wake.ts";
+import {
+  createWakeDispatcher,
+  loadWakeAdapters,
+  spawnWake,
+  type WakeResult,
+  wakeRunner,
+} from "../src/wake.ts";
 
 const CALLER = { actor: "mediarr", channel: "cli" } as const;
 const ADAPTERS = { test: { command: ["/bin/wake", "--to", "{address}", "{message}"] } };
@@ -246,4 +252,78 @@ describe("loadWakeAdapters", () => {
       expect(loadWakeAdapters(fileWith(content))).toEqual({});
     },
   );
+});
+
+describe("a wake that runs past its deadline (fourth audit, A1)", () => {
+  test("reached the session: it is not declared gone, keeps its line, and its process is known while it runs", async () => {
+    let now = "2026-11-14T09:00:00.000Z";
+    const tracker = new Tracker(openSqlite(":memory:"), () => now);
+    const dev = { actor: "dev", channel: "dashboard" } as const;
+    const panel = { actor: "panel", channel: "cli" } as const;
+    tracker.call(c.projectCreate, { key: "PANEL", name: "Panel" }, dev);
+    const line = tracker.call(
+      c.lineAdd,
+      { title: "Enclosure", doneWhen: "Done.", repos: ["PANEL"], where: "working" },
+      dev,
+    );
+    tracker.call(c.agentRegister, { wake: "test:panel-session", repo: "PANEL" }, panel);
+    tracker.call(c.lineTake, { ref: line.ref }, panel);
+    now = "2026-11-14T09:20:00.000Z";
+    tracker.call(c.lineTell, { line: line.ref, body: "Look at the base." }, dev);
+    const stopsDuringRun: unknown[] = [];
+    const dispatcher = createWakeDispatcher({
+      tracker,
+      adapters: ADAPTERS,
+      run: async (_argv, _env, onSpawn) => {
+        onSpawn?.(4242);
+        tracker.call(c.agentStop, { name: "panel" }, dev);
+        stopsDuringRun.push(...tracker.call(c.runnerStops, {}, dev));
+        tracker.call(c.agentLift, { name: "panel" }, dev);
+        tracker.call(c.lineTake, { ref: line.ref }, panel);
+        now = "2026-11-14T09:50:00.000Z";
+        return { exitCode: 124, stderr: "Killed: past its deadline", timedOut: true };
+      },
+    });
+    await dispatcher.dispatch();
+    expect(stopsDuringRun).toEqual([
+      { name: "panel", wake: { pid: 4242, since: "2026-11-14T09:20:00.000Z" } },
+    ]);
+    const agent = tracker.call(c.agentList, {}, dev).find((item) => item.name === "panel");
+    expect([agent?.state, agent?.line, agent?.wakeError]).toEqual(["asleep", line.ref, null]);
+    const events = tracker.call(c.feedList, { query: "event:agent.wake_ended,agent.gone" }, dev).events;
+    expect(events.map((event) => event.type)).toEqual(["agent.wake_ended"]);
+  });
+
+  test("for a question on no line, a wake killed at its deadline reached its asker, so it is no failed wake", async () => {
+    const { dispatcher, askAndAnswer, read } = setup({ exitCode: 124, stderr: "Killed", timedOut: true });
+    const ref = askAndAnswer("test:session-1");
+    await dispatcher.dispatch();
+    expect(read(ref)?.wakeError).toBeNull();
+  });
+
+  test("its process is killed at the deadline with everything it started, and the wake says it timed out", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "octo-wake-"));
+    dirs.push(dir);
+    const pidFile = join(dir, "session.pid");
+    const spawned: number[] = [];
+    const woken = await wakeRunner(500)(
+      ["sh", "-c", `sleep 30 & echo $! > ${pidFile}; wait`],
+      { OCTO_AGENT: "panel" },
+      (pid) => spawned.push(pid),
+    );
+    expect([woken.exitCode, woken.timedOut, spawned.length]).toEqual([124, true, 1]);
+    const session = Number((await Bun.file(pidFile).text()).trim());
+    const deadline = Date.now() + 2000;
+    let alive = true;
+    while (alive && Date.now() < deadline) {
+      try {
+        process.kill(session, 0);
+        await Bun.sleep(20);
+      } catch {
+        alive = false;
+      }
+    }
+    if (alive) process.kill(session, "SIGKILL");
+    expect(alive).toBe(false);
+  });
 });

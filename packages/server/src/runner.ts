@@ -1,6 +1,6 @@
 import { closeSync, existsSync, mkdirSync, openSync, readFileSync, renameSync, rmSync } from "node:fs";
 import { dirname, join, sep } from "node:path";
-import { type Caller, contracts, type RunnerDue, type Tracker } from "@octotrack/core";
+import { type Caller, contracts, type RunnerDue, type StartCause, type Tracker } from "@octotrack/core";
 import { z } from "zod";
 import { childEnv } from "./env.ts";
 import { octoHome } from "./paths.ts";
@@ -257,8 +257,12 @@ export function createRunner(options: {
     tracker.call(contracts.runnerRestarted, { alive }, RUNNER);
   })();
 
-  const ended = (name: string, code: number, output: string) =>
-    tracker.call(contracts.runnerExited, { name, code, output }, RUNNER);
+  const ended = (name: string, code: number, output: string, cause?: StartCause) =>
+    tracker.call(
+      contracts.runnerExited,
+      { name, code, output, ...(cause === undefined ? {} : { cause }) },
+      RUNNER,
+    );
 
   /** The GitHub repo a checkout's origin points at, to compare with the one a repo names. */
   const originOf = async (path: string): Promise<string | null> => {
@@ -379,7 +383,8 @@ export function createRunner(options: {
     }
     const checkout = await inTurn(`repo:${due.repo}`, () => checkoutFor(due.repo));
     if ("error" in checkout) {
-      ended(started.name, 1, checkout.error);
+      // Said as its cause, so Step in offers to set a checkout without reading the words (A20).
+      ended(started.name, 1, checkout.error, "checkout");
       return;
     }
     const worktree = await inTurn(`checkout:${checkout.path}`, () =>
@@ -465,19 +470,26 @@ export function createRunner(options: {
         "--comment",
         `Closed with ${close.line}, which is ${state} in Octotrack.`,
       ]);
-      if (closed.code === 0) tracker.call(contracts.runnerClosed, { pr: close.pr }, RUNNER);
-      else console.error(`[runner] closing ${close.pr}: ${closed.stderr.trim()}`);
+      // A failure is recorded, said in the Log once and tried again later each time, never every tick (A4).
+      tracker.call(
+        contracts.runnerClosed,
+        closed.code === 0
+          ? { pr: close.pr }
+          : { pr: close.pr, error: closed.stderr.trim() || closed.stdout.trim() || `exit ${closed.code}` },
+        RUNNER,
+      );
     }
   };
 
   /**
-   * Stop, for each agent the developer stopped, once: the process group of a session the runner started is ended, and
-   * the developer's stop command, if one is set, is run for what the runner cannot see. Watch mode only notes it, and a
-   * name the command could misread is never given to it.
+   * Stop, for each agent the developer stopped, once: the process group of a session the runner started, or of a wake
+   * the server is running for it, is ended, or else the developer's stop command, if one is set, is run for what the
+   * runner cannot see. Never both: the command is for sessions the runner did not start (D13). Watch mode only notes
+   * it, and a name the command could misread is never given to it.
    */
   const runStops = async () => {
     const before = new Map(unwatched().map((live) => [live.name, live]));
-    for (const { name } of tracker.call(contracts.runnerStops, {}, RUNNER)) {
+    for (const { name, wake } of tracker.call(contracts.runnerStops, {}, RUNNER)) {
       if (config.dryRun) {
         tracker.call(contracts.runnerStopRan, { name, code: 0, output: "", dry: true }, RUNNER);
         continue;
@@ -492,8 +504,14 @@ export function createRunner(options: {
         shell.end(old.pid);
         ended = true;
       }
-      if (config.stop === undefined) {
-        // Nothing more for a session the runner did not start: Stop refuses its writes, as before.
+      // A wake the server is running for it is its session at work, the session included: it is ended too (A1).
+      if (wake !== null && (await shell.alive(wake.pid, wake.since))) {
+        shell.end(wake.pid);
+        ended = true;
+      }
+      // The stop command is only for what the runner cannot end itself (D13): a session it ended needs nothing more.
+      if (config.stop === undefined || ended) {
+        // Nothing more for a session the runner did not start and no command is set for: Stop refuses its writes.
         if (ended) {
           tracker.call(contracts.runnerStopRan, { name, code: 0, output: "", ended, command: false }, RUNNER);
         }
