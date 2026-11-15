@@ -10,7 +10,14 @@ import { filterEntities } from "../store/docs.ts";
 import { allLines, requireLine, requireProject, summarize } from "../store/entities.ts";
 import { loadGraph } from "../store/graph.ts";
 import { IssueRow, PlanStepRow, PrRow } from "../store/rows.ts";
-import { afterAdd, afterMove, guardLineWrite, guardOnLine, windDown } from "../agents/claims.ts";
+import {
+  afterAdd,
+  afterMove,
+  guardLineWrite,
+  guardOnLine,
+  settleHeldWork,
+  windDown,
+} from "../agents/claims.ts";
 import { DEVELOPER } from "../agents/state.ts";
 import { addNotice, claimOf } from "../store/agents.ts";
 import { addToInbox } from "../store/inbox.ts";
@@ -398,6 +405,8 @@ export const lineOps = [
       });
     }
     ctx.sql.run("UPDATE decisions SET line = ? WHERE line = ?", [into.ref, current.ref]);
+    // They land held if nobody works on that line, and are no longer held by the line they left if somebody does.
+    settleHeldWork(ctx, into);
     // Answers and Tells waiting for the folded line go where its work went.
     ctx.sql.run("UPDATE line_inbox SET line = ? WHERE line = ? AND deliveredAt IS NULL", [
       into.ref,

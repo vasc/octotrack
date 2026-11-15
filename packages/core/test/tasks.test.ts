@@ -363,3 +363,61 @@ describe("a line the developer owns", () => {
     expect(w.notices(w.owner).map((notice) => notice.kind)).toContain("owner_offer");
   });
 });
+
+describe("folding carries whether questions and tasks are held", () => {
+  test("into a working line, current ones reach the developer at once", () => {
+    const w = world();
+    const waiting = w.as(w.dev, c.lineAdd, {
+      title: "Lid",
+      doneWhen: "It closes.",
+      repos: ["PANEL"],
+      where: "up_next",
+    });
+    const scoper = w.agent("scout");
+    w.as(scoper, c.agentRegister, { repo: "PANEL" });
+    w.as(scoper, c.lineTake, { ref: waiting.ref });
+    const asked = w.as(scoper, c.decisionAsk, {
+      title: "Which hinge?",
+      context: SITUATION,
+      options: OPTIONS,
+    });
+    const task = w.as(scoper, c.taskFile, {
+      title: "Measure the lid",
+      place: "the bench",
+      outcome: "Its width",
+    });
+    w.as(w.dev, c.lineFold, { ref: waiting.ref, into: w.line });
+    const home = w.as(w.dev, c.homeShow, {});
+    expect(
+      home.lines[w.line]?.forYou.map((item) =>
+        item.kind === "question" ? item.card.decision.ref : item.kind === "task" ? item.task.ref : item.kind,
+      ),
+    ).toEqual([asked.ref, task.ref]);
+    expect([home.counts.toAnswer, home.counts.toDo, home.lines[w.line]?.reconfirming]).toEqual([1, 1, 0]);
+  });
+
+  test("into an up-next line, they are held, and any gone stale is re-confirmed before it reaches the developer", () => {
+    const w = world();
+    const asked = w.as(w.owner, c.decisionAsk, {
+      title: "Which board?",
+      context: SITUATION,
+      options: OPTIONS,
+    });
+    const waiting = w.as(w.dev, c.lineAdd, {
+      title: "Lid",
+      doneWhen: "It closes.",
+      repos: ["PANEL"],
+      where: "up_next",
+    });
+    w.as(w.dev, c.lineFold, { ref: w.line, into: waiting.ref });
+    expect(w.as(w.dev, c.homeShow, {}).counts.toAnswer).toBe(0);
+    w.later(8 * DAY);
+    expect(w.as(w.dev, c.homeShow, {}).lines[waiting.ref]?.reconfirming).toBe(1);
+    w.as(w.dev, c.lineStart, { ref: waiting.ref });
+    const home = w.as(w.dev, c.homeShow, {});
+    expect([home.counts.toAnswer, home.lines[waiting.ref]?.reconfirming]).toEqual([0, 1]);
+    expect(w.as(w.dev, c.heldList, { line: waiting.ref }).map((item) => [item.ref, item.current])).toEqual([
+      [asked.ref, false],
+    ]);
+  });
+});
