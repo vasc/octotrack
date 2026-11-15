@@ -2450,8 +2450,9 @@ p {
     border: 0;
   }
   .agents-table .agent-actions {
+    order: 0;
     grid-column: 2;
-    grid-row: 1 / span 3;
+    grid-row: 1 / span 4;
     align-self: start;
   }
   .agents-table .agent-now,
@@ -2461,6 +2462,16 @@ p {
   }
   .agents-table .agent-last::before {
     content: "last command ";
+  }
+  /* What it is doing first, under its name; its line and last command quieter after. */
+  .agents-table .agent-now {
+    order: 1;
+  }
+  .agents-table .agent-line,
+  .agents-table .agent-last {
+    order: 2;
+    font-size: var(--text-xs);
+    color: var(--ink-3);
   }
   /* The bar names the page already, so Log and Agents do not name it again; search takes the width. */
   .log-head .panel-title {
