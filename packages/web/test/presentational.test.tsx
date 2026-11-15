@@ -158,10 +158,11 @@ describe("DecisionCardView", () => {
     expect(view.queryByRole("button", { name: "OCT-5" })).toBeNull();
   });
 
-  test("one press on an option answers it; the card says when it has focus", () => {
+  test("one press on an option answers it; the card marks focus with its border, not a word", () => {
     const answer = mock((_key: string) => {});
     const view = render(<DecisionCardView selected form={form({ answer })} card={decisionCard()} />);
-    view.getByText("Focused");
+    expect(view.getByRole("article").getAttribute("data-selected")).toBe("true");
+    expect(view.queryByText("Focused")).toBeNull();
     fireEvent.click(view.getByRole("button", { name: /Redis/ }));
     expect(answer).toHaveBeenCalledWith("redis");
     expect(view.queryByRole("button", { name: "Decide" })).toBeNull();
@@ -1486,7 +1487,7 @@ describe("a question's own choices", () => {
     const article = view.getByRole("article");
     expect(article.getAttribute("data-urgent")).toBe("true");
     const strip = article.querySelector(".question-strip")?.textContent ?? "";
-    expect(strip).toContain("Focused");
+    expect(strip).not.toContain("Focused");
     expect(strip).toContain("Urgent");
     expect(strip).toContain("Something broken");
     expect(strip).toContain("3 · Quiet household trial · D-60");

@@ -386,6 +386,12 @@ Decisions made from that:
   with the note after it, which the line's inbox and the log say on one line, so an agent reads one answer whichever
   way it was given. _Decided:_ the dashboard keeps a task's boxes as one draft, its values and note together, so the
   choice that closes the task deletes all of it at once; a draft written as plain words before is read as the note.
+- **Focus is a border, with the keys beside it, not a word.** The developer, looking at the built home: "focused text on
+  lines is unnecessary, reminding about j an k shortcuts to the side would be better, in a subtle way". The word
+  Focused, which the boards draw over the focused item, is gone; the item keeps its dark border, and out in the margin
+  beside it a quiet "k ↑ j ↓" says how to move on. _Decided:_ the hint shows only with a mouse or trackpad (keys belong
+  to a keyboard) and where the window leaves a margin for it, and a screen reader is not told it, since focus moving
+  already says where it is.
 - **A number key presses the button that shows the number.** On home, an item's numbered choices are buttons carrying
   `data-choice`, which also draws the number beside them; the key finds the focused item's button by that number and
   clicks it, unless it is disabled. _Decided,_ after an audit asked for handlers registered per item instead: the drawn

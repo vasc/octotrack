@@ -29,7 +29,7 @@ What agents ask, answered in one press where it waits: on its line, or at the to
 | Component          | Kind       | What it is                                                                                                                                                                                                                                                    |
 | ------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `DecisionCardView` | Pure       | A question opened, as E-Home draws it: a strip saying what it is and what it holds up, the situation, options side by side that answer in one press, the reason for the recommendation under them, In my own words and Later. A dark border when it has focus |
-| `QuestionStrip`    | Pure       | The line over a question: Focused, what it is (urgent with its reason, the line it stands apart from), its ref, and what it holds up or who asked                                                                                                             |
+| `QuestionStrip`    | Pure       | The line over a question: what it is (urgent with its reason, the line it stands apart from), its ref, and what it holds up or who asked                                                                                                                      |
 | `QuestionOptions`  | Pure       | A question's options side by side, each saying what happens, numbered, the recommended one marked, its reason directly under them                                                                                                                             |
 | `OwnWords`         | Pure       | An answer in the developer's own words: a box that takes the cursor, Send (Sending while it waits) and Cancel                                                                                                                                                 |
 | `DecisionMeta`     | Pure       | The top line: ref, type, priority, repo, who asked, how long ago                                                                                                                                                                                              |
@@ -43,7 +43,7 @@ What agents ask, answered in one press where it waits: on its line, or at the to
 | State     | Looks like                                                                              |
 | --------- | --------------------------------------------------------------------------------------- |
 | A row     | Unfocused, a question is one row on its line: what it is, its title, the recommendation |
-| Focused   | Opened, with the word Focused and a dark border; its numbers answer it                  |
+| Focused   | Opened, with a dark border and k ↑ j ↓ quietly beside it; its numbers answer it         |
 | Urgent    | Red, with its reason and the line it stands apart from; a row in red until focused      |
 | Own words | A box that takes the cursor; Send, which says Sending while the answer waits            |
 | Waiting   | Its answer waits with Undo; its keys stand down until it takes effect                   |

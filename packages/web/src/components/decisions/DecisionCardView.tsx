@@ -36,7 +36,7 @@ export function DecisionCardView({
       data-urgent={decision.urgentReason !== null}
       aria-label={decision.title}
     >
-      <QuestionStrip card={card} selected={selected} line={line} />
+      <QuestionStrip card={card} line={line} />
       <h3 className="question-title">{decision.title}</h3>
       {decision.context === "" ? null : (
         <div className="question-context">

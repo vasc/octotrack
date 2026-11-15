@@ -1092,13 +1092,14 @@ describe("lines of work", () => {
       view.getByRole("complementary", { name: "L-1" });
     });
 
-    test("the focused item says Focused, and only it", async () => {
+    test("only the focused item is marked, by its border and the j and k hint beside it, never a word", async () => {
       onLine();
       navigate("/");
       const view = renderApp(<App />);
       const question = await view.findByRole("article", { name: "Which board?" });
-      expect(within(question).getByText("Focused")).toBeTruthy();
-      expect(view.getAllByText("Focused")).toHaveLength(1);
+      expect(question.closest("[data-selected='true']")).not.toBeNull();
+      expect(document.querySelectorAll("[data-focus-ref][data-selected='true']")).toHaveLength(1);
+      expect(view.queryByText("Focused")).toBeNull();
     });
 
     test("a proposal's number keys do nothing more while its choice waits", async () => {
