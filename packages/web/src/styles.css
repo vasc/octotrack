@@ -1096,8 +1096,9 @@ p {
     padding: var(--space-6) var(--space-10);
     gap: var(--space-3) var(--space-6);
   }
+  /* The keys are for a keyboard: as specific as the touch rule that makes every button a flex box, so it stays hidden. */
   .brand-name,
-  .top-keys,
+  .btn.top-keys,
   .top-new-more {
     display: none;
   }
@@ -1224,7 +1225,7 @@ p {
     min-height: var(--touch-target);
   }
   /* The keys are for a keyboard; a touch screen has no use for their list. */
-  .top-keys {
+  .btn.top-keys {
     display: none;
   }
   /* Too small to tap as drawn: a full target, with the mark kept in its middle. */

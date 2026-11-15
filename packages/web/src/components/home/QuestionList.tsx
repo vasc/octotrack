@@ -55,9 +55,12 @@ export function QuestionList({
   );
   if (folded && !cards.some((card) => card.decision.ref === focus)) {
     return (
-      <FoldedSection title={title} names={cards.map((card) => card.decision.title)} named={false}>
-        {items}
-      </FoldedSection>
+      // In a row of tiles, as the other folded sections are, so the tile is one row high.
+      <div className="tiles">
+        <FoldedSection title={title} names={cards.map((card) => card.decision.title)} named={false}>
+          {items}
+        </FoldedSection>
+      </div>
     );
   }
   return (

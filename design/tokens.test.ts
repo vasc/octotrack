@@ -228,7 +228,7 @@ describe("a finger can use it", () => {
     expect(rulesFor(selector)).toContain("min-height: var(--touch-target)");
   });
 
-  test.each([".top-keys"])("%s, which only keyboards can act on, is hidden", (selector) => {
+  test.each([".btn.top-keys"])("%s, which only keyboards can act on, is hidden", (selector) => {
     expect(rulesFor(selector)).toContain("display: none");
   });
 
