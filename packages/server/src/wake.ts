@@ -4,11 +4,13 @@ import {
   type Caller,
   contracts,
   type Decision,
+  type RunningWake,
   type Tracker,
   WAKE_DEADLINE_MS,
 } from "@octotrack/core";
 import { z } from "zod";
 import { childEnv } from "./env.ts";
+import { processShell, type RunnerShell } from "./runner.ts";
 import { runProcess } from "./spawn.ts";
 
 const WakeAdapter = z.object({ command: z.array(z.string().min(1)).min(1) });
@@ -91,14 +93,29 @@ export interface WakeDispatcher {
   settled(): Promise<void>;
 }
 
-/** One loop for every session, so that no session has to hang on the tracker to hear about an answer. */
+/** What the dispatcher does to a wake's process beyond running it: tell whether it still runs, and end its group. */
+export type WakeProcesses = Pick<RunnerShell, "alive" | "end">;
+
+/**
+ * One loop for every session, so that no session has to hang on the tracker to hear about an answer. It owns the wakes
+ * it starts: an agent whose wake runs is never woken again (fifth audit, B1), the developer's Stop ends a running wake
+ * whatever the runner's setup (B10), and a wake a restart left behind is watched by its process id, recorded once its
+ * process ends, and ended at its deadline or a Stop.
+ */
 export function createWakeDispatcher(options: {
   tracker: Tracker;
   adapters: WakeAdapters;
   run?: WakeRunner;
+  processes?: WakeProcesses;
+  /** The time a deadline is measured by, the tracker's own clock in tests. */
+  clock?: () => number;
 }): WakeDispatcher {
-  const { tracker, adapters, run = spawnWake } = options;
+  const { tracker, adapters, run = spawnWake, processes = processShell, clock = Date.now } = options;
   const running = new Set<Promise<void>>();
+  /** Wakes this dispatcher runs, by agent: their process once spawned, and whether a Stop is ending them. */
+  const own = new Map<string, { pid: number | null; stopping: boolean }>();
+  /** Wakes left by a restart that a sweep is settling now, so that two sweeps never settle one twice. */
+  const settling = new Set<string>();
 
   const record = (ref: string, error?: string) =>
     tracker.call(contracts.decisionWoken, { ref, ...(error === undefined ? {} : { error }) }, DISPATCHER);
@@ -128,6 +145,8 @@ export function createWakeDispatcher(options: {
 
   const recordAgent = (name: string, error?: string) =>
     tracker.call(contracts.agentWoken, { name, ...(error === undefined ? {} : { error }) }, DISPATCHER);
+  const recordEnd = (name: string, ended: "exited" | "deadline" | "stopped") =>
+    tracker.call(contracts.agentWoken, { name, ended }, DISPATCHER);
 
   /** An agent on a line is woken at the address it registered, whatever is waiting for it. */
   const wakeAgent = async (due: AgentWake): Promise<void> => {
@@ -138,25 +157,73 @@ export function createWakeDispatcher(options: {
       recordAgent(due.agent, `No wake adapter named ${name}`);
       return;
     }
-    // Recorded first: if this process dies mid-run, an agent is left unwoken rather than woken twice.
-    recordAgent(due.agent);
+    const mine: { pid: number | null; stopping: boolean } = { pid: null, stopping: false };
+    own.set(due.agent, mine);
     try {
+      // Recorded first: if this process dies mid-run, an agent is left unwoken rather than woken twice.
+      recordAgent(due.agent);
       const { exitCode, stderr, timedOut } = await run(
         argvFor(adapter.command, due.address.slice(split + 1), due.message),
         { OCTO_AGENT: due.agent },
         // Its process is recorded while it runs: the cap counts it, and Stop ends it.
-        (pid) => tracker.call(contracts.agentWoken, { name: due.agent, pid }, DISPATCHER),
+        (pid) => {
+          mine.pid = pid;
+          tracker.call(contracts.agentWoken, { name: due.agent, pid }, DISPATCHER);
+          if (mine.stopping) processes.end(pid);
+        },
       );
-      // One killed at its deadline reached its session, which was at work: not a failed wake (fourth audit, A1).
-      if (timedOut === true) {
-        tracker.call(contracts.agentWoken, { name: due.agent, ended: "deadline" }, DISPATCHER);
+      if (mine.stopping) {
+        recordEnd(due.agent, "stopped");
+      } else if (timedOut === true) {
+        // One killed at its deadline reached its session, which was at work: not a failed wake (fourth audit, A1).
+        recordEnd(due.agent, "deadline");
       } else if (exitCode !== 0) {
         recordAgent(due.agent, `Exit ${exitCode}: ${stderr.trim().slice(0, STDERR_KEPT)}`);
       } else {
-        tracker.call(contracts.agentWoken, { name: due.agent, ended: "exited" }, DISPATCHER);
+        recordEnd(due.agent, "exited");
       }
     } catch (error) {
-      recordAgent(due.agent, error instanceof Error ? error.message : String(error));
+      if (mine.stopping) recordEnd(due.agent, "stopped");
+      else recordAgent(due.agent, error instanceof Error ? error.message : String(error));
+    } finally {
+      own.delete(due.agent);
+    }
+  };
+
+  /** A wake from before this server started: nothing here awaits its process, so it is watched by its id. */
+  const settleLeft = async (wake: RunningWake): Promise<void> => {
+    const pid = wake.pid;
+    if (pid === null || !(await processes.alive(pid, wake.since))) {
+      recordEnd(wake.agent, "exited");
+      return;
+    }
+    if (wake.stopped) {
+      processes.end(pid);
+      recordEnd(wake.agent, "stopped");
+    } else if (clock() - Date.parse(wake.since) > WAKE_DEADLINE_MS) {
+      processes.end(pid);
+      recordEnd(wake.agent, "deadline");
+    }
+  };
+
+  /** Ends the wakes of agents the developer stopped, and settles the ones a restart left behind. */
+  const sweep = async (): Promise<void> => {
+    for (const wake of tracker.call(contracts.agentWaking, {}, DISPATCHER)) {
+      const mine = own.get(wake.agent);
+      if (mine !== undefined) {
+        if (wake.stopped && !mine.stopping) {
+          mine.stopping = true;
+          if (mine.pid !== null) processes.end(mine.pid);
+        }
+        continue;
+      }
+      if (settling.has(wake.agent)) continue;
+      settling.add(wake.agent);
+      try {
+        await settleLeft(wake);
+      } finally {
+        settling.delete(wake.agent);
+      }
     }
   };
 
@@ -167,8 +234,12 @@ export function createWakeDispatcher(options: {
   };
 
   const dispatch = async (): Promise<void> => {
+    await sweep();
     const due = tracker.call(contracts.decisionWakes, {}, DISPATCHER);
-    const agents = tracker.call(contracts.agentWakes, {}, DISPATCHER);
+    // An agent whose wake this dispatcher runs is never woken again meanwhile, whatever the tracker says.
+    const agents = tracker
+      .call(contracts.agentWakes, {}, DISPATCHER)
+      .filter((agent) => !own.has(agent.agent));
     await Promise.all([
       ...due.map((decision) => track(() => wake(decision))),
       ...agents.map((agent) => track(() => wakeAgent(agent))),

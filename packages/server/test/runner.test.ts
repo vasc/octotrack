@@ -855,7 +855,7 @@ describe("what the fourth audit found in the local runner", () => {
     expect(await gone(child)).toBe(true);
   });
 
-  test("A1: Stop ends a wake still running for a session, and runs no stop command for it", async () => {
+  test("A1, B10: Stop leaves a wake still running to the server that started it, and runs no stop command for it", async () => {
     const w = world({ stop: ["tmux", "kill-session", "-t", "{name}"] }, {}, { living: [4242] });
     w.tracker.call(
       c.agentRegister,
@@ -867,10 +867,11 @@ describe("what the fourth audit found in the local runner", () => {
     w.tracker.call(c.agentStop, { name: "panel-a" }, DEV);
     await w.tick();
     await w.tick();
-    expect(w.ended).toEqual([4242]);
+    // The wake dispatcher ends it, whatever the runner's setup (fifth audit, B10); the runner records the Stop as done.
+    expect(w.ended).toEqual([]);
     expect(w.ran.filter((command) => command.startsWith("tmux"))).toEqual([]);
-    const ran = w.tracker.call(c.feedList, { query: "event:runner.stop_ran" }, DEV).events;
-    expect(ran.map((event) => event.summary)).toEqual(["Ended panel-a's process"]);
+    expect(w.tracker.call(c.runnerStops, {}, RUNNER_CALLER)).toEqual([]);
+    expect(w.tracker.call(c.feedList, { query: "event:runner.stop_ran" }, DEV).events).toEqual([]);
   });
 
   test("A4: a pull request gh fails to close is said in the Log, and not asked of gh again every tick", async () => {

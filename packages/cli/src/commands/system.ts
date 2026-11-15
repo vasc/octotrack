@@ -76,14 +76,14 @@ export const systemCommands: Command[] = [
     summary: "What this agent should do now",
     options: {
       for: { ...STRING, description: "Ask on behalf of another agent" },
-      project: { ...STRING, short: "p", description: "Only this project" },
+      repo: { ...STRING, short: "p", aliases: ["project"], description: "Only this repo" },
       limit: { ...STRING, description: "How many items per section" },
     },
     ops: [c.next.name],
     async run({ client, out }, args) {
       const outcome = await client.call(
         c.next,
-        compact({ agent: args.str("for"), project: args.str("project"), limit: args.int("limit") }),
+        compact({ agent: args.str("for"), project: args.str("repo"), limit: args.int("limit") }),
       );
       out.result(outcome, () => r.renderNext(outcome.data));
     },
@@ -226,6 +226,27 @@ export const systemCommands: Command[] = [
         outcome.data.length === 0
           ? r.dim("Nobody to wake.")
           : r.table(outcome.data.map((wake) => [r.bold(wake.agent), wake.address, wake.message])),
+      );
+    },
+  },
+  {
+    path: ["agent", "waking"],
+    summary:
+      "Wakes whose end is not recorded yet, with their process and whether the agent was stopped. The server settles them",
+    ops: [c.agentWaking.name],
+    async run({ client, out }) {
+      const outcome = await client.call(c.agentWaking, {});
+      out.result(outcome, () =>
+        outcome.data.length === 0
+          ? r.dim("No wake is running.")
+          : r.table(
+              outcome.data.map((wake) => [
+                r.bold(wake.agent),
+                wake.pid === null ? "not spawned yet" : `pid ${wake.pid}`,
+                `since ${wake.since}`,
+                wake.stopped ? "stopped" : "",
+              ]),
+            ),
       );
     },
   },

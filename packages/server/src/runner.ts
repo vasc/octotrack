@@ -482,14 +482,15 @@ export function createRunner(options: {
   };
 
   /**
-   * Stop, for each agent the developer stopped, once: the process group of a session the runner started, or of a wake
-   * the server is running for it, is ended, or else the developer's stop command, if one is set, is run for what the
-   * runner cannot see. Never both: the command is for sessions the runner did not start (D13). Watch mode only notes
-   * it, and a name the command could misread is never given to it.
+   * Stop, for each agent the developer stopped, once: the process group of a session the runner started is ended, or
+   * else the developer's stop command, if one is set, is run for what the runner cannot see. Never both: the command is
+   * for sessions the runner did not start (D13). Nor is it for a wake the server ran for the agent, which the wake
+   * dispatcher that started it ends, whatever the runner's setup (fifth audit, B10). Watch mode only notes it, and a
+   * name the command could misread is never given to it.
    */
   const runStops = async () => {
     const before = new Map(unwatched().map((live) => [live.name, live]));
-    for (const { name, wake } of tracker.call(contracts.runnerStops, {}, RUNNER)) {
+    for (const { name, woken } of tracker.call(contracts.runnerStops, {}, RUNNER)) {
       if (config.dryRun) {
         tracker.call(contracts.runnerStopRan, { name, code: 0, output: "", dry: true }, RUNNER);
         continue;
@@ -504,15 +505,11 @@ export function createRunner(options: {
         shell.end(old.pid);
         ended = true;
       }
-      // A wake the server is running for it is its session at work, the session included: it is ended too (A1).
-      if (wake !== null && (await shell.alive(wake.pid, wake.since))) {
-        shell.end(wake.pid);
-        ended = true;
-      }
-      // The stop command is only for what the runner cannot end itself (D13): a session it ended needs nothing more.
-      if (config.stop === undefined || ended) {
+      // The stop command is only for what the runner cannot end itself (D13): a session it ended, or one whose wake the
+      // server ends, needs nothing more.
+      if (config.stop === undefined || ended || woken) {
         // Nothing more for a session the runner did not start and no command is set for: Stop refuses its writes.
-        if (ended) {
+        if (ended || woken) {
           tracker.call(contracts.runnerStopRan, { name, code: 0, output: "", ended, command: false }, RUNNER);
         }
         continue;

@@ -38,13 +38,16 @@ will be woken.
   octo post "what is happening" --on PANEL-4 --level progress
   octo issue update PANEL-4 --status in_review
   octo plan set L-7 "Model the base" "Print and test-fit" "Final print"
-  octo issue create "Measure the grip" -p PANEL --line L-7 --step 2
+  octo issue create "Measure the grip" --repo PANEL --line L-7 --step 2
   octo line summarize L-7 --headline "<one sentence that stands alone>" --summary-file -
   octo line propose-done L-7 How done when was met
 
 The owner speaks for the line: its summary, its plan, its case for done. A summary falls due an hour after real work
 (a step changed, an issue closed, a question asked or answered), as drift for the owner. If the developer says not yet,
 you hear what is missing in a notice that wakes you.
+
+A wake that runs thirty minutes is ended with your session, mid-work. You are woken again at once with a notice
+saying so: carry on where you left off. While a wake runs, you are not woken again.
 
 When every session Octotrack may run is in use and a line needs an owner, a helper Octotrack started is asked to give
 way: finish your current issue, then octo line release.
@@ -86,7 +89,8 @@ A measurement, a login, a play-test: file a task, at one of the developer's plac
 The task frees the issue you hold. Name each thing to send back with --field, a short label on one line with no = or
 :, such as Length: the developer gets a one-line box for each, and Done needs them all. Its outcome comes back to you
 like an answer, one "Name: value" per field. The task is the developer's from then on: only they finish it, or say it
-cannot be done. If it no longer stands, withdraw it with octo held withdraw.
+cannot be done. If it no longer stands, withdraw it with octo held withdraw. Once closed it stays closed: if it is
+needed again, file a new task.
 
 ## Proposing lines
 
@@ -173,7 +177,7 @@ Clear it in one of two ways, with a note. There is no third:
 
 Drift about state, such as a PR still open, clears by itself once you fix the state, so --updated is refused while it
 is still true. --verified says it is correct as it is. With several agents around, take an item first:
-octo drift claim DR-4. Use octo next -p OCT to see only one repo.
+octo drift claim DR-4. Use octo next --repo OCT to see only one repo.
 
 Some drift clears itself when the state becomes consistent. Connect your own work to the network so that you get told:
 

@@ -1,19 +1,36 @@
 import { z } from "zod";
 import { endClaim, endFirstOffer } from "../agents/claims.ts";
-import { agentState } from "../agents/state.ts";
+import { agentState, wakeRuns } from "../agents/state.ts";
 import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
 import type { AgentWake } from "../schemas.ts";
-import { claimOf, getAgent, viewOf } from "../store/agents.ts";
+import { addNotice, claimOf, getAgent, viewOf } from "../store/agents.ts";
 import { emit } from "../store/common.ts";
 import { rows } from "../store/context.ts";
 import { requireIssue, requireLine } from "../store/entities.ts";
 import { addToInbox, inboxFor, recipientOf } from "../store/inbox.ts";
-import { AgentRow } from "../store/rows.ts";
+import { WakeRow } from "../store/rows.ts";
 import { bind } from "./bind.ts";
 import { requireDeveloper, requireServer } from "./developer.ts";
 
 const CountRow = z.object({ n: z.number() });
+
+/**
+ * Whether an agent can be woken now: asleep, with no wake of its own still running (fifth audit, B1). A session whose
+ * wake was killed at its deadline after its last command is at work no longer, however recent that command, so it is
+ * woken to carry on at once rather than after the running window (fifth audit, B3).
+ */
+function wakeable(agent: WakeRow, now: string): boolean {
+  if (wakeRuns(agent, now)) return false;
+  const state = agentState(agent, now);
+  if (state === "asleep") return true;
+  return (
+    state === "running" &&
+    agent.wakeEnd === "deadline" &&
+    agent.wakeEndedAt !== null &&
+    agent.wakeEndedAt >= agent.lastSeenAt
+  );
+}
 
 export const inboxOps = [
   bind(contracts.lineTell, (ctx, input) => {
@@ -57,10 +74,10 @@ export const inboxOps = [
   bind(contracts.agentWakes, (ctx) =>
     rows(
       ctx,
-      AgentRow,
+      WakeRow,
       "SELECT * FROM agents WHERE wakeAddress IS NOT NULL AND stoppedAt IS NULL AND goneAt IS NULL",
     ).flatMap((agent): AgentWake[] => {
-      if (agent.wakeAddress === null || agentState(agent, ctx.now) !== "asleep") return [];
+      if (agent.wakeAddress === null || !wakeable(agent, ctx.now)) return [];
       const since = agent.wokenAt ?? "";
       const notices =
         rows(
@@ -82,6 +99,25 @@ export const inboxOps = [
     }),
   ),
 
+  bind(contracts.agentWaking, (ctx) =>
+    rows(
+      ctx,
+      WakeRow,
+      "SELECT * FROM agents WHERE wokenAt IS NOT NULL AND wakeEndedAt IS NULL ORDER BY wokenAt, name",
+    ).flatMap((agent) =>
+      agent.wokenAt === null || !wakeRuns(agent, ctx.now)
+        ? []
+        : [
+            {
+              agent: agent.name,
+              pid: agent.wakePid,
+              since: agent.wokenAt,
+              stopped: agent.stoppedAt !== null,
+            },
+          ],
+    ),
+  ),
+
   bind(contracts.agentWoken, (ctx, input) => {
     requireServer(ctx);
     const agent = getAgent(ctx, input.name);
@@ -96,30 +132,60 @@ export const inboxOps = [
     if (input.pid !== undefined) {
       ctx.sql.run("UPDATE agents SET wakePid = ? WHERE name = ?", [input.pid, agent.name]);
     } else if (input.ended !== undefined) {
-      ctx.sql.run("UPDATE agents SET wakePid = NULL WHERE name = ?", [agent.name]);
+      ctx.sql.run("UPDATE agents SET wakePid = NULL, wakeEndedAt = ?, wakeEnd = ? WHERE name = ?", [
+        ctx.now,
+        input.ended,
+        agent.name,
+      ]);
+      const line = claimOf(ctx, agent.name)?.line ?? null;
       // Killed at its deadline, the wake had reached its session, which was at work: the session is not gone, and
-      // keeps its line asleep, to be woken again (fourth audit, A1). Only a wake that could not reach it is a failure.
+      // keeps its line (fourth audit, A1). It is told to carry on, which wakes it again at once (fifth audit, B3).
       if (input.ended === "deadline") {
-        const line = claimOf(ctx, agent.name)?.line ?? null;
+        addNotice(
+          ctx,
+          agent.name,
+          "wake_deadline",
+          line,
+          `Your wake ran past its deadline, so its process was ended while you worked. Carry on where you left off${line === null ? "" : ` on ${line}: octo line show ${line}`}.`,
+          true,
+        );
         emit(ctx, {
           type: "agent.wake_ended",
           kind: "agent",
           ref: agent.name,
           project: agent.repo,
           line,
-          summary: `${agent.name}'s wake ran past its deadline, so its process was ended. ${line === null ? "It" : `It keeps ${line}, and`} is woken again when something waits for it.`,
+          summary: `${agent.name}'s wake ran past its deadline, so its process was ended. ${line === null ? "It" : `It keeps ${line}, and`} is woken again to carry on.`,
+          attrs: {},
+        });
+      } else if (input.ended === "stopped") {
+        emit(ctx, {
+          type: "agent.wake_ended",
+          kind: "agent",
+          ref: agent.name,
+          project: agent.repo,
+          line,
+          summary: `${agent.name}'s wake was ended, as the developer stopped it`,
           attrs: {},
         });
       }
     } else if (input.error !== undefined && agent.stoppedAt !== null) {
       // Its wake ended because the developer stopped it, which ended its claims already: nothing failed.
-      ctx.sql.run("UPDATE agents SET wakePid = NULL WHERE name = ?", [agent.name]);
-    } else {
-      ctx.sql.run("UPDATE agents SET wokenAt = ?, wakeError = ?, wakePid = NULL WHERE name = ?", [
+      ctx.sql.run("UPDATE agents SET wakePid = NULL, wakeEndedAt = ?, wakeEnd = 'stopped' WHERE name = ?", [
         ctx.now,
-        input.error ?? null,
         agent.name,
       ]);
+    } else if (input.error !== undefined) {
+      ctx.sql.run(
+        "UPDATE agents SET wokenAt = ?, wakeError = ?, wakePid = NULL, wakeEndedAt = ?, wakeEnd = 'error' WHERE name = ?",
+        [ctx.now, input.error, ctx.now, agent.name],
+      );
+    } else {
+      // A wake begins: it runs until its end is recorded.
+      ctx.sql.run(
+        "UPDATE agents SET wokenAt = ?, wakeError = NULL, wakePid = NULL, wakeEndedAt = NULL, wakeEnd = NULL WHERE name = ?",
+        [ctx.now, agent.name],
+      );
     }
     if (input.error !== undefined && agent.stoppedAt === null) {
       // A session that cannot be woken is gone: what it held goes to whoever comes next.

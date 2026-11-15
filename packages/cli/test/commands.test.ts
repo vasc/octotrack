@@ -60,6 +60,27 @@ describe("the CLI says repo where it used to say project", () => {
     expect(network).not.toContain("octo project");
     expect(network).toContain("octo repo update <KEY> --repo owner/name");
   });
+
+  test("in every option outside octo project: --repo, with --project kept as an alias (fifth audit, B22)", () => {
+    const options = COMMANDS.filter((command) => command.path[0] !== "project").flatMap((command) =>
+      Object.entries(command.options ?? {}).map(
+        ([name, spec]) => [command.path.join(" "), name, spec] as const,
+      ),
+    );
+    expect(options.filter(([, name]) => name === "project").map(([path]) => path)).toEqual([]);
+    expect(
+      options
+        .filter(([, , spec]) => /\bproject\b/i.test(spec.description))
+        .map(([path, name]) => `${path} --${name}`),
+    ).toEqual([]);
+    expect(AGENT_GUIDE).not.toMatch(/ -p [A-Z]/);
+    for (const path of [["issue", "create"], ["issue", "list"], ["next"], ["pr", "list"]]) {
+      const options = resolveCommand([...path])?.command.options ?? {};
+      expect(parse(["--project", "PANEL"], options).list("repo")).toEqual(["PANEL"]);
+      expect(parse(["-p", "PANEL"], options).list("repo")).toEqual(["PANEL"]);
+      expect(parse(["--project=PANEL"], options).list("repo")).toEqual(["PANEL"]);
+    }
+  });
 });
 
 describe("D14's words, beside the older ones", () => {

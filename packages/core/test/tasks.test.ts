@@ -577,6 +577,24 @@ describe("the agents' questions and tasks on a line the developer owns", () => {
       ),
     ).toEqual([asked.ref, mine.ref]);
   });
+
+  test("tabled and started again, an owned line still holds them: only handing it back releases them (fifth audit, B2)", () => {
+    const w = world();
+    w.as(w.owner, c.decisionAsk, { title: "Which board?", context: SITUATION, options: OPTIONS });
+    w.as(w.owner, c.taskFile, { title: "Measure the grip", place: "the bench", outcome: "In mm" });
+    w.as(w.dev, c.lineOwn, { ref: w.line });
+    w.later(20);
+    w.as(w.dev, c.lineTable, { ref: w.line, reason: "Later" });
+    w.as(w.dev, c.lineStart, { ref: w.line });
+    const home = w.as(w.dev, c.homeShow, {});
+    expect(w.as(w.dev, c.lineShow, { ref: w.line }).line.ownedBy).toBe("dev");
+    expect(home.lines[w.line]?.forYou).toEqual([]);
+    expect([home.lines[w.line]?.held, home.counts.toAnswer, home.counts.toDo]).toEqual([
+      { questions: 1, tasks: 1 },
+      0,
+      0,
+    ]);
+  });
 });
 
 describe("a line waits on the developer", () => {

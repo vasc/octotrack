@@ -332,12 +332,12 @@ describe("the developer's stop command", () => {
     const w = world();
     w.register("panel");
     w.as(w.dev, c.agentStop, { name: "panel" });
-    expect(w.as(w.server, c.runnerStops, {})).toEqual([{ name: "panel", wake: null }]);
+    expect(w.as(w.server, c.runnerStops, {})).toEqual([{ name: "panel", woken: false }]);
     w.as(w.server, c.runnerStopRan, { name: "panel", code: 0, output: "" });
     expect(w.as(w.server, c.runnerStops, {})).toEqual([]);
     w.as(w.dev, c.agentLift, { name: "panel" });
     w.as(w.dev, c.agentStop, { name: "panel" });
-    expect(w.as(w.server, c.runnerStops, {})).toEqual([{ name: "panel", wake: null }]);
+    expect(w.as(w.server, c.runnerStops, {})).toEqual([{ name: "panel", woken: false }]);
     expect(() => w.as(w.dev, c.runnerStopRan, { name: "panel", code: 0, output: "" })).toThrow();
   });
 
@@ -351,7 +351,7 @@ describe("the developer's stop command", () => {
     const noted = w.as(w.dev, c.feedList, { query: "event:runner.would_stop" }).events;
     expect(noted.map((event) => event.ref)).toEqual(["panel"]);
     expect(w.as(w.dev, c.feedList, { query: "event:runner.stop_ran" }).events).toEqual([]);
-    expect(w.as(w.server, c.runnerStops, {})).toEqual([{ name: "panel", wake: null }]);
+    expect(w.as(w.server, c.runnerStops, {})).toEqual([{ name: "panel", woken: false }]);
   });
 });
 

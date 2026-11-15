@@ -447,8 +447,10 @@ Decisions made from that:
     deadline runs in a process group of its own and is killed with everything it started. A wake killed at its
     deadline reached its session, so it is recorded as ended (`agent.woken` with `ended: deadline`, and
     `agent.wake_ended` in the Log), not as a failed wake: the agent keeps its line, asleep, and is woken again when
-    something waits. While a wake runs, its process id is recorded: the cap counts the woken session for as long, up
-    to the wake's deadline, however silent it is, and Stop ends the wake's process group as it does a session's.
+    something waits (since the fifth audit, a notice to carry on wakes it at once). While a wake runs, its process id
+    is recorded: the cap counts the woken session for as long, however silent it is, until the server records the
+    wake's end, and Stop ends the wake's process group as it does a session's (the wake dispatcher does, since the
+    fifth audit, whatever the runner's setup).
     _Why:_ the deadline killed only the adapter, so the `claude` it resumed kept working, unseen, while the wake was
     recorded as failed ("Exit 124"): the agent was declared gone, its claim ended, a new session was started for the
     line and handed the orphan's worktree, Stop could not reach it, and the cap stopped counting it after fifteen
@@ -609,6 +611,49 @@ Decisions made from that:
     panel, which lists them with the same query (`sinceSummaryQuery`: `line:L-n -actor:dev -event:line.reordered`).
     _Why:_ two drags and a nudge showed as "3 changes since the summary"; the developer's own actions are never news to
     them, and a reorder changes only where the line stands.
+- **What the fifth audit changed in core, the server and the CLI.**
+  - _A wake runs until its end is recorded, and its agent is not woken again meanwhile._ The agent's row keeps when its
+    latest wake ended and how (`wakeEndedAt`, `wakeEnd`: exited, deadline, stopped or error); a wake with no recorded end
+    runs, and the cap counts it, however silent the woken session is. One whose process was never recorded counts only
+    up to its deadline, as a server that died between recording a wake and spawning it left nothing running. _Why:_ an
+    agent read as asleep until its woken session ran an octo command, so the next Tell started a second `claude
+    --resume` on the same session and worktree (B1). _Trade-off:_ an end is now something the server must record, so
+    the server owns every wake it starts: see the next two.
+  - _The wake dispatcher owns the wakes it starts._ It ends a stopped agent's wake itself, whatever the runner's setup,
+    in watch mode too, and logs it (`agent.wake_ended`, "ended, as the developer stopped it"). `runner.stops` says only
+    whether a wake ran at the Stop (`woken`), and the runner neither ends it nor runs the developer's stop command for
+    it, which stays for sessions Octotrack did not start (D13). A wake a restart left behind is listed by
+    `agent.waking`, watched by its process id, recorded as ended once its process is gone, and ended at its deadline or
+    at a Stop, when the server starts and every ten seconds. _Why:_ only the runner's stop step ended a wake, so with no
+    setup file or in watch mode a stopped agent's session kept working, and spending, for up to thirty minutes (B10);
+    and after a restart nothing enforced a detached wake's deadline (B1). The dispatcher started the process, so it is
+    the one place that knows it; the runner ending it too would be a second owner. _Trade-off:_ in watch mode a Stop
+    now ends a running wake rather than only noting it. Watch mode is about what the runner would start; a wake is not
+    the runner's, and a stopped agent working on was the harm.
+  - _A wake killed at its deadline is followed by one that says to carry on._ Its end leaves the agent a notice
+    (`wake_deadline`) that wakes it, and an agent whose wake was killed after its last command is woken at once,
+    however recent that command, since the kill ended the session. _Why:_ the session keeps its line, and D13 said it
+    "is woken again when something waits", but nothing was made to wait, so the line sat with an asleep owner and no
+    owner search (B3). _Trade-off:_ a session that never finishes is resumed every thirty minutes until it does or the
+    developer stops it; the alternative, leaving it asleep, stalls its line in silence.
+  - _A line the developer owns keeps its agents' work held when it is tabled and started again._ Every start settles
+    held work by the line's state, as a fold does, so it is released only when the line is handed back. _Why:_ ownership
+    survives table and start, and releasing on every start put an agent's question back in the developer's queue,
+    answered into an inbox no agent read (B2).
+  - _A closed task stays closed._ An agent may change neither the status nor the assignee of a task the developer
+    closed (or it withdrew); a need that comes back is a new task. _Why:_ `issue update --status todo` put a task the
+    developer had turned down back in their to do, with its old result, logged only as an update (B12).
+  - _A session stopped before it took its line exited; it did not fail to start._ Any Stop, release or wind-down since
+    the start makes its exit `exited`, with no retry wait and no attempt counted, taken or not, and the next start has
+    a new name. _Why:_ a Stop within the check-in was logged as `runner.failed` and the stopped name was started again
+    two minutes later, setup and all (B11).
+  - _Reserved names are never agents._ A migration removes the agent rows early releases made for `dev`, `octotrack`
+    and `github`, with any claim or notice under them; the migration rehearsal counts agents without them. _Why:_ early
+    releases recorded every caller as seen, the server's own included, so the roster listed Octotrack and GitHub sync
+    as running agents. Nothing since creates such rows.
+  - _CLI options say repo._ `--repo` (still `-p`) in every option that took `--project`, which, with `--no-project`,
+    keeps working as an alias; `pr list`'s two filters are one, since `repo:` takes a key or an owner/name. _Why:_ D13's
+    word is repo, and options were the place it had not reached (B22).
 - **Departures, each for a reason.**
   - _The pages from before lines are gone:_ Decisions, Pull requests, Drift, Issues and Repos. Nothing linked to them
     any more, and the issues page changed status through a select with no Undo. Questions are answered on home, a
