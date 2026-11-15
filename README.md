@@ -40,7 +40,7 @@ bun link
 That puts `octo` on your PATH. The server starts itself on the first command.
 
 ```bash
-octo project create OCT "My project" --repo owner/name
+octo repo create OCT "My project" --repo owner/name
 ```
 
 ```bash
@@ -216,11 +216,11 @@ stop command ten, then killed; pull request sync gives each gh call thirty secon
 | `octo watch D-3`                                                               | Anything touches D-3                          |
 | `octo watch --until 'ref:D-3 status:decided'`                                  | D-3 is decided, even if that already happened |
 | `octo watch --until-none 'ref:D-3,D-4 status:open'`                            | Both are answered                             |
-| `octo watch --on 'kind:pr project:OCT to:merged'`                              | A PR in OCT merges                            |
+| `octo watch --on 'kind:pr repo:OCT to:merged'`                                 | A PR in OCT merges                            |
 | `octo watch --on 'event:decision.*' --on 'checks:failing' --timeout 30m`       | Either happens, within 30 minutes             |
 | `octo watch --on 'ref:PR-3 to:passing' --until 'ref:D-3 status:decided' --all` | Both are true                                 |
 | `octo wait PR-7 --status merged`                                               | The simple form                               |
-| `octo feed -f 'project:OCT -actor:github'`                                     | Streams every match instead of stopping       |
+| `octo feed -f 'repo:OCT -actor:github'`                                        | Streams every match instead of stopping       |
 
 To keep several things in flight, register watches and carry on working:
 

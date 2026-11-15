@@ -10,7 +10,14 @@ import { filterEntities } from "../store/docs.ts";
 import { allLines, requireLine, requireProject, summarize } from "../store/entities.ts";
 import { loadGraph } from "../store/graph.ts";
 import { IssueRow, PlanStepRow, PrRow } from "../store/rows.ts";
-import { afterAdd, afterMove, guardLineWrite, guardOnLine, windDown } from "../agents/claims.ts";
+import {
+  afterAdd,
+  afterMove,
+  guardLineWrite,
+  guardOnLine,
+  settleHeldWork,
+  windDown,
+} from "../agents/claims.ts";
 import { DEVELOPER } from "../agents/state.ts";
 import { addNotice, claimOf } from "../store/agents.ts";
 import { addToInbox } from "../store/inbox.ts";
@@ -398,6 +405,8 @@ export const lineOps = [
       });
     }
     ctx.sql.run("UPDATE decisions SET line = ? WHERE line = ?", [into.ref, current.ref]);
+    // They land held if nobody works on that line, and are no longer held by the line they left if somebody does.
+    settleHeldWork(ctx, into);
     // Answers and Tells waiting for the folded line go where its work went.
     ctx.sql.run("UPDATE line_inbox SET line = ? WHERE line = ? AND deliveredAt IS NULL", [
       into.ref,
@@ -518,8 +527,10 @@ export const lineOps = [
       return updated;
     }
     const claim = claimOf(ctx, ctx.actor);
+    // Its proposer writes a proposal's done when only while it is a proposal; once placed, the line is its agents'.
     const mayPropose =
-      (claim !== null && claim.line === line.ref && claim.role !== "helper") || line.proposedBy === ctx.actor;
+      (claim !== null && claim.line === line.ref && claim.role !== "helper") ||
+      (line.state === "proposed" && line.proposedBy === ctx.actor);
     if (!mayPropose) {
       throw new OctoError(
         "forbidden",
@@ -527,7 +538,7 @@ export const lineOps = [
         `Take it first: octo line take ${line.ref}`,
       );
     }
-    guardLineWrite(ctx, line.ref, "scope");
+    guardOnLine(ctx, line.ref, "scope", line.ref);
     // A proposed line's done when is still its agent's own words, so it writes it directly. Any other line's is the
     // developer's to accept: on a working line as an item for them, on a waiting one in its Start sheet.
     const direct = line.state === "proposed";

@@ -9,7 +9,7 @@ import { one, rows } from "../store/context.ts";
 import { allLines } from "../store/entities.ts";
 import type { DecisionRow } from "../store/rows.ts";
 import { bind } from "./bind.ts";
-import { requireDeveloper, requireDeveloperInPerson } from "./developer.ts";
+import { requireDeveloperInPerson } from "./developer.ts";
 import { buildQueue } from "./decisions.ts";
 import { stepInFor } from "./runner.ts";
 
@@ -81,7 +81,9 @@ export const pushOps = [
   }),
 
   bind(contracts.pushUnsubscribe, (ctx, input) => {
-    if (!ctx.system) requireDeveloper(ctx, "turn off notifications");
+    // The developer's in person, as turning them on is: one relayed on an agent's word would silence the phone. The
+    // server drops a subscription the push service says is gone.
+    if (!ctx.system) requireDeveloperInPerson(ctx, "turn off notifications");
     ctx.sql.run("DELETE FROM push_subscriptions WHERE endpoint = ?", [input.endpoint]);
     return { endpoint: input.endpoint };
   }),

@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { guardLineWrite, guardOnLine } from "../agents/claims.ts";
+import { guardOnLine, holdsWork } from "../agents/claims.ts";
 import { HELD_CURRENT_MS } from "../agents/held.ts";
 import { DEVELOPER } from "../agents/state.ts";
 import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
-import type { AtView, HeldItem, Issue, Place } from "../schemas.ts";
+import type { AtView, Decision, HeldItem, Issue, Place } from "../schemas.ts";
 import type { EventTypeName } from "../query/values.ts";
 import { claimOf } from "../store/agents.ts";
 import { applyPatch, emit } from "../store/common.ts";
@@ -67,10 +67,28 @@ function freedBy(ctx: Ctx, task: string): string | null {
   );
 }
 
-/** A task's names, as given, refused when two differ only in case: each is a box of its own. */
+const LINE_BREAK = /[\r\n]/;
+
+/** Text said on one line, as the line's inbox and the log say a task's outcome. */
+function oneLine(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+/**
+ * A task's names, as given: each one line, with no = (the CLI answers `--value Name=value`) and no : (the outcome reads
+ * "Name: value"), so a name can be answered and read as one row; refused when two differ only in case, since each is a
+ * box of its own.
+ */
 function distinctFields(fields: readonly string[]): string[] {
   const seen = new Set<string>();
   for (const field of fields) {
+    if (LINE_BREAK.test(field) || field.includes("=") || field.includes(":")) {
+      throw new OctoError(
+        "invalid_input",
+        `"${oneLine(field)}" must be one line, with no = or :`,
+        "Name each outcome with a short label, such as Length: it is answered as --value Length=41.",
+      );
+    }
     const key = field.toLowerCase();
     if (seen.has(key))
       throw new OctoError("invalid_input", `"${field}" is named twice`, "Give each outcome its own name.");
@@ -79,9 +97,37 @@ function distinctFields(fields: readonly string[]): string[] {
   return [...fields];
 }
 
+/** The values Done gives, under the task's own names, matched whatever their case, as names are told apart. */
+function valuesByName(task: Issue, values: Readonly<Record<string, string>>): Map<string, string> {
+  const named = new Map<string, string>();
+  for (const [given, value] of Object.entries(values)) {
+    const name = task.fields.find((field) => field.toLowerCase() === given.trim().toLowerCase());
+    if (name === undefined) {
+      throw new OctoError(
+        "invalid_input",
+        `${task.ref} asks for no ${given}`,
+        `It asks for: ${task.fields.join(", ")}.`,
+      );
+    }
+    if (named.has(name)) throw new OctoError("invalid_input", `${task.ref}'s ${name} is given twice`);
+    const trimmed = value.trim();
+    // Each value is one row of the list: a line break in one would read as rows of its own.
+    if (LINE_BREAK.test(trimmed)) {
+      throw new OctoError(
+        "invalid_input",
+        `${task.ref}'s ${name} must be one line`,
+        "Put anything longer in the note beside the values.",
+      );
+    }
+    named.set(name, trimmed);
+  }
+  return named;
+}
+
 /**
- * What Done reports: a task's named outcomes as a list, each filled, then any note; or, with none named, its words.
- * `said` is the same on one line, for the line's inbox and the log.
+ * What Done reports: a task's named outcomes as a list, each filled, then any note; or, with none named, its words. The
+ * developer's own task has nothing to send anyone, so it is done without words. `said` is the same on one line, for the
+ * line's inbox and the log.
  */
 function outcomeOf(
   task: Issue,
@@ -89,19 +135,14 @@ function outcomeOf(
   note: string | null,
 ): { result: string; said: string } {
   if (task.fields.length === 0) {
-    if (note === null)
+    if (note === null) {
+      if (task.outcome === "") return { result: "Done", said: "Done" };
       throw new OctoError("invalid_input", `${task.ref} needs what you found`, "Pass the outcome.");
-    return { result: note, said: note };
+    }
+    return { result: note, said: oneLine(note) };
   }
-  const unknown = Object.keys(values).find((name) => !task.fields.includes(name));
-  if (unknown !== undefined) {
-    throw new OctoError(
-      "invalid_input",
-      `${task.ref} asks for no ${unknown}`,
-      `It asks for: ${task.fields.join(", ")}.`,
-    );
-  }
-  const missing = task.fields.filter((name) => (values[name] ?? "").trim() === "");
+  const named = valuesByName(task, values);
+  const missing = task.fields.filter((name) => (named.get(name) ?? "") === "");
   if (missing.length > 0) {
     throw new OctoError(
       "invalid_input",
@@ -109,44 +150,51 @@ function outcomeOf(
       "Fill every named outcome.",
     );
   }
-  const filled = task.fields.map((name) => `${name}: ${(values[name] ?? "").trim()}`);
+  const filled = task.fields.map((name) => `${name}: ${named.get(name) ?? ""}`);
   return {
     result: [filled.map((line) => `- ${line}`).join("\n"), ...(note === null ? [] : [note])].join("\n\n"),
-    said: [...filled, ...(note === null ? [] : [note])].join("; "),
+    said: [...filled, ...(note === null ? [] : [oneLine(note)])].join("; "),
   };
 }
 
-function closeTask(
-  ctx: Ctx,
-  task: Issue,
-  status: "done" | "cancelled",
-  result: string,
-  said: string = result,
-): Issue {
+/**
+ * How a task closes: Done and Can't do it are the developer's, and go to whoever holds the issue it frees; withdrawn is
+ * an agent saying it no longer stands, which tells nobody anything they did not already know.
+ */
+type TaskEnd = "done" | "cant" | "withdrawn";
+
+function closeTask(ctx: Ctx, task: Issue, end: TaskEnd, result: string, outcome: string = result): Issue {
+  // The line's inbox and the log say it on one line.
+  const said = oneLine(outcome);
+  const status = end === "done" ? "done" : "cancelled";
   const changes = applyPatch(ctx, "issues", task.ref, task, { status, result, closedAt: ctx.now });
   // The half-written outcome, and any half-written reason it cannot be done, are answered now.
   ctx.sql.run("DELETE FROM drafts WHERE key IN (?, ?)", [`task:${task.ref}`, `task-why:${task.ref}`]);
-  const kind = status === "done" ? "task_done" : "task_cant";
   const frees = freedBy(ctx, task.ref);
-  if (task.line !== null) {
+  if (task.line !== null && end !== "withdrawn") {
     addToInbox(
       ctx,
       task.line,
-      kind,
+      end === "done" ? "task_done" : "task_cant",
       task.ref,
       frees,
-      status === "done"
+      end === "done"
         ? `${task.ref} done: ${said} ("${task.title}")`
         : `${task.ref} could not be done: ${said} ("${task.title}")`,
     );
   }
   emit(ctx, {
-    type: status === "done" ? "task.done" : "task.cant",
+    type: end === "done" ? "task.done" : end === "cant" ? "task.cant" : "task.withdrawn",
     kind: "issue",
     ref: task.ref,
     project: task.project,
     line: task.line,
-    summary: status === "done" ? `${task.ref} done: ${said}` : `${task.ref} could not be done: ${said}`,
+    summary:
+      end === "done"
+        ? `${task.ref} done: ${said}`
+        : end === "cant"
+          ? `${task.ref} could not be done: ${said}`
+          : `${task.ref} withdrawn by ${ctx.actor}: ${said}`,
     attrs: { status },
     changes,
   });
@@ -238,26 +286,80 @@ export function heldOn(ctx: Ctx, line: string): HeldItem[] {
   return [...questions, ...tasks];
 }
 
-/**
- * How many questions and tasks on a line wait to be re-confirmed: held, and not asked or re-confirmed in the last 7
- * days. A line being worked on keeps such work held until an agent re-confirms it; one up next holds all its work.
- */
-export function reconfirmingOn(ctx: Ctx, line: string): number {
-  const since = new Date(Date.parse(ctx.now) - HELD_CURRENT_MS).toISOString();
+/** How many of a line's questions and tasks are held for an agent now, current or not. */
+export function heldCount(ctx: Ctx, line: string): { questions: number; tasks: number } {
   const count = (sql: string, params: readonly string[]) =>
     one(ctx, z.object({ n: z.number() }), sql, params)?.n ?? 0;
-  return (
-    count(
-      `SELECT COUNT(*) AS n FROM decisions WHERE line = ? AND status = 'open' AND heldAt IS NOT NULL
-         AND COALESCE(confirmedAt, createdAt) < ?`,
-      [line, since],
-    ) +
-    count(
+  return {
+    questions: count(
+      "SELECT COUNT(*) AS n FROM decisions WHERE line = ? AND status = 'open' AND heldAt IS NOT NULL",
+      [line],
+    ),
+    tasks: count(
       `SELECT COUNT(*) AS n FROM issues WHERE line = ? AND assignee = ? AND outcome IS NOT NULL
-         AND status NOT IN ('done', 'cancelled') AND heldAt IS NOT NULL AND COALESCE(confirmedAt, createdAt) < ?`,
+         AND status NOT IN ('done', 'cancelled') AND heldAt IS NOT NULL`,
+      [line, DEVELOPER],
+    ),
+  };
+}
+
+/**
+ * The questions and tasks on a line that wait to be re-confirmed: held, and not asked or re-confirmed in the last 7
+ * days. A line being worked on keeps such work held until an agent re-confirms it; one up next holds all its work.
+ */
+export function staleHeldOn(ctx: Ctx, line: string): string[] {
+  const since = new Date(Date.parse(ctx.now) - HELD_CURRENT_MS).toISOString();
+  const refs = (sql: string, params: readonly string[]) =>
+    rows(ctx, z.object({ ref: z.string() }), sql, params).map((row) => row.ref);
+  return [
+    ...refs(
+      `SELECT ref FROM decisions WHERE line = ? AND status = 'open' AND heldAt IS NOT NULL
+         AND COALESCE(confirmedAt, createdAt) < ? ORDER BY createdAt`,
+      [line, since],
+    ),
+    ...refs(
+      `SELECT ref FROM issues WHERE line = ? AND assignee = ? AND outcome IS NOT NULL
+         AND status NOT IN ('done', 'cancelled') AND heldAt IS NOT NULL AND COALESCE(confirmedAt, createdAt) < ?
+       ORDER BY createdAt`,
       [line, DEVELOPER, since],
-    )
-  );
+    ),
+  ];
+}
+
+/** How many questions and tasks on a line wait to be re-confirmed. */
+export function reconfirmingOn(ctx: Ctx, line: string): number {
+  return staleHeldOn(ctx, line).length;
+}
+
+/** A question or a task for the developer, open, on the line it is held on. */
+type HeldWork =
+  | { kind: "decision"; value: Decision; line: string }
+  | { kind: "issue"; value: Issue; line: string };
+
+/**
+ * What held confirm and held withdraw act on: a question still open, or a task for the developer still open, on a
+ * line. An answered question or a closed task no longer stands or falls, and any other issue is not held work.
+ */
+function requireHeldItem(ctx: Ctx, ref: string): HeldWork {
+  const entity = findEntity(ctx, ref);
+  if (entity?.kind === "decision" && entity.value.line !== null) {
+    if (entity.value.status !== "open") {
+      throw new OctoError("conflict", `${entity.value.ref} is ${entity.value.status}, so it is not held`);
+    }
+    return { kind: "decision", value: entity.value, line: entity.value.line };
+  }
+  if (
+    entity?.kind === "issue" &&
+    entity.value.line !== null &&
+    entity.value.assignee === DEVELOPER &&
+    entity.value.outcome !== null
+  ) {
+    if (entity.value.status === "done" || entity.value.status === "cancelled") {
+      throw new OctoError("conflict", `${entity.value.ref} is already closed, so it is not held`);
+    }
+    return { kind: "issue", value: entity.value, line: entity.value.line };
+  }
+  throw new OctoError("invalid_input", `${ref} is not a question or task on a line`);
 }
 
 export const taskOps = [
@@ -296,12 +398,12 @@ export const taskOps = [
       assignee: DEVELOPER,
       line: line.ref,
     });
-    // Filed on a line nobody works on, it is held until the line starts.
+    // Filed on a line no agent works on (in a wind-down), it is held until one does.
     ctx.sql.run("UPDATE issues SET place = ?, outcome = ?, fields = ?, heldAt = ? WHERE ref = ?", [
       place,
       input.outcome,
       JSON.stringify(fields),
-      line.state === "working" ? null : ctx.now,
+      holdsWork(line) ? ctx.now : null,
       task.ref,
     ]);
     if (frees !== null) addLink(ctx, task.ref, "blocks", frees.ref);
@@ -317,7 +419,7 @@ export const taskOps = [
 
   bind(contracts.taskCant, (ctx, input) => {
     requireDeveloper(ctx, "say a task cannot be done");
-    return closeTask(ctx, requireTask(ctx, input.ref), "cancelled", input.why);
+    return closeTask(ctx, requireTask(ctx, input.ref), "cant", input.why);
   }),
 
   bind(contracts.placeList, (ctx) => places(ctx)),
@@ -347,17 +449,10 @@ export const taskOps = [
   bind(contracts.heldConfirm, (ctx, input) => {
     const lines = new Set<string>();
     for (const ref of input.refs) {
-      const entity = findEntity(ctx, ref);
-      if (
-        entity === null ||
-        (entity.kind !== "decision" && entity.kind !== "issue") ||
-        entity.value.line === null
-      ) {
-        throw new OctoError("invalid_input", `${ref} is not a question or task on a line`);
-      }
-      guardOnLine(ctx, entity.value.line, "scope", entity.value.ref);
-      // Re-confirmed, it is current again; on a line being worked on it reaches the developer from now.
-      const working = requireLine(ctx, entity.value.line).state === "working";
+      const entity = requireHeldItem(ctx, ref);
+      guardOnLine(ctx, entity.line, "scope", entity.value.ref);
+      // Re-confirmed, it is current again; on a line agents work on it reaches the developer from now.
+      const working = !holdsWork(requireLine(ctx, entity.line));
       ctx.sql.run(
         `UPDATE ${entity.kind === "decision" ? "decisions" : "issues"} SET confirmedAt = ?, heldAt = ${working ? "NULL" : "heldAt"} WHERE ref = ?`,
         [ctx.now, entity.value.ref],
@@ -368,10 +463,10 @@ export const taskOps = [
         kind: entity.kind,
         ref: entity.value.ref,
         project: entity.value.project,
-        line: entity.value.line,
+        line: entity.line,
         summary: `${entity.value.ref} still stands, ${ctx.actor} re-confirmed: ${entity.value.title}`,
       });
-      lines.add(entity.value.line);
+      lines.add(entity.line);
     }
     return [...lines].flatMap((line) => heldOn(ctx, line)).filter((item) => input.refs.includes(item.ref));
   }),
@@ -379,30 +474,14 @@ export const taskOps = [
   bind(contracts.heldWithdraw, (ctx, input) => {
     const withdrawn: string[] = [];
     for (const ref of input.refs) {
-      const entity = findEntity(ctx, ref);
-      if (
-        entity === null ||
-        (entity.kind !== "decision" && entity.kind !== "issue") ||
-        entity.value.line === null
-      ) {
-        throw new OctoError("invalid_input", `${ref} is not a question or task on a line`);
-      }
-      // Withdrawing is scoping: refused to anyone not on the line, as any other write there.
-      guardLineWrite(ctx, entity.value.line, "scope");
-      if (!ctx.developer && claimOf(ctx, ctx.actor)?.line !== entity.value.line) {
-        throw new OctoError(
-          "forbidden",
-          `${entity.value.ref} is on ${entity.value.line}, which you are not on`,
-        );
-      }
+      const entity = requireHeldItem(ctx, ref);
+      // Withdrawing is scoping: only from the line, or on a proposal by its proposer, as re-confirming is.
+      guardOnLine(ctx, entity.line, "scope", entity.value.ref);
       if (entity.kind === "decision") withdrawQuestion(ctx, entity.value.ref, input.why);
-      else
-        closeTask(
-          ctx,
-          requireTask(ctx, entity.value.ref),
-          "cancelled",
-          input.why ?? "Withdrawn: it no longer stands",
-        );
+      else {
+        const why = input.why ?? "it no longer stands";
+        closeTask(ctx, requireTask(ctx, entity.value.ref), "withdrawn", `Withdrawn: ${why}`, why);
+      }
       withdrawn.push(entity.value.ref);
     }
     return { withdrawn };

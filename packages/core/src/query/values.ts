@@ -77,6 +77,7 @@ export const EVENT_TYPES = [
   "held.confirmed",
   "place.removed",
   "task.cant",
+  "task.withdrawn",
   "line.summarized",
   "line.done_when_set",
   "line.done_when_proposed",

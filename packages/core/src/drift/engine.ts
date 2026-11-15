@@ -4,7 +4,7 @@ import { normalizeRef } from "../refs.ts";
 import type { Drift, FeedEvent } from "../schemas.ts";
 import { emit, nextNumber } from "../store/common.ts";
 import { type Ctx, one, placeholders, rows } from "../store/context.ts";
-import { type AnyEntity, findEntity, getDrift, getIssue, summarize } from "../store/entities.ts";
+import { type AnyEntity, findEntity, getDrift, getIssue, lineOfPr, summarize } from "../store/entities.ts";
 import { type GraphSnapshot, loadGraph } from "../store/graph.ts";
 import { CountRow, DriftRow, EventRow } from "../store/rows.ts";
 import { type DesiredDrift, DRIFT_REF, evaluateLevelRules } from "./rules.ts";
@@ -52,7 +52,9 @@ function assigneeFor(ctx: Ctx, target: AnyEntity | null, graph: GraphSnapshot): 
     case "pr": {
       const [issueRef] = graph.from(target.value.ref, "implements");
       const issue = issueRef === undefined ? null : getIssue(ctx, issueRef);
-      return issue?.assignee ?? null;
+      // A failing check is work on the pull request's line: with nobody on its issue, the owner's to sort out.
+      const line = lineOfPr(ctx, target.value.ref);
+      return issue?.assignee ?? (line === null ? null : ownerOf(ctx, line));
     }
     default:
       return null;

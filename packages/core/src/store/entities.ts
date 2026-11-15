@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { notFound } from "../errors.ts";
 import { kindOfRef, normalizeRef, parseRepoPrRef } from "../refs.ts";
 import type {
@@ -49,6 +50,29 @@ export function lineOfEntity(entity: AnyEntity): string | null {
     default:
       return null;
   }
+}
+
+const LineOfRow = z.object({ line: z.string() });
+
+/**
+ * A pull request's line: that of the first issue it implements that is on one, as its events name it. Its checks,
+ * reviews and conflicts are work on that line (D14).
+ */
+export function lineOfPr(ctx: Ctx, pr: string): string | null {
+  return (
+    one(
+      ctx,
+      LineOfRow,
+      `SELECT i.line AS line FROM links l JOIN issues i ON i.ref = l.toRef
+       WHERE l.fromRef = ? AND l.rel = 'implements' AND i.line IS NOT NULL ORDER BY l.createdAt, l.toRef LIMIT 1`,
+      [pr],
+    )?.line ?? null
+  );
+}
+
+/** The line something concerns: its own line, or for a pull request, the line of the work it implements. */
+export function lineConcerned(ctx: Ctx, entity: AnyEntity): string | null {
+  return entity.kind === "pr" ? lineOfPr(ctx, entity.value.ref) : lineOfEntity(entity);
 }
 
 export function reposOf(ctx: Ctx, line: string): string[] {

@@ -382,24 +382,26 @@ describe("live updates, with nothing but the server's own notifications", () => 
     server.act(c.decisionAsk, { title: "Asked by an agent", context: "Context.", options }, "octo.1");
     await view.findByRole("heading", { name: "Asked by an agent" });
     await view.findByRole("link", { name: "1 to answer" });
-    server.act(c.prUpsert, {
-      repo: "a/b",
-      number: 1,
-      title: "PR from an agent",
-      state: "open",
-      checks: "failing",
-      issues: [issue.ref],
-    });
+    server.act(
+      c.prUpsert,
+      {
+        repo: "a/b",
+        number: 1,
+        title: "PR from an agent",
+        state: "open",
+        checks: "failing",
+        issues: [issue.ref],
+      },
+      "octo.1",
+    );
     fireEvent.click(view.getByRole("button", { name: "Enclosure" }));
     const panel = within(await view.findByRole("complementary", { name: "L-1" }));
     await panel.findByText(/checks failing/);
-    server.act(c.prUpsert, {
-      repo: "a/b",
-      number: 1,
-      title: "PR from an agent",
-      state: "open",
-      checks: "passing",
-    });
+    server.act(
+      c.prUpsert,
+      { repo: "a/b", number: 1, title: "PR from an agent", state: "open", checks: "passing" },
+      "octo.1",
+    );
     await panel.findByText(/✓ checks/);
   });
 
@@ -2384,14 +2386,18 @@ describe("lines of work", () => {
 
     test("an issue shows its line and step, who holds it, its pull requests' checks, and Tell reaches its holder", async () => {
       const { issue, task } = withIssue();
-      server.act(c.prUpsert, {
-        repo: "a/b",
-        number: 7,
-        title: "Shorter board",
-        state: "open",
-        checks: "failing",
-        issues: [issue.ref],
-      });
+      server.act(
+        c.prUpsert,
+        {
+          repo: "a/b",
+          number: 7,
+          title: "Shorter board",
+          state: "open",
+          checks: "failing",
+          issues: [issue.ref],
+        },
+        "octo.1",
+      );
       navigate(`/?ref=${issue.ref}`);
       const view = renderApp(<App />);
       const panel = within(await view.findByRole("complementary", { name: issue.ref }));
