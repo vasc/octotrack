@@ -595,6 +595,12 @@ export const decisionOps = [
       line: placed.line?.ref ?? null,
       issue: placed.issue,
     });
+    // What it holds up or changes is written to as well, as when a question is asked: only on the recorder's line, or
+    // on no line. An `affects` link raises drift on its target, routed to that line's owner.
+    const recorded = requireEntity(ctx, decision.ref);
+    for (const target of [...(input.blocks ?? []), ...(input.affects ?? [])]) {
+      guardEnds(ctx, recorded, resolveRef(ctx, target));
+    }
     for (const target of input.blocks ?? []) addLink(ctx, decision.ref, "blocks", target);
     for (const target of input.affects ?? []) addLink(ctx, decision.ref, "affects", target);
     return resolveDecision(ctx, {
