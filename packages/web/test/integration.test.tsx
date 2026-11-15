@@ -1988,6 +1988,78 @@ describe("lines of work", () => {
       }
     });
 
+    function measuring() {
+      owned();
+      server.tracker.call(c.placeAdd, { name: "the bench" }, asDeveloper);
+      return server.act(
+        c.taskFile,
+        { title: "Measure the board", place: "the bench", outcome: "In mm", fields: ["Length", "Holes"] },
+        "octo.1",
+      );
+    }
+    const kept = (ref: string) => server.tracker.call(c.draftGet, { key: `task:${ref}` }, asDeveloper).text;
+
+    test("a task's named outcomes and note are one draft, which closing the task deletes", async () => {
+      const task = measuring();
+      navigate("/");
+      const view = renderApp(<App />);
+      const opened = within(await view.findByRole("article", { name: "Measure the board" }));
+      fireEvent.change(opened.getByLabelText("Length"), { target: { value: "41" } });
+      fireEvent.change(opened.getByLabelText("Note, if anything surprised you"), {
+        target: { value: "Warped" },
+      });
+      await waitFor(() =>
+        expect(JSON.parse(kept(task.ref) ?? "null")).toEqual({ values: { Length: "41" }, note: "Warped" }),
+      );
+      fireEvent.change(opened.getByLabelText("Holes"), { target: { value: "38" } });
+      fireEvent.click(opened.getByRole("button", { name: "Done" }));
+      await answerNow(view);
+      // Gone from the server: no draft at all.
+      await waitFor(() => expect(kept(task.ref) ?? "gone").toBe("gone"));
+    });
+
+    test("Undo keeps a task's named outcomes in their boxes", async () => {
+      measuring();
+      navigate("/");
+      const view = renderApp(<App />);
+      const opened = within(await view.findByRole("article", { name: "Measure the board" }));
+      fireEvent.change(opened.getByLabelText("Length"), { target: { value: "41" } });
+      fireEvent.change(opened.getByLabelText("Holes"), { target: { value: "38" } });
+      fireEvent.click(opened.getByRole("button", { name: "Done" }));
+      fireEvent.click(await view.findByRole("button", { name: "Undo" }));
+      await gone(() => view.queryByRole("button", { name: "Undo" }));
+      expect(opened.getByLabelText("Length")).toHaveProperty("value", "41");
+      expect(opened.getByLabelText("Holes")).toHaveProperty("value", "38");
+    });
+
+    test("a draft written as plain words, before named outcomes, is read as the note", async () => {
+      const task = measuring();
+      server.tracker.call(c.draftSave, { key: `task:${task.ref}`, text: "41 by 38, roughly" }, asDeveloper);
+      navigate("/");
+      const view = renderApp(<App />);
+      const opened = within(await view.findByRole("article", { name: "Measure the board" }));
+      await waitFor(() =>
+        expect(opened.getByLabelText("Note, if anything surprised you")).toHaveProperty(
+          "value",
+          "41 by 38, roughly",
+        ),
+      );
+      opened.getByText(/0 of 2 filled/);
+    });
+
+    test("named outcomes typed on another device reach boxes without focus", async () => {
+      server = startTestServer({ live: true });
+      server.act(c.projectCreate, { key: "OCT", name: "Octotrack" });
+      const task = measuring();
+      navigate("/");
+      const view = renderApp(<App />);
+      const opened = within(await view.findByRole("article", { name: "Measure the board" }));
+      const text = JSON.stringify({ values: { Length: "41", Holes: "38" }, note: "" });
+      server.tracker.call(c.draftSave, { key: `task:${task.ref}`, text }, asDeveloper);
+      await waitFor(() => expect(opened.getByLabelText("Holes")).toHaveProperty("value", "38"));
+      opened.getByText(/2 of 2 filled/);
+    });
+
     test("words typed on another device appear in a box that does not have focus, and never in one that does", async () => {
       server = startTestServer({ live: true });
       server.act(c.projectCreate, { key: "OCT", name: "Octotrack" });
