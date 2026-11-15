@@ -51,9 +51,9 @@ export function LineHandle({
     }
     if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
     event.preventDefault();
-    const items = [
-      ...event.currentTarget.querySelectorAll<HTMLButtonElement>("[role=menuitem]:not(:disabled)"),
-    ];
+    const items = [...event.currentTarget.querySelectorAll("[role=menuitem]:not(:disabled)")].filter(
+      (item) => item instanceof HTMLButtonElement,
+    );
     const active = document.activeElement;
     const at = active instanceof HTMLButtonElement ? items.indexOf(active) : -1;
     const next = items[(at + (event.key === "ArrowDown" ? 1 : items.length - 1)) % items.length];

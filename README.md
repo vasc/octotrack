@@ -328,7 +328,7 @@ D-5 - None of the options, doing this instead
 bun run check
 ```
 
-That runs types, lint and all tests. Casts are a lint error through `scripts/no-casts.grit`, and `as const` is allowed.
+That runs types, lint and all tests. Casts are a lint error through `scripts/no-casts.grit`, and so are type arguments that assert what the page or the query cache holds (`querySelectorAll<…>`, `closest<…>`, `getQueryData<…>`); `as const` is allowed.
 
 | Package           | Holds                                                                                     |
 | ----------------- | ----------------------------------------------------------------------------------------- |

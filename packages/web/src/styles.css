@@ -2232,6 +2232,14 @@ p {
 }
 
 /* The one focus: a dark border, so a key never acts on another item than this one. */
+/* A fieldset only to name the item for a screen reader: none of the browser's own box. */
+.focus-wrap {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
 .focus-wrap[data-selected="true"] > :is(.task, .proposal) {
   border: 2px solid var(--ink);
 }

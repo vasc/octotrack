@@ -17,9 +17,8 @@ export function FocusTarget({
   children: ReactNode;
 }) {
   return (
-    <div
+    <fieldset
       className="focus-wrap"
-      role="group"
       aria-label={label}
       data-focus-ref={focusRef}
       data-selected={focused}
@@ -27,6 +26,6 @@ export function FocusTarget({
       tabIndex={-1}
     >
       {children}
-    </div>
+    </fieldset>
   );
 }
