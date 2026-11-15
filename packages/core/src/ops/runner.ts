@@ -8,7 +8,7 @@ import {
   waitingOnYou,
   windingDown,
 } from "../agents/claims.ts";
-import { agentState, RUNNING_WINDOW_MS, WAKE_DEADLINE_MS } from "../agents/state.ts";
+import { agentState, RUNNING_WINDOW_MS, wakeRuns } from "../agents/state.ts";
 import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
 import { StartCause } from "../schemas.ts";
@@ -18,7 +18,7 @@ import { emit, nextNumber } from "../store/common.ts";
 import type { Ctx } from "../store/context.ts";
 import { one, placeholders, rows } from "../store/context.ts";
 import { allLines, requireLine, requireProject } from "../store/entities.ts";
-import { AgentRow } from "../store/rows.ts";
+import { AgentRow, WakeRow } from "../store/rows.ts";
 import { bind } from "./bind.ts";
 import { requireDeveloper } from "./developer.ts";
 
@@ -145,7 +145,7 @@ function whyNotSpawn(ctx: Ctx, start: StartRow): string | null {
  * Sessions whose process is alive as far as Octotrack knows, which is what counts against the cap (D14): every start
  * whose process has not been seen to exit, from its worktree and setup to its end, however silent; and sessions
  * Octotrack started that were woken after their process exited and are at work, or whose wake's process still runs,
- * however silent (fourth audit, A1), up to the wake's deadline. One that went to sleep with a wake address keeps its
+ * however silent (fourth audit, A1), until its end is recorded (fifth audit, B1). One that went to sleep with a wake address keeps its
  * line but holds no process. A command in the last 15 minutes is no sign of a process: it may have exited just after.
  */
 function liveSessions(ctx: Ctx): Set<string> {
@@ -154,16 +154,23 @@ function liveSessions(ctx: Ctx): Set<string> {
   );
   const woken = rows(
     ctx,
-    AgentRow.extend({ wakePid: z.number().int().nullable() }),
+    WakeRow,
     `SELECT a.* FROM agents a
      WHERE a.startedBy = 'octotrack' AND a.goneAt IS NULL AND a.stoppedAt IS NULL AND a.wokenAt IS NOT NULL
        AND a.wakeError IS NULL
        AND a.wokenAt > COALESCE((SELECT MAX(s.exitedAt) FROM runner_starts s WHERE s.name = a.name), '')`,
   )
     .filter((agent) => {
-      const since = Date.parse(ctx.now) - (agent.wokenAt === null ? 0 : Date.parse(agent.wokenAt));
-      // Its wake's process runs: a server restart may leave its end unrecorded, so only until its deadline.
-      if (agent.wakePid !== null && since <= WAKE_DEADLINE_MS) return true;
+      // Its wake's process runs until its end is recorded; the server ends one a restart left past its deadline (B1).
+      if (wakeRuns(agent, ctx.now)) return true;
+      // A session killed at its deadline is at work no longer, however recent its last command (B3).
+      if (
+        agent.wakeEnd === "deadline" &&
+        agent.wakeEndedAt !== null &&
+        agent.wakeEndedAt >= agent.lastSeenAt
+      ) {
+        return false;
+      }
       // Woken lately, or at work since: silence after its wake ended is taken as the session's end.
       const latest = Math.max(
         Date.parse(agent.lastSeenAt),
@@ -970,12 +977,15 @@ export const runnerOps = [
   bind(contracts.runnerStops, (ctx) =>
     rows(
       ctx,
-      z.object({ name: z.string(), wakePid: z.number().int().nullable(), wokenAt: z.string().nullable() }),
-      "SELECT name, wakePid, wokenAt FROM agents WHERE stoppedAt IS NOT NULL AND stopRanAt IS NULL ORDER BY stoppedAt",
-    ).map(({ name, wakePid, wokenAt }) => ({
+      z.object({ name: z.string(), woken: z.number().int() }),
+      `SELECT name,
+              (wokenAt IS NOT NULL AND wokenAt <= stoppedAt AND (wakeEndedAt IS NULL OR wakeEndedAt >= stoppedAt)) AS woken
+         FROM agents WHERE stoppedAt IS NOT NULL AND stopRanAt IS NULL ORDER BY stoppedAt`,
+    ).map(({ name, woken }) => ({
       name,
-      // A wake still running for it is a process the server started, so Stop ends it (fourth audit, A1).
-      wake: wakePid === null || wokenAt === null ? null : { pid: wakePid, since: wokenAt },
+      // A wake that ran for it when it was stopped is the server's own process: its wake dispatcher ends it, whatever
+      // the runner's setup, and the stop command is not for it (fifth audit, B10).
+      woken: woken === 1,
     })),
   ),
 
@@ -1012,6 +1022,8 @@ export const runnerOps = [
           ? `did not run the stop command: ${input.output.trim()}`
           : `ran the stop command for ${input.name}${input.code === 0 ? "" : `, which exited ${input.code}: ${input.output.trim().split("\n").at(-1) ?? ""}`}`;
     const said = [ended, command].flatMap((part) => (part === null ? [] : [part])).join(", and ");
+    // Nothing done on this machine but what the wake dispatcher does, which it logs itself.
+    if (said === "") return { name: input.name };
     emit(ctx, {
       type: "runner.stop_ran",
       kind: "agent",

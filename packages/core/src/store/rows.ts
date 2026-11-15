@@ -20,6 +20,7 @@ import {
   StatusUpdate,
   SyncFailure,
   View,
+  WakeEnd,
   WatchSpec,
 } from "../schemas.ts";
 
@@ -39,6 +40,13 @@ export const PrRow = PullRequest;
 export const StatusUpdateRow = StatusUpdate;
 export const LinkRow = Link;
 export const AgentRow = Agent;
+/** An agent with what is recorded of its latest wake: its process while it runs, and when and how it ended. */
+export const WakeRow = Agent.extend({
+  wakePid: z.number().int().nullable(),
+  wakeEndedAt: z.string().nullable(),
+  wakeEnd: WakeEnd.nullable(),
+});
+export type WakeRow = z.infer<typeof WakeRow>;
 
 /** A line as stored; its repos live in their own table and are joined in when it is read. */
 export const LineRow = Line.omit({ repos: true });

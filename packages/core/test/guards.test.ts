@@ -813,7 +813,11 @@ describe("agents write only to the line they are on, the rest of it (fourth audi
   test("issue update and claim: an agent cannot reopen or take a task the developer closed (fifth audit, B12)", () => {
     const w = world();
     w.as(w.dev, c.placeAdd, { name: "the bench" });
-    const task = w.as(w.owner, c.taskFile, { title: "Measure", place: "the bench", outcome: "Width in mm" }).ref;
+    const task = w.as(w.owner, c.taskFile, {
+      title: "Measure",
+      place: "the bench",
+      outcome: "Width in mm",
+    }).ref;
     w.as(w.dev, c.taskCant, { ref: task, why: "No calipers" });
     for (const change of [{ status: "todo" }, { status: "done" }, { assignee: "panel" }] as const) {
       const refusal = w.refused(() => w.as(w.owner, c.issueUpdate, { refs: [task], ...change }));

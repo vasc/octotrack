@@ -101,6 +101,8 @@ export function startServer(port: number, hostname = "127.0.0.1"): RunningServer
       }
     }, CHOICE_TICK_MS),
     setInterval(runOnce, RUNNER_TICK_MS),
+    // A wake a restart left behind is watched by its process id, and ended at its deadline, with no change to prompt it.
+    setInterval(() => void wakes.dispatch().catch((error) => console.error("[wake]", error)), RUNNER_TICK_MS),
     // Step in becomes due by time alone, so notifications are checked on a tick as well as on every change.
     setInterval(() => void push.dispatch(), RUNNER_TICK_MS),
   ];
