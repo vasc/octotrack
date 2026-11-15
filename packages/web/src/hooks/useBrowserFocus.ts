@@ -1,5 +1,5 @@
 import { focusItem } from "../lib/focus.ts";
-import { type RefObject, useEffect } from "react";
+import { type RefObject, useEffect, useRef } from "react";
 
 function isTyping(element: HTMLElement): boolean {
   return (
@@ -38,6 +38,27 @@ export function useBrowserFocus(
     const target = focusItem(container.current, focus);
     if (target !== undefined && !target.contains(active)) target.focus();
   }, [container, moved]);
+
+  // Whether the browser's focus was last somewhere on home, kept outside rendering: an item that goes away takes the
+  // browser's focus with it without any event, so this is what says home still had it.
+  const inside = useRef(false);
+  useEffect(() => {
+    const onFocusIn = (event: FocusEvent) => {
+      const element = container.current;
+      inside.current = element !== null && event.target instanceof Node && element.contains(event.target);
+    };
+    document.addEventListener("focusin", onFocusIn);
+    return () => document.removeEventListener("focusin", onFocusIn);
+  }, [container]);
+
+  // When the item with the browser's focus goes away, as after a choice, the browser's focus follows home's to the
+  // next item instead of falling to the page; it is never taken from anything else holding it.
+  useEffect(() => {
+    if (focus === null || container.current === null || !inside.current) return;
+    const active = document.activeElement;
+    if (active !== null && active !== document.body) return;
+    focusItem(container.current, focus)?.focus();
+  }, [container, focus]);
 
   useEffect(() => {
     const element = container.current;

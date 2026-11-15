@@ -1871,6 +1871,44 @@ describe("lines of work", () => {
       await waitFor(() => expect(selected(view, "Which board?")).toBe("true"));
     });
 
+    test("after a choice takes its item away, the browser's focus follows home's to the next item", async () => {
+      onLine();
+      server.act(c.decisionAsk, { title: "Which board?", context: "Printed.", options }, "octo.1");
+      server.act(c.decisionAsk, { title: "Which plug?", context: "Side.", options }, "octo.1");
+      navigate("/");
+      const view = renderApp(<App />);
+      await view.findByRole("article", { name: "Which board?" });
+      fireEvent.keyDown(window, { key: "j" });
+      fireEvent.keyDown(window, { key: "k" });
+      const board = await view.findByRole("article", { name: "Which board?" });
+      await waitFor(() => expect(document.activeElement?.contains(board)).toBe(true));
+      fireEvent.keyDown(document.activeElement ?? window, { key: "1" });
+      await answerNow(view);
+      const plug = await view.findByRole("article", { name: "Which plug?" });
+      await waitFor(() =>
+        expect(plug.closest("[data-focus-ref]")?.contains(document.activeElement)).toBe(true),
+      );
+    });
+
+    test("o opens a line's panel with the browser's focus in it, and Esc brings focus back to the line", async () => {
+      onLine();
+      navigate("/");
+      const view = renderApp(<App />);
+      await view.findByRole("region", { name: "Working on" });
+      // Home's focus starts on the proposal below the lines; K walks back to one.
+      fireEvent.keyDown(window, { key: "K", shiftKey: true });
+      // Whichever line K reached holds the browser's focus.
+      await waitFor(() => expect(document.activeElement?.getAttribute("data-focus-ref")).toMatch(/^line:/));
+      const line = document.activeElement;
+      const ref = line?.getAttribute("data-focus-ref")?.slice("line:".length) ?? "";
+      fireEvent.keyDown(document.activeElement ?? window, { key: "o" });
+      const aside = await view.findByRole("complementary", { name: ref });
+      await waitFor(() => expect(aside.contains(document.activeElement)).toBe(true));
+      fireEvent.keyDown(document.activeElement ?? window, { key: "Escape" });
+      await gone(() => view.queryByRole("complementary", { name: ref }));
+      await waitFor(() => expect(document.activeElement).toBe(line));
+    });
+
     test("from a line itself, j goes to the next thing for you after it, and k to the one before", async () => {
       onLine();
       server.act(c.decisionAsk, { title: "Which board?", context: "Printed.", options }, "octo.1");
