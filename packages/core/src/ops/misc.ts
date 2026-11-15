@@ -1,3 +1,4 @@
+import { RESERVED_NAMES } from "../agents/state.ts";
 import { contracts } from "../contracts.ts";
 import { ackDrift } from "../drift/engine.ts";
 import { notFound, OctoError } from "../errors.ts";
@@ -307,7 +308,11 @@ export const miscOps = [
   })),
 
   bind(contracts.agentList, (ctx) =>
-    rows(ctx, AgentRow, "SELECT * FROM agents ORDER BY lastSeenAt DESC").map((agent) => viewOf(ctx, agent)),
+    // Rows an early release made for the developer's and the server's own names are kept, never deleted, but they were
+    // never agents, so the roster leaves them out.
+    rows(ctx, AgentRow, "SELECT * FROM agents ORDER BY lastSeenAt DESC")
+      .filter((agent) => !RESERVED_NAMES.has(agent.name.toLowerCase()))
+      .map((agent) => viewOf(ctx, agent)),
   ),
 
   bind(contracts.agentNote, (ctx, input) => {

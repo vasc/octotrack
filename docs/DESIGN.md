@@ -647,10 +647,11 @@ Decisions made from that:
     the start makes its exit `exited`, with no retry wait and no attempt counted, taken or not, and the next start has
     a new name. _Why:_ a Stop within the check-in was logged as `runner.failed` and the stopped name was started again
     two minutes later, setup and all (B11).
-  - _Reserved names are never agents._ A migration removes the agent rows early releases made for `dev`, `octotrack`
-    and `github`, with any claim or notice under them; the migration rehearsal counts agents without them. _Why:_ early
-    releases recorded every caller as seen, the server's own included, so the roster listed Octotrack and GitHub sync
-    as running agents. Nothing since creates such rows.
+  - _Reserved names are never agents._ The roster leaves out the agent rows early releases made for `dev`, `octotrack`
+    and `github`. _Why:_ early releases recorded every caller as seen, the server's own included, so the roster listed
+    Octotrack and GitHub sync as running agents. Nothing since creates such rows. _Decided:_ the rows are kept, not
+    deleted by a migration: deleting what the live database holds is never done without the developer, and leaving
+    them out where the roster is read is enough.
   - _CLI options say repo._ `--repo` (still `-p`) in every option that took `--project`, which, with `--no-project`,
     keeps working as an alias; `pr list`'s two filters are one, since `repo:` takes a key or an owner/name. _Why:_ D13's
     word is repo, and options were the place it had not reached (B22).
