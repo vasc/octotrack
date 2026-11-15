@@ -12,7 +12,14 @@ import {
   toneOf,
 } from "../src/lib/format.ts";
 import { focusLabel, nextFocus } from "../src/lib/focus.ts";
-import { heldOnTabled, lineFacts, undoLines } from "../src/lib/lines.ts";
+import {
+  forYouCounts,
+  heldOnTabled,
+  lineFacts,
+  linePosition,
+  tellSummary,
+  undoLines,
+} from "../src/lib/lines.ts";
 import { askedText, cantSummary, doneSummary, isTask, taskOutcome } from "../src/lib/tasks.ts";
 import { issueLinks } from "../src/lib/links.ts";
 import { decision, decisionCard, issue } from "../src/design/fixtures.ts";
@@ -313,5 +320,30 @@ describe("isTask", () => {
     expect(isTask(issue({ assignee: "dev", outcome: "" }))).toBe(true);
     expect(isTask(issue({ assignee: "dev", outcome: null }))).toBe(false);
     expect(isTask(issue({ assignee: "panel", outcome: "In mm" }))).toBe(false);
+  });
+});
+
+describe("a line's place and its items, for the line panel", () => {
+  const order = [
+    { ref: "L-1", title: "Enclosure" },
+    { ref: "L-2", title: "Mount" },
+  ];
+
+  test("says where a line stands in the order, or nothing for one outside it", () => {
+    expect(linePosition(order, "L-2")).toBe("Line 2 of 2");
+    expect(linePosition(order, "L-9")).toBeNull();
+  });
+
+  test("counts what waits on the developer by kind", () => {
+    const task = { kind: "task" as const, task: issue() };
+    const question = { kind: "question" as const, card: decisionCard() };
+    expect(forYouCounts([task, question, task])).toEqual({ questions: 1, tasks: 2 });
+  });
+
+  test("a Tell says whom it reaches, and a nudge when it is empty", () => {
+    expect(tellSummary("whoever holds OCT-1", "Try the 40 mm one")).toBe(
+      "Telling whoever holds OCT-1: Try the 40 mm one",
+    );
+    expect(tellSummary("Enclosure's owner", "")).toBe("Nudging Enclosure's owner");
   });
 });

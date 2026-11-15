@@ -1,4 +1,5 @@
 import type {
+  ForYou,
   HomeView,
   Line,
   LineCrew,
@@ -158,4 +159,23 @@ export function logLines(home: HomeView | undefined): readonly Line[] {
   return home === undefined
     ? []
     : [...home.working, ...home.proposed, ...home.doneLately, ...home.upNext, ...home.tabled];
+}
+
+/** Where a line stands among working and up next, as the line panel heads it, or null for one outside the order. */
+export function linePosition(order: readonly Pick<Line, "ref">[], ref: string): string | null {
+  const at = order.findIndex((candidate) => candidate.ref === ref);
+  return at === -1 ? null : `Line ${at + 1} of ${order.length}`;
+}
+
+/** What waits on the developer on a line, counted by kind: what tabling it would hold. */
+export function forYouCounts(items: readonly ForYou[]): { questions: number; tasks: number } {
+  return {
+    questions: items.filter((item) => item.kind === "question").length,
+    tasks: items.filter((item) => item.kind === "task").length,
+  };
+}
+
+/** A Tell in the Undo bar: whom it reaches, and what it says, or that it is a nudge. */
+export function tellSummary(to: string, words: string): string {
+  return words === "" ? `Nudging ${to}` : `Telling ${to}: ${words}`;
 }
