@@ -109,6 +109,16 @@ describe("the dashboard uses the language instead of going around it", () => {
     expect(ringless).toEqual(["[data-focus-ref]:focus-visible"]);
   });
 
+  test("edges thicker than a hairline, and opacity, come from tokens", () => {
+    const edges = declarations
+      .filter(({ property }) => /^(border|outline)(-(top|right|bottom|left))?(-width)?$/.test(property))
+      .filter(({ value }) => /\b([2-9]|\d{2,})px\b/.test(value));
+    const opacity = declarations
+      .filter(({ property }) => property === "opacity")
+      .filter(({ value }) => !/^(var\(--opacity-|0$|1$)/.test(value));
+    expect([...edges, ...opacity]).toEqual([]);
+  });
+
   test("line height comes from the leading or the spacing scale", () => {
     const off = declarations
       .filter(({ property }) => property === "line-height")
