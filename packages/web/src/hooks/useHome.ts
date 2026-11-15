@@ -1,7 +1,7 @@
-import type { TaskOutcome } from "../lib/tasks.ts";
+import { cantSummary, doneSummary, type TaskOutcome } from "../lib/tasks.ts";
 import { homeLines } from "../lib/lines.ts";
 import { contracts } from "@octotrack/core/contracts";
-import type { HomeView, Line } from "@octotrack/core/schemas";
+import type { HomeView, Issue, Line } from "@octotrack/core/schemas";
 import { useMemo } from "react";
 import type { Move } from "../components/home/LineHandle.tsx";
 import type { NewLine } from "../components/lines/NewLineCard.tsx";
@@ -131,10 +131,14 @@ export function useHome() {
         { refs },
         `Placing ${refs.length} proposal${refs.length === 1 ? "" : "s"} where their agents recommend`,
       ),
-    taskDone: (ref: string, outcome: TaskOutcome) =>
-      choices.make(contracts.taskDone.name, { ref, ...outcome }, `Sending ${ref} as done`),
-    taskCant: (ref: string, why: string) =>
-      choices.make(contracts.taskCant.name, { ref, why }, `Closing ${ref} as not doable`),
+    taskDone: (task: Issue, outcome: TaskOutcome) =>
+      choices.make(
+        contracts.taskDone.name,
+        { ref: task.ref, ...outcome },
+        doneSummary(task, outcome, task.line === null ? null : (lineOf(task.line)?.title ?? null)),
+      ),
+    taskCant: (task: Issue, why: string) =>
+      choices.make(contracts.taskCant.name, { ref: task.ref, why }, cantSummary(task, why)),
     /** Dragged onto another line: it lands before it. */
     dropBefore: (ref: string, before: string) => order.mutate({ ref, before }),
     reorder(ref: string, direction: Move) {

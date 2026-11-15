@@ -22,8 +22,8 @@ export function AtUpNext({
   /** The number of the first up-next line on the list. */
   firstNumber: number;
   focus: string | null;
-  onTaskDone(ref: string, outcome: TaskOutcome): void;
-  onTaskCant(ref: string, why: string): void;
+  onTaskDone(task: Issue, outcome: TaskOutcome): void;
+  onTaskCant(task: Issue, why: string): void;
 }) {
   if (tasks.length === 0) return null;
   return (

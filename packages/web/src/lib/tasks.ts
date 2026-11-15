@@ -37,3 +37,24 @@ export function askedText(task: Pick<Issue, "createdAt" | "confirmedAt">, now: n
     ? `re-confirmed ${sinceText(task.confirmedAt, now)}`
     : `asked ${sinceText(task.createdAt, now)}`;
 }
+
+/** Done in the Undo bar, worded as it happens: what is sent and to which line, or that a task of one's own is done. */
+export function doneSummary(
+  task: Pick<Issue, "ref" | "title" | "outcome">,
+  outcome: TaskOutcome,
+  line: string | null,
+): string {
+  if (task.outcome === "") return `Marking "${task.title}" done`;
+  const sent =
+    outcome.values === undefined
+      ? (outcome.result ?? "")
+      : Object.entries(outcome.values)
+          .map(([name, value]) => `${name} ${value}`)
+          .join(", ");
+  return line === null ? `Sending "${sent}" for ${task.ref}` : `Sending "${sent}" to ${line}`;
+}
+
+/** Can't do it in the Undo bar: it closes the task as not done, and why. */
+export function cantSummary(task: Pick<Issue, "ref">, why: string): string {
+  return `Closing ${task.ref} as not done: ${why}`;
+}

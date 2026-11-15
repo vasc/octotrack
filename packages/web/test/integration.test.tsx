@@ -787,6 +787,7 @@ describe("lines of work", () => {
       fireEvent.change(opened.getByLabelText("Holes"), { target: { value: "38" } });
       opened.getByText(/2 of 2 filled/);
       fireEvent.click(opened.getByRole("button", { name: "Done" }));
+      await view.findByText(/Sending "Length 41, Holes 38" to Sendspin enclosure/);
       await answerNow(view);
       await waitFor(() =>
         expect(
