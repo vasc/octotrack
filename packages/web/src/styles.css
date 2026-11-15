@@ -123,7 +123,8 @@ p {
   display: inline-flex;
   align-items: center;
   gap: var(--space-3);
-  min-height: calc(var(--control-height) - 2px);
+  /* Inside the pill's two hairlines, so the pill itself is one control high. */
+  min-height: calc(var(--control-height) - 2 * 1px);
   padding: 0 var(--space-6);
   color: var(--ink-2);
   text-decoration: none;
@@ -338,7 +339,7 @@ p {
   padding: 0 var(--space-3);
   border-radius: var(--radius-md);
   font-size: var(--text-xs);
-  line-height: 18px;
+  line-height: var(--space-9);
   white-space: nowrap;
   background: var(--tone-soft, var(--surface-2));
   color: var(--tone, var(--ink-2));
@@ -549,18 +550,6 @@ p {
 
 .state[data-error="true"] {
   color: var(--bad);
-}
-
-.progress {
-  height: 3px;
-  background: var(--surface-2);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-}
-
-.progress > div {
-  height: 100%;
-  background: var(--good);
 }
 
 .prose {
@@ -784,18 +773,18 @@ p {
 
 .feed-row {
   display: grid;
-  grid-template-columns: 16px minmax(0, 1fr) auto;
+  grid-template-columns: var(--icon-size) minmax(0, 1fr) auto;
   gap: var(--space-4);
   padding: var(--space-2) 0;
   border-top: 1px solid var(--line);
   align-items: baseline;
   content-visibility: auto;
-  contain-intrinsic-size: auto 28px;
+  contain-intrinsic-size: auto var(--space-14);
 }
 
 .feed-mark {
-  width: 8px;
-  height: 8px;
+  width: var(--space-4);
+  height: var(--space-4);
   border-radius: var(--radius-sm);
   background: var(--tone-mark, var(--line-strong));
   align-self: center;
@@ -1036,7 +1025,7 @@ p {
 
 .design-swatches {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(calc(var(--tile-width) / 2), 1fr));
   gap: var(--space-4);
 }
 
@@ -1051,14 +1040,14 @@ p {
 
 .design-swatch > span:first-child {
   flex: none;
-  width: 22px;
-  height: 22px;
+  width: var(--space-11);
+  height: var(--space-11);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-md);
 }
 
 .design-bar {
-  height: 10px;
+  height: var(--space-5);
   background: var(--ink-3);
   border-radius: var(--radius-sm);
 }
@@ -1081,7 +1070,7 @@ p {
 }
 
 .batch textarea {
-  min-height: 84px;
+  min-height: var(--text-box-tall);
   font-family: var(--mono);
   font-size: var(--text-sm);
   resize: vertical;
@@ -1196,7 +1185,7 @@ p {
     flex: 1 1 100%;
   }
   .feed-row {
-    grid-template-columns: 16px minmax(0, 1fr);
+    grid-template-columns: var(--icon-size) minmax(0, 1fr);
   }
   .feed-meta {
     grid-column: 2;
@@ -1488,7 +1477,7 @@ p {
 /* Named outcomes side by side, as many to a row as fit, each with its name over it. */
 .outcome-fields {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(var(--field-narrow), 1fr));
   gap: var(--space-4);
 }
 
@@ -1671,12 +1660,6 @@ p {
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
-}
-
-/* Past six working lines: what spreading thin costs. A nudge, never a cap. */
-.home-nudge {
-  font-size: var(--text-sm);
-  color: var(--ink-2);
 }
 
 .home-urgent {
@@ -1953,10 +1936,6 @@ p {
   text-transform: uppercase;
 }
 
-.home-headline {
-  color: var(--ink-2);
-}
-
 .home-items {
   display: flex;
   flex-direction: column;
@@ -2079,7 +2058,7 @@ p {
 }
 
 .tile {
-  flex: 1 1 300px;
+  flex: 1 1 var(--tile-width);
   background: var(--surface-2);
   border: 1px solid var(--line);
   border-radius: var(--radius-xl);
@@ -2253,11 +2232,6 @@ p {
   color: var(--ink-3);
 }
 
-.feed-folded {
-  font-size: var(--text-sm);
-  padding: var(--space-2) 0;
-}
-
 .reorder {
   display: inline-flex;
   gap: var(--space-2);
@@ -2266,18 +2240,6 @@ p {
 /* At least 30px tall, as E-States asks; touch screens make every button a full target already. */
 .reorder .btn {
   min-height: var(--space-16);
-}
-
-.line-actions {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  margin-top: var(--space-4);
-}
-
-.decision-why {
-  font-size: var(--text-sm);
-  color: var(--ink-2);
 }
 
 /* Written text: markdown, and boxes that grow as you type */

@@ -102,6 +102,22 @@ describe("the dashboard uses the language instead of going around it", () => {
     expect(off).toEqual([]);
   });
 
+  test("line height comes from the leading or the spacing scale", () => {
+    const off = declarations
+      .filter(({ property }) => property === "line-height")
+      .filter(({ value }) => !/^(var\(--(leading|space)-|1$|normal$)/.test(value));
+    expect(off).toEqual([]);
+  });
+
+  test("sizes come from tokens, apart from hairlines", () => {
+    const sizes =
+      /^(width|height|min-width|min-height|max-width|max-height|flex|flex-basis|grid-template-columns|contain-intrinsic-size)$/;
+    const off = declarations
+      .filter(({ property }) => sizes.test(property))
+      .filter(({ value }) => /\d+(px|rem|em)\b/.test(value.replace(/\b1px\b/g, "")));
+    expect(off).toEqual([]);
+  });
+
   test("everything used is defined, and everything defined is used", () => {
     const used = new Set([...stylesCss.matchAll(/var\((--[a-z0-9-]+)/g)].flatMap((match) => match[1] ?? []));
     const internal = new Set(
@@ -115,9 +131,8 @@ describe("the dashboard uses the language instead of going around it", () => {
   });
 
   test("components have no inline styles, apart from values only known at run time", () => {
-    const allowed = ["Progress.tsx"];
     const offenders = filesUnder(COMPONENTS)
-      .filter((file) => file.endsWith(".tsx") && !allowed.includes(basename(file)))
+      .filter((file) => file.endsWith(".tsx"))
       .filter((file) => readFileSync(file, "utf8").includes("style={{"));
     expect(offenders).toEqual([]);
   });
