@@ -698,3 +698,37 @@ describe("where an asker is woken is the asker's own (third audit, N13)", () => 
     expect(due.map((decision) => [decision.ref, decision.wakeAddress])).toEqual([[asked, "claude:loose"]]);
   });
 });
+
+describe("agents write only to the line they are on, the rest of it (fourth audit)", () => {
+  /** The outsider, on a working line of its own in OTHER: on a line, but not this one. */
+  function elsewhere(w: ReturnType<typeof world>): string {
+    const own = w.as(w.dev, c.lineAdd, {
+      title: "Other",
+      doneWhen: "Done.",
+      repos: ["OTHER"],
+      where: "working",
+    });
+    w.as(w.outsider, c.lineTake, { ref: own.ref });
+    return own.ref;
+  }
+
+  test("pr upsert: an agent cannot link a pull request to another line's issue, nor rewrite one linked there", () => {
+    const w = world();
+    elsewhere(w);
+    const pr = { repo: "vasc/homepanel", title: "Base", state: "open" } as const;
+    expect(w.refused(() => w.as(w.outsider, c.prUpsert, { ...pr, number: 7, issues: [w.issue] })).code).toBe(
+      "forbidden",
+    );
+    expect(
+      w.refused(() => w.as(w.outsider, c.prUpsert, { ...pr, number: 8, title: `Fixes ${w.issue}` })).code,
+    ).toBe("forbidden");
+    expect(w.as(w.dev, c.linkList, { ref: w.issue })).toEqual([]);
+    const own = w.as(w.owner, c.prUpsert, { ...pr, number: 9, issues: [w.issue] });
+    expect(w.refused(() => w.as(w.outsider, c.prUpsert, { ...pr, number: 9, state: "merged" })).code).toBe(
+      "forbidden",
+    );
+    expect(w.as(w.dev, c.prList, {}).map((card) => [card.pr.ref, card.pr.state])).toEqual([
+      [own.ref, "open"],
+    ]);
+  });
+});
