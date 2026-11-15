@@ -50,6 +50,7 @@ import {
   RunnerDue,
   RunnerStatus,
   RunnerWorktree,
+  RunningWake,
   StartCause,
   StartRole,
   StatusUpdate,
@@ -57,6 +58,7 @@ import {
   UpdateLevel,
   UrgentReason,
   View,
+  WakeEnd,
   Watch,
   WatchResult,
   WatchSpec,
@@ -294,13 +296,16 @@ export const contracts = {
   ),
   runnerStops: read(
     "runner.stops",
-    "Agents the developer stopped whose stop command has not run yet, with the process of a wake still running for it",
+    "Agents the developer stopped whose stop command has not run yet, and whether a wake ran for it when stopped",
     Empty,
     z.array(
       z.object({
         name: z.string(),
-        /** A wake the server is running for it, which Stop ends: its process id, and when it began. */
-        wake: z.object({ pid: z.number().int(), since: z.string() }).nullable(),
+        /**
+         * A wake the server ran for it when it was stopped: the server's wake dispatcher, which started it, ends it, so
+         * the runner neither ends it nor runs the stop command for it (fifth audit, B10).
+         */
+        woken: z.boolean(),
       }),
     ),
   ),
@@ -721,6 +726,12 @@ export const contracts = {
     Empty,
     z.array(AgentWake),
   ),
+  agentWaking: read(
+    "agent.waking",
+    "Wakes whose end is not recorded, which the server settles: each one's process, when it began, and whether its agent was stopped since",
+    Empty,
+    z.array(RunningWake),
+  ),
   agentWoken: write(
     "agent.woken",
     "Record a wake: that it began, its process, how it ended, or that it failed, which makes the agent gone",
@@ -730,8 +741,11 @@ export const contracts = {
       error: z.string().optional(),
       /** Its process was spawned, with this id, and runs until its end is recorded. */
       pid: z.number().int().optional(),
-      /** Its process ended: by itself, or killed at its deadline, having reached the session either way. */
-      ended: z.enum(["exited", "deadline"]).optional(),
+      /**
+       * Its process ended: by itself, killed at its deadline, or ended by the server for the developer's Stop, having
+       * reached the session each way. One killed at its deadline is woken again to carry on.
+       */
+      ended: WakeEnd.exclude(["error"]).optional(),
     }),
     AgentView,
   ),

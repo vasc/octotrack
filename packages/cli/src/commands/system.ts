@@ -230,6 +230,27 @@ export const systemCommands: Command[] = [
     },
   },
   {
+    path: ["agent", "waking"],
+    summary:
+      "Wakes whose end is not recorded yet, with their process and whether the agent was stopped. The server settles them",
+    ops: [c.agentWaking.name],
+    async run({ client, out }) {
+      const outcome = await client.call(c.agentWaking, {});
+      out.result(outcome, () =>
+        outcome.data.length === 0
+          ? r.dim("No wake is running.")
+          : r.table(
+              outcome.data.map((wake) => [
+                r.bold(wake.agent),
+                wake.pid === null ? "not spawned yet" : `pid ${wake.pid}`,
+                `since ${wake.since}`,
+                wake.stopped ? "stopped" : "",
+              ]),
+            ),
+      );
+    },
+  },
+  {
     path: ["agent", "woken"],
     usage: "<name>",
     summary: "Record that an agent was woken, or with --error that it could not be, which makes it gone",

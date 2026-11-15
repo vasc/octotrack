@@ -375,6 +375,14 @@ const MIGRATIONS: readonly Migration[] = [
   DELETE FROM notices WHERE lower(agent) IN ('dev', 'octotrack', 'github');
   DELETE FROM agents WHERE lower(name) IN ('dev', 'octotrack', 'github');
   `,
+  // When a wake's end was recorded, and how it ended: a wake with no end runs, so its agent is not woken again, and a
+  // session killed at its deadline is known to be at work no longer. A wake from before with no process recorded ended.
+  `
+  ALTER TABLE agents ADD COLUMN wakeEndedAt TEXT;
+  ALTER TABLE agents ADD COLUMN wakeEnd TEXT;
+  UPDATE agents SET wakeEndedAt = wokenAt, wakeEnd = CASE WHEN wakeError IS NULL THEN 'exited' ELSE 'error' END
+    WHERE wokenAt IS NOT NULL AND wakePid IS NULL;
+  `,
 ];
 
 const UserVersion = z.object({ user_version: z.number().int() });
