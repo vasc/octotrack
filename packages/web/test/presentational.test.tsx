@@ -1,5 +1,7 @@
 import { navigate } from "../src/lib/router.ts";
 import { HeldDecision } from "../src/components/decisions/HeldDecision.tsx";
+import { OutcomeFields } from "../src/components/home/OutcomeFields.tsx";
+import { LineBox } from "../src/components/ui/LineBox.tsx";
 import type { TaskOutcome } from "../src/lib/tasks.ts";
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 import { useState } from "react";
@@ -2656,5 +2658,45 @@ describe("HeldDecision", () => {
     view.getByText(/Why: Proven./);
     // Nothing to answer with: the only button is its ref.
     expect(view.getAllByRole("button").map((button) => button.textContent)).toEqual(["D-1"]);
+  });
+});
+
+describe("one-line boxes", () => {
+  test("a named outcome is one line, so it cannot add rows to the list sent back", () => {
+    const view = render(
+      <OutcomeFields
+        fields={["Length"]}
+        values={{ Length: "41" }}
+        onValue={() => {}}
+        note=""
+        onNote={() => {}}
+      />,
+    );
+    expect(view.getByLabelText("Length").tagName).toBe("INPUT");
+    expect(view.getByLabelText("Note, if anything surprised you").tagName).toBe("TEXTAREA");
+  });
+
+  test("LineBox keeps what it shows while it has focus, and shows a new value once it has none", () => {
+    const onChange = mock((_value: string) => {});
+    const view = render(<LineBox label="Length" value="41" onChange={onChange} />);
+    const box = view.getByLabelText("Length");
+    fireEvent.focus(box);
+    view.rerender(<LineBox label="Length" value="from another device" onChange={onChange} />);
+    expect(box).toHaveProperty("value", "41");
+    fireEvent.change(box, { target: { value: "42" } });
+    expect(onChange).toHaveBeenCalledWith("42");
+    fireEvent.blur(box);
+    view.rerender(<LineBox label="Length" value="43" onChange={onChange} />);
+    expect(box).toHaveProperty("value", "43");
+  });
+
+  test("TextBox sizes itself when a draft arrives without typing", () => {
+    const view = render(<TextBox label="Note" value="" onChange={() => {}} />);
+    const box = view.getByLabelText("Note");
+    expect(box.style.height).not.toMatch(/px$/);
+    view.rerender(<TextBox label="Note" value={"one\ntwo\nthree"} onChange={() => {}} />);
+    expect(box.style.height).toMatch(/px$/);
+    view.rerender(<TextBox label="Note" value="" onChange={() => {}} />);
+    expect(box.style.height).not.toMatch(/px$/);
   });
 });

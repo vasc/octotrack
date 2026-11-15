@@ -1,4 +1,5 @@
-import { type ChangeEvent, type KeyboardEvent, useState } from "react";
+import { type ChangeEvent, type KeyboardEvent, useLayoutEffect, useRef } from "react";
+import { useHeldValue } from "../../hooks/useHeldValue.ts";
 
 export interface TextBoxProps {
   label: string;
@@ -16,15 +17,21 @@ export interface TextBoxProps {
  * keeps showing what was typed in it, so a draft arriving from another device never changes the text under the cursor.
  */
 export function TextBox({ label, value, onChange, placeholder, onSubmit, autoFocus = false }: TextBoxProps) {
-  const [held, setHeld] = useState<string | null>(null);
+  const held = useHeldValue(value);
+  const box = useRef<HTMLTextAreaElement>(null);
+  // Browsers without field-sizing still grow: the height is only known once the text is laid out, so it is measured
+  // whenever what is shown changes, typed here or arrived as a draft.
+  useLayoutEffect(() => {
+    const element = box.current;
+    if (element === null) return;
+    // Emptied, as when its words were sent: back to one line.
+    element.style.height = "auto";
+    if (held.shown === "") return;
+    element.style.height = `${element.scrollHeight}px`;
+  }, [held.shown]);
   const grow = (event: ChangeEvent<HTMLTextAreaElement>) => {
-    // Browsers without field-sizing still grow: the height is only known once the text is laid out.
-    const box = event.currentTarget;
-    box.style.height = "auto";
-    box.style.height = `${box.scrollHeight}px`;
-    // Only while it has focus: typing always comes with focus, and an unfocused box shows the draft as it is.
-    setHeld((current) => (current === null ? null : box.value));
-    onChange(box.value);
+    held.typed(event.currentTarget.value);
+    onChange(event.currentTarget.value);
   };
   const submitOnShortcut = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (onSubmit !== undefined && event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
@@ -40,9 +47,10 @@ export function TextBox({ label, value, onChange, placeholder, onSubmit, autoFoc
       rows={1}
       // biome-ignore lint/a11y/noAutofocus: only when the developer pressed a key to write here
       autoFocus={autoFocus}
-      value={held ?? value}
-      onFocus={() => setHeld(value)}
-      onBlur={() => setHeld(null)}
+      ref={box}
+      value={held.shown}
+      onFocus={held.onFocus}
+      onBlur={held.onBlur}
       onChange={grow}
       onKeyDown={submitOnShortcut}
     />
