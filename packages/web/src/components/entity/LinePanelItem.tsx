@@ -17,6 +17,7 @@ import { OwnerBox } from "./OwnerBox.tsx";
 import { OwnWorkBox } from "./OwnWorkBox.tsx";
 import { PanelForYou } from "./PanelForYou.tsx";
 import { PlanList } from "./PlanList.tsx";
+import { Loaded } from "../ui/Loaded.tsx";
 import { OpenDrift } from "./OpenDrift.tsx";
 import { SinceSummary } from "./SinceSummary.tsx";
 import { SummaryBox } from "./SummaryBox.tsx";
@@ -34,7 +35,7 @@ export function LinePanelItem({ line, drift }: { line: Line; drift: readonly Dri
   const since = useOpQuery(contracts.feedList, { query: `line:${line.ref}`, limit: 50 });
   const tell = useDraft(`tell:${line.ref}`);
   const own = useDraft(`own:${line.ref}`);
-  useMarkSeen(line.ref);
+  const unmarked = useMarkSeen(line.ref);
   // As it was when the panel opened: opening it marks the line seen, which must not fold what is being read now.
   const [seenAt] = useState(line.seenAt);
   const [starting, setStarting] = useState(false);
@@ -86,15 +87,25 @@ export function LinePanelItem({ line, drift }: { line: Line; drift: readonly Dri
       <SummaryBox line={line} owner={owner} />
       <PanelForYou title={line.title} items={forYou} h={h} />
       <OpenDrift drift={drift} />
+      {unmarked === null ? null : (
+        <p className="error-text" role="alert">
+          Could not mark {line.ref} seen: {unmarked.message}. The Log still shows its changes as not seen.
+        </p>
+      )}
       <div className="panel-grid">
-        <PlanList steps={shown.data?.steps ?? []} work={shown.data?.work ?? []} />
+        <Loaded pending={shown.isPending} error={shown.error} label="Loading the plan">
+          <PlanList steps={shown.data?.steps ?? []} work={shown.data?.work ?? []} />
+        </Loaded>
         <div className="panel-column">
-          <SinceSummary
-            line={line.ref}
-            events={since.data?.events ?? []}
-            summaryAt={line.summaryAt}
-            seenAt={seenAt}
-          />
+          <Loaded pending={since.isPending} error={since.error} label="Loading what is new">
+            <SinceSummary
+              line={line.ref}
+              events={since.data?.events ?? []}
+              summaryAt={line.summaryAt}
+              seenAt={seenAt}
+              more={since.data?.nextBefore !== null && since.data?.nextBefore !== undefined}
+            />
+          </Loaded>
           <OwnerBox
             line={line}
             crew={crew}

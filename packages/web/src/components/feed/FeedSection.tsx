@@ -4,6 +4,7 @@ import { useOpQuery } from "../../hooks/useOp.ts";
 import { EmptyState, ErrorState, LoadingState } from "../ui/states.tsx";
 import { FeedList } from "./FeedList.tsx";
 import { UnseenLog } from "./UnseenLog.tsx";
+import { logLines } from "../../lib/lines.ts";
 
 export interface FeedSectionProps {
   view?: string;
@@ -31,16 +32,7 @@ export function FeedSection({
   if (feed.isPending) return <LoadingState label="Loading the log" />;
   if (feed.stillSearching) return <LoadingState label="Searching older events" />;
   if (unseen) {
-    const lines =
-      home.data === undefined
-        ? []
-        : [
-            ...home.data.working,
-            ...home.data.proposed,
-            ...home.data.doneLately,
-            ...home.data.upNext,
-            ...home.data.tabled,
-          ];
+    const lines = logLines(home.data);
     return (
       <>
         <UnseenLog
@@ -64,15 +56,20 @@ export function FeedSection({
 
 /** More of the log than one page: what is not seen pages like a search does, so nothing past the first page is lost. */
 function Older({ feed }: { feed: ReturnType<typeof useFeed> }) {
-  if (!feed.hasNextPage) return null;
+  // A page that failed after the first says why under what was already shown, which stays.
+  const failed = feed.error === null ? null : <ErrorState error={feed.error} />;
+  if (!feed.hasNextPage) return failed;
   return (
-    <button
-      type="button"
-      className="btn"
-      disabled={feed.isFetchingNextPage}
-      onClick={() => void feed.fetchNextPage()}
-    >
-      {feed.isFetchingNextPage ? "Loading" : "Older"}
-    </button>
+    <>
+      {failed}
+      <button
+        type="button"
+        className="btn"
+        disabled={feed.isFetchingNextPage}
+        onClick={() => void feed.fetchNextPage()}
+      >
+        {feed.isFetchingNextPage ? "Loading" : "Older"}
+      </button>
+    </>
   );
 }

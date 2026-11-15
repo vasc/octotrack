@@ -273,6 +273,36 @@ describe("the log", () => {
     expect(view.queryByText("Nothing matches this search.") === null).toBe(true);
   });
 
+  test("an older page that fails to load says why, and keeps what was already shown", async () => {
+    server.tracker.batch(
+      {
+        ops: Array.from({ length: 80 }, (_, index) => ({
+          op: "update.post",
+          input: { body: `Noise ${index}`, project: "OCT" },
+        })),
+      },
+      { actor: "agent-a", channel: "cli" },
+    );
+    navigate("/log?q=actor%3Aagent-a");
+    const view = renderApp(<App />);
+    const feed = within(await view.findByRole("feed"));
+    await feed.findByText(/Noise 79/);
+    const fetchNow = globalThis.fetch;
+    Object.assign(globalThis, {
+      fetch: async (input: string | URL | Request, init?: RequestInit) => {
+        if (String(input).includes("feed.list")) throw new Error("The server went away");
+        return fetchNow(input, init);
+      },
+    });
+    try {
+      fireEvent.click(view.getByRole("button", { name: "Older" }));
+      await view.findByText(/The server went away/);
+      feed.getByText(/Noise 79/);
+    } finally {
+      Object.assign(globalThis, { fetch: fetchNow });
+    }
+  });
+
   test("a search goes through the whole log, and stays in the URL", async () => {
     server.act(c.issueCreate, { project: "OCT", title: "A task" });
     seedDecision();
@@ -2397,6 +2427,25 @@ describe("lines of work", () => {
     await within(panel.getByRole("navigation", { name: "Where this is" })).findByRole("button", {
       name: "Wall mount",
     });
+  });
+
+  test("a line that could not be marked seen says so in its panel", async () => {
+    seedLines();
+    const fetchNow = globalThis.fetch;
+    Object.assign(globalThis, {
+      fetch: async (input: string | URL | Request, init?: RequestInit) => {
+        if (String(input).endsWith("/api/ops/seen")) throw new Error("The server went away");
+        return fetchNow(input, init);
+      },
+    });
+    try {
+      navigate("/?ref=L-1");
+      const view = renderApp(<App />);
+      const panel = within(await view.findByRole("complementary", { name: "L-1" }));
+      await panel.findByText(/Could not mark L-1 seen: The server went away/);
+    } finally {
+      Object.assign(globalThis, { fetch: fetchNow });
+    }
   });
 
   test("a line opens in the inspector with what finishes it", async () => {
