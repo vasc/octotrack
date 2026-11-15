@@ -202,8 +202,8 @@ whose line you moved on, did not leave by itself): the next one waits as a faile
 
 Stop ends the whole process group of a session Octotrack started. `stop` is for sessions it did not start, such as
 `["tmux", "kill-session", "-t", "{name}"]` for ones kept in tmux; it runs once when the developer stops an agent. In
-watch mode both are only noted. git and gh are given two minutes, clones and setup commands thirty and the stop
-command ten, then killed.
+watch mode both are only noted. The runner's git and gh are given two minutes, clones and setup commands thirty and the
+stop command ten, then killed; pull request sync gives each gh call thirty seconds (`OCTO_GH_TIMEOUT_MS`).
 
 ## Watching
 
