@@ -46,6 +46,9 @@ export function stepInReason(line: Line, runner: RunnerStatus, start: LineStart 
   if (runner.dryRun) {
     return `No agent took ${line.ref}. The runner is watching only, so it noted it would start one. Set dryRun to false in ~/.octotrack/agent-setup.json to let it.`;
   }
+  if (start?.state === "failed" && start.took) {
+    return `${start.name} took ${line.ref} and left soon after, with no way to wake it. Octotrack starts the next one less often each time: keep the session running, or have it register a wake address (octo agent register --wake).`;
+  }
   if (start?.state === "failed") {
     const said = start.output?.trim().split("\n").at(-1);
     return `${start.name}, started for it, exited at once${said === undefined || said === "" ? "" : `: ${said}`}. Octotrack tries again by itself, less often each time.`;

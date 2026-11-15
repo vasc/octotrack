@@ -109,6 +109,7 @@ function toLineStart(start: StartRow): LineStart {
     attempts: start.attempts,
     at: start.endedAt ?? start.startedAt,
     nextTryAt: start.nextTryAt,
+    took: start.ran === 1,
   };
 }
 
@@ -635,6 +636,7 @@ export const runnerOps = [
       attempts: start.attempts,
       at: ctx.now,
       nextTryAt,
+      took,
     };
   }),
 
