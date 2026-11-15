@@ -23,3 +23,16 @@ export function routineSentence(events: readonly FeedEvent[]): string | null {
   });
   return words.length === 0 ? null : words.join(", ");
 }
+
+/**
+ * Whether there may be more changes newer than a line's summary than the page loaded: only when every change loaded is
+ * newer than it and an older page remains. With no summary, every change counts.
+ */
+export function moreSinceSummary(
+  events: readonly Pick<FeedEvent, "ts">[],
+  summaryAt: string | null,
+  nextBefore: number | null,
+): boolean {
+  if (nextBefore === null) return false;
+  return summaryAt === null || events.every((event) => event.ts > summaryAt);
+}

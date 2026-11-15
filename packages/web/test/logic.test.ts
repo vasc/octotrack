@@ -23,6 +23,7 @@ import {
 } from "../src/lib/lines.ts";
 import { askedText, cantSummary, doneSummary, howClosed, isTask, taskOutcome } from "../src/lib/tasks.ts";
 import { issueLinks } from "../src/lib/links.ts";
+import { moreSinceSummary } from "../src/lib/log.ts";
 import { decision, decisionCard, event, issue } from "../src/design/fixtures.ts";
 import { closeEntity, navigate, openEntity, setParams } from "../src/lib/router.ts";
 
@@ -369,5 +370,21 @@ describe("howClosed", () => {
     expect(howClosed([at("task.cant", "dev", 2)])).toEqual({ how: "cant", by: "dev" });
     expect(howClosed([at("task.done", "dev", 2)])).toEqual({ how: "done", by: "dev" });
     expect(howClosed([at("issue.created", "octo.1", 1)])).toBeNull();
+  });
+});
+
+describe("moreSinceSummary", () => {
+  const at = (ts: string) => ({ ts });
+  test("there may be more newer than the summary only when every change loaded is newer and older ones remain", () => {
+    expect(moreSinceSummary([at("2026-11-14T10:00"), at("2026-11-14T09:30")], "2026-11-14T09:00", 12)).toBe(
+      true,
+    );
+    // The oldest loaded is already older than the summary: everything newer is here.
+    expect(moreSinceSummary([at("2026-11-14T10:00"), at("2026-11-14T08:00")], "2026-11-14T09:00", 12)).toBe(
+      false,
+    );
+    expect(moreSinceSummary([at("2026-11-14T10:00")], "2026-11-14T09:00", null)).toBe(false);
+    // With no summary, every change counts, so any older page means more.
+    expect(moreSinceSummary([at("2026-11-14T10:00")], null, 12)).toBe(true);
   });
 });
