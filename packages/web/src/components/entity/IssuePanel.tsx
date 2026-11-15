@@ -4,7 +4,6 @@ import { useChoices } from "../../hooks/useChoices.ts";
 import { useIssueTell } from "../../hooks/useIssueTell.ts";
 import { useHome } from "../../hooks/useHome.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
-import { useStepTitle } from "../../hooks/useStepTitle.ts";
 import { issueLinks } from "../../lib/links.ts";
 import { backEntity, openEntity } from "../../lib/router.ts";
 import { howClosed, isTask } from "../../lib/tasks.ts";
@@ -34,7 +33,6 @@ export function IssuePanel({ issue, detail }: { issue: Issue; detail: EntityDeta
   const open = issue.status !== "done" && issue.status !== "cancelled";
   const { frees, waitsOn } = issueLinks(issue.ref, detail.links);
   const freed = detail.linked.filter((item) => frees.includes(item.ref));
-  const step = useStepTitle(issue.line, issue.step);
   return (
     <section className="line-panel" aria-label={`${task ? "Task" : "Issue"} ${issue.ref}`}>
       <div className="panel-crumbs">
@@ -55,12 +53,7 @@ export function IssuePanel({ issue, detail }: { issue: Issue; detail: EntityDeta
       </div>
       {task ? (
         open ? (
-          <TaskItem
-            task={issue}
-            {...(step === null ? {} : { holdsUp: step })}
-            onDone={h.taskDone}
-            onCant={h.taskCant}
-          />
+          <TaskItem task={issue} onDone={h.taskDone} onCant={h.taskCant} />
         ) : (
           <TaskClosed task={issue} closed={howClosed(detail.history)} />
         )
