@@ -121,14 +121,18 @@ The names are multiples of the unit: `--space-4` is four units.
 
 Only what floats over content gets a shadow. Everything else is separated by a line.
 
-| Token              | Use for                                                 |
-| ------------------ | ------------------------------------------------------- |
-| `--shadow-popover` | The filter's suggestions, the Undo bar                  |
-| `--shadow-panel`   | A line, task or issue opened over the right of the page |
-| `--shadow-focus`   | The one focus on home: the line or item the keys act on |
-| `--z-popover`      | Above the page                                          |
-| `--z-panel`        | Above popovers                                          |
-| `--z-undo`         | Above an open panel: a choice made there shows its Undo |
+| Token                | Use for                                                            |
+| -------------------- | ------------------------------------------------------------------ |
+| `--shadow-popover`   | The filter's suggestions, the Undo bar                             |
+| `--shadow-panel`     | A line, task or issue opened over the right of the page            |
+| `--shadow-focus`     | The one focus on home: the line or item the keys act on            |
+| `--border-focus`     | Edges for focus: the focus ring and the focused item's dark border |
+| `--border-accent`    | An item's accent edge, such as a question's left edge              |
+| `--opacity-disabled` | A control that cannot act now                                      |
+| `--opacity-hover`    | A filled button under the pointer                                  |
+| `--z-popover`        | Above the page                                                     |
+| `--z-panel`          | Above popovers                                                     |
+| `--z-undo`           | Above an open panel: a choice made there shows its Undo            |
 
 ## Layout
 

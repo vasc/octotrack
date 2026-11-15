@@ -93,7 +93,13 @@
   --shadow-popover: 0 6px 20px rgb(0 0 0 / 0.14);
   --shadow-panel: -12px 0 40px rgb(0 0 0 / 0.08);
   /* The one focus on home: a dark ring, so a key never acts on another item than this. */
-  --shadow-focus: 0 0 0 2px var(--ink);
+  --shadow-focus: 0 0 0 var(--border-focus) var(--ink);
+  /* Edges thicker than a hairline: focus (its ring and the focused item's border), and an item's accent edge. */
+  --border-focus: 2px;
+  --border-accent: 3px;
+  /* A control that cannot act now, and a filled button under the pointer. */
+  --opacity-disabled: 0.5;
+  --opacity-hover: 0.88;
   --z-popover: 10;
   --z-panel: 20;
   --z-undo: 30;

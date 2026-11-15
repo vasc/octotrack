@@ -42,7 +42,7 @@ p {
 }
 
 :focus-visible {
-  outline: 2px solid var(--attention);
+  outline: var(--border-focus) solid var(--attention);
   outline-offset: 1px;
 }
 
@@ -441,7 +441,7 @@ p {
 }
 
 .btn:disabled {
-  opacity: 0.5;
+  opacity: var(--opacity-disabled);
   cursor: default;
 }
 
@@ -452,7 +452,7 @@ p {
 }
 
 .btn[data-primary="true"]:hover:not(:disabled) {
-  opacity: 0.88;
+  opacity: var(--opacity-hover);
   background: var(--ink);
 }
 
@@ -567,7 +567,7 @@ p {
 .decision {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-left: 3px solid var(--attention-line);
+  border-left: var(--border-accent) solid var(--attention-line);
   border-radius: var(--radius-lg);
   padding: var(--space-5) var(--space-6);
   display: flex;
@@ -644,7 +644,7 @@ p {
 }
 
 .question[data-selected="true"] {
-  border: 2px solid var(--ink);
+  border: var(--border-focus) solid var(--ink);
 }
 
 .question-strip {
@@ -1963,7 +1963,7 @@ p {
 }
 
 .step-in[data-selected="true"] {
-  border: 2px solid var(--ink);
+  border: var(--border-focus) solid var(--ink);
 }
 
 .proposal {
@@ -2212,7 +2212,7 @@ p {
 }
 
 .focus-wrap[data-selected="true"] > :is(.task, .proposal) {
-  border: 2px solid var(--ink);
+  border: var(--border-focus) solid var(--ink);
 }
 
 /* The focused item's numbered choices, drawn by the number its key presses: only on an item the keys act on, never on a
@@ -2470,7 +2470,7 @@ p {
 }
 
 .focus-wrap[data-selected="true"] > .line-proposal {
-  border: 2px solid var(--ink);
+  border: var(--border-focus) solid var(--ink);
 }
 
 .line-proposal-claim {
