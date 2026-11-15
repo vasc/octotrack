@@ -350,6 +350,16 @@ const MIGRATIONS: readonly Migration[] = [
   `
   ALTER TABLE issues ADD COLUMN fields TEXT NOT NULL DEFAULT '[]';
   `,
+  // Pull requests the runner could not close on GitHub: how many times in a row, gh's last word, and when to try again.
+  `
+  CREATE TABLE runner_close_failures (
+    pr TEXT PRIMARY KEY,
+    attempts INTEGER NOT NULL,
+    error TEXT NOT NULL,
+    at TEXT NOT NULL,
+    nextTryAt TEXT NOT NULL
+  );
+  `,
 ];
 
 const UserVersion = z.object({ user_version: z.number().int() });

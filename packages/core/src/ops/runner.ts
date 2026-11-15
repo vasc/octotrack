@@ -198,6 +198,40 @@ function sentAwayFrom(ctx: Ctx, start: StartRow): string | null {
   return SENT_AWAY[notice.kind]?.(notice.line ?? start.line) ?? null;
 }
 
+/**
+ * A pull request the runner could not close on GitHub, for want of permission, an archived repo or the network: tried
+ * again after 2, 10, 60 then every 360 minutes, as a failing start is, and said in the Log once, with gh's last line,
+ * rather than retried every tick in silence (fourth audit, A4).
+ */
+function closeFailed(ctx: Ctx, pr: string, line: string | null, error: string): { pr: string } {
+  const before = one(
+    ctx,
+    z.object({ attempts: z.number().int() }),
+    "SELECT attempts FROM runner_close_failures WHERE pr = ?",
+    [pr],
+  );
+  const attempts = (before?.attempts ?? 0) + 1;
+  const said = error.trim().split("\n").at(-1)?.trim() ?? "";
+  ctx.sql.run(
+    `INSERT INTO runner_close_failures (pr, attempts, error, at, nextTryAt) VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT(pr) DO UPDATE SET attempts = excluded.attempts, error = excluded.error, at = excluded.at,
+       nextTryAt = excluded.nextTryAt`,
+    [pr, attempts, said, ctx.now, new Date(Date.parse(ctx.now) + retryWait(attempts)).toISOString()],
+  );
+  if (before === null) {
+    emit(ctx, {
+      type: "runner.pr_close_failed",
+      kind: "pr",
+      ref: pr,
+      project: null,
+      line,
+      summary: `Could not close ${pr} on GitHub with ${line ?? "its line"}${said === "" ? "" : `: ${said}`}. Trying again later.`,
+      attrs: {},
+    });
+  }
+  return { pr };
+}
+
 /** What stopped a start, so that Try now can retry every line stopped the same way: its last line of output. */
 function stoppedBy(start: { state: string; output: string | null }): string {
   if (start.state === "never_took") return "never took";
@@ -782,8 +816,10 @@ export const runnerOps = [
              AND (i2.status NOT IN ('done', 'cancelled')
                OR (l2.ref IS NOT NULL AND (l2.state NOT IN ('done', 'dropped') OR l2.windDownUntil IS NOT NULL))))
          AND p.ref NOT IN (SELECT pr FROM runner_closes WHERE dry = 0)
+         AND p.ref NOT IN (SELECT pr FROM runner_close_failures WHERE nextTryAt > ?)
        GROUP BY p.ref, p.repo, p.number
        ORDER BY p.ref`,
+      [ctx.now],
     ),
   ),
 
@@ -796,6 +832,9 @@ export const runnerOps = [
       [input.pr],
     )[0];
     const dry = input.dry === true;
+    if (input.error !== undefined && !dry)
+      return closeFailed(ctx, input.pr, close?.line ?? null, input.error);
+    ctx.sql.run("DELETE FROM runner_close_failures WHERE pr = ?", [input.pr]);
     const before = one(ctx, z.object({ dry: z.number() }), "SELECT dry FROM runner_closes WHERE pr = ?", [
       input.pr,
     ]);

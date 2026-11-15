@@ -472,6 +472,38 @@ describe("closing pull requests only when it is safe (third audit, N2)", () => {
     expect(e.closes()).toEqual([]);
   });
 
+  test("A4: a close that fails is in the Log once, with gh's last line, and tried again later each time", () => {
+    const e = ended((issue) => `Fixes ${issue}`);
+    const failed = () =>
+      e.w.tracker
+        .call(c.feedList, { query: "event:runner.pr_close_failed" }, e.w.dev)
+        .events.map((event) => [event.ref, event.line, event.summary]);
+    expect(e.closes()).toEqual([14]);
+    const pr = e.w.tracker.call(c.runnerCloses, {}, e.w.runner)[0]?.pr ?? "";
+    const error = "GraphQL: Resource not accessible by integration\nexit 1";
+    e.w.tracker.call(c.runnerClosed, { pr, error }, e.w.runner);
+    expect(failed()).toEqual([
+      [
+        pr,
+        e.line.ref,
+        `Could not close ${pr} on GitHub with ${e.line.ref}: exit 1. Trying again later.`,
+      ],
+    ]);
+    expect(e.closes()).toEqual([]);
+    e.w.later(2);
+    expect(e.closes()).toEqual([14]);
+    e.w.tracker.call(c.runnerClosed, { pr, error }, e.w.runner);
+    e.w.later(9);
+    expect(e.closes()).toEqual([]);
+    e.w.later(1);
+    expect(e.closes()).toEqual([14]);
+    expect(failed()).toHaveLength(1);
+    e.w.tracker.call(c.runnerClosed, { pr }, e.w.runner);
+    expect(e.closes()).toEqual([]);
+    e.w.later(400);
+    expect(e.closes()).toEqual([]);
+  });
+
   test("a pull request an agent reported, and GitHub never confirmed, is not closed", () => {
     const w = world();
     const line = w.line("Enclosure");

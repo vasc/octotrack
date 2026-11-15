@@ -465,8 +465,14 @@ export function createRunner(options: {
         "--comment",
         `Closed with ${close.line}, which is ${state} in Octotrack.`,
       ]);
-      if (closed.code === 0) tracker.call(contracts.runnerClosed, { pr: close.pr }, RUNNER);
-      else console.error(`[runner] closing ${close.pr}: ${closed.stderr.trim()}`);
+      // A failure is recorded, said in the Log once and tried again later each time, never every tick (A4).
+      tracker.call(
+        contracts.runnerClosed,
+        closed.code === 0
+          ? { pr: close.pr }
+          : { pr: close.pr, error: closed.stderr.trim() || closed.stdout.trim() || `exit ${closed.code}` },
+        RUNNER,
+      );
     }
   };
 
