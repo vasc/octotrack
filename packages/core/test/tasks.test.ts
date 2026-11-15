@@ -3,6 +3,7 @@ import type { z } from "zod";
 import type { Contract } from "../src/contracts.ts";
 import { contracts as c } from "../src/contracts.ts";
 import { OctoError } from "../src/errors.ts";
+import { sinceSummaryQuery } from "../src/query/index.ts";
 import type { Caller } from "../src/tracker.ts";
 import { Tracker } from "../src/tracker.ts";
 import { memoryDriver } from "./helpers.ts";
@@ -346,6 +347,27 @@ describe("changes since the summary, on home", () => {
     w.as(w.owner, c.issueUpdate, { refs: ["PANEL-1"], status: "done" });
     w.as(w.owner, c.decisionAsk, { title: "Which board?", context: SITUATION, options: OPTIONS });
     expect(since()).toBe(2);
+  });
+
+  test("leaves out the developer's own moves, reorders and Tells, and the panel's list is the same query", () => {
+    const w = world();
+    const since = () => w.as(w.dev, c.homeShow, {}).lines[w.line]?.sinceSummary;
+    w.as(w.dev, c.lineAdd, { title: "Lid", doneWhen: "It closes.", repos: ["PANEL"], where: "working" });
+    w.later(1);
+    w.as(w.owner, c.lineSummarize, { ref: w.line, headline: "The base is modelled.", summary: "Modelled." });
+    w.later(1);
+    w.as(w.dev, c.lineOrder, { ref: w.line, to: "bottom" });
+    w.as(w.dev, c.lineOrder, { ref: w.line, to: "top" });
+    w.as(w.dev, c.lineTell, { line: w.line, body: "" });
+    expect(since()).toBe(0);
+    w.as(w.owner, c.decisionAsk, { title: "Which board?", context: SITUATION, options: OPTIONS });
+    expect(since()).toBe(1);
+    const summaryAt = w.as(w.dev, c.lineShow, { ref: w.line }).line.summaryAt ?? "";
+    const listed = w
+      .as(w.dev, c.feedList, { query: sinceSummaryQuery(w.line) })
+      .events.filter((event) => event.ts > summaryAt)
+      .map((event) => event.type);
+    expect(listed).toEqual(["decision.requested"]);
   });
 });
 

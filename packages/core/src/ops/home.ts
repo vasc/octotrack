@@ -85,13 +85,18 @@ function openTasks(ctx: Ctx, line: string) {
   );
 }
 
-/** How many changes were logged on a line after a time: what its summary does not yet tell. */
+/**
+ * How many changes were logged on a line after a time: what its summary does not yet tell. The same rule as
+ * sinceSummaryQuery, which the line's panel lists: not the developer's own doings, and not reorders.
+ */
 function changesSince(ctx: Ctx, line: string, at: string): number {
   return (
-    one(ctx, z.object({ n: z.number() }), "SELECT COUNT(*) AS n FROM events WHERE line = ? AND ts > ?", [
-      line,
-      at,
-    ])?.n ?? 0
+    one(
+      ctx,
+      z.object({ n: z.number() }),
+      "SELECT COUNT(*) AS n FROM events WHERE line = ? AND ts > ? AND actor <> ? AND type <> 'line.reordered'",
+      [line, at, DEVELOPER],
+    )?.n ?? 0
   );
 }
 
