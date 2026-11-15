@@ -9,10 +9,13 @@ import { TaskCard } from "./TaskCard.tsx";
 /** A task opened, with what is typed kept as a draft. */
 export function TaskItem({
   task,
+  holdsUp,
   onDone,
   onCant,
 }: {
   task: Issue;
+  /** The plan step it holds up, by title, where that is known. */
+  holdsUp?: string;
   onDone(task: Issue, outcome: TaskOutcome): void;
   onCant(task: Issue, why: string): void;
 }) {
@@ -23,6 +26,7 @@ export function TaskItem({
     <>
       <TaskCard
         task={task}
+        {...(holdsUp === undefined ? {} : { holdsUp })}
         words={draft.note}
         onWords={draft.setNote}
         values={draft.values}

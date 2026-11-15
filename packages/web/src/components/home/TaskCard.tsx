@@ -20,6 +20,8 @@ export interface TaskCardProps {
   onCant(why: string): void;
   /** Its Done or Can't do it is waiting with Undo: neither is sent again. */
   sending?: boolean;
+  /** The plan step it holds up, by title, where that is known. */
+  holdsUp?: string;
 }
 
 /**
@@ -38,6 +40,7 @@ export function TaskCard({
   onDone,
   onCant,
   sending = false,
+  holdsUp,
 }: TaskCardProps) {
   const [cant, setCant] = useState(false);
   const own = task.outcome === "";
@@ -49,6 +52,8 @@ export function TaskCard({
       <p className="for-you-kind">
         Task for you · {task.ref}
         {task.place === null ? "" : ` · at ${task.place}`}
+        {holdsUp === undefined ? "" : ` · holds up ${holdsUp}`}
+        {task.createdBy === "dev" ? "" : ` · filed by ${task.createdBy}`}
       </p>
       <h3 className="question-title">{task.title}</h3>
       {task.body === "" ? null : <Markdown text={task.body} />}

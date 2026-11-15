@@ -4,7 +4,10 @@ import { useChoices } from "../../hooks/useChoices.ts";
 import { useDraft } from "../../hooks/useDraft.ts";
 import { useHome } from "../../hooks/useHome.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
+import { useStepTitle } from "../../hooks/useStepTitle.ts";
+import { issueLinks } from "../../lib/links.ts";
 import { backEntity, openEntity } from "../../lib/router.ts";
+import { isTask } from "../../lib/tasks.ts";
 import { TaskClosed } from "../home/TaskClosed.tsx";
 import { TaskItem } from "../home/TaskItem.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
@@ -14,6 +17,7 @@ import { ErrorState } from "../ui/states.tsx";
 import { ActivityList } from "./ActivityList.tsx";
 import { PullRequestBox } from "./PullRequestBox.tsx";
 import { OpenDrift } from "./OpenDrift.tsx";
+import { TaskFrees } from "./TaskFrees.tsx";
 import { TellBox } from "./TellBox.tsx";
 
 /**
@@ -26,15 +30,11 @@ export function IssuePanel({ issue, detail }: { issue: Issue; detail: EntityDeta
   const prs = useOpQuery(contracts.prList, { query: `linked:${issue.ref} kind:pr` });
   const tell = useDraft(`tell:${issue.ref}`);
   const line = issue.line === null ? null : h.lineOf(issue.line);
-  // A task is an issue for the developer with something to report: "dev" is the name the developer acts under.
-  const task = issue.assignee === "dev" && issue.outcome !== null;
+  const task = isTask(issue);
   const open = issue.status !== "done" && issue.status !== "cancelled";
-  const frees = detail.links
-    .filter((link) => link.fromRef === issue.ref && link.rel === "blocks")
-    .map((link) => link.toRef);
-  const waitsOn = detail.links
-    .filter((link) => link.toRef === issue.ref && link.rel === "blocks")
-    .map((link) => link.fromRef);
+  const { frees, waitsOn } = issueLinks(issue.ref, detail.links);
+  const freed = detail.linked.filter((item) => frees.includes(item.ref));
+  const step = useStepTitle(issue.line, issue.step);
   return (
     <section className="line-panel" aria-label={`${task ? "Task" : "Issue"} ${issue.ref}`}>
       <div className="panel-crumbs">
@@ -55,7 +55,12 @@ export function IssuePanel({ issue, detail }: { issue: Issue; detail: EntityDeta
       </div>
       {task ? (
         open ? (
-          <TaskItem task={issue} onDone={h.taskDone} onCant={h.taskCant} />
+          <TaskItem
+            task={issue}
+            {...(step === null ? {} : { holdsUp: step })}
+            onDone={h.taskDone}
+            onCant={h.taskCant}
+          />
         ) : (
           <TaskClosed task={issue} />
         )
@@ -78,15 +83,7 @@ export function IssuePanel({ issue, detail }: { issue: Issue; detail: EntityDeta
         </>
       )}
       {task ? (
-        frees.length === 0 ? null : (
-          <section className="panel-section" aria-label="What it frees">
-            <h2 className="panel-label">What it frees</h2>
-            <p className="panel-prose">
-              {frees.join(", ")}. Done goes to the line's inbox for whoever holds{" "}
-              {frees.length === 1 ? "it" : "them"}, and wakes them.
-            </p>
-          </section>
-        )
+        <TaskFrees freed={freed} />
       ) : (
         <>
           <PullRequestBox

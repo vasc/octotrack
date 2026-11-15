@@ -47,8 +47,10 @@ export function PullRequestBox({
         </div>
       ))}
       <span className="muted">
-        Checks are agents' to fix, never yours{holder === null ? "" : `, and ${holder} merges once they pass`}
-        ; if it wants your eyes first, it asks.
+        Checks are agents' to fix, never yours.{" "}
+        {holder === null
+          ? "Whoever takes the issue merges once they pass, and asks first if it wants your eyes."
+          : `${holder} merges once they pass, and asks first if it wants your eyes.`}
       </span>
     </section>
   );

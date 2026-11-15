@@ -2289,7 +2289,12 @@ describe("lines of work", () => {
       const panel = within(await view.findByRole("complementary", { name: task.ref }));
       const section = within(panel.getByRole("region", { name: `Task ${task.ref}` }));
       section.getByRole("button", { name: "Sendspin enclosure" });
-      within(section.getByRole("region", { name: "What it frees" })).getByText(new RegExp(issue.ref));
+      const frees = within(section.getByRole("region", { name: "What it frees" }));
+      frees.getByRole("button", { name: issue.ref });
+      frees.getByText(
+        `Done goes to the line's inbox for whoever holds ${issue.ref}, now octo.1, and wakes it.`,
+      );
+      section.getByText(/filed by octo.1/);
       section.getByRole("button", { name: "Can't do it" });
       fireEvent.change(section.getByLabelText(`What ${task.ref} found`), { target: { value: "41, 38, 12" } });
       fireEvent.click(section.getByRole("button", { name: "Done" }));

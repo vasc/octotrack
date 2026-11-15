@@ -13,7 +13,8 @@ import {
 } from "../src/lib/format.ts";
 import { focusLabel, nextFocus } from "../src/lib/focus.ts";
 import { heldOnTabled, lineFacts, undoLines } from "../src/lib/lines.ts";
-import { askedText, cantSummary, doneSummary, taskOutcome } from "../src/lib/tasks.ts";
+import { askedText, cantSummary, doneSummary, isTask, taskOutcome } from "../src/lib/tasks.ts";
+import { issueLinks } from "../src/lib/links.ts";
 import { decision, decisionCard, issue } from "../src/design/fixtures.ts";
 import { closeEntity, navigate, openEntity, setParams } from "../src/lib/router.ts";
 
@@ -283,5 +284,34 @@ describe("focusLabel", () => {
         "Enclosure",
       ),
     ).toBe("A new done when proposed: Enclosure");
+  });
+});
+
+describe("issueLinks", () => {
+  const link = (fromRef: string, rel: "blocks" | "relates", toRef: string) => ({
+    fromRef,
+    rel,
+    toRef,
+    createdAt: "",
+    createdBy: "",
+  });
+
+  test("what an issue frees and what it waits on, from its links in both directions", () => {
+    const links = [
+      link("OCT-2", "blocks", "OCT-5"),
+      link("OCT-1", "blocks", "OCT-2"),
+      link("OCT-2", "relates", "OCT-9"),
+    ];
+    expect(issueLinks("OCT-2", links)).toEqual({ frees: ["OCT-5"], waitsOn: ["OCT-1"] });
+    expect(issueLinks("OCT-9", links)).toEqual({ frees: [], waitsOn: [] });
+  });
+});
+
+describe("isTask", () => {
+  test("a task is an issue for the developer with something to report", () => {
+    expect(isTask(issue({ assignee: "dev", outcome: "In mm" }))).toBe(true);
+    expect(isTask(issue({ assignee: "dev", outcome: "" }))).toBe(true);
+    expect(isTask(issue({ assignee: "dev", outcome: null }))).toBe(false);
+    expect(isTask(issue({ assignee: "panel", outcome: "In mm" }))).toBe(false);
   });
 });

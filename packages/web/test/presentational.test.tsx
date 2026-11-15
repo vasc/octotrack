@@ -3,6 +3,7 @@ import { HeldDecision } from "../src/components/decisions/HeldDecision.tsx";
 import { OutcomeFields } from "../src/components/home/OutcomeFields.tsx";
 import { LineBox } from "../src/components/ui/LineBox.tsx";
 import { Loaded } from "../src/components/ui/Loaded.tsx";
+import { TaskFrees } from "../src/components/entity/TaskFrees.tsx";
 import type { TaskOutcome } from "../src/lib/tasks.ts";
 import { describe, expect, mock, test } from "bun:test";
 import { useState } from "react";
@@ -2000,7 +2001,7 @@ describe("PullRequestBox", () => {
     expect(within(box).getAllByText("+10 −2 · opened 2026-11-07")).toHaveLength(2);
     within(box).getByText("merged");
     within(box).getByText(
-      "Checks are agents' to fix, never yours, and claude-a merges once they pass; if it wants your eyes first, it asks.",
+      "Checks are agents' to fix, never yours. claude-a merges once they pass, and asks first if it wants your eyes.",
     );
   });
 
@@ -2008,7 +2009,11 @@ describe("PullRequestBox", () => {
     const view = render(<PullRequestBox prs={[pr({ checks: "pending" })]} holder={null} />);
     view.getByRole("heading", { name: "Pull request" });
     view.getByText("checks running");
-    view.getByText("Checks are agents' to fix, never yours; if it wants your eyes first, it asks.");
+    view.getByText(
+      whole(
+        "Checks are agents' to fix, never yours. Whoever takes the issue merges once they pass, and asks first if it wants your eyes.",
+      ),
+    );
     render(<PullRequestBox prs={[pr({ ref: "PR-3", checks: "none" })]} holder={null} />).getByText(
       "no checks",
     );
@@ -2659,5 +2664,62 @@ describe("Loaded", () => {
         <p>Plan</p>
       </Loaded>,
     ).getByText("Plan");
+  });
+});
+
+describe("TaskFrees", () => {
+  const freed = (overrides: Partial<EntitySummary> = {}): EntitySummary => ({
+    kind: "issue",
+    ref: "PANEL-5",
+    title: "Test-print the current parts",
+    status: "in_progress",
+    project: "PANEL",
+    priority: "medium",
+    assignee: "panel-widgets",
+    version: 1,
+    updatedAt: "",
+    ...overrides,
+  });
+
+  test("names what Done frees, opens it, and says who it wakes", () => {
+    navigate("/");
+    const view = render(<TaskFrees freed={[freed()]} />);
+    view.getByText("Test-print the current parts");
+    view.getByText(
+      /Done goes to the line's inbox for whoever holds PANEL-5, now panel-widgets, and wakes it./,
+    );
+    fireEvent.click(view.getByRole("button", { name: "PANEL-5" }));
+    expect(new URLSearchParams(window.location.search).get("ref")).toBe("PANEL-5");
+  });
+
+  test("with nobody holding it, says whoever takes it hears", () => {
+    render(<TaskFrees freed={[freed({ assignee: null })]} />).getByText(
+      /Done goes to the line's inbox for whoever takes PANEL-5, and wakes them./,
+    );
+  });
+
+  test("is nothing when the task frees nothing", () => {
+    expect(render(<TaskFrees freed={[]} />).container.textContent).toBe("");
+  });
+});
+
+describe("TaskCard's strip", () => {
+  test("says who filed the task and what it holds up", () => {
+    const view = render(
+      <TaskCard
+        task={issue({ title: "Measure", place: "the bench", outcome: "mm", createdBy: "panel-widgets" })}
+        holdsUp="the final print"
+        words=""
+        onWords={() => {}}
+        values={{}}
+        onValue={() => {}}
+        why=""
+        onWhy={() => {}}
+        onDone={() => {}}
+        onCant={() => {}}
+      />,
+    );
+    view.getByText(/holds up the final print/);
+    view.getByText(/filed by panel-widgets/);
   });
 });

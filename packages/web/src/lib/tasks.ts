@@ -58,3 +58,8 @@ export function doneSummary(
 export function cantSummary(task: Pick<Issue, "ref">, why: string): string {
   return `Closing ${task.ref} as not done: ${why}`;
 }
+
+/** A task is an issue for the developer with something to report: "dev" is the name the developer acts under. */
+export function isTask(issue: Pick<Issue, "assignee" | "outcome">): boolean {
+  return issue.assignee === "dev" && issue.outcome !== null;
+}
