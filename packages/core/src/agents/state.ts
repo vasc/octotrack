@@ -2,6 +2,11 @@ import type { Agent, AgentState } from "../schemas.ts";
 
 /** A command, watch poll or push within this long means the agent is at work. */
 export const RUNNING_WINDOW_MS = 15 * 60 * 1000;
+/**
+ * How long a wake's process may run, the woken session working within it, before the server ends it: past this it
+ * holds a process for good. The server's wake dispatcher keeps to it; the cap counts a wake as running for no longer.
+ */
+export const WAKE_DEADLINE_MS = 30 * 60 * 1000;
 
 /**
  * Where an agent stands, from what Octotrack has seen of it. Stopped and gone are things that happened; the rest follows

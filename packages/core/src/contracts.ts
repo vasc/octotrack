@@ -287,9 +287,15 @@ export const contracts = {
   ),
   runnerStops: read(
     "runner.stops",
-    "Agents the developer stopped whose stop command has not run yet",
+    "Agents the developer stopped whose stop command has not run yet, with the process of a wake still running for it",
     Empty,
-    z.array(z.object({ name: z.string() })),
+    z.array(
+      z.object({
+        name: z.string(),
+        /** A wake the server is running for it, which Stop ends: its process id, and when it began. */
+        wake: z.object({ pid: z.number().int(), since: z.string() }).nullable(),
+      }),
+    ),
   ),
   runnerStopRan: write(
     "runner.stop_ran",
@@ -710,8 +716,16 @@ export const contracts = {
   ),
   agentWoken: write(
     "agent.woken",
-    "Record that an agent was woken, or that the wake failed, which makes it gone",
-    z.strictObject({ name: z.string(), error: z.string().optional() }),
+    "Record a wake: that it began, its process, how it ended, or that it failed, which makes the agent gone",
+    z.strictObject({
+      name: z.string(),
+      /** It could not reach the session: the agent is gone. */
+      error: z.string().optional(),
+      /** Its process was spawned, with this id, and runs until its end is recorded. */
+      pid: z.number().int().optional(),
+      /** Its process ended: by itself, or killed at its deadline, having reached the session either way. */
+      ended: z.enum(["exited", "deadline"]).optional(),
+    }),
     AgentView,
   ),
   decisionUpdate: write(

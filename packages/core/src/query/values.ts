@@ -66,6 +66,7 @@ export const EVENT_TYPES = [
   "agent.would_stop",
   "write.refused",
   "agent.gone",
+  "agent.wake_ended",
   "line.told",
   "line.look_again",
   "decision.not_urgent",

@@ -4,7 +4,7 @@ import { agentState } from "../agents/state.ts";
 import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
 import type { AgentWake } from "../schemas.ts";
-import { getAgent, viewOf } from "../store/agents.ts";
+import { claimOf, getAgent, viewOf } from "../store/agents.ts";
 import { emit } from "../store/common.ts";
 import { rows } from "../store/context.ts";
 import { requireIssue, requireLine } from "../store/entities.ts";
@@ -86,12 +86,42 @@ export const inboxOps = [
     requireServer(ctx);
     const agent = getAgent(ctx, input.name);
     if (agent === null) throw new OctoError("not_found", `No agent called ${input.name}`);
-    ctx.sql.run("UPDATE agents SET wokenAt = ?, wakeError = ? WHERE name = ?", [
-      ctx.now,
-      input.error ?? null,
-      agent.name,
-    ]);
-    if (input.error !== undefined) {
+    const told = [input.error, input.pid, input.ended].filter((part) => part !== undefined).length;
+    if (told > 1) {
+      throw new OctoError(
+        "invalid_input",
+        "Record one thing about a wake at a time: its error, its process, or its end",
+      );
+    }
+    if (input.pid !== undefined) {
+      ctx.sql.run("UPDATE agents SET wakePid = ? WHERE name = ?", [input.pid, agent.name]);
+    } else if (input.ended !== undefined) {
+      ctx.sql.run("UPDATE agents SET wakePid = NULL WHERE name = ?", [agent.name]);
+      // Killed at its deadline, the wake had reached its session, which was at work: the session is not gone, and
+      // keeps its line asleep, to be woken again (fourth audit, A1). Only a wake that could not reach it is a failure.
+      if (input.ended === "deadline") {
+        const line = claimOf(ctx, agent.name)?.line ?? null;
+        emit(ctx, {
+          type: "agent.wake_ended",
+          kind: "agent",
+          ref: agent.name,
+          project: agent.repo,
+          line,
+          summary: `${agent.name}'s wake ran past its deadline, so its process was ended. ${line === null ? "It" : `It keeps ${line}, and`} is woken again when something waits for it.`,
+          attrs: {},
+        });
+      }
+    } else if (input.error !== undefined && agent.stoppedAt !== null) {
+      // Its wake ended because the developer stopped it, which ended its claims already: nothing failed.
+      ctx.sql.run("UPDATE agents SET wakePid = NULL WHERE name = ?", [agent.name]);
+    } else {
+      ctx.sql.run("UPDATE agents SET wokenAt = ?, wakeError = ?, wakePid = NULL WHERE name = ?", [
+        ctx.now,
+        input.error ?? null,
+        agent.name,
+      ]);
+    }
+    if (input.error !== undefined && agent.stoppedAt === null) {
       // A session that cannot be woken is gone: what it held goes to whoever comes next.
       ctx.sql.run("UPDATE agents SET goneAt = ? WHERE name = ?", [ctx.now, agent.name]);
       endFirstOffer(ctx, agent.name);

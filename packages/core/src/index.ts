@@ -1,3 +1,4 @@
+export { WAKE_DEADLINE_MS } from "./agents/state.ts";
 export * from "./contracts.ts";
 export type { SqlDriver, SqlValue } from "./db/driver.ts";
 export { type Migration, migrate, SCHEMA_VERSION } from "./db/migrations.ts";

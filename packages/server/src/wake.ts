@@ -1,5 +1,12 @@
 import { readFileSync } from "node:fs";
-import { type AgentWake, type Caller, contracts, type Decision, type Tracker } from "@octotrack/core";
+import {
+  type AgentWake,
+  type Caller,
+  contracts,
+  type Decision,
+  type Tracker,
+  WAKE_DEADLINE_MS,
+} from "@octotrack/core";
 import { z } from "zod";
 import { childEnv } from "./env.ts";
 import { runProcess } from "./spawn.ts";
@@ -11,18 +18,22 @@ export type WakeAdapters = z.infer<typeof WakeAdapters>;
 export interface WakeResult {
   exitCode: number;
   stderr: string;
+  /** Killed at its deadline: it reached the session, which was still at work, so the wake did not fail. */
+  timedOut?: boolean;
 }
 
-/** Runs a wake command; `env` says who the woken session is, which is all of its identity it gets. */
+/**
+ * Runs a wake command; `env` says who the woken session is, which is all of its identity it gets. `onSpawn` is told
+ * its process id once it runs, so that Stop can end it.
+ */
 export type WakeRunner = (
   argv: readonly string[],
   env: Readonly<Record<string, string>>,
+  onSpawn?: (pid: number) => void,
 ) => Promise<WakeResult>;
 
 const DISPATCHER: Caller = { actor: "octotrack", channel: "cli", system: true };
 const STDERR_KEPT = 300;
-// A woken agent may work for a while before its command returns, and must not hold a process forever.
-const WAKE_DEADLINE_MS = 30 * 60 * 1000;
 
 /**
  * What a wake can run comes only from this file on the machine. With no authentication, a request naming its own command
@@ -45,12 +56,22 @@ export function loadWakeAdapters(path: string): WakeAdapters {
 
 /**
  * No shell is involved, so that nothing in an address or a message can be read as a command. The woken session gets
- * its own name and never the server's: the server may have been started from another agent's shell.
+ * its own name and never the server's: the server may have been started from another agent's shell. A woken agent may
+ * work for a while before its command returns, and must not hold a process forever: at the deadline the wake is killed
+ * with everything it started, the session included, which an adapter such as `octo adapter claude` runs as its child.
  */
-export const spawnWake: WakeRunner = async (argv, env) => {
-  const { code, stderr } = await runProcess(argv, { env: childEnv(env), deadlineMs: WAKE_DEADLINE_MS });
-  return { exitCode: code, stderr };
-};
+export function wakeRunner(deadlineMs: number): WakeRunner {
+  return async (argv, env, onSpawn) => {
+    const { code, stderr, timedOut } = await runProcess(argv, {
+      env: childEnv(env),
+      deadlineMs,
+      ...(onSpawn === undefined ? {} : { onSpawn }),
+    });
+    return { exitCode: code, stderr, timedOut };
+  };
+}
+
+export const spawnWake: WakeRunner = wakeRunner(WAKE_DEADLINE_MS);
 
 /** Says only that there is an answer. The agent reads it from the tracker, so tracker text never becomes a prompt. */
 function wakeMessage(ref: string): string {
@@ -95,8 +116,9 @@ export function createWakeDispatcher(options: {
     record(decision.ref);
     try {
       const argv = argvFor(adapter.command, address.slice(split + 1), wakeMessage(decision.ref));
-      const { exitCode, stderr } = await run(argv, { OCTO_AGENT: decision.requestedBy });
-      if (exitCode !== 0) {
+      const { exitCode, stderr, timedOut } = await run(argv, { OCTO_AGENT: decision.requestedBy });
+      // Killed at its deadline, it had reached its asker, which was at work: not a failed wake (fourth audit, A1).
+      if (exitCode !== 0 && timedOut !== true) {
         record(decision.ref, `Exit ${exitCode}: ${stderr.trim().slice(0, STDERR_KEPT)}`);
       }
     } catch (error) {
@@ -119,11 +141,20 @@ export function createWakeDispatcher(options: {
     // Recorded first: if this process dies mid-run, an agent is left unwoken rather than woken twice.
     recordAgent(due.agent);
     try {
-      const { exitCode, stderr } = await run(
+      const { exitCode, stderr, timedOut } = await run(
         argvFor(adapter.command, due.address.slice(split + 1), due.message),
         { OCTO_AGENT: due.agent },
+        // Its process is recorded while it runs: the cap counts it, and Stop ends it.
+        (pid) => tracker.call(contracts.agentWoken, { name: due.agent, pid }, DISPATCHER),
       );
-      if (exitCode !== 0) recordAgent(due.agent, `Exit ${exitCode}: ${stderr.trim().slice(0, STDERR_KEPT)}`);
+      // One killed at its deadline reached its session, which was at work: not a failed wake (fourth audit, A1).
+      if (timedOut === true) {
+        tracker.call(contracts.agentWoken, { name: due.agent, ended: "deadline" }, DISPATCHER);
+      } else if (exitCode !== 0) {
+        recordAgent(due.agent, `Exit ${exitCode}: ${stderr.trim().slice(0, STDERR_KEPT)}`);
+      } else {
+        tracker.call(contracts.agentWoken, { name: due.agent, ended: "exited" }, DISPATCHER);
+      }
     } catch (error) {
       recordAgent(due.agent, error instanceof Error ? error.message : String(error));
     }

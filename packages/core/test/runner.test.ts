@@ -947,3 +947,70 @@ describe("Step in says why, as the server decides it (fourth audit, A20)", () =>
     expect(w.tracker.call(c.homeShow, {}, w.dev).lines[line.ref]?.stepInReason).toBeNull();
   });
 });
+
+describe("a wake that runs past its deadline (fourth audit, A1)", () => {
+  /** A session Octotrack started that took its line, registered a wake address, and exited: asleep, keeping its line. */
+  function asleep() {
+    const w = world();
+    w.cap(1);
+    const line = w.line("Enclosure");
+    w.line("Mount");
+    w.later(1);
+    const started = w.tracker.call(c.runnerStart, { line: line.ref, repo: "PANEL" }, w.runner);
+    w.tracker.call(c.runnerSpawned, { name: started.name, pid: 101 }, w.runner);
+    w.tracker.call(c.agentRegister, { wake: `claude:${started.name}` }, w.session(started.name));
+    w.tracker.call(c.lineTake, { ref: line.ref }, w.session(started.name));
+    w.tracker.call(c.runnerExited, { name: started.name, code: 0, output: "" }, w.runner);
+    w.later(20);
+    const agent = () => w.tracker.call(c.agentList, {}, w.dev).find((item) => item.name === started.name);
+    return { w, line, name: started.name, agent };
+  }
+  const due = (w: ReturnType<typeof world>) =>
+    w.tracker.call(c.runnerDue, {}, w.runner).map((item) => [item.line, item.name]);
+
+  test("reached its session, so the session keeps its line and is not gone", () => {
+    const { w, line, name, agent } = asleep();
+    w.tracker.call(c.agentWoken, { name }, w.runner);
+    w.tracker.call(c.agentWoken, { name, pid: 4242 }, w.runner);
+    w.later(30);
+    w.tracker.call(c.agentWoken, { name, ended: "deadline" }, w.runner);
+    expect([agent()?.state, agent()?.line, agent()?.wakeError]).toEqual(["asleep", line.ref, null]);
+    const ended = w.tracker.call(c.feedList, { query: "event:agent.wake_ended,agent.gone" }, w.dev).events;
+    expect(ended.map((event) => [event.type, event.summary])).toEqual([
+      [
+        "agent.wake_ended",
+        `${name}'s wake ran past its deadline, so its process was ended. It keeps ${line.ref}, and is woken again when something waits for it.`,
+      ],
+    ]);
+  });
+
+  test("counts against the cap while it runs, however silent the session is", () => {
+    const { w, name } = asleep();
+    w.tracker.call(c.agentWoken, { name }, w.runner);
+    w.tracker.call(c.agentWoken, { name, pid: 4242 }, w.runner);
+    w.later(20);
+    expect(due(w)).toEqual([]);
+    w.tracker.call(c.agentWoken, { name, ended: "exited" }, w.runner);
+    expect(due(w)).toEqual([["L-2", null]]);
+  });
+
+  test("is listed for Stop with its process, so Stop can end it", () => {
+    const { w, name } = asleep();
+    w.tracker.call(c.agentWoken, { name }, w.runner);
+    w.tracker.call(c.agentWoken, { name, pid: 4242 }, w.runner);
+    w.tracker.call(c.agentStop, { name }, w.dev);
+    expect(w.tracker.call(c.runnerStops, {}, w.runner)).toEqual([
+      { name, wake: { pid: 4242, since: w.tracker.call(c.agentList, {}, w.dev)[0]?.wokenAt ?? "" } },
+    ]);
+  });
+
+  test("ended by Stop is not a wake that failed: the agent is stopped, not declared gone", () => {
+    const { w, name, agent } = asleep();
+    w.tracker.call(c.agentWoken, { name }, w.runner);
+    w.tracker.call(c.agentWoken, { name, pid: 4242 }, w.runner);
+    w.tracker.call(c.agentStop, { name }, w.dev);
+    w.tracker.call(c.agentWoken, { name, error: "Exit 143: " }, w.runner);
+    expect(agent()?.state).toBe("stopped");
+    expect(w.tracker.call(c.feedList, { query: "event:agent.gone" }, w.dev).events).toEqual([]);
+  });
+});
