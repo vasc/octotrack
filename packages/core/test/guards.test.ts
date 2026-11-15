@@ -899,4 +899,13 @@ describe("agents write only to the line they are on, the rest of it (fourth audi
     );
     expect(w.events(`event:status.posted line:${w.line}`)).toHaveLength(1);
   });
+
+  test("notifications: an agent cannot turn them off, even on the developer's words", () => {
+    const w = world();
+    const endpoint = "https://push.example/1";
+    w.as(w.dev, c.pushSubscribe, { endpoint, keys: { p256dh: "key", auth: "auth" } });
+    const relayed = w.agent("panel", { said: "stop buzzing me" });
+    expect(w.refused(() => w.as(relayed, c.pushUnsubscribe, { endpoint })).code).toBe("forbidden");
+    expect(w.as(w.dev, c.pushUnsubscribe, { endpoint }).endpoint).toBe(endpoint);
+  });
 });
