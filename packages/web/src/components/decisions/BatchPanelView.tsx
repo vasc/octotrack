@@ -14,11 +14,13 @@ export interface BatchPanelViewProps {
   submitting: boolean;
   onChange(text: string): void;
   onSubmit(): void;
+  /** Opened with a key: the box takes the cursor. */
+  autoFocus?: boolean;
 }
 
 /** Decisions made elsewhere, typed in as fast as they can be remembered. */
 export function BatchPanelView(props: BatchPanelViewProps) {
-  const { text, parsed, parseError, results, submitting, onChange, onSubmit } = props;
+  const { text, parsed, parseError, results, submitting, onChange, onSubmit, autoFocus = false } = props;
   return (
     <form
       className="batch"
@@ -34,6 +36,8 @@ export function BatchPanelView(props: BatchPanelViewProps) {
         id="batch-lines"
         className="field"
         spellCheck={false}
+        // biome-ignore lint/a11y/noAutofocus: opened with r, to type into at once
+        autoFocus={autoFocus}
         placeholder={"D-3 redis Agreed on the call\nD-4 a\nD-5 - None of the options, doing this instead"}
         value={text}
         onChange={(event) => onChange(event.target.value)}

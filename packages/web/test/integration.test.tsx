@@ -538,6 +538,30 @@ describe("decisions out of band", () => {
     });
   });
 
+  test("Record answers takes the cursor, keeps what is typed as a draft, and closes on Esc", async () => {
+    const first = seedDecision({ title: "First" });
+    navigate("/");
+    const view = renderApp(<App />);
+    await view.findByRole("heading", { name: "First" });
+    fireEvent.keyDown(window, { key: "r" });
+    const box = await view.findByLabelText("Log decisions made elsewhere");
+    expect(document.activeElement).toBe(box);
+    fireEvent.change(box, { target: { value: `${first.ref} sqs On the call` } });
+    fireEvent.keyDown(box, { key: "Escape" });
+    await gone(() => view.queryByRole("region", { name: "Record answers" }));
+    await waitFor(() =>
+      expect(
+        server.tracker.call(c.draftGet, { key: "record-answers" }, { actor: "dev", channel: "dashboard" })
+          .text,
+      ).toBe(`${first.ref} sqs On the call`),
+    );
+    fireEvent.keyDown(window, { key: "r" });
+    expect(await view.findByLabelText("Log decisions made elsewhere")).toHaveProperty(
+      "value",
+      `${first.ref} sqs On the call`,
+    );
+  });
+
   test("the Log finds the architecture decisions recorded, and only those", async () => {
     server.act(c.decisionRecord, { title: "Chose SQLite", chosen: "SQLite", kind: "architecture" });
     server.act(c.decisionRecord, { title: "Chose pricing", chosen: "Flat", kind: "product" });
