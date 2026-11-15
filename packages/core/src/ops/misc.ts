@@ -13,7 +13,7 @@ import {
   findEntity,
   getDrift,
   getUpdate,
-  lineOfEntity,
+  lineConcerned,
   requireEntity,
   requireLine,
   requireProject,
@@ -122,10 +122,13 @@ function describeNext(
   return parts.length === 0 ? "Nothing to do." : `${parts.join("; ")}.`;
 }
 
-/** The line a drift is about: the line it names, or the line of the issue or question it names. */
+/**
+ * The line a drift is about: the line it names, or the line of the issue or question it names, or of the work the pull
+ * request it names implements.
+ */
 function lineOfDrift(ctx: Ctx, drift: Drift): string | null {
   const target = findEntity(ctx, drift.target);
-  return target === null ? null : lineOfEntity(target);
+  return target === null ? null : lineConcerned(ctx, target);
 }
 
 /** Drift on a line is cleared and taken only from that line. */
@@ -149,7 +152,7 @@ function postUpdate(
 ): StatusUpdate {
   const target = input.target === undefined ? null : requireEntity(ctx, input.target);
   const targetRef = target?.value.ref ?? null;
-  const line = target === null ? null : lineOfEntity(target);
+  const line = target === null ? null : lineConcerned(ctx, target);
   if (target !== null && !forDeveloper) guardOnLine(ctx, line, "scope", target.value.ref);
   const project =
     input.project === undefined
@@ -231,7 +234,7 @@ export const miscOps = [
     }
     if (input.target !== undefined) {
       const target = findEntity(ctx, input.target);
-      if (target !== null) guardOnLine(ctx, lineOfEntity(target), "scope", target.value.ref);
+      if (target !== null) guardOnLine(ctx, lineConcerned(ctx, target), "scope", target.value.ref);
     }
     return { acknowledged: ackDrift(ctx, input) };
   }),
