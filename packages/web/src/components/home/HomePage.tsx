@@ -55,6 +55,7 @@ export function HomePage() {
       choose,
       move: h.reorder,
       onRecord: () => setRecording(true),
+      inspecting,
     }),
   );
   const { handle, drop } = useLineHandles(h);
