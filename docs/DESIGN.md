@@ -407,6 +407,17 @@ Decisions made from that:
   Appearance menu in the bar, each theme previewed in its own colours, and kept per device in browser storage, since a
   phone and a desk may want different ones and nothing else depends on it; `index.html` applies the choice before the
   first paint. `bun test design` holds every theme to the same contrast in both modes.
+
+  Then the developer asked "Why do all themes have a blue highlight" and said "Themes don't change anything on mobile".
+  Proposals were edged and tinted in an info colour seeded blue, teal or violet in every theme, attention was blue in
+  Sand and Plum, every dark ground was a near-black with a trace of hue, and the phone marked the page you are on with
+  coloured text only, so on a phone at night every theme looked the same. _Decided:_ info is the accent, so what waits
+  for your yes is drawn in the theme's own colour; attention is blue only in a theme whose own colour is blue (Sand's is
+  plum, Plum's teal), and where attention is teal, good is an olive green so the two never read alike; each hued
+  theme's dark ground is a deep shade of its hue (Forest green, Ocean navy, Plum aubergine), with only Paper a neutral
+  black; dark tints are mixed from a neutral grey, since a hue mixed into a ground of another hue turns into a third;
+  and the phone fills the page you are on with the accent, as a wide screen does. `bun test design` checks each of
+  these, and a tap on a phone flashes the accent instead of the browser's blue-grey.
 - **Focus is a border, with the keys beside it, not a word.** The developer, looking at the built home: "focused text on
   lines is unnecessary, reminding about j an k shortcuts to the side would be better, in a subtle way". The word
   Focused, which the boards draw over the focused item, is gone; the item keeps its border, in the theme's accent, and out in the margin

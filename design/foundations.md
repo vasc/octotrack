@@ -13,18 +13,25 @@ specimen shows both.
 
 There are eight themes, each in light and dark: Paper (the tokens below), Slate, Sand, Forest, Ocean, Plum, Rose and High
 contrast. A theme chooses every colour: `[data-palette="…"]` in `tokens.css` redefines the ground, its lines, the ink, the
-accent, attention and the four statuses. What a colour means never changes with the theme, only its hue: attention is
-still the one colour for what needs you, good is still a green and bad a red, each tuned to sit in that theme, and no
-two themes share an accent or an attention colour. Paper's accent is a blue and its attention an orange; Slate is
-indigo with pink, Sand terracotta with cobalt, Forest moss with orange, Ocean sea blue with coral, Plum violet with gold,
-Rose raspberry with teal, and High contrast pure blue with magenta in light, cyan with yellow in dark.
+accent, attention and the statuses. What a colour means never changes with the theme, only its hue: attention is still
+the one colour for what needs you, good is still a green and bad a red, each tuned to sit in that theme, and no two
+themes share an accent or an attention colour. The accent is the theme's own colour, and what agents propose (info)
+wears it too, so the cards that wait for your yes are the theme's colour and not a blue every theme shares. Attention
+is a second hue that stands apart from the accent, from bad's red and from good's green, and it is blue only in a
+theme whose own colour is blue. Paper's accent is a blue and its attention a fuchsia; Slate is indigo with teal, Sand
+terracotta with plum, Forest moss with magenta, Ocean sea blue with violet, Plum violet with teal, Rose raspberry with
+teal, and High contrast pure blue with purple in light, cyan with yellow in dark. Where attention is teal, good is an
+olive green so the two never read alike. In dark, each theme's ground is a deep shade of its own hue (Slate blue-grey,
+Sand brown, Forest green, Ocean navy, Plum aubergine, Rose wine), so a theme still shows at night; only Paper's is a
+neutral black, and High contrast's a pure one.
 
 The colours are not picked by hand one by one. `scripts/themes.ts` holds each theme's seeds (its ground, ink, accent,
-attention and statuses, in each mode), mixes the lines, the quieter inks, the tints and the edges from them, moves
+attention, good, bad and warn, in each mode), mixes the lines, the quieter inks, the tints and the edges from them, moves
 every colour that is read as text toward the ink until it reaches its contrast on every ground and tint it sits on,
 and writes the result into `tokens.css`. To change a theme, change its seeds and run `bun scripts/themes.ts`; to add
 one, add its seeds there and an entry in `packages/web/src/lib/appearance.ts`. `bun test design` checks every pairing
-in every theme and both modes, that each theme defines every colour, and that the themes stay distinct.
+in every theme and both modes, that each theme defines every colour, that the themes stay distinct, that info is the
+accent, that no theme but a blue one has a blue highlight, and that every hued theme's dark ground carries its hue.
 
 A palette set on any element applies inside it, which is how the Appearance menu previews each theme: a swatch shows
 the theme's ground with its accent and attention side by side. The developer picks a theme and a mode in that menu;
@@ -78,14 +85,14 @@ Means "this needs you". See [principle 1](principles.md#1-attention-is-the-scarc
 
 Each has a strong and a soft version: the strong one for text and marks, and the soft one behind that text.
 
-| Tokens                  | Means                                                        |
-| ----------------------- | ------------------------------------------------------------ |
-| `--good`, `--good-soft` | Finished or fine: merged, passing, decided, done             |
-| `--bad`, `--bad-soft`   | Broken, and someone has to act: failing, Step in, no owner   |
-| `--bad-line`            | The edge of a Step in box. Decorative only                   |
-| `--warn`, `--warn-soft` | Not finished yet, or worth a look: pending, review requested |
-| `--info`, `--info-soft` | What agents propose and wait for your yes on; in progress    |
-| `--info-line`           | The edge of a proposal. Decorative only                      |
+| Tokens                  | Means                                                                                      |
+| ----------------------- | ------------------------------------------------------------------------------------------ |
+| `--good`, `--good-soft` | Finished or fine: merged, passing, decided, done                                           |
+| `--bad`, `--bad-soft`   | Broken, and someone has to act: failing, Step in, no owner                                 |
+| `--bad-line`            | The edge of a Step in box. Decorative only                                                 |
+| `--warn`, `--warn-soft` | Not finished yet, or worth a look: pending, review requested                               |
+| `--info`, `--info-soft` | What agents propose and wait for your yes on; in progress. The accent's hue in every theme |
+| `--info-line`           | The edge of a proposal. Decorative only                                                    |
 
 ### Tones
 

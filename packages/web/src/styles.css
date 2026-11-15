@@ -19,6 +19,8 @@ body,
   background: var(--bg);
   accent-color: var(--accent);
   caret-color: var(--accent);
+  /* A tap on a phone flashes the accent, not the browser's own blue-grey. */
+  -webkit-tap-highlight-color: color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 ::selection {
@@ -1165,9 +1167,8 @@ p {
     justify-content: center;
     min-height: var(--touch-target);
   }
+  /* The page you are on is filled with the theme's accent, as on a wide screen, so the theme shows on every page. */
   .top-nav .nav-item[aria-current="page"] {
-    background: none;
-    color: var(--accent);
     font-weight: var(--weight-bold);
   }
   /* The bar's own order on a phone: New beside the page's name, I'm at across the width under the counts. */
@@ -2056,7 +2057,7 @@ p {
   color: var(--ink-2);
 }
 
-/* What agents propose waits for your yes, in blue; the recommended choice is the filled one. */
+/* What agents propose waits for your yes, in the theme's own colour; the recommended choice is the filled one. */
 .proposal-card {
   background: var(--surface);
   border: 1px solid var(--info-line);
@@ -2498,6 +2499,10 @@ p {
   .proposal-choices {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /* The recommended choice takes the whole width, so "Start · recommended" is never cut to half a phone. */
+  .proposal-choices > [data-primary="true"] {
+    grid-column: 1 / -1;
   }
   .line-handle {
     width: var(--control-height);

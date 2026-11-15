@@ -49,6 +49,23 @@ function contrast(a: string, b: string): number {
   return (high + 0.05) / (low + 0.05);
 }
 
+/** The hue of a colour, 0 to 360 degrees. */
+function hueOf(hex: string): number {
+  const [red = 0, green = 0, blue = 0] = [1, 3, 5].map(
+    (start) => Number.parseInt(hex.slice(start, start + 2), 16) / 255,
+  );
+  const high = Math.max(red, green, blue);
+  const span = high - Math.min(red, green, blue);
+  if (span === 0) return 0;
+  const sector =
+    high === red
+      ? ((green - blue) / span) % 6
+      : high === green
+        ? (blue - red) / span + 2
+        : (red - green) / span + 4;
+  return (sector * 60 + 360) % 360;
+}
+
 const TEXT = 4.5;
 const FOCUS_RING = 3;
 
@@ -96,6 +113,71 @@ describe("contrast", () => {
       const names = [...block.matchAll(/^\s*(--[a-z0-9-]+):/gm)].map((match) => match[1]);
       expect({ palette, names }).toEqual({ palette, names: COLOR_TOKENS });
     }
+  });
+
+  test("what agents propose is drawn in the theme's own colour, not a hue every theme shares", () => {
+    for (const palette of themes) {
+      for (const mode of ["light", "dark"] as const) {
+        const pick = (token: string) => hexOf(token, mode, palette);
+        expect({ palette, mode, info: pick("--info"), soft: pick("--info-soft") }).toEqual({
+          palette,
+          mode,
+          info: pick("--accent"),
+          soft: pick("--accent-soft"),
+        });
+      }
+    }
+  });
+
+  test("in dark, a hued theme's ground is its own colour, not a black every theme shares", () => {
+    const chroma = (hex: string) => {
+      const values = [1, 3, 5].map((start) => Number.parseInt(hex.slice(start, start + 2), 16));
+      return Math.max(...values) - Math.min(...values);
+    };
+    const greys = themes
+      .filter((palette) => palette !== "paper" && palette !== "contrast")
+      .flatMap((palette) =>
+        ["--bg", "--surface", "--surface-2"]
+          .map((token) => ({ palette, token, hex: hexOf(token, "dark", palette) }))
+          .filter(({ hex }) => chroma(hex) < 22),
+      );
+    expect(greys).toEqual([]);
+  });
+
+  test("a tint keeps its colour's hue instead of turning into another on a hued ground", () => {
+    const apart = (a: number, b: number) => Math.min(Math.abs(a - b), 360 - Math.abs(a - b));
+    const drifted = themes.flatMap((palette) =>
+      (["light", "dark"] as const).flatMap((mode) =>
+        ["--accent", "--attention", "--good", "--bad", "--warn"]
+          .map((token) => ({
+            palette,
+            mode,
+            token,
+            by: Math.round(
+              apart(hueOf(hexOf(token, mode, palette)), hueOf(hexOf(`${token}-soft`, mode, palette))),
+            ),
+          }))
+          .filter(({ by }) => by > 25),
+      ),
+    );
+    expect(drifted).toEqual([]);
+  });
+
+  test("a highlight is blue only in a theme whose own colour is blue", () => {
+    const blue = (hex: string) => {
+      const hue = hueOf(hex);
+      return hue >= 195 && hue <= 250;
+    };
+    const strays = themes.flatMap((palette) =>
+      (["light", "dark"] as const).flatMap((mode) =>
+        blue(hexOf("--accent", mode, palette))
+          ? []
+          : ["--attention", "--info"]
+              .filter((token) => blue(hexOf(token, mode, palette)))
+              .map((token) => `${palette} ${mode} ${token} ${hexOf(token, mode, palette)}`),
+      ),
+    );
+    expect(strays).toEqual([]);
   });
 
   test("each theme looks like itself: no two share an accent or an attention colour", () => {

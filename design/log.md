@@ -55,8 +55,12 @@ further down, each marked _Replaced_ there.
 - **One control height** (`--control-height`) for every desktop control, a few inline icons, and no ellipsis on a
   button that asks first.
 - **A theme chooses every colour.** Eight themes, each with its own ground, accent, attention and statuses, mixed from
-  seeds in `scripts/themes.ts` and checked for contrast. Attention moved off amber in Paper to an orange that `--warn`'s
-  yellow cannot be mistaken for, which settles the old question of whether amber was right.
+  seeds in `scripts/themes.ts` and checked for contrast. Attention moved off amber in Paper to a fuchsia that neither
+  `--warn`'s yellow nor `--bad`'s red can be mistaken for, which settles the old question of whether amber was right.
+- **What agents propose wears the theme's own colour.** Info is the accent, attention is blue only in a blue theme, each
+  hued theme's dark ground is a deep shade of its hue, dark tints are mixed from a neutral grey so they keep their hue,
+  and the phone fills the page you are on with the accent. Before, every theme showed a blue proposal edge and, on a
+  phone in dark, looked like every other.
 - **I'm at is a menu of places, never a select,** so no arrow key changes where you are.
 - **The key list is the one modal,** so no key acts behind it. The Start sheet opens in place.
 - **A lost connection is said quietly:** "Not live: reconnecting" under the bar until it returns.

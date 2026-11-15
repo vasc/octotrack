@@ -22,7 +22,7 @@ export function FoldedSection({
   note?: string | undefined;
   /** Tabled lines wait; their tile is drawn dashed. */
   dashed?: boolean;
-  /** Proposals wait for your yes, in blue. */
+  /** Proposals wait for your yes, in the theme's own colour. */
   tone?: "info";
   children: ReactNode;
 }) {

@@ -1,8 +1,9 @@
 /**
  * Writes every theme's colours into design/tokens.css: `bun scripts/themes.ts`.
  *
- * A theme is seeded with its ground, ink, accent, attention and four statuses in each mode. Its lines, quieter inks,
- * tints and edges are mixed from those, and every colour that is read as text is moved toward the ink until it reaches
+ * A theme is seeded with its ground, ink, accent, attention and three statuses in each mode. What agents propose
+ * (info) wears the accent, so a theme's own colour is what you act on and what waits for your yes. Its lines, quieter
+ * inks, tints and edges are mixed from those, and every colour that is read as text is moved toward the ink until it reaches
  * its contrast on every ground and tint it is drawn on. Change a seed here, run it, and `bun test design` checks the
  * result.
  */
@@ -19,7 +20,6 @@ type Seed = {
   good: string;
   bad: string;
   warn: string;
-  info: string;
 };
 type Theme = { id: string; label: string; light: Seed; dark: Seed; lineStrength: number };
 
@@ -28,57 +28,57 @@ const THEMES: readonly Theme[] = [
     id: "paper",
     label: "Paper",
     lineStrength: 1,
-    light: seed("#f6f6f4 #ffffff #f9f9f8 #18181b #2b59c3 #a21caf #15803d #b91c1c #a16207 #0f766e"),
-    dark: seed("#121212 #1b1b1b #232323 #f2f2f0 #8fb0ff #e879f9 #4ade80 #f87171 #facc15 #5eead4"),
+    light: seed("#f6f6f4 #ffffff #f9f9f8 #18181b #2b59c3 #a21caf #15803d #b91c1c #a16207"),
+    dark: seed("#121212 #1b1b1b #232323 #f2f2f0 #8fb0ff #e879f9 #4ade80 #f87171 #facc15"),
   },
   {
     id: "slate",
     label: "Slate",
     lineStrength: 1,
-    light: seed("#e3e9f0 #f4f7fa #ebf0f6 #0f172a #4338ca #0d9488 #15803d #b91c1c #a16207 #a21caf"),
-    dark: seed("#0c1219 #141c27 #1b2432 #eef3f8 #a5b4fc #5eead4 #4ade80 #f87171 #fbbf24 #f0abfc"),
+    light: seed("#e3e9f0 #f4f7fa #ebf0f6 #0f172a #4338ca #0d9488 #4d7c0f #b91c1c #a16207"),
+    dark: seed("#0e1826 #152233 #1c2c40 #eef3f8 #a5b4fc #5eead4 #a3e635 #f87171 #fbbf24"),
   },
   {
     id: "sand",
     label: "Sand",
     lineStrength: 1,
-    light: seed("#eee1cb #faf3e6 #f3e9d8 #2a2016 #a64b1f #1d4ed8 #4d7c0f #9f1239 #a16207 #6d28d9"),
-    dark: seed("#19130a #231b10 #2c2317 #f6efe3 #f2a37c #93c5fd #a3e635 #fb7185 #facc15 #c4b5fd"),
+    light: seed("#eee1cb #faf3e6 #f3e9d8 #2a2016 #a64b1f #86198f #4d7c0f #9f1239 #a16207"),
+    dark: seed("#22180b #2e2112 #3a2b19 #f6efe3 #f2a37c #f5a0e6 #a3e635 #fb7185 #facc15"),
   },
   {
     id: "forest",
     label: "Forest",
     lineStrength: 1,
-    light: seed("#dae8da #eff6ee #e3eee3 #0f2214 #3f6b0c #c026d3 #0f766e #b91c1c #a16207 #1e40af"),
-    dark: seed("#09150c #0f1f13 #15281a #eaf5ec #a3e635 #f0abfc #5eead4 #fca5a5 #fde047 #93c5fd"),
+    light: seed("#dae8da #eff6ee #e3eee3 #0f2214 #3f6b0c #c026d3 #0f766e #b91c1c #a16207"),
+    dark: seed("#0c2215 #133020 #1a3c29 #eaf5ec #a3e635 #f0abfc #5eead4 #fca5a5 #fde047"),
   },
   {
     id: "ocean",
     label: "Ocean",
     lineStrength: 1,
-    light: seed("#d7e6f5 #eef5fd #e2edf9 #0a1a2e #035f92 #7c3aed #047857 #b91c1c #a16207 #be185d"),
-    dark: seed("#06101c #0c1829 #122136 #e8f1fc #38bdf8 #c4b5fd #34d399 #f87171 #fde047 #f9a8d4"),
+    light: seed("#d7e6f5 #eef5fd #e2edf9 #0a1a2e #035f92 #7c3aed #047857 #b91c1c #a16207"),
+    dark: seed("#081a30 #0e2540 #15304f #e8f1fc #38bdf8 #c4b5fd #34d399 #f87171 #fde047"),
   },
   {
     id: "plum",
     label: "Plum",
     lineStrength: 1,
-    light: seed("#e7dcef #f6f0fa #ede4f4 #1e1426 #7322b8 #2563eb #15803d #be123c #a16207 #0f766e"),
-    dark: seed("#130b18 #1c1222 #25182c #f5eef9 #c69cfa #bfdbfe #4ade80 #fb7185 #facc15 #5eead4"),
+    light: seed("#e7dcef #f6f0fa #ede4f4 #1e1426 #7322b8 #0b7a6c #4d7c0f #be123c #a16207"),
+    dark: seed("#1d0e28 #281736 #331f44 #f5eef9 #c69cfa #3fe0c5 #a3e635 #fb7185 #facc15"),
   },
   {
     id: "rose",
     label: "Rose",
     lineStrength: 1,
-    light: seed("#f2dde1 #fbf1f3 #f6e6ea #26141a #b0164f #0f766e #15803d #b91c1c #a16207 #1d4ed8"),
-    dark: seed("#190b0f #231217 #2d191f #fbeef0 #f58bb9 #2dd4bf #4ade80 #f87171 #facc15 #93c5fd"),
+    light: seed("#f2dde1 #fbf1f3 #f6e6ea #26141a #b0164f #0f766e #4d7c0f #b91c1c #a16207"),
+    dark: seed("#250d17 #321621 #3f1e2b #fbeef0 #f58bb9 #2dd4bf #a3e635 #f87171 #facc15"),
   },
   {
     id: "contrast",
     label: "High contrast",
     lineStrength: 1.9,
-    light: seed("#ffffff #ffffff #f0f0f0 #000000 #0000cc #8000a0 #006b00 #b00000 #7a4f00 #006a6a"),
-    dark: seed("#000000 #000000 #121212 #ffffff #00ffff #ffff00 #00ff66 #ff6b6b #ffb000 #d9a6ff"),
+    light: seed("#ffffff #ffffff #f0f0f0 #000000 #0000cc #8000a0 #006b00 #b00000 #7a4f00"),
+    dark: seed("#000000 #000000 #121212 #ffffff #00ffff #ffff00 #00ff66 #ff6b6b #ffb000"),
   },
 ];
 
@@ -114,7 +114,7 @@ export const COLOR_TOKENS = [
 type ColorToken = (typeof COLOR_TOKENS)[number];
 
 function seed(values: string): Seed {
-  const [bg, surface, surface2, ink, accent, attention, good, bad, warn, info, ...rest] = values.split(" ");
+  const [bg, surface, surface2, ink, accent, attention, good, bad, warn, ...rest] = values.split(" ");
   if (
     bg === undefined ||
     surface === undefined ||
@@ -125,12 +125,11 @@ function seed(values: string): Seed {
     good === undefined ||
     bad === undefined ||
     warn === undefined ||
-    info === undefined ||
     rest.length > 0
   ) {
-    throw new Error(`A seed is ten colours: ${values}`);
+    throw new Error(`A seed is nine colours: ${values}`);
   }
-  return { bg, surface, surface2, ink, accent, attention, good, bad, warn, info };
+  return { bg, surface, surface2, ink, accent, attention, good, bad, warn };
 }
 
 function channels(hex: string): number[] {
@@ -167,6 +166,13 @@ export function contrast(a: string, b: string): number {
   return (high + 0.05) / (low + 0.05);
 }
 
+/** The grey as light as `hex`: each channel the mean of its three. */
+function grey(hex: string): string {
+  const values = channels(hex);
+  const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
+  return toHex([mean, mean, mean]);
+}
+
 /** `color` moved toward `toward` in small steps until it reaches `need` on every ground. */
 function reach(color: string, toward: string, grounds: readonly string[], need = 4.7): string {
   const worst = (candidate: string) => Math.min(...grounds.map((ground) => contrast(candidate, ground)));
@@ -180,9 +186,10 @@ function reach(color: string, toward: string, grounds: readonly string[], need =
 function colors(theme: Seed, dark: boolean, strength: number): Record<ColorToken, string> {
   const grounds = [theme.bg, theme.surface, theme.surface2];
   const tint = dark ? 0.2 : 0.13;
-  // Tints and edges take the seed itself, not the text colour darkened to read. In light, they are mixed from white,
-  // since a hue mixed into a ground of another hue turns grey, as orange does on Ocean's blue.
-  const base = dark ? theme.surface : "#ffffff";
+  // Tints and edges take the seed itself, not the text colour darkened to read, and are mixed from a neutral: white in
+  // light, a grey as deep as the surface in dark. A hue mixed into a ground of another hue turns into a third, as red
+  // does into purple on Ocean's navy, or teal into a blue-grey on Plum's aubergine.
+  const base = dark ? grey(theme.surface) : "#ffffff";
   const hue = (color: string) => {
     const soft = mix(base, color, tint);
     const text = reach(color, theme.ink, [...grounds, soft]);
@@ -193,8 +200,9 @@ function colors(theme: Seed, dark: boolean, strength: number): Record<ColorToken
   const good = hue(theme.good);
   const bad = hue(theme.bad);
   const warn = hue(theme.warn);
-  const info = hue(theme.info);
-  const tints = [accent.soft, attention.soft, good.soft, bad.soft, warn.soft, info.soft];
+  // What agents propose waits for your yes, so it wears the theme's own colour rather than a hue every theme shares.
+  const info = accent;
+  const tints = [accent.soft, attention.soft, good.soft, bad.soft, warn.soft];
   const light = dark ? theme.bg : "#ffffff";
   const onAccent = contrast(light, accent.text) >= 4.7 ? light : theme.ink;
   if (contrast(onAccent, accent.text) < 4.7) throw new Error(`Nothing reads on ${accent.text}`);

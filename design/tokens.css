@@ -21,8 +21,8 @@
 
   /* Ink: text, from most to least important. All three must stay readable at the smallest size. */
   --ink: light-dark(#18181b, #f2f2f0);
-  --ink-2: light-dark(#4a4a4c, #d3d3d1);
-  --ink-3: light-dark(#646466, #aeaead);
+  --ink-2: light-dark(#4a4a4c, #d2d2d0);
+  --ink-3: light-dark(#646466, #adadac);
 
   /* Accent: the theme's own colour, for what the developer is acting on: the primary button, the page they are on,
      focus, links, the chosen item in a menu. It never says that something needs them: that is attention. */
@@ -46,9 +46,9 @@
   --warn: light-dark(#955b09, #facc15);
   --warn-soft: light-dark(#f3ebdf, #483e1a);
   /* Info is also what agents propose, waiting for your yes. */
-  --info: light-dark(#0f736c, #5eead4);
-  --info-soft: light-dark(#e0edec, #284440);
-  --info-line: light-dark(#87bbb7, #39786e);
+  --info: light-dark(#2b59c3, #8fb0ff);
+  --info-soft: light-dark(#e3e9f7, #323949);
+  --info-line: light-dark(#95ace1, #4f5e82);
 
   /* Type: Inter where it is installed, else the system's own face, because a web font is a wait. */
   --font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
@@ -191,182 +191,182 @@
  */
 /* Slate. */
 [data-palette="slate"] {
-  --bg: light-dark(#e3e9f0, #0c1219);
-  --surface: light-dark(#f4f7fa, #141c27);
-  --surface-2: light-dark(#ebf0f6, #1b2432);
-  --line: light-dark(#c7ced6, #292f36);
-  --line-faint: light-dark(#e6eaee, #212934);
-  --line-strong: light-dark(#b6bdc6, #3b4148);
-  --line-field: light-dark(#8a919d, #6b7177);
+  --bg: light-dark(#e3e9f0, #0e1826);
+  --surface: light-dark(#f4f7fa, #152233);
+  --surface-2: light-dark(#ebf0f6, #1c2c40);
+  --line: light-dark(#c7ced6, #2b3441);
+  --line-faint: light-dark(#e6eaee, #222f3f);
+  --line-strong: light-dark(#b6bdc6, #3d4652);
+  --line-field: light-dark(#8a919d, #6c747e);
   --ink: light-dark(#0f172a, #eef3f8);
-  --ink-2: light-dark(#42495a, #d0d5da);
-  --ink-3: light-dark(#5d6473, #abb0b5);
+  --ink-2: light-dark(#42495a, #d9dee5);
+  --ink-3: light-dark(#5d6473, #b2b8c0);
   --accent: light-dark(#4338ca, #a5b4fc);
-  --accent-soft: light-dark(#e7e5f8, #313a52);
-  --on-accent: light-dark(#ffffff, #0c1219);
+  --accent-soft: light-dark(#e7e5f8, #3d404e);
+  --on-accent: light-dark(#ffffff, #0e1826);
   --attention: light-dark(#0e726f, #5eead4);
-  --attention-soft: light-dark(#e0f1f0, #23454a);
-  --attention-line: light-dark(#86cac4, #357975);
-  --good: light-dark(#14743b, #4ade80);
-  --good-soft: light-dark(#e1eee6, #1f4339);
-  --bad: light-dark(#b91c1c, #f87676);
-  --bad-soft: light-dark(#f6e1e1, #422d36);
-  --bad-line: light-dark(#dc8e8e, #7b4248);
+  --attention-soft: light-dark(#e0f1f0, #2f4b46);
+  --attention-line: light-dark(#86cac4, #3e7d73);
+  --good: light-dark(#467112, #a3e635);
+  --good-soft: light-dark(#e8eee0, #3d4a27);
+  --bad: light-dark(#b91c1c, #f68687);
+  --bad-soft: light-dark(#f6e1e1, #4e3333);
+  --bad-line: light-dark(#dc8e8e, #834646);
   --warn: light-dark(#8f590b, #fbbf24);
-  --warn-soft: light-dark(#f3ebdf, #423d26);
-  --info: light-dark(#a21caf, #f0abfc);
-  --info-soft: light-dark(#f3e1f5, #403952);
-  --info-line: light-dark(#d18ed7, #775c87);
+  --warn-soft: light-dark(#f3ebdf, #4e4223);
+  --info: light-dark(#4338ca, #a5b4fc);
+  --info-soft: light-dark(#e7e5f8, #3d404e);
+  --info-line: light-dark(#a19ce5, #5e6485);
 }
 
 /* Sand. */
 [data-palette="sand"] {
-  --bg: light-dark(#eee1cb, #19130a);
-  --surface: light-dark(#faf3e6, #231b10);
-  --surface-2: light-dark(#f3e9d8, #2c2317);
-  --line: light-dark(#d5c8b3, #363026);
-  --line-faint: light-dark(#eee6da, #30281d);
-  --line-strong: light-dark(#c5b8a5, #474138);
-  --line-field: light-dark(#9c907f, #766f65);
+  --bg: light-dark(#eee1cb, #22180b);
+  --surface: light-dark(#faf3e6, #2e2112);
+  --surface-2: light-dark(#f3e9d8, #3a2b19);
+  --line: light-dark(#d5c8b3, #3e3427);
+  --line-faint: light-dark(#eee6da, #3a2d1f);
+  --line-strong: light-dark(#c5b8a5, #4f4538);
+  --line-field: light-dark(#9c907f, #7b7266);
   --ink: light-dark(#2a2016, #f6efe3);
-  --ink-2: light-dark(#52473b, #dcd5c9);
-  --ink-3: light-dark(#6b6052, #b5afa3);
+  --ink-2: light-dark(#52473b, #e0d9cd);
+  --ink-3: light-dark(#6b6052, #bab3a6);
   --accent: light-dark(#9f481e, #f2a37c);
-  --accent-soft: light-dark(#f3e8e2, #4c3626);
-  --on-accent: light-dark(#ffffff, #19130a);
-  --attention: light-dark(#1d4ed8, #93c5fd);
-  --attention-soft: light-dark(#e2e8fa, #393d3f);
-  --attention-line: light-dark(#8ea7ec, #55687b);
+  --accent-soft: light-dark(#f3e8e2, #4a3a32);
+  --on-accent: light-dark(#ffffff, #22180b);
+  --attention: light-dark(#86198f, #f5a0e6);
+  --attention-soft: light-dark(#efe1f0, #4b3a48);
+  --attention-line: light-dark(#c38cc7, #805a79);
   --good: light-dark(#476c10, #a3e635);
-  --good-soft: light-dark(#e8eee0, #3d4417);
-  --bad: light-dark(#9f1239, #fb7689);
-  --bad-soft: light-dark(#f3e0e5, #4e2c27);
-  --bad-line: light-dark(#cf899c, #844245);
+  --good-soft: light-dark(#e8eee0, #3a4824);
+  --bad: light-dark(#9f1239, #fb7c8d);
+  --bad-soft: light-dark(#f3e0e5, #4c3034);
+  --bad-line: light-dark(#cf899c, #83444d);
   --warn: light-dark(#8c560a, #facc15);
-  --warn-soft: light-dark(#f3ebdf, #4e3e11);
-  --info: light-dark(#6d28d9, #c4b5fd);
-  --info-soft: light-dark(#ece3fa, #433a3f);
-  --info-line: light-dark(#b694ec, #6b607b);
+  --warn-soft: light-dark(#f3ebdf, #4c421e);
+  --info: light-dark(#9f481e, #f2a37c);
+  --info-soft: light-dark(#f3e8e2, #4a3a32);
+  --info-line: light-dark(#d3a58f, #7f5b49);
 }
 
 /* Forest. */
 [data-palette="forest"] {
-  --bg: light-dark(#dae8da, #09150c);
-  --surface: light-dark(#eff6ee, #0f1f13);
-  --surface-2: light-dark(#e3eee3, #15281a);
-  --line: light-dark(#c0cec0, #263229);
-  --line-faint: light-dark(#e2e9e1, #1c2c20);
-  --line-strong: light-dark(#afbeb0, #38443b);
-  --line-field: light-dark(#859587, #68736a);
+  --bg: light-dark(#dae8da, #0c2215);
+  --surface: light-dark(#eff6ee, #133020);
+  --surface-2: light-dark(#e3eee3, #1a3c29);
+  --line: light-dark(#c0cec0, #293d31);
+  --line-faint: light-dark(#e2e9e1, #203c2c);
+  --line-strong: light-dark(#afbeb0, #3b4e42);
+  --line-field: light-dark(#859587, #697b6f);
   --ink: light-dark(#0f2214, #eaf5ec);
-  --ink-2: light-dark(#3c4e40, #d0dbd2);
-  --ink-3: light-dark(#566759, #aab5ac);
+  --ink-2: light-dark(#3c4e40, #d7e3d9);
+  --ink-3: light-dark(#566759, #aebcb2);
   --accent: light-dark(#3f6b0c, #a3e635);
-  --accent-soft: light-dark(#e6ecdf, #2d471a);
-  --on-accent: light-dark(#ffffff, #09150c);
+  --accent-soft: light-dark(#e6ecdf, #3b4825);
+  --on-accent: light-dark(#ffffff, #0c2215);
   --attention: light-dark(#a425b4, #f0abfc);
-  --attention-soft: light-dark(#f7e3f9, #3c3b42);
-  --attention-line: light-dark(#e093e9, #745e7c);
+  --attention-soft: light-dark(#f7e3f9, #4a3d4d);
+  --attention-line: light-dark(#e093e9, #7e5f84);
   --good: light-dark(#0f6f67, #5eead4);
-  --good-soft: light-dark(#e0edec, #1f483a);
+  --good-soft: light-dark(#e0edec, #2d4945);
   --bad: light-dark(#b91c1c, #fca5a5);
-  --bad-soft: light-dark(#f6e1e1, #3e3a30);
-  --bad-line: light-dark(#dc8e8e, #7a5b55);
+  --bad-soft: light-dark(#f6e1e1, #4d3b3b);
+  --bad-line: light-dark(#dc8e8e, #845c5c);
   --warn: light-dark(#8b5809, #fde047);
-  --warn-soft: light-dark(#f3ebdf, #3f461d);
-  --info: light-dark(#1e40af, #93c5fd);
-  --info-soft: light-dark(#e2e6f5, #294042);
-  --info-line: light-dark(#8fa0d7, #4a6a7c);
+  --warn-soft: light-dark(#f3ebdf, #4d4729);
+  --info: light-dark(#3f6b0c, #a3e635);
+  --info-soft: light-dark(#e6ecdf, #3b4825);
+  --info-line: light-dark(#9fb586, #5c7a2a);
 }
 
 /* Ocean. */
 [data-palette="ocean"] {
-  --bg: light-dark(#d7e6f5, #06101c);
-  --surface: light-dark(#eef5fd, #0c1829);
-  --surface-2: light-dark(#e2edf9, #122136);
-  --line: light-dark(#bccbdb, #232d39);
-  --line-faint: light-dark(#e0e8f1, #192536);
-  --line-strong: light-dark(#acbbcb, #353f4b);
-  --line-field: light-dark(#8190a1, #656f7a);
+  --bg: light-dark(#d7e6f5, #081a30);
+  --surface: light-dark(#eef5fd, #0e2540);
+  --surface-2: light-dark(#e2edf9, #15304f);
+  --line: light-dark(#bccbdb, #25364b);
+  --line-faint: light-dark(#e0e8f1, #1b314b);
+  --line-strong: light-dark(#acbbcb, #37475b);
+  --line-field: light-dark(#8190a1, #667486);
   --ink: light-dark(#0a1a2e, #e8f1fc);
-  --ink-2: light-dark(#3b4b5e, #cad3de);
-  --ink-3: light-dark(#556577, #a4adb8);
+  --ink-2: light-dark(#3b4b5e, #dde7f2);
+  --ink-3: light-dark(#556577, #b4c0cd);
   --accent: light-dark(#035f92, #38bdf8);
-  --accent-soft: light-dark(#deeaf1, #153952);
-  --on-accent: light-dark(#ffffff, #06101c);
+  --accent-soft: light-dark(#deeaf1, #2a4450);
+  --on-accent: light-dark(#ffffff, #081a30);
   --attention: light-dark(#7739e5, #c4b5fd);
-  --attention-soft: light-dark(#eee5fd, #313753);
-  --attention-line: light-dark(#be9df6, #5f5f88);
+  --attention-soft: light-dark(#eee5fd, #464351);
+  --attention-line: light-dark(#be9df6, #6d6687);
   --good: light-dark(#047154, #34d399);
-  --good-soft: light-dark(#deede9, #143d3f);
-  --bad: light-dark(#b91c1c, #f87171);
-  --bad-soft: light-dark(#f6e1e1, #3b2a37);
-  --bad-line: light-dark(#dc8e8e, #764049);
+  --good-soft: light-dark(#deede9, #29493d);
+  --bad: light-dark(#b91c1c, #f58b8d);
+  --bad-soft: light-dark(#f6e1e1, #503535);
+  --bad-line: light-dark(#dc8e8e, #854848);
   --warn: light-dark(#8c580c, #fde047);
-  --warn-soft: light-dark(#f3ebdf, #3c402f);
-  --info: light-dark(#be185d, #f9a8d4);
-  --info-soft: light-dark(#f7e1ea, #3b354b);
-  --info-line: light-dark(#df8cae, #775976);
+  --warn-soft: light-dark(#f3ebdf, #514b2d);
+  --info: light-dark(#035f92, #38bdf8);
+  --info-soft: light-dark(#deeaf1, #2a4450);
+  --info-line: light-dark(#81afc9, #2e6a85);
 }
 
 /* Plum. */
 [data-palette="plum"] {
-  --bg: light-dark(#e7dcef, #130b18);
-  --surface: light-dark(#f6f0fa, #1c1222);
-  --surface-2: light-dark(#ede4f4, #25182c);
-  --line: light-dark(#cdc2d5, #302935);
-  --line-faint: light-dark(#e9e3ed, #291f2f);
-  --line-strong: light-dark(#bdb2c5, #423b47);
-  --line-field: light-dark(#93889b, #726a77);
+  --bg: light-dark(#e7dcef, #1d0e28);
+  --surface: light-dark(#f6f0fa, #281736);
+  --surface-2: light-dark(#ede4f4, #331f44);
+  --line: light-dark(#cdc2d5, #392b43);
+  --line-faint: light-dark(#e9e3ed, #342442);
+  --line-strong: light-dark(#bdb2c5, #4a3d54);
+  --line-field: light-dark(#93889b, #786c80);
   --ink: light-dark(#1e1426, #f5eef9);
-  --ink-2: light-dark(#4d4355, #d4cdd8);
-  --ink-3: light-dark(#675d6f, #afa8b3);
-  --accent: light-dark(#7322b8, #c69cfa);
-  --accent-soft: light-dark(#ede2f6, #3e2e4d);
-  --on-accent: light-dark(#ffffff, #130b18);
-  --attention: light-dark(#2458cf, #bfdbfe);
-  --attention-soft: light-dark(#e3ebfc, #3d3a4e);
-  --attention-line: light-dark(#92b1f5, #656c85);
-  --good: light-dark(#166f39, #4ade80);
-  --good-soft: light-dark(#e1eee6, #253b35);
-  --bad: light-dark(#be123c, #fb7185);
-  --bad-soft: light-dark(#f7e0e6, #492536);
-  --bad-line: light-dark(#df899e, #803d4f);
+  --ink-2: light-dark(#4d4355, #e7e0ec);
+  --ink-3: light-dark(#675d6f, #c1b8c7);
+  --accent: light-dark(#7322b8, #c89ffa);
+  --accent-soft: light-dark(#ede2f6, #473e51);
+  --on-accent: light-dark(#ffffff, #1d0e28);
+  --attention: light-dark(#0e6c62, #3fe0c5);
+  --attention-soft: light-dark(#dfeeec, #2c4c47);
+  --attention-line: light-dark(#85bdb6, #327a6e);
+  --good: light-dark(#456b13, #a3e635);
+  --good-soft: light-dark(#e8eee0, #404d2a);
+  --bad: light-dark(#be123c, #fa899b);
+  --bad-soft: light-dark(#f7e0e6, #51363a);
+  --bad-line: light-dark(#df899e, #864851);
   --warn: light-dark(#89540d, #facc15);
-  --warn-soft: light-dark(#f3ebdf, #48371f);
-  --info: light-dark(#116c67, #5eead4);
-  --info-soft: light-dark(#e0edec, #293d46);
-  --info-line: light-dark(#87bbb7, #3a7372);
+  --warn-soft: light-dark(#f3ebdf, #514823);
+  --info: light-dark(#7322b8, #c89ffa);
+  --info-soft: light-dark(#ede2f6, #473e51);
+  --info-line: light-dark(#b991dc, #6f5c86);
 }
 
 /* Rose. */
 [data-palette="rose"] {
-  --bg: light-dark(#f2dde1, #190b0f);
-  --surface: light-dark(#fbf1f3, #231217);
-  --surface-2: light-dark(#f6e6ea, #2d191f);
-  --line: light-dark(#d7c3c7, #36292c);
-  --line-faint: light-dark(#eee4e6, #301f24);
-  --line-strong: light-dark(#c7b3b7, #483b3e);
-  --line-field: light-dark(#9c898d, #786a6e);
+  --bg: light-dark(#f2dde1, #250d17);
+  --surface: light-dark(#fbf1f3, #321621);
+  --surface-2: light-dark(#f6e6ea, #3f1e2b);
+  --line: light-dark(#d7c3c7, #412a33);
+  --line-faint: light-dark(#eee4e6, #3e232d);
+  --line-strong: light-dark(#c7b3b7, #523c45);
+  --line-field: light-dark(#9c898d, #7f6c72);
   --ink: light-dark(#26141a, #fbeef0);
-  --ink-2: light-dark(#564349, #d7cacc);
-  --ink-3: light-dark(#705c62, #b3a6a9);
+  --ink-2: light-dark(#564349, #e8dadd);
+  --ink-3: light-dark(#705c62, #c2b3b7);
   --accent: light-dark(#b0164f, #f58bb9);
-  --accent-soft: light-dark(#f5e1e8, #4d2a37);
-  --on-accent: light-dark(#ffffff, #190b0f);
+  --accent-soft: light-dark(#f5e1e8, #4d3841);
+  --on-accent: light-dark(#ffffff, #250d17);
   --attention: light-dark(#116d66, #2dd4bf);
-  --attention-soft: light-dark(#e0edec, #253939);
-  --attention-line: light-dark(#87bbb7, #286963);
-  --good: light-dark(#187038, #4ade80);
-  --good-soft: light-dark(#e1eee6, #2b3b2c);
-  --bad: light-dark(#b91c1c, #f87272);
-  --bad-soft: light-dark(#f6e1e1, #4e2529);
-  --bad-line: light-dark(#dc8e8e, #833d40);
+  --attention-soft: light-dark(#e0edec, #254642);
+  --attention-line: light-dark(#87bbb7, #287369);
+  --good: light-dark(#476c11, #a3e635);
+  --good-soft: light-dark(#e8eee0, #3d4a27);
+  --bad: light-dark(#b91c1c, #f88585);
+  --bad-soft: light-dark(#f6e1e1, #4e3333);
+  --bad-line: light-dark(#dc8e8e, #834646);
   --warn: light-dark(#8c550a, #facc15);
-  --warn-soft: light-dark(#f3ebdf, #4e3717);
-  --info: light-dark(#1d4ed8, #93c5fd);
-  --info-soft: light-dark(#e2e8fa, #393645);
-  --info-line: light-dark(#8ea7ec, #55637f);
+  --warn-soft: light-dark(#f3ebdf, #4e4520);
+  --info: light-dark(#b0164f, #f58bb9);
+  --info-soft: light-dark(#f5e1e8, #4d3841);
+  --info-line: light-dark(#d88ba7, #825267);
 }
 
 /* High contrast. */
@@ -394,9 +394,9 @@
   --bad-line: light-dark(#d88080, #733030);
   --warn: light-dark(#7a4f00, #ffb000);
   --warn-soft: light-dark(#eee8de, #332300);
-  --info: light-dark(#006a6a, #d9a6ff);
-  --info-soft: light-dark(#deecec, #2b2133);
-  --info-line: light-dark(#80b5b5, #624b73);
+  --info: light-dark(#0000cc, #00ffff);
+  --info-soft: light-dark(#dedef8, #003333);
+  --info-line: light-dark(#8080e6, #007373);
 }
 
 /* The mode the developer picked, over the system's. */
