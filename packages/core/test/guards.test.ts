@@ -747,4 +747,18 @@ describe("agents write only to the line they are on, the rest of it (fourth audi
     const recorded = w.as(w.outsider, c.decisionRecord, { ...decision, affects: [loose] });
     expect(w.as(w.dev, c.linkList, { ref: loose }).map((link) => link.fromRef)).toEqual([recorded.ref]);
   });
+
+  test("watch check: an agent cannot check another agent's watch and take its events", () => {
+    const w = world();
+    const watch = w.as(w.owner, c.watchCreate, {
+      name: "mine",
+      spec: { require: "any", clauses: [{ type: "event", query: "kind:issue", count: 1 }] },
+      follow: true,
+    });
+    w.as(w.dev, c.issueCreate, { project: "PANEL", title: "Lid", line: w.line });
+    expect(w.refused(() => w.as(w.outsider, c.watchCheck, { refs: [watch.ref] })).code).toBe("forbidden");
+    const own = w.as(w.owner, c.watchCheck, { refs: [watch.ref] });
+    expect(own[0]?.fired).toBe(true);
+    expect(own[0]?.clauses[0]?.events.map((event) => event.type)).toEqual(["issue.created"]);
+  });
 });

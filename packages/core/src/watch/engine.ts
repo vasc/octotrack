@@ -212,7 +212,8 @@ function resumePoint(clauses: readonly WatchClauseResult[], cursorNow: number): 
 
 /** Evaluates a watch and records the outcome. A fired watch stays fired, unless it follows. */
 export function checkWatch(ctx: Ctx, refOrName: string): WatchResult {
-  const found = requireWatch(ctx, refOrName);
+  // Checking moves the cursor, fires the watch and revives it: another agent would take the events its owner waits for.
+  const found = requireOwnWatch(ctx, refOrName);
   const cursorNow = currentCursor(ctx);
   if (found.status === "fired") return storedResult(ctx, found);
   if (found.status === "cancelled") {
@@ -272,12 +273,18 @@ function reviveWatch(ctx: Ctx, watch: Watch): Watch {
   return { ...watch, status: "active" };
 }
 
-/** Only the agent a watch is for, the developer or the server cancels it: another agent would silence its wait. */
-export function cancelWatch(ctx: Ctx, refOrName: string): string {
+/** A watch is checked or cancelled only by the agent it is for, the developer or the server. */
+function requireOwnWatch(ctx: Ctx, refOrName: string): Watch {
   const watch = requireWatch(ctx, refOrName);
   if (watch.agent !== ctx.actor && !ctx.developer && !ctx.system) {
     throw new OctoError("forbidden", `${watch.ref} is ${watch.agent}'s watch, not yours`);
   }
+  return watch;
+}
+
+/** Another agent cancelling a watch would silence its wait. */
+export function cancelWatch(ctx: Ctx, refOrName: string): string {
+  const watch = requireOwnWatch(ctx, refOrName);
   ctx.sql.run("UPDATE watches SET status = 'cancelled' WHERE ref = ? AND status = 'active'", [watch.ref]);
   return watch.ref;
 }
