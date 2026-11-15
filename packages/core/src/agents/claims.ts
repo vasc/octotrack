@@ -154,17 +154,38 @@ function freeIssues(ctx: Ctx, agent: string, line: Line): void {
   }
 }
 
-/** Questions and tasks on a line nobody works on are held; they wait for its next start. */
+/**
+ * Whether a line holds its agents' questions and tasks: when no agent works on it, because it is not being worked on or
+ * because the developer owns it. An answer or a Done there would wait in an inbox no agent reads, so they wait, out of
+ * the developer's queue and to do, for an agent to work on the line again.
+ */
+export function holdsWork(line: Line): boolean {
+  return line.state !== "working" || line.ownedBy !== null;
+}
+
+/**
+ * Questions and tasks on a line no agent works on are held; they wait for its next start. The developer's own tasks
+ * (with no outcome to send anyone) are never held: they are theirs to do whoever works on the line.
+ */
 function holdWork(ctx: Ctx, line: string): void {
   ctx.sql.run("UPDATE decisions SET heldAt = ? WHERE line = ? AND status = 'open' AND heldAt IS NULL", [
     ctx.now,
     line,
   ]);
   ctx.sql.run(
-    `UPDATE issues SET heldAt = ? WHERE line = ? AND assignee = 'dev' AND outcome IS NOT NULL
+    `UPDATE issues SET heldAt = ? WHERE line = ? AND assignee = 'dev' AND outcome IS NOT NULL AND outcome <> ''
        AND status NOT IN ('done', 'cancelled') AND heldAt IS NULL`,
     [ctx.now, line],
   );
+}
+
+/**
+ * Questions and tasks that arrived on a line from elsewhere (a fold) take the line's own state: held if nobody works on
+ * it, or, on a line being worked on, reaching the developer at once when current and waiting to be re-confirmed when not.
+ */
+export function settleHeldWork(ctx: Ctx, line: Line): void {
+  if (holdsWork(line)) holdWork(ctx, line.ref);
+  else releaseCurrentWork(ctx, line.ref);
 }
 
 /** When a line starts, held work that is still current reaches the developer; stale work waits to be re-confirmed. */
@@ -188,13 +209,17 @@ export const NOT_BLOCKED = `NOT EXISTS (
   WHERE l.toRef = i.ref AND l.rel = 'blocks'
     AND ((b.ref IS NOT NULL AND b.status NOT IN ('done', 'cancelled')) OR (d.ref IS NOT NULL AND d.status = 'open')))`;
 
-/** All of a working line's open work waits on the developer: questions or tasks, and nothing an agent can pick up. */
+/**
+ * All of a working line's open work waits on the developer: questions or tasks that reach them, and nothing an agent can
+ * pick up. A held question or task waits on an agent to re-confirm it, so it does not count.
+ */
 export function waitingOnYou(ctx: Ctx, line: string): boolean {
   const count = (sql: string) => one(ctx, z.object({ n: z.number() }), sql, [line])?.n ?? 0;
   const forYou =
-    count("SELECT COUNT(*) AS n FROM decisions WHERE line = ? AND status = 'open'") +
+    count("SELECT COUNT(*) AS n FROM decisions WHERE line = ? AND status = 'open' AND heldAt IS NULL") +
     count(
-      "SELECT COUNT(*) AS n FROM issues WHERE line = ? AND assignee = 'dev' AND outcome IS NOT NULL AND status NOT IN ('done', 'cancelled')",
+      `SELECT COUNT(*) AS n FROM issues WHERE line = ? AND assignee = 'dev' AND outcome IS NOT NULL
+         AND status NOT IN ('done', 'cancelled') AND heldAt IS NULL`,
     );
   if (forYou === 0) return false;
   const workable = count(

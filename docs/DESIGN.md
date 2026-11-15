@@ -552,6 +552,57 @@ Decisions made from that:
   - _The developer's own operations, relayed with `--said`, take effect on their own lines._ `task add` and `note add`
     were refused there, as writes to a line no agent may touch, though D14 says every developer operation accepts the
     developer's words.
+- **What the fourth audit changed in core and the CLI.**
+  - _Agents write only to the line they are on, the rest of it._ A pull request report (`pr upsert`) is refused unless
+    every issue it implements (named, linked already, or named by its branch or a closing keyword) is on the
+    reporting agent's line, so it can neither link nor rewrite another line's pull request. A decision recorded on no
+    line guards both ends of the `blocks` and `affects` links it adds, as asking does. A watch is checked, as it is
+    cancelled, only by its own agent, the developer or the server, since a check moves its cursor. A proposer writes
+    its proposal's done when only while it is a proposal. Releasing an issue that is not one's own claim is work on its
+    line. A question's asker withdraws it only while its line's state allows scoping, unless it relays the developer's
+    words. `held confirm` and `held withdraw` take only an open question or an open task, from the line or, on a
+    proposal, by its proposer. Drift and notes about a pull request belong to the line of the first issue it
+    implements that is on one, and its drift falls to that line's owner when nobody holds the issue. Turning
+    notifications off is the developer's in person, as turning them on is. _Why:_ each let an agent change another
+    line's work, or the developer's, from outside it.
+  - _An open task is the developer's._ An agent may not change an open task's status or assignee through `issue
+    update` or take it with `issue claim`, `--force` included; it withdraws one that no longer stands
+    (`held withdraw`), and relays the developer's Done with `task done --said`. _Why:_ closing it that way skipped the
+    outcome, the report to whoever holds what it frees, and the task's own event, and took it out of to do.
+  - _A line the developer owns holds its agents' questions and tasks for an agent,_ as it holds their issues and pull
+    requests. I'll own it winds the agents down and holds every open question and every task an agent filed, and one
+    asked or filed during the wind-down is held too; none of them is in the developer's queue, in to do, or counted as
+    re-confirming, and home counts them as the line's held work (`held`, every one, current or not). The developer's own
+    tasks, with no outcome to send anyone, are never held, on any line. Handing the line back runs what any start does:
+    current ones reach the developer again, and older ones go to the next agent to re-confirm or withdraw. _Why:_ the
+    developer said they will do the line themselves; an answer or a Done there would wait in an inbox no agent reads
+    until it is handed back, and asking the developer to answer an agent that is no longer there is the waste D14 exists
+    to remove. Showing them was the other choice, as D14's "its tasks counted in to do" could be read; that sentence is
+    about the developer's own tasks, which do count. Not counting them as re-confirming follows from no agent being
+    allowed to write to the line. _Trade-off:_ an agent's task the developer would still have done while owning the
+    line waits until it is handed back, or until they open it by its ref.
+  - _A line waits on the developer only for what reaches them._ A held question or task waits on an agent to
+    re-confirm it, so it no longer makes a line "waiting on you"; before, a line restarted with only stale held work
+    and nothing else open waited for an answer the developer was never shown, and no session started to re-confirm it.
+    Taking a line names only held work that waits to be re-confirmed, not an old question that already reaches the
+    developer.
+  - _Folded questions and tasks take the held state of the line they land on:_ held when no agent works on it, else
+    released when current and left to re-confirm when not.
+  - _A named outcome is one line, its name and its value._ A name has no line break, `=` or `:`, and a value has no
+    line break; the note beside them may have several lines, and the line's inbox and the log say it, like a task's
+    words and a Can't do it's why, on one line. Done matches names whatever their case, as filing tells them apart that
+    way, and the developer's own task (which sends nothing back) is done without words, recorded as "Done". _Why:_ a
+    line break in a value forged rows in the "- Name: value" list, so an agent read a name twice; a name with `=` could
+    be filed but never answered from the CLI, which splits `--value` at the first `=`; and one with `:` read as another
+    name and value.
+  - _An agent withdrawing a task is its own event,_ `task.withdrawn`, naming the agent and its why, and puts nothing in
+    the line's inbox; the task closes as cancelled with "Withdrawn: why" as its result. _Why:_ it was recorded and
+    delivered as the developer's Can't do it, so the log and the line read as the developer turning down work they
+    never saw.
+  - _Changes since the summary leave out the developer's own doings and reorders,_ on home's count and in the line's
+    panel, which lists them with the same query (`sinceSummaryQuery`: `line:L-n -actor:dev -event:line.reordered`).
+    _Why:_ two drags and a nudge showed as "3 changes since the summary"; the developer's own actions are never news to
+    them, and a reorder changes only where the line stands.
 - **Departures, each for a reason.**
   - _The pages from before lines are gone:_ Decisions, Pull requests, Drift, Issues and Repos. Nothing linked to them
     any more, and the issues page changed status through a select with no Undo. Questions are answered on home, a

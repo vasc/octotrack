@@ -83,8 +83,10 @@ A measurement, a login, a play-test: file a task, at one of the developer's plac
     --field Length --field Holes --field "USB-C grip" --field Flange --field Clearance
   octo decision ask "Which board?" ... --waits-for PANEL-9     a question the task would settle waits behind it
 
-The task frees the issue you hold. Name each thing to send back with --field: the developer gets a box for each, and
-Done needs them all. Its outcome comes back to you like an answer, one "Name: value" per field.
+The task frees the issue you hold. Name each thing to send back with --field, a short label on one line with no = or
+:, such as Length: the developer gets a one-line box for each, and Done needs them all. Its outcome comes back to you
+like an answer, one "Name: value" per field. The task is the developer's from then on: only they finish it, or say it
+cannot be done. If it no longer stands, withdraw it with octo held withdraw.
 
 ## Proposing lines
 
@@ -103,8 +105,9 @@ stands first for the developer, with Start first:
 
 ## Held work
 
-Questions and tasks on lines nobody is working on are held, and only current for 7 days after they were asked or
-re-confirmed. When you take such a line you are told which are stale:
+Questions and tasks on lines no agent works on (not being worked on, or the developer's own) are held, and only
+current for 7 days after they were asked or re-confirmed. When you take such a line you are told which are stale.
+Confirm or withdraw only open questions and tasks, on your line or on a proposal you made:
 
   octo held list L-7
   octo held confirm D-12 PANEL-9                still stands: current for another 7 days
@@ -117,14 +120,14 @@ re-confirmed. When you take such a line you are told which are stale:
   octo watch D-3                                      anything touching D-3
   octo watch --until 'ref:D-3 status:decided'         fires at once if it is already true
   octo watch --until-none 'ref:D-3,D-4 status:open'   until both are answered
-  octo watch --on 'kind:pr project:OCT to:merged'     a PR in OCT merges
+  octo watch --on 'kind:pr repo:OCT to:merged'        a PR in OCT merges
   octo watch --on 'event:decision.*' --on 'checks:failing' --timeout 30m
   octo watch --on 'ref:PR-3 to:passing' --until 'ref:D-3 status:decided' --all
   octo wait PR-7 --status merged                      the simple form
-  octo feed -f 'project:OCT -actor:github'            stream instead of stopping at the first match
+  octo feed -f 'repo:OCT -actor:github'               stream instead of stopping at the first match
 
 Prefer --until over --on when waiting for an outcome: --on only sees events after the watch starts. A typo such as
-status:opne or a project that does not exist is an error, not a watch that fires at once or never.
+status:opne or a repo that does not exist is an error, not a watch that fires at once or never.
 
 ## Doing several things at once
 
@@ -153,7 +156,7 @@ Other agents are working too. Claim before starting. Use --if-version when overw
 
 Drift means something is out of date and someone must look. It comes from the dependency network:
 
-  decision decided              its project and everything it blocks or affects must be re-checked
+  decision decided              its repo and everything it blocks or affects must be re-checked
   issue closed, PR still open   or the reverse: PR merged, issue still open
   blocked issue, blockers gone  or the reverse: working on something still blocked
   all issues closed             the repo should probably close
@@ -165,7 +168,7 @@ Drift means something is out of date and someone must look. It comes from the de
 Clear it in one of two ways, with a note. There is no third:
 
   octo drift ack DR-4 --updated "Body now says redis"           you changed it (checked: it must really have changed)
-  octo drift ack DR-4 --verified "Project text never mentions the queue"   you looked, nothing needs changing
+  octo drift ack DR-4 --verified "The repo's text never mentions the queue"   you looked, nothing needs changing
   octo drift ack --target OCT-4 --verified "..."                everything open on one item, so only when that is true
 
 Drift about state, such as a PR still open, clears by itself once you fix the state, so --updated is refused while it

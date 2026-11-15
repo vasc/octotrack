@@ -3,6 +3,7 @@ import type { z } from "zod";
 import type { Contract } from "../src/contracts.ts";
 import { contracts as c } from "../src/contracts.ts";
 import { OctoError } from "../src/errors.ts";
+import { sinceSummaryQuery } from "../src/query/index.ts";
 import type { Caller } from "../src/tracker.ts";
 import { Tracker } from "../src/tracker.ts";
 import { memoryDriver } from "./helpers.ts";
@@ -191,6 +192,64 @@ describe("outcome fields", () => {
     expect(w.refusal(() => w.as(w.dev, c.taskDone, { ref: plain.ref })).code).toBe("invalid_input");
     expect(w.as(w.dev, c.taskDone, { ref: plain.ref, result: "212 g" }).result).toBe("212 g");
   });
+
+  test("a name is one line, with no = or :, so it is answered from the CLI and read as one row", () => {
+    const w = world();
+    for (const name of ["Length\n- Holes: 99", "A=B", "Holes: 38"]) {
+      const refusal = w.refusal(() =>
+        w.as(w.owner, c.taskFile, { title: "Measure", place: "the bench", outcome: "mm", fields: [name] }),
+      );
+      expect(refusal.code).toBe("invalid_input");
+      expect(refusal.message).toContain("one line");
+    }
+  });
+
+  test("a value is one line, so the list sends each name once; the note is said on one line", () => {
+    const w = world();
+    const task = measured(w);
+    const refusal = w.refusal(() =>
+      w.as(w.dev, c.taskDone, { ref: task.ref, values: { Length: "41\n- Holes: 99", Holes: "38" } }),
+    );
+    expect([refusal.code, refusal.message]).toEqual([
+      "invalid_input",
+      `${task.ref}'s Length must be one line`,
+    ]);
+    const done = w.as(w.dev, c.taskDone, {
+      ref: task.ref,
+      values: { Length: "41", Holes: "38" },
+      result: "Warped.\nSanded it flat.",
+    });
+    expect(done.result).toBe("- Length: 41\n- Holes: 38\n\nWarped.\nSanded it flat.");
+    const said = w.notices(w.owner).map((notice) => notice.body);
+    expect(said.some((body) => body.includes("Length: 41; Holes: 38; Warped. Sanded it flat."))).toBe(true);
+    expect(said.every((body) => !body.includes("\n"))).toBe(true);
+    const plain = w.as(w.owner, c.taskFile, { title: "Weigh it", place: "the bench", outcome: "Grams" });
+    w.as(w.dev, c.taskDone, { ref: plain.ref, result: "212 g,\nwith the lid" });
+    expect(w.as(w.dev, c.feedList, { query: `ref:${plain.ref} event:task.done` }).events[0]?.summary).toBe(
+      `${plain.ref} done: 212 g, with the lid`,
+    );
+  });
+
+  test("Done matches the names whatever their case, as filing does", () => {
+    const w = world();
+    const task = measured(w);
+    expect(w.as(w.dev, c.taskDone, { ref: task.ref, values: { length: "41", HOLES: "38" } }).result).toBe(
+      "- Length: 41\n- Holes: 38",
+    );
+    const twice = measured(w);
+    expect(
+      w.refusal(() =>
+        w.as(w.dev, c.taskDone, { ref: twice.ref, values: { length: "41", Length: "42", Holes: "38" } }),
+      ).message,
+    ).toBe(`${twice.ref}'s Length is given twice`);
+  });
+
+  test("the developer's own task is done without words", () => {
+    const w = world();
+    const mine = w.as(w.dev, c.lineAdd, { title: "Tax", doneWhen: "Filed.", repos: [], where: "working" });
+    const task = w.as(w.dev, c.taskAdd, { line: mine.ref, title: "Scan the receipts" });
+    expect(w.as(w.dev, c.taskDone, { ref: task.ref }).result).toBe("Done");
+  });
 });
 
 describe("held work on lines not being worked on", () => {
@@ -289,6 +348,27 @@ describe("changes since the summary, on home", () => {
     w.as(w.owner, c.decisionAsk, { title: "Which board?", context: SITUATION, options: OPTIONS });
     expect(since()).toBe(2);
   });
+
+  test("leaves out the developer's own moves, reorders and Tells, and the panel's list is the same query", () => {
+    const w = world();
+    const since = () => w.as(w.dev, c.homeShow, {}).lines[w.line]?.sinceSummary;
+    w.as(w.dev, c.lineAdd, { title: "Lid", doneWhen: "It closes.", repos: ["PANEL"], where: "working" });
+    w.later(1);
+    w.as(w.owner, c.lineSummarize, { ref: w.line, headline: "The base is modelled.", summary: "Modelled." });
+    w.later(1);
+    w.as(w.dev, c.lineOrder, { ref: w.line, to: "bottom" });
+    w.as(w.dev, c.lineOrder, { ref: w.line, to: "top" });
+    w.as(w.dev, c.lineTell, { line: w.line, body: "" });
+    expect(since()).toBe(0);
+    w.as(w.owner, c.decisionAsk, { title: "Which board?", context: SITUATION, options: OPTIONS });
+    expect(since()).toBe(1);
+    const summaryAt = w.as(w.dev, c.lineShow, { ref: w.line }).line.summaryAt ?? "";
+    const listed = w
+      .as(w.dev, c.feedList, { query: sinceSummaryQuery(w.line) })
+      .events.filter((event) => event.ts > summaryAt)
+      .map((event) => event.type);
+    expect(listed).toEqual(["decision.requested"]);
+  });
 });
 
 describe("done when and done are the developer's to accept", () => {
@@ -361,5 +441,175 @@ describe("a line the developer owns", () => {
     // Its last owner wound down rather than left, so it is offered the line first.
     expect(w.as(w.dev, c.homeShow, {}).crews[w.line]?.search?.step).toBe(1);
     expect(w.notices(w.owner).map((notice) => notice.kind)).toContain("owner_offer");
+  });
+});
+
+describe("folding carries whether questions and tasks are held", () => {
+  test("into a working line, current ones reach the developer at once", () => {
+    const w = world();
+    const waiting = w.as(w.dev, c.lineAdd, {
+      title: "Lid",
+      doneWhen: "It closes.",
+      repos: ["PANEL"],
+      where: "up_next",
+    });
+    const scoper = w.agent("scout");
+    w.as(scoper, c.agentRegister, { repo: "PANEL" });
+    w.as(scoper, c.lineTake, { ref: waiting.ref });
+    const asked = w.as(scoper, c.decisionAsk, {
+      title: "Which hinge?",
+      context: SITUATION,
+      options: OPTIONS,
+    });
+    const task = w.as(scoper, c.taskFile, {
+      title: "Measure the lid",
+      place: "the bench",
+      outcome: "Its width",
+    });
+    w.as(w.dev, c.lineFold, { ref: waiting.ref, into: w.line });
+    const home = w.as(w.dev, c.homeShow, {});
+    expect(
+      home.lines[w.line]?.forYou.map((item) =>
+        item.kind === "question" ? item.card.decision.ref : item.kind === "task" ? item.task.ref : item.kind,
+      ),
+    ).toEqual([asked.ref, task.ref]);
+    expect([home.counts.toAnswer, home.counts.toDo, home.lines[w.line]?.reconfirming]).toEqual([1, 1, 0]);
+  });
+
+  test("into an up-next line, they are held, and any gone stale is re-confirmed before it reaches the developer", () => {
+    const w = world();
+    const asked = w.as(w.owner, c.decisionAsk, {
+      title: "Which board?",
+      context: SITUATION,
+      options: OPTIONS,
+    });
+    const waiting = w.as(w.dev, c.lineAdd, {
+      title: "Lid",
+      doneWhen: "It closes.",
+      repos: ["PANEL"],
+      where: "up_next",
+    });
+    w.as(w.dev, c.lineFold, { ref: w.line, into: waiting.ref });
+    expect(w.as(w.dev, c.homeShow, {}).counts.toAnswer).toBe(0);
+    w.later(8 * DAY);
+    expect(w.as(w.dev, c.homeShow, {}).lines[waiting.ref]?.reconfirming).toBe(1);
+    w.as(w.dev, c.lineStart, { ref: waiting.ref });
+    const home = w.as(w.dev, c.homeShow, {});
+    expect([home.counts.toAnswer, home.lines[waiting.ref]?.reconfirming]).toEqual([0, 1]);
+    expect(w.as(w.dev, c.heldList, { line: waiting.ref }).map((item) => [item.ref, item.current])).toEqual([
+      [asked.ref, false],
+    ]);
+  });
+});
+
+describe("the agents' questions and tasks on a line the developer owns", () => {
+  test("are held for an agent: counted as held, never as to answer, to do or re-confirming", () => {
+    const w = world();
+    const asked = w.as(w.owner, c.decisionAsk, {
+      title: "Which board?",
+      context: SITUATION,
+      options: OPTIONS,
+    });
+    const task = w.as(w.owner, c.taskFile, {
+      title: "Measure the grip",
+      place: "the bench",
+      outcome: "In mm",
+    });
+    w.as(w.dev, c.lineOwn, { ref: w.line });
+    const late = w.as(w.owner, c.decisionAsk, { title: "Which plug?", context: SITUATION, options: OPTIONS });
+    const mine = w.as(w.dev, c.taskAdd, { line: w.line, title: "Sand the lid" });
+    w.later(8 * DAY);
+    const home = w.as(w.dev, c.homeShow, {});
+    const line = home.lines[w.line];
+    expect(line?.forYou.map((item) => (item.kind === "task" ? item.task.ref : item.kind))).toEqual([
+      mine.ref,
+    ]);
+    expect([line?.held, line?.reconfirming]).toEqual([{ questions: 2, tasks: 1 }, 0]);
+    expect([home.counts.toAnswer, home.counts.toDo]).toEqual([0, 1]);
+    expect(w.as(w.dev, c.heldList, { line: w.line }).map((item) => item.ref)).toEqual([
+      asked.ref,
+      late.ref,
+      task.ref,
+      mine.ref,
+    ]);
+  });
+
+  test("handed back, current ones reach the developer again; the developer's own tasks were never held", () => {
+    const w = world();
+    const asked = w.as(w.owner, c.decisionAsk, {
+      title: "Which board?",
+      context: SITUATION,
+      options: OPTIONS,
+    });
+    w.as(w.dev, c.lineOwn, { ref: w.line });
+    const mine = w.as(w.dev, c.taskAdd, { line: w.line, title: "Sand the lid" });
+    w.later(DAY);
+    w.as(w.dev, c.lineHand, { ref: w.line });
+    w.as(w.dev, c.lineOwn, { ref: w.line });
+    const owned = w.as(w.dev, c.homeShow, {});
+    expect(
+      owned.lines[w.line]?.forYou.map((item) => (item.kind === "task" ? item.task.ref : item.kind)),
+    ).toEqual([mine.ref]);
+    w.as(w.dev, c.lineHand, { ref: w.line });
+    const handed = w.as(w.dev, c.homeShow, {});
+    expect(
+      handed.lines[w.line]?.forYou.map((item) =>
+        item.kind === "question" ? item.card.decision.ref : item.kind === "task" ? item.task.ref : item.kind,
+      ),
+    ).toEqual([asked.ref, mine.ref]);
+  });
+});
+
+describe("a line waits on the developer", () => {
+  test("only for what reaches them: held questions waiting to be re-confirmed wait on an agent", () => {
+    const w = world();
+    w.as(w.owner, c.decisionAsk, { title: "Which board?", context: SITUATION, options: OPTIONS });
+    w.as(w.dev, c.issueUpdate, { refs: ["PANEL-1"], status: "done" });
+    expect(w.as(w.dev, c.homeShow, {}).lines[w.line]?.waitingOnYou).toBe(true);
+    w.as(w.dev, c.lineQueue, { ref: w.line });
+    w.later(8 * DAY);
+    w.as(w.dev, c.lineStart, { ref: w.line });
+    const line = w.as(w.dev, c.homeShow, {}).lines[w.line];
+    expect([line?.reconfirming, line?.waitingOnYou]).toEqual([1, false]);
+  });
+});
+
+describe("taking a line names what waits to be re-confirmed", () => {
+  test("only what is held: an old question that reaches the developer already needs nobody's re-confirmation", () => {
+    const w = world();
+    w.as(w.owner, c.decisionAsk, { title: "Which board?", context: SITUATION, options: OPTIONS });
+    w.later(8 * DAY);
+    const helper = w.agent("garden");
+    w.as(helper, c.agentRegister, { repo: "PANEL" });
+    const taken = w.tracker.execute(c.lineTake.name, { ref: w.line }, helper);
+    expect(taken.notices.map((notice) => notice.kind)).not.toContain("held_stale");
+  });
+});
+
+describe("an agent withdrawing a task", () => {
+  test("is logged as withdrawn, by the agent, and is not delivered as the developer's Can't do it", () => {
+    const w = world();
+    const task = w.as(w.owner, c.taskFile, {
+      title: "Measure the grip",
+      place: "the bench",
+      outcome: "In mm",
+    });
+    w.notices(w.owner);
+    w.as(w.owner, c.heldWithdraw, { refs: [task.ref], why: "Found it in the datasheet" });
+    const events = w.as(w.dev, c.feedList, { query: `ref:${task.ref}` }).events;
+    expect(events.map((event) => [event.type, event.actor, event.summary])).toContainEqual([
+      "task.withdrawn",
+      "panel",
+      `${task.ref} withdrawn by panel: Found it in the datasheet`,
+    ]);
+    expect(events.map((event) => event.type)).not.toContain("task.cant");
+    expect(
+      w
+        .notices(w.owner)
+        .map((notice) => notice.body)
+        .join(" "),
+    ).not.toContain("could not be done");
+    const closed = w.as(w.dev, c.issueList, { query: `ref:${task.ref}` })[0]?.issue;
+    expect([closed?.status, closed?.result]).toEqual(["cancelled", "Withdrawn: Found it in the datasheet"]);
   });
 });

@@ -84,9 +84,9 @@ export const networkCommands: Command[] = [
   },
   {
     path: ["pr", "sync"],
-    summary: "Have the server pull PR status from GitHub now, for one repo or every repo a project names",
+    summary: "Have the server pull PR status from GitHub now, for one repo or every repo with a GitHub name",
     options: {
-      repo: { ...MANY, description: "owner/name, repeatable. Default: every repo a project names" },
+      repo: { ...MANY, description: "owner/name, repeatable. Default: every repo with a GitHub name" },
     },
     // The server runs gh and reports what it found as pull request sync: no command's own report is taken as GitHub's.
     ops: [c.prSync.name],
@@ -95,7 +95,7 @@ export const networkCommands: Command[] = [
       if (repos.length === 0) {
         const projects = await client.call(c.projectList, {});
         if (!projects.data.some((card) => card.project.repo !== null))
-          throw new UsageError("No repo to sync. Set one with: octo project update <KEY> --repo owner/name");
+          throw new UsageError("No repo to sync. Set one with: octo repo update <KEY> --repo owner/name");
       }
       const reply = SyncReply.parse(await client.post("/api/github/sync", { repos }));
       const data = reply.data;

@@ -698,3 +698,214 @@ describe("where an asker is woken is the asker's own (third audit, N13)", () => 
     expect(due.map((decision) => [decision.ref, decision.wakeAddress])).toEqual([[asked, "claude:loose"]]);
   });
 });
+
+describe("agents write only to the line they are on, the rest of it (fourth audit)", () => {
+  /** The outsider, on a working line of its own in OTHER: on a line, but not this one. */
+  function elsewhere(w: ReturnType<typeof world>): string {
+    const own = w.as(w.dev, c.lineAdd, {
+      title: "Other",
+      doneWhen: "Done.",
+      repos: ["OTHER"],
+      where: "working",
+    });
+    w.as(w.outsider, c.lineTake, { ref: own.ref });
+    return own.ref;
+  }
+
+  test("pr upsert: an agent cannot link a pull request to another line's issue, nor rewrite one linked there", () => {
+    const w = world();
+    elsewhere(w);
+    const pr = { repo: "vasc/homepanel", title: "Base", state: "open" } as const;
+    expect(w.refused(() => w.as(w.outsider, c.prUpsert, { ...pr, number: 7, issues: [w.issue] })).code).toBe(
+      "forbidden",
+    );
+    expect(
+      w.refused(() => w.as(w.outsider, c.prUpsert, { ...pr, number: 8, title: `Fixes ${w.issue}` })).code,
+    ).toBe("forbidden");
+    expect(w.as(w.dev, c.linkList, { ref: w.issue })).toEqual([]);
+    const own = w.as(w.owner, c.prUpsert, { ...pr, number: 9, issues: [w.issue] });
+    expect(w.refused(() => w.as(w.outsider, c.prUpsert, { ...pr, number: 9, state: "merged" })).code).toBe(
+      "forbidden",
+    );
+    expect(w.as(w.dev, c.prList, {}).map((card) => [card.pr.ref, card.pr.state])).toEqual([
+      [own.ref, "open"],
+    ]);
+  });
+
+  test("decision record: an agent on no line cannot record a decision that holds up or changes a line's work", () => {
+    const w = world();
+    const decision = { title: "Use PLA", context: "Printed parts.", chosen: "PLA" };
+    expect(
+      w.refused(() => w.as(w.outsider, c.decisionRecord, { ...decision, affects: [w.issue] })).code,
+    ).toBe("forbidden");
+    expect(w.refused(() => w.as(w.outsider, c.decisionRecord, { ...decision, blocks: [w.issue] })).code).toBe(
+      "forbidden",
+    );
+    expect(w.as(w.dev, c.linkList, { ref: w.issue })).toEqual([]);
+    expect(w.as(w.dev, c.driftList, { query: "rule:decision-outcome" })).toEqual([]);
+    const loose = w.as(w.dev, c.issueCreate, { project: "OTHER", title: "Loose" }).ref;
+    const recorded = w.as(w.outsider, c.decisionRecord, { ...decision, affects: [loose] });
+    expect(w.as(w.dev, c.linkList, { ref: loose }).map((link) => link.fromRef)).toEqual([recorded.ref]);
+  });
+
+  test("watch check: an agent cannot check another agent's watch and take its events", () => {
+    const w = world();
+    const watch = w.as(w.owner, c.watchCreate, {
+      name: "mine",
+      spec: { require: "any", clauses: [{ type: "event", query: "kind:issue", count: 1 }] },
+      follow: true,
+    });
+    w.as(w.dev, c.issueCreate, { project: "PANEL", title: "Lid", line: w.line });
+    expect(w.refused(() => w.as(w.outsider, c.watchCheck, { refs: [watch.ref] })).code).toBe("forbidden");
+    const own = w.as(w.owner, c.watchCheck, { refs: [watch.ref] });
+    expect(own[0]?.fired).toBe(true);
+    expect(own[0]?.clauses[0]?.events.map((event) => event.type)).toEqual(["issue.created"]);
+  });
+
+  test("issue update and claim: an agent cannot finish, reopen or take the developer's task", () => {
+    const w = world();
+    w.as(w.dev, c.placeAdd, { name: "the bench" });
+    const task = w.as(w.owner, c.taskFile, {
+      title: "Measure",
+      place: "the bench",
+      outcome: "Width in mm",
+    }).ref;
+    for (const change of [
+      { status: "done" },
+      { status: "cancelled" },
+      { assignee: "panel" },
+      { assignee: null },
+    ] as const) {
+      const refusal = w.refused(() => w.as(w.owner, c.issueUpdate, { refs: [task], ...change }));
+      expect(refusal.code).toBe("forbidden");
+      expect(refusal.hint).toContain("held withdraw");
+    }
+    expect(w.refused(() => w.as(w.owner, c.issueClaim, { refs: [task], force: true })).code).toBe(
+      "forbidden",
+    );
+    const kept = w.as(w.dev, c.issueList, { query: `ref:${task}` })[0]?.issue;
+    expect([kept?.status, kept?.assignee, kept?.result]).toEqual(["todo", "dev", null]);
+    expect(w.as(w.owner, c.issueUpdate, { refs: [task], title: "Measure the width" })[0]?.title).toBe(
+      "Measure the width",
+    );
+    expect(
+      w.as(w.owner, c.heldWithdraw, { refs: [task], why: "Found it in the datasheet" }).withdrawn,
+    ).toEqual([task]);
+  });
+
+  test("issue release: an agent cannot move another line's unclaimed work back to todo", () => {
+    const w = world();
+    elsewhere(w);
+    w.as(w.dev, c.issueUpdate, { refs: [w.issue], status: "in_progress" });
+    expect(w.refused(() => w.as(w.outsider, c.issueRelease, { refs: [w.issue] })).code).toBe("forbidden");
+    expect(w.as(w.dev, c.issueList, { query: `ref:${w.issue}` })[0]?.issue.status).toBe("in_progress");
+    expect(w.as(w.owner, c.issueRelease, { refs: [w.issue] })[0]?.status).toBe("todo");
+  });
+
+  test("done when: the agent that proposed a line cannot propose a new one once it started, from another line", () => {
+    const w = world();
+    const proposal = w.as(w.owner, c.linePropose, {
+      title: "Stand",
+      doneWhen: "It stands.",
+      repos: ["PANEL"],
+      recommendation: "start",
+      why: "It is next.",
+    }).ref;
+    expect(w.as(w.owner, c.lineDoneWhen, { ref: proposal, doneWhen: "It stands up." }).doneWhen).toBe(
+      "It stands up.",
+    );
+    w.as(w.dev, c.lineStart, { ref: proposal });
+    const refusal = w.refused(() =>
+      w.as(w.owner, c.lineDoneWhen, { ref: proposal, doneWhen: "Hijacked", why: "x" }),
+    );
+    expect(refusal.code).toBe("forbidden");
+    expect(w.as(w.dev, c.lineShow, { ref: proposal }).line.doneWhenProposal).toBeNull();
+    expect(
+      w.as(w.owner, c.lineDoneWhen, { ref: w.line, doneWhen: "It closes.", why: "Lid" }).doneWhenProposal,
+    ).toBe("It closes.");
+  });
+
+  test("held confirm: only an open question or an open task is re-confirmed", () => {
+    const w = world();
+    const asked = w.ask();
+    w.as(w.dev, c.decisionResolve, { ref: asked, option: "a" });
+    expect(w.refused(() => w.as(w.owner, c.heldConfirm, { refs: [asked] })).code).toBe("conflict");
+    expect(w.refused(() => w.as(w.owner, c.heldConfirm, { refs: [w.issue] })).code).toBe("invalid_input");
+    expect(w.events("event:held.confirmed")).toEqual([]);
+  });
+
+  test("held withdraw: a proposal's proposer withdraws what it asked there, as it re-confirms it", () => {
+    const w = world();
+    const proposal = w.as(w.outsider, c.linePropose, {
+      title: "Stand",
+      doneWhen: "It stands.",
+      repos: ["OTHER"],
+      recommendation: "up_next",
+      why: "It is next.",
+    }).ref;
+    const asked = w.as(w.outsider, c.decisionAsk, {
+      title: "Which foot?",
+      context: SITUATION,
+      options: OPTIONS,
+      line: proposal,
+    }).ref;
+    w.as(w.outsider, c.heldConfirm, { refs: [asked] });
+    expect(w.refused(() => w.as(w.owner, c.heldWithdraw, { refs: [asked] })).code).toBe("forbidden");
+    expect(w.as(w.outsider, c.heldWithdraw, { refs: [asked], why: "Decided" }).withdrawn).toEqual([asked]);
+  });
+
+  test("question withdraw: its asker cannot withdraw it once its line is tabled, unless the developer said so", () => {
+    const w = world();
+    const asked = w.ask();
+    const kept = w.ask();
+    w.as(w.dev, c.lineTable, { ref: w.line, reason: "Later" });
+    w.later(20);
+    const refusal = w.refused(() => w.as(w.owner, c.decisionWithdraw, { ref: asked }));
+    expect([refusal.code, refusal.message]).toEqual([
+      "forbidden",
+      `${w.line} is tabled: nothing is written to it`,
+    ]);
+    expect(
+      w.as(w.agent("panel", { said: "drop that question" }), c.decisionWithdraw, { ref: kept }).status,
+    ).toBe("withdrawn");
+  });
+
+  test("pull request drift: it is work on the line of the issue the pull request implements", () => {
+    const w = world();
+    elsewhere(w);
+    w.as(w.github, c.prSync, {
+      prs: [
+        { repo: "vasc/homepanel", number: 4, title: `Fixes ${w.issue}`, state: "open", checks: "failing" },
+      ],
+    });
+    const [drift] = w.as(w.dev, c.driftList, { query: "rule:pr-checks-failing" });
+    if (drift === undefined) throw new Error("expected drift");
+    expect(drift.assignee).toBe("panel");
+    expect(w.refused(() => w.as(w.outsider, c.driftClaim, { refs: [drift.ref] })).code).toBe("forbidden");
+    expect(
+      w.refused(() => w.as(w.outsider, c.driftAck, { refs: [drift.ref], mode: "verified", note: "fine" }))
+        .code,
+    ).toBe("forbidden");
+    expect(
+      w.refused(() => w.as(w.outsider, c.driftAck, { target: drift.target, mode: "verified", note: "fine" }))
+        .code,
+    ).toBe("forbidden");
+    expect(w.refused(() => w.as(w.outsider, c.updatePost, { body: "Mine", target: drift.target })).code).toBe(
+      "forbidden",
+    );
+    expect(w.as(w.owner, c.driftClaim, { refs: [drift.ref] })[0]?.claimedBy).toBe("panel");
+    expect(w.as(w.owner, c.updatePost, { body: "Fixing the test", target: drift.target }).target).toBe(
+      drift.target,
+    );
+    expect(w.events(`event:status.posted line:${w.line}`)).toHaveLength(1);
+  });
+
+  test("notifications: an agent cannot turn them off, even on the developer's words", () => {
+    const w = world();
+    const endpoint = "https://push.example/1";
+    w.as(w.dev, c.pushSubscribe, { endpoint, keys: { p256dh: "key", auth: "auth" } });
+    const relayed = w.agent("panel", { said: "stop buzzing me" });
+    expect(w.refused(() => w.as(relayed, c.pushUnsubscribe, { endpoint })).code).toBe("forbidden");
+    expect(w.as(w.dev, c.pushUnsubscribe, { endpoint }).endpoint).toBe(endpoint);
+  });
+});

@@ -31,7 +31,7 @@ import { loadGraph } from "../store/graph.ts";
 import { DecisionRow, IssueRow, WatchRow } from "../store/rows.ts";
 import { toWatch } from "../watch/engine.ts";
 import { z } from "zod";
-import { guardLineWrite, guardOnLine, requireOnLineOf } from "../agents/claims.ts";
+import { guardLineWrite, guardOnLine, holdsWork, requireOnLineOf } from "../agents/claims.ts";
 import { DEVELOPER } from "../agents/state.ts";
 import { addNotice, claimOf } from "../store/agents.ts";
 import { addToInbox } from "../store/inbox.ts";
@@ -452,6 +452,8 @@ export function withdrawQuestion(ctx: Ctx, ref: string, note: string | undefined
       "Only the developer, the agent that asked, or an agent on that line can withdraw it.",
     );
   }
+  // Withdrawing is scoping the line, which its state allows or refuses: a tabled, done or dropped line takes nothing.
+  if (ctx.said === null) guardLineWrite(ctx, current.line, "scope");
   return transition(
     ctx,
     ref,
@@ -477,8 +479,8 @@ export const decisionOps = [
       project: input.project ?? placed.line?.repos[0],
       line: placed.line?.ref ?? null,
       issue: placed.issue,
-      // Asked on a line nobody works on: held until it starts.
-      held: placed.line !== null && placed.line.state !== "working",
+      // Asked on a line no agent works on (in a wind-down): held until one does.
+      held: placed.line !== null && holdsWork(placed.line),
     });
 
     if (input.waitsFor !== undefined) {
@@ -595,6 +597,12 @@ export const decisionOps = [
       line: placed.line?.ref ?? null,
       issue: placed.issue,
     });
+    // What it holds up or changes is written to as well, as when a question is asked: only on the recorder's line, or
+    // on no line. An `affects` link raises drift on its target, routed to that line's owner.
+    const recorded = requireEntity(ctx, decision.ref);
+    for (const target of [...(input.blocks ?? []), ...(input.affects ?? [])]) {
+      guardEnds(ctx, recorded, resolveRef(ctx, target));
+    }
     for (const target of input.blocks ?? []) addLink(ctx, decision.ref, "blocks", target);
     for (const target of input.affects ?? []) addLink(ctx, decision.ref, "affects", target);
     return resolveDecision(ctx, {

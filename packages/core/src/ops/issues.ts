@@ -136,6 +136,24 @@ function isClosed(status: IssueStatus): boolean {
   return status === "done" || status === "cancelled";
 }
 
+/**
+ * An open task is the developer's: they finish it with Done or Can't do it, which report back through the line's inbox.
+ * An agent closing, reopening or taking it through the generic issue operations would skip that report and take it out
+ * of the developer's to do; it withdraws a task that no longer stands instead.
+ */
+function guardTask(ctx: Ctx, issue: Issue, change: { status?: IssueStatus; assignee?: string | null }): void {
+  if (ctx.developer || ctx.system) return;
+  if (issue.assignee !== DEVELOPER || issue.outcome === null || isClosed(issue.status)) return;
+  const moves = change.status !== undefined && change.status !== issue.status;
+  const reassigns = change.assignee !== undefined && change.assignee !== issue.assignee;
+  if (!moves && !reassigns) return;
+  throw new OctoError(
+    "forbidden",
+    `${issue.ref} is a task for the developer: only they finish it, or say it cannot be done`,
+    `If it no longer stands, withdraw it: octo held withdraw ${issue.ref} --why "<why>". If the developer told you it is done, relay it: octo task done ${issue.ref} --said "<their words>".`,
+  );
+}
+
 function emitIssueChange(
   ctx: Ctx,
   updated: Issue,
@@ -180,6 +198,7 @@ export const issueOps = [
     return input.refs.map((rawRef) => {
       const current = requireIssue(ctx, rawRef);
       assertVersion(current.ref, current.version, input.ifVersion);
+      guardTask(ctx, current, input);
       if (input.milestone !== undefined && input.milestone !== null) {
         const milestone = requireMilestone(ctx, input.milestone);
         if (milestone.project !== current.project) {
@@ -254,6 +273,7 @@ export const issueOps = [
   bind(contracts.issueClaim, (ctx, input) =>
     input.refs.map((rawRef) => {
       const current = requireIssue(ctx, rawRef);
+      guardTask(ctx, current, { assignee: ctx.actor });
       guardLineWrite(ctx, current.line, "work");
       requireOnLine(ctx, current);
       if (current.assignee !== null && current.assignee !== ctx.actor && input.force !== true) {
@@ -280,6 +300,8 @@ export const issueOps = [
       if (current.assignee !== null && current.assignee !== ctx.actor) {
         throw new OctoError("conflict", `${current.ref} is claimed by ${current.assignee}, not ${ctx.actor}`);
       }
+      // Releasing one's own claim is always one's own business; moving unclaimed work back to todo is work on its line.
+      if (current.assignee === null) guardOnLine(ctx, current.line, "work", current.ref);
       const changes = applyPatch(ctx, "issues", current.ref, current, {
         assignee: null,
         status: current.status === "in_progress" ? "todo" : undefined,
