@@ -869,4 +869,34 @@ describe("agents write only to the line they are on, the rest of it (fourth audi
       w.as(w.agent("panel", { said: "drop that question" }), c.decisionWithdraw, { ref: kept }).status,
     ).toBe("withdrawn");
   });
+
+  test("pull request drift: it is work on the line of the issue the pull request implements", () => {
+    const w = world();
+    elsewhere(w);
+    w.as(w.github, c.prSync, {
+      prs: [
+        { repo: "vasc/homepanel", number: 4, title: `Fixes ${w.issue}`, state: "open", checks: "failing" },
+      ],
+    });
+    const [drift] = w.as(w.dev, c.driftList, { query: "rule:pr-checks-failing" });
+    if (drift === undefined) throw new Error("expected drift");
+    expect(drift.assignee).toBe("panel");
+    expect(w.refused(() => w.as(w.outsider, c.driftClaim, { refs: [drift.ref] })).code).toBe("forbidden");
+    expect(
+      w.refused(() => w.as(w.outsider, c.driftAck, { refs: [drift.ref], mode: "verified", note: "fine" }))
+        .code,
+    ).toBe("forbidden");
+    expect(
+      w.refused(() => w.as(w.outsider, c.driftAck, { target: drift.target, mode: "verified", note: "fine" }))
+        .code,
+    ).toBe("forbidden");
+    expect(w.refused(() => w.as(w.outsider, c.updatePost, { body: "Mine", target: drift.target })).code).toBe(
+      "forbidden",
+    );
+    expect(w.as(w.owner, c.driftClaim, { refs: [drift.ref] })[0]?.claimedBy).toBe("panel");
+    expect(w.as(w.owner, c.updatePost, { body: "Fixing the test", target: drift.target }).target).toBe(
+      drift.target,
+    );
+    expect(w.events(`event:status.posted line:${w.line}`)).toHaveLength(1);
+  });
 });
