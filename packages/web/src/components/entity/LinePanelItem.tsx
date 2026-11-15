@@ -1,3 +1,4 @@
+import { forYouCounts, linePosition } from "../../lib/lines.ts";
 import { contracts } from "@octotrack/core/contracts";
 import type { Drift, Line } from "@octotrack/core/schemas";
 import { useState } from "react";
@@ -45,14 +46,13 @@ export function LinePanelItem({ line, drift }: { line: Line; drift: readonly Dri
   const crew = home?.crews[line.ref];
   const owner = crew?.owner?.name ?? null;
   const order = home === undefined ? [] : [...home.working, ...home.upNext];
-  const at = order.findIndex((candidate) => candidate.ref === line.ref);
   const live = line.state !== "done" && line.state !== "dropped";
   const forYou = home?.lines[line.ref]?.forYou ?? [];
   return (
     <div className="line-panel">
       <LinePanelHead
         line={line}
-        position={at === -1 ? null : `Line ${at + 1} of ${order.length}`}
+        position={linePosition(order, line.ref)}
         repos={line.repos.map(h.repoName)}
       />
       {starting ? (
@@ -78,10 +78,7 @@ export function LinePanelItem({ line, drift }: { line: Line; drift: readonly Dri
           onTable={choices.table}
           foldTargets={order.filter((other) => other.ref !== line.ref)}
           onFold={(into) => h.fold(line.ref, into)}
-          held={{
-            questions: forYou.filter((item) => item.kind === "question").length,
-            tasks: forYou.filter((item) => item.kind === "task").length,
-          }}
+          held={forYouCounts(forYou)}
         />
       )}
       <SummaryBox line={line} owner={owner} />

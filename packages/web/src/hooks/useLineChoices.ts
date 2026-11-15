@@ -1,3 +1,4 @@
+import { tellSummary } from "../lib/lines.ts";
 import { contracts } from "@octotrack/core/contracts";
 import type { Line } from "@octotrack/core/schemas";
 import type { LineChoice } from "../components/entity/LineActions.tsx";
@@ -44,7 +45,7 @@ export function useLineChoices(line: Line) {
       choices.make(
         contracts.lineTell.name,
         { line: line.ref, body },
-        body === "" ? `Nudging ${line.title}'s owner` : `Telling ${line.title}'s owner: ${body}`,
+        tellSummary(`${line.title}'s owner`, body),
         `tell:${line.ref}`,
       ),
     stop: (name: string) => choices.make(contracts.agentStop.name, { name }, `Stopping ${name}`),

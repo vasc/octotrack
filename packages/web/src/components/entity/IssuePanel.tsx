@@ -1,7 +1,7 @@
 import { contracts } from "@octotrack/core/contracts";
 import type { EntityDetail, Issue } from "@octotrack/core/schemas";
 import { useChoices } from "../../hooks/useChoices.ts";
-import { useDraft } from "../../hooks/useDraft.ts";
+import { useIssueTell } from "../../hooks/useIssueTell.ts";
 import { useHome } from "../../hooks/useHome.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
 import { useStepTitle } from "../../hooks/useStepTitle.ts";
@@ -28,7 +28,7 @@ export function IssuePanel({ issue, detail }: { issue: Issue; detail: EntityDeta
   const h = useHome();
   const choices = useChoices();
   const prs = useOpQuery(contracts.prList, { query: `linked:${issue.ref} kind:pr` });
-  const tell = useDraft(`tell:${issue.ref}`);
+  const tell = useIssueTell(issue);
   const line = issue.line === null ? null : h.lineOf(issue.line);
   const task = isTask(issue);
   const open = issue.status !== "done" && issue.status !== "cancelled";
@@ -97,29 +97,16 @@ export function IssuePanel({ issue, detail }: { issue: Issue; detail: EntityDeta
             <TellBox
               line={issue.line}
               to={issue.assignee === null ? null : `${issue.assignee}, who holds ${issue.ref}`}
-              words={tell.value}
-              sending={choices.waiting(`tell:${issue.ref}`)}
-              onWords={tell.change}
-              onSend={(words) =>
-                void tell
-                  .flush()
-                  .then(() =>
-                    choices.make(
-                      contracts.lineTell.name,
-                      { line: issue.line ?? "", body: words, issue: issue.ref },
-                      words === ""
-                        ? `Nudging whoever holds ${issue.ref}`
-                        : `Telling whoever holds ${issue.ref}: ${words}`,
-                      `tell:${issue.ref}`,
-                    ),
-                  )
-              }
+              words={tell.draft.value}
+              sending={tell.sending}
+              onWords={tell.draft.change}
+              onSend={tell.send}
             />
           )}
         </>
       )}
       <OpenDrift drift={detail.drift} />
-      <NotKept error={tell.error} />
+      <NotKept error={tell.draft.error} />
       {choices.failure === null ? null : <ErrorState error={choices.failure} />}
     </section>
   );
