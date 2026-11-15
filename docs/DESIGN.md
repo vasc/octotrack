@@ -450,7 +450,12 @@ Decisions made from that:
     instead of running `gh` in the agent's shell and reporting the result. _Why:_ any agent could write pull request
     rows through sync, past the line rules `pr upsert` keeps, and say a repo's sync failed or was fine. _Trade-off:_ the
     sync runs with the server's `gh` and environment, not the caller's; on this one machine they are the same login.
-    `gh` now runs on the same bounded path as every other command the server runs.
+    `gh` now runs on the same bounded path as every other command the server runs. (Fourth audit, A24:) a repo named
+    in the request is synced only if a project here names it, as D11 says; any other is reported as an error and
+    never fetched. A scheduled sync that finds one running waits for it and then runs, once however many intervals
+    passed, rather than being dropped. _Why:_ any caller could have the server run `gh` for any owner/name and write
+    that repo's pull requests into the tracker, linked to issues by branch or keyword, and a long list held the sync
+    while every scheduled sync was dropped with nothing recorded, so pull request status went stale.
   - _A pull request implements an issue by its branch name, a closing keyword, or `--issue`,_ as D14 says; a bare
     mention ("see PANEL-1 for background") no longer links it. Links an earlier mention made stay, but the runner does
     not act on them (below). _Why:_ every link is a reason the runner may close the pull request on GitHub with a line.

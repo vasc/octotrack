@@ -106,8 +106,10 @@ export function startServer(port: number, hostname = "127.0.0.1"): RunningServer
   ];
   const syncSeconds = prSyncSeconds();
   if (syncSeconds > 0) {
-    timers.push(setInterval(() => void syncPrs(), syncSeconds * 1000));
-    void syncPrs();
+    // A scheduled sync that finds one someone asked for still running waits for it, rather than being dropped.
+    const scheduled = () => void syncPrs(undefined, { wait: true });
+    timers.push(setInterval(scheduled, syncSeconds * 1000));
+    scheduled();
   }
 
   return {
