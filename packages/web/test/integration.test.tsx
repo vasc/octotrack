@@ -1025,6 +1025,10 @@ describe("lines of work", () => {
       line.getByText(/plan/i);
       within(feed.getByRole("article", { name: "Weekly digest" })).getByText(/nothing new/);
       fireEvent.click(view.getByRole("button", { name: "Mark all seen" }));
+      // It waits with Undo, like every choice.
+      await view.findByText(/Marking everything seen/);
+      line.getByText("1 unseen");
+      await answerNow(view);
       await line.findByText(/nothing new/);
     });
   });
