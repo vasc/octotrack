@@ -81,20 +81,19 @@ export function ProposalCard({
           <button type="button" className="line-link" onClick={() => openEntity(line.ref)}>
             {line.title}
           </button>
-          <span className="line-facts">
+          {/* The dots between facts are drawn by the stylesheet, so facts on a line of their own start clean. */}{" "}
+          <span className="line-facts" data-separated="true">
             {line.proposedBy === null ? null : (
               <span>
-                {" "}
-                · proposed by {line.proposedBy}, {age(line.createdAt, now)}
+                proposed by {line.proposedBy}, {age(line.createdAt, now)}
               </span>
             )}
-            {repos.length === 0 ? null : <span className="mono"> · {repos.join(", ")}</span>}
-            {firstStep === null || firstStep === undefined ? null : <span> · first step: {firstStep}</span>}
-            {line.fromRef === null ? null : <span> · from before ({line.fromRef})</span>}
+            {repos.length === 0 ? null : <span className="mono">{repos.join(", ")}</span>}
+            {firstStep === null || firstStep === undefined ? null : <span>first step: {firstStep}</span>}
+            {line.fromRef === null ? null : <span>from before ({line.fromRef})</span>}
             {line.doneWhen === "" ? null : (
               <span>
-                {" "}
-                · done when <Markdown text={line.doneWhen} inline />
+                done when <Markdown text={line.doneWhen} inline />
               </span>
             )}
           </span>
