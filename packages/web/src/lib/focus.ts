@@ -209,3 +209,12 @@ export function focusItem(root: ParentNode, ref: string): HTMLElement | undefine
     .filter((element) => element instanceof HTMLElement)
     .find((element) => element.dataset.focusRef === ref);
 }
+
+/**
+ * Presses the numbered button within an element, as a click would, unless it is disabled: number keys act on what the
+ * page draws, so the drawn number and its action can never disagree (D13).
+ */
+export function pressNumbered(root: ParentNode, number: string): void {
+  const button = root.querySelector(`[data-choice="${number}"]`);
+  if (button instanceof HTMLButtonElement && !button.disabled) button.click();
+}
