@@ -2031,6 +2031,20 @@ describe("lines of work", () => {
       expect(server.tracker.call(c.draftGet, { key: "tell:L-1" }, asDeveloper).text).toBeNull();
     });
 
+    test("a Tell sent with Cmd+Enter from a box that keeps focus empties it, so a second Cmd+Enter sends nothing", async () => {
+      owned();
+      navigate("/?ref=L-1");
+      const view = renderApp(<App />);
+      const panel = within(await view.findByRole("complementary", { name: "L-1" }));
+      const box = await panel.findByLabelText("Message to octo.1");
+      fireEvent.focus(box);
+      fireEvent.change(box, { target: { value: "Print it in black" } });
+      fireEvent.keyDown(box, { key: "Enter", metaKey: true });
+      await answerNow(view);
+      await waitFor(() => expect(box).toHaveProperty("value", ""));
+      expect(panel.getByRole("button", { name: "Nudge" })).toBeDefined();
+    });
+
     test("a save that lands while newer words wait for theirs does not put older words back in the box", async () => {
       owned();
       navigate("/?ref=L-1");

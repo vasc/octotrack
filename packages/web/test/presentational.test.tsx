@@ -2741,3 +2741,17 @@ describe("TaskCard's strip", () => {
     view.getByText(/filed by panel-widgets/);
   });
 });
+
+describe("useHeldValue, through TextBox", () => {
+  test("a box with focus keeps its words when other words arrive, but empties when its draft does, as when sent", () => {
+    const view = render(<TextBox label="Note" value="Print it" onChange={() => {}} />);
+    const box = view.getByLabelText("Note");
+    fireEvent.focus(box);
+    view.rerender(<TextBox label="Note" value="From the phone" onChange={() => {}} />);
+    expect(box).toHaveProperty("value", "Print it");
+    view.rerender(<TextBox label="Note" value="" onChange={() => {}} />);
+    expect(box).toHaveProperty("value", "");
+    view.rerender(<TextBox label="Note" value="New words" onChange={() => {}} />);
+    expect(box).toHaveProperty("value", "");
+  });
+});
