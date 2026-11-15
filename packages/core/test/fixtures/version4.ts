@@ -62,7 +62,7 @@ export function buildVersion4(driver: SqlDriver): void {
   run(
     `INSERT INTO decisions (ref, project, kind, title, context, options, recommendation, status, priority, requestedBy, version, createdAt, updatedAt, wakeAddress)
      VALUES ('D-34', 'PANEL', 'product', 'Which board goes in?', 'The printed base fits the 26 mm board.',
-       '[{"key":"a","label":"26 mm","description":"Print as it is."},{"key":"b","label":"30 mm","description":"Rebuild the model first."}]', 'a', 'open', 'medium', 'panel-widgets', 1, ?, ?, 'claude:panel-session')`,
+       '[{"key":"a","label":"26 mm","description":"Print as it is."},{"key":"b","label":"30 mm","description":"Rebuild the model first."}]', 'a', 'open', 'medium', 'panel-widgets', 1, ?, ?, 'screen:panel-session')`,
     [T, T],
   );
   run(

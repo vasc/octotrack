@@ -81,7 +81,7 @@ describe("owner search step 3: a session the start command runs", () => {
     const line = w.line("Enclosure");
     w.later(1);
     w.tracker.call(c.runnerStart, { line: line.ref, repo: "PANEL", worktree: "/wt/panel.1" }, w.runner);
-    w.tracker.call(c.runnerExited, { name: "panel.1", code: 1, output: "claude: not logged in" }, w.runner);
+    w.tracker.call(c.runnerExited, { name: "panel.1", code: 1, output: "agent: not logged in" }, w.runner);
     expect(w.tracker.call(c.runnerDue, {}, w.runner)).toEqual([]);
     w.later(2);
     const retry = w.tracker.call(c.runnerDue, {}, w.runner);
@@ -89,7 +89,7 @@ describe("owner search step 3: a session the start command runs", () => {
     const home = w.tracker.call(c.homeShow, {}, w.dev);
     expect(home.lines[line.ref]?.start).toMatchObject({
       state: "failed",
-      output: "claude: not logged in",
+      output: "agent: not logged in",
       attempts: 1,
     });
   });
@@ -267,7 +267,7 @@ describe("what the runner audit found", () => {
     w.later(15);
     const handed = w.tracker.call(c.runnerStart, { line: line.ref, repo: "PANEL" }, w.runner);
     expect([handed.name, handed.worktree]).toEqual(["panel.2", "/wt/panel.1"]);
-    w.tracker.call(c.runnerExited, { name: "panel.2", code: 1, output: "claude: not logged in" }, w.runner);
+    w.tracker.call(c.runnerExited, { name: "panel.2", code: 1, output: "agent: not logged in" }, w.runner);
     w.later(2);
     expect(w.tracker.call(c.runnerDue, {}, w.runner).map((due) => due.name)).toEqual(["panel.2"]);
     const retry = w.tracker.call(
@@ -327,7 +327,7 @@ describe("what the runner audit found", () => {
       ["panel.2", "helper"],
     ] as const) {
       w.tracker.call(c.runnerStart, { line: first.ref, repo: "PANEL" }, w.runner);
-      w.tracker.call(c.agentRegister, { wake: `claude:${name}` }, w.session(name));
+      w.tracker.call(c.agentRegister, { wake: `screen:${name}` }, w.session(name));
       expect(w.tracker.call(c.lineTake, { ref: first.ref }, w.session(name)).role).toBe(role);
     }
     w.later(16);
@@ -617,7 +617,7 @@ describe("what the third audit found in the runner", () => {
     const second = w.line("Mount");
     w.later(1);
     const name = spawn(w, first.ref, 101);
-    w.tracker.call(c.agentRegister, { wake: `claude:${name}` }, w.session(name));
+    w.tracker.call(c.agentRegister, { wake: `screen:${name}` }, w.session(name));
     w.tracker.call(c.lineTake, { ref: first.ref }, w.session(name));
     w.tracker.call(c.runnerExited, { name, code: 0, output: "" }, w.runner);
     expect(due(w)).toEqual([[second.ref, null]]);
@@ -642,7 +642,7 @@ describe("what the third audit found in the runner", () => {
     w.line("Mount");
     w.later(1);
     const name = spawn(w, first.ref, 101);
-    w.tracker.call(c.agentRegister, { wake: `claude:${name}` }, w.session(name));
+    w.tracker.call(c.agentRegister, { wake: `screen:${name}` }, w.session(name));
     w.tracker.call(c.lineTake, { ref: first.ref }, w.session(name));
     w.tracker.call(c.runnerExited, { name, code: 0, output: "" }, w.runner);
     w.later(20);
@@ -863,7 +863,7 @@ describe("Step in says why, as the server decides it (fourth audit, A20)", () =>
     const line = w.line("Enclosure");
     w.later(1);
     expect(reason(w, line.ref)).toBe(
-      `No agent took ${line.ref}, and none can be started for it: no start command is set on this machine. Add "start": ["claude", "-p", "You are {name}. Run: octo line take {line}"] to ~/.octotrack/agent-setup.json, then Try now.`,
+      `No agent took ${line.ref}, and none can be started for it: no start command is set on this machine. Add a "start" command to ~/.octotrack/agent-setup.json, such as ["your-agent", "--prompt", "You are {name}. Run: octo line take {line}"], then Try now.`,
     );
     expect(kind(w, line.ref)).toBe("no_start_command");
   });
@@ -1003,7 +1003,7 @@ describe("a wake that runs past its deadline (fourth audit, A1)", () => {
     w.later(1);
     const started = w.tracker.call(c.runnerStart, { line: line.ref, repo: "PANEL" }, w.runner);
     w.tracker.call(c.runnerSpawned, { name: started.name, pid: 101 }, w.runner);
-    w.tracker.call(c.agentRegister, { wake: `claude:${started.name}` }, w.session(started.name));
+    w.tracker.call(c.agentRegister, { wake: `screen:${started.name}` }, w.session(started.name));
     w.tracker.call(c.lineTake, { ref: line.ref }, w.session(started.name));
     w.tracker.call(c.runnerExited, { name: started.name, code: 0, output: "" }, w.runner);
     w.later(20);
@@ -1066,10 +1066,10 @@ describe("the roster's start attempts (fourth audit A22)", () => {
     w.later(1);
     const first = "2026-11-14T09:01:00.000Z";
     w.tracker.call(c.runnerStart, { line: line.ref, repo: "PANEL", worktree: "/wt/panel.1" }, w.runner);
-    w.tracker.call(c.runnerExited, { name: "panel.1", code: 1, output: "claude: not logged in" }, w.runner);
+    w.tracker.call(c.runnerExited, { name: "panel.1", code: 1, output: "agent: not logged in" }, w.runner);
     w.later(3);
     w.tracker.call(c.runnerStart, { line: line.ref, repo: "PANEL", worktree: "/wt/panel.1" }, w.runner);
-    w.tracker.call(c.runnerExited, { name: "panel.1", code: 1, output: "claude: not logged in" }, w.runner);
+    w.tracker.call(c.runnerExited, { name: "panel.1", code: 1, output: "agent: not logged in" }, w.runner);
     const started = w.tracker.call(
       c.runnerStart,
       { line: other.ref, repo: "PANEL", worktree: "/wt/panel.2" },
@@ -1149,7 +1149,7 @@ describe("a wake still running (fifth audit, B1)", () => {
     const w = world();
     const line = w.line("Enclosure");
     const panel = w.session("panel");
-    w.tracker.call(c.agentRegister, { wake: "claude:panel-session", repo: "PANEL" }, panel);
+    w.tracker.call(c.agentRegister, { wake: "screen:panel-session", repo: "PANEL" }, panel);
     w.tracker.call(c.lineTake, { ref: line.ref }, panel);
     w.later(20);
     const tell = (body: string) => w.tracker.call(c.lineTell, { line: line.ref, body }, w.dev);
@@ -1215,7 +1215,7 @@ describe("a wake still running (fifth audit, B1)", () => {
     w.later(1);
     const started = w.tracker.call(c.runnerStart, { line: line.ref, repo: "PANEL" }, w.runner);
     w.tracker.call(c.runnerSpawned, { name: started.name, pid: 101 }, w.runner);
-    w.tracker.call(c.agentRegister, { wake: `claude:${started.name}` }, w.session(started.name));
+    w.tracker.call(c.agentRegister, { wake: `screen:${started.name}` }, w.session(started.name));
     w.tracker.call(c.lineTake, { ref: line.ref }, w.session(started.name));
     w.tracker.call(c.runnerExited, { name: started.name, code: 0, output: "" }, w.runner);
     w.later(20);
@@ -1233,7 +1233,7 @@ describe("a wake killed at its deadline (fifth audit, B3)", () => {
     const w = world();
     const line = w.line("Enclosure");
     const panel = w.session("panel");
-    w.tracker.call(c.agentRegister, { wake: "claude:panel-session", repo: "PANEL" }, panel);
+    w.tracker.call(c.agentRegister, { wake: "screen:panel-session", repo: "PANEL" }, panel);
     w.tracker.call(c.lineTake, { ref: line.ref }, panel);
     w.later(20);
     w.tracker.call(c.lineTell, { line: line.ref, body: "Look at the base." }, w.dev);
@@ -1263,7 +1263,7 @@ describe("a wake killed at its deadline (fifth audit, B3)", () => {
     const w = world();
     const line = w.line("Enclosure");
     const panel = w.session("panel");
-    w.tracker.call(c.agentRegister, { wake: "claude:panel-session", repo: "PANEL" }, panel);
+    w.tracker.call(c.agentRegister, { wake: "screen:panel-session", repo: "PANEL" }, panel);
     w.tracker.call(c.lineTake, { ref: line.ref }, panel);
     w.later(20);
     w.tracker.call(c.lineTell, { line: line.ref, body: "Look at the base." }, w.dev);

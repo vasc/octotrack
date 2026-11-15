@@ -13,7 +13,7 @@ import { NOT_STARTED, runProcess } from "./spawn.ts";
  * becomes a prompt.
  */
 export const RunnerConfig = z.object({
-  /** The start command, such as ["claude", "-p", "You are {name}. Run octo line take {line}."]. */
+  /** The start command, such as ["your-agent", "--prompt", "You are {name}. Run octo line take {line}."]. */
   start: z.array(z.string().min(1)).min(1),
   /** Run when the developer stops an agent, with only `{name}` filled in, such as ["tmux", "kill-session", "-t", "{name}"]. */
   stop: z.array(z.string().min(1)).min(1).optional(),

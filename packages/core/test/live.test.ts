@@ -153,7 +153,7 @@ const EVERY_WRITE: readonly (readonly [string, unknown])[] = [
   ["line.drop", { ref: "L-4" }],
   ["line.reject", { ref: "L-6" }],
   ["line.fold", { ref: "L-3", into: "L-1" }],
-  ["agent.register", { wake: "claude:a", repo: "OCT" }],
+  ["agent.register", { wake: "screen:a", repo: "OCT" }],
   ["line.take", { ref: "L-1" }],
   // From the line it took: an agent writes only to the line it is on.
   ["plan.set", { line: "L-1", steps: ["One"] }],

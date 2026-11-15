@@ -55,7 +55,7 @@ function world() {
     where: "working",
   }).ref;
   const owner = agent("panel");
-  as(owner, c.agentRegister, { wake: "claude:panel", repo: "PANEL" });
+  as(owner, c.agentRegister, { wake: "screen:panel", repo: "PANEL" });
   as(owner, c.lineTake, { ref: line });
   const outsider = agent("outsider");
   as(outsider, c.agentRegister, { repo: "OTHER" });
@@ -711,14 +711,14 @@ describe("where an asker is woken is the asker's own (third audit, N13)", () => 
   test("nobody can change, or silence, where a question's answer wakes its asker", () => {
     const w = world();
     const asker = w.agent("loose");
-    w.as(asker, c.agentRegister, { wake: "claude:loose", repo: "OTHER" });
+    w.as(asker, c.agentRegister, { wake: "screen:loose", repo: "OTHER" });
     const asked = w.as(asker, c.decisionAsk, { title: "Which queue?" }).ref;
-    for (const address of ["claude:mallory", null]) {
+    for (const address of ["screen:mallory", null]) {
       expect(() => w.tracker.execute("decision.wake", { ref: asked, address }, w.outsider)).toThrow();
     }
     w.as(w.dev, c.decisionResolve, { ref: asked, note: "Kafka" });
     const due = w.as(w.github, c.decisionWakes, {});
-    expect(due.map((decision) => [decision.ref, decision.wakeAddress])).toEqual([[asked, "claude:loose"]]);
+    expect(due.map((decision) => [decision.ref, decision.wakeAddress])).toEqual([[asked, "screen:loose"]]);
   });
 });
 

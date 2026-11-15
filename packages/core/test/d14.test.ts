@@ -127,7 +127,7 @@ describe("Try now", () => {
     w.later(1);
     for (const line of [first, second]) {
       const started = w.as(w.server, c.runnerStart, { line: line.ref, repo: "PANEL" });
-      w.as(w.server, c.runnerExited, { name: started.name, code: 1, output: "boot\nclaude: not logged in" });
+      w.as(w.server, c.runnerExited, { name: started.name, code: 1, output: "boot\nagent: not logged in" });
     }
     expect(w.as(w.server, c.runnerDue, {})).toEqual([]);
     w.as(w.dev, c.runnerRetry, { line: first.ref, same: true });
@@ -462,7 +462,7 @@ describe("an answer whose owner could not be woken", () => {
   test("names the agent that could not be woken", () => {
     const w = world();
     const line = w.line("Enclosure");
-    w.as(w.agent("owner"), c.agentRegister, { repo: "PANEL", wake: "claude:abc" });
+    w.as(w.agent("owner"), c.agentRegister, { repo: "PANEL", wake: "screen:abc" });
     const owner = w.agent("owner");
     w.as(owner, c.lineTake, { ref: line.ref });
     const asked = w.as(owner, c.decisionAsk, {

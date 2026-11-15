@@ -713,8 +713,8 @@ describe("what the re-audit found", () => {
 
   test("a question's own wake address gave way to the one an agent registers, and the old habit is told so", async () => {
     for (const args of [
-      ["decision", "wake", "D-1", "claude:abc"],
-      ["question", "ask", "Which?", "--wake", "claude:abc"],
+      ["decision", "wake", "D-1", "screen:abc"],
+      ["question", "ask", "Which?", "--wake", "screen:abc"],
     ]) {
       const result = await octo(args);
       expect(result.code).toBe(2);

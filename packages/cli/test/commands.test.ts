@@ -239,18 +239,18 @@ describe("output reaches a pipe whole", () => {
 describe("the guide says how this machine can wake an agent, naming no adapter it lacks", () => {
   test("it lists the adapters set up here, each with what it fits and the address to give", () => {
     const guide = agentGuide({
-      claude: {
-        command: ["octo", "adapter", "claude", "--", "{address}", "{message}"],
-        for: "a session Octotrack started, or any Claude Code session not open in a terminal",
-        address: "$CLAUDE_CODE_SESSION_ID",
+      tmux: {
+        command: ["tmux", "send-keys", "-t", "{address}", "{message}", "Enter"],
+        for: "a session open in tmux",
+        address: "$TMUX_PANE",
       },
       screen: {
         command: ["screen", "-S", "{address}", "-p", "0", "-X", "stuff", "{message}"],
         for: "inside GNU screen",
       },
     });
-    expect(guide).toContain("octo agent register --wake claude:$CLAUDE_CODE_SESSION_ID");
-    expect(guide).toContain("a session Octotrack started, or any Claude Code session not open in a terminal");
+    expect(guide).toContain("octo agent register --wake tmux:$TMUX_PANE");
+    expect(guide).toContain("a session open in tmux");
     expect(guide).toContain("octo agent register --wake screen:<address>");
     expect(guide).toContain("inside GNU screen");
   });
@@ -258,6 +258,6 @@ describe("the guide says how this machine can wake an agent, naming no adapter i
   test("with none set up, it says to register with --no-wake, and names no adapter", () => {
     const guide = agentGuide({});
     expect(guide).toContain("No wake adapter is set up on this machine");
-    expect(guide).not.toContain("claude:");
+    expect(guide).not.toMatch(/--wake [a-z]+:/);
   });
 });

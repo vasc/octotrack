@@ -45,7 +45,7 @@ export function StatusGallery() {
       <DesignSection title="Loading, empty and error">
         <LoadingState label="Loading the feed" />
         <EmptyState command="octo guide">Nothing here yet.</EmptyState>
-        <ErrorState error={new Error("D-3 was already decided by claude-a")} />
+        <ErrorState error={new Error("D-3 was already decided by agent-a")} />
       </DesignSection>
     </>
   );

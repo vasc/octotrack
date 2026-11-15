@@ -78,13 +78,13 @@ describe("who an agent is: a name plus its checkout", () => {
   test("the first command registers it, with the repo read from the checkout's remote", () => {
     const w = world();
     const meals = w.agent("panel");
-    w.as(meals, c.agentRegister, { wake: "claude:abc" });
+    w.as(meals, c.agentRegister, { wake: "screen:abc" });
     const [listed] = w.as(w.dev, c.agentList, {}).filter((agent) => agent.name === "panel");
     expect(listed).toMatchObject({
       name: "panel",
       repo: "PANEL",
       checkout: "/src/homepanel",
-      wakeAddress: "claude:abc",
+      wakeAddress: "screen:abc",
     });
     expect(listed?.state).toBe("running");
   });
@@ -146,7 +146,7 @@ describe("agent states", () => {
   test("running within 15 minutes of its last command, then asleep or quiet by whether it can be woken", () => {
     expect(agentState(base, at(14))).toBe("running");
     expect(agentState(base, at(16))).toBe("quiet");
-    expect(agentState({ ...base, wakeAddress: "claude:x" }, at(16))).toBe("asleep");
+    expect(agentState({ ...base, wakeAddress: "screen:x" }, at(16))).toBe("asleep");
   });
 
   test("gone and stopped override everything, and silence alone never makes an agent gone", () => {
@@ -227,7 +227,7 @@ describe("stopping an agent", () => {
     const w = world();
     const line = w.line("Sendspin enclosure", "working");
     const a = w.agent("one");
-    w.as(a, c.agentRegister, { wake: "claude:abc" });
+    w.as(a, c.agentRegister, { wake: "screen:abc" });
     w.as(a, c.lineTake, { ref: line.ref });
     w.as(w.dev, c.agentStop, { name: "one", reason: "Wrong approach" });
     expect(w.as(w.dev, c.homeShow, {}).crews[line.ref]?.owner).toBeNull();
@@ -314,7 +314,7 @@ describe("every working line gets an owner", () => {
     const line = w.line("Sendspin enclosure", "working");
     const one = w.agent("one");
     const two = w.agent("two", "/src/homepanel-2");
-    w.as(one, c.agentRegister, { wake: "claude:one" });
+    w.as(one, c.agentRegister, { wake: "screen:one" });
     w.as(two, c.agentRegister, {});
     w.as(one, c.lineTake, { ref: line.ref });
     w.as(w.dev, c.lineQueue, { ref: line.ref });

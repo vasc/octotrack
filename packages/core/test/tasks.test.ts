@@ -52,7 +52,7 @@ function world() {
   });
   as(dev, c.issueCreate, { project: "PANEL", title: "Model the base", line: line.ref });
   const owner = agent("panel");
-  as(owner, c.agentRegister, { wake: "claude:panel" });
+  as(owner, c.agentRegister, { wake: "screen:panel" });
   as(owner, c.lineTake, { ref: line.ref });
   as(owner, c.issueClaim, { refs: ["PANEL-1"] });
   notices(owner);

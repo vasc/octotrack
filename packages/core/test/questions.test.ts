@@ -68,7 +68,7 @@ function ownedLine() {
   const line = w.line("Sendspin enclosure");
   w.as(w.dev, c.issueCreate, { project: "PANEL", title: "Pick the board", line: line.ref });
   const owner = w.agent("panel");
-  w.as(owner, c.agentRegister, { wake: "claude:panel" });
+  w.as(owner, c.agentRegister, { wake: "screen:panel" });
   w.as(owner, c.lineTake, { ref: line.ref });
   w.as(owner, c.issueClaim, { refs: ["PANEL-1"] });
   return { ...w, ref: line.ref, owner };
@@ -172,7 +172,7 @@ describe("the line inbox", () => {
     w.later(20);
     w.as(w.dev, c.decisionResolve, { ref: asked.ref, option: "a" });
     const due = w.as(w.dev, c.agentWakes, {});
-    expect(due.map((wake) => [wake.agent, wake.address])).toEqual([["panel", "claude:panel"]]);
+    expect(due.map((wake) => [wake.agent, wake.address])).toEqual([["panel", "screen:panel"]]);
     expect(due[0]?.message).not.toContain("26 mm");
 
     w.as({ actor: "octotrack", channel: "cli", system: true }, c.agentWoken, {

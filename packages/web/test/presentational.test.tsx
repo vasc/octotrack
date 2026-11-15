@@ -217,8 +217,8 @@ describe("FeedItem", () => {
     const view = render(<FeedItem onFilter={onFilter} event={event({ summary: "OCT-1 moved, see D-3" })} />);
     view.getByRole("button", { name: "OCT-1" });
     view.getByRole("button", { name: "D-3" });
-    fireEvent.click(view.getByRole("button", { name: "claude-a" }));
-    expect(onFilter).toHaveBeenCalledWith("actor:claude-a");
+    fireEvent.click(view.getByRole("button", { name: "agent-a" }));
+    expect(onFilter).toHaveBeenCalledWith("actor:agent-a");
     fireEvent.click(view.getByRole("button", { name: "OCT" }));
     expect(onFilter).toHaveBeenCalledWith("project:OCT");
   });
@@ -772,13 +772,13 @@ describe("lines of work", () => {
     const view = render(
       <StepIn
         line={line()}
-        reason="claude is not logged in"
+        reason="the agent command is not logged in"
         onRetry={onRetry}
         onOwn={onOwn}
         onTable={onTable}
       />,
     );
-    view.getByText("claude is not logged in");
+    view.getByText("the agent command is not logged in");
     fireEvent.click(view.getByRole("button", { name: "Try now" }));
     expect(onRetry).toHaveBeenCalledWith("L-1");
     fireEvent.click(view.getByRole("button", { name: "I'll own it" }));
@@ -1202,7 +1202,7 @@ describe("agents and first run", () => {
     lastSeenAt: "2026-11-14T09:00:00.000Z",
     checkout: "/src/panel",
     repo: "PANEL",
-    wakeAddress: "claude:abc",
+    wakeAddress: "screen:abc",
     startedBy: null,
     stoppedAt: null,
     stoppedReason: null,
@@ -1315,7 +1315,7 @@ describe("agents and first run", () => {
       />,
     );
     view.getByText("vasc/homepanel");
-    view.getByText("claude");
+    view.getByText("screen");
     view.getByText(", owner");
     view.getByText("asleep, on its line");
     expect(view.queryByRole("button", { name: "Release panel" })).toBeNull();
@@ -2163,7 +2163,7 @@ const forYouDone = {
   kind: "done" as const,
   line: "L-1",
   text: "The case holds the board.",
-  by: "claude-a",
+  by: "agent-a",
   doneWhen: "A printed case holds the board.",
 };
 
@@ -2186,7 +2186,7 @@ describe("PullRequestBox", () => {
           pr(),
           pr({ ref: "PR-2", number: 13, title: "Drop the cache", checks: "failing", state: "merged" }),
         ]}
-        holder="claude-a"
+        holder="agent-a"
       />,
     );
     const box = view.getByRole("region", { name: "Pull request" });
@@ -2202,7 +2202,7 @@ describe("PullRequestBox", () => {
     expect(within(box).getAllByText(`+10 −2 · opened ${whenText(pr().createdAt)}`)).toHaveLength(2);
     within(box).getByText("merged");
     within(box).getByText(
-      "Checks are agents' to fix, never yours. claude-a merges once they pass, and asks first if it wants your eyes.",
+      "Checks are agents' to fix, never yours. agent-a merges once they pass, and asks first if it wants your eyes.",
     );
   });
 
@@ -2723,7 +2723,7 @@ describe("HistoryList", () => {
     );
     view.getByRole("heading", { name: "History" });
     view.getByText(whole("OCT-2 closed dev 2026-01-02"));
-    view.getByText(whole("OCT-1 created: Thing claude-a 2026-01-01"));
+    view.getByText(whole("OCT-1 created: Thing agent-a 2026-01-01"));
   });
 
   test("with no events, is only its heading", () => {

@@ -223,8 +223,9 @@ OCT-12", "Closes OCT-3, OCT-4"), becomes an `implements` link automatically; a b
 
 Answering a decision used to reach an agent only if it was hanging on `--wait` or a watch. In first real use, nine answers
 were recorded correctly and no session acted on them until each was messaged by hand. Comments from the developer on the
-proposal: "not overfitting to Claude code", "letting the session decide if it want to be reawaken", and that it would be great
-if "we can avoid having the session actively hang on octo".
+proposal: that it should not overfit to the one agent tool then in use (paraphrased here, since the quote named that tool),
+"letting the session decide if it want to be reawaken", and that it would be great if "we can avoid having the session
+actively hang on octo".
 
 - **An inbox any tool can use.** `octo inbox`, `decision pickup` and `decision report` are plain CLI commands keyed on the
   agent's name. An answer moves through not picked up, picked up, and carried out or partly carried out. An agent that answers
@@ -237,17 +238,24 @@ if "we can avoid having the session actively hang on octo".
   a command, so another tool needs one more entry and no code.
 - **Each adapter says what it fits, and the guide lists what this machine has.** An entry may carry `for` (when an agent
   should use it, in plain words) and `address` (what to give after the colon), and `octo guide` prints the adapters set
-  up here with both, instead of naming one. _Why:_ the guide once told every agent to register `claude:` with its
-  session id, which resumes a session headlessly; the developer's agents run open in GNU screen, where that starts a
+  up here with both, instead of naming one. _Why:_ the guide once told every agent to register one adapter's name with
+  its session id, which resumes a session headlessly; the developer's agents run open in GNU screen, where that starts a
   second copy beside the open one, and an agent rewrote the guide for screen instead (vasc/octotrack#1, closed), which
   fitted that machine and no other. What fits depends on the machine and how each agent runs, so the guide reads it from
-  the machine. _Decided:_ the claude adapter does not try to detect a session open in a terminal; nothing it can see
-  tells an open interactive session from one that ended, so the guide says which sessions it fits instead.
+  the machine. _Decided:_ an adapter does not try to detect a session open in a terminal; nothing it can see tells an
+  open interactive session from one that ended, so the guide says which sessions it fits instead.
 - **A request can never supply the command.** There is no authentication (D10), so that would let any device that can reach
   the server run anything. Addresses are also narrow enough that they cannot pass for an option or mean anything to a shell, no
   shell is involved, and the wake message holds only the ref, so tracker text never becomes a prompt.
 - **Trade-off:** one attempt per answer rather than retries. A retried wake could start a second run of an agent, which is
   worse than an answer waiting in an inbox where the dashboard shows it.
+- **2026-11-15: the built-in adapter for one agent tool is removed.** The binary carried one adapter of its own, `octo
+  adapter <tool>`, which resumed a session of one agent tool, and a deploy pointed that tool's entry in
+  `wake-adapters.json` at it. The developer, in their words, with the tool's name left out at their request: "No one ever
+  asked for a [tool] wake adaptor so... no [tool] in the product no [tool] in the commits". _Decided:_ the command is
+  gone, so Octotrack carries no adapter and every adapter is a command the developer writes; a deploy now removes any
+  entry that runs the binary's `adapter` command, which could only fail, and leaves the rest as written. Nothing in the
+  product names an agent tool. _Trade-off:_ a developer whose sessions resume headlessly writes that one entry by hand.
 
 ### D13. Building lines of work at the centre
 
@@ -265,8 +273,8 @@ Decisions made from that:
   tasks, places and summaries; the dashboard; the local runner; phone interruptions; then removing what it replaces.
 - **The live install stops running from the main checkout: it runs one compiled `octo` binary.** The investigation
   worked: `bun build --compile` carries the CLI, the server, SQLite, the built dashboard (embedded through generated
-  `with { type: "file" }` imports, since Bun rebundles HTML and scripts given as entry points) and the Claude wake adapter
-  (`octo adapter claude -- <session> <message>`, so no script path outside the binary). A compiled binary starts its own
+  `with { type: "file" }` imports, since Bun rebundles HTML and scripts given as entry points) and the wake adapter
+  it then carried (`octo adapter`, so no script path outside the binary; removed since, see D12). A compiled binary starts its own
   server by running itself, not its virtual script path. Every answer carries the server's build (`x-octo-build`, a hash of
   the sources and the dashboard) and the CLI warns once when it differs from its own. `scripts/deploy.ts` builds,
   rehearses the migration on a copy of the real data, backs the database up with SQLite (`VACUUM INTO` from a read-only
@@ -512,7 +520,7 @@ Decisions made from that:
     is recorded: the cap counts the woken session for as long, however silent it is, until the server records the
     wake's end, and Stop ends the wake's process group as it does a session's (the wake dispatcher does, since the
     fifth audit, whatever the runner's setup).
-    _Why:_ the deadline killed only the adapter, so the `claude` it resumed kept working, unseen, while the wake was
+    _Why:_ the deadline killed only the adapter, so the session it resumed kept working, unseen, while the wake was
     recorded as failed ("Exit 124"): the agent was declared gone, its claim ended, a new session was started for the
     line and handed the orphan's worktree, Stop could not reach it, and the cap stopped counting it after fifteen
     minutes. A clone or setup command cut short likewise left git writing into a folder the runner then removed.
@@ -571,7 +579,7 @@ Decisions made from that:
     within fifteen minutes of its spawn with no wake address is recorded as failed, with a line saying sessions keep
     leaving: the next start for the line (with a new name, since that one ran) waits 2, 10, 60 then 360 minutes, and the
     second such exit in a row raises Step in. A session that ran longer, or kept its line asleep, resets the count.
-    _Why:_ a start command that exits after taking the line, as `claude -p "…octo line take {line}"` does, was replaced
+    _Why:_ a start command that exits after taking the line, as a headless `--prompt "…octo line take {line}"` start does, was replaced
     every 40 seconds without limit; the cap bounds how many run at once, not how fast they are replaced. _Trade-off:_ a
     session that does a short job and exits is replaced only after the wait. (Fourth audit, A2:) a session the
     developer sent away is not leaving at once: one stopped, released by the developer, or whose line was tabled, done,
@@ -593,7 +601,7 @@ Decisions made from that:
   - _Stop ends what the runner started._ Sessions run in a process group of their own; Stop sends it SIGTERM, then
     SIGKILL after ten seconds, and the developer's `stop` command is only for sessions the runner did not start. The log
     says which was done. _Why:_ the runner kept no handle on its children, so a stopped session kept running and
-    spending, and the README's `claude -p` start and `tmux` stop could never work together. D14's "Octotrack cannot kill
+    spending, and the README's headless start and `tmux` stop could never work together. D14's "Octotrack cannot kill
     a session" now holds only for sessions it did not start.
   - _A session outlives a server restart, and is watched by its process id._ Each start records its process id, and
     its output goes to a log file (`sessions/<name>.log` in Octotrack's home) rather than a pipe, so the session is not cut
@@ -677,8 +685,8 @@ Decisions made from that:
     latest wake ended and how (`wakeEndedAt`, `wakeEnd`: exited, deadline, stopped or error); a wake with no recorded end
     runs, and the cap counts it, however silent the woken session is. One whose process was never recorded counts only
     up to its deadline, as a server that died between recording a wake and spawning it left nothing running. _Why:_ an
-    agent read as asleep until its woken session ran an octo command, so the next Tell started a second `claude
-    --resume` on the same session and worktree (B1). _Trade-off:_ an end is now something the server must record, so
+    agent read as asleep until its woken session ran an octo command, so the next Tell resumed the same session a second
+    time, on the same worktree (B1). _Trade-off:_ an end is now something the server must record, so
     the server owns every wake it starts: see the next two.
   - _The wake dispatcher owns the wakes it starts._ It ends a stopped agent's wake itself, whatever the runner's setup,
     in watch mode too, and logs it (`agent.wake_ended`, "ended, as the developer stopped it"). `runner.stops` says only
@@ -922,7 +930,7 @@ you", answers wait in its inbox, and the next answer, finished task or Tell star
   Agents showing only the latest attempt; one that ran but never took the line is not retried until the developer acts.
   Octotrack keeps each start's exit code and last lines of output. The line gets a Step in item only when no start
   command is set, a clone failed, a start keeps failing or never checked in, or the cap is reached with every counted
-  session an owner; the item shows that output, says what to do ("claude is not logged in on this Mac: log it in"), and
+  session an owner; the item shows that output, says what to do ("the agent command is not logged in on this Mac: log it in"), and
   offers the action that fits (the file and line to add, then Try now, when no start command is set; Set its checkout
   when a clone failed; Try now, which retries every line stopped the same way, when a start keeps failing or never
   checked in; Start one anyway at the cap), with Table it and I'll own it beside. _Why:_ a line the developer marked

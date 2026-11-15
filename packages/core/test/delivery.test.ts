@@ -7,7 +7,7 @@ const SERVER = { actor: "octotrack", channel: "cli", system: true } as const;
 import { type Harness, harness } from "./helpers.ts";
 
 const ASKER = "mediarr";
-const ADDRESS = "claude:ca1743eb-4524-4f04-9737-3980f49747b4";
+const ADDRESS = "screen:ca1743eb-4524-4f04-9737-3980f49747b4";
 
 let h: Harness;
 
@@ -180,11 +180,11 @@ describe("an answer to a question on no line wakes its asker at the address it r
     register(ADDRESS);
     const { ref } = ask();
     answer(ref);
-    h.tracker.call(c.decisionWoken, { ref, error: "No wake adapter named claude" }, SERVER);
+    h.tracker.call(c.decisionWoken, { ref, error: "No wake adapter named screen" }, SERVER);
     expect(wakes()).toEqual([]);
     expect(inbox()).toEqual([ref]);
     expect(h.call(c.decisionList, { query: `ref:${ref}` }, "server")[0]?.wakeError).toBe(
-      "No wake adapter named claude",
+      "No wake adapter named screen",
     );
   });
 
@@ -206,12 +206,12 @@ describe("an answer to a question on no line wakes its asker at the address it r
   });
 
   test.each([
-    "claude",
-    "claude:",
-    "claude:--dangerously-skip-permissions",
-    "claude:abc;rm -rf /",
-    "claude:$(whoami)",
-    "Claude:abc",
+    "screen",
+    "screen:",
+    "screen:--quit",
+    "screen:abc;rm -rf /",
+    "screen:$(whoami)",
+    "Screen:abc",
     ":abc",
     "../bin/sh:abc",
   ])("refuses the address %s, which could reach a command line", (wake) => {

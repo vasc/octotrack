@@ -210,7 +210,7 @@ export function LinesGallery() {
         >
           <StepIn
             line={line({ title: "South Tyrol trip" })}
-            reason="trips.2, started for it, exited at once: claude is not logged in. Octotrack tries again by itself, less often each time."
+            reason="trips.2, started for it, exited at once: the agent command is not logged in. Octotrack tries again by itself, less often each time."
             onRetry={NOOP}
             onOwn={NOOP}
             onTable={NOOP}

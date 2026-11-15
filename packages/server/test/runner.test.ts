@@ -91,7 +91,7 @@ function world(
     tracker,
     shell: fake.shell,
     config: {
-      start: ["claude", "--name", "{name}", "octo line take {line}"],
+      start: ["agent", "--name", "{name}", "octo line take {line}"],
       cap: 1,
       dryRun: false,
       worktrees: "/wt",
@@ -120,7 +120,7 @@ describe("the local runner", () => {
     expect(w.ran).toEqual(["git -C /src/homepanel worktree add -b octo/panel.1 /wt/panel.1", "bun install"]);
     expect(w.started).toEqual([
       {
-        argv: ["claude", "--name", "panel.1", `octo line take ${w.line.ref}`],
+        argv: ["agent", "--name", "panel.1", `octo line take ${w.line.ref}`],
         cwd: "/wt/panel.1",
         env: { OCTO_AGENT: "panel.1" },
       },
@@ -140,10 +140,10 @@ describe("the local runner", () => {
   test("a start that exits at once is recorded with its output, for Step in to show", async () => {
     const w = world();
     await w.tick();
-    w.finish[0]?.({ code: 1, output: "claude: not logged in" });
+    w.finish[0]?.({ code: 1, output: "agent: not logged in" });
     await w.runner.settled();
     const home = w.tracker.call(c.homeShow, {}, DEV);
-    expect(home.lines[w.line.ref]?.start).toMatchObject({ state: "failed", output: "claude: not logged in" });
+    expect(home.lines[w.line.ref]?.start).toMatchObject({ state: "failed", output: "agent: not logged in" });
   });
 
   test("a worktree that cannot be made is a failed start, not a session", async () => {
@@ -441,7 +441,7 @@ describe("what the runner audit found", () => {
     const home = mkdtempSync(join(tmpdir(), "octo-runner-home-"));
     homes.push(home);
     await withEnv({ OCTO_HOME: home }, () => {
-      expect(RunnerConfig.parse({ start: ["claude"] }).worktrees).toBe(join(home, "worktrees"));
+      expect(RunnerConfig.parse({ start: ["agent"] }).worktrees).toBe(join(home, "worktrees"));
     });
   });
 
@@ -763,7 +763,7 @@ describe("what the third audit found in the local runner", () => {
     const home = mkdtempSync(join(tmpdir(), "octo-runner-home-"));
     homes.push(home);
     await withEnv({ OCTO_HOME: home }, () => {
-      expect(RunnerConfig.parse({ start: ["claude"] }).clones).toBe(join(home, "clones"));
+      expect(RunnerConfig.parse({ start: ["agent"] }).clones).toBe(join(home, "clones"));
     });
   });
 });
@@ -788,7 +788,7 @@ describe("the setup file", () => {
       for (const content of [
         "{ not json",
         JSON.stringify({ start: [] }),
-        JSON.stringify({ start: ["claude"], cap: -1 }),
+        JSON.stringify({ start: ["agent"], cap: -1 }),
       ]) {
         writeFileSync(path, content);
         expect(loadRunnerConfig(path)).toBeNull();
@@ -799,9 +799,9 @@ describe("the setup file", () => {
   test("valid, it watches only until dryRun is turned off", async () => {
     await inHome((home) => {
       const path = join(home, "agent-setup.json");
-      writeFileSync(path, JSON.stringify({ start: ["claude", "-p", "{name}"] }));
+      writeFileSync(path, JSON.stringify({ start: ["agent", "--prompt", "{name}"] }));
       expect(loadRunnerConfig(path)).toMatchObject({ dryRun: true, cap: 1, repos: {} });
-      writeFileSync(path, JSON.stringify({ start: ["claude"], dryRun: false, cap: 3 }));
+      writeFileSync(path, JSON.stringify({ start: ["agent"], dryRun: false, cap: 3 }));
       expect(loadRunnerConfig(path)).toMatchObject({ dryRun: false, cap: 3 });
     });
   });
@@ -859,7 +859,7 @@ describe("what the fourth audit found in the local runner", () => {
     const w = world({ stop: ["tmux", "kill-session", "-t", "{name}"] }, {}, { living: [4242] });
     w.tracker.call(
       c.agentRegister,
-      { repo: "PANEL", wake: "claude:abc" },
+      { repo: "PANEL", wake: "screen:abc" },
       { actor: "panel-a", channel: "cli" },
     );
     w.tracker.call(c.agentWoken, { name: "panel-a" }, RUNNER_CALLER);

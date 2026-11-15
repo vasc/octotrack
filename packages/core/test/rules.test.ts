@@ -126,7 +126,7 @@ describe("a session Octotrack started that can be woken", () => {
     w.later(1);
     w.as(w.server, c.runnerStart, { line: first.ref, repo: "PANEL" });
     const session = w.agent("panel.1");
-    w.as(session, c.agentRegister, { wake: "claude:panel-1" });
+    w.as(session, c.agentRegister, { wake: "screen:panel-1" });
     w.as(session, c.lineTake, { ref: first.ref });
     w.as(w.server, c.runnerExited, { name: "panel.1", code: 0, output: "" });
     const listed = w.as(w.dev, c.agentList, {}).find((agent) => agent.name === "panel.1");
@@ -197,7 +197,7 @@ describe("the search for an owner", () => {
   test("ends its first step when the last owner cannot be woken", () => {
     const w = world();
     const line = w.line("Enclosure");
-    const owner = w.register("owner", "claude:owner");
+    const owner = w.register("owner", "screen:owner");
     w.as(owner, c.lineTake, { ref: line.ref });
     w.as(w.dev, c.lineQueue, { ref: line.ref });
     w.later(20);

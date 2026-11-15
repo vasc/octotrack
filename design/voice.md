@@ -28,7 +28,7 @@ Say why it is empty, and how to change that.
 | Situation                | Text                                                                               |
 | ------------------------ | ---------------------------------------------------------------------------------- |
 | No lines yet             | `No lines yet. Add one above, or point an agent at the guide…`, then `octo guide`  |
-| No agent has checked in  | `No agent has checked in yet.`, then `export OCTO_AGENT=claude-feature-x`          |
+| No agent has checked in  | `No agent has checked in yet.`, then `export OCTO_AGENT=feature-x`                 |
 | A search matched nothing | `Nothing matches this search.`                                                     |
 | Nothing waits on you     | `Nothing needs you.`, then who is working and where the next ask likely comes from |
 

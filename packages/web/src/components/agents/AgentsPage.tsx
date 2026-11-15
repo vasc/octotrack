@@ -36,7 +36,7 @@ export function AgentsPage() {
       {agents.error === null ? null : <ErrorState error={agents.error} />}
       {choices.failure === null ? null : <ErrorState error={choices.failure} />}
       {agents.data?.length === 0 ? (
-        <EmptyState command="export OCTO_AGENT=claude-feature-x">No agent has checked in yet.</EmptyState>
+        <EmptyState command="export OCTO_AGENT=feature-x">No agent has checked in yet.</EmptyState>
       ) : (
         <div className="table-box">
           <table className="agents-table" aria-label="Roster">

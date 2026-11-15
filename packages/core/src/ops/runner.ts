@@ -426,7 +426,7 @@ function stepInOf(ctx: Ctx, line: Line): StepIn | null {
   if (!status.configured) {
     return {
       kind: "no_start_command",
-      reason: `No agent took ${line.ref}, and none can be started for it: no start command is set on this machine. Add "start": ["claude", "-p", "You are {name}. Run: octo line take {line}"] to ~/.octotrack/agent-setup.json, then Try now.`,
+      reason: `No agent took ${line.ref}, and none can be started for it: no start command is set on this machine. Add a "start" command to ~/.octotrack/agent-setup.json, such as ["your-agent", "--prompt", "You are {name}. Run: octo line take {line}"], then Try now.`,
     };
   }
   if (status.dryRun) {

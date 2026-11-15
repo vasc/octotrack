@@ -28,7 +28,7 @@ export function decision(overrides: Partial<Decision> = {}): Decision {
     recommendation: "redis",
     status: "open",
     priority: "high",
-    requestedBy: "claude-a",
+    requestedBy: "agent-a",
     dueAt: null,
     chosenOption: null,
     resolutionNote: null,
@@ -79,7 +79,7 @@ export function pr(overrides: Partial<PullRequest> = {}): PullRequest {
     headRef: "feature/retry",
     baseRef: "main",
     headSha: "abc",
-    author: "claude-a",
+    author: "agent-a",
     additions: 10,
     deletions: 2,
     mergedAt: null,
@@ -96,7 +96,7 @@ export function event(overrides: Partial<FeedEvent> = {}): FeedEvent {
   return {
     seq: 1,
     ts: AT,
-    actor: "claude-a",
+    actor: "agent-a",
     type: "issue.created",
     kind: "issue",
     ref: "OCT-1",
@@ -135,7 +135,7 @@ export function issue(overrides: Partial<Issue> = {}): Issue {
     createdAt: AT,
     updatedAt: AT,
     closedAt: null,
-    createdBy: "claude-a",
+    createdBy: "agent-a",
     ...overrides,
   };
 }

@@ -68,22 +68,19 @@ export function pointPlistAt(plist: string, program: readonly string[]): string 
 
 const WakeAdapters = z.record(z.string(), z.object({ command: z.array(z.string()) }).loose());
 
-/** The wake adapters with Claude's run by the binary, which carries the adapter, instead of a script in a checkout. */
-export function pointWakeAdaptersAt(json: string, binary: string): string {
+/**
+ * The wake adapters without any that run `adapter` on this binary, given every path it runs from. The binary has no
+ * `adapter` command any more, so such an entry could only fail. Every other entry is left as the developer wrote it, and
+ * with nothing to remove the text comes back unchanged, so the file is not rewritten.
+ */
+export function removeAdaptersRunning(json: string, binaries: readonly string[]): string {
   const adapters = WakeAdapters.parse(JSON.parse(json));
-  const claude = adapters.claude;
-  if (claude === undefined) return json;
-  const next = {
-    ...adapters,
-    claude: {
-      // What it fits and what address to give, for the guide, unless the developer wrote their own.
-      for: "a session Octotrack started, or any Claude Code session not open in a terminal",
-      address: "$CLAUDE_CODE_SESSION_ID",
-      ...claude,
-      command: [binary, "adapter", "claude", "--", "{address}", "{message}"],
-    },
-  };
-  return `${JSON.stringify(next, null, 2)}\n`;
+  const kept = Object.entries(adapters).filter(([, adapter]) => {
+    const [program, subcommand] = adapter.command;
+    return !(program !== undefined && binaries.includes(program) && subcommand === "adapter");
+  });
+  if (kept.length === Object.keys(adapters).length) return json;
+  return `${JSON.stringify(Object.fromEntries(kept), null, 2)}\n`;
 }
 
 function relink(link: string, target: string, changed: string[]): void {
@@ -109,8 +106,9 @@ function restartAgent(plist: string, run: CommandRunner, uid: number): void {
 }
 
 /**
- * Installs a built binary as the live Octotrack: keeps the one before it, points the PATH link, the LaunchAgent and the
- * Claude wake adapter at it, and restarts the server. Each file it changes is kept as `.previous` first.
+ * Installs a built binary as the live Octotrack: keeps the one before it, points the PATH link and the LaunchAgent at
+ * it, removes any wake adapter that runs the binary's old `adapter` command, and restarts the server. Each file it
+ * changes is kept as `.previous` first.
  */
 export function install(
   built: string,
@@ -132,7 +130,7 @@ export function install(
   if (existsSync(paths.wakeAdapters)) {
     writeIfChanged(
       paths.wakeAdapters,
-      pointWakeAdaptersAt(readFileSync(paths.wakeAdapters, "utf8"), binary),
+      removeAdaptersRunning(readFileSync(paths.wakeAdapters, "utf8"), [binary, paths.link]),
       changed,
     );
   }

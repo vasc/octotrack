@@ -147,7 +147,7 @@ scene('hook', 7, (root) => {
   const l3 = put(el(root, `<div class="a h1" style="color:var(--amber)">One of you.</div>`), 120, 490)
   const msgs = [
     ['PANEL-WIDGETS', 'Which board goes in, 26 mm or 30 mm?'], ['MEALS', 'Build the restructure as mocked up?'], ['MEDIARR', 'Should I keep cleaning podcasts?'],
-    ['TTUBE', 'How should slow downloads treat skipping?'], ['ROADTRIP', 'Which hotel, the lake or the town?'], ['OCTOTRACK-BUILDER', 'Can you log claude back in?'],
+    ['TTUBE', 'How should slow downloads treat skipping?'], ['ROADTRIP', 'Which hotel, the lake or the town?'], ['OCTOTRACK-BUILDER', 'Can you log the agent back in?'],
     ['STACK', 'Group multi-commit PRs?'], ['PANEL-WIDGETS', 'How big should the USB-C opening be?'], ['MEALS', 'Today and Week, or one plan?'],
   ]
   const ns = msgs.map((m, i) => put(el(root, `<div class="a notif"><small>${m[0]}</small>${m[1]}</div>`), 1240 + (i % 2) * 40, 120 + i * 92))

@@ -100,10 +100,11 @@ bun scripts/deploy.ts
 It builds the dashboard and the binary (`scripts/build-binary.ts`, into `build/octo`); rehearses the migration on a copy
 of `~/.octotrack/octo.db` and deploys nothing if a ref would stop resolving or anything would be lost; backs the
 database up to `octo-backup-before-v<N>.db` beside it when the schema moves; installs the binary to
-`~/.octotrack/bin/octo`; points the `octo` on your PATH, the LaunchAgent and the `claude` wake adapter at it; restarts
-the server; and checks that the new build is the one answering. It finds the LaunchAgent as the file in
-`~/Library/LaunchAgents` with `octotrack` in its name, and changes only its program, keeping the rest. Each file it
-changes is kept first as `.previous`, so the last deploy can be undone:
+`~/.octotrack/bin/octo`; points the `octo` on your PATH and the LaunchAgent at it; removes any wake adapter that runs
+the binary's old `octo adapter` command, which no longer exists; restarts the server; and checks that the new build is
+the one answering. It finds the LaunchAgent as the file in `~/Library/LaunchAgents` with `octotrack` in its name, and
+changes only its program, keeping the rest. Each file it changes is kept first as `.previous`, so the last deploy can
+be undone:
 
 ```bash
 bun scripts/deploy.ts --rollback
@@ -122,27 +123,11 @@ label in its plist:
 launchctl kickstart -k gui/$(id -u)/octotrack.server
 ```
 
-### Letting Claude Code sessions write
+### Letting agents write
 
-In auto mode, Claude Code's permission classifier can refuse `octo` writes as writes to an external system. Sessions
-then file nothing. To allow them, add this to `~/.claude/settings.json`, merging it with what is already there:
-
-```json
-{
-  "permissions": {
-    "allow": ["Bash(octo *)", "Bash(OCTO_AGENT=* octo *)"]
-  },
-  "autoMode": {
-    "allow": [
-      "$defaults",
-      "Running the `octo` CLI, including writes (lines, issues, questions, tasks, status posts, projects, PR links, drift attestations) and with an OCTO_AGENT=name prefix or --agent flag. Octotrack is the user's own local tracker on 127.0.0.1:4747, built for AI agents to write to, and the user has authorized every session to use it."
-    ]
-  }
-}
-```
-
-The allow rules cover plain commands. The `autoMode` entry is for commands that still reach the classifier. Sessions
-that were already running picked this up without a restart.
+An agent tool that asks before running commands, or screens them, can refuse `octo` writes as writes to an external
+system, and its sessions then file nothing. Allow `octo *` and `OCTO_AGENT=* octo *` in its permissions, and where it
+screens commands, tell it that `octo` is your own local tracker on 127.0.0.1:4747, built for agents to write to.
 
 ### Using it from your phone
 
@@ -168,14 +153,14 @@ Run `octo guide` and put the output in your agents' instructions. It covers ever
 agent set its own name, so that its work and claims are its own:
 
 ```bash
-export OCTO_AGENT=claude-feature-x
+export OCTO_AGENT=feature-x
 ```
 
 Output is JSON when piped and text in a terminal. Every write returns `driftOpened`, listing what it just put out of
 date, and every reply carries the agent's notices: answers, Tells, a line that needs an owner, a wind-down.
 
 ```bash
-octo agent register --wake claude:$CLAUDE_CODE_SESSION_ID
+octo agent register --wake screen:$STY
 ```
 
 ```bash
@@ -203,17 +188,13 @@ When the developer tells an agent in conversation to do one of their operations,
 
 ### Waking agents
 
-An agent that registered a wake address, such as `claude:<session-id>`, is woken when something waits for it. What a
+An agent that registered a wake address, such as `screen:<session>`, is woken when something waits for it. What a
 wake runs is set only in `~/.octotrack/wake-adapters.json` on this machine, never by a request. Each entry is a command,
-and, for agents choosing one, what it fits (`for`) and what address to give (`address`):
+with `{address}` and `{message}` in it, and, for agents choosing one, what it fits (`for`) and what address to give
+(`address`):
 
 ```json
 {
-  "claude": {
-    "command": ["/Users/you/.octotrack/bin/octo", "adapter", "claude", "--", "{address}", "{message}"],
-    "for": "a session Octotrack started, or any Claude Code session not open in a terminal",
-    "address": "$CLAUDE_CODE_SESSION_ID"
-  },
   "screen": {
     "command": ["screen", "-S", "{address}", "-p", "0", "-X", "stuff", "{message}\r"],
     "for": "a session open in window 0 of GNU screen",
@@ -233,11 +214,11 @@ and so does a tmux session's, where a pane id such as `%3` would not.
 `octo guide` lists the adapters set up here, each with its `for` and `address`, so an agent picks the one that fits how
 it runs and the guide never names one the machine lacks. With none set up, it tells agents to register with `--no-wake`.
 
-`octo adapter claude` resumes the session with `claude -p --resume`, from the folder it ran in. That suits sessions
-Octotrack starts, which run headless. For a session open in a terminal it starts a second copy beside the open one, so
-such sessions want an adapter that types into their terminal, like `screen` or `tmux` above, or `--no-wake`. A deploy
-points the `claude` entry at the new binary and gives it the `for` and `address` above, unless you wrote your own. A wake
-whose adapter has no entry here fails, and a failed wake makes its agent gone, ending its claims, so set this up before
+Octotrack carries no adapter of its own: each is a command you write for the agent tool you run. One that resumes a
+session headless suits sessions Octotrack starts. For a session open in a terminal, resuming starts a second copy beside
+the open one, so such sessions want an adapter that types into their terminal, like `screen` or `tmux` above, or
+`--no-wake`. A deploy removes any entry that runs the binary's old `octo adapter` command, which no longer exists, and
+leaves the rest as you wrote them. A wake whose adapter has no entry here fails, and a failed wake makes its agent gone, ending its claims, so set this up before
 agents register addresses. An agent registered with `--no-wake` is never woken, and hears what waits on its next
 command.
 
@@ -249,7 +230,7 @@ until `~/.octotrack/agent-setup.json` exists, and starts in watch mode, only not
 
 ```json
 {
-  "start": ["claude", "-p", "You are {name}. Run: octo line take {line}, then work on it"],
+  "start": ["your-agent", "--prompt", "You are {name}. Run: octo line take {line}, then work on it"],
   "cap": 1,
   "dryRun": false,
   "repos": { "PANEL": { "checkout": "/Users/you/src/homepanel", "setup": [["bun", "install"]] } }

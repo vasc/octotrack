@@ -32,7 +32,7 @@ import { decision, decisionCard, event, issue } from "../src/design/fixtures.ts"
 import { closeEntity, navigate, openEntity, setParams } from "../src/lib/router.ts";
 
 describe("suggest", () => {
-  const dynamic = { project: ["OCT", "API"], actor: ["claude-a"] };
+  const dynamic = { project: ["OCT", "API"], actor: ["agent-a"] };
 
   test("completes field names", () => {
     expect(suggest("sta", {}).map((item) => item.term)).toEqual(["status:", "state:"]);

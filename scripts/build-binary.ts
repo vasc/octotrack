@@ -1,5 +1,5 @@
 /**
- * Builds Octotrack as one binary: the CLI, the server, the dashboard and the Claude wake adapter, so that the CLI and
+ * Builds Octotrack as one binary: the CLI, the server and the dashboard, so that the CLI and
  * the server always come from the same build. Usage: bun scripts/build-binary.ts [out], default build/octo.
  *
  * The build id is a hash of the sources and the built dashboard, so the same code always gets the same id and a CLI can

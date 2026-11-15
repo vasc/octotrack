@@ -39,7 +39,7 @@ const STDERR_KEPT = 300;
  * No shell is involved, so that nothing in an address or a message can be read as a command. The woken session gets
  * its own name and never the server's: the server may have been started from another agent's shell. A woken agent may
  * work for a while before its command returns, and must not hold a process forever: at the deadline the wake is killed
- * with everything it started, the session included, which an adapter such as `octo adapter claude` runs as its child.
+ * with everything it started, the session included, which an adapter may run as its child.
  */
 export function wakeRunner(deadlineMs: number): WakeRunner {
   return async (argv, env, onSpawn) => {

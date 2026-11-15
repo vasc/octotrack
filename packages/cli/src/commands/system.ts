@@ -1,14 +1,7 @@
 import { wakeAdaptersPath } from "@octotrack/server/paths";
 import { writeFileSync } from "node:fs";
 import { BatchOp, contracts as c, type Counts } from "@octotrack/core";
-import {
-  DEFAULT_PORT,
-  serverLogPath,
-  serverStoppedPath,
-  serverUrl,
-  startServer,
-  wakeClaude,
-} from "@octotrack/server";
+import { DEFAULT_PORT, serverLogPath, serverStoppedPath, serverUrl, startServer } from "@octotrack/server";
 import { z } from "zod";
 import { UsageError } from "../args.ts";
 import { ConnectionError, RemoteError } from "../client.ts";
@@ -104,7 +97,7 @@ export const systemCommands: Command[] = [
     summary:
       "Say how to wake you, or that you cannot be woken, and which repo you serve if your checkout does not say",
     options: {
-      wake: { ...STRING, description: "Your wake address, such as claude:<session-id>" },
+      wake: { ...STRING, description: "Your wake address, <adapter>:<address>, such as screen:octo-panel" },
       "no-wake": {
         type: "boolean",
         description: "You cannot be woken: you hear things on your next command",
@@ -114,7 +107,7 @@ export const systemCommands: Command[] = [
         description: "The repo you serve, when your checkout's remote is not a tracked GitHub repo",
       },
     },
-    examples: ["octo agent register --wake claude:4f1c…", "octo agent register --no-wake --repo GARDEN"],
+    examples: ["octo agent register --wake screen:octo-panel", "octo agent register --no-wake --repo GARDEN"],
     ops: [c.agentRegister.name],
     async run({ client, out }, args) {
       const wake = args.flag("no-wake") ? null : args.str("wake");
@@ -404,16 +397,6 @@ export const systemCommands: Command[] = [
     ops: [],
     async run() {
       console.log(agentGuide(loadWakeAdapters(wakeAdaptersPath())));
-    },
-  },
-  {
-    path: ["adapter", "claude"],
-    usage: "-- <session-id> <message>",
-    summary: "Wake a Claude Code session with a message. The server's wake adapters run this",
-    examples: ['octo adapter claude -- 4f1c… "D-34 was answered: 26 mm"'],
-    ops: [],
-    async run(_ctx, args) {
-      return wakeClaude(args.positionals);
     },
   },
   {

@@ -81,7 +81,7 @@ export function ActivityGallery() {
             ref: "DR-3",
             status: "verified",
             note: "Kept open on purpose",
-            resolvedBy: "claude-a",
+            resolvedBy: "agent-a",
           })}
           onAck={NOOP}
         />

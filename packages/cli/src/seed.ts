@@ -10,9 +10,9 @@ export async function seedDemo(
   base: OctoClient,
 ): Promise<{ decisions: number; issues: number; prs: number }> {
   const as = (agent: string) => new OctoClient(base.baseUrl, agent, [], false);
-  const planner = as("claude-planner");
-  const api = as("claude-api");
-  const web = as("claude-web");
+  const planner = as("planner");
+  const api = as("api-agent");
+  const web = as("web-agent");
   const infra = as("codex-infra");
   const you = new OctoClient(base.baseUrl, "dev", [], false, { developer: true });
 
@@ -91,7 +91,7 @@ export async function seedDemo(
   });
   const cart = await issue(web, "SHOP", "Cart state survives a refresh", {
     status: "in_progress",
-    assignee: "claude-web",
+    assignee: "web-agent",
     line: beta.data.ref,
     labels: ["frontend"],
   });
@@ -101,13 +101,13 @@ export async function seedDemo(
   });
   const checkoutUi = await issue(web, "SHOP", "Checkout form validation", {
     status: "done",
-    assignee: "claude-web",
+    assignee: "web-agent",
     line: beta.data.ref,
     labels: ["frontend"],
   });
   const auth = await issue(api, "API", "Token based authentication", {
     status: "in_review",
-    assignee: "claude-api",
+    assignee: "api-agent",
     priority: "high",
   });
   await issue(api, "API", "Rate limiting per client", { priority: "high", blockedBy: [auth] });
@@ -195,7 +195,7 @@ export async function seedDemo(
     review: "requested",
     headRef: "feature/cart-persist",
     headSha: "a1b2c3",
-    author: "claude-web",
+    author: "web-agent",
     additions: 214,
     deletions: 37,
   });
@@ -205,7 +205,7 @@ export async function seedDemo(
     mergeable: "clean",
     headRef: "feature/checkout-validation",
     headSha: "d4e5f6",
-    author: "claude-web",
+    author: "web-agent",
     additions: 96,
     deletions: 12,
   });
@@ -215,7 +215,7 @@ export async function seedDemo(
     mergeable: "conflicting",
     headRef: "feature/tokens",
     headSha: "778899",
-    author: "claude-api",
+    author: "api-agent",
     additions: 642,
     deletions: 81,
   });
@@ -233,7 +233,7 @@ export async function seedDemo(
     checks: "passing",
     review: "approved",
     headRef: "chore/remove-harness",
-    author: "claude-api",
+    author: "api-agent",
     additions: 12,
     deletions: 880,
     mergedAt: "2026-11-06T18:20:00.000Z",

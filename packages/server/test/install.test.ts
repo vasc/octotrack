@@ -17,7 +17,7 @@ import {
   type CommandRunner,
   install,
   pointPlistAt,
-  pointWakeAdaptersAt,
+  removeAdaptersRunning,
   rollback,
 } from "../src/install.ts";
 
@@ -37,6 +37,11 @@ const PLIST = `<?xml version="1.0" encoding="UTF-8"?>
 </dict>
 </plist>
 `;
+
+const SCREEN = {
+  command: ["screen", "-S", "{address}", "-X", "stuff", "{message}"],
+  for: "inside GNU screen",
+};
 
 const dirs: string[] = [];
 afterEach(() => {
@@ -60,7 +65,10 @@ function scene() {
   writeFileSync(paths.plist, PLIST);
   writeFileSync(
     paths.wakeAdapters,
-    JSON.stringify({ claude: { command: ["bun", "/checkout/claude.ts", "{address}", "{message}"] } }),
+    JSON.stringify({
+      gone: { command: [join(paths.binDir, "octo"), "adapter", "gone", "--", "{address}", "{message}"] },
+      screen: SCREEN,
+    }),
   );
   const built = join(root, "octo-built");
   writeFileSync(built, "binary one");
@@ -73,7 +81,7 @@ function scene() {
 }
 
 describe("installing the binary as the live Octotrack", () => {
-  test("points the PATH link, the LaunchAgent and the wake adapter at it, and restarts the server", () => {
+  test("points the PATH link and the LaunchAgent at it, drops wake adapters it no longer carries, and restarts the server", () => {
     const s = scene();
     const report = install(s.built, s.paths, s.run, 501);
     const binary = join(s.paths.binDir, "octo");
@@ -83,14 +91,8 @@ describe("installing the binary as the live Octotrack", () => {
     expect(plist).toContain(`<string>${binary}</string>\n    <string>serve</string>`);
     expect(plist).not.toContain(".bun/bin/bun");
     expect(plist).toContain("<string>/Users/me/.octotrack/server.log</string>");
-    expect(JSON.parse(readFileSync(s.paths.wakeAdapters, "utf8")).claude.command).toEqual([
-      binary,
-      "adapter",
-      "claude",
-      "--",
-      "{address}",
-      "{message}",
-    ]);
+    expect(JSON.parse(readFileSync(s.paths.wakeAdapters, "utf8"))).toEqual({ screen: SCREEN });
+    expect(report.changed).toContain(s.paths.wakeAdapters);
     expect(s.commands).toEqual([
       ["launchctl", "bootout", "gui/501", s.paths.plist],
       ["launchctl", "bootstrap", "gui/501", s.paths.plist],
@@ -170,31 +172,38 @@ describe("backing up the database", () => {
 });
 
 describe("the wake adapters a deploy writes", () => {
-  test("the claude entry says what it fits and what address an agent gives, unless it already says so", () => {
+  test("an adapter that runs the binary's adapter command is removed, since the binary no longer has one", () => {
     const written = JSON.parse(
-      pointWakeAdaptersAt(
+      removeAdaptersRunning(
         JSON.stringify({
-          claude: { command: ["bun", "claude.ts", "{address}", "{message}"] },
-          screen: {
-            command: ["screen", "-S", "{address}", "-X", "stuff", "{message}"],
-            for: "inside GNU screen",
+          old: {
+            command: ["/bin/octo", "adapter", "old", "--", "{address}", "{message}"],
+            for: "an old session",
           },
+          linked: { command: ["/usr/local/bin/octo", "adapter", "old", "{address}", "{message}"] },
+          screen: SCREEN,
+          own: { command: ["/bin/my-waker", "adapter", "{address}", "{message}"] },
         }),
-        "/bin/octo",
+        ["/bin/octo", "/usr/local/bin/octo"],
       ),
     );
-    expect(written.claude.for).toContain("not open in a terminal");
-    expect(written.claude.address).toBe("$CLAUDE_CODE_SESSION_ID");
-    expect(written.screen).toEqual({
-      command: ["screen", "-S", "{address}", "-X", "stuff", "{message}"],
-      for: "inside GNU screen",
+    expect(written).toEqual({
+      screen: SCREEN,
+      own: { command: ["/bin/my-waker", "adapter", "{address}", "{message}"] },
     });
-    const own = JSON.parse(
-      pointWakeAdaptersAt(
-        JSON.stringify({ claude: { command: ["x"], for: "my own words", address: "$MINE" } }),
-        "/bin/octo",
-      ),
-    );
-    expect([own.claude.for, own.claude.address]).toEqual(["my own words", "$MINE"]);
+  });
+
+  test("a file with no such adapter is left exactly as the developer wrote it", () => {
+    const json = JSON.stringify({ screen: SCREEN, serve: { command: ["/bin/octo", "serve", "{address}"] } });
+    expect(removeAdaptersRunning(json, ["/bin/octo"])).toBe(json);
+  });
+
+  test("a deploy leaves a wake adapters file it has nothing to remove from unwritten", () => {
+    const s = scene();
+    const json = JSON.stringify({ screen: SCREEN });
+    writeFileSync(s.paths.wakeAdapters, json);
+    const report = install(s.built, s.paths, s.run, 501);
+    expect(readFileSync(s.paths.wakeAdapters, "utf8")).toBe(json);
+    expect(report.changed).not.toContain(s.paths.wakeAdapters);
   });
 });

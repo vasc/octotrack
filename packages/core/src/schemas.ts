@@ -421,7 +421,7 @@ export const Agent = z.object({
   checkout: z.string().nullable(),
   /** The repo it serves, a repo key, read from its checkout's remote or given when it registered. */
   repo: z.string().nullable(),
-  /** How to wake it, such as claude:<session>, or null when it asked not to be woken. */
+  /** How to wake it, such as screen:<session>, or null when it asked not to be woken. */
   wakeAddress: z.string().nullable(),
   /** "octotrack" for a session Octotrack started; null for one the developer started. */
   startedBy: z.string().nullable(),

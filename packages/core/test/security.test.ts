@@ -41,7 +41,7 @@ function world() {
     repos: ["PANEL"],
     where: "working",
   });
-  as(agent("panel"), c.agentRegister, { wake: "claude:panel", repo: "PANEL" });
+  as(agent("panel"), c.agentRegister, { wake: "screen:panel", repo: "PANEL" });
   as(agent("panel"), c.lineTake, { ref: line.ref });
   return { tracker, dev, server, agent, as, refused, line };
 }
@@ -58,7 +58,7 @@ describe("only the server records wakes", () => {
 
   test("nor say a question's session was woken", () => {
     const w = world();
-    w.as(w.agent("legacy"), c.agentRegister, { wake: "claude:legacy" });
+    w.as(w.agent("legacy"), c.agentRegister, { wake: "screen:legacy" });
     const asked = w.as(w.agent("legacy"), c.decisionAsk, { title: "Q" });
     expect(w.refused(() => w.as(w.agent("mallory"), c.decisionWoken, { ref: asked.ref })).code).toBe(
       "forbidden",
@@ -157,7 +157,7 @@ describe("what an agent may say about itself and its repos", () => {
     expect(w.refused(() => w.as(w.agent("other"), c.agentRegister, { wake: "--help:x" })).code).toBe(
       "invalid_input",
     );
-    expect(w.refused(() => w.as(w.agent("other"), c.agentRegister, { wake: "claude:a b; rm" })).code).toBe(
+    expect(w.refused(() => w.as(w.agent("other"), c.agentRegister, { wake: "screen:a b; rm" })).code).toBe(
       "invalid_input",
     );
   });
