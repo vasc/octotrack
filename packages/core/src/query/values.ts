@@ -90,6 +90,7 @@ export const EVENT_TYPES = [
   "runner.would_start",
   "runner.pr_closed",
   "runner.would_close",
+  "runner.pr_close_failed",
   "line.not_yet",
   "runner.stop_ran",
   "runner.would_stop",

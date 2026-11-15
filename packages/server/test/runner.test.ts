@@ -829,6 +829,37 @@ describe("sessions as real processes (third audit, N9 and N10)", () => {
 });
 
 describe("what the fourth audit found in the local runner", () => {
+  test("A4: a pull request gh fails to close is said in the Log, and not asked of gh again every tick", async () => {
+    const w = world(
+      { repos: {}, cap: 0 },
+      { "gh pr close": { code: 1, stderr: "GraphQL: Resource not accessible by integration (closePullRequest)" } },
+    );
+    const issue = w.tracker.call(c.issueCreate, { project: "PANEL", title: "Base", line: w.line.ref }, DEV);
+    w.tracker.call(
+      c.prSync,
+      {
+        prs: [
+          { repo: "vasc/homepanel", number: 14, title: "Base", state: "open", body: `Fixes ${issue.ref}` },
+        ],
+      },
+      GITHUB,
+    );
+    w.tracker.call(c.lineDone, { ref: w.line.ref }, DEV);
+    w.later(16);
+    w.tracker.sweep();
+    await w.tick();
+    await w.tick();
+    const closes = () => w.ran.filter((command) => command.startsWith("gh pr close"));
+    expect(closes()).toHaveLength(1);
+    const failed = w.tracker.call(c.feedList, { query: "event:runner.pr_close_failed" }, DEV).events;
+    expect(failed.map((event) => event.summary)).toEqual([
+      `Could not close PR-1 on GitHub with ${w.line.ref}: GraphQL: Resource not accessible by integration (closePullRequest). Trying again later.`,
+    ]);
+    w.later(2);
+    await w.tick();
+    expect(closes()).toHaveLength(2);
+  });
+
   test("A23: Stop ends a session the runner started, and does not also run the stop command for it", async () => {
     const w = world({ stop: ["tmux", "kill-session", "-t", "{name}"] });
     await w.tick();

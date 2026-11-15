@@ -420,7 +420,11 @@ Decisions made from that:
     works in it. A retry whose worktree was removed is made again on the branch it left.
   - _Pull requests are closed only in the GitHub repo of the issues they implement,_ and never while they also
     implement an open issue or one on a line that has not ended. _Why:_ a pull request's row names any repo its writer
-    likes, and closing work still wanted cannot be undone from Octotrack.
+    likes, and closing work still wanted cannot be undone from Octotrack. (Fourth audit, A4:) a close that gh refuses
+    (no permission, an archived repo, the network) is recorded (`runner.closed` with its error), said in the Log once
+    per pull request with gh's last line (`runner.pr_close_failed`), and tried again after 2, 10, 60 then every 360
+    minutes, as a failing start is. _Why:_ it was only written to the console and asked of gh again every ten seconds,
+    without end, while D14 says the Log says what the runner closed.
   - _No process inherits an identity._ The server the CLI starts drops `OCTO_AGENT` and `OCTO_DEVELOPER`, and every
     command, session and wake the server runs is given only its own: a session its name, a wake the agent woken (or,
     for a question from before lines, its asker). _Why:_ the server is often started by an agent's first command, and a

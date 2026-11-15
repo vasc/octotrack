@@ -269,8 +269,8 @@ export const contracts = {
   ),
   runnerClosed: write(
     "runner.closed",
-    "Record that a pull request was closed with its line, or in watch mode that it would have been",
-    z.strictObject({ pr: z.string(), dry: z.boolean().optional() }),
+    "Record that a pull request was closed with its line, that closing it failed and why, or in watch mode that it would have been",
+    z.strictObject({ pr: z.string(), dry: z.boolean().optional(), error: z.string().optional() }),
     z.object({ pr: z.string() }),
   ),
   runnerRestarted: write(
