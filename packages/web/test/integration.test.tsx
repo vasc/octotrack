@@ -757,6 +757,14 @@ describe("lines of work", () => {
     );
   }
 
+  test("with nothing being worked on, Working on says so and draws no empty sheet", async () => {
+    navigate("/lines");
+    const view = renderApp(<App />);
+    const working = await view.findByRole("region", { name: "Working on" });
+    await waitFor(() => expect(within(working).getByText("Nothing is being worked on.")).toBeTruthy());
+    expect(working.querySelector(".line-list")).toBeNull();
+  });
+
   test("the Lines page shows each section in the developer's order, with what an agent recommends", async () => {
     seedLines();
     navigate("/lines");
