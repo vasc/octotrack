@@ -25,6 +25,7 @@ import {
 import { askedText, cantSummary, doneSummary, howClosed, isTask, taskOutcome } from "../src/lib/tasks.ts";
 import { issueLinks } from "../src/lib/links.ts";
 import { moreSinceSummary } from "../src/lib/log.ts";
+import { doneWhenSaid, LINE_SAID } from "../src/lib/said.ts";
 import { decision, decisionCard, event, issue } from "../src/design/fixtures.ts";
 import { closeEntity, navigate, openEntity, setParams } from "../src/lib/router.ts";
 
@@ -400,5 +401,16 @@ describe("moreSinceSummary", () => {
     expect(moreSinceSummary([at("2026-11-14T10:00")], "2026-11-14T09:00", null)).toBe(false);
     // With no summary, every change counts, so any older page means more.
     expect(moreSinceSummary([at("2026-11-14T10:00")], null, 12)).toBe(true);
+  });
+});
+
+describe("how a line's choices read in the Undo bar", () => {
+  test("one wording for each, wherever it is made", () => {
+    expect(LINE_SAID.start("Enclosure")).toBe("Starting Enclosure");
+    expect(LINE_SAID.queue("Enclosure")).toBe("Moving Enclosure to up next");
+    expect(LINE_SAID.reject("Enclosure")).toBe("Turning down Enclosure: not a line");
+    expect(LINE_SAID.table("Enclosure")).toBe("Tabling Enclosure");
+    expect(doneWhenSaid("Enclosure", true)).toBe("Accepting the new done when for Enclosure");
+    expect(doneWhenSaid("Enclosure", false)).toBe("Keeping Enclosure's done when");
   });
 });

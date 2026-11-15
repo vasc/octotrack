@@ -1,3 +1,4 @@
+import { doneWhenSaid, LINE_SAID } from "../lib/said.ts";
 import { cantSummary, doneSummary, type TaskOutcome } from "../lib/tasks.ts";
 import { homeLines } from "../lib/lines.ts";
 import { contracts } from "@octotrack/core/contracts";
@@ -96,23 +97,20 @@ export function useHome() {
             ? `Tabling ${line.title}`
             : `Adding ${line.title} to up next`,
       ),
-    start: (ref: string) => choices.make(contracts.lineStart.name, { ref }, `Starting ${titleOf(ref)}`),
-    queue: (ref: string) =>
-      choices.make(contracts.lineQueue.name, { ref }, `Moving ${titleOf(ref)} to up next`),
-    reject: (ref: string) =>
-      choices.make(contracts.lineReject.name, { ref }, `Turning down ${titleOf(ref)}: not a line`),
-    drop: (ref: string) => choices.make(contracts.lineDrop.name, { ref }, `Dropping ${titleOf(ref)}`),
+    start: (ref: string) => choices.make(contracts.lineStart.name, { ref }, LINE_SAID.start(titleOf(ref))),
+    queue: (ref: string) => choices.make(contracts.lineQueue.name, { ref }, LINE_SAID.queue(titleOf(ref))),
+    reject: (ref: string) => choices.make(contracts.lineReject.name, { ref }, LINE_SAID.reject(titleOf(ref))),
+    drop: (ref: string) => choices.make(contracts.lineDrop.name, { ref }, LINE_SAID.drop(titleOf(ref))),
     table: (ref: string, reason: string, lookAgainAt: string | null = null) =>
       choices.make(
         contracts.lineTable.name,
         { ref, reason, ...(lookAgainAt === null ? {} : { lookAgainAt }) },
-        `Tabling ${titleOf(ref)}`,
+        LINE_SAID.table(titleOf(ref)),
       ),
     fold: (ref: string, into: string) =>
       choices.make(contracts.lineFold.name, { ref, into }, `Folding ${titleOf(ref)} into ${titleOf(into)}`),
-    own: (ref: string) => choices.make(contracts.lineOwn.name, { ref }, `Taking ${titleOf(ref)} as yours`),
-    lineDone: (ref: string) =>
-      choices.make(contracts.lineDone.name, { ref }, `Closing ${titleOf(ref)} as done`),
+    own: (ref: string) => choices.make(contracts.lineOwn.name, { ref }, LINE_SAID.own(titleOf(ref))),
+    lineDone: (ref: string) => choices.make(contracts.lineDone.name, { ref }, LINE_SAID.done(titleOf(ref))),
     notYet: (ref: string, why: string) =>
       choices.make(
         contracts.lineNotYet.name,
@@ -120,11 +118,7 @@ export function useHome() {
         `Telling ${titleOf(ref)}'s owner it is not done yet`,
       ),
     doneWhen: (ref: string, accept: boolean) =>
-      choices.make(
-        contracts.lineDoneWhenAnswer.name,
-        { ref, accept },
-        accept ? `Accepting the new done when for ${titleOf(ref)}` : `Keeping ${titleOf(ref)}'s done when`,
-      ),
+      choices.make(contracts.lineDoneWhenAnswer.name, { ref, accept }, doneWhenSaid(titleOf(ref), accept)),
     acceptRecommended: (refs: string[]) =>
       choices.make(
         contracts.lineAcceptRecommended.name,
@@ -147,7 +141,7 @@ export function useHome() {
         return;
       }
       if (direction === "up_next") {
-        choices.make(contracts.lineQueue.name, { ref }, `Moving ${titleOf(ref)} to up next`);
+        choices.make(contracts.lineQueue.name, { ref }, LINE_SAID.queue(titleOf(ref)));
         return;
       }
       const data = home.data;

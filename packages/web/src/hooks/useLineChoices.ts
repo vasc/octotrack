@@ -1,7 +1,7 @@
 import { tellSummary } from "../lib/lines.ts";
 import { contracts } from "@octotrack/core/contracts";
 import type { Line } from "@octotrack/core/schemas";
-import type { LineChoice } from "../components/entity/LineActions.tsx";
+import { doneWhenSaid, LINE_SAID, type LineChoice } from "../lib/said.ts";
 import { useChoices } from "./useChoices.ts";
 
 const OPS: Readonly<Record<LineChoice, string>> = {
@@ -13,33 +13,24 @@ const OPS: Readonly<Record<LineChoice, string>> = {
   own: contracts.lineOwn.name,
 };
 
-/** What each choice is doing while it waits, as the Undo bar says it. */
-const SAID: Readonly<Record<LineChoice, (title: string) => string>> = {
-  start: (title) => `Starting ${title}`,
-  queue: (title) => `Moving ${title} to up next`,
-  done: (title) => `Closing ${title} as done`,
-  drop: (title) => `Dropping ${title}`,
-  reject: (title) => `Turning down ${title}: not a line`,
-  own: (title) => `Taking ${title} as yours`,
-};
-
 /** The developer's choices on one line, as the line panel offers them. Each waits a few seconds with Undo. */
 export function useLineChoices(line: Line) {
   const choices = useChoices();
   return {
     failure: choices.failure,
-    choose: (choice: LineChoice) => choices.make(OPS[choice], { ref: line.ref }, SAID[choice](line.title)),
+    choose: (choice: LineChoice) =>
+      choices.make(OPS[choice], { ref: line.ref }, LINE_SAID[choice](line.title)),
     table: (reason: string, lookAgainAt: string | null) =>
       choices.make(
         contracts.lineTable.name,
         { ref: line.ref, reason, ...(lookAgainAt === null ? {} : { lookAgainAt }) },
-        `Tabling ${line.title}`,
+        LINE_SAID.table(line.title),
       ),
     doneWhen: (accept: boolean) =>
       choices.make(
         contracts.lineDoneWhenAnswer.name,
         { ref: line.ref, accept },
-        accept ? `Accepting the new done when for ${line.title}` : `Keeping ${line.title}'s done when`,
+        doneWhenSaid(line.title, accept),
       ),
     tell: (body: string) =>
       choices.make(
