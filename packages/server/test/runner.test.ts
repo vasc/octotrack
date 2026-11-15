@@ -832,7 +832,12 @@ describe("what the fourth audit found in the local runner", () => {
   test("A4: a pull request gh fails to close is said in the Log, and not asked of gh again every tick", async () => {
     const w = world(
       { repos: {}, cap: 0 },
-      { "gh pr close": { code: 1, stderr: "GraphQL: Resource not accessible by integration (closePullRequest)" } },
+      {
+        "gh pr close": {
+          code: 1,
+          stderr: "GraphQL: Resource not accessible by integration (closePullRequest)",
+        },
+      },
     );
     const issue = w.tracker.call(c.issueCreate, { project: "PANEL", title: "Base", line: w.line.ref }, DEV);
     w.tracker.call(
