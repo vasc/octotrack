@@ -731,4 +731,20 @@ describe("agents write only to the line they are on, the rest of it (fourth audi
       [own.ref, "open"],
     ]);
   });
+
+  test("decision record: an agent on no line cannot record a decision that holds up or changes a line's work", () => {
+    const w = world();
+    const decision = { title: "Use PLA", context: "Printed parts.", chosen: "PLA" };
+    expect(
+      w.refused(() => w.as(w.outsider, c.decisionRecord, { ...decision, affects: [w.issue] })).code,
+    ).toBe("forbidden");
+    expect(w.refused(() => w.as(w.outsider, c.decisionRecord, { ...decision, blocks: [w.issue] })).code).toBe(
+      "forbidden",
+    );
+    expect(w.as(w.dev, c.linkList, { ref: w.issue })).toEqual([]);
+    expect(w.as(w.dev, c.driftList, { query: "rule:decision-outcome" })).toEqual([]);
+    const loose = w.as(w.dev, c.issueCreate, { project: "OTHER", title: "Loose" }).ref;
+    const recorded = w.as(w.outsider, c.decisionRecord, { ...decision, affects: [loose] });
+    expect(w.as(w.dev, c.linkList, { ref: loose }).map((link) => link.fromRef)).toEqual([recorded.ref]);
+  });
 });
