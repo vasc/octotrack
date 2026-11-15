@@ -594,6 +594,15 @@ describe("lines of work", () => {
     expect(busy.queryByText(/waiting on you/)).toBeNull();
   });
 
+  test("LineMeta on a line the developer owns says what it holds for an agent", () => {
+    const view = render(<LineMeta details={details({ held: { questions: 1, tasks: 2 } })} owned />);
+    view.getByText("3 held for an agent");
+    view.unmount();
+    expect(
+      render(<LineMeta details={details({ held: { questions: 1, tasks: 0 } })} />).queryByText(/held/),
+    ).toBeNull();
+  });
+
   test("LineMeta says when nobody could be found to own a line, and who is scoping it", () => {
     const crew: LineCrew = { owner: null, helpers: [], scoper: null, search: { step: 3, since: "" } };
     const empty = render(<LineMeta crew={crew} details={details({ stepIn: true })} />);
