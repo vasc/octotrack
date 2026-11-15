@@ -92,11 +92,11 @@ export function LinePanelItem({ line, drift }: { line: Line; drift: readonly Dri
         </p>
       )}
       <div className="panel-grid">
-        <Loaded pending={shown.isPending} error={shown.error} label="Loading the plan">
+        <Loaded loaded={shown.data !== undefined} error={shown.error} label="Loading the plan">
           <PlanList steps={shown.data?.steps ?? []} work={shown.data?.work ?? []} />
         </Loaded>
         <div className="panel-column">
-          <Loaded pending={since.isPending} error={since.error} label="Loading what is new">
+          <Loaded loaded={since.data !== undefined} error={since.error} label="Loading what is new">
             <SinceSummary
               line={line.ref}
               events={since.data?.events ?? []}

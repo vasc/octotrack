@@ -2661,9 +2661,9 @@ describe("SinceSummary, past one page", () => {
 });
 
 describe("Loaded", () => {
-  test("says what is loading, then why it failed, and shows its part only once it is there", () => {
+  test("says what is loading, or why it failed, until its part has loaded once", () => {
     const loading = render(
-      <Loaded pending error={null} label="Loading the plan">
+      <Loaded loaded={false} error={null} label="Loading the plan">
         <p>Plan</p>
       </Loaded>,
     );
@@ -2671,20 +2671,30 @@ describe("Loaded", () => {
     expect(loading.queryByText("Plan")).toBeNull();
     loading.unmount();
     const failed = render(
-      <Loaded pending={false} error={new Error("Boom")} label="Loading the plan">
+      <Loaded loaded={false} error={new Error("Boom")} label="Loading the plan">
         <p>Plan</p>
       </Loaded>,
     );
     failed.getByRole("alert");
+    expect(failed.queryByText("Plan")).toBeNull();
     failed.unmount();
     render(
-      <Loaded pending={false} error={null} label="Loading the plan">
+      <Loaded loaded error={null} label="Loading the plan">
         <p>Plan</p>
       </Loaded>,
     ).getByText("Plan");
   });
-});
 
+  test("keeps what loaded when a refresh fails, and says it may be out of date", () => {
+    const view = render(
+      <Loaded loaded error={new Error("Server restarting")} label="Loading the plan">
+        <p>Plan</p>
+      </Loaded>,
+    );
+    view.getByText("Plan");
+    view.getByText("Could not refresh: Server restarting. This may be out of date.");
+  });
+});
 describe("TaskFrees", () => {
   const freed = (overrides: Partial<EntitySummary> = {}): EntitySummary => ({
     kind: "issue",

@@ -579,6 +579,32 @@ describe("the inspector", () => {
     await panel.findByText("Asked the vendor");
   });
 
+  test("an open panel keeps what it showed when a refresh fails, and says so", async () => {
+    const issue = server.act(c.issueCreate, {
+      project: "OCT",
+      title: "Thing to look at",
+      body: "Details here",
+    });
+    navigate(`/?ref=${issue.ref}`);
+    const view = renderApp(<App />);
+    const panel = within(await view.findByRole("complementary", { name: issue.ref }));
+    await panel.findByRole("heading", { name: "Thing to look at" });
+    const fetchNow = globalThis.fetch;
+    Object.assign(globalThis, {
+      fetch: async (input: string | URL | Request, init?: RequestInit) => {
+        if (String(input).includes("entity.show")) throw new Error("Server restarting");
+        return fetchNow(input, init);
+      },
+    });
+    try {
+      await act(() => view.client.refetchQueries({ queryKey: [c.entityShow.name] }));
+      await panel.findByText(/Could not refresh: Server restarting/);
+      panel.getByRole("heading", { name: "Thing to look at" });
+    } finally {
+      Object.assign(globalThis, { fetch: fetchNow });
+    }
+  });
+
   test("says when a ref does not exist", async () => {
     navigate("/?ref=OCT-404");
     const view = renderApp(<App />);

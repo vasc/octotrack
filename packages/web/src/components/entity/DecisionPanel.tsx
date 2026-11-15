@@ -6,7 +6,7 @@ import { useOpQuery } from "../../hooks/useOp.ts";
 import { DecisionCardItem } from "../decisions/DecisionCardItem.tsx";
 import { DecisionMeta } from "../decisions/DecisionMeta.tsx";
 import { HeldDecision } from "../decisions/HeldDecision.tsx";
-import { ErrorState, LoadingState } from "../ui/states.tsx";
+import { Loaded } from "../ui/Loaded.tsx";
 import { RefLink } from "../ui/RefLink.tsx";
 import { KeyValues } from "./KeyValues.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
@@ -20,15 +20,13 @@ function OpenDecision({ decision, waitsFor }: { decision: Decision; waitsFor: re
   return (
     <>
       {/* The decision being inspected is the one the keys answer. Home stands down while this is open. */}
-      {queue.isPending ? (
-        <LoadingState />
-      ) : queue.error !== null ? (
-        <ErrorState error={queue.error} />
-      ) : card === undefined ? (
-        <HeldDecision decision={decision} waitsFor={waitsFor} />
-      ) : (
-        <DecisionCardItem card={card} active armed={!waiting} />
-      )}
+      <Loaded loaded={queue.data !== undefined} error={queue.error} label="Loading the question">
+        {card === undefined ? (
+          <HeldDecision decision={decision} waitsFor={waitsFor} />
+        ) : (
+          <DecisionCardItem card={card} active armed={!waiting} />
+        )}
+      </Loaded>
       <div>
         <button
           type="button"
