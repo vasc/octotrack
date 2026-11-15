@@ -4,9 +4,9 @@ import { OutcomeFields } from "../src/components/home/OutcomeFields.tsx";
 import { LineBox } from "../src/components/ui/LineBox.tsx";
 import { Loaded } from "../src/components/ui/Loaded.tsx";
 import type { TaskOutcome } from "../src/lib/tasks.ts";
-import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
+import { describe, expect, mock, test } from "bun:test";
 import { useState } from "react";
-import { fireEvent, render, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, within } from "@testing-library/react";
 import { QueryClient, QueryObserver } from "@tanstack/react-query";
 import { BatchPanelView } from "../src/components/decisions/BatchPanelView.tsx";
 import { DecisionCardView } from "../src/components/decisions/DecisionCardView.tsx";
@@ -95,7 +95,7 @@ import {
   pendingChoice,
   pr,
 } from "../src/design/fixtures.ts";
-import { contracts, renderApp, startTestServer, whole } from "./harness.tsx";
+import { contracts, whole } from "./harness.tsx";
 
 const form = decisionForm;
 
@@ -1937,20 +1937,6 @@ function homeActions(overrides: Partial<HomeActions> = {}): HomeActions {
   };
 }
 
-/**
- * An opened task keeps what is typed as a draft on the server, so items that open one render against the real server
- * in memory, and the page's own globals come back afterwards.
- */
-function withDraftServer() {
-  const saved = { fetch: globalThis.fetch, EventSource: globalThis.EventSource };
-  beforeEach(() => {
-    startTestServer();
-  });
-  afterEach(() => {
-    Object.assign(globalThis, saved);
-  });
-}
-
 /** How LineForYou and AtPlaceItems are told to draw an item: a line naming it, so a test can see which were drawn. */
 function drawn(forYou: ForYou) {
   return <p key={refOf(forYou)}>Drawn {refOf(forYou)}</p>;
@@ -2145,7 +2131,7 @@ describe("FocusTarget", () => {
 });
 
 describe("AtUpNext", () => {
-  withDraftServer();
+  const drawTask = (task: Issue) => <article aria-label={task.title}>Task {task.ref}</article>;
   const asked = new Date(Date.now() - 2 * 3_600_000 - 60_000).toISOString();
   const tasks = [
     issue({
@@ -2168,29 +2154,13 @@ describe("AtUpNext", () => {
   const lines = [line({ ref: "L-1", title: "Wall mount" }), line({ ref: "L-2", title: "Shelf" })];
 
   test("is nothing without tasks", () => {
-    const view = render(
-      <AtUpNext
-        tasks={[]}
-        lines={lines}
-        firstNumber={3}
-        focus={null}
-        onTaskDone={() => {}}
-        onTaskCant={() => {}}
-      />,
-    );
+    const view = render(<AtUpNext tasks={[]} lines={lines} firstNumber={3} focus={null} task={drawTask} />);
     expect(view.container.textContent).toBe("");
   });
 
   test("names each task's up-next line by its number, how long it has waited, and opens it", () => {
-    const view = renderApp(
-      <AtUpNext
-        tasks={tasks}
-        lines={lines}
-        firstNumber={3}
-        focus="OCT-6"
-        onTaskDone={() => {}}
-        onTaskCant={() => {}}
-      />,
+    const view = render(
+      <AtUpNext tasks={tasks} lines={lines} firstNumber={3} focus="OCT-6" task={drawTask} />,
     );
     const section = view.getByRole("region", { name: "While you're here, from lines up next" });
     within(section).getByRole("heading", { name: "While you're here, from lines up next" });
@@ -2200,56 +2170,6 @@ describe("AtUpNext", () => {
     const sweep = within(section).getByRole("article", { name: "Sweep the shed" });
     expect(drill.closest("[data-focus-ref]")?.hasAttribute("aria-current")).toBe(false);
     expect(sweep.closest("[data-focus-ref]")?.getAttribute("aria-current")).toBe("true");
-  });
-
-  test("sends a task done with what was found, and one of the developer's own as Done", async () => {
-    const onTaskDone = mock((_task: Issue, _outcome: TaskOutcome) => {});
-    const view = renderApp(
-      <AtUpNext
-        tasks={tasks}
-        lines={lines}
-        firstNumber={1}
-        focus={null}
-        onTaskDone={onTaskDone}
-        onTaskCant={() => {}}
-      />,
-    );
-    const drill = view.getByRole("article", { name: "Find the drill" });
-    fireEvent.change(within(drill).getByLabelText("What OCT-5 found"), { target: { value: " Top shelf " } });
-    fireEvent.click(within(drill).getByRole("button", { name: "Done" }));
-    await waitFor(() =>
-      expect(onTaskDone).toHaveBeenCalledWith(expect.objectContaining({ ref: "OCT-5" }), {
-        result: "Top shelf",
-      }),
-    );
-    const sweep = view.getByRole("article", { name: "Sweep the shed" });
-    fireEvent.click(within(sweep).getByRole("button", { name: "Done" }));
-    await waitFor(() =>
-      expect(onTaskDone).toHaveBeenCalledWith(expect.objectContaining({ ref: "OCT-6" }), { result: "Done" }),
-    );
-  });
-
-  test("closes a task as not doable, with why", async () => {
-    const onTaskCant = mock((_task: Issue, _why: string) => {});
-    const view = renderApp(
-      <AtUpNext
-        tasks={tasks}
-        lines={lines}
-        firstNumber={1}
-        focus={null}
-        onTaskDone={() => {}}
-        onTaskCant={onTaskCant}
-      />,
-    );
-    const drill = view.getByRole("article", { name: "Find the drill" });
-    fireEvent.click(within(drill).getByRole("button", { name: "Can't do it" }));
-    fireEvent.change(within(drill).getByLabelText("Why OCT-5 cannot be done"), {
-      target: { value: "Lent out" },
-    });
-    fireEvent.click(within(drill).getByRole("button", { name: "Close it" }));
-    await waitFor(() =>
-      expect(onTaskCant).toHaveBeenCalledWith(expect.objectContaining({ ref: "OCT-5" }), "Lent out"),
-    );
   });
 });
 
@@ -2461,7 +2381,7 @@ describe("LineForYou", () => {
 });
 
 describe("AtPlaceItems", () => {
-  withDraftServer();
+  const drawTask = (task: Issue) => <article aria-label={task.title}>Task {task.ref}</article>;
   const here = forYouTask({
     ref: "PANEL-1",
     title: "Measure the grip",
@@ -2477,12 +2397,12 @@ describe("AtPlaceItems", () => {
 
   test("opens the place's tasks and folds everything else into one sentence that opens the first", () => {
     const onFocus = mock((_ref: string) => {});
-    const view = renderApp(
+    const view = render(
       <AtPlaceItems
         forYou={items}
         at="the bench"
         focus={null}
-        h={homeActions()}
+        task={drawTask}
         item={drawn}
         onFocus={onFocus}
       />,
@@ -2499,12 +2419,12 @@ describe("AtPlaceItems", () => {
 
   test("draws the item with focus through item, and leaves it out of the folded sentence", () => {
     const onFocus = mock((_ref: string) => {});
-    const view = renderApp(
+    const view = render(
       <AtPlaceItems
         forYou={items}
         at="the bench"
         focus="D-7"
-        h={homeActions()}
+        task={drawTask}
         item={drawn}
         onFocus={onFocus}
       />,
@@ -2516,12 +2436,12 @@ describe("AtPlaceItems", () => {
   });
 
   test("marks the place's task current when it has focus, with nothing else folded away", () => {
-    const view = renderApp(
+    const view = render(
       <AtPlaceItems
         forYou={[here]}
         at="the bench"
         focus="PANEL-1"
-        h={homeActions()}
+        task={drawTask}
         item={drawn}
         onFocus={() => {}}
       />,
@@ -2529,29 +2449,6 @@ describe("AtPlaceItems", () => {
     const task = view.getByRole("article", { name: "Measure the grip" });
     expect(task.closest("[data-focus-ref]")?.getAttribute("aria-current")).toBe("true");
     expect(view.queryByRole("button", { name: /folded/ })).toBeNull();
-  });
-
-  test("sends the place's task done or not doable through home's actions", async () => {
-    const h = homeActions();
-    const view = renderApp(
-      <AtPlaceItems forYou={items} at="the bench" focus={null} h={h} item={drawn} onFocus={() => {}} />,
-    );
-    const task = view.getByRole("article", { name: "Measure the grip" });
-    fireEvent.change(within(task).getByLabelText("What PANEL-1 found"), { target: { value: "41, 38" } });
-    fireEvent.click(within(task).getByRole("button", { name: "Done" }));
-    await waitFor(() =>
-      expect(h.taskDone).toHaveBeenCalledWith(expect.objectContaining({ ref: "PANEL-1" }), {
-        result: "41, 38",
-      }),
-    );
-    fireEvent.click(within(task).getByRole("button", { name: "Can't do it" }));
-    fireEvent.change(within(task).getByLabelText("Why PANEL-1 cannot be done"), {
-      target: { value: "No calipers" },
-    });
-    fireEvent.click(within(task).getByRole("button", { name: "Close it" }));
-    await waitFor(() =>
-      expect(h.taskCant).toHaveBeenCalledWith(expect.objectContaining({ ref: "PANEL-1" }), "No calipers"),
-    );
   });
 });
 
