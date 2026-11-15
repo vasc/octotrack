@@ -8,7 +8,7 @@ import { allLines } from "../store/entities.ts";
 import { DecisionRow, IssueRow, PlanStepRow } from "../store/rows.ts";
 import { buildQueue } from "./decisions.ts";
 import { lineStart, runnerStatus, stepInFor, stepInKind, stepInReason } from "./runner.ts";
-import { atView, heldCount, heldOn, reconfirmingOn } from "./tasks.ts";
+import { atView, freedIssue, heldCount, heldOn, reconfirmingOn } from "./tasks.ts";
 
 const DONE_LATELY_MS = 7 * 24 * 60 * 60 * 1000;
 /** How long an answer's status shows on its line. */
@@ -133,7 +133,9 @@ export function buildHome(ctx: Ctx): HomeView {
           .filter((card) => card.decision.line === line.ref && !urgent.includes(card))
           .map((card) => ({ kind: "question", card }))
       : [];
-    const tasks: ForYou[] = working ? openTasks(ctx, line.ref).map((task) => ({ kind: "task", task })) : [];
+    const tasks: ForYou[] = working
+      ? openTasks(ctx, line.ref).map((task) => ({ kind: "task", task, frees: freedIssue(ctx, task.ref) }))
+      : [];
     // A proposal about the line itself is its first item: it decides what the rest of it is for.
     const proposals: ForYou[] = working
       ? [

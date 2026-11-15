@@ -276,9 +276,9 @@ describe("focusLabel", () => {
   test("names each kind of item that focus can move to", () => {
     const card = decisionCard({ decision: decision({ ref: "D-7", title: "Which board?" }) });
     expect(focusLabel({ kind: "question", card })).toBe("Question D-7, Which board?");
-    expect(focusLabel({ kind: "task", task: issue({ ref: "OCT-7", title: "Measure the grip" }) })).toBe(
-      "Task OCT-7, Measure the grip",
-    );
+    expect(
+      focusLabel({ kind: "task", task: issue({ ref: "OCT-7", title: "Measure the grip" }), frees: null }),
+    ).toBe("Task OCT-7, Measure the grip");
     expect(
       focusLabel(
         { kind: "done", line: "L-1", text: "It fits", by: "panel", doneWhen: "It holds" },
@@ -335,7 +335,7 @@ describe("a line's place and its items, for the line panel", () => {
   });
 
   test("counts what waits on the developer by kind", () => {
-    const task = { kind: "task" as const, task: issue() };
+    const task = { kind: "task" as const, task: issue(), frees: null };
     const question = { kind: "question" as const, card: decisionCard() };
     expect(forYouCounts([task, question, task])).toEqual({ questions: 1, tasks: 2 });
   });

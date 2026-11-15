@@ -106,7 +106,10 @@ export function LinesGallery() {
         </WorkingLine>
       </Example>
       <Example label="A task, one row, and opened">
-        <ForYouRow item={{ kind: "task", task: TASK }} onOpen={NOOP} />
+        <ForYouRow
+          item={{ kind: "task", task: TASK, frees: { ref: "OCT-41", title: "the real wake test" } }}
+          onOpen={NOOP}
+        />
         <TaskCard
           task={TASK}
           words=""

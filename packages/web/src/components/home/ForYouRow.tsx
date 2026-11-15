@@ -53,7 +53,7 @@ function rowText(item: ForYou) {
       );
     }
     case "task": {
-      const { task } = item;
+      const { task, frees } = item;
       return (
         <>
           <span className="item-kind">
@@ -61,7 +61,11 @@ function rowText(item: ForYou) {
             {task.place === null ? "" : ` · at ${task.place}`}
           </span>{" "}
           <b>{task.title}</b>{" "}
-          {task.outcome === null || task.outcome === "" ? null : (
+          {frees !== null ? (
+            <span className="item-note">
+              Frees {frees.ref}: {frees.title}.
+            </span>
+          ) : task.outcome === null || task.outcome === "" ? null : (
             <span className="item-note">
               Report: <Markdown text={task.outcome} inline />
             </span>

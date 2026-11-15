@@ -715,7 +715,12 @@ export type LineDetail = z.infer<typeof LineDetail>;
 /** Something on a line waiting on the developer: a question to answer or a task to do. */
 export const ForYou = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("question"), card: DecisionCard }),
-  z.object({ kind: z.literal("task"), task: Issue }),
+  z.object({
+    kind: z.literal("task"),
+    task: Issue,
+    /** The issue its outcome frees, by ref and title, as home names it: "Frees OCT-41: the real wake test." */
+    frees: z.object({ ref: z.string(), title: z.string() }).nullable(),
+  }),
   /** The owner's case that the line is done: Done, or Not yet. */
   z.object({
     kind: z.literal("done"),

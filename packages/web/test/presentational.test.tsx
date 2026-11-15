@@ -636,15 +636,28 @@ describe("lines of work", () => {
     fireEvent.click(question.getByRole("button", { name: "Open D-1" }));
     expect(onOpen).toHaveBeenCalledWith("D-1");
     question.unmount();
-    render(
+    const task = render(
       <ForYouRow
         item={{
           kind: "task",
           task: issue({ ref: "OCT-7", assignee: "dev", place: "the Mac", outcome: "Yes or no" }),
+          frees: { ref: "OCT-41", title: "the real wake test" },
         }}
         onOpen={onOpen}
       />,
-    ).getByText("Task · OCT-7 · at the Mac");
+    );
+    task.getByText("Task · OCT-7 · at the Mac");
+    // As E-Home writes it: what it frees, not what to report, which the task says once opened.
+    task.getByText(whole("Frees OCT-41: the real wake test."));
+    expect(task.queryByText(/Report:/)).toBeNull();
+    task.unmount();
+    const unlinked = render(
+      <ForYouRow
+        item={{ kind: "task", task: issue({ ref: "OCT-8", outcome: "Yes or no" }), frees: null }}
+        onOpen={onOpen}
+      />,
+    );
+    unlinked.getByText(whole("Report: Yes or no"));
   });
 
   test("TaskCard with named outcomes has a box for each and a note, counts what is filled, and needs them all", () => {
@@ -1517,6 +1530,7 @@ describe("I'm at a place", () => {
     const task = (ref: string, place: string | null) => ({
       kind: "task" as const,
       task: issue({ ref, place }),
+      frees: null,
     });
     expect(
       foldedText([
@@ -1940,6 +1954,7 @@ const forYouQuestion = {
 const forYouTask = (overrides: Parameters<typeof issue>[0]) => ({
   kind: "task" as const,
   task: issue(overrides),
+  frees: null,
 });
 const forYouDone = {
   kind: "done" as const,

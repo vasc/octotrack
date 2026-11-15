@@ -2322,7 +2322,7 @@ describe("lines of work", () => {
       frees.getByText(
         `Done goes to the line's inbox for whoever holds ${issue.ref}, now octo.1, and wakes it.`,
       );
-      section.getByText(/filed by octo.1/);
+      await section.findByText(/holds up Settle the board · filed by octo.1/);
       section.getByRole("button", { name: "Can't do it" });
       fireEvent.change(section.getByLabelText(`What ${task.ref} found`), { target: { value: "41, 38, 12" } });
       fireEvent.click(section.getByRole("button", { name: "Done" }));

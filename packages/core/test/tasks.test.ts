@@ -136,6 +136,25 @@ describe("tasks: what only the developer can do", () => {
   });
 });
 
+describe("what a task holds up", () => {
+  test("a task takes the plan step of the issue it frees, and home names that issue on the task", () => {
+    const w = world();
+    w.as(w.owner, c.planSet, { line: w.line, steps: ["Model the base", "Print it"] });
+    w.as(w.owner, c.issueUpdate, { refs: ["PANEL-1"], step: 2 });
+    const task = w.as(w.owner, c.taskFile, {
+      title: "Measure the grip",
+      place: "the bench",
+      outcome: "In mm",
+    });
+    expect(task.step).toBe(2);
+    const item = w.as(w.dev, c.homeShow, {}).lines[w.line]?.forYou.find((other) => other.kind === "task");
+    expect(item?.kind === "task" ? item.frees : undefined).toEqual({
+      ref: "PANEL-1",
+      title: "Model the base",
+    });
+  });
+});
+
 describe("outcome fields", () => {
   function measured(w: ReturnType<typeof world>) {
     return w.as(w.owner, c.taskFile, {
