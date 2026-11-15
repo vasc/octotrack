@@ -2328,6 +2328,11 @@ p {
   text-align: left;
 }
 
+/* One line, as for a measurement: as tall as a growing box at rest. */
+.line-box {
+  min-height: var(--touch-target);
+}
+
 .text-box {
   resize: none;
   field-sizing: content;
