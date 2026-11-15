@@ -27,7 +27,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const closeKeys = useCallback(() => setKeysOpen(false), []);
   const entity = params.get("ref");
   // The picker is the browser's to focus; g p reaches it through its element.
-  const atPicker = useRef<HTMLSelectElement>(null);
+  const atPicker = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLElement>(null);
   usePanelFocus(panel, entity);
   const { at, setAt } = bar;

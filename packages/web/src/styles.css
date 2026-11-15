@@ -492,40 +492,27 @@ p {
   color: var(--ink-2);
 }
 
-/* I'm at: a pin, the place, and the select's own arrow, in one control the height of the rest. */
-.picker {
+/* I'm at: a button with a pin, the place and an arrow, the height of the rest, opening the places under it. */
+.picker-wrap {
   position: relative;
   display: inline-flex;
-  align-items: center;
-  min-height: var(--control-height);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-md);
-  background: var(--surface);
-  color: var(--ink-2);
+}
+
+.picker {
+  color: var(--ink);
 }
 
 .picker > .icon {
-  position: absolute;
-  pointer-events: none;
+  color: var(--ink-2);
 }
 
-.picker > .icon:first-child {
-  left: var(--space-5);
+.picker-wrap > .menu {
+  top: calc(100% + var(--space-2));
 }
 
-.picker > .icon:last-child {
-  right: var(--space-4);
-}
-
-.picker select {
-  appearance: none;
-  min-height: var(--control-height);
-  padding: 0 calc(var(--space-6) + var(--icon-size)) 0 calc(var(--space-7) + var(--icon-size));
-  border: 0;
-  background: transparent;
-  color: var(--ink);
-  font-size: var(--text-sm);
-  cursor: pointer;
+/* The choice in force, in a menu of choices. */
+.menu-item[aria-checked="true"] {
+  font-weight: var(--weight-bold);
 }
 
 .state {
@@ -1146,13 +1133,13 @@ p {
   .top-actions {
     display: contents;
   }
-  .picker {
+  .picker-wrap {
     order: 3;
     width: 100%;
-    min-height: var(--touch-target);
   }
-  .picker select {
+  .picker {
     flex: 1;
+    justify-content: flex-start;
     min-height: var(--touch-target);
   }
   .main {

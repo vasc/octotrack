@@ -1,7 +1,8 @@
 import type { HomeCounts } from "@octotrack/core/schemas";
-import type { Ref } from "react";
+import type { RefObject } from "react";
 import { navigate } from "../../lib/router.ts";
 import { Icon } from "../ui/Icon.tsx";
+import { AtMenu } from "./AtMenu.tsx";
 import { NavItem } from "./NavItem.tsx";
 
 /** The header counts, each a link to the first such item in focus order. Zeros are left out. */
@@ -22,11 +23,9 @@ export interface TopBarProps {
   onAt(place: string | null): void;
   onNewLine(): void;
   onKeys(): void;
-  /** The I'm at picker, which g p focuses. */
-  atRef?: Ref<HTMLSelectElement>;
+  /** The I'm at button, which g p focuses. */
+  atRef?: RefObject<HTMLButtonElement | null>;
 }
-
-const ALL_PLACES = "";
 
 const PAGE_NAMES: Readonly<Record<string, string>> = {
   "/": "Lines",
@@ -68,23 +67,12 @@ export function TopBar({ path, counts, places, at, onAt, onNewLine, onKeys, atRe
         )}
         <span className="top-actions">
           {places.length === 0 ? null : (
-            <span className="picker">
-              <Icon name="pin" />
-              <select
-                ref={atRef}
-                aria-label="I'm at"
-                value={at ?? ALL_PLACES}
-                onChange={(event) => onAt(event.target.value === ALL_PLACES ? null : event.target.value)}
-              >
-                <option value={ALL_PLACES}>All places</option>
-                {places.map((place) => (
-                  <option key={place} value={place}>
-                    {place}
-                  </option>
-                ))}
-              </select>
-              <Icon name="chevron" />
-            </span>
+            <AtMenu
+              places={places}
+              at={at}
+              onAt={onAt}
+              {...(atRef === undefined ? {} : { buttonRef: atRef })}
+            />
           )}
           <button type="button" className="btn top-new" onClick={onNewLine}>
             <Icon name="plus" />

@@ -1,5 +1,5 @@
-import { type FocusEvent, type KeyboardEvent, useRef, useState } from "react";
 import type { DragHandle } from "../../hooks/useDragOrder.ts";
+import { useMenu } from "../../hooks/useMenu.ts";
 import { Icon } from "../ui/Icon.tsx";
 
 export type Move = "top" | "up" | "down" | "up_next";
@@ -26,38 +26,10 @@ export function LineHandle({
   drag?: DragHandle;
   onMove(direction: Move): void;
 }) {
-  const [open, setOpen] = useState(false);
-  const handle = useRef<HTMLButtonElement>(null);
-  const close = () => {
-    setOpen(false);
-    handle.current?.focus();
-  };
+  const menu = useMenu();
   const move = (direction: Move) => {
-    close();
+    menu.close();
     onMove(direction);
-  };
-  // Focus leaving the handle and its menu, by a click or Tab elsewhere, closes the menu.
-  const leave = (event: FocusEvent<HTMLButtonElement>) => {
-    const wrap = event.currentTarget.closest(".line-handle-wrap");
-    if (!(event.relatedTarget instanceof Node && wrap?.contains(event.relatedTarget) === true))
-      setOpen(false);
-  };
-  // The arrows move between the menu's items, as in any menu; the items are the browser's to focus.
-  const onMenuKey = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === "Escape") {
-      event.stopPropagation();
-      close();
-      return;
-    }
-    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
-    event.preventDefault();
-    const items = [...event.currentTarget.querySelectorAll("[role=menuitem]:not(:disabled)")].filter(
-      (item) => item instanceof HTMLButtonElement,
-    );
-    const active = document.activeElement;
-    const at = active instanceof HTMLButtonElement ? items.indexOf(active) : -1;
-    const next = items[(at + (event.key === "ArrowDown" ? 1 : items.length - 1)) % items.length];
-    next?.focus();
   };
   const enabled: Readonly<Record<Move, boolean>> = {
     top: canMoveUp,
@@ -70,7 +42,7 @@ export function LineHandle({
     <button
       type="button"
       role="menuitem"
-      onBlur={leave}
+      onBlur={menu.leave}
       className="menu-item"
       disabled={!enabled[direction]}
       // biome-ignore lint/a11y/noAutofocus: a menu opened takes the cursor on its first item
@@ -81,14 +53,14 @@ export function LineHandle({
     </button>
   );
   return (
-    <span className="line-handle-wrap">
+    <span className="line-handle-wrap" ref={menu.wrap}>
       <button
-        ref={handle}
+        ref={menu.button}
         type="button"
         className="line-handle"
         aria-label={`Move ${title}`}
         aria-haspopup="menu"
-        aria-expanded={open}
+        aria-expanded={menu.open}
         title="Drag to reorder, or click to move"
         draggable
         onDragStart={(event) => {
@@ -97,13 +69,13 @@ export function LineHandle({
           drag?.onDragStart(event);
         }}
         onDragEnd={drag?.onDragEnd}
-        onClick={() => setOpen(!open)}
-        onBlur={leave}
+        onClick={menu.toggle}
+        onBlur={menu.leave}
       >
         <Icon name="grip" />
       </button>
-      {open ? (
-        <div className="menu" role="menu" aria-label={`Move ${title}`} onKeyDown={onMenuKey}>
+      {menu.open ? (
+        <div className="menu" role="menu" aria-label={`Move ${title}`} onKeyDown={menu.onMenuKey}>
           {item("top", "Move to top")}
           {item("up", "Up")}
           {item("down", "Down")}
