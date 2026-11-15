@@ -1,5 +1,5 @@
 import { contracts } from "@octotrack/core/contracts";
-import type { Line } from "@octotrack/core/schemas";
+import type { Drift, Line } from "@octotrack/core/schemas";
 import { useState } from "react";
 import { useChoices } from "../../hooks/useChoices.ts";
 import { useDraft } from "../../hooks/useDraft.ts";
@@ -17,6 +17,7 @@ import { OwnerBox } from "./OwnerBox.tsx";
 import { OwnWorkBox } from "./OwnWorkBox.tsx";
 import { PanelForYou } from "./PanelForYou.tsx";
 import { PlanList } from "./PlanList.tsx";
+import { OpenDrift } from "./OpenDrift.tsx";
 import { SinceSummary } from "./SinceSummary.tsx";
 import { SummaryBox } from "./SummaryBox.tsx";
 import { TellBox } from "./TellBox.tsx";
@@ -25,7 +26,7 @@ import { TellBox } from "./TellBox.tsx";
  * A line opened, as E-Line draws it: where it stands and how to move it, its summary, what it needs from you, its plan
  * beside what is new and who owns it, and Tell. Opening it marks it seen.
  */
-export function LinePanelItem({ line }: { line: Line }) {
+export function LinePanelItem({ line, drift }: { line: Line; drift: readonly Drift[] }) {
   const choices = useLineChoices(line);
   const { waiting: choicesWaiting } = useChoices();
   const h = useHome();
@@ -84,6 +85,7 @@ export function LinePanelItem({ line }: { line: Line }) {
       )}
       <SummaryBox line={line} owner={owner} />
       <PanelForYou title={line.title} items={forYou} h={h} />
+      <OpenDrift drift={drift} />
       <div className="panel-grid">
         <PlanList steps={shown.data?.steps ?? []} work={shown.data?.work ?? []} />
         <div className="panel-column">

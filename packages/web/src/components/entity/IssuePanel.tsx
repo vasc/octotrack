@@ -13,6 +13,7 @@ import { NotKept } from "../ui/NotKept.tsx";
 import { ErrorState } from "../ui/states.tsx";
 import { ActivityList } from "./ActivityList.tsx";
 import { PullRequestBox } from "./PullRequestBox.tsx";
+import { OpenDrift } from "./OpenDrift.tsx";
 import { TellBox } from "./TellBox.tsx";
 
 /**
@@ -115,6 +116,7 @@ export function IssuePanel({ issue, detail }: { issue: Issue; detail: EntityDeta
           )}
         </>
       )}
+      <OpenDrift drift={detail.drift} />
       <NotKept error={tell.error} />
       {choices.failure === null ? null : <ErrorState error={choices.failure} />}
     </section>
