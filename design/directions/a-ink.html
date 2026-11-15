@@ -30,6 +30,7 @@
   .nav a[aria-current] { color: var(--ink); box-shadow: inset 0 -1.5px 0 var(--ink); }
   .waits { margin-left: auto; display: flex; gap: 18px; font-size: 13px; color: var(--ink-3); }
   .waits b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .task b { color: var(--ink); font-weight: 600; }
   .waits .urgent b { color: var(--needs); }
   .new { font-size: 13px; color: var(--ink); border-bottom: 1px solid var(--ink); padding-bottom: 1px; }
 
@@ -63,7 +64,6 @@
 
   .task { margin: 14px 0 0; display: flex; gap: 12px; align-items: baseline; font-size: 14px; color: var(--ink-2); }
   .task::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--needs); flex: none; transform: translateY(-1px); }
-  .task b { color: var(--ink); font-weight: 600; }
   .task .open { margin-left: auto; color: var(--ink); border-bottom: 1px solid var(--rule); font-size: 13px; }
 
   .stepin { margin: 14px 0 0; font-size: 14px; color: var(--ink-2); max-width: 62ch; }
@@ -102,11 +102,11 @@
 <body>
   <header class="bar">
     <span class="word">Octotrack</span>
-    <nav class="nav"><a href="#" aria-current="page">Lines</a><a href="#">Log</a><a href="#">Agents</a></nav>
+    <nav class="nav"><a href="#lines" aria-current="page">Lines</a><a href="#log">Log</a><a href="#agents">Agents</a></nav>
     <div class="waits">
       <span class="urgent"><b>1</b> urgent</span><span><b>2</b> to do</span><span><b>2</b> to accept</span><span><b>2</b> to step in</span>
     </div>
-    <button class="new">New<span class="more"> line</span></button>
+    <button type="button" class="new">New<span class="more"> line</span></button>
   </header>
   <main>
     <section>
@@ -118,13 +118,13 @@
         <div>
           <h3 class="title">One plan, one meal</h3>
           <p class="facts"><span class="needs">no owner yet</span> · waiting on you · step 1 of 4, Mock it up</p>
-          <p class="summary">Mockup ready after six rejected restyles. Nothing built until you answer. <a href="#">3 changes since the summary</a></p>
+          <p class="summary">Mockup ready after six rejected restyles. Nothing built until you answer. <a href="#changes">3 changes since the summary</a></p>
           <div class="ask">
             <div class="kind">Task for you <span>· MEALS-1 · at the Mac</span></div>
             <h3>Try the mockup on the phone</h3>
-            <label>Does it read at arm's length?</label>
-            <input class="field" placeholder="What you saw">
-            <div class="choices"><button class="choice primary"><kbd>1</kbd>Done</button><button class="choice"><kbd>2</kbd>Can't do it</button></div>
+            <label for="seen">Does it read at arm's length?</label>
+            <input id="seen" class="field" placeholder="What you saw">
+            <div class="choices"><button type="button" class="choice primary"><kbd>1</kbd>Done</button><button type="button" class="choice"><kbd>2</kbd>Can't do it</button></div>
           </div>
         </div>
       </article>
@@ -135,7 +135,7 @@
           <h3 class="title">Sendspin enclosure</h3>
           <p class="facts"><span class="who">panel-widgets</span> · quiet · waiting on you</p>
           <p class="summary">Printed; the short board fits. One answer and one measurement from the final print.</p>
-          <div class="task"><span><b>Measure the board and its holes</b> · at the bench</span><button class="open">Open</button></div>
+          <div class="task"><span><b>Measure the board and its holes</b> · at the bench</span><button type="button" class="open">Open</button></div>
         </div>
       </article>
 
@@ -145,7 +145,7 @@
           <h3 class="title">South Tyrol trip</h3>
           <p class="facts"><span class="needs">no owner</span> · step 2 of 3, Book the huts</p>
           <p class="stepin"><em>Step in.</em> No agent took L-3, and none can be started: no start command is set on this machine.</p>
-          <div class="stepin"><div class="choices"><button class="choice primary"><kbd>1</kbd>Try now</button><button class="choice"><kbd>2</kbd>Table it</button><button class="choice"><kbd>3</kbd>I'll own it</button></div></div>
+          <div class="stepin"><div class="choices"><button type="button" class="choice primary"><kbd>1</kbd>Try now</button><button type="button" class="choice"><kbd>2</kbd>Table it</button><button type="button" class="choice"><kbd>3</kbd>I'll own it</button></div></div>
         </div>
       </article>
 
@@ -170,13 +170,13 @@
         <h3 class="title">Restore the garden feed</h3>
         <p class="facts"><span class="needs">urgent</span> · garden-sensor · 18h ago · done when readings arrive again</p>
         <p class="why">The done sensor line's service stopped answering. Recommended: start it now.</p>
-        <div class="choices"><button class="choice primary"><kbd>1</kbd>Start</button><button class="choice"><kbd>2</kbd>Up next</button><button class="choice"><kbd>3</kbd>Table</button></div>
+        <div class="choices"><button type="button" class="choice primary"><kbd>1</kbd>Start</button><button type="button" class="choice"><kbd>2</kbd>Up next</button><button type="button" class="choice"><kbd>3</kbd>Table</button></div>
       </div>
       <div class="proposal">
         <h3 class="title">Widgets redesign</h3>
         <p class="facts">panel-widgets · 20h ago · done when the new card forms are on every panel screen</p>
         <p class="why">The enclosure's final print moves the mounting points. Recommended: up next.</p>
-        <div class="choices"><button class="choice"><kbd>1</kbd>Start</button><button class="choice primary"><kbd>2</kbd>Up next</button><button class="choice"><kbd>3</kbd>Table</button></div>
+        <div class="choices"><button type="button" class="choice"><kbd>1</kbd>Start</button><button type="button" class="choice primary"><kbd>2</kbd>Up next</button><button type="button" class="choice"><kbd>3</kbd>Table</button></div>
       </div>
     </section>
   </main>

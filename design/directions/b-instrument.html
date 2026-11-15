@@ -98,11 +98,11 @@
 <body>
   <header class="bar">
     <span class="word">Octotrack</span>
-    <button class="tab" aria-current="page">Lines</button><button class="tab">Log</button><button class="tab">Agents</button>
+    <button type="button" class="tab" aria-current="page">Lines</button><button type="button" class="tab">Log</button><button type="button" class="tab">Agents</button>
     <div class="waits">
       <span><i class="dot"></i><b>1</b>urgent</span><span><b>2</b>to do</span><span><b>2</b>to accept</span><span><b>2</b>to step in</span>
     </div>
-    <button class="new">New line</button>
+    <button type="button" class="new">New line</button>
   </header>
   <main>
     <section>
@@ -114,13 +114,13 @@
           <span class="right"><span class="needs-tag">Waiting on you</span></span>
         </div>
         <div class="detail">
-          <p class="summary">Mockup ready after six rejected restyles. Nothing built until you answer. <a href="#">3 changes since the summary</a></p>
+          <p class="summary">Mockup ready after six rejected restyles. Nothing built until you answer. <a href="#changes">3 changes since the summary</a></p>
           <div class="ask">
             <div class="kind">Task for you <span>· MEALS-1 · at the Mac</span></div>
             <h3>Try the mockup on the phone</h3>
-            <label>Does it read at arm's length?</label>
-            <input class="field" placeholder="What you saw">
-            <div class="choices"><button class="choice primary"><kbd>1</kbd>Done</button><button class="choice"><kbd>2</kbd>Can't do it</button></div>
+            <label for="seen">Does it read at arm's length?</label>
+            <input id="seen" class="field" placeholder="What you saw">
+            <div class="choices"><button type="button" class="choice primary"><kbd>1</kbd>Done</button><button type="button" class="choice"><kbd>2</kbd>Can't do it</button></div>
           </div>
         </div>
         <div class="row">
@@ -130,7 +130,7 @@
         </div>
         <div class="detail">
           <p class="summary">Printed; the short board fits. One answer and one measurement from the final print.</p>
-          <div class="inline"><span class="needs-tag">Task</span><span><b>Measure the board and its holes</b> · at the bench</span><button class="open">Open</button></div>
+          <div class="inline"><span class="needs-tag">Task</span><span><b>Measure the board and its holes</b> · at the bench</span><button type="button" class="open">Open</button></div>
         </div>
         <div class="row">
           <span class="n">3</span><span class="state stuck"></span>
@@ -139,7 +139,7 @@
         </div>
         <div class="detail">
           <p class="summary">No agent took L-3, and none can be started: no start command is set on this machine.</p>
-          <div class="choices"><button class="choice primary"><kbd>1</kbd>Try now</button><button class="choice"><kbd>2</kbd>Table it</button><button class="choice"><kbd>3</kbd>I'll own it</button></div>
+          <div class="choices"><button type="button" class="choice primary"><kbd>1</kbd>Try now</button><button type="button" class="choice"><kbd>2</kbd>Table it</button><button type="button" class="choice"><kbd>3</kbd>I'll own it</button></div>
         </div>
         <div class="row">
           <span class="n">4</span><span class="state working"></span>
@@ -164,7 +164,7 @@
         </div>
         <div class="detail">
           <p class="summary">The done sensor line's service stopped answering. Recommended: start it now.</p>
-          <div class="choices"><button class="choice primary"><kbd>1</kbd>Start</button><button class="choice"><kbd>2</kbd>Up next</button><button class="choice"><kbd>3</kbd>Table</button></div>
+          <div class="choices"><button type="button" class="choice primary"><kbd>1</kbd>Start</button><button type="button" class="choice"><kbd>2</kbd>Up next</button><button type="button" class="choice"><kbd>3</kbd>Table</button></div>
         </div>
         <div class="row">
           <span class="n">P</span><span class="state"></span>
