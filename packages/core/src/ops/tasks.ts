@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { guardLineWrite, guardOnLine, holdsWork } from "../agents/claims.ts";
+import { guardOnLine, holdsWork } from "../agents/claims.ts";
 import { HELD_CURRENT_MS } from "../agents/held.ts";
 import { DEVELOPER } from "../agents/state.ts";
 import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
-import type { AtView, HeldItem, Issue, Place } from "../schemas.ts";
+import type { AtView, Decision, HeldItem, Issue, Place } from "../schemas.ts";
 import type { EventTypeName } from "../query/values.ts";
 import { claimOf } from "../store/agents.ts";
 import { applyPatch, emit } from "../store/common.ts";
@@ -331,6 +331,37 @@ export function reconfirmingOn(ctx: Ctx, line: string): number {
   return staleHeldOn(ctx, line).length;
 }
 
+/** A question or a task for the developer, open, on the line it is held on. */
+type HeldWork =
+  | { kind: "decision"; value: Decision; line: string }
+  | { kind: "issue"; value: Issue; line: string };
+
+/**
+ * What held confirm and held withdraw act on: a question still open, or a task for the developer still open, on a
+ * line. An answered question or a closed task no longer stands or falls, and any other issue is not held work.
+ */
+function requireHeldItem(ctx: Ctx, ref: string): HeldWork {
+  const entity = findEntity(ctx, ref);
+  if (entity?.kind === "decision" && entity.value.line !== null) {
+    if (entity.value.status !== "open") {
+      throw new OctoError("conflict", `${entity.value.ref} is ${entity.value.status}, so it is not held`);
+    }
+    return { kind: "decision", value: entity.value, line: entity.value.line };
+  }
+  if (
+    entity?.kind === "issue" &&
+    entity.value.line !== null &&
+    entity.value.assignee === DEVELOPER &&
+    entity.value.outcome !== null
+  ) {
+    if (entity.value.status === "done" || entity.value.status === "cancelled") {
+      throw new OctoError("conflict", `${entity.value.ref} is already closed, so it is not held`);
+    }
+    return { kind: "issue", value: entity.value, line: entity.value.line };
+  }
+  throw new OctoError("invalid_input", `${ref} is not a question or task on a line`);
+}
+
 export const taskOps = [
   bind(contracts.taskFile, (ctx, input) => {
     const lineRef = input.line ?? (ctx.developer ? null : (claimOf(ctx, ctx.actor)?.line ?? null));
@@ -418,17 +449,10 @@ export const taskOps = [
   bind(contracts.heldConfirm, (ctx, input) => {
     const lines = new Set<string>();
     for (const ref of input.refs) {
-      const entity = findEntity(ctx, ref);
-      if (
-        entity === null ||
-        (entity.kind !== "decision" && entity.kind !== "issue") ||
-        entity.value.line === null
-      ) {
-        throw new OctoError("invalid_input", `${ref} is not a question or task on a line`);
-      }
-      guardOnLine(ctx, entity.value.line, "scope", entity.value.ref);
+      const entity = requireHeldItem(ctx, ref);
+      guardOnLine(ctx, entity.line, "scope", entity.value.ref);
       // Re-confirmed, it is current again; on a line agents work on it reaches the developer from now.
-      const working = !holdsWork(requireLine(ctx, entity.value.line));
+      const working = !holdsWork(requireLine(ctx, entity.line));
       ctx.sql.run(
         `UPDATE ${entity.kind === "decision" ? "decisions" : "issues"} SET confirmedAt = ?, heldAt = ${working ? "NULL" : "heldAt"} WHERE ref = ?`,
         [ctx.now, entity.value.ref],
@@ -439,10 +463,10 @@ export const taskOps = [
         kind: entity.kind,
         ref: entity.value.ref,
         project: entity.value.project,
-        line: entity.value.line,
+        line: entity.line,
         summary: `${entity.value.ref} still stands, ${ctx.actor} re-confirmed: ${entity.value.title}`,
       });
-      lines.add(entity.value.line);
+      lines.add(entity.line);
     }
     return [...lines].flatMap((line) => heldOn(ctx, line)).filter((item) => input.refs.includes(item.ref));
   }),
@@ -450,22 +474,9 @@ export const taskOps = [
   bind(contracts.heldWithdraw, (ctx, input) => {
     const withdrawn: string[] = [];
     for (const ref of input.refs) {
-      const entity = findEntity(ctx, ref);
-      if (
-        entity === null ||
-        (entity.kind !== "decision" && entity.kind !== "issue") ||
-        entity.value.line === null
-      ) {
-        throw new OctoError("invalid_input", `${ref} is not a question or task on a line`);
-      }
-      // Withdrawing is scoping: refused to anyone not on the line, as any other write there.
-      guardLineWrite(ctx, entity.value.line, "scope");
-      if (!ctx.developer && claimOf(ctx, ctx.actor)?.line !== entity.value.line) {
-        throw new OctoError(
-          "forbidden",
-          `${entity.value.ref} is on ${entity.value.line}, which you are not on`,
-        );
-      }
+      const entity = requireHeldItem(ctx, ref);
+      // Withdrawing is scoping: only from the line, or on a proposal by its proposer, as re-confirming is.
+      guardOnLine(ctx, entity.line, "scope", entity.value.ref);
       if (entity.kind === "decision") withdrawQuestion(ctx, entity.value.ref, input.why);
       else {
         const why = input.why ?? "it no longer stands";

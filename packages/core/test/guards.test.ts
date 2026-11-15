@@ -824,4 +824,33 @@ describe("agents write only to the line they are on, the rest of it (fourth audi
       w.as(w.owner, c.lineDoneWhen, { ref: w.line, doneWhen: "It closes.", why: "Lid" }).doneWhenProposal,
     ).toBe("It closes.");
   });
+
+  test("held confirm: only an open question or an open task is re-confirmed", () => {
+    const w = world();
+    const asked = w.ask();
+    w.as(w.dev, c.decisionResolve, { ref: asked, option: "a" });
+    expect(w.refused(() => w.as(w.owner, c.heldConfirm, { refs: [asked] })).code).toBe("conflict");
+    expect(w.refused(() => w.as(w.owner, c.heldConfirm, { refs: [w.issue] })).code).toBe("invalid_input");
+    expect(w.events("event:held.confirmed")).toEqual([]);
+  });
+
+  test("held withdraw: a proposal's proposer withdraws what it asked there, as it re-confirms it", () => {
+    const w = world();
+    const proposal = w.as(w.outsider, c.linePropose, {
+      title: "Stand",
+      doneWhen: "It stands.",
+      repos: ["OTHER"],
+      recommendation: "up_next",
+      why: "It is next.",
+    }).ref;
+    const asked = w.as(w.outsider, c.decisionAsk, {
+      title: "Which foot?",
+      context: SITUATION,
+      options: OPTIONS,
+      line: proposal,
+    }).ref;
+    w.as(w.outsider, c.heldConfirm, { refs: [asked] });
+    expect(w.refused(() => w.as(w.owner, c.heldWithdraw, { refs: [asked] })).code).toBe("forbidden");
+    expect(w.as(w.outsider, c.heldWithdraw, { refs: [asked], why: "Decided" }).withdrawn).toEqual([asked]);
+  });
 });
