@@ -471,9 +471,10 @@ export function createRunner(options: {
   };
 
   /**
-   * Stop, for each agent the developer stopped, once: the process group of a session the runner started is ended, and
-   * the developer's stop command, if one is set, is run for what the runner cannot see. Watch mode only notes it, and a
-   * name the command could misread is never given to it.
+   * Stop, for each agent the developer stopped, once: the process group of a session the runner started is ended, or
+   * else the developer's stop command, if one is set, is run for what the runner cannot see. Never both: the command is
+   * for sessions the runner did not start (D13). Watch mode only notes it, and a name the command could misread is
+   * never given to it.
    */
   const runStops = async () => {
     const before = new Map(unwatched().map((live) => [live.name, live]));
@@ -492,8 +493,9 @@ export function createRunner(options: {
         shell.end(old.pid);
         ended = true;
       }
-      if (config.stop === undefined) {
-        // Nothing more for a session the runner did not start: Stop refuses its writes, as before.
+      // The stop command is only for what the runner cannot end itself (D13): a session it ended needs nothing more.
+      if (config.stop === undefined || ended) {
+        // Nothing more for a session the runner did not start and no command is set for: Stop refuses its writes.
         if (ended) {
           tracker.call(contracts.runnerStopRan, { name, code: 0, output: "", ended, command: false }, RUNNER);
         }
