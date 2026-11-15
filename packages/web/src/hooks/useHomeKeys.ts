@@ -32,9 +32,12 @@ export function useHomeKeys(options: {
   choose(ref: string): void;
   move(line: string, direction: "up" | "down"): void;
   onRecord(): void;
+  /** A panel or a Start sheet is open over home: it takes the keys, and home's stand down, r and g u too. */
+  inspecting: boolean;
 }): HotkeyMap {
-  const { page, home, focus, armed, choose, move, onRecord } = options;
+  const { page, home, focus, armed, choose, move, onRecord, inspecting } = options;
   return useMemo((): HotkeyMap => {
+    if (inspecting) return {};
     const always: HotkeyMap = { r: onRecord };
     if (home === undefined) return always;
     const line = lineOf(home, focus);
@@ -61,5 +64,5 @@ export function useHomeKeys(options: {
       ...numbers,
       ...(urgent === null ? {} : { "g u": () => choose(urgent) }),
     };
-  }, [page, home, focus, armed, choose, move, onRecord]);
+  }, [page, home, focus, armed, choose, move, onRecord, inspecting]);
 }

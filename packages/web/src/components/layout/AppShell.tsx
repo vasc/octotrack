@@ -41,6 +41,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         : at !== null
           ? () => setAt(null)
           : null;
+    // With the key list open, only what closes it acts: a stray key behind it costs nothing (D14).
+    if (keysOpen) return { "?": closeKeys, ...(closeTop === null ? {} : { Escape: closeTop }) };
     return {
       "?": openKeys,
       "g p": () => atPicker.current?.focus(),

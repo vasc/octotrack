@@ -136,6 +136,23 @@ describe("questions on home", () => {
     await view.findByRole("button", { name: "Undo" });
   });
 
+  test("with the key list open, / goes nowhere; with a panel open, r records nothing behind it", async () => {
+    const decision = seedDecision();
+    navigate("/");
+    const view = renderApp(<App />);
+    await view.findByRole("heading", { name: "Which queue?" });
+    fireEvent.keyDown(window, { key: "?" });
+    await view.findByRole("dialog", { name: "Keys" });
+    fireEvent.keyDown(document.activeElement ?? window, { key: "/" });
+    expect(window.location.pathname).toBe("/");
+    fireEvent.keyDown(window, { key: "Escape" });
+    await gone(() => view.queryByRole("dialog", { name: "Keys" }));
+    act(() => navigate(`/?ref=${decision.ref}`));
+    await view.findByRole("complementary", { name: decision.ref });
+    fireEvent.keyDown(window, { key: "r" });
+    expect(view.queryByRole("region", { name: "Record answers" })).toBeNull();
+  });
+
   test("one question is open at a time, and j and k move between them", async () => {
     seedDecision({ title: "First", priority: "urgent" });
     seedDecision({ title: "Second", priority: "low" });
