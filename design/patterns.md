@@ -4,12 +4,13 @@ How components combine, and why.
 
 ## The frame
 
-One bar on top: Octotrack, Lines, Log and Agents; what waits on you, as plain words with urgent first, after a small
-warm dot; I'm at, New line and the keys. Under it, the page. Any ref opens as a panel over the right of the page, so the
-page keeps its place behind it. Below 720px the pages become tabs at the bottom, the page you are on filled with the
-accent, and the bar above is one row: what waits, wrapping in its own column, then a plus for New line and the theme.
-The bar does not name the page, since its tab does. The tabs sit right on the browser's own bar, with only the home
-indicator's room below them, and the page leaves room for the tabs and no more.
+One bar on top: the name Octotrack, which opens Lines, with the Log and Agents beside it as quiet words; what waits on
+you, as plain words with urgent first, after a small warm dot; I'm at, New line and the keys. Under it, the page. Any ref
+opens as a panel over the right of the page, so the page keeps its place behind it.
+
+Lines is the app; the Log and Agents are places to look now and then, so they are never tabs of equal weight. Below
+720px there is no bar of tabs at all: Lines fills the screen, the bar is one row (what waits, wrapping in its own
+column, then a plus for New line, the theme and a pages menu that holds Lines, the Log and Agents), and it names no page.
 
 A menu or a list of suggestions closes when focus moves out of it or on a tap elsewhere, never on a blur that moves
 focus nowhere: Safari gives a tapped button no focus, so that blur comes under every tap on an item.

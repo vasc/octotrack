@@ -55,6 +55,7 @@ import { TellBox } from "../src/components/entity/TellBox.tsx";
 import { type NewLine, NewLineCard } from "../src/components/lines/NewLineCard.tsx";
 import { TableForm } from "../src/components/lines/TableForm.tsx";
 import { TopBar } from "../src/components/layout/TopBar.tsx";
+import { PagesMenu } from "../src/components/layout/PagesMenu.tsx";
 import { UndoBar } from "../src/components/layout/UndoBar.tsx";
 import { SyncFailures } from "../src/components/prs/SyncFailures.tsx";
 import { Markdown } from "../src/components/ui/Markdown.tsx";
@@ -430,7 +431,7 @@ describe("TopBar", () => {
     { key: "toStepIn" as const, label: "to step in", count: 1, to: "stepin:L-9" },
   ];
 
-  test("names the three pages, marks this one, and links each count to its first item", () => {
+  test("puts Lines first: the name opens it, and Log and Agents are quieter places beside it", () => {
     const onAt = mock((_place: string | null) => {});
     const onNewLine = mock(() => {});
     const view = render(
@@ -448,8 +449,10 @@ describe("TopBar", () => {
       />,
     );
     const nav = within(view.getByRole("navigation", { name: "Main" }));
-    expect(nav.getAllByRole("link").map((link) => link.textContent)).toEqual(["Lines", "Log", "Agents"]);
+    expect(nav.getByRole("link", { name: "Octotrack" }).getAttribute("href")).toBe("/");
+    expect(nav.getAllByRole("link").map((link) => link.textContent)).toEqual(["Octotrack", "Log", "Agents"]);
     expect(nav.getByRole("link", { name: "Log" }).getAttribute("aria-current")).toBe("page");
+    expect(nav.getByRole("link", { name: "Octotrack" }).getAttribute("aria-current")).toBeNull();
     expect(view.getByRole("link", { name: "4 to answer" }).getAttribute("href")).toBe("/?focus=D-56");
     expect(view.getByRole("link", { name: "1 to step in" }).getAttribute("data-count")).toBe("toStepIn");
     expect(view.queryByRole("combobox")).toBeNull();
@@ -461,6 +464,22 @@ describe("TopBar", () => {
     expect(view.queryByRole("menu")).toBeNull();
     fireEvent.click(view.getByRole("button", { name: "New line" }));
     expect(onNewLine).toHaveBeenCalledTimes(1);
+  });
+
+  test("on a phone, the pages wait behind one quiet menu instead of a bar of equal tabs", () => {
+    const go = mock((_to: string) => {});
+    const view = render(<PagesMenu path="/" onGo={go} />);
+    fireEvent.click(view.getByRole("button", { name: "Pages: Lines" }));
+    const menu = within(view.getByRole("menu", { name: "Pages" }));
+    expect(menu.getAllByRole("menuitemradio").map((item) => item.textContent)).toEqual([
+      "Lines",
+      "Log",
+      "Agents",
+    ]);
+    expect(menu.getByRole("menuitemradio", { name: "Lines" }).getAttribute("aria-checked")).toBe("true");
+    fireEvent.click(menu.getByRole("menuitemradio", { name: "Agents" }));
+    expect(go).toHaveBeenCalledWith("/agents");
+    expect(view.queryByRole("menu")).toBeNull();
   });
 
   test("draws the counts as one group of number and words, with urgent apart in front of it", () => {
@@ -489,7 +508,7 @@ describe("TopBar", () => {
     expect(urgent.querySelector(".top-count-n")?.textContent).toBe("1");
   });
 
-  test("names the page once: its tab, never a title above it as well", () => {
+  test("never names the page twice: on Lines, the name is the way home and marks the page", () => {
     const view = render(
       <TopBar
         appearance={{ palette: "paper", mode: "system" }}
@@ -505,8 +524,8 @@ describe("TopBar", () => {
       />,
     );
     const bar = view.getByRole("banner");
-    expect((bar.textContent ?? "").split("Lines").length - 1).toBe(1);
-    expect(within(bar).getByRole("link", { name: "Lines" }).getAttribute("aria-current")).toBe("page");
+    expect((bar.textContent ?? "").split("Lines").length - 1).toBeLessThanOrEqual(1);
+    expect(within(bar).getByRole("link", { name: "Octotrack" }).getAttribute("aria-current")).toBe("page");
   });
 
   test("leaves out I'm at when the developer has no places, and the counts when nothing waits", () => {

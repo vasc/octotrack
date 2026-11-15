@@ -86,14 +86,20 @@ p {
   gap: var(--space-6) var(--space-12);
 }
 
+/* The name is the way home: Lines is the app. */
 .brand-name {
   font-weight: var(--weight-bold);
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
   letter-spacing: -0.01em;
+  color: var(--ink);
+  text-decoration: none;
+  margin-right: var(--space-6);
 }
 
+/* The Log and Agents: places to look now and then, so quiet words beside the name, never tabs equal to Lines. */
 .top-nav {
   display: flex;
+  align-items: center;
   gap: var(--space-2);
 }
 
@@ -102,8 +108,9 @@ p {
   align-items: center;
   min-height: var(--control-height);
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-6);
+  padding: 0 var(--space-4);
   border-radius: var(--radius-md);
+  font-size: var(--text-sm);
   color: var(--ink-3);
   font-weight: var(--weight-medium);
 }
@@ -113,8 +120,12 @@ p {
 }
 
 .nav-item[aria-current="page"] {
-  background: var(--accent);
-  color: var(--on-accent);
+  color: var(--ink);
+}
+
+/* The pages menu is for a phone; a wide screen has room for the words. */
+.menu-wrap.pages-menu {
+  display: none;
 }
 
 .nav-count {
@@ -1129,12 +1140,13 @@ p {
   .top-new-word {
     display: none;
   }
+  /* New, the theme and the pages: one size of square, a full touch target each. */
+  .top-actions .btn-icon,
   .btn.top-new {
     width: var(--touch-target);
     padding: 0;
   }
-  /* The bar on a phone is one row: what waits, then New and the theme. The tab bar at the bottom names the page, so the
-     bar does not name it again. */
+  /* The bar on a phone is one row: what waits, then New, the theme and the pages menu. It names no page. */
   .top-new,
   .menu-wrap {
     order: 1;
@@ -1160,26 +1172,13 @@ p {
   .top-count + .top-count {
     border-left: 0;
   }
+  /* No bar of tabs on a phone: Lines is the screen, and the Log and Agents wait behind the pages menu. */
   .top-nav {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    /* Only the home indicator's own room below the tabs, where there is one; no band of blank above the browser's bar. */
-    padding: var(--space-3) var(--space-4) max(var(--space-3), env(safe-area-inset-bottom));
-    background: var(--surface);
-    border-top: 1px solid var(--line);
-    z-index: var(--z-popover);
+    display: none;
   }
-  .top-nav .nav-item {
-    justify-content: center;
-    min-height: var(--touch-target);
-  }
-  /* The page you are on is filled with the theme's accent, as on a wide screen, so the theme shows on every page. */
-  .top-nav .nav-item[aria-current="page"] {
-    font-weight: var(--weight-bold);
+  .menu-wrap.pages-menu {
+    display: inline-flex;
+    order: 1;
   }
   /* The bar's own order on a phone: New beside the page's name, I'm at across the width under the counts. */
   .top-actions {
@@ -1193,10 +1192,6 @@ p {
     flex: 1;
     justify-content: flex-start;
     min-height: var(--touch-target);
-  }
-  /* Room for the tab bar fixed over the bottom of the page, and no more. */
-  .main {
-    padding-bottom: calc(var(--touch-target) + var(--space-3) * 2);
   }
   .tabs {
     flex-wrap: nowrap;

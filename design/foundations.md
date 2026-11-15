@@ -192,9 +192,9 @@ E · One list boards draw it.
 
 CSS custom properties cannot be used in media queries, so the breakpoint lives in `packages/web/src/styles.css`:
 
-| Below | What changes                                                                                                                          |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| 720px | Lines, Log and Agents become tabs at the bottom, and the bar stops naming the page; a line's items take the full width; choices stack |
+| Below | What changes                                                                                                                                   |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| 720px | The Log and Agents move into the pages menu, with no bar of tabs, and the bar names no page; a line's items take the full width; choices stack |
 
 Size and input are separate questions, so touch has its own rule rather than a width: `@media (pointer: coarse)` raises
 the type scale, gives controls `--touch-target`, and hides what only a keyboard can act on. A phone on its side, wider than

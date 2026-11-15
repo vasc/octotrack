@@ -465,6 +465,10 @@ Decisions made from that:
   down the side of anything; red is kept for real errors (a bad query, a failed save, failing checks, a refused write),
   and what is urgent, has no owner, or is stuck reads in the warm tone as words and a small dot, never as a red pill, fill
   or edge; Step in's way forward is the filled main action; the bar's counts are plain words.
+  The developer then asked "are agents and log actually the same order or importance of lines" and "If not why the hell
+  is there a bottom menu with them at the same level". They are not: Lines is the app, the Log is catch-up reading and
+  Agents a roster opened now and then. _Decided:_ the name Octotrack opens Lines; the Log and Agents are quiet words
+  beside it on a wide screen and wait behind one pages menu on a phone; there is no bar of equal tabs anywhere.
 - **Focus is a tint, with the keys beside it, not a word.** (Superseded in part above: the border became a tint.) The developer, looking at the built home: "focused text on
   lines is unnecessary, reminding about j an k shortcuts to the side would be better, in a subtle way". The word
   Focused, which the boards draw over the focused item, is gone; the item keeps its border, in the theme's accent, and out in the margin

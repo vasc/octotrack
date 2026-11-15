@@ -32,6 +32,13 @@ const PATHS = {
     </>
   ),
   chevron: <path d="m6 9 6 6 6-6" />,
+  more: (
+    <>
+      <circle cx="5" cy="12" r="1" />
+      <circle cx="12" cy="12" r="1" />
+      <circle cx="19" cy="12" r="1" />
+    </>
+  ),
   palette: (
     <>
       <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />

@@ -6,6 +6,7 @@ import type { Appearance, Mode, Palette } from "../../lib/appearance.ts";
 import { AppearanceMenu } from "./AppearanceMenu.tsx";
 import { AtMenu } from "./AtMenu.tsx";
 import { NavItem } from "./NavItem.tsx";
+import { PagesMenu } from "./PagesMenu.tsx";
 
 /** The header counts, each a link to the first such item in focus order. Zeros are left out. */
 export interface CountLink {
@@ -33,7 +34,11 @@ export interface TopBarProps {
   onMode(mode: Mode): void;
 }
 
-/** Lines, Log and Agents, what waits on the developer, where they are, and New line. One bar on every page. */
+/**
+ * One bar on every page: the name, which opens Lines; the Log and Agents, quieter, since Lines is the app and they are
+ * places to look now and then; what waits on the developer, where they are, and New line. On a phone the Log and Agents
+ * wait behind one menu.
+ */
 export function TopBar({
   path,
   counts,
@@ -53,9 +58,19 @@ export function TopBar({
   return (
     <header className="top-bar">
       <div className="top-bar-inner">
-        <span className="brand-name">Octotrack</span>
         <nav aria-label="Main" className="top-nav">
-          <NavItem label="Lines" to="/" current={path === "/" || path === "/lines"} />
+          <a
+            className="brand-name"
+            href="/"
+            aria-current={path === "/" || path === "/lines" ? "page" : undefined}
+            onClick={(event) => {
+              if (event.metaKey || event.ctrlKey) return;
+              event.preventDefault();
+              navigate("/");
+            }}
+          >
+            Octotrack
+          </a>
           <NavItem label="Log" to="/log" current={path === "/log"} />
           <NavItem label="Agents" to="/agents" current={path === "/agents"} />
         </nav>
@@ -95,6 +110,7 @@ export function TopBar({
             </span>
           </button>
           <AppearanceMenu appearance={appearance} onPalette={onPalette} onMode={onMode} />
+          <PagesMenu path={path} onGo={navigate} />
           <button
             type="button"
             className="btn btn-icon top-keys"
