@@ -269,6 +269,12 @@ describe("the developer's and the server's names are not agents' names", () => {
     const tracker = new Tracker(driver, () => "2026-11-14T09:00:00.000Z");
     const roster = tracker.call(c.agentList, {}, { actor: "dev", channel: "dashboard" });
     expect(roster.map((agent) => [agent.name, agent.state])).toEqual([["panel", "running"]]);
+    // Kept, never deleted: they are data like any other, only not agents.
+    expect(driver.all("SELECT name FROM agents ORDER BY name").map((row) => JSON.stringify(row))).toEqual([
+      JSON.stringify({ name: "github" }),
+      JSON.stringify({ name: "octotrack" }),
+      JSON.stringify({ name: "panel" }),
+    ]);
   });
 });
 
