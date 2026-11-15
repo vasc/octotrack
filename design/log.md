@@ -54,13 +54,12 @@ further down, each marked _Replaced_ there.
   Reordering, I'm at and Record answers act at once.
 - **One control height** (`--control-height`) for every desktop control, a few inline icons, and no ellipsis on a
   button that asks first.
-- **A theme chooses every colour.** Eight themes, each with its own ground, accent, attention and statuses, mixed from
-  seeds in `scripts/themes.ts` and checked for contrast. Attention moved off amber in Paper to a fuchsia that neither
-  `--warn`'s yellow nor `--bad`'s red can be mistaken for, which settles the old question of whether amber was right.
-- **What agents propose wears the theme's own colour.** Info is the accent, attention is blue only in a blue theme, each
-  hued theme's dark ground is a deep shade of its hue, dark tints are mixed from a neutral grey so they keep their hue,
-  and the phone fills the page you are on with the accent. Before, every theme showed a blue proposal edge and, on a
-  phone in dark, looked like every other.
+- **A theme chooses every colour, each picked by hand.** The generated themes were dropped. Paper became monochrome,
+  its accent the ink, after the developer said its blue pill belonged in 2008. Six themes are editor palettes people
+  already love (Solarized, Gruvbox, Catppuccin, Rosé Pine, Nord, Everforest), with High contrast. Each value was chosen
+  looking at the dashboard; contrast tests are the floor. What agents propose wears the accent; attention is blue only
+  in a blue theme.
+- **The phone fills the page you are on with the accent,** as a wide screen does.
 - **A phone's bar names no page, and a tap in Safari reaches its menu item.** The tab says where you are; the bar is one
   row of what waits beside a plus and the theme; the tab bar sits on the browser's own bar. Menus close on focus moving
   out or a tap elsewhere, not on a blur to nowhere, which is what Safari does under every tap.

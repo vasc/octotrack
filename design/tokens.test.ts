@@ -129,21 +129,6 @@ describe("contrast", () => {
     }
   });
 
-  test("in dark, a hued theme's ground is its own colour, not a black every theme shares", () => {
-    const chroma = (hex: string) => {
-      const values = [1, 3, 5].map((start) => Number.parseInt(hex.slice(start, start + 2), 16));
-      return Math.max(...values) - Math.min(...values);
-    };
-    const greys = themes
-      .filter((palette) => palette !== "paper" && palette !== "contrast")
-      .flatMap((palette) =>
-        ["--bg", "--surface", "--surface-2"]
-          .map((token) => ({ palette, token, hex: hexOf(token, "dark", palette) }))
-          .filter(({ hex }) => chroma(hex) < 22),
-      );
-    expect(greys).toEqual([]);
-  });
-
   test("a tint keeps its colour's hue instead of turning into another on a hued ground", () => {
     const apart = (a: number, b: number) => Math.min(Math.abs(a - b), 360 - Math.abs(a - b));
     const drifted = themes.flatMap((palette) =>

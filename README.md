@@ -392,8 +392,8 @@ Lift.
 Everything an agent does shows up without a reload, and nothing that arrives moves the item you are on. While the
 connection is lost, a quiet line says "Not live: reconnecting". Every choice waits five seconds with Undo, answers, Mark
 all seen, drift answers and notes included; reordering, I'm at and Record answers act at once. I'm at opens the tasks
-for one of your places. Appearance, beside the keys, picks one of eight themes (Paper, Slate, Sand, Forest, Ocean, Plum,
-Rose, High contrast), each in light and dark, and the mode: as the system, light or dark. Each device keeps its own.
+for one of your places. Appearance, beside the keys, picks one of eight themes (Paper, Solarized, Gruvbox,
+Catppuccin, Rosé Pine, Nord, Everforest, High contrast), each in light and dark, and the mode: as the system, light or dark. Each device keeps its own.
 
 Keys: `j` `k` items, `J` `K` lines, `1`-`9` the focused item's numbered choices, `w` answer in your own words, `l`
 later, `u` undo, `o` or `Enter` open its line, `t` tell its owner, `Alt` with the arrows to move it, `g p` I'm at, `g u`

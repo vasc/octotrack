@@ -11,27 +11,22 @@ specimen shows both.
 
 ### Themes
 
-There are eight themes, each in light and dark: Paper (the tokens below), Slate, Sand, Forest, Ocean, Plum, Rose and High
-contrast. A theme chooses every colour: `[data-palette="…"]` in `tokens.css` redefines the ground, its lines, the ink, the
-accent, attention and the statuses. What a colour means never changes with the theme, only its hue: attention is still
-the one colour for what needs you, good is still a green and bad a red, each tuned to sit in that theme, and no two
-themes share an accent or an attention colour. The accent is the theme's own colour, and what agents propose (info)
-wears it too, so the cards that wait for your yes are the theme's colour and not a blue every theme shares. Attention
-is a second hue that stands apart from the accent, from bad's red and from good's green, and it is blue only in a
-theme whose own colour is blue. Paper's accent is a blue and its attention a fuchsia; Slate is indigo with teal, Sand
-terracotta with plum, Forest moss with magenta, Ocean sea blue with violet, Plum violet with teal, Rose raspberry with
-teal, and High contrast pure blue with purple in light, cyan with yellow in dark. Where attention is teal, good is an
-olive green so the two never read alike. In dark, each theme's ground is a deep shade of its own hue (Slate blue-grey,
-Sand brown, Forest green, Ocean navy, Plum aubergine, Rose wine), so a theme still shows at night; only Paper's is a
-neutral black, and High contrast's a pure one.
+There are eight themes, each in light and dark. Paper (the tokens below) is our own quiet neutral, monochrome: its
+accent is the ink itself, so the page you are on is a near-black pill and only what needs you has a colour. Six are
+well-loved editor palettes, kept close to how their authors drew them: Solarized (blue, magenta for what needs you),
+Gruvbox (its faded blue on cream and charcoal, purple), Catppuccin (Latte and Mocha, mauve, peach), Rosé Pine (Dawn
+and the main palette, pine, iris), Nord (snow storm and polar night, frost, aurora purple) and Everforest (parchment
+and green-grey, its green, purple). High contrast is for sun or low vision.
 
-The colours are not picked by hand one by one. `scripts/themes.ts` holds each theme's seeds (its ground, ink, accent,
-attention, good, bad and warn, in each mode), mixes the lines, the quieter inks, the tints and the edges from them, moves
-every colour that is read as text toward the ink until it reaches its contrast on every ground and tint it sits on,
-and writes the result into `tokens.css`. To change a theme, change its seeds and run `bun scripts/themes.ts`; to add
-one, add its seeds there and an entry in `packages/web/src/lib/appearance.ts`. `bun test design` checks every pairing
-in every theme and both modes, that each theme defines every colour, that the themes stay distinct, that info is the
-accent, that no theme but a blue one has a blue highlight, and that every hued theme's dark ground carries its hue.
+A theme chooses every colour, and every one is picked by hand, looking at the dashboard in that theme: the ground and
+its lines, the inks, the accent and its tint, attention and its tint and edge, the statuses and theirs, and info, which
+is the accent, so what agents propose wears the theme's own colour. Nothing is mixed or generated. Each palette's own
+named shades come first; a colour is darkened by hand only where it has to read as text on a light ground. What a
+colour means never changes with the theme: attention is the one colour for what needs you, good is a green and bad a
+red. `bun test design` checks every pairing in every theme and both modes, that each theme defines every colour, that
+no two themes share an accent or attention, that info is the accent, that a tint keeps its colour's hue, and that a
+highlight is blue only in a theme whose own colour is blue. Passing those is the floor; a change to a theme is looked
+at on the dashboard, light and dark, desktop and phone, before it ships.
 
 A palette set on any element applies inside it, which is how the Appearance menu previews each theme: a swatch shows
 the theme's ground with its accent and attention side by side. The developer picks a theme and a mode in that menu;

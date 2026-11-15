@@ -2691,13 +2691,13 @@ describe("appearance", () => {
     navigate("/");
     const view = renderApp(<App />);
     fireEvent.click(await view.findByRole("button", { name: "Appearance: Paper, as the system" }));
-    fireEvent.click(view.getByRole("menuitemradio", { name: "Forest" }));
-    fireEvent.click(view.getByRole("button", { name: "Appearance: Forest, as the system" }));
+    fireEvent.click(view.getByRole("menuitemradio", { name: "Nord" }));
+    fireEvent.click(view.getByRole("button", { name: "Appearance: Nord, as the system" }));
     fireEvent.click(view.getByRole("menuitemradio", { name: "Dark" }));
-    await waitFor(() => expect(document.documentElement.getAttribute("data-palette")).toBe("forest"));
+    await waitFor(() => expect(document.documentElement.getAttribute("data-palette")).toBe("nord"));
     expect(document.documentElement.getAttribute("data-mode")).toBe("dark");
     expect(JSON.parse(localStorage.getItem("octotrack.appearance") ?? "null")).toEqual({
-      palette: "forest",
+      palette: "nord",
       mode: "dark",
     });
     localStorage.removeItem("octotrack.appearance");

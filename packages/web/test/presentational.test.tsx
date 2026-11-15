@@ -2963,37 +2963,37 @@ describe("AppearanceMenu", () => {
     const onMode = mock((_mode: string) => {});
     const view = render(
       <AppearanceMenu
-        appearance={{ palette: "sand", mode: "system" }}
+        appearance={{ palette: "gruvbox", mode: "system" }}
         onPalette={onPalette}
         onMode={onMode}
       />,
     );
-    fireEvent.click(view.getByRole("button", { name: "Appearance: Sand, as the system" }));
+    fireEvent.click(view.getByRole("button", { name: "Appearance: Gruvbox, as the system" }));
     const menu = within(view.getByRole("menu", { name: "Appearance" }));
     expect(menu.getAllByRole("menuitemradio").map((item) => item.textContent)).toEqual([
       "Paper",
-      "Slate",
-      "Sand",
-      "Forest",
-      "Ocean",
-      "Plum",
-      "Rose",
+      "Solarized",
+      "Gruvbox",
+      "Catppuccin",
+      "Rosé Pine",
+      "Nord",
+      "Everforest",
       "High contrast",
       "As the system",
       "Light",
       "Dark",
     ]);
-    expect(menu.getByRole("menuitemradio", { name: "Sand" }).getAttribute("aria-checked")).toBe("true");
+    expect(menu.getByRole("menuitemradio", { name: "Gruvbox" }).getAttribute("aria-checked")).toBe("true");
     expect(menu.getByRole("menuitemradio", { name: "As the system" }).getAttribute("aria-checked")).toBe(
       "true",
     );
     // Each theme previews itself: its swatch carries the palette.
     expect(
-      menu.getByRole("menuitemradio", { name: "Ocean" }).querySelector("[data-palette='ocean']"),
+      menu.getByRole("menuitemradio", { name: "Nord" }).querySelector("[data-palette='nord']"),
     ).not.toBeNull();
-    fireEvent.click(menu.getByRole("menuitemradio", { name: "Ocean" }));
-    expect(onPalette).toHaveBeenCalledWith("ocean");
-    fireEvent.click(view.getByRole("button", { name: "Appearance: Sand, as the system" }));
+    fireEvent.click(menu.getByRole("menuitemradio", { name: "Nord" }));
+    expect(onPalette).toHaveBeenCalledWith("nord");
+    fireEvent.click(view.getByRole("button", { name: "Appearance: Gruvbox, as the system" }));
     fireEvent.click(
       within(view.getByRole("menu", { name: "Appearance" })).getByRole("menuitemradio", { name: "Dark" }),
     );
@@ -3011,12 +3011,12 @@ describe("AppearanceMenu", () => {
     );
     fireEvent.click(view.getByRole("button", { name: "Appearance: Paper, as the system" }));
     const menu = within(view.getByRole("menu", { name: "Appearance" }));
-    const forest = menu.getByRole("menuitemradio", { name: "Forest" });
+    const forest = menu.getByRole("menuitemradio", { name: "Everforest" });
     // Safari: the item that had focus loses it, and nothing receives it, before the tap's click arrives.
     fireEvent.pointerDown(forest);
     fireEvent.blur(menu.getByRole("menuitemradio", { name: "Paper" }), { relatedTarget: null });
     fireEvent.click(forest);
-    expect(onPalette).toHaveBeenCalledWith("forest");
+    expect(onPalette).toHaveBeenCalledWith("everforest");
   });
 
   test("a tap outside the menu, or focus moving out of it, closes it", () => {

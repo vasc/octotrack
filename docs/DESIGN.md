@@ -400,7 +400,8 @@ Decisions made from that:
   "the point is to change the gods damn amber, a theme chooses all colors". _Decided:_ a theme chooses every colour:
   the ground, lines, ink, an accent for what the developer acts on (the primary button, the page they are on, focus,
   links), attention and the four statuses. Meaning is kept by family, not by one fixed hue: attention is still the one
-  colour for what needs you in its theme, good still a green, bad still a red. The colours come from seeds in
+  colour for what needs you in its theme, good still a green, bad still a red. (Superseded below: the generated
+  colours were replaced by hand-picked ones.) The colours came from seeds in
   `scripts/themes.ts`, which mixes the rest and moves every text colour until it reads, so a theme cannot be made
   unreadable by hand; the ground is set on `:root` so it covers the whole page. The themes are Paper (the boards' own), Slate,
   Sand, Forest, Ocean, Plum, Rose and High contrast; the mode is as the system, light or dark. They are picked in an
@@ -411,7 +412,8 @@ Decisions made from that:
   Then the developer asked "Why do all themes have a blue highlight" and said "Themes don't change anything on mobile".
   Proposals were edged and tinted in an info colour seeded blue, teal or violet in every theme, attention was blue in
   Sand and Plum, every dark ground was a near-black with a trace of hue, and the phone marked the page you are on with
-  coloured text only, so on a phone at night every theme looked the same. _Decided:_ info is the accent, so what waits
+  coloured text only, so on a phone at night every theme looked the same. _Decided_ (the themes themselves superseded
+  below): info is the accent, so what waits
   for your yes is drawn in the theme's own colour; attention is blue only in a theme whose own colour is blue (Sand's is
   plum, Plum's teal), and where attention is teal, good is an olive green so the two never read alike; each hued
   theme's dark ground is a deep shade of its hue (Forest green, Ocean navy, Plum aubergine), with only Paper a neutral
@@ -429,6 +431,16 @@ Decisions made from that:
   of what waits beside a plus for New line and the theme; the tab bar drops its fixed band of padding for the home
   indicator's own inset; and the page's bottom padding is the tab bar's height, not twice it. Checked in Safari in the
   iOS Simulator, not only in a narrowed desktop browser.
+
+  The developer then said "All these themes are hideous any way", "Delete that stupid generator", "It's not the code of
+  the generator that's a problem it's the generations", "Pick all variations by hand", "You can't desing without
+  seeing, desing is not a math test", and of Paper's filled blue pill, "This blue belong and 2008". _Decided:_ the
+  generator is gone and every colour of every theme is picked by hand, looking at the dashboard in light and dark,
+  desktop and phone; contrast tests are a floor, not the design. Paper is monochrome, its accent the ink, so only what
+  needs you has a colour. The other colour themes are editor palettes people already love, kept close to their
+  authors' shades: Solarized, Gruvbox (its faded blue as accent, since its orange read as the red of urgent),
+  Catppuccin, Rosé Pine, Nord and Everforest (its green as accent, so it does not read as one more cream-and-blue);
+  High contrast stays. A device that kept a theme that no longer exists gets Paper in the mode it kept.
 
   The fix still did not reach the developer's phone: Safari keeps an open tab's code, so a deploy never reached the page
   they had open, and they kept tapping the old broken menu. _Decided:_ an open tab loads a new build by itself when it

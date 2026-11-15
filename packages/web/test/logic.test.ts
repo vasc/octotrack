@@ -421,21 +421,24 @@ describe("appearance", () => {
   test("eight themes, Paper first", () => {
     expect(PALETTES.map((palette) => palette.id)).toEqual([
       "paper",
-      "slate",
-      "sand",
-      "forest",
-      "ocean",
-      "plum",
-      "rose",
+      "solarized",
+      "gruvbox",
+      "catppuccin",
+      "rosepine",
+      "nord",
+      "everforest",
       "contrast",
     ]);
   });
 
   test("reads what was stored, and falls back to Paper following the system for anything else", () => {
-    expect(readAppearance('{"palette":"ocean","mode":"dark"}')).toEqual({ palette: "ocean", mode: "dark" });
+    expect(readAppearance('{"palette":"nord","mode":"dark"}')).toEqual({ palette: "nord", mode: "dark" });
+    // A theme that no longer exists, kept by a device from before, is Paper in the mode it kept.
+    expect(readAppearance('{"palette":"forest","mode":"dark"}')).toEqual({ palette: "paper", mode: "dark" });
     expect(readAppearance(null)).toEqual(DEFAULT_APPEARANCE);
     expect(readAppearance("not json")).toEqual(DEFAULT_APPEARANCE);
-    expect(readAppearance('{"palette":"neon","mode":"dark"}')).toEqual(DEFAULT_APPEARANCE);
+    expect(readAppearance('{"palette":"neon","mode":"dark"}')).toEqual({ palette: "paper", mode: "dark" });
+    expect(readAppearance('{"palette":"nord","mode":"dim"}')).toEqual({ palette: "nord", mode: "system" });
     expect(DEFAULT_APPEARANCE).toEqual({ palette: "paper", mode: "system" });
   });
 });

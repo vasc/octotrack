@@ -1,14 +1,17 @@
 import { z } from "zod";
 
-/** The eight themes, Paper first: each a palette in light and dark, defined in design/tokens.css. */
+/**
+ * The eight themes, Paper first: each a palette in light and dark, defined in design/tokens.css. Paper is our own
+ * neutral; six are well-loved editor palettes; High contrast is for sun or low vision.
+ */
 export const PALETTES = [
   { id: "paper", name: "Paper" },
-  { id: "slate", name: "Slate" },
-  { id: "sand", name: "Sand" },
-  { id: "forest", name: "Forest" },
-  { id: "ocean", name: "Ocean" },
-  { id: "plum", name: "Plum" },
-  { id: "rose", name: "Rose" },
+  { id: "solarized", name: "Solarized" },
+  { id: "gruvbox", name: "Gruvbox" },
+  { id: "catppuccin", name: "Catppuccin" },
+  { id: "rosepine", name: "Rosé Pine" },
+  { id: "nord", name: "Nord" },
+  { id: "everforest", name: "Everforest" },
   { id: "contrast", name: "High contrast" },
 ] as const;
 
@@ -18,9 +21,12 @@ export const MODES = [
   { id: "dark", name: "Dark" },
 ] as const;
 
+// Each part falls back on its own, so a theme that no longer exists still keeps the mode the device chose.
 const Appearance = z.object({
-  palette: z.enum(["paper", "slate", "sand", "forest", "ocean", "plum", "rose", "contrast"]),
-  mode: z.enum(["system", "light", "dark"]),
+  palette: z
+    .enum(["paper", "solarized", "gruvbox", "catppuccin", "rosepine", "nord", "everforest", "contrast"])
+    .catch("paper"),
+  mode: z.enum(["system", "light", "dark"]).catch("system"),
 });
 export type Appearance = z.infer<typeof Appearance>;
 export type Palette = Appearance["palette"];
@@ -31,7 +37,7 @@ export const DEFAULT_APPEARANCE: Appearance = { palette: "paper", mode: "system"
 /** Where this device keeps the developer's choice; index.html reads it too, so the first paint is already themed. */
 export const APPEARANCE_KEY = "octotrack.appearance";
 
-/** What was stored, or Paper following the system for anything missing or unreadable. */
+/** What was stored; Paper, or the system's mode, for any part missing or unreadable. */
 export function readAppearance(stored: string | null): Appearance {
   if (stored === null) return DEFAULT_APPEARANCE;
   try {

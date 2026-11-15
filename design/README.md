@@ -52,8 +52,8 @@ These are one-line edits in `tokens.css` that change the whole product:
 - **Density:** `--space-unit: 2px`. Try `2.5px` for roomier, or `1.75px` for tighter.
 - **Reading size:** `--text-md: 13px`, the size of nearly everything. Change the rest of the scale with it.
 - **Corners:** the three `--radius-*` values.
-- **A theme's colours:** its seeds in `scripts/themes.ts`, then `bun scripts/themes.ts`. Every colour of every theme
-  is mixed from those and checked for contrast; Foundations, under Themes, says how.
+- **A theme's colours:** its `[data-palette]` block in `tokens.css`, every value picked by hand. Look at the change
+  on the dashboard in light and dark before keeping it; `bun test design` checks contrast. Foundations, under Themes.
 - **One control height:** `--control-height`, which every button, field and pill on a desktop shares.
 
 [log.md](log.md) lists the bigger open questions.
