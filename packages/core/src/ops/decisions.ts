@@ -452,6 +452,8 @@ export function withdrawQuestion(ctx: Ctx, ref: string, note: string | undefined
       "Only the developer, the agent that asked, or an agent on that line can withdraw it.",
     );
   }
+  // Withdrawing is scoping the line, which its state allows or refuses: a tabled, done or dropped line takes nothing.
+  if (ctx.said === null) guardLineWrite(ctx, current.line, "scope");
   return transition(
     ctx,
     ref,

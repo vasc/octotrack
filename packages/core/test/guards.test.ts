@@ -853,4 +853,20 @@ describe("agents write only to the line they are on, the rest of it (fourth audi
     expect(w.refused(() => w.as(w.owner, c.heldWithdraw, { refs: [asked] })).code).toBe("forbidden");
     expect(w.as(w.outsider, c.heldWithdraw, { refs: [asked], why: "Decided" }).withdrawn).toEqual([asked]);
   });
+
+  test("question withdraw: its asker cannot withdraw it once its line is tabled, unless the developer said so", () => {
+    const w = world();
+    const asked = w.ask();
+    const kept = w.ask();
+    w.as(w.dev, c.lineTable, { ref: w.line, reason: "Later" });
+    w.later(20);
+    const refusal = w.refused(() => w.as(w.owner, c.decisionWithdraw, { ref: asked }));
+    expect([refusal.code, refusal.message]).toEqual([
+      "forbidden",
+      `${w.line} is tabled: nothing is written to it`,
+    ]);
+    expect(
+      w.as(w.agent("panel", { said: "drop that question" }), c.decisionWithdraw, { ref: kept }).status,
+    ).toBe("withdrawn");
+  });
 });
