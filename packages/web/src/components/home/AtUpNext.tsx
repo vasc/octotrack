@@ -1,3 +1,4 @@
+import { focusLabel } from "../../lib/focus.ts";
 import type { Issue, Line } from "@octotrack/core/schemas";
 import type { ReactNode } from "react";
 import { askedText } from "../../lib/tasks.ts";
@@ -32,7 +33,12 @@ export function AtUpNext({
           const at = lines.findIndex((line) => line.ref === task.line);
           const line = lines[at];
           return (
-            <FocusTarget key={task.ref} focusRef={task.ref} focused={task.ref === focus}>
+            <FocusTarget
+              key={task.ref}
+              focusRef={task.ref}
+              label={focusLabel({ kind: "task", task })}
+              focused={task.ref === focus}
+            >
               <p className="muted">
                 {line === undefined ? "" : `${firstNumber + at} ${line.title}, up next · `}
                 {task.ref} · {askedText(task)}

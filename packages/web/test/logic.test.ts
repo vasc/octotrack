@@ -11,10 +11,10 @@ import {
   timeLabel,
   toneOf,
 } from "../src/lib/format.ts";
-import { nextFocus } from "../src/lib/focus.ts";
+import { focusLabel, nextFocus } from "../src/lib/focus.ts";
 import { heldOnTabled, lineFacts, undoLines } from "../src/lib/lines.ts";
 import { askedText, cantSummary, doneSummary, taskOutcome } from "../src/lib/tasks.ts";
-import { issue } from "../src/design/fixtures.ts";
+import { decision, decisionCard, issue } from "../src/design/fixtures.ts";
 import { closeEntity, navigate, openEntity, setParams } from "../src/lib/router.ts";
 
 describe("suggest", () => {
@@ -261,5 +261,27 @@ describe("how a task's choices read in the Undo bar", () => {
 
   test("Can't do it says it closes the task as not done, and why", () => {
     expect(cantSummary(task, "No calipers")).toBe("Closing OCT-1 as not done: No calipers");
+  });
+});
+
+describe("focusLabel", () => {
+  test("names each kind of item that focus can move to", () => {
+    const card = decisionCard({ decision: decision({ ref: "D-7", title: "Which board?" }) });
+    expect(focusLabel({ kind: "question", card })).toBe("Question D-7, Which board?");
+    expect(focusLabel({ kind: "task", task: issue({ ref: "OCT-7", title: "Measure the grip" }) })).toBe(
+      "Task OCT-7, Measure the grip",
+    );
+    expect(
+      focusLabel(
+        { kind: "done", line: "L-1", text: "It fits", by: "panel", doneWhen: "It holds" },
+        "Enclosure",
+      ),
+    ).toBe("Proposed as done: Enclosure");
+    expect(
+      focusLabel(
+        { kind: "done_when", line: "L-1", text: "New", by: "panel", was: "Old", why: null },
+        "Enclosure",
+      ),
+    ).toBe("A new done when proposed: Enclosure");
   });
 });

@@ -1,6 +1,6 @@
 import type { ForYou, Issue } from "@octotrack/core/schemas";
 import type { ReactNode } from "react";
-import { refOf } from "../../lib/focus.ts";
+import { focusLabel, refOf } from "../../lib/focus.ts";
 import { FocusTarget } from "./FocusTarget.tsx";
 import { FoldedItems } from "./FoldedItems.tsx";
 
@@ -32,7 +32,12 @@ export function AtPlaceItems({
       {forYou.map((other) => {
         if (other.kind === "task" && other.task.place === at)
           return (
-            <FocusTarget key={refOf(other)} focusRef={refOf(other)} focused={refOf(other) === focus}>
+            <FocusTarget
+              key={refOf(other)}
+              focusRef={refOf(other)}
+              label={focusLabel(other)}
+              focused={refOf(other) === focus}
+            >
               {task(other.task)}
             </FocusTarget>
           );
