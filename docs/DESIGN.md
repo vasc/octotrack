@@ -513,6 +513,26 @@ Decisions made from that:
   - _The developer's own operations, relayed with `--said`, take effect on their own lines._ `task add` and `note add`
     were refused there, as writes to a line no agent may touch, though D14 says every developer operation accepts the
     developer's words.
+- **What the fourth audit changed in core and the CLI.**
+  - _A line the developer owns holds its agents' questions and tasks for an agent,_ as it holds their issues and pull
+    requests. I'll own it winds the agents down and holds every open question and every task an agent filed, and one
+    asked or filed during the wind-down is held too; none of them is in the developer's queue, in to do, or counted as
+    re-confirming, and home counts them as the line's held work (`held`, every one, current or not). The developer's own
+    tasks, with no outcome to send anyone, are never held, on any line. Handing the line back runs what any start does:
+    current ones reach the developer again, and older ones go to the next agent to re-confirm or withdraw. _Why:_ the
+    developer said they will do the line themselves; an answer or a Done there would wait in an inbox no agent reads
+    until it is handed back, and asking the developer to answer an agent that is no longer there is the waste D14 exists
+    to remove. Showing them was the other choice, as D14's "its tasks counted in to do" could be read; that sentence is
+    about the developer's own tasks, which do count. Not counting them as re-confirming follows from no agent being
+    allowed to write to the line. _Trade-off:_ an agent's task the developer would still have done while owning the
+    line waits until it is handed back, or until they open it by its ref.
+  - _A line waits on the developer only for what reaches them._ A held question or task waits on an agent to
+    re-confirm it, so it no longer makes a line "waiting on you"; before, a line restarted with only stale held work
+    and nothing else open waited for an answer the developer was never shown, and no session started to re-confirm it.
+    Taking a line names only held work that waits to be re-confirmed, not an old question that already reaches the
+    developer.
+  - _Folded questions and tasks take the held state of the line they land on:_ held when no agent works on it, else
+    released when current and left to re-confirm when not.
 - **Departures, each for a reason.**
   - _The pages from before lines are gone:_ Decisions, Pull requests, Drift, Issues and Repos. Nothing linked to them
     any more, and the issues page changed status through a select with no Undo. Questions are answered on home, a

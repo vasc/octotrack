@@ -31,7 +31,7 @@ import { loadGraph } from "../store/graph.ts";
 import { DecisionRow, IssueRow, WatchRow } from "../store/rows.ts";
 import { toWatch } from "../watch/engine.ts";
 import { z } from "zod";
-import { guardLineWrite, guardOnLine, requireOnLineOf } from "../agents/claims.ts";
+import { guardLineWrite, guardOnLine, holdsWork, requireOnLineOf } from "../agents/claims.ts";
 import { DEVELOPER } from "../agents/state.ts";
 import { addNotice, claimOf } from "../store/agents.ts";
 import { addToInbox } from "../store/inbox.ts";
@@ -477,8 +477,8 @@ export const decisionOps = [
       project: input.project ?? placed.line?.repos[0],
       line: placed.line?.ref ?? null,
       issue: placed.issue,
-      // Asked on a line nobody works on: held until it starts.
-      held: placed.line !== null && placed.line.state !== "working",
+      // Asked on a line no agent works on (in a wind-down): held until one does.
+      held: placed.line !== null && holdsWork(placed.line),
     });
 
     if (input.waitsFor !== undefined) {

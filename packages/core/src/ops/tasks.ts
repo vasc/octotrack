@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { guardLineWrite, guardOnLine } from "../agents/claims.ts";
+import { guardLineWrite, guardOnLine, holdsWork } from "../agents/claims.ts";
 import { HELD_CURRENT_MS } from "../agents/held.ts";
 import { DEVELOPER } from "../agents/state.ts";
 import { contracts } from "../contracts.ts";
@@ -238,26 +238,49 @@ export function heldOn(ctx: Ctx, line: string): HeldItem[] {
   return [...questions, ...tasks];
 }
 
-/**
- * How many questions and tasks on a line wait to be re-confirmed: held, and not asked or re-confirmed in the last 7
- * days. A line being worked on keeps such work held until an agent re-confirms it; one up next holds all its work.
- */
-export function reconfirmingOn(ctx: Ctx, line: string): number {
-  const since = new Date(Date.parse(ctx.now) - HELD_CURRENT_MS).toISOString();
+/** How many of a line's questions and tasks are held for an agent now, current or not. */
+export function heldCount(ctx: Ctx, line: string): { questions: number; tasks: number } {
   const count = (sql: string, params: readonly string[]) =>
     one(ctx, z.object({ n: z.number() }), sql, params)?.n ?? 0;
-  return (
-    count(
-      `SELECT COUNT(*) AS n FROM decisions WHERE line = ? AND status = 'open' AND heldAt IS NOT NULL
-         AND COALESCE(confirmedAt, createdAt) < ?`,
-      [line, since],
-    ) +
-    count(
+  return {
+    questions: count(
+      "SELECT COUNT(*) AS n FROM decisions WHERE line = ? AND status = 'open' AND heldAt IS NOT NULL",
+      [line],
+    ),
+    tasks: count(
       `SELECT COUNT(*) AS n FROM issues WHERE line = ? AND assignee = ? AND outcome IS NOT NULL
-         AND status NOT IN ('done', 'cancelled') AND heldAt IS NOT NULL AND COALESCE(confirmedAt, createdAt) < ?`,
+         AND status NOT IN ('done', 'cancelled') AND heldAt IS NOT NULL`,
+      [line, DEVELOPER],
+    ),
+  };
+}
+
+/**
+ * The questions and tasks on a line that wait to be re-confirmed: held, and not asked or re-confirmed in the last 7
+ * days. A line being worked on keeps such work held until an agent re-confirms it; one up next holds all its work.
+ */
+export function staleHeldOn(ctx: Ctx, line: string): string[] {
+  const since = new Date(Date.parse(ctx.now) - HELD_CURRENT_MS).toISOString();
+  const refs = (sql: string, params: readonly string[]) =>
+    rows(ctx, z.object({ ref: z.string() }), sql, params).map((row) => row.ref);
+  return [
+    ...refs(
+      `SELECT ref FROM decisions WHERE line = ? AND status = 'open' AND heldAt IS NOT NULL
+         AND COALESCE(confirmedAt, createdAt) < ? ORDER BY createdAt`,
+      [line, since],
+    ),
+    ...refs(
+      `SELECT ref FROM issues WHERE line = ? AND assignee = ? AND outcome IS NOT NULL
+         AND status NOT IN ('done', 'cancelled') AND heldAt IS NOT NULL AND COALESCE(confirmedAt, createdAt) < ?
+       ORDER BY createdAt`,
       [line, DEVELOPER, since],
-    )
-  );
+    ),
+  ];
+}
+
+/** How many questions and tasks on a line wait to be re-confirmed. */
+export function reconfirmingOn(ctx: Ctx, line: string): number {
+  return staleHeldOn(ctx, line).length;
 }
 
 export const taskOps = [
@@ -296,12 +319,12 @@ export const taskOps = [
       assignee: DEVELOPER,
       line: line.ref,
     });
-    // Filed on a line nobody works on, it is held until the line starts.
+    // Filed on a line no agent works on (in a wind-down), it is held until one does.
     ctx.sql.run("UPDATE issues SET place = ?, outcome = ?, fields = ?, heldAt = ? WHERE ref = ?", [
       place,
       input.outcome,
       JSON.stringify(fields),
-      line.state === "working" ? null : ctx.now,
+      holdsWork(line) ? ctx.now : null,
       task.ref,
     ]);
     if (frees !== null) addLink(ctx, task.ref, "blocks", frees.ref);
@@ -356,8 +379,8 @@ export const taskOps = [
         throw new OctoError("invalid_input", `${ref} is not a question or task on a line`);
       }
       guardOnLine(ctx, entity.value.line, "scope", entity.value.ref);
-      // Re-confirmed, it is current again; on a line being worked on it reaches the developer from now.
-      const working = requireLine(ctx, entity.value.line).state === "working";
+      // Re-confirmed, it is current again; on a line agents work on it reaches the developer from now.
+      const working = !holdsWork(requireLine(ctx, entity.value.line));
       ctx.sql.run(
         `UPDATE ${entity.kind === "decision" ? "decisions" : "issues"} SET confirmedAt = ?, heldAt = ${working ? "NULL" : "heldAt"} WHERE ref = ?`,
         [ctx.now, entity.value.ref],
