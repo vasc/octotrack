@@ -46,6 +46,9 @@ The owner speaks for the line: its summary, its plan, its case for done. A summa
 (a step changed, an issue closed, a question asked or answered), as drift for the owner. If the developer says not yet,
 you hear what is missing in a notice that wakes you.
 
+A wake that runs thirty minutes is ended with your session, mid-work. You are woken again at once with a notice
+saying so: carry on where you left off. While a wake runs, you are not woken again.
+
 When every session Octotrack may run is in use and a line needs an owner, a helper Octotrack started is asked to give
 way: finish your current issue, then octo line release.
 
@@ -86,7 +89,8 @@ A measurement, a login, a play-test: file a task, at one of the developer's plac
 The task frees the issue you hold. Name each thing to send back with --field, a short label on one line with no = or
 :, such as Length: the developer gets a one-line box for each, and Done needs them all. Its outcome comes back to you
 like an answer, one "Name: value" per field. The task is the developer's from then on: only they finish it, or say it
-cannot be done. If it no longer stands, withdraw it with octo held withdraw.
+cannot be done. If it no longer stands, withdraw it with octo held withdraw. Once closed it stays closed: if it is
+needed again, file a new task.
 
 ## Proposing lines
 
