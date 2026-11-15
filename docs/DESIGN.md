@@ -514,6 +514,22 @@ Decisions made from that:
     were refused there, as writes to a line no agent may touch, though D14 says every developer operation accepts the
     developer's words.
 - **What the fourth audit changed in core and the CLI.**
+  - _Agents write only to the line they are on, the rest of it._ A pull request report (`pr upsert`) is refused unless
+    every issue it implements (named, linked already, or named by its branch or a closing keyword) is on the
+    reporting agent's line, so it can neither link nor rewrite another line's pull request. A decision recorded on no
+    line guards both ends of the `blocks` and `affects` links it adds, as asking does. A watch is checked, as it is
+    cancelled, only by its own agent, the developer or the server, since a check moves its cursor. A proposer writes
+    its proposal's done when only while it is a proposal. Releasing an issue that is not one's own claim is work on its
+    line. A question's asker withdraws it only while its line's state allows scoping, unless it relays the developer's
+    words. `held confirm` and `held withdraw` take only an open question or an open task, from the line or, on a
+    proposal, by its proposer. Drift and notes about a pull request belong to the line of the first issue it
+    implements that is on one, and its drift falls to that line's owner when nobody holds the issue. Turning
+    notifications off is the developer's in person, as turning them on is. _Why:_ each let an agent change another
+    line's work, or the developer's, from outside it.
+  - _An open task is the developer's._ An agent may not change an open task's status or assignee through `issue
+    update` or take it with `issue claim`, `--force` included; it withdraws one that no longer stands
+    (`held withdraw`), and relays the developer's Done with `task done --said`. _Why:_ closing it that way skipped the
+    outcome, the report to whoever holds what it frees, and the task's own event, and took it out of to do.
   - _A line the developer owns holds its agents' questions and tasks for an agent,_ as it holds their issues and pull
     requests. I'll own it winds the agents down and holds every open question and every task an agent filed, and one
     asked or filed during the wind-down is held too; none of them is in the developer's queue, in to do, or counted as

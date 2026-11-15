@@ -105,8 +105,9 @@ stands first for the developer, with Start first:
 
 ## Held work
 
-Questions and tasks on lines nobody is working on are held, and only current for 7 days after they were asked or
-re-confirmed. When you take such a line you are told which are stale:
+Questions and tasks on lines no agent works on (not being worked on, or the developer's own) are held, and only
+current for 7 days after they were asked or re-confirmed. When you take such a line you are told which are stale.
+Confirm or withdraw only open questions and tasks, on your line or on a proposal you made:
 
   octo held list L-7
   octo held confirm D-12 PANEL-9                still stands: current for another 7 days
