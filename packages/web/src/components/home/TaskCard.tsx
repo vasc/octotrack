@@ -22,6 +22,8 @@ export interface TaskCardProps {
   sending?: boolean;
   /** The plan step it holds up, by title, where that is known. */
   holdsUp?: string;
+  /** The issue its outcome frees, by ref and title, where that is known. */
+  frees?: { ref: string; title: string } | null;
 }
 
 /**
@@ -41,6 +43,7 @@ export function TaskCard({
   onCant,
   sending = false,
   holdsUp,
+  frees = null,
 }: TaskCardProps) {
   const [cant, setCant] = useState(false);
   const own = task.outcome === "";
@@ -56,6 +59,11 @@ export function TaskCard({
         {task.createdBy === "dev" ? "" : ` · filed by ${task.createdBy}`}
       </p>
       <h3 className="question-title">{task.title}</h3>
+      {frees === null ? null : (
+        <p className="item-note">
+          Frees {frees.ref}: {frees.title}.
+        </p>
+      )}
       {task.body === "" ? null : <Markdown text={task.body} />}
       <form
         className="task-form"

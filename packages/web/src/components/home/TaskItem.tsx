@@ -2,6 +2,7 @@ import type { Issue } from "@octotrack/core/schemas";
 import { useChoices } from "../../hooks/useChoices.ts";
 import { useDraft } from "../../hooks/useDraft.ts";
 import { useOutcomeDraft } from "../../hooks/useOutcomeDraft.ts";
+import { useStepTitle } from "../../hooks/useStepTitle.ts";
 import type { TaskOutcome } from "../../lib/tasks.ts";
 import { NotKept } from "../ui/NotKept.tsx";
 import { TaskCard } from "./TaskCard.tsx";
@@ -9,24 +10,26 @@ import { TaskCard } from "./TaskCard.tsx";
 /** A task opened, with what is typed kept as a draft. */
 export function TaskItem({
   task,
-  holdsUp,
+  frees = null,
   onDone,
   onCant,
 }: {
   task: Issue;
-  /** The plan step it holds up, by title, where that is known. */
-  holdsUp?: string;
+  /** The issue its outcome frees, by ref and title, where home knows it. */
+  frees?: { ref: string; title: string } | null;
   onDone(task: Issue, outcome: TaskOutcome): void;
   onCant(task: Issue, why: string): void;
 }) {
   const draft = useOutcomeDraft(task.ref);
+  const holdsUp = useStepTitle(task.line, task.step);
   const why = useDraft(`task-why:${task.ref}`);
   const { waiting } = useChoices();
   return (
     <>
       <TaskCard
         task={task}
-        {...(holdsUp === undefined ? {} : { holdsUp })}
+        {...(holdsUp === null ? {} : { holdsUp })}
+        frees={frees}
         words={draft.note}
         onWords={draft.setNote}
         values={draft.values}

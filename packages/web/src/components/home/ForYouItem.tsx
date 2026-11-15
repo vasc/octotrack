@@ -49,7 +49,7 @@ export function ForYouItem({
         />
       );
     case "task":
-      return <TaskItem task={item.task} onDone={onTaskDone} onCant={onTaskCant} />;
+      return <TaskItem task={item.task} frees={item.frees} onDone={onTaskDone} onCant={onTaskCant} />;
     case "done":
       return (
         <LineProposalCard

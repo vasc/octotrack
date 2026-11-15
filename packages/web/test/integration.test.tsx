@@ -2482,6 +2482,15 @@ describe("lines of work", () => {
       );
     });
 
+    test("a task opened on home says what it frees and the step it holds up, as in its panel", async () => {
+      const { issue } = withIssue();
+      navigate("/");
+      const view = renderApp(<App />);
+      const opened = within(await view.findByRole("article", { name: "Measure the grip" }));
+      await opened.findByText(/holds up Settle the board/);
+      opened.getByText(whole(`Frees ${issue.ref}: Fit the board.`));
+    });
+
     test("a closed task says how it closed and what was sent, and offers nothing to send again", async () => {
       const { task } = withIssue();
       server.tracker.call(c.taskDone, { ref: task.ref, result: "41, 38 and 12 mm" }, asDeveloper);
