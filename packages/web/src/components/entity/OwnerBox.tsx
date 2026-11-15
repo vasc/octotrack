@@ -1,22 +1,11 @@
 import type { Line, LineCrew } from "@octotrack/core/schemas";
 import { useState } from "react";
-
-/** How the owner keeps the line, as E-Line says it: what waits on the developer, and whether it can be woken. */
-function keeping(state: string, waitingOnYou: boolean): string {
-  const waits = waitingOnYou ? "All the line's open work waits on you, and it" : "It";
-  switch (state) {
-    case "asleep":
-      return `${waits} left a wake address, so it keeps the line while it sleeps and is woken by what you send.`;
-    case "running":
-      return waitingOnYou
-        ? "All the line's open work waits on you; it is running now."
-        : "It is running now.";
-    case "quiet":
-      return "It has been quiet since its last command and cannot be woken; Release is on Agents.";
-    default:
-      return `It is ${state}.`;
-  }
-}
+import { Actions } from "../ui/Actions.tsx";
+import { Button } from "../ui/Button.tsx";
+import { Facts } from "../ui/Facts.tsx";
+import { List } from "../ui/List.tsx";
+import { Row } from "../ui/Row.tsx";
+import { Section } from "../ui/Section.tsx";
 
 /**
  * Who speaks for the line: its owner and how it is, its helpers; Stop on the owner, and I'll own it; or, on a line the
@@ -48,85 +37,68 @@ export function OwnerBox({
   const helpers = crew?.helpers ?? [];
   if (line.state !== "working") return null;
   return (
-    <section className="panel-section" aria-label="Owner">
-      <h2 className="panel-label">Owner</h2>
-      <p className="panel-prose">
+    <Section title="Owner">
+      <List>
         {line.ownedBy !== null ? (
-          <>
-            <b>You</b> own it. No agent writes to it until you hand it back.
-          </>
+          <Row title="You" />
         ) : owner === null ? (
-          stepIn === null ? (
-            <>No agent owns it yet. Octotrack is looking for one.</>
-          ) : (
-            <>No agent owns it yet, and none can be found: {stepIn}</>
-          )
+          <Row title="no owner" {...(stepIn === null ? {} : { note: stepIn })} />
         ) : (
-          <>
-            <b>{owner.name}</b> writes the summary and hears what you tell it.{" "}
-            {keeping(owner.state, waitingOnYou)}{" "}
-            {helpers.length === 0
-              ? "Helpers may work under it, never writing the summary; none now."
-              : `Helping: ${helpers.map((helper) => helper.name).join(", ")}.`}
-          </>
+          <Row
+            title={owner.name}
+            facts={
+              <Facts>
+                {owner.state}
+                {waitingOnYou ? "waits on you" : null}
+                {helpers.length === 0 ? null : `helping: ${helpers.map((helper) => helper.name).join(", ")}`}
+              </Facts>
+            }
+          />
         )}
-      </p>
+      </List>
       {handing === null ? (
-        <div className="question-actions">
-          {owner === null ? null : (
-            <button type="button" className="btn" onClick={() => onStop(owner.name)}>
-              Stop {owner.name}
-            </button>
-          )}
+        <Actions>
+          {owner === null ? null : <Button onClick={() => onStop(owner.name)}>Stop {owner.name}</Button>}
           {line.ownedBy === null ? (
-            <button type="button" className="btn" onClick={onOwn}>
-              I'll own it
-            </button>
+            <Button onClick={onOwn}>I'll own it</Button>
           ) : (
-            <button
-              type="button"
-              className="btn"
-              // A line that names its repos goes straight back; one that names none asks which first.
-              onClick={() => (line.repos.length > 0 ? onHand([]) : setHanding([]))}
-            >
+            // A line that names its repos goes straight back; one that names none asks which first.
+            <Button onClick={() => (line.repos.length > 0 ? onHand([]) : setHanding([]))}>
               Hand to an agent
-            </button>
+            </Button>
           )}
-        </div>
+        </Actions>
       ) : (
-        <fieldset className="choice-group">
-          <legend className="muted">Its repos, so an agent can take it</legend>
-          {repos.map((repo) => (
-            <label key={repo} className="check">
-              <input
-                type="checkbox"
+        <>
+          <List label="Its repos">
+            {repos.map((repo) => (
+              <Row
+                key={repo}
+                title={repo}
                 checked={handing.includes(repo)}
-                onChange={(event) =>
+                onToggle={() =>
                   setHanding(
-                    event.target.checked ? [...handing, repo] : handing.filter((other) => other !== repo),
+                    handing.includes(repo) ? handing.filter((other) => other !== repo) : [...handing, repo],
                   )
                 }
               />
-              {repo}
-            </label>
-          ))}
-          <button
-            type="button"
-            className="btn"
-            data-primary="true"
-            disabled={handing.length === 0}
-            onClick={() => {
-              onHand([...handing]);
-              setHanding(null);
-            }}
-          >
-            Hand over
-          </button>
-          <button type="button" className="btn" onClick={() => setHanding(null)}>
-            Cancel
-          </button>
-        </fieldset>
+            ))}
+          </List>
+          <Actions>
+            <Button
+              variant="primary"
+              disabled={handing.length === 0}
+              onClick={() => {
+                onHand([...handing]);
+                setHanding(null);
+              }}
+            >
+              Hand over
+            </Button>
+            <Button onClick={() => setHanding(null)}>Cancel</Button>
+          </Actions>
+        </>
       )}
-    </section>
+    </Section>
   );
 }

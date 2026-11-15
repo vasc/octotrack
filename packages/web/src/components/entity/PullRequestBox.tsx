@@ -1,6 +1,12 @@
-import { whenText } from "../../lib/format.ts";
-import { ErrorState, LoadingState } from "../ui/states.tsx";
 import type { PullRequest } from "@octotrack/core/schemas";
+import { Link } from "../ui/Link.tsx";
+import { whenText } from "../../lib/format.ts";
+import { Fact, Facts } from "../ui/Facts.tsx";
+import { List } from "../ui/List.tsx";
+import { Note } from "../ui/Note.tsx";
+import { Row } from "../ui/Row.tsx";
+import { Section } from "../ui/Section.tsx";
+import { ErrorState, LoadingState } from "../ui/states.tsx";
 
 const CHECKS: Readonly<Record<PullRequest["checks"], string>> = {
   none: "no checks",
@@ -9,50 +15,43 @@ const CHECKS: Readonly<Record<PullRequest["checks"], string>> = {
   failing: "✗ checks failing",
 };
 
-/**
- * An issue's pull requests, each with its checks, size and state. Checks are agents' to fix, never the developer's:
- * the holder merges once they pass, and asks first when it wants the developer's eyes.
- */
+/** An issue's pull requests, each with its link, checks, size, when it was opened and its state. */
 export function PullRequestBox({
   prs,
-  holder,
   loading = false,
   error = null,
 }: {
   prs: readonly PullRequest[];
-  holder: string | null;
   loading?: boolean;
   error?: Error | null;
 }) {
   return (
-    <section className="panel-section" aria-label="Pull request">
-      <h2 className="panel-label">Pull request{prs.length === 1 ? "" : "s"}</h2>
+    <Section title="Pull requests" count={loading || error !== null ? undefined : prs.length}>
       {loading ? <LoadingState label="Loading pull requests" /> : null}
       {error === null ? null : <ErrorState error={error} />}
-      {prs.length === 0 && !loading && error === null ? <p className="muted">None yet.</p> : null}
-      {prs.map((pr) => (
-        <div key={pr.ref} className="pr-box">
-          <span>
-            <a className="mono panel-link" href={pr.url} target="_blank" rel="noreferrer">
-              {pr.repo}#{pr.number}
-            </a>{" "}
-            <b>{pr.title}</b>
-          </span>
-          <span className="plan-checks" data-checks={pr.checks}>
-            {CHECKS[pr.checks]}
-          </span>
-          <span className="muted">
-            +{pr.additions} −{pr.deletions} · opened {whenText(pr.createdAt)}
-          </span>
-          <span className="muted">{pr.state}</span>
-        </div>
-      ))}
-      <span className="muted">
-        Checks are agents' to fix, never yours.{" "}
-        {holder === null
-          ? "Whoever takes the issue merges once they pass, and asks first if it wants your eyes."
-          : `${holder} merges once they pass, and asks first if it wants your eyes.`}
-      </span>
-    </section>
+      {prs.length === 0 && !loading && error === null ? <Note>None yet</Note> : null}
+      {prs.length === 0 ? null : (
+        <List>
+          {prs.map((pr) => (
+            <Row
+              key={pr.ref}
+              title={pr.title}
+              facts={
+                <Facts>
+                  {/* Out to GitHub, where the pull request lives. */}
+                  <Link href={pr.url} external>
+                    {pr.repo}#{pr.number}
+                  </Link>
+                  {pr.checks === "failing" ? <Fact tone="stuck">{CHECKS.failing}</Fact> : CHECKS[pr.checks]}
+                  {`+${pr.additions} −${pr.deletions}`}
+                  {`opened ${whenText(pr.createdAt)}`}
+                  {pr.state}
+                </Facts>
+              }
+            />
+          ))}
+        </List>
+      )}
+    </Section>
   );
 }

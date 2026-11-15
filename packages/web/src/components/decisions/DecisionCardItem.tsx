@@ -42,7 +42,6 @@ export function DecisionCardItem({
     <DecisionCardView
       card={card}
       form={form}
-      selected={active}
       line={line}
       {...(background ? { onBackground: () => openEntity(card.decision.ref) } : {})}
     />

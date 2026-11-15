@@ -29,7 +29,7 @@ export function FoundationsGallery({ tokens }: { tokens: readonly DesignToken[] 
             {token.name} ({token.value}) Which queue should the beta use?
           </div>
         ))}
-        <code className="mono">--mono OCT-12 D-3 PR-7 kind:decision status:open</code>
+        <code>--mono OCT-12 D-3 PR-7 kind:decision status:open</code>
       </DesignSection>
       <DesignSection title="Space">
         {withPrefix(tokens, "--space-")
@@ -52,7 +52,7 @@ export function FoundationsGallery({ tokens }: { tokens: readonly DesignToken[] 
         </div>
         <div className="design-row">
           {withPrefix(tokens, "--shadow-").map((token) => (
-            <div className="card" key={token.name} style={{ boxShadow: `var(${token.name})` }}>
+            <div className="design-card" key={token.name} style={{ boxShadow: `var(${token.name})` }}>
               <code>{token.name}</code>
             </div>
           ))}

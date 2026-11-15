@@ -1,9 +1,13 @@
 import type { Line } from "@octotrack/core/schemas";
+import { Actions } from "../ui/Actions.tsx";
+import { Button } from "../ui/Button.tsx";
+import { List } from "../ui/List.tsx";
+import { Row } from "../ui/Row.tsx";
 import { EmptyState } from "../ui/states.tsx";
 
 /**
- * Before anything is placed: the lines agents proposed from what was there before, accepted where they recommend in
- * one choice, with Undo; or, with nothing proposed yet, how agents start proposing.
+ * Before anything is placed: the lines agents proposed, placed where they recommend in one choice, with Undo; or,
+ * with nothing proposed yet, the command that starts agents proposing.
  */
 export function FirstRun({
   proposals,
@@ -15,42 +19,22 @@ export function FirstRun({
   const placeable = proposals.filter(
     (line) => line.recommendation !== null && line.recommendation !== "fold",
   );
-  if (proposals.length === 0) {
-    return (
-      <EmptyState command="octo guide">
-        No lines yet. Add one above, or point an agent at the guide and it will propose lines from its repo.
-      </EmptyState>
-    );
-  }
-  const many = proposals.length !== 1;
+  if (proposals.length === 0) return <EmptyState command="octo guide">No lines yet</EmptyState>;
   return (
-    <div className="proposal" role="note" aria-label="First run">
-      {placeable.length === 0 ? (
-        <p>
-          Nothing is placed yet. The {many ? `${proposals.length} proposed lines` : "proposed line"} came from
-          before lines, with no recommendation: place {many ? "each" : "it"} yourself, or wait for{" "}
-          {many ? "their agents" : "its agent"} to propose a real line.
-        </p>
-      ) : (
-        <>
-          <p>
-            {placeable.length} of the {proposals.length} proposed line{many ? "s" : ""}{" "}
-            {placeable.length === 1 ? "carries" : "carry"} a recommended placement. Accept{" "}
-            {placeable.length === 1 ? "it" : "them"} at once, then change any you disagree with.
-          </p>
-          <div className="question-actions">
-            <button
-              type="button"
-              className="btn"
-              data-primary="true"
-              onClick={() => onAccept(placeable.map((line) => line.ref))}
-            >
+    <List>
+      <Row
+        label="First run"
+        title="Nothing placed yet"
+        facts={`${placeable.length} of ${proposals.length} proposed carry a recommendation`}
+      >
+        {placeable.length === 0 ? null : (
+          <Actions>
+            <Button variant="primary" onClick={() => onAccept(placeable.map((line) => line.ref))}>
               Accept recommended placements
-            </button>
-            <span className="muted">with Undo</span>
-          </div>
-        </>
-      )}
-    </div>
+            </Button>
+          </Actions>
+        )}
+      </Row>
+    </List>
   );
 }

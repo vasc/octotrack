@@ -1,9 +1,16 @@
 import type { Drift } from "@octotrack/core/schemas";
 import { useState } from "react";
 import { humanize } from "../../lib/format.ts";
-import { Badge, StatusBadge } from "../ui/Badge.tsx";
+import { Actions } from "../ui/Actions.tsx";
+import { StatusBadge } from "../ui/Badge.tsx";
+import { Button } from "../ui/Button.tsx";
+import { Facts } from "../ui/Facts.tsx";
+import { Field } from "../ui/Field.tsx";
+import { Markdown } from "../ui/Markdown.tsx";
+import { Note } from "../ui/Note.tsx";
 import { RefLink } from "../ui/RefLink.tsx";
 import { RefText } from "../ui/RefText.tsx";
+import { Row } from "../ui/Row.tsx";
 import { TimeAgo } from "../ui/TimeAgo.tsx";
 
 export type DriftMode = "updated" | "verified";
@@ -19,61 +26,55 @@ export function DriftItem({ drift, error = null, onAck }: DriftItemProps) {
   const [note, setNote] = useState("");
   const trimmed = note.trim();
   return (
-    <article className="drift" aria-label={drift.ref}>
-      <div className="row-sub">
-        <RefLink value={drift.ref} />
-        <Badge>{humanize(drift.rule.replaceAll("-", " "))}</Badge>
-        {drift.status === "open" ? null : <StatusBadge value={drift.status} />}
-        <span>on</span>
-        <RefLink value={drift.target} />
-        {drift.assignee === null ? null : <span>for {drift.assignee}</span>}
-        <TimeAgo iso={drift.createdAt} />
-      </div>
-      <div>
-        <RefText text={drift.message} />
-      </div>
+    <Row
+      label={drift.ref}
+      title={humanize(drift.rule.replaceAll("-", " "))}
+      facts={
+        <Facts>
+          <RefLink value={drift.ref} />
+          {drift.status === "open" ? null : <StatusBadge value={drift.status} />}
+          <On target={drift.target} />
+          {drift.assignee === null ? null : `for ${drift.assignee}`}
+          <TimeAgo iso={drift.createdAt} />
+        </Facts>
+      }
+      note={<RefText text={drift.message} />}
+    >
       {drift.status === "open" ? (
         <>
-          <div className="drift-suggestion">{drift.suggestion}</div>
-          <form className="composer" onSubmit={(event) => event.preventDefault()}>
-            <input
-              className="field"
-              aria-label={`Note for ${drift.ref}`}
-              placeholder="What changed, or why nothing needs to"
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-            />
+          <Markdown text={drift.suggestion} />
+          <Field
+            label={`Note for ${drift.ref}`}
+            hideLabel
+            placeholder="Note"
+            value={note}
+            onChange={setNote}
+          />
+          <Actions>
             {/* Drift about state clears by itself once the state is right, so "updated" could only be a false claim. */}
             {drift.edge ? (
-              <button
-                type="button"
-                className="btn"
-                disabled={trimmed === ""}
-                onClick={() => onAck(drift.ref, "updated", trimmed)}
-              >
+              <Button disabled={trimmed === ""} onClick={() => onAck(drift.ref, "updated", trimmed)}>
                 Updated
-              </button>
+              </Button>
             ) : null}
-            <button
-              type="button"
-              className="btn"
-              disabled={trimmed === ""}
-              onClick={() => onAck(drift.ref, "verified", trimmed)}
-            >
+            <Button disabled={trimmed === ""} onClick={() => onAck(drift.ref, "verified", trimmed)}>
               Nothing to update
-            </button>
-          </form>
-          {error === null ? null : (
-            <p className="error-text" role="alert">
-              {error}
-            </p>
-          )}
+            </Button>
+          </Actions>
+          {error === null ? null : <Note error>{error}</Note>}
         </>
       ) : drift.note === null ? null : (
-        <p className="muted">
-          {drift.resolvedBy}: {drift.note}
-        </p>
+        <Note>{drift.resolvedBy === null ? drift.note : `${drift.resolvedBy}: ${drift.note}`}</Note>
       )}
-    </article>
+    </Row>
+  );
+}
+
+/** What the drift is about, openable. */
+function On({ target }: { target: string }) {
+  return (
+    <>
+      on <RefLink value={target} />
+    </>
   );
 }

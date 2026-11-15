@@ -122,10 +122,19 @@ These changed how the product looks, slightly. All of them are visible at `/desi
   form that has to show a refusal.
 - **Two steps to decide.** Pick, then confirm. A stray key cannot answer anything on its own. _Replaced:_ one press,
   with Undo.
-- **No modals.** Everything is answered in place or in the inspector. The key list is now the one modal.
+- **No modals.** Everything is answered in place or in the inspector. _Replaced:_ a task of its own (New line, Table,
+  Start, Record answers, the keys) is a sheet over the whole page and its bar, so the page's actions never seem to
+  apply to it; a short answer that belongs to an item stays in place under it.
 - **No animation.** Nothing should look slower than it is.
 - **System fonts.** A web font is a wait.
 - **Drift about state only offers "Nothing to update".** It clears by itself when fixed, so "Updated" could only be false.
 - **`PrStrip` below 1180px.** PR status should not disappear because the window is narrower. _Replaced:_ the strip is
   gone; a pull request's status shows on its issue and in its line's plan.
 - **No component library.** The product needs a small vocabulary, and a library brings a large one with its own look.
+- **Screens are made only of primitives.** The dashboard had grown a 2,800-line stylesheet and a hand-rolled button on
+  every screen, so no two looked alike. Now every look belongs to a primitive in `components/ui` (Row, List, Section,
+  Sheet, Button and the rest, styled in `ui.css`), screens only compose them, and a test fails on a screen that gives
+  an element a class or a style. A change to how something looks is a change to one primitive, everywhere at once.
+- **The UI does not explain itself.** Sentences telling the developer how the product works (what tabling does, how
+  owners are found, what a box accepts) are gone from the screens; the docs and `octo guide` say it once. What stays
+  are names, facts and actions.

@@ -1,7 +1,11 @@
 import type { AgentView } from "@octotrack/core/schemas";
-import { openEntity } from "../../lib/router.ts";
 import { AUTO_STOP_REASON } from "@octotrack/core/schemas";
 import { dayWord, whenText } from "../../lib/format.ts";
+import { Button } from "../ui/Button.tsx";
+import { Facts } from "../ui/Facts.tsx";
+import { Note } from "../ui/Note.tsx";
+import { RefLink } from "../ui/RefLink.tsx";
+import { Row } from "../ui/Row.tsx";
 import { TimeAgo } from "../ui/TimeAgo.tsx";
 
 /** What an agent is doing now, in a few words, as E-Agents writes it. */
@@ -48,15 +52,49 @@ function startText(start: NonNullable<AgentView["start"]>, now: number): string 
   }
 }
 
-/** The kind of session a wake address reaches, or none. */
-function wakeText(agent: AgentView): string {
-  if (agent.wakeAddress === null) return "none";
+/** The kind of session a wake address reaches, if it has one. */
+function wakeScheme(agent: AgentView): string | null {
+  if (agent.wakeAddress === null) return null;
   return agent.wakeAddress.split(":")[0] ?? agent.wakeAddress;
 }
 
+/** The one thing the developer can do to an agent: Release a quiet one holding a line, Lift a stop, or Stop it. */
+function AgentAction({
+  agent,
+  onStop,
+  onLift,
+  onRelease,
+}: {
+  agent: AgentView;
+  onStop(name: string): void;
+  onLift(name: string): void;
+  onRelease(name: string): void;
+}) {
+  if (agent.state === "gone") return null;
+  if (agent.state === "quiet" && agent.line !== null) {
+    return (
+      <Button aria-label={`Release ${agent.name} from ${agent.line}`} onClick={() => onRelease(agent.name)}>
+        Release
+      </Button>
+    );
+  }
+  if (agent.state === "stopped") {
+    return (
+      <Button aria-label={`Lift ${agent.name}`} onClick={() => onLift(agent.name)}>
+        Lift
+      </Button>
+    );
+  }
+  return (
+    <Button aria-label={`Stop ${agent.name}`} onClick={() => onStop(agent.name)}>
+      Stop
+    </Button>
+  );
+}
+
 /**
- * One agent on the roster: its repo, its line and role, its last command, how it is woken, what it is doing; Stop,
- * Lift on a stopped one, and Release on a quiet one that still holds a line.
+ * One agent on the roster: its repo, its line and role, its last command, how it is woken, what it is doing; and the
+ * one thing to do to it.
  */
 export function AgentRosterRow({
   agent,
@@ -90,62 +128,32 @@ export function AgentRosterRow({
       : agent.start !== null
         ? ", started for it"
         : ", last owner";
+  const shownRepo = repo ?? agent.repo;
+  const action = <AgentAction agent={agent} onStop={onStop} onLift={onLift} onRelease={onRelease} />;
   return (
-    <tr aria-label={agent.name} data-state={agent.state}>
-      <th scope="row">{agent.name}</th>
-      <td className="mono agent-repo">{repo ?? agent.repo ?? "none"}</td>
-      <td className="agent-line">
-        {shown === null ? (
-          <span className="muted">no line</span>
-        ) : (
-          <>
-            <button type="button" className="line-link mono" onClick={() => openEntity(shown)}>
-              {shown}
-            </button>
-            {lineTitle === undefined ? null : <> {lineTitle}</>}
-            <span className="muted">{relation}</span>
-          </>
-        )}
-      </td>
-      <td className="muted agent-last">
-        {agent.start === null ? <TimeAgo iso={agent.lastSeenAt} /> : "never"}
-      </td>
-      <td className="muted agent-wake">{wakeText(agent)}</td>
-      <td className="agent-now">
-        {agent.start === null ? nowText(agent, waitsOnYou) : startText(agent.start, now)}
-        {agent.note === null ? null : <span className="agent-note">{agent.note}</span>}
-      </td>
-      <td className="agent-actions">
-        {agent.state === "quiet" && agent.line !== null ? (
-          <button
-            type="button"
-            className="btn"
-            aria-label={`Release ${agent.name} from ${agent.line}`}
-            onClick={() => onRelease(agent.name)}
-          >
-            Release
-          </button>
-        ) : null}
-        {agent.state === "stopped" ? (
-          <button
-            type="button"
-            className="btn"
-            aria-label={`Lift ${agent.name}`}
-            onClick={() => onLift(agent.name)}
-          >
-            Lift
-          </button>
-        ) : agent.state === "gone" ? null : (
-          <button
-            type="button"
-            className="btn"
-            aria-label={`Stop ${agent.name}`}
-            onClick={() => onStop(agent.name)}
-          >
-            Stop
-          </button>
-        )}
-      </td>
-    </tr>
+    <Row
+      label={agent.name}
+      title={agent.name}
+      facts={
+        <Facts>
+          {shownRepo ?? null}
+          {shown === null ? (
+            "no line"
+          ) : (
+            <>
+              <RefLink value={shown} />
+              {lineTitle === undefined ? null : ` ${lineTitle}`}
+              {relation}
+            </>
+          )}
+          {agent.start === null ? <TimeAgo iso={agent.lastSeenAt} /> : "never"}
+          {wakeScheme(agent)}
+        </Facts>
+      }
+      note={agent.start === null ? nowText(agent, waitsOnYou) : startText(agent.start, now)}
+      {...(agent.state === "gone" ? {} : { trailing: action })}
+    >
+      {agent.note === null ? null : <Note>{agent.note}</Note>}
+    </Row>
   );
 }

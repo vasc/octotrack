@@ -159,7 +159,11 @@ blocks, priority), as facts rather than as a rank. Questions from before lines a
   parses, and an in-memory query cache so navigating back is instant.
 - SSE pushes changes. The client invalidates only what changed and shows previous data while refetching, so a
   filter change never flashes a spinner.
-- No component library, no CSS framework.
+- No component library, no CSS framework. The dashboard's own primitives in `packages/web/src/components/ui` (Row,
+  List, Section, Sheet, Button and the rest) are the only things with a look, styled in `ui.css`; screens only compose
+  them, and `packages/web/test/primitives-only.test.ts` fails on a screen that gives an element a class or a style. A
+  hand-styled button per screen is how the dashboard stopped looking like one product; one primitive per shape is how
+  a change of look reaches every screen at once. See `design/log.md`.
 - Deciding is not optimistic. A round trip takes single-digit milliseconds on loopback, so there is nothing to hide,
   and removing a card early would unmount the form that has to show the error if the server refuses.
 - One decision is open at a time on the feed, the rest are one line each, with `j` and `k` to move. Three open cards

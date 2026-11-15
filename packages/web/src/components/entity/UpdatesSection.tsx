@@ -1,21 +1,27 @@
 import { contracts } from "@octotrack/core/contracts";
 import type { StatusUpdate } from "@octotrack/core/schemas";
-import { useDraft } from "../../hooks/useDraft.ts";
 import { useChoices } from "../../hooks/useChoices.ts";
+import { useDraft } from "../../hooks/useDraft.ts";
+import { Actions } from "../ui/Actions.tsx";
 import { StatusBadge } from "../ui/Badge.tsx";
+import { Button } from "../ui/Button.tsx";
+import { Facts } from "../ui/Facts.tsx";
+import { List } from "../ui/List.tsx";
 import { NotKept } from "../ui/NotKept.tsx";
 import { RefText } from "../ui/RefText.tsx";
+import { Row } from "../ui/Row.tsx";
 import { Section } from "../ui/Section.tsx";
-import { TimeAgo } from "../ui/TimeAgo.tsx";
 import { TextBox } from "../ui/TextBox.tsx";
+import { TimeAgo } from "../ui/TimeAgo.tsx";
 
+/** Notes on an item: a box to post one, which waits with Undo like any choice, then each note with who and when. */
 export function UpdatesSection({ target, updates }: { target: string; updates: readonly StatusUpdate[] }) {
   const key = `update:${target}`;
   const draft = useDraft(key);
   const body = draft.value;
   const choices = useChoices();
   const sending = choices.waiting(key);
-  // A note waits with Undo like any choice; the server deletes its draft once it is posted.
+  // The server deletes its draft once it is posted.
   const post = () => {
     const words = body.trim();
     if (words === "" || sending) return;
@@ -31,32 +37,37 @@ export function UpdatesSection({ target, updates }: { target: string; updates: r
       );
   };
   return (
-    <Section title="Updates" {...(updates.length === 0 ? {} : { note: String(updates.length) })}>
-      <form
-        className="composer"
-        onSubmit={(event) => {
-          event.preventDefault();
-          post();
-        }}
-      >
-        <TextBox
-          label={`Post an update on ${target}`}
-          placeholder="Post an update. Markdown works; Cmd+Enter posts"
-          value={body}
-          onChange={draft.change}
-          onSubmit={post}
-        />
-        <button type="submit" className="btn" disabled={body.trim() === "" || sending}>
+    <Section title="Updates" count={updates.length}>
+      <TextBox
+        label={`Post an update on ${target}`}
+        placeholder="Post an update"
+        value={body}
+        onChange={draft.change}
+        onSubmit={post}
+      />
+      <Actions>
+        <Button disabled={body.trim() === "" || sending} onClick={post}>
           {sending ? "Posting" : "Post"}
-        </button>
-      </form>
+        </Button>
+      </Actions>
       <NotKept error={draft.error} />
-      {updates.map((update) => (
-        <div className="history-row" key={update.ref}>
-          <StatusBadge value={update.level} /> <RefText text={update.body} />{" "}
-          <span className="muted">{update.actor}</span> <TimeAgo iso={update.createdAt} />
-        </div>
-      ))}
+      {updates.length === 0 ? null : (
+        <List>
+          {updates.map((update) => (
+            <Row
+              key={update.ref}
+              title={<RefText text={update.body} />}
+              facts={
+                <Facts>
+                  <StatusBadge value={update.level} />
+                  {update.actor}
+                  <TimeAgo iso={update.createdAt} />
+                </Facts>
+              }
+            />
+          ))}
+        </List>
+      )}
     </Section>
   );
 }

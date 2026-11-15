@@ -1,8 +1,15 @@
 import type { Issue } from "@octotrack/core/schemas";
 import { useState } from "react";
 import { filledCount, type TaskOutcome, taskOutcome } from "../../lib/tasks.ts";
+import { Actions } from "../ui/Actions.tsx";
+import { Button } from "../ui/Button.tsx";
+import { Facts } from "../ui/Facts.tsx";
+import { Field } from "../ui/Field.tsx";
+import { Item } from "../ui/Item.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
-import { TextBox } from "../ui/TextBox.tsx";
+import { Note } from "../ui/Note.tsx";
+import { Stack } from "../ui/Pairs.tsx";
+import { RefLink } from "../ui/RefLink.tsx";
 import { OutcomeFields } from "./OutcomeFields.tsx";
 
 export interface TaskCardProps {
@@ -51,22 +58,26 @@ export function TaskCard({
   const outcome = taskOutcome(task, values, words);
   const ready = outcome !== null && !sending;
   return (
-    <article className="task" aria-label={task.title}>
-      <p className="for-you-kind">
-        Task for you · {task.ref}
-        {task.place === null ? "" : ` · at ${task.place}`}
-        {holdsUp === undefined ? "" : ` · holds up ${holdsUp}`}
-        {task.createdBy === "dev" ? "" : ` · filed by ${task.createdBy}`}
-      </p>
-      <h3 className="question-title">{task.title}</h3>
+    <Item
+      label={task.title}
+      kind={
+        <Facts>
+          Task for you
+          <RefLink value={task.ref} />
+          {task.place === null ? null : `at ${task.place}`}
+          {holdsUp === undefined ? null : `holds up ${holdsUp}`}
+          {task.createdBy === "dev" ? null : `filed by ${task.createdBy}`}
+        </Facts>
+      }
+      title={task.title}
+    >
       {frees === null ? null : (
-        <p className="item-note">
-          Frees {frees.ref}: {frees.title}.
-        </p>
+        <Note>
+          Frees {frees.ref}: {frees.title}
+        </Note>
       )}
       {task.body === "" ? null : <Markdown text={task.body} />}
       <form
-        className="task-form"
         aria-label={cant ? "Say why it cannot be done" : "Report the outcome"}
         onSubmit={(event) => {
           event.preventDefault();
@@ -78,17 +89,10 @@ export function TaskCard({
           if (outcome !== null && !sending) onDone(outcome);
         }}
       >
-        {own && !cant ? null : (
-          <>
-            <span className="panel-label" data-tone="attention">
-              {cant ? "Why it cannot be done" : "What to send back"}
-            </span>
-            {task.outcome === null || own || cant ? null : (
-              <span className="task-outcome">
-                <Markdown text={task.outcome} inline />
-              </span>
-            )}
-            {named && !cant ? (
+        <Stack>
+          {own && !cant ? null : named && !cant ? (
+            <>
+              {task.outcome === null ? null : <Markdown text={task.outcome} />}
               <OutcomeFields
                 fields={task.fields}
                 values={values}
@@ -96,50 +100,44 @@ export function TaskCard({
                 note={words}
                 onNote={onWords}
               />
-            ) : (
-              <TextBox
-                label={cant ? `Why ${task.ref} cannot be done` : `What ${task.ref} found`}
-                placeholder={cant ? "Why not" : (task.outcome ?? "What you found")}
-                value={cant ? why : words}
-                onChange={cant ? onWhy : onWords}
-              />
-            )}
-          </>
-        )}
-        <div className="question-actions">
-          {cant ? (
-            <>
-              <button
-                type="submit"
-                className="btn"
-                data-primary="true"
-                disabled={why.trim() === "" || sending}
-              >
-                Close it
-              </button>
-              <button type="button" className="btn" onClick={() => setCant(false)}>
-                Cancel
-              </button>
             </>
           ) : (
-            <>
-              <button type="submit" className="btn" data-tone="attention" data-choice="1" disabled={!ready}>
-                Done
-              </button>
-              <button type="button" className="btn" data-choice="2" onClick={() => setCant(true)}>
-                Can't do it
-              </button>
-            </>
+            <Field
+              label={cant ? `Why ${task.ref} cannot be done` : (task.outcome ?? "What you found")}
+              placeholder={cant ? "Why not" : undefined}
+              value={cant ? why : words}
+              onChange={cant ? onWhy : onWords}
+              multiline
+            />
           )}
-        </div>
-        {own || cant ? null : (
-          <span className="muted">
-            {named ? `${filledCount(task, values)} of ${task.fields.length} filled, saved` : "Saved"} as you
-            type, so you can finish on another day or device. Done sends {named ? "them all" : "it"}; Can't do
-            it asks why and closes the task as not done.
-          </span>
-        )}
+          {cant ? (
+            <Actions>
+              <Button type="submit" variant="primary" disabled={why.trim() === "" || sending}>
+                Close it
+              </Button>
+              <Button variant="quiet" onClick={() => setCant(false)}>
+                Cancel
+              </Button>
+            </Actions>
+          ) : (
+            <Actions>
+              <Button type="submit" variant="primary" choice={1} disabled={!ready}>
+                Done
+              </Button>
+              <Button choice={2} onClick={() => setCant(true)}>
+                Can't do it
+              </Button>
+              {own ? null : (
+                <Note>
+                  {named
+                    ? `${filledCount(task, values)} of ${task.fields.length} filled, saved`
+                    : "Saved as you type"}
+                </Note>
+              )}
+            </Actions>
+          )}
+        </Stack>
       </form>
-    </article>
+    </Item>
   );
 }

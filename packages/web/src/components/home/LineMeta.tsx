@@ -1,9 +1,10 @@
+import { Fact, Facts } from "../ui/Facts.tsx";
 import type { LineCrew, LineHome } from "@octotrack/core/schemas";
 import { crewText } from "../../lib/lines.ts";
 
 /**
  * The facts beside a line's title, each after a dot: who is on it, whether it waits on you, held work being
- * re-confirmed, its plan step. No owner reads in red.
+ * re-confirmed, its plan step. No owner reads in the warm tone.
  */
 export function LineMeta({
   crew,
@@ -17,6 +18,7 @@ export function LineMeta({
 }) {
   const heldForAgent = details === undefined || !owned ? 0 : details.held.questions + details.held.tasks;
   const facts = [
+    ...(owned ? ["yours"] : []),
     ...crewText(crew, details?.stepIn === true),
     // Waiting on you only when nothing else can move meanwhile; with something for you and work for the agents too,
     // they are on it.
@@ -32,13 +34,16 @@ export function LineMeta({
   ];
   if (facts.length === 0) return null;
   return (
-    // The dots between facts are drawn by the stylesheet, so a line of facts of its own, on a phone, starts clean.
-    <span className="line-facts" data-separated="true">
-      {facts.map((fact) => (
-        <span key={fact} data-tone={fact.startsWith("no owner") ? "bad" : undefined}>
-          {fact}
-        </span>
-      ))}
-    </span>
+    <Facts>
+      {facts.map((fact) =>
+        fact.startsWith("no owner") ? (
+          <Fact key={fact} tone="stuck">
+            {fact}
+          </Fact>
+        ) : (
+          fact
+        ),
+      )}
+    </Facts>
   );
 }

@@ -1,10 +1,6 @@
-import { LineBox } from "../ui/LineBox.tsx";
-import { TextBox } from "../ui/TextBox.tsx";
+import { Field, FieldRow } from "../ui/Field.tsx";
 
-/**
- * A task's named outcomes, a short one-line box for each in a row, so none can add rows to the list sent back, then a
- * note for anything that surprised.
- */
+/** A task's named outcomes, a one-line box for each side by side, then a note for anything that surprised. */
 export function OutcomeFields({
   fields,
   values,
@@ -20,18 +16,17 @@ export function OutcomeFields({
 }) {
   return (
     <>
-      <div className="outcome-fields">
+      <FieldRow>
         {fields.map((name) => (
-          <div key={name} className="outcome-field">
-            <span aria-hidden="true">{name}</span>
-            <LineBox label={name} value={values[name] ?? ""} onChange={(value) => onValue(name, value)} />
-          </div>
+          <Field
+            key={name}
+            label={name}
+            value={values[name] ?? ""}
+            onChange={(value) => onValue(name, value)}
+          />
         ))}
-      </div>
-      <div className="outcome-field">
-        <span aria-hidden="true">Note, if anything surprised you</span>
-        <TextBox label="Note, if anything surprised you" value={note} onChange={onNote} />
-      </div>
+      </FieldRow>
+      <Field label="Note" value={note} onChange={onNote} multiline />
     </>
   );
 }

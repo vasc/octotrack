@@ -60,27 +60,27 @@ export function StartSheet({
     [armed, waiting],
   );
   useHotkeys(keys);
-  if (held.isPending || questions.isPending) return <LoadingState />;
   const failure = held.error ?? questions.error;
-  if (failure !== null) return <ErrorState error={failure} />;
+  // One sheet throughout: while what the line holds loads, or if it failed to, the sheet says so in its place.
+  const loading = held.isPending || questions.isPending || failure !== null;
   return (
-    <div ref={sheet}>
-      <StartSheetView
-        line={line}
-        held={current}
-        questions={questions.data ?? []}
-        onDoneWhen={(accept) => onDoneWhen(line.ref, accept)}
-        onAnswer={(ref, key, label) =>
-          resolve({
-            ref,
-            option: key,
-            note: null,
-            summary: `Sending "${label}" to ${place?.title ?? line.title}`,
-          })
-        }
-        onStart={() => onStart(line.ref)}
-        onCancel={onCancel}
-      />
-    </div>
+    <StartSheetView
+      sheetRef={sheet}
+      {...(loading ? { status: failure === null ? <LoadingState /> : <ErrorState error={failure} /> } : {})}
+      line={line}
+      held={current}
+      questions={questions.data ?? []}
+      onDoneWhen={(accept) => onDoneWhen(line.ref, accept)}
+      onAnswer={(ref, key, label) =>
+        resolve({
+          ref,
+          option: key,
+          note: null,
+          summary: `Sending "${label}" to ${place?.title ?? line.title}`,
+        })
+      }
+      onStart={() => onStart(line.ref)}
+      onCancel={onCancel}
+    />
   );
 }

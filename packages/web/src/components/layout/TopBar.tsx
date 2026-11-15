@@ -1,11 +1,11 @@
 import type { HomeCounts } from "@octotrack/core/schemas";
 import type { RefObject } from "react";
-import { navigate } from "../../lib/router.ts";
-import { Icon } from "../ui/Icon.tsx";
 import type { Appearance, Mode, Palette } from "../../lib/appearance.ts";
+import { navigate } from "../../lib/router.ts";
+import { AppBar, BarLink, Count, Counts, Only } from "../ui/AppBar.tsx";
+import { Button, IconButton } from "../ui/Button.tsx";
 import { AppearanceMenu } from "./AppearanceMenu.tsx";
 import { AtMenu } from "./AtMenu.tsx";
-import { NavItem } from "./NavItem.tsx";
 import { PagesMenu } from "./PagesMenu.tsx";
 
 /** The header counts, each a link to the first such item in focus order. Zeros are left out. */
@@ -28,16 +28,14 @@ export interface TopBarProps {
   onKeys(): void;
   /** The I'm at button, which g p focuses. */
   atRef?: RefObject<HTMLButtonElement | null>;
-  /** The theme and mode in use on this device. */
   appearance: Appearance;
   onPalette(palette: Palette): void;
   onMode(mode: Mode): void;
 }
 
 /**
- * One bar on every page: the name, which opens Lines; the Log and Agents, quieter, since Lines is the app and they are
- * places to look now and then; what waits on the developer, where they are, and New line. On a phone the Log and Agents
- * wait behind one menu.
+ * One bar on every page: the name, which opens Lines; the Log and Agents beside it, quieter; what waits on the
+ * developer, urgent first; then where they are, New line, the theme, and on a phone the pages behind one icon.
  */
 export function TopBar({
   path,
@@ -52,42 +50,43 @@ export function TopBar({
   onPalette,
   onMode,
 }: TopBarProps) {
-  // Urgent stands apart, in front; the rest are one quiet group.
-  const urgent = counts.find((count) => count.key === "urgent");
-  const waiting = counts.filter((count) => count.key !== "urgent");
+  const ordered = [
+    ...counts.filter((count) => count.key === "urgent"),
+    ...counts.filter((count) => count.key !== "urgent"),
+  ];
   return (
-    <header className="top-bar">
-      <div className="top-bar-inner">
-        <nav aria-label="Main" className="top-nav">
-          <a
-            className="brand-name"
-            href="/"
-            aria-current={path === "/" || path === "/lines" ? "page" : undefined}
-            onClick={(event) => {
-              if (event.metaKey || event.ctrlKey) return;
-              event.preventDefault();
-              navigate("/");
-            }}
-          >
+    <AppBar
+      nav={
+        <>
+          <BarLink href="/" brand current={path === "/" || path === "/lines"} onGo={navigate}>
             Octotrack
-          </a>
-          <NavItem label="Log" to="/log" current={path === "/log"} />
-          <NavItem label="Agents" to="/agents" current={path === "/agents"} />
-        </nav>
-        {counts.length === 0 ? null : (
-          // One announced region for everything that waits, urgent first and apart, the rest one quiet group.
-          <span className="top-waiting" role="status" aria-label="Waiting on you">
-            {urgent === undefined ? null : <CountLinkView count={urgent} className="top-urgent" />}
-            {waiting.length === 0 ? null : (
-              <span className="top-counts">
-                {waiting.map((count) => (
-                  <CountLinkView key={count.key} count={count} className="top-count" />
-                ))}
-              </span>
-            )}
-          </span>
-        )}
-        <span className="top-actions">
+          </BarLink>
+          <BarLink href="/log" current={path === "/log"} onGo={navigate}>
+            Log
+          </BarLink>
+          <BarLink href="/agents" current={path === "/agents"} onGo={navigate}>
+            Agents
+          </BarLink>
+        </>
+      }
+      status={
+        ordered.length === 0 ? null : (
+          <Counts label="Waiting on you">
+            {ordered.map((count) => (
+              <Count
+                key={count.key}
+                n={count.count}
+                label={count.label}
+                urgent={count.key === "urgent"}
+                href={count.to === null ? "/" : `/?focus=${encodeURIComponent(count.to)}`}
+                onGo={navigate}
+              />
+            ))}
+          </Counts>
+        )
+      }
+      actions={
+        <>
           {places.length === 0 ? null : (
             <AtMenu
               places={places}
@@ -96,51 +95,18 @@ export function TopBar({
               {...(atRef === undefined ? {} : { buttonRef: atRef })}
             />
           )}
-          {/* A plus alone on a phone, beside the theme, so what waits keeps the room; its name is always New line. */}
-          <button
-            type="button"
-            className="btn top-new"
-            aria-label="New line"
-            title="New line"
-            onClick={onNewLine}
-          >
-            <Icon name="plus" />
-            <span className="top-new-word">
-              New<span className="top-new-more"> line</span>
-            </span>
-          </button>
+          <Button variant="primary" icon="plus" onClick={onNewLine}>
+            New line
+          </Button>
           <AppearanceMenu appearance={appearance} onPalette={onPalette} onMode={onMode} />
-          <PagesMenu path={path} onGo={navigate} />
-          <button
-            type="button"
-            className="btn btn-icon top-keys"
-            aria-label="Keyboard shortcuts"
-            title="Keyboard shortcuts (?)"
-            onClick={onKeys}
-          >
-            <Icon name="keyboard" />
-          </button>
-        </span>
-      </div>
-    </header>
-  );
-}
-
-/** One count: its number, then its words; it opens the first such item, focused. */
-function CountLinkView({ count, className }: { count: CountLink; className: string }) {
-  const to = count.to === null ? "/" : `/?focus=${encodeURIComponent(count.to)}`;
-  return (
-    <a
-      className={className}
-      data-count={count.key}
-      href={to}
-      onClick={(event) => {
-        if (event.metaKey || event.ctrlKey) return;
-        event.preventDefault();
-        navigate(to);
-      }}
-    >
-      <b className="top-count-n">{count.count}</b> <span>{count.label}</span>
-    </a>
+          <Only on="wide">
+            <IconButton icon="keyboard" label="Keyboard shortcuts" onClick={onKeys} />
+          </Only>
+          <Only on="phone">
+            <PagesMenu path={path} onGo={navigate} />
+          </Only>
+        </>
+      }
+    />
   );
 }

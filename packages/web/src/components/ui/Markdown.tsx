@@ -17,7 +17,7 @@ export function Markdown({
   links?: boolean;
 }) {
   return (
-    <Suspense fallback={inline ? <span>{text}</span> : <p className="prose">{text}</p>}>
+    <Suspense fallback={inline ? <span>{text}</span> : <p className="ui-prose">{text}</p>}>
       <MarkdownView text={text} inline={inline} links={links} />
     </Suspense>
   );

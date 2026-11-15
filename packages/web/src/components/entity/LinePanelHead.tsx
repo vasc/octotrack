@@ -1,42 +1,57 @@
 import type { Line } from "@octotrack/core/schemas";
+import type { ReactNode } from "react";
+import { LINE_STATE_LABEL } from "../../lib/lines.ts";
 import { backEntity } from "../../lib/router.ts";
+import { Facts } from "../ui/Facts.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
+import { Code, Note } from "../ui/Note.tsx";
+import { Stack } from "../ui/Pairs.tsx";
+import { Panel } from "../ui/Panel.tsx";
 
-/** The top of a line opened: where it sits in the order, its ref and repos, its title, and what finishes it. */
+/**
+ * A line opened: where it stands and sits in the order, its ref and repos, its title, what finishes it and its moves,
+ * then its parts. Close goes back to what was open before it.
+ */
 export function LinePanelHead({
   line,
   position,
   repos,
+  actions,
+  children,
 }: {
   line: Line;
   /** "Line 2 of 5", for a line in the order. */
   position: string | null;
   /** Its repos, by GitHub name where one is set. */
   repos: readonly string[];
+  /** Its moves, under what finishes it. */
+  actions?: ReactNode;
+  children?: ReactNode;
 }) {
   return (
-    <div className="panel-head">
-      <div className="panel-crumbs">
-        <span>
-          {position === null ? null : <>{position} · </>}
-          <span className="mono">{line.ref}</span>
+    <Panel
+      crumbs={
+        <Facts>
+          {LINE_STATE_LABEL[line.state]}
+          {position}
+          <Code>{line.ref}</Code>
           {repos.map((repo) => (
-            <span key={repo}>
-              {" "}
-              · <span className="mono">{repo}</span>
-            </span>
+            <Code key={repo}>{repo}</Code>
           ))}
-        </span>
-        <button type="button" className="btn" aria-label="Close" onClick={backEntity}>
-          Esc
-        </button>
-      </div>
-      <h1 className="panel-title">{line.title}</h1>
-      {line.doneWhen === "" ? null : (
-        <p className="panel-done-when">
-          <span className="muted">Done when</span> <Markdown text={line.doneWhen} inline />
-        </p>
-      )}
-    </div>
+        </Facts>
+      }
+      title={line.title}
+      onClose={backEntity}
+    >
+      <Stack>
+        {line.doneWhen === "" ? null : (
+          <Note>
+            Done when <Markdown text={line.doneWhen} inline />
+          </Note>
+        )}
+        {actions}
+      </Stack>
+      {children}
+    </Panel>
   );
 }

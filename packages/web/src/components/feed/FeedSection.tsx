@@ -1,6 +1,8 @@
 import { contracts } from "@octotrack/core/contracts";
 import { DEFAULT_VIEW, useFeed } from "../../hooks/useFeed.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
+import { Actions } from "../ui/Actions.tsx";
+import { Button } from "../ui/Button.tsx";
 import { EmptyState, ErrorState, LoadingState } from "../ui/states.tsx";
 import { FeedList } from "./FeedList.tsx";
 import { UnseenLog } from "./UnseenLog.tsx";
@@ -62,14 +64,11 @@ function Older({ feed }: { feed: ReturnType<typeof useFeed> }) {
   return (
     <>
       {failed}
-      <button
-        type="button"
-        className="btn"
-        disabled={feed.isFetchingNextPage}
-        onClick={() => void feed.fetchNextPage()}
-      >
-        {feed.isFetchingNextPage ? "Loading" : "Older"}
-      </button>
+      <Actions>
+        <Button disabled={feed.isFetchingNextPage} onClick={() => void feed.fetchNextPage()}>
+          {feed.isFetchingNextPage ? "Loading" : "Older"}
+        </Button>
+      </Actions>
     </>
   );
 }

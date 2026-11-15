@@ -1,8 +1,13 @@
 import type { Line } from "@octotrack/core/schemas";
 import { useState } from "react";
-import { TableForm } from "../lines/TableForm.tsx";
-import { CheckoutForm } from "./CheckoutForm.tsx";
 import { stepInRef } from "../../lib/focus.ts";
+import { TableForm } from "../lines/TableForm.tsx";
+import { Actions } from "../ui/Actions.tsx";
+import { Button } from "../ui/Button.tsx";
+import { Focusable } from "../ui/Focusable.tsx";
+import { Item } from "../ui/Item.tsx";
+import { Markdown } from "../ui/Markdown.tsx";
+import { CheckoutForm } from "./CheckoutForm.tsx";
 
 export interface StepInProps {
   line: Line;
@@ -40,20 +45,60 @@ export function StepIn({
     "table",
     "own",
   ].filter((action) => action !== null);
-  const number = (action: string) => String(offered.indexOf(action) + 1);
+  const number = (action: string) => offered.indexOf(action) + 1;
+  // The way forward is filled; Table and own are words beside it.
+  const forward = offered[0] === "table" ? null : offered[0];
   return (
-    <div
-      className="step-in"
-      role="note"
-      aria-label={`Step in on ${line.title}`}
-      data-selected={focused}
-      aria-current={focused ? "true" : undefined}
-      data-focus-ref={stepInRef(line.ref)}
-      tabIndex={-1}
-    >
-      <p>
-        <span className="step-in-label">Step in</span> {reason}
-      </p>
+    <Focusable focusRef={stepInRef(line.ref)} label={`Step in on ${line.title}`} focused={focused}>
+      <Item kind="Step in" tone="stuck">
+        <Markdown text={reason} />
+        {mode === "checkout" && checkoutRepo !== undefined && onCheckout !== undefined ? (
+          <CheckoutForm
+            repo={checkoutRepo}
+            onSet={(path) => {
+              onCheckout(line.ref, checkoutRepo, path);
+              setMode(null);
+            }}
+            onCancel={() => setMode(null)}
+          />
+        ) : (
+          <Actions>
+            {checkoutRepo === undefined || onCheckout === undefined ? null : (
+              <Button
+                variant={forward === "checkout" ? "primary" : "plain"}
+                choice={number("checkout")}
+                onClick={() => setMode("checkout")}
+              >
+                Set its checkout
+              </Button>
+            )}
+            {onRetry === undefined ? null : (
+              <Button
+                variant={forward === "retry" ? "primary" : "plain"}
+                choice={number("retry")}
+                onClick={() => onRetry(line.ref)}
+              >
+                Try now
+              </Button>
+            )}
+            {onAnyway === undefined ? null : (
+              <Button
+                variant={forward === "anyway" ? "primary" : "plain"}
+                choice={number("anyway")}
+                onClick={() => onAnyway(line.ref)}
+              >
+                Start one anyway
+              </Button>
+            )}
+            <Button choice={number("table")} onClick={() => setMode("table")}>
+              Table it
+            </Button>
+            <Button choice={number("own")} onClick={() => onOwn(line.ref)}>
+              I'll own it
+            </Button>
+          </Actions>
+        )}
+      </Item>
       {mode === "table" ? (
         <TableForm
           title={line.title}
@@ -63,64 +108,7 @@ export function StepIn({
           }}
           onCancel={() => setMode(null)}
         />
-      ) : mode === "checkout" && checkoutRepo !== undefined && onCheckout !== undefined ? (
-        <CheckoutForm
-          repo={checkoutRepo}
-          onSet={(path) => {
-            onCheckout(line.ref, checkoutRepo, path);
-            setMode(null);
-          }}
-          onCancel={() => setMode(null)}
-        />
-      ) : (
-        <div className="decision-actions">
-          {/* Numbered in the order drawn, for the number keys. */}
-          {checkoutRepo === undefined || onCheckout === undefined ? null : (
-            <button
-              type="button"
-              className="btn"
-              data-primary="true"
-              data-choice={number("checkout")}
-              onClick={() => setMode("checkout")}
-            >
-              Set its checkout
-            </button>
-          )}
-          {onRetry === undefined ? null : (
-            <button
-              type="button"
-              className="btn"
-              data-primary="true"
-              data-choice={number("retry")}
-              onClick={() => onRetry(line.ref)}
-            >
-              Try now
-            </button>
-          )}
-          {onAnyway === undefined ? null : (
-            <button
-              type="button"
-              className="btn"
-              data-primary="true"
-              data-choice={number("anyway")}
-              onClick={() => onAnyway(line.ref)}
-            >
-              Start one anyway
-            </button>
-          )}
-          <button
-            type="button"
-            className="btn"
-            data-choice={number("table")}
-            onClick={() => setMode("table")}
-          >
-            Table it
-          </button>
-          <button type="button" className="btn" data-choice={number("own")} onClick={() => onOwn(line.ref)}>
-            I'll own it
-          </button>
-        </div>
-      )}
-    </div>
+      ) : null}
+    </Focusable>
   );
 }

@@ -16,10 +16,11 @@ function parseLines(text: string): { parsed: DecisionLine[]; error: string | nul
 /** Record answers' lines, kept on the server as they are typed, so they follow the developer between devices. */
 const DRAFT = "record-answers";
 
-export function BatchPanel({ autoFocus = false }: { autoFocus?: boolean }) {
+export function BatchPanel({ autoFocus = false, onClose }: { autoFocus?: boolean; onClose(): void }) {
   const draft = useDraft(DRAFT);
   const text = draft.value;
   const [results, setResults] = useState<BatchResultLine[] | null>(null);
+  const [recorded, setRecorded] = useState(0);
   const record = useOpMutation(contracts.decisionResolveBatch);
   const { parsed, error } = useMemo(() => parseLines(text), [text]);
 
@@ -31,6 +32,8 @@ export function BatchPanel({ autoFocus = false }: { autoFocus?: boolean }) {
       results={results}
       submitting={record.isPending}
       autoFocus={autoFocus}
+      recorded={recorded}
+      onClose={onClose}
       onChange={(next) => {
         if (next === "") draft.clear();
         else draft.change(next);
@@ -50,6 +53,7 @@ export function BatchPanel({ autoFocus = false }: { autoFocus?: boolean }) {
                 .join("\n");
               if (left === "") draft.clear();
               else draft.change(left);
+              setRecorded((count) => count + 1);
             },
           },
         )

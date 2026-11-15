@@ -45,7 +45,6 @@ From furthest back to nearest. Separation comes from lines and these small steps
 | `--line`        | Card edges, and dividers between sections                         |
 | `--line-faint`  | Dividers between rows inside one card: the rows of Up next        |
 | `--line-strong` | Edges that have to be noticed: buttons, an option not recommended |
-| `--line-field`  | The edge of a box you type into, and of a dashed tile             |
 
 ### Ink
 
@@ -84,7 +83,6 @@ Each has a strong and a soft version: the strong one for text and marks, and the
 | ----------------------- | ------------------------------------------------------------------------------------------ |
 | `--good`, `--good-soft` | Finished or fine: merged, passing, decided, done                                           |
 | `--bad`, `--bad-soft`   | Broken, and someone has to act: failing, Step in, no owner                                 |
-| `--bad-line`            | The edge of a Step in box. Decorative only                                                 |
 | `--warn`, `--warn-soft` | Not finished yet, or worth a look: pending, review requested                               |
 | `--info`, `--info-soft` | What agents propose and wait for your yes on; in progress. The accent's hue in every theme |
 
@@ -104,16 +102,12 @@ and `--tone-mark`, and badges, glyphs and feed marks all read those. Add a tone 
 | `--text-sm`         | A line's facts, notes under a section, buttons in a row                                             |
 | `--text-md`         | Body. Nearly everything                                                                             |
 | `--text-lg`         | Running text in a summary or an outcome form                                                        |
-| `--text-xl`         | A line's title, a question's title, the smaller section headings                                    |
 | `--text-heading`    | Working on, and a page's own title                                                                  |
-| `--text-title`      | The title of a line, task or issue opened in the panel                                              |
 | `--weight-regular`  | Body                                                                                                |
 | `--weight-medium`   | Navigation, counts beside a heading                                                                 |
 | `--weight-semibold` | Titles, the counts in the bar                                                                       |
-| `--weight-bold`     | Section headings, small capitals labels, a line's number                                            |
 | `--leading-body`    | Running text                                                                                        |
 | `--leading-tight`   | Titles that may wrap                                                                                |
-| `--label-spacing`   | The letter spacing of small capitals labels: SUMMARY, FOR YOU, PLAN                                 |
 
 Hierarchy comes from weight and color first, then size. The scale follows the E · One list boards: 12 to 20.
 
@@ -130,13 +124,11 @@ Hierarchy comes from weight and color first, then size. The scale follows the E 
 | `--space-6`    | Padding of a question; between sections inside a panel   |
 | `--space-7`    | A line card's padding, vertically                        |
 | `--space-8`    | Padding of a question, horizontally                      |
-| `--space-9`    | A line card's padding, horizontally; a handle's column   |
 | `--space-10`   | A phone page's margins                                   |
 | `--space-11`   | A number's column; the page's top margin                 |
 | `--space-12`   | Between sections of home                                 |
 | `--space-14`   | Padding around an empty state                            |
 | `--space-16`   | The page's side margins                                  |
-| `--space-24`   | How far a line's items sit under its title               |
 | `--space-32`   | The room left at the end of a scroll                     |
 
 The names are multiples of the unit: `--space-4` is four units.
@@ -150,25 +142,30 @@ The names are multiples of the unit: `--space-4` is four units.
 | `--radius-md`   | Buttons, inputs, options, repo chips                |
 | `--radius-lg`   | Questions, tasks and rows under a line              |
 | `--radius-xl`   | Line cards, the Up next card, proposals             |
-| `--radius-2xl`  | Panels and the new line card                        |
 | `--radius-pill` | Pills: the header counts, a group read as one thing |
 
 ## Elevation
 
 Only what floats over content gets a shadow. Everything else is separated by a line.
 
-| Token                | Use for                                                                            |
-| -------------------- | ---------------------------------------------------------------------------------- |
-| `--shadow-popover`   | The filter's suggestions, the Undo bar                                             |
-| `--shadow-panel`     | A line, task or issue opened over the right of the page                            |
-| `--border-focus`     | Edges for focus: the focus ring and the focused item's border                      |
-| `--dot-size`         | A small round mark: urgent in the bar, an item's kind                              |
-| `--row-inset`        | How far a sheet's rows sit from its edges: their text and focus tint line up on it |
-| `--opacity-disabled` | A control that cannot act now                                                      |
-| `--opacity-hover`    | A filled button under the pointer                                                  |
-| `--z-popover`        | Above the page                                                                     |
-| `--z-panel`          | Above popovers                                                                     |
-| `--z-undo`           | Above an open panel: a choice made there shows its Undo                            |
+| Token                | Use for                                                                             |
+| -------------------- | ----------------------------------------------------------------------------------- |
+| `--shadow-popover`   | The filter's suggestions, the Undo bar                                              |
+| `--shadow-panel`     | A line, task or issue opened over the right of the page                             |
+| `--shadow-sheet`     | A sheet lifted over the page and its bar                                            |
+| `--scrim`            | What dims the page and its bar behind a sheet                                       |
+| `--border-focus`     | Edges for focus: the focus ring and the focused item's border                       |
+| `--dot-size`         | A small round mark: urgent in the bar, an item's kind                               |
+| `--row-inset`        | How far a sheet's rows sit from its edges: their text and focus tint line up on it  |
+| `--lead-width`       | A row's first column, its number in an order: every title in a list starts after it |
+| `--lead-width-wide`  | The first column when it holds a time or a date, as the Log's rows do               |
+| `--opacity-hint`     | How far a choice's key number steps back from the words beside it                   |
+| `--opacity-disabled` | A control that cannot act now                                                       |
+| `--opacity-hover`    | A filled button under the pointer                                                   |
+| `--z-popover`        | Above the page                                                                      |
+| `--z-panel`          | Above popovers                                                                      |
+| `--z-undo`           | Above an open panel: a choice made there shows its Undo                             |
+| `--z-sheet`          | A sheet, over everything, the bar included                                          |
 
 ## Layout
 
@@ -181,13 +178,11 @@ E · One list boards draw it.
 | `--panel-width`       | A line, task or issue opened over the page                                                   |
 | `--page-width-narrow` | A page of reading in one column: the log                                                     |
 | `--touch-target`      | The least height of anything tapped on a touch screen                                        |
+| `--sheet-width`       | A sheet's width on a wide screen                                                             |
 | `--control-height`    | Every control on a desktop: buttons, selects, the bar's pills; one height, so a row lines up |
 | `--icon-size`         | The few icons, beside words or alone in a control that names itself                          |
 | `--tile-width`        | A tile's width before it grows to fill its row: folded sections' tiles, and swatches at half |
 | `--field-narrow`      | A box for one short value, such as a measurement, side by side with others                   |
-| `--text-box-tall`     | A box for several lines at once, such as Record answers                                      |
-| `--line-gutter`       | The handle's column on a line, before its number                                             |
-| `--line-indent`       | Where a line's title starts; what the line holds is indented to it                           |
 | `--text-input-touch`  | Text fields on a touch screen. Below 16px, iOS zooms the page on focus                       |
 
 CSS custom properties cannot be used in media queries, so the breakpoint lives in `packages/web/src/styles.css`:

@@ -1,31 +1,29 @@
 import type { ReactNode } from "react";
-import { navigate } from "../../lib/router.ts";
 
+/**
+ * A part of a page or a panel, named: its title and count in small words, and at the right end anything that acts on
+ * all of it. What it holds is usually one List.
+ */
 export function Section({
   title,
-  note,
-  linkTo,
-  linkLabel,
+  count,
+  aside,
   children,
 }: {
   title: string;
-  note?: string;
-  linkTo?: string;
-  linkLabel?: string;
+  /** How many, or a floor such as 50+. */
+  count?: number | string | undefined;
+  aside?: ReactNode;
   children: ReactNode;
 }) {
   return (
-    <section>
-      <div className="section-head">
-        <h2 className="section-title">
+    <section className="ui-section" aria-label={title}>
+      <div className="ui-section-head">
+        <h2>
           {title}
-          {note === undefined ? null : <small>{note}</small>}
+          {count === undefined ? null : <span className="ui-section-count">{count}</span>}
         </h2>
-        {linkTo === undefined ? null : (
-          <button type="button" className="chip section-link" onClick={() => navigate(linkTo)}>
-            {linkLabel ?? "All"}
-          </button>
-        )}
+        {aside === undefined ? null : <span className="ui-section-aside">{aside}</span>}
       </div>
       {children}
     </section>

@@ -7,8 +7,8 @@ import { useHomeKeys } from "../../hooks/useHomeKeys.ts";
 import { useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useNarrow } from "../../hooks/useNarrow.ts";
 import { linesWaitingOnYou, linesWithNoOwner, nextAsk, runningAgents } from "../../lib/lines.ts";
-import { setParams, useRoute } from "../../lib/router.ts";
-import { NewLineCard } from "../lines/NewLineCard.tsx";
+import { useRoute } from "../../lib/router.ts";
+import { Page } from "../ui/Page.tsx";
 import { ErrorState, LoadingState } from "../ui/states.tsx";
 import { AtSection } from "./AtSection.tsx";
 import { AtUpNext } from "./AtUpNext.tsx";
@@ -32,7 +32,6 @@ export function HomePage() {
   const { params } = useRoute();
   // A tapped notification, or a count in the bar, opens its item focused.
   const asked = params.get("focus");
-  const adding = params.get("new") === "1";
   const narrow = useNarrow();
   const home = h.home.data;
   const page = useRef<HTMLDivElement>(null);
@@ -64,18 +63,7 @@ export function HomePage() {
   const now = useClock(at !== null, 60_000);
 
   return (
-    <div className="page" ref={page}>
-      <h1 className="visually-hidden">Lines</h1>
-      {adding ? (
-        <NewLineCard
-          repos={h.repos}
-          onAdd={(line) => {
-            h.add(line);
-            setParams({ new: null });
-          }}
-          onCancel={() => setParams({ new: null })}
-        />
-      ) : null}
+    <Page title="Lines" hideTitle ref={page}>
       {recording ? <RecordAnswers onClose={() => setRecording(false)} /> : null}
       {h.failure === null ? null : <ErrorState error={h.failure} />}
       {h.home.isPending ? <LoadingState /> : null}
@@ -142,7 +130,6 @@ export function HomePage() {
           <QuestionList
             title="On no line"
             folded={narrow}
-            note="from before lines; their agents should put each on its line"
             cards={home.noLine}
             focus={focus}
             inspecting={inspecting}
@@ -152,6 +139,6 @@ export function HomePage() {
           />
         </>
       )}
-    </div>
+    </Page>
   );
 }

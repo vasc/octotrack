@@ -6,6 +6,8 @@ import { useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useMarkAllSeen } from "../../hooks/useMarkSeen.ts";
 import { setParams, useRoute } from "../../lib/router.ts";
 import { SyncFailures } from "../prs/SyncFailures.tsx";
+import { Button } from "../ui/Button.tsx";
+import { Page } from "../ui/Page.tsx";
 import { FeedSection } from "./FeedSection.tsx";
 import { FilterBox } from "./FilterBox.tsx";
 
@@ -20,40 +22,33 @@ export function FeedPage() {
   const includeWaiting = params.get("waiting") === "yes";
   const input = useRef<HTMLInputElement>(null);
   useHotkeys({ "/": () => input.current?.focus() });
-  const searching = filter.query !== "";
   const { data: bootstrap } = useBootstrap();
   return (
-    <div className="page page--narrow">
-      <div className="log-head">
-        <div>
-          <h1 className="panel-title">Log</h1>
-          <p className="log-sub">
-            {searching
-              ? "Everything that matches, newest first."
-              : "What you have not seen, line by line, in your order. A line counts as seen once you open it, and what you did yourself is never unseen."}
-          </p>
-        </div>
-        <div className="question-actions">
+    <Page
+      title="Log"
+      aside={
+        <>
           <FilterBox
             filter={filter}
             inputRef={input}
             placeholder="Search"
             autoFocus={params.get("find") === "1"}
           />
-          <button type="button" className="btn" onClick={seen.markAll}>
+          <Button variant="quiet" onClick={seen.markAll}>
             Mark all seen
-          </button>
-        </div>
-      </div>
+          </Button>
+        </>
+      }
+    >
       <SyncFailures failures={bootstrap?.syncFailures ?? []} />
       <FeedSection
         view={DEFAULT_VIEW}
         query={filter.query}
-        unseen={!searching}
+        unseen={filter.query === ""}
         includeWaiting={includeWaiting}
         onShowWaiting={() => setParams({ waiting: "yes" })}
         onFilter={filter.addTerm}
       />
-    </div>
+    </Page>
   );
 }

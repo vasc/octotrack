@@ -1,27 +1,29 @@
-import { sinceSummaryQuery } from "@octotrack/core/query";
-import { forYouCounts, linePosition } from "../../lib/lines.ts";
-import { moreSinceSummary } from "../../lib/log.ts";
 import { contracts } from "@octotrack/core/contracts";
+import { sinceSummaryQuery } from "@octotrack/core/query";
 import type { Drift, Line } from "@octotrack/core/schemas";
 import { useState } from "react";
 import { useChoices } from "../../hooks/useChoices.ts";
 import { useDraft } from "../../hooks/useDraft.ts";
-import { StartSheet } from "../home/StartSheet.tsx";
 import { useHome } from "../../hooks/useHome.ts";
 import { useLineChoices } from "../../hooks/useLineChoices.ts";
 import { useMarkSeen } from "../../hooks/useMarkSeen.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
+import { forYouCounts, linePosition } from "../../lib/lines.ts";
+import { moreSinceSummary } from "../../lib/log.ts";
 import { useRoute } from "../../lib/router.ts";
+import { StartSheet } from "../home/StartSheet.tsx";
+import { Loaded, StaleNote } from "../ui/Loaded.tsx";
 import { NotKept } from "../ui/NotKept.tsx";
+import { Note } from "../ui/Note.tsx";
+import { Columns, Stack } from "../ui/Pairs.tsx";
 import { ErrorState } from "../ui/states.tsx";
 import { LineActions } from "./LineActions.tsx";
 import { LinePanelHead } from "./LinePanelHead.tsx";
+import { OpenDrift } from "./OpenDrift.tsx";
 import { OwnerBox } from "./OwnerBox.tsx";
 import { OwnWorkBox } from "./OwnWorkBox.tsx";
 import { PanelForYou } from "./PanelForYou.tsx";
 import { PlanList } from "./PlanList.tsx";
-import { Loaded } from "../ui/Loaded.tsx";
-import { OpenDrift } from "./OpenDrift.tsx";
 import { SinceSummary } from "./SinceSummary.tsx";
 import { SummaryBox } from "./SummaryBox.tsx";
 import { TellBox } from "./TellBox.tsx";
@@ -30,7 +32,16 @@ import { TellBox } from "./TellBox.tsx";
  * A line opened, as E-Line draws it: where it stands and how to move it, its summary, what it needs from you, its plan
  * beside what is new and who owns it, and Tell. Opening it marks it seen.
  */
-export function LinePanelItem({ line, drift }: { line: Line; drift: readonly Drift[] }) {
+export function LinePanelItem({
+  line,
+  drift,
+  stale = null,
+}: {
+  line: Line;
+  drift: readonly Drift[];
+  /** Why the panel could not refresh, once it had loaded: what it shows may be out of date. */
+  stale?: Error | null;
+}) {
   const choices = useLineChoices(line);
   const { waiting: choicesWaiting } = useChoices();
   const h = useHome();
@@ -52,51 +63,53 @@ export function LinePanelItem({ line, drift }: { line: Line; drift: readonly Dri
   const live = line.state !== "done" && line.state !== "dropped";
   const forYou = home?.lines[line.ref]?.forYou ?? [];
   return (
-    <div className="line-panel">
-      <LinePanelHead
-        line={line}
-        position={linePosition(order, line.ref)}
-        repos={line.repos.map(h.repoName)}
-      />
-      {starting ? (
-        <StartSheet
-          line={line}
-          onDoneWhen={h.doneWhen}
-          onStart={(ref) => {
-            h.start(ref);
-            setStarting(false);
-          }}
-          onCancel={() => setStarting(false)}
-        />
-      ) : (
-        <LineActions
-          line={line}
-          owner={owner}
-          // A line that waited may hold questions and tasks, so Start goes through its Start sheet.
-          onChoose={(choice) =>
-            choice === "start" && (line.state === "up_next" || line.state === "tabled")
-              ? setStarting(true)
-              : choices.choose(choice)
-          }
-          onTable={choices.table}
-          foldTargets={order.filter((other) => other.ref !== line.ref)}
-          onFold={(into) => h.fold(line.ref, into)}
-          held={forYouCounts(forYou)}
-        />
+    <LinePanelHead
+      line={line}
+      position={linePosition(order, line.ref)}
+      repos={line.repos.map(h.repoName)}
+      actions={
+        starting ? (
+          <StartSheet
+            line={line}
+            onDoneWhen={h.doneWhen}
+            onStart={(ref) => {
+              h.start(ref);
+              setStarting(false);
+            }}
+            onCancel={() => setStarting(false)}
+          />
+        ) : (
+          <LineActions
+            line={line}
+            owner={owner}
+            // A line that waited may hold questions and tasks, so Start goes through its Start sheet.
+            onChoose={(choice) =>
+              choice === "start" && (line.state === "up_next" || line.state === "tabled")
+                ? setStarting(true)
+                : choices.choose(choice)
+            }
+            onTable={choices.table}
+            foldTargets={order.filter((other) => other.ref !== line.ref)}
+            onFold={(into) => h.fold(line.ref, into)}
+            held={forYouCounts(forYou)}
+          />
+        )
+      }
+    >
+      {stale === null ? null : <StaleNote error={stale} />}
+      {unmarked === null ? null : (
+        <Note error>
+          Could not mark {line.ref} seen: {unmarked.message}
+        </Note>
       )}
-      <SummaryBox line={line} owner={owner} />
+      <SummaryBox line={line} />
       <PanelForYou title={line.title} items={forYou} h={h} />
       <OpenDrift drift={drift} />
-      {unmarked === null ? null : (
-        <p className="error-text" role="alert">
-          Could not mark {line.ref} seen: {unmarked.message}. The Log still shows its changes as not seen.
-        </p>
-      )}
-      <div className="panel-grid">
+      <Columns>
         <Loaded loaded={shown.data !== undefined} error={shown.error} label="Loading the plan">
           <PlanList steps={shown.data?.steps ?? []} work={shown.data?.work ?? []} />
         </Loaded>
-        <div className="panel-column">
+        <Stack>
           <Loaded loaded={since.data !== undefined} error={since.error} label="Loading what is new">
             <SinceSummary
               line={line.ref}
@@ -120,8 +133,8 @@ export function LinePanelItem({ line, drift }: { line: Line; drift: readonly Dri
             waitingOnYou={home?.lines[line.ref]?.waitingOnYou === true}
             stepIn={home?.lines[line.ref]?.stepInReason ?? null}
           />
-        </div>
-      </div>
+        </Stack>
+      </Columns>
       {!live ? null : line.ownedBy !== null ? (
         <OwnWorkBox
           line={line.ref}
@@ -145,6 +158,6 @@ export function LinePanelItem({ line, drift }: { line: Line; drift: readonly Dri
       <NotKept error={tell.error ?? own.error} />
       {choices.failure === null ? null : <ErrorState error={choices.failure} />}
       {h.failure === null ? null : <ErrorState error={h.failure} />}
-    </div>
+    </LinePanelHead>
   );
 }

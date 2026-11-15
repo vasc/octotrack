@@ -1,20 +1,21 @@
-import { whenText } from "../../lib/format.ts";
 import type { PullRequest } from "@octotrack/core/schemas";
-import { humanize } from "../../lib/format.ts";
+import { Link } from "../ui/Link.tsx";
+import { humanize, whenText } from "../../lib/format.ts";
 import { StatusBadge } from "../ui/Badge.tsx";
-import { KeyValues } from "./KeyValues.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
+import { Pairs, Stack } from "../ui/Pairs.tsx";
 
+/** A pull request opened by its ref: where it lives, its checks, review and size, then what its author wrote. */
 export function PrPanel({ pr }: { pr: PullRequest }) {
   return (
-    <>
-      <KeyValues
-        items={[
+    <Stack>
+      <Pairs
+        pairs={[
           [
             "GitHub",
-            <a key="url" href={pr.url} target="_blank" rel="noreferrer">
+            <Link key="url" href={pr.url} external>
               {pr.repo}#{pr.number}
-            </a>,
+            </Link>,
           ],
           ["Checks", <StatusBadge key="checks" value={pr.checks} />],
           ["Review", <StatusBadge key="review" value={pr.review} />],
@@ -26,6 +27,6 @@ export function PrPanel({ pr }: { pr: PullRequest }) {
         ]}
       />
       {pr.body === "" ? null : <Markdown text={pr.body} />}
-    </>
+    </Stack>
   );
 }

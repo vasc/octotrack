@@ -3,9 +3,11 @@ import { type ReactNode, useState } from "react";
 import type { DropTarget } from "../../hooks/useDragOrder.ts";
 import type { HomeActions } from "../../hooks/useHome.ts";
 import { lineFocusRef, refOf, stepInRef } from "../../lib/focus.ts";
+import { List } from "../ui/List.tsx";
+import { Section } from "../ui/Section.tsx";
+import { EmptyState } from "../ui/states.tsx";
 import { AtPlaceItems } from "./AtPlaceItems.tsx";
 import { TaskItem } from "./TaskItem.tsx";
-import { HomeSection } from "./HomeSection.tsx";
 import { LineForYou } from "./LineForYou.tsx";
 import { LineForYouItem } from "./LineForYouItem.tsx";
 import { LineStepIn } from "./LineStepIn.tsx";
@@ -48,18 +50,11 @@ export function WorkingSection({
 }) {
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   return (
-    <HomeSection
-      title="Working on"
-      count={home.working.length}
-      note="Your order is everyone's order"
-      actions={actions}
-      main
-    >
-      {/* No lines, no sheet: an empty sheet would draw as a stray bar. */}
+    <Section title="Working on" count={home.working.length} aside={actions}>
       {home.working.length === 0 ? (
-        <p className="muted">Nothing is being worked on.</p>
+        <EmptyState>Nothing is being worked on</EmptyState>
       ) : (
-        <ol className="line-list">
+        <List>
           {home.working.map((line, index) => {
             const details = home.lines[line.ref];
             const crew = home.crews[line.ref];
@@ -85,7 +80,6 @@ export function WorkingSection({
                 focused={focus === lineFocusRef(line.ref)}
                 drop={drop(line.ref, "working")}
                 fold={at !== null ? "at" : folded ? "phone" : null}
-                index={index + 1}
                 line={line}
                 {...(crew === undefined ? {} : { crew })}
                 {...(details === undefined ? {} : { details })}
@@ -122,8 +116,8 @@ export function WorkingSection({
               </WorkingLine>
             );
           })}
-        </ol>
+        </List>
       )}
-    </HomeSection>
+    </Section>
   );
 }

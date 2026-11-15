@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 
 /**
- * One item in home's focus order, which the browser can focus: the keys move the browser's own focus here, and a
- * click or Tab into it moves home's focus with it. Focused, it is outlined and its numbered choices are drawn.
+ * One item in a page's focus order, which the browser can focus: the keys move the browser's own focus here, and a
+ * click or Tab into it moves the page's focus with it. Focused, it is tinted and its numbered choices show their keys.
  */
-export function FocusTarget({
+export function Focusable({
   focusRef,
   label,
   focused,
@@ -18,10 +18,10 @@ export function FocusTarget({
 }) {
   return (
     <fieldset
-      className="focus-wrap"
+      className="ui-focusable"
       aria-label={label}
       data-focus-ref={focusRef}
-      data-selected={focused}
+      data-current={focused ? "true" : undefined}
       aria-current={focused ? "true" : undefined}
       tabIndex={-1}
     >

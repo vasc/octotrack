@@ -1,3 +1,4 @@
+import type { RefObject } from "react";
 import type { Filter } from "../../hooks/useFilter.ts";
 import { useSuggestions } from "../../hooks/useSuggestions.ts";
 import { FilterBar } from "./FilterBar.tsx";
@@ -11,7 +12,7 @@ export function FilterBox({
 }: {
   filter: Filter;
   placeholder?: string;
-  inputRef?: React.Ref<HTMLInputElement>;
+  inputRef?: RefObject<HTMLInputElement | null>;
   /** Reached with / from another page: the cursor goes straight into the search. */
   autoFocus?: boolean;
 }) {

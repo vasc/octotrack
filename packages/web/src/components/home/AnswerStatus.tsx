@@ -1,7 +1,9 @@
 import type { LineHome } from "@octotrack/core/schemas";
 import { timeAgo } from "../../lib/format.ts";
 import { openEntity } from "../../lib/router.ts";
+import { Button } from "../ui/Button.tsx";
 import { RefLink } from "../ui/RefLink.tsx";
+import { Row } from "../ui/Row.tsx";
 
 type Answer = LineHome["answers"][number];
 
@@ -20,24 +22,23 @@ function status(answer: Answer): string {
   }
 }
 
-/**
- * One answer given on a line lately, and what became of it, in one sentence as E-States writes it; Change answer
- * opens the question, which reopens it and sends the new answer as replacing the old.
- */
+/** One answer given on a line lately and what became of it; Change answer opens the question to answer it again. */
 export function AnswerStatus({ answer }: { answer: Answer }) {
   return (
-    <p className="line-answer" data-status={answer.status}>
-      <span className="line-answer-text">
-        <RefLink value={answer.ref} /> answered: {answer.answer} · {status(answer)}
-      </span>
-      <button
-        type="button"
-        className="more-link"
-        aria-label={`Change answer ${answer.ref}`}
-        onClick={() => openEntity(answer.ref)}
-      >
-        Change answer
-      </button>
-    </p>
+    <Row
+      kind={<RefLink value={answer.ref} />}
+      tone="none"
+      title={answer.answer}
+      note={status(answer)}
+      trailing={
+        <Button
+          variant="quiet"
+          aria-label={`Change answer ${answer.ref}`}
+          onClick={() => openEntity(answer.ref)}
+        >
+          Change answer
+        </Button>
+      }
+    />
   );
 }

@@ -1,17 +1,14 @@
 import type { TaskOutcome } from "../../lib/tasks.ts";
 import type { ForYou, Issue } from "@octotrack/core/schemas";
 import { DecisionCardItem } from "../decisions/DecisionCardItem.tsx";
-import { ForYouRow } from "./ForYouRow.tsx";
 import { LineProposalCard } from "./LineProposalCard.tsx";
 import { TaskItem } from "./TaskItem.tsx";
 
-/** One thing waiting on the developer: opened in full when it has focus, else one row that opens it. */
+/** One thing waiting on the developer, opened in full: a question, a task, or a proposal about its line. */
 export function ForYouItem({
   item,
   title,
-  focused,
   armed,
-  onOpen,
   onTaskDone,
   onTaskCant,
   onLineDone,
@@ -23,10 +20,8 @@ export function ForYouItem({
   item: ForYou;
   /** The line's title, for proposals about the line itself. */
   title: string;
-  focused: boolean;
   /** Whether its keys act: not while its answer waits with Undo. */
   armed: boolean;
-  onOpen(ref: string): void;
   onTaskDone(task: Issue, outcome: TaskOutcome): void;
   onTaskCant(task: Issue, why: string): void;
   onLineDone(line: string): void;
@@ -36,7 +31,6 @@ export function ForYouItem({
   /** In a line's panel: a question offers its background, opened on its own. */
   background?: boolean;
 }) {
-  if (!focused) return <ForYouRow item={item} onOpen={onOpen} />;
   switch (item.kind) {
     case "question":
       return (

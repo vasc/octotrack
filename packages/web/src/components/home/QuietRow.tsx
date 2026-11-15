@@ -1,8 +1,12 @@
-import { whenText } from "../../lib/format.ts";
 import type { Line } from "@octotrack/core/schemas";
+import { whenText } from "../../lib/format.ts";
 import { openEntity } from "../../lib/router.ts";
+import { Button } from "../ui/Button.tsx";
+import { Facts } from "../ui/Facts.tsx";
+import { TextLink } from "../ui/RefLink.tsx";
+import { Row } from "../ui/Row.tsx";
 
-/** A tabled or finished line, shown when its section is opened: why it waits, and how to bring it back. */
+/** A tabled or finished line: why it waits, when to look again, and how to bring it back. */
 export function QuietRow({
   line,
   onStart,
@@ -13,36 +17,33 @@ export function QuietRow({
   onQueue?: (ref: string) => void;
 }) {
   return (
-    <article className="row" aria-label={line.title}>
-      <div className="row-stack">
-        <button type="button" className="row-title" onClick={() => openEntity(line.ref)}>
-          {line.title}
-        </button>
-        <div className="row-sub">
-          {line.tabledReason === null ? null : <span>{line.tabledReason}</span>}
-          {line.lookAgainAt === null ? null : <span>look again {whenText(line.lookAgainAt)}</span>}
-        </div>
-      </div>
-      {onQueue === undefined ? null : (
-        <button
-          type="button"
-          className="btn"
-          aria-label={`Up next ${line.title}`}
-          onClick={() => onQueue(line.ref)}
-        >
-          Up next
-        </button>
-      )}
-      {onStart === undefined ? null : (
-        <button
-          type="button"
-          className="btn"
-          aria-label={`Start ${line.title}`}
-          onClick={() => onStart(line.ref)}
-        >
-          Start
-        </button>
-      )}
-    </article>
+    <Row
+      label={line.title}
+      title={<TextLink onClick={() => openEntity(line.ref)}>{line.title}</TextLink>}
+      note={
+        <Facts>
+          {line.tabledReason}
+          {line.lookAgainAt === null ? null : `look again ${whenText(line.lookAgainAt)}`}
+        </Facts>
+      }
+      {...(onQueue === undefined && onStart === undefined
+        ? {}
+        : {
+            trailing: (
+              <>
+                {onQueue === undefined ? null : (
+                  <Button aria-label={`Up next ${line.title}`} onClick={() => onQueue(line.ref)}>
+                    Up next
+                  </Button>
+                )}
+                {onStart === undefined ? null : (
+                  <Button aria-label={`Start ${line.title}`} onClick={() => onStart(line.ref)}>
+                    Start
+                  </Button>
+                )}
+              </>
+            ),
+          })}
+    />
   );
 }

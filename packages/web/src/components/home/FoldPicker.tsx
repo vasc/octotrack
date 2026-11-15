@@ -1,9 +1,9 @@
 import type { Line } from "@octotrack/core/schemas";
+import { Actions } from "../ui/Actions.tsx";
+import { Button } from "../ui/Button.tsx";
+import { Label } from "../ui/Note.tsx";
 
-/**
- * Fold into: the open lines a proposal could join, as numbered buttons, never a select an arrow key could change. The
- * number keys pick one while the proposal has focus.
- */
+/** Fold into: the open lines a proposal could join, one button each, numbered for the keys. */
 export function FoldPicker({
   title,
   targets,
@@ -16,25 +16,25 @@ export function FoldPicker({
   onCancel(): void;
 }) {
   return (
-    <fieldset className="choice-group">
-      <legend className="muted">Fold {title} into</legend>
-      {targets.map((target, index) => (
-        <button
-          key={target.ref}
-          type="button"
-          // biome-ignore lint/a11y/noAutofocus: opened to choose one, so the first choice takes the cursor
-          autoFocus={index === 0}
-          className="btn"
-          aria-label={`Fold ${title} into ${target.title}`}
-          data-choice={index < 9 ? String(index + 1) : undefined}
-          onClick={() => onFold(target.ref)}
-        >
-          {target.ref} {target.title}
-        </button>
-      ))}
-      <button type="button" className="btn" data-quiet="true" onClick={onCancel}>
-        Cancel
-      </button>
-    </fieldset>
+    <>
+      <Label>Fold into</Label>
+      <Actions>
+        {targets.map((target, index) => (
+          <Button
+            key={target.ref}
+            // Opened to choose one, so the first choice takes the cursor.
+            autoFocus={index === 0}
+            aria-label={`Fold ${title} into ${target.title}`}
+            choice={index < 9 ? index + 1 : undefined}
+            onClick={() => onFold(target.ref)}
+          >
+            {target.title}
+          </Button>
+        ))}
+        <Button variant="quiet" onClick={onCancel}>
+          Cancel
+        </Button>
+      </Actions>
+    </>
   );
 }

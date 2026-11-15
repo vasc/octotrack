@@ -1,8 +1,12 @@
+import "./design.css";
+import { Actions } from "../components/ui/Actions.tsx";
+import { Button } from "../components/ui/Button.tsx";
 import { setParams, useRoute } from "../lib/router.ts";
 import { ActivityGallery } from "./ActivityGallery.tsx";
 import { DecisionGallery } from "./DecisionGallery.tsx";
 import { FoundationsGallery } from "./FoundationsGallery.tsx";
 import { LinesGallery } from "./LinesGallery.tsx";
+import { PrimitivesGallery } from "./PrimitivesGallery.tsx";
 import { StatusGallery } from "./StatusGallery.tsx";
 import { useDesignTokens } from "./useDesignTokens.ts";
 
@@ -24,24 +28,24 @@ export function DesignPage() {
   return (
     <div className="design-page">
       <header className="design-head">
-        <h1 className="page-title">Octotrack design language</h1>
-        <nav className="tabs" aria-label="Theme">
+        <h1>Octotrack design language</h1>
+        <Actions>
           {MODES.map(({ label, value }) => (
-            <button
-              type="button"
+            <Button
               key={label}
-              className="tab"
+              variant={mode === value ? "primary" : "plain"}
               aria-pressed={mode === value}
               onClick={() => setParams({ theme: value })}
             >
               {label}
-            </button>
+            </Button>
           ))}
-        </nav>
+        </Actions>
       </header>
       <div className="design-columns">
         {themes.map((theme) => (
           <div className="design-column" data-theme={theme} key={theme}>
+            <PrimitivesGallery />
             <FoundationsGallery tokens={tokens} />
             <StatusGallery />
             <DecisionGallery />

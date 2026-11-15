@@ -1,3 +1,6 @@
+import { Actions } from "../ui/Actions.tsx";
+import { Button } from "../ui/Button.tsx";
+import { Section } from "../ui/Section.tsx";
 import { TextBox } from "../ui/TextBox.tsx";
 
 export interface OwnWorkBoxProps {
@@ -15,17 +18,16 @@ export function OwnWorkBox({ line, words, onWords, onTask, onNote, sending = fal
   const text = words.trim();
   const off = text === "" || sending;
   return (
-    <section className="panel-section" aria-label="Add a task or a note">
-      <h2 className="panel-label">Add a task or a note</h2>
-      <div className="composer">
-        <TextBox label={`Add to ${line}`} placeholder="A task, or a note" value={words} onChange={onWords} />
-        <button type="button" className="btn" disabled={off} onClick={() => onTask(text)}>
+    <Section title="Add a task or a note">
+      <TextBox label={`Add to ${line}`} placeholder="A task, or a note" value={words} onChange={onWords} />
+      <Actions>
+        <Button disabled={off} onClick={() => onTask(text)}>
           Add as a task
-        </button>
-        <button type="button" className="btn" disabled={off} onClick={() => onNote(text)}>
+        </Button>
+        <Button disabled={off} onClick={() => onNote(text)}>
           Add as a note
-        </button>
-      </div>
-    </section>
+        </Button>
+      </Actions>
+    </Section>
   );
 }

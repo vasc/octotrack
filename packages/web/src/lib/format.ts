@@ -93,7 +93,10 @@ export function timeLabel(iso: string, now: number = Date.now()): string {
     return `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
   }
   if (now - at.getTime() < 6 * DAY) return WEEKDAYS[at.getDay()] ?? iso.slice(0, 10);
-  return iso.slice(0, 10);
+  const month = (MONTHS[at.getMonth()] ?? "").slice(0, 3);
+  return at.getFullYear() === today.getFullYear()
+    ? `${at.getDate()} ${month}`
+    : `${month} ${at.getFullYear()}`;
 }
 
 /** A filter term that survives names with spaces or brackets in them. */

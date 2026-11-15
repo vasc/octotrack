@@ -1,3 +1,4 @@
+import { Row } from "../ui/Row.tsx";
 import type { ForYou } from "@octotrack/core/schemas";
 
 /** What a folded line holds for the developer, in a few words: "1 question · 1 task at the Mac". */
@@ -23,9 +24,5 @@ export function foldedText(items: readonly ForYou[]): string {
 /** The rest of a line's items while I'm at a place, folded to one link that opens the first. */
 export function FoldedItems({ items, onOpen }: { items: readonly ForYou[]; onOpen(): void }) {
   if (items.length === 0) return null;
-  return (
-    <button type="button" className="more-link" onClick={onOpen}>
-      {foldedText(items)}, folded
-    </button>
-  );
+  return <Row tone="none" title={foldedText(items)} onOpen={onOpen} />;
 }

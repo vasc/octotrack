@@ -1,17 +1,15 @@
 import type { Decision } from "@octotrack/core/schemas";
+import { DecisionOptions } from "../entity/DecisionOptions.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
-import { KeyValues } from "../entity/KeyValues.tsx";
+import { Note } from "../ui/Note.tsx";
+import { RefText } from "../ui/RefText.tsx";
 import { DecisionMeta } from "./DecisionMeta.tsx";
 
 /** Why an open question is not in the developer's queue: the task it waits for, or its line not being worked on. */
 function heldText(decision: Decision, waitsFor: readonly string[]): string {
-  if (waitsFor.length > 0) {
-    return `Held: waits for ${waitsFor.join(", ")}, which would settle it.`;
-  }
-  if (decision.heldAt !== null) {
-    return `Held while ${decision.line ?? "its line"} is not being worked on; it reaches you when the line starts and the question is current.`;
-  }
-  return "Not in your queue now.";
+  if (waitsFor.length > 0) return `held: waits for ${waitsFor.join(", ")}`;
+  if (decision.heldAt !== null) return "held until its line starts";
+  return "not in your queue";
 }
 
 /**
@@ -22,23 +20,15 @@ export function HeldDecision({ decision, waitsFor }: { decision: Decision; waits
   return (
     <>
       <DecisionMeta decision={decision} />
-      <p className="panel-label" data-tone="attention">
-        {heldText(decision, waitsFor)}
-      </p>
-      <h2 className="question-title">{decision.title}</h2>
+      <Note>
+        <RefText text={heldText(decision, waitsFor)} />
+      </Note>
       {decision.context === "" ? null : <Markdown text={decision.context} />}
-      {decision.options.length === 0 ? null : (
-        <KeyValues
-          items={decision.options.map((option) => [
-            option.key === decision.recommendation ? `${option.key} (recommended)` : option.key,
-            option.description === "" ? option.label : `${option.label}: ${option.description}`,
-          ])}
-        />
-      )}
+      <DecisionOptions options={decision.options} marked={decision.recommendation} mark="recommended" />
       {decision.recommendationWhy === null ? null : (
-        <p className="muted">
+        <Note>
           <Markdown text={`Why: ${decision.recommendationWhy}`} inline />
-        </p>
+        </Note>
       )}
     </>
   );

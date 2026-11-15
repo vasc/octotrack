@@ -1,6 +1,10 @@
+import { Actions } from "../ui/Actions.tsx";
+import { Button } from "../ui/Button.tsx";
+import { Item } from "../ui/Item.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
+import { Note } from "../ui/Note.tsx";
 
-/** A done when an agent sharpened while the line waited: the old and the new with why, then Accept or Keep current. */
+/** A done when an agent sharpened while the line waited: the new one, the old and why, then Accept or Keep current. */
 export function DoneWhenChanged({
   was,
   proposal,
@@ -16,28 +20,24 @@ export function DoneWhenChanged({
   onAnswer(accept: boolean): void;
 }) {
   return (
-    <section className="start-sheet-part" aria-label="Done when changed">
-      <span className="panel-label" data-tone="info">
-        Done when changed
-      </span>
-      <p className="line-proposal-claim">
-        "<Markdown text={was} inline />" became "<Markdown text={proposal} inline />
-        ".
+    <Item label="Done when changed" kind="Done when changed" title={<Markdown text={proposal} inline />}>
+      <Note>
+        Was: <Markdown text={was} inline />
         {why === null ? null : (
           <>
-            {" "}
-            Why: <Markdown text={why} inline />
+            {" · "}
+            <Markdown text={why} inline />
           </>
         )}
-      </p>
-      <div className="question-actions">
-        <button type="button" className="btn" data-choice={numbers[0]} onClick={() => onAnswer(true)}>
+      </Note>
+      <Actions>
+        <Button choice={numbers[0]} onClick={() => onAnswer(true)}>
           Accept
-        </button>
-        <button type="button" className="btn" data-choice={numbers[1]} onClick={() => onAnswer(false)}>
+        </Button>
+        <Button choice={numbers[1]} onClick={() => onAnswer(false)}>
           Keep current
-        </button>
-      </div>
-    </section>
+        </Button>
+      </Actions>
+    </Item>
   );
 }

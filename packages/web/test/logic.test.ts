@@ -169,7 +169,9 @@ describe("timeLabel", () => {
     const now = new Date(2026, 10, 14, 18, 0).getTime();
     expect(timeLabel(new Date(2026, 10, 14, 9, 52).toISOString(), now)).toBe("09:52");
     expect(timeLabel(new Date(2026, 10, 10, 9, 0).toISOString(), now)).toBe("Tue");
-    expect(timeLabel("2026-10-01T09:00:00.000Z", now)).toBe("2026-10-01");
+    // Older: the day and the month in few letters, so the log's time column stays narrow; another year says which.
+    expect(timeLabel(new Date(2026, 9, 1, 9, 0).toISOString(), now)).toBe("1 Oct");
+    expect(timeLabel(new Date(2025, 9, 1, 9, 0).toISOString(), now)).toBe("Oct 2025");
   });
 });
 

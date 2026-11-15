@@ -2,8 +2,8 @@
 export function NotKept({ error }: { error: string | null }) {
   if (error === null) return null;
   return (
-    <p className="error-text" role="alert">
-      Not saved: {error}. What you typed is still here; it is kept as soon as saving works again.
+    <p className="ui-note" data-error="true" role="alert">
+      Not saved: {error}
     </p>
   );
 }

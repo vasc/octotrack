@@ -1,4 +1,12 @@
 import type { DecisionLine } from "@octotrack/core/decision-lines";
+import { Actions } from "../ui/Actions.tsx";
+import { Button } from "../ui/Button.tsx";
+import { Field } from "../ui/Field.tsx";
+import { List } from "../ui/List.tsx";
+import { Note } from "../ui/Note.tsx";
+import { RefLink } from "../ui/RefLink.tsx";
+import { Row } from "../ui/Row.tsx";
+import { Sheet } from "../ui/Sheet.tsx";
 
 export interface BatchResultLine {
   ref: string;
@@ -14,60 +22,65 @@ export interface BatchPanelViewProps {
   submitting: boolean;
   onChange(text: string): void;
   onSubmit(): void;
+  onClose(): void;
   /** Opened with a key: the box takes the cursor. */
   autoFocus?: boolean;
+  /** How many times recording replaced the lines with those that failed, which the box shows even with focus. */
+  recorded?: number;
 }
 
-/** Decisions made elsewhere, typed in as fast as they can be remembered. */
+/** Answers given elsewhere, one per line, typed as fast as they come back to mind: ref, option, an optional note. */
 export function BatchPanelView(props: BatchPanelViewProps) {
-  const { text, parsed, parseError, results, submitting, onChange, onSubmit, autoFocus = false } = props;
+  const {
+    text,
+    parsed,
+    parseError,
+    results,
+    submitting,
+    onChange,
+    onSubmit,
+    onClose,
+    autoFocus = false,
+    recorded = 0,
+  } = props;
+  const ready = parsed.length > 0 && parseError === null && !submitting;
   return (
-    <form
-      className="batch"
-      onSubmit={(event) => {
-        event.preventDefault();
-        onSubmit();
-      }}
+    <Sheet
+      title="Record answers"
+      onClose={onClose}
+      actions={
+        <Actions>
+          <Button variant="primary" disabled={!ready} onClick={onSubmit}>
+            Record {parsed.length === 0 ? "" : parsed.length}
+          </Button>
+        </Actions>
+      }
     >
-      <label htmlFor="batch-lines" className="section-title">
-        Log decisions made elsewhere
-      </label>
-      <textarea
-        id="batch-lines"
-        className="field"
-        spellCheck={false}
-        // biome-ignore lint/a11y/noAutofocus: opened with r, to type into at once
+      <Field
+        label="Answers"
+        multiline
         autoFocus={autoFocus}
+        replaced={recorded}
         placeholder={"D-3 redis Agreed on the call\nD-4 a\nD-5 - None of the options, doing this instead"}
         value={text}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={onChange}
+        onSubmit={() => {
+          if (ready) onSubmit();
+        }}
       />
-      {parseError === null ? null : (
-        <p className="error-text" role="alert">
-          {parseError}
-        </p>
-      )}
+      {parseError === null ? null : <Note error>{parseError}</Note>}
       {results === null ? null : (
-        <ul className="rows" aria-label="Results">
+        <List label="Results">
           {results.map((result) => (
-            <li className="row" key={result.ref}>
-              <span className="ref">{result.ref}</span>
-              {result.ok ? <span>recorded</span> : <span className="error-text">{result.error}</span>}
-            </li>
+            <Row
+              key={result.ref}
+              kind={<RefLink value={result.ref} />}
+              tone={result.ok ? "none" : "stuck"}
+              title={result.ok ? "recorded" : (result.error ?? "not recorded")}
+            />
           ))}
-        </ul>
+        </List>
       )}
-      <div className="page-head">
-        <span className="muted">One per line: ref, option key, then an optional note.</span>
-        <button
-          type="submit"
-          className="btn"
-          data-primary="true"
-          disabled={parsed.length === 0 || parseError !== null || submitting}
-        >
-          Record {parsed.length === 0 ? "" : parsed.length}
-        </button>
-      </div>
-    </form>
+    </Sheet>
   );
 }

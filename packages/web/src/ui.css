@@ -1,0 +1,1398 @@
+/*
+ * The primitives' own looks, and the only styles a screen gets: every class here belongs to a component in
+ * components/ui. A screen composes primitives and never styles them, so every button, row, field and sheet looks alike
+ * everywhere. Values come from design/tokens.css.
+ */
+
+/* ---------- Words ---------- */
+
+.ui-hidden,
+.ui-label[data-hidden="true"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.ui-label {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-regular);
+  color: var(--ink-3);
+}
+
+.ui-note {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--ink-3);
+}
+
+.ui-note[data-error="true"] {
+  color: var(--bad);
+}
+
+.ui-code,
+.ui-command {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+}
+
+.ui-command {
+  margin: 0;
+  padding: var(--space-4) var(--space-5);
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
+  color: var(--ink-2);
+  overflow-x: auto;
+}
+
+.ui-ref {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+  cursor: pointer;
+}
+
+.ui-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+.ui-ref:hover,
+.ui-link:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 3px;
+}
+
+.ui-time {
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ui-tag {
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.ui-tag:is([data-tone="bad"], [data-tone="warn"]) {
+  color: var(--warn);
+}
+
+.ui-tag[data-tone="good"] {
+  color: var(--ink-2);
+}
+
+.ui-facts {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-regular);
+  color: var(--ink-3);
+}
+
+.ui-fact + .ui-fact::before {
+  content: "·";
+  margin: 0 var(--space-3);
+  color: var(--ink-3);
+}
+
+.ui-fact-tone[data-tone="strong"] {
+  color: var(--ink-2);
+}
+
+.ui-fact-tone[data-tone="stuck"] {
+  color: var(--warn);
+}
+
+/* Markdown, as agents and the developer write it. */
+.ui-prose {
+  margin: 0;
+  color: var(--ink-2);
+  line-height: var(--leading-body);
+  overflow-wrap: anywhere;
+}
+
+.ui-prose > :first-child {
+  margin-top: 0;
+}
+
+.ui-prose > :last-child {
+  margin-bottom: 0;
+}
+
+.ui-prose :is(p, ul, ol, pre, blockquote, table) {
+  margin: 0 0 var(--space-4);
+}
+
+.ui-prose :is(ul, ol) {
+  padding-left: var(--space-10);
+}
+
+.ui-prose :is(h1, h2, h3, h4) {
+  margin: var(--space-6) 0 var(--space-2);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--ink);
+}
+
+.ui-prose :is(code, pre),
+.ui-prose-inline code {
+  font-family: var(--mono);
+  font-size: var(--text-sm);
+}
+
+.ui-prose :not(pre) > code,
+.ui-prose-inline code {
+  padding: 0 var(--space-1);
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+}
+
+.ui-prose pre {
+  padding: var(--space-4) var(--space-5);
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+}
+
+.ui-prose blockquote {
+  padding-left: var(--space-5);
+  border-left: 1px solid var(--line-strong);
+  color: var(--ink-3);
+}
+
+.ui-prose a,
+.ui-prose-inline a {
+  color: inherit;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 3px;
+}
+
+.ui-prose strong,
+.ui-prose-inline strong {
+  color: var(--ink);
+  font-weight: var(--weight-semibold);
+}
+
+/* ---------- Button ---------- */
+
+/* Primary filled, plain a word that acts, quiet a word that steps back, icon a square around an icon. */
+.ui-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  min-height: var(--control-height);
+  padding: 0 var(--space-5);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--ink);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ui-button:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+
+.ui-button[data-variant="primary"] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.ui-button[data-variant="primary"]:hover:not(:disabled) {
+  background: var(--accent);
+  opacity: var(--opacity-hover);
+}
+
+.ui-button[data-variant="quiet"] {
+  color: var(--ink-3);
+}
+
+.ui-button[data-variant="icon"] {
+  width: var(--control-height);
+  padding: 0;
+  color: var(--ink-2);
+}
+
+.ui-icon {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  flex: none;
+}
+
+.ui-button:disabled {
+  opacity: var(--opacity-disabled);
+  cursor: default;
+}
+
+/* Actions: one row of buttons that wraps; a word that acts starts in line with the text above it. */
+.ui-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ui-actions > .ui-button:first-child:not([data-variant="primary"]) {
+  margin-left: calc(-1 * var(--space-5));
+}
+
+/* The number a key presses, drawn only on the item the keys act on, and only where there are keys. */
+@media (pointer: fine) {
+  [data-current="true"] [data-choice]::before {
+    content: attr(data-choice);
+    font-family: var(--mono);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-regular);
+    opacity: var(--opacity-hint);
+  }
+}
+
+/* ---------- List and Row ---------- */
+
+/* A list: one sheet of rows, hairlines between them. */
+.ui-list {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.ui-list > * + * {
+  border-top: 1px solid var(--line);
+}
+
+/* A named list: its name over its rows, spaced as a field's label is over its box. */
+.ui-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.ui-row {
+  --lead: var(--lead-width);
+  position: relative;
+  min-width: 0;
+}
+
+.ui-row[data-lead="wide"] {
+  --lead: var(--lead-width-wide);
+}
+
+.ui-row[data-current="true"],
+.ui-focusable[data-current="true"] {
+  background: var(--accent-soft);
+}
+
+.ui-row:focus,
+.ui-focusable:focus {
+  outline: none;
+}
+
+/* Lead, what it is, what acts on it: the lead a narrow column so every title in a list starts in one place. */
+.ui-row-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-5);
+  padding: var(--space-6) var(--row-inset);
+}
+
+.ui-row-lead {
+  flex: none;
+  width: var(--lead);
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+}
+
+.ui-row-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+/* A row that opens: its words are one button, stretched over the whole head, so the row is one target. */
+.ui-row-open {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ui-row-open::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.ui-row-head:is([data-action="open"], [data-action="toggle"]) {
+  position: relative;
+  cursor: pointer;
+}
+
+.ui-row-head:is([data-action="open"], [data-action="toggle"]):hover {
+  background: var(--surface-2);
+}
+
+.ui-row[data-current="true"] > .ui-row-head:hover {
+  background: none;
+}
+
+.ui-row-trailing {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+  align-self: center;
+  margin-right: calc(-1 * var(--space-4));
+}
+
+.ui-row-kind {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+}
+
+.ui-row-kind::before {
+  content: "";
+  flex: none;
+  width: var(--dot-size);
+  height: var(--dot-size);
+  border-radius: var(--radius-pill);
+  background: var(--attention);
+}
+
+.ui-row-kind[data-tone="stuck"]::before {
+  background: var(--warn);
+}
+
+.ui-row-kind[data-tone="none"]::before {
+  background: var(--line-strong);
+}
+
+.ui-row-title {
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.ui-row[data-quiet="true"] .ui-row-title {
+  font-weight: var(--weight-regular);
+  color: var(--ink-2);
+}
+
+.ui-row-facts {
+  margin-left: var(--space-5);
+}
+
+.ui-row-note {
+  font-size: var(--text-sm);
+  color: var(--ink-3);
+}
+
+.ui-row-chevron {
+  flex: none;
+  color: var(--ink-3);
+}
+
+.ui-row-chevron[data-open="true"] {
+  transform: rotate(90deg);
+}
+
+.ui-row-check {
+  flex: none;
+  min-width: var(--icon-size);
+  color: var(--accent);
+  font-weight: var(--weight-semibold);
+  text-align: center;
+}
+
+/* A row picked with a check: the box itself is the browser's, kept for keys and screen readers, and drawn as a ✓. */
+.ui-row-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.ui-row-head:has(.ui-row-input:focus-visible) {
+  outline: var(--border-focus) solid var(--accent);
+  outline-offset: calc(-1 * var(--border-focus));
+}
+
+/* What a row holds: under it, in line with its title. */
+.ui-row-body {
+  --body-inset: var(--row-inset);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: 0 var(--row-inset) var(--space-7) var(--body-inset);
+}
+
+.ui-row:has(> .ui-row-head > .ui-row-lead) > .ui-row-body {
+  --body-inset: calc(var(--row-inset) + var(--lead) + var(--space-5));
+}
+
+/* A list inside a row is no box of its own: its rows are part of the one sheet, their text in line with the title. */
+.ui-row-body .ui-list {
+  background: none;
+  border: 0;
+  border-radius: var(--radius-none);
+  overflow: visible;
+}
+
+.ui-row-body .ui-list > * + * {
+  border-top-color: var(--line-faint);
+}
+
+.ui-row-body .ui-row-head {
+  padding-inline: 0;
+  padding-block: var(--space-4);
+}
+
+.ui-row-body .ui-row-body {
+  padding-right: 0;
+  padding-left: 0;
+}
+
+/*
+ * An item opened in its list's place, which the keys act on: a band of tint across the whole sheet, edge to edge, its
+ * words in line with the rows around it. Never a box of its own.
+ */
+.ui-focusable {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ui-list > .ui-focusable {
+  padding: var(--space-7) var(--row-inset);
+}
+
+.ui-row-body > .ui-focusable,
+.ui-row-body > .ui-list > .ui-focusable {
+  margin: 0 calc(-1 * var(--row-inset)) 0 calc(-1 * var(--body-inset));
+  padding: var(--space-7) var(--row-inset) var(--space-7) var(--body-inset);
+}
+
+.ui-row-body .ui-row-body > .ui-focusable,
+.ui-row-body .ui-row-body > .ui-list > .ui-focusable {
+  margin: 0;
+  padding: var(--space-7) 0;
+}
+
+.ui-row[data-current="true"] .ui-focusable[data-current="true"],
+.ui-panel .ui-focusable[data-current="true"] {
+  background: none;
+}
+
+/* ---------- Field ---------- */
+
+.ui-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.ui-field :is(input, textarea) {
+  width: 100%;
+  min-height: var(--control-height);
+  padding: var(--space-3) var(--space-5);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  font: inherit;
+  font-size: var(--text-md);
+  line-height: var(--leading-body);
+  color: var(--ink);
+  resize: none;
+}
+
+.ui-field textarea {
+  overflow: hidden;
+  field-sizing: content;
+}
+
+.ui-field :is(input, textarea)::placeholder {
+  color: var(--ink-3);
+}
+
+.ui-field :is(input, textarea):focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* ---------- Menu ---------- */
+
+.ui-menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.ui-menu-list {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: var(--z-popover);
+  display: flex;
+  flex-direction: column;
+  min-width: calc(var(--control-height) * 6);
+  padding: var(--space-2);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-popover);
+  /* Its own type, whatever it opens from, such as a row's number in monospace. */
+  font-family: var(--font);
+  font-size: var(--text-sm);
+  text-align: left;
+}
+
+.ui-menu-list[data-align="start"] {
+  right: auto;
+  left: 0;
+}
+
+/* A row's lead that opens a menu, such as a line's number: the same small grey figures, a quiet target. */
+.ui-lead {
+  min-width: var(--lead-width);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: grab;
+}
+
+.ui-lead:hover,
+.ui-lead[aria-expanded="true"] {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ui-menu-group {
+  padding: var(--space-4) var(--space-5) var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+}
+
+.ui-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: var(--control-height);
+  padding: 0 var(--space-5) 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--ink);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ui-menu-item:is(:hover, :focus-visible):not(:disabled) {
+  background: var(--surface-2);
+  outline: none;
+}
+
+.ui-menu-item:disabled {
+  color: var(--ink-3);
+  cursor: default;
+}
+
+.ui-menu-check {
+  width: var(--icon-size);
+  color: var(--ink-2);
+  text-align: center;
+}
+
+/* ---------- Page, Section, Fold ---------- */
+
+.ui-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  width: 100%;
+  max-width: var(--page-width-narrow);
+  margin: 0 auto;
+  padding: var(--space-14) var(--space-10) var(--space-32);
+}
+
+.ui-page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-5) var(--space-8);
+}
+
+.ui-page-title {
+  margin: 0;
+  font-size: var(--text-heading);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.01em;
+}
+
+.ui-page-aside {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.ui-page-aside .ui-field {
+  flex: 1;
+  max-width: calc(var(--control-height) * 10);
+}
+
+.ui-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+/* A section's title starts where its words do, never on an inset of its own. */
+.ui-section-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-5);
+}
+
+.ui-section-head h2 {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--ink);
+}
+
+.ui-section-count {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-regular);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-section-aside {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-left: auto;
+  font-size: var(--text-sm);
+  color: var(--ink-3);
+}
+
+/* A folded section: a sheet whose head opens it to its rows. */
+.ui-fold {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.ui-fold-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-6) var(--row-inset);
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ui-fold-head:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+
+.ui-fold-head:disabled {
+  cursor: default;
+}
+
+.ui-fold-title {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--ink);
+}
+
+.ui-fold-summary {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--text-sm);
+  color: var(--ink-3);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-fold-head .ui-row-chevron {
+  margin-left: auto;
+}
+
+.ui-fold .ui-list {
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: var(--radius-none);
+}
+
+/* ---------- Answers ---------- */
+
+.ui-options {
+  display: flex;
+  flex-direction: column;
+}
+
+.ui-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  margin: 0 calc(-1 * var(--space-5));
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ui-option:hover {
+  background: var(--surface-2);
+}
+
+.ui-option::before {
+  grid-row: span 2;
+}
+
+.ui-option-label,
+.ui-option-description {
+  grid-column: 2;
+}
+
+.ui-option-label {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+  color: var(--ink);
+}
+
+.ui-option-recommended {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-regular);
+  color: var(--attention);
+}
+
+.ui-option-description {
+  font-size: var(--text-sm);
+  color: var(--ink-3);
+}
+
+/* ---------- Pairs, columns, stacks ---------- */
+
+.ui-pairs {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-3) var(--space-8);
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.ui-pair {
+  display: contents;
+}
+
+.ui-pair dt {
+  color: var(--ink-3);
+}
+
+.ui-pair dd {
+  margin: 0;
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+
+.ui-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-12);
+}
+
+.ui-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+/* ---------- States ---------- */
+
+.ui-state {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin: 0;
+  padding: var(--space-6) 0;
+  font-size: var(--text-sm);
+  color: var(--ink-3);
+}
+
+.ui-state p {
+  margin: 0;
+}
+
+.ui-state[data-error="true"] {
+  color: var(--bad);
+}
+
+/* ---------- Sheet ---------- */
+
+/* Over the whole page and its bar; from the bottom on a phone, a panel in the middle on a wide screen. */
+.ui-sheet-layer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-sheet);
+}
+
+.ui-sheet-scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--scrim);
+}
+
+.ui-sheet {
+  position: absolute;
+  left: 50%;
+  top: 12vh;
+  width: min(var(--sheet-width), 100%);
+  max-height: 76vh;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sheet);
+}
+
+.ui-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-5) var(--space-5) var(--space-3) var(--row-inset);
+}
+
+.ui-sheet-head h2 {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+.ui-sheet-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-3) var(--row-inset) var(--space-8);
+  overflow-y: auto;
+}
+
+.ui-sheet-foot {
+  padding: var(--space-5) var(--row-inset);
+  border-top: 1px solid var(--line);
+}
+
+/* Inside a sheet a list is no box of its own: its rows run edge to edge, their text in line with the fields. */
+.ui-sheet-body .ui-list {
+  margin-inline: calc(-1 * var(--row-inset));
+  border: 0;
+  border-block: 1px solid var(--line);
+  border-radius: var(--radius-none);
+  background: none;
+}
+
+/* ---------- Panel ---------- */
+
+.ui-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-12) var(--space-32);
+}
+
+.ui-panel-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  margin-right: calc(-1 * var(--space-5));
+}
+
+.ui-panel-crumbs {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+}
+
+.ui-panel-title {
+  margin: 0;
+  font-size: var(--text-heading);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.01em;
+}
+
+.ui-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-14);
+  margin-top: var(--space-8);
+}
+
+/* ---------- Toasts ---------- */
+
+/* Over everything, an open panel included: a choice made anywhere shows its Undo. */
+.ui-toasts {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--space-10) + env(safe-area-inset-bottom));
+  z-index: var(--z-undo);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: min(var(--sheet-width), calc(100% - 2 * var(--space-8)));
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.ui-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-8);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-popover);
+  font-size: var(--text-sm);
+  pointer-events: auto;
+}
+
+.ui-toast-text {
+  flex: 1;
+  min-width: 0;
+  color: var(--ink-2);
+}
+
+.ui-toast[data-failed="true"] .ui-toast-text {
+  color: var(--bad);
+}
+
+.ui-toast-actions {
+  display: flex;
+  flex: none;
+  gap: var(--space-1);
+}
+
+/* ---------- Bar and shell ---------- */
+
+.ui-bar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-panel);
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.ui-bar-inner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  max-width: var(--page-width);
+  min-height: calc(var(--control-height) + 2 * var(--space-4));
+  margin: 0 auto;
+  padding: var(--space-3) var(--space-10);
+}
+
+.ui-bar-nav {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+}
+
+.ui-bar-link {
+  font-size: var(--text-sm);
+  color: var(--ink-3);
+  text-decoration: none;
+}
+
+.ui-bar-link:hover,
+.ui-bar-link[aria-current="page"] {
+  color: var(--ink);
+}
+
+.ui-bar-link[data-brand="true"] {
+  margin-right: var(--space-4);
+  font-weight: var(--weight-semibold);
+  color: var(--ink);
+}
+
+.ui-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+/* What waits on the developer: numbers in ink, words quieter; urgent first, after a small warm dot. */
+.ui-counts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-8);
+  font-size: var(--text-sm);
+}
+
+.ui-count {
+  color: var(--ink-3);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.ui-count b {
+  margin-right: var(--space-2);
+  font-weight: var(--weight-medium);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-count:hover {
+  color: var(--ink);
+}
+
+.ui-count[data-urgent="true"]::before {
+  content: "";
+  display: inline-block;
+  width: var(--dot-size);
+  height: var(--dot-size);
+  margin-right: var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--warn);
+  transform: translateY(-1px);
+}
+
+/* A theme naming itself in its own colours: its ground and its colour for what needs you. */
+.ui-swatch {
+  display: inline-flex;
+  gap: var(--space-1);
+}
+
+.ui-swatch::before,
+.ui-swatch::after {
+  content: "";
+  width: var(--space-5);
+  height: var(--space-5);
+  border-radius: var(--radius-pill);
+}
+
+.ui-swatch::before {
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+}
+
+.ui-swatch::after {
+  background: var(--attention);
+}
+
+/* An opened ref: over the right of the page, so the list keeps its place behind it; the whole screen on a phone. */
+.ui-side {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--z-panel);
+  width: min(var(--panel-width), 100%);
+  overflow-y: auto;
+  background: var(--surface);
+  border-left: 1px solid var(--line);
+  box-shadow: var(--shadow-panel);
+}
+
+.ui-side:focus {
+  outline: none;
+}
+
+/* ---------- Phone ---------- */
+
+@media (max-width: 720px) {
+  .ui-sheet {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-height: 88vh;
+    transform: none;
+    border-radius: var(--radius-xl) var(--radius-xl) var(--radius-none) var(--radius-none);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .ui-page {
+    gap: var(--space-12);
+    padding: var(--space-8) var(--space-4) var(--space-32);
+  }
+
+  .ui-panel {
+    padding: var(--space-5) var(--space-8) var(--space-32);
+  }
+
+  .ui-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ui-row-facts {
+    display: block;
+    margin-left: 0;
+  }
+
+  /* On a phone what a row holds takes the full width, rather than starting past its number. */
+  .ui-row:has(> .ui-row-head > .ui-row-lead) > .ui-row-body {
+    --body-inset: var(--row-inset);
+  }
+
+  .ui-bar-inner {
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    padding: var(--space-3) var(--space-4) var(--space-3) var(--space-8);
+  }
+
+  /* On a phone the bar is the name and the actions, with what waits on its own line under them. */
+  .ui-bar-link:not([data-brand="true"]) {
+    display: none;
+  }
+
+  .ui-counts {
+    order: 3;
+    flex-basis: 100%;
+    gap: var(--space-1) var(--space-6);
+    padding-bottom: var(--space-2);
+  }
+
+  .ui-fold-summary {
+    display: none;
+  }
+}
+
+@media (pointer: coarse) {
+  .ui-button,
+  .ui-menu-item,
+  .ui-search-option {
+    min-height: var(--touch-target);
+  }
+
+  /* Words that act inside a line of text, and a row's number, reach a finger's size past their own edges. */
+  .ui-link,
+  .ui-ref,
+  .ui-lead {
+    position: relative;
+  }
+
+  .ui-link::after,
+  .ui-ref::after,
+  .ui-lead::after {
+    content: "";
+    position: absolute;
+    inset: calc(-1 * var(--space-5));
+  }
+
+  .ui-button[data-variant="icon"] {
+    width: var(--touch-target);
+  }
+
+  .ui-field input,
+  .ui-field textarea,
+  .ui-search-input {
+    font-size: var(--text-input-touch);
+  }
+
+  /* On a touch screen a menu opens with focus on its current item; its tint shows that, and a ring would shout it. */
+  .ui-menu-item:focus-visible {
+    outline: none;
+  }
+}
+
+/* ---------- Only on a phone, or only wider ---------- */
+
+.ui-only {
+  display: contents;
+}
+
+@media (max-width: 720px) {
+  .ui-only[data-on="wide"],
+  .ui-button-words {
+    display: none;
+  }
+
+  .ui-button:has(.ui-button-words) {
+    width: var(--control-height);
+    padding: 0;
+  }
+}
+
+@media (min-width: 721px) {
+  .ui-only[data-on="phone"] {
+    display: none;
+  }
+}
+
+/* ---------- Item: something opened in place ---------- */
+
+.ui-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+.ui-item > .ui-row-kind {
+  margin-bottom: calc(-1 * var(--space-3));
+}
+
+.ui-item-title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  color: var(--ink);
+}
+
+.ui-field-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--field-narrow), 1fr));
+  gap: var(--space-5);
+}
+
+/* ---------- Search, with completions under it ---------- */
+
+.ui-search {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  max-width: calc(var(--control-height) * 10);
+}
+
+.ui-search-input {
+  width: 100%;
+  min-height: var(--control-height);
+  padding: var(--space-3) var(--space-5);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  font: inherit;
+  font-size: var(--text-md);
+  color: var(--ink);
+}
+
+.ui-search-input::placeholder {
+  color: var(--ink-3);
+}
+
+.ui-search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.ui-search-list {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  left: 0;
+  z-index: var(--z-popover);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(var(--control-height) * 10);
+  padding: var(--space-2);
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-popover);
+}
+
+.ui-search-option {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  min-height: var(--control-height);
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  font: inherit;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ui-search-option:hover,
+.ui-search-option[aria-selected="true"] {
+  background: var(--surface-2);
+}
+
+.ui-search-hint {
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

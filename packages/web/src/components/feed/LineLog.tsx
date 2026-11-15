@@ -1,8 +1,9 @@
 import type { FeedEvent, Line } from "@octotrack/core/schemas";
 import { openEntity } from "../../lib/router.ts";
+import { TextLink } from "../ui/RefLink.tsx";
 import { LogGroup } from "./LogGroup.tsx";
 
-/** One line's part of what is not seen: its number, title, ref and headline, then its changes. */
+/** One line's part of what is not seen: its number, title opening it, ref and headline, then its changes. */
 export function LineLog({
   line,
   number,
@@ -15,15 +16,9 @@ export function LineLog({
   return (
     <LogGroup
       label={line.title}
-      mark={<span className="line-num">{number}</span>}
-      name={
-        <>
-          <button type="button" className="line-link" onClick={() => openEntity(line.ref)}>
-            {line.title}
-          </button>{" "}
-          <span className="mono muted">{line.ref}</span>
-        </>
-      }
+      lead={number}
+      title={<TextLink onClick={() => openEntity(line.ref)}>{line.title}</TextLink>}
+      refText={line.ref}
       headline={line.headline}
       events={events}
     />

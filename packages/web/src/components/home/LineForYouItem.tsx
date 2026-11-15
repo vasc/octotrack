@@ -1,10 +1,10 @@
 import type { ForYou } from "@octotrack/core/schemas";
 import type { HomeActions } from "../../hooks/useHome.ts";
 import { focusLabel, refOf } from "../../lib/focus.ts";
-import { FocusTarget } from "./FocusTarget.tsx";
 import { ForYouItem } from "./ForYouItem.tsx";
+import { ForYouRow } from "./ForYouRow.tsx";
 
-/** One thing on a working line that waits on the developer, as a focus target. */
+/** One thing on a working line that waits on the developer: a row, opened in place while it has focus. */
 export function LineForYouItem({
   item,
   title,
@@ -23,22 +23,22 @@ export function LineForYouItem({
   onFocus(ref: string): void;
   onPostponed(ref: string): void;
 }) {
-  const ref = refOf(item);
+  const focused = refOf(item) === focus;
   return (
-    <FocusTarget focusRef={ref} label={focusLabel(item, title)} focused={ref === focus}>
-      <ForYouItem
-        item={item}
-        title={title}
-        focused={ref === focus}
-        armed={armed}
-        onOpen={onFocus}
-        onTaskDone={h.taskDone}
-        onTaskCant={h.taskCant}
-        onLineDone={h.lineDone}
-        onNotYet={h.notYet}
-        onDoneWhen={h.doneWhen}
-        onPostponed={onPostponed}
-      />
-    </FocusTarget>
+    <ForYouRow item={item} label={focusLabel(item, title)} focused={focused} onOpen={onFocus}>
+      {focused ? (
+        <ForYouItem
+          item={item}
+          title={title}
+          armed={armed}
+          onTaskDone={h.taskDone}
+          onTaskCant={h.taskCant}
+          onLineDone={h.lineDone}
+          onNotYet={h.notYet}
+          onDoneWhen={h.doneWhen}
+          onPostponed={onPostponed}
+        />
+      ) : undefined}
+    </ForYouRow>
   );
 }

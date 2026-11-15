@@ -1,67 +1,32 @@
 import type { FeedEvent } from "@octotrack/core/schemas";
-import { filterTerm, type Tone } from "../../lib/format.ts";
+import { filterTerm } from "../../lib/format.ts";
+import { Facts } from "../ui/Facts.tsx";
+import { RefLink, TextLink } from "../ui/RefLink.tsx";
 import { RefText } from "../ui/RefText.tsx";
+import { Row } from "../ui/Row.tsx";
 import { TimeAgo } from "../ui/TimeAgo.tsx";
-
-export function eventTone(event: FeedEvent): Tone {
-  switch (event.type) {
-    case "decision.requested":
-      return "attention";
-    case "decision.resolved":
-    case "pr.merged":
-    case "drift.resolved":
-      return "good";
-    case "drift.opened":
-      return "warn";
-    case "pr.closed":
-      return "bad";
-    case "pr.checks_changed":
-      return event.attrs.checks === "failing" ? "bad" : event.attrs.checks === "passing" ? "good" : "warn";
-    case "pr.review_changed":
-      return event.attrs.review === "changes_requested"
-        ? "bad"
-        : event.attrs.review === "approved"
-          ? "good"
-          : "warn";
-    case "status.posted":
-      if (event.attrs.level === "blocker") return "bad";
-      if (event.attrs.level === "warning") return "warn";
-      if (event.attrs.level === "done") return "good";
-      return "info";
-    case "issue.status_changed":
-      if (event.attrs.status === "done") return "good";
-      if (event.attrs.status === "blocked") return "bad";
-      return "info";
-    default:
-      return "neutral";
-  }
-}
 
 export interface FeedItemProps {
   event: FeedEvent;
   onFilter(term: string): void;
 }
 
+/** One event a search found: what it says, its ref if it does not say it, its project and actor to narrow by, and when. */
 export function FeedItem({ event, onFilter }: FeedItemProps) {
-  const needsPrefix = !event.summary.includes(event.ref);
+  const project = event.project;
   return (
-    <article className="feed-row" data-event={event.type}>
-      <span className="feed-mark" data-tone={eventTone(event)} title={event.type} />
-      <div className="feed-text">
-        {needsPrefix ? <RefText text={`${event.ref} `} /> : null}
-        <RefText text={event.summary} />
-      </div>
-      <div className="feed-meta">
-        {event.project === null ? null : (
-          <button type="button" className="chip" onClick={() => onFilter(`project:${event.project}`)}>
-            {event.project}
-          </button>
-        )}
-        <button type="button" className="chip" onClick={() => onFilter(filterTerm("actor", event.actor))}>
-          {event.actor}
-        </button>
-        <TimeAgo iso={event.ts} />
-      </div>
-    </article>
+    <Row
+      title={<RefText text={event.summary} />}
+      facts={
+        <Facts>
+          {event.summary.includes(event.ref) ? null : <RefLink value={event.ref} />}
+          {project === null ? null : (
+            <TextLink onClick={() => onFilter(`project:${project}`)}>{project}</TextLink>
+          )}
+          <TextLink onClick={() => onFilter(filterTerm("actor", event.actor))}>{event.actor}</TextLink>
+          <TimeAgo iso={event.ts} />
+        </Facts>
+      }
+    />
   );
 }

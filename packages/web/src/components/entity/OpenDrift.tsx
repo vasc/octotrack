@@ -2,6 +2,8 @@ import { contracts } from "@octotrack/core/contracts";
 import type { Drift } from "@octotrack/core/schemas";
 import { useChoices } from "../../hooks/useChoices.ts";
 import { DriftItem } from "../drift/DriftItem.tsx";
+import { List } from "../ui/List.tsx";
+import { Section } from "../ui/Section.tsx";
 
 /**
  * What is out of date about the item open in the panel, each with how to answer it. An answer waits with Undo like
@@ -12,25 +14,24 @@ export function OpenDrift({ drift }: { drift: readonly Drift[] }) {
   const open = drift.filter((item) => item.status === "open");
   if (open.length === 0) return null;
   return (
-    <section className="panel-section" aria-label="Out of date">
-      <h2 className="panel-label" data-tone="attention">
-        Out of date · {open.length}
-      </h2>
-      {open.map((item) => (
-        <DriftItem
-          key={item.ref}
-          drift={item}
-          onAck={(ref, mode, note) =>
-            choices.make(
-              contracts.driftAck.name,
-              { refs: [ref], mode, note },
-              mode === "updated"
-                ? `Marking ${ref} updated: ${note}`
-                : `Marking ${ref} as needing no update: ${note}`,
-            )
-          }
-        />
-      ))}
-    </section>
+    <Section title="Out of date" count={open.length}>
+      <List>
+        {open.map((item) => (
+          <DriftItem
+            key={item.ref}
+            drift={item}
+            onAck={(ref, mode, note) =>
+              choices.make(
+                contracts.driftAck.name,
+                { refs: [ref], mode, note },
+                mode === "updated"
+                  ? `Marking ${ref} updated: ${note}`
+                  : `Marking ${ref} as needing no update: ${note}`,
+              )
+            }
+          />
+        ))}
+      </List>
+    </Section>
   );
 }

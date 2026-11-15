@@ -35,5 +35,5 @@ export default function MarkdownView({
       {text}
     </ReactMarkdown>
   );
-  return inline ? <span className="markdown-inline">{view}</span> : <div className="markdown">{view}</div>;
+  return inline ? <span className="ui-prose-inline">{view}</span> : <div className="ui-prose">{view}</div>;
 }

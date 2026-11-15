@@ -32,6 +32,12 @@ data; the rest of the dashboard sends `/api` to the server on 4747, which the in
 bun run dev:web
 ```
 
+Every look belongs to a primitive in `packages/web/src/components/ui`, styled in `packages/web/src/ui.css` and nowhere
+else: screens compose primitives and never give an element a class or a style, so a button, a row or a sheet is the same
+everywhere. To change how something looks, change its primitive; if a screen needs something no primitive draws, add
+the primitive, its line in [components.md](components.md) and its specimen. `bun run --cwd packages/web test` fails on a
+screen that styles itself.
+
 1. Edit `tokens.css` and watch the specimen. For a color, change one line: `light-dark(light value, dark value)`.
 2. Check that the language still holds. This fails on contrast below AA, on raw values in the dashboard's CSS, on tokens
    nobody uses, and on tokens or components the docs do not mention:

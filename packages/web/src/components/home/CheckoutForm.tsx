@@ -1,4 +1,8 @@
 import { useState } from "react";
+import { Actions } from "../ui/Actions.tsx";
+import { Button } from "../ui/Button.tsx";
+import { Field } from "../ui/Field.tsx";
+import { Stack } from "../ui/Pairs.tsx";
 
 /** Set its checkout: where this machine already has a repo, an absolute path, after a clone failed. */
 export function CheckoutForm({
@@ -14,27 +18,28 @@ export function CheckoutForm({
   const valid = path.startsWith("/");
   return (
     <form
-      className="composer"
       onSubmit={(event) => {
         event.preventDefault();
         if (valid) onSet(path);
       }}
     >
-      <input
-        className="field"
-        aria-label={`Checkout of ${repo}`}
-        placeholder="/Users/you/src/repo"
-        value={path}
-        // biome-ignore lint/a11y/noAutofocus: opened by the developer to type this path
-        autoFocus
-        onChange={(event) => setPath(event.target.value)}
-      />
-      <button type="submit" className="btn" data-primary="true" disabled={!valid}>
-        Set
-      </button>
-      <button type="button" className="btn" onClick={onCancel}>
-        Cancel
-      </button>
+      <Stack>
+        <Field
+          label={`Checkout of ${repo}`}
+          placeholder="/Users/you/src/repo"
+          value={path}
+          onChange={setPath}
+          autoFocus
+        />
+        <Actions>
+          <Button type="submit" variant="primary" disabled={!valid}>
+            Set
+          </Button>
+          <Button variant="quiet" onClick={onCancel}>
+            Cancel
+          </Button>
+        </Actions>
+      </Stack>
     </form>
   );
 }

@@ -1,8 +1,8 @@
 import type { EntityDetail } from "@octotrack/core/schemas";
-import { DecisionPanel } from "./DecisionPanel.tsx";
-import { KeyValues } from "./KeyValues.tsx";
-import { PrPanel } from "./PrPanel.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
+import { Pairs, Stack } from "../ui/Pairs.tsx";
+import { DecisionPanel } from "./DecisionPanel.tsx";
+import { PrPanel } from "./PrPanel.tsx";
 
 /** The part that differs by kind of item. */
 export function EntityBody({
@@ -24,9 +24,9 @@ export function EntityBody({
   if ("priority" in entity) return null;
   if ("rule" in entity) {
     return (
-      <>
-        <KeyValues
-          items={[
+      <Stack>
+        <Pairs
+          pairs={[
             ["Rule", entity.rule],
             ["Target", entity.target],
             ["Caused by", entity.cause],
@@ -35,16 +35,16 @@ export function EntityBody({
             ["Note", entity.note],
           ]}
         />
-        <p className="drift-suggestion">{entity.suggestion}</p>
-      </>
+        <Markdown text={entity.suggestion} />
+      </Stack>
     );
   }
   if ("level" in entity) return <Markdown text={entity.body} />;
   if ("promotedTo" in entity) {
     return (
-      <>
-        <KeyValues
-          items={[
+      <Stack>
+        <Pairs
+          pairs={[
             ["Project", entity.project],
             ["Horizon", entity.horizon],
             ["Promoted to", entity.promotedTo],
@@ -52,13 +52,13 @@ export function EntityBody({
           ]}
         />
         {entity.body === "" ? null : <Markdown text={entity.body} />}
-      </>
+      </Stack>
     );
   }
   return (
-    <>
-      <KeyValues
-        items={[
+    <Stack>
+      <Pairs
+        pairs={[
           ["Project", "project" in entity ? entity.project : null],
           ["Repo", "repo" in entity ? entity.repo : null],
           ["Horizon", entity.horizon],
@@ -66,6 +66,6 @@ export function EntityBody({
         ]}
       />
       {entity.description === "" ? null : <Markdown text={entity.description} />}
-    </>
+    </Stack>
   );
 }

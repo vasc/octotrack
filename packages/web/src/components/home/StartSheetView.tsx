@@ -1,35 +1,19 @@
 import type { Decision, HeldItem, Line } from "@octotrack/core/schemas";
+import type { ReactNode, Ref } from "react";
+import { Actions } from "../ui/Actions.tsx";
+import { Button } from "../ui/Button.tsx";
+import { List } from "../ui/List.tsx";
+import { RefLink } from "../ui/RefLink.tsx";
+import { Row } from "../ui/Row.tsx";
+import { Sheet } from "../ui/Sheet.tsx";
+import { EmptyState } from "../ui/states.tsx";
 import { DoneWhenChanged } from "./DoneWhenChanged.tsx";
 import { HeldQuestion } from "./HeldQuestion.tsx";
 
-/** How many of what it holds, in words: "One question", "2 questions and a task". */
-function heldWords(questions: number, tasks: number): string {
-  const part = (count: number, one: string, many: string) =>
-    count === 0 ? null : count === 1 ? one : `${count} ${many}`;
-  const parts = [part(questions, "one question", "questions"), part(tasks, "one task", "tasks")].filter(
-    (text) => text !== null,
-  );
-  const words = parts.join(" and ");
-  return words.charAt(0).toUpperCase() + words.slice(1);
-}
-
-/** The sentence at the top: what has waited for the line, and that settling it now starts the line with it. */
-function intro(line: Line, held: readonly HeldItem[]): string {
-  const questions = held.filter((item) => item.kind === "question").length;
-  const tasks = held.length - questions;
-  const changed = line.doneWhenProposal !== null;
-  if (held.length === 0 && !changed) return "Nothing has been waiting for this line: it starts clean.";
-  const waited =
-    held.length === 0
-      ? "Its done when was sharpened while it waited."
-      : `${heldWords(questions, tasks)} ${held.length === 1 ? "has" : "have"} been waiting for this line${changed ? ", and its done when was sharpened" : ""}.`;
-  return `${waited} Settle ${held.length + (changed ? 1 : 0) === 1 ? "it" : "them"} now and the line starts with ${held.length + (changed ? 1 : 0) === 1 ? "it" : "them"}.`;
-}
-
 /**
- * Starting a line that waited, as E-States draws it: what it holds that is still current (asked or re-confirmed in the
- * last 7 days), a done when an agent sharpened while it waited, each with its choices numbered in one run, then Start.
- * Held questions are answered here, with the usual Undo; tasks reach the developer once the line starts.
+ * Starting a line that waited, in a sheet of its own: what it holds that is still current, and a done when an agent
+ * sharpened while it waited, each with its choices numbered in one run, then Start. Held questions are answered here,
+ * with the usual Undo; its tasks reach the developer once the line starts.
  */
 export function StartSheetView({
   line,
@@ -39,6 +23,8 @@ export function StartSheetView({
   onAnswer,
   onStart,
   onCancel,
+  sheetRef,
+  status,
 }: {
   line: Line;
   held: readonly HeldItem[];
@@ -48,78 +34,65 @@ export function StartSheetView({
   onAnswer(ref: string, key: string, label: string): void;
   onStart(): void;
   onCancel(): void;
+  /** The sheet, where the number keys find its choices. */
+  sheetRef?: Ref<HTMLDivElement>;
+  /** What the sheet says in place of what the line holds, while that loads or if it failed to. */
+  status?: ReactNode;
 }) {
-  let number = 0;
-  const next = () => {
-    number += 1;
-    return String(number);
-  };
   const tasks = held.filter((item) => item.kind === "task");
   const asked = held.flatMap((item) => {
     const question = questions.find((candidate) => candidate.ref === item.ref);
     return item.kind === "question" && question !== undefined ? [question] : [];
   });
+  // One run of numbers across the sheet: the done when's two choices, then each question's answers.
+  let next = line.doneWhenProposal === null ? 1 : 3;
+  const firsts = asked.map((question) => {
+    const first = next;
+    next += question.options.length;
+    return first;
+  });
   return (
-    <dialog
-      open
-      className="start-sheet"
-      aria-labelledby={`start-${line.ref}`}
-      tabIndex={-1}
-      // biome-ignore lint/a11y/noAutofocus: the developer opened it to act on it, so the keys and Tab start here
-      autoFocus
-      onKeyDown={(event) => {
-        // Esc closes the sheet first, before anything behind it.
-        if (event.key === "Escape") {
-          event.stopPropagation();
-          onCancel();
-        }
-      }}
+    <Sheet
+      title={`Start ${line.title}`}
+      onClose={onCancel}
+      numbered
+      {...(sheetRef === undefined ? {} : { ref: sheetRef })}
+      actions={
+        <Actions>
+          <Button variant="primary" disabled={status !== undefined} onClick={onStart}>
+            Start
+          </Button>
+        </Actions>
+      }
     >
-      <h2 className="start-sheet-title" id={`start-${line.ref}`}>
-        Start {line.title}
-      </h2>
-      <p className="muted">{intro(line, held)}</p>
+      {status !== undefined ? status : null}
+      {status !== undefined ? null : line.doneWhenProposal === null && held.length === 0 ? (
+        <EmptyState>Nothing waited for it</EmptyState>
+      ) : null}
       {line.doneWhenProposal === null ? null : (
         <DoneWhenChanged
           was={line.doneWhen}
           proposal={line.doneWhenProposal}
           why={line.doneWhenWhy}
-          numbers={[next(), next()]}
+          numbers={["1", "2"]}
           onAnswer={onDoneWhen}
         />
       )}
-      {asked.map((question) => (
+      {asked.map((question, index) => (
         <HeldQuestion
           key={question.ref}
           question={question}
-          numbers={question.options.map(() => next())}
+          firstChoice={firsts[index] ?? 1}
           onAnswer={onAnswer}
         />
       ))}
       {tasks.length === 0 ? null : (
-        <section className="start-sheet-part" aria-label="Tasks it holds">
-          <span className="panel-label">Tasks, which reach you once it starts</span>
-          <ul className="start-sheet-list">
-            {tasks.map((item) => (
-              <li key={item.ref}>
-                <span className="mono muted">{item.ref}</span> {item.title}
-              </li>
-            ))}
-          </ul>
-        </section>
+        <List label="Tasks, once it starts">
+          {tasks.map((item) => (
+            <Row key={item.ref} kind={<RefLink value={item.ref} />} title={item.title} />
+          ))}
+        </List>
       )}
-      <p className="muted">
-        It joins the bottom of Working on, and the owner search runs at once: its last owner if it had one, an
-        idle agent with the repo that is running, told in its next reply, else a new session.
-      </p>
-      <div className="question-actions">
-        <button type="button" className="btn" data-primary="true" onClick={onStart}>
-          Start
-        </button>
-        <button type="button" className="btn" data-quiet="true" onClick={onCancel}>
-          Cancel
-        </button>
-      </div>
-    </dialog>
+    </Sheet>
   );
 }

@@ -4,7 +4,10 @@ import { basename, join } from "node:path";
 
 const ROOT = join(import.meta.dir, "..");
 const tokensCss = readFileSync(join(import.meta.dir, "tokens.css"), "utf8");
-const stylesCss = readFileSync(join(ROOT, "packages/web/src/styles.css"), "utf8");
+// The dashboard's stylesheets: its pages' and its primitives', held to the same language.
+const stylesCss = ["styles.css", "ui.css", "design/design.css"]
+  .map((file) => readFileSync(join(ROOT, "packages/web/src", file), "utf8"))
+  .join("\n");
 const COMPONENTS = join(ROOT, "packages/web/src/components");
 
 function filesUnder(dir: string): string[] {
@@ -211,11 +214,22 @@ describe("the dashboard uses the language instead of going around it", () => {
     expect(off).toEqual([]);
   });
 
-  test("nothing takes the focus ring away, apart from items whose own border shows their focus", () => {
+  test("nothing takes the focus ring away, apart from items whose own border or tint shows their focus", () => {
     const ringless = [
       ...stylesCss.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/([^{}]+)\{([^{}]*outline:\s*none[^{}]*)\}/g),
     ].map((match) => (match[1] ?? "").trim());
-    expect(ringless).toEqual(["[data-focus-ref]:focus-visible"]);
+    // A row's or an item's tint, a menu item's tint, and a box's border already show focus; the panel takes focus only
+    // so the keys and a screen reader start in it, and its own edge shows where it is.
+    expect(ringless.sort()).toEqual(
+      [
+        ".ui-field :is(input, textarea):focus",
+        ".ui-menu-item:focus-visible",
+        ".ui-menu-item:is(:hover, :focus-visible):not(:disabled)",
+        ".ui-row:focus,\n.ui-focusable:focus",
+        ".ui-search-input:focus",
+        ".ui-side:focus",
+      ].sort(),
+    );
   });
 
   test("edges thicker than a hairline, and opacity, come from tokens", () => {
@@ -250,7 +264,13 @@ describe("the dashboard uses the language instead of going around it", () => {
       [...tokensCss.matchAll(/var\((--[a-z0-9-]+)/g)].flatMap((match) => match[1] ?? []),
     );
     const tones = new Set(["--tone", "--tone-soft", "--tone-mark"]);
-    expect([...used].filter((name) => !tokenNames.includes(name) && !tones.has(name))).toEqual([]);
+    // A primitive's own measure, worked out from tokens where it is declared, such as a row's lead.
+    const local = new Set(
+      [...stylesCss.matchAll(/^\s*(--[a-z0-9-]+):/gm)].flatMap((match) => match[1] ?? []),
+    );
+    expect(
+      [...used].filter((name) => !tokenNames.includes(name) && !tones.has(name) && !local.has(name)),
+    ).toEqual([]);
     expect(
       tokenNames.filter((name) => !used.has(name) && !internal.has(name) && name !== "--space-unit"),
     ).toEqual([]);
@@ -280,35 +300,25 @@ describe("a finger can use it", () => {
 
   test("text fields are large enough that iOS does not zoom the page on focus", () => {
     expect(pixels("--text-input-touch")).toBeGreaterThanOrEqual(16);
-    expect(rulesFor(".field")).toContain("font-size: var(--text-input-touch)");
-    expect(rulesFor(".filter-input")).toContain("font-size: var(--text-input-touch)");
+    expect(rulesFor(".ui-field input")).toContain("font-size: var(--text-input-touch)");
+    expect(rulesFor(".ui-search-input")).toContain("font-size: var(--text-input-touch)");
   });
 
-  test.each([
-    ".nav-item",
-    ".btn",
-    ".tab",
-    ".field",
-    ".filter-input",
-    ".select",
-    ".detail-close",
-    ".check",
-    ".chip:not(.chip--static)",
-    ".line-link",
-    ".more-link",
-    ".item-row",
-    ".top-count",
-    ".top-urgent",
-    ".menu-item",
-    ".row-title",
-    ".tile-head",
-    ".repo-chip-remove",
-  ])("%s is tall enough to tap", (selector) => {
+  test.each([".ui-button", ".ui-menu-item", ".ui-search-option"])("%s is tall enough to tap", (selector) => {
     expect(rulesFor(selector)).toContain("min-height: var(--touch-target)");
   });
 
-  test.each([".btn.top-keys"])("%s, which only keyboards can act on, is hidden", (selector) => {
-    expect(rulesFor(selector)).toContain("display: none");
+  test.each([".ui-link::after", ".ui-ref::after", ".ui-lead::after"])(
+    "%s, inside a line of words, reaches past its edges to a finger's size",
+    (selector) => {
+      expect(rulesFor(selector)).toContain("inset: calc(-1 * var(--space-5))");
+    },
+  );
+
+  test("a choice's key number is drawn only where there are keys", () => {
+    const outside = css.replace(/@media \(pointer: fine\) \{[\s\S]*?\n\}/g, "");
+    expect(outside).not.toContain("[data-choice]::before");
+    expect(css).toContain("[data-choice]::before");
   });
 
   test("reading text grows on touch screens", () => {

@@ -1,12 +1,15 @@
-import { focusLabel } from "../../lib/focus.ts";
 import type { Issue, Line } from "@octotrack/core/schemas";
 import type { ReactNode } from "react";
+import { focusLabel } from "../../lib/focus.ts";
 import { askedText } from "../../lib/tasks.ts";
-import { FocusTarget } from "./FocusTarget.tsx";
+import { Focusable } from "../ui/Focusable.tsx";
+import { List } from "../ui/List.tsx";
+import { Note } from "../ui/Note.tsx";
+import { Section } from "../ui/Section.tsx";
 
 /**
- * While you're here, from lines up next: tasks for this place that wait on lines not started yet, each with its
- * choices, saying which line and how long it has waited. Only current ones reach here.
+ * Tasks for this place that wait on lines up next, each with its choices, saying which line and how long it has
+ * waited. Only current ones reach here.
  */
 export function AtUpNext({
   tasks,
@@ -26,28 +29,27 @@ export function AtUpNext({
 }) {
   if (tasks.length === 0) return null;
   return (
-    <section className="home-section" aria-label="While you're here, from lines up next">
-      <h2 className="panel-label">While you're here, from lines up next</h2>
-      <div className="line-items" data-flush="true">
+    <Section title="Here, from up next" count={tasks.length}>
+      <List>
         {tasks.map((task) => {
           const at = lines.findIndex((line) => line.ref === task.line);
           const line = lines[at];
           return (
-            <FocusTarget
+            <Focusable
               key={task.ref}
               focusRef={task.ref}
               label={focusLabel({ kind: "task", task, frees: null })}
               focused={task.ref === focus}
             >
-              <p className="muted">
-                {line === undefined ? "" : `${firstNumber + at} ${line.title}, up next · `}
-                {task.ref} · {askedText(task)}
-              </p>
+              <Note>
+                {line === undefined ? "" : `${firstNumber + at} ${line.title} · `}
+                {askedText(task)}
+              </Note>
               {draw(task)}
-            </FocusTarget>
+            </Focusable>
           );
         })}
-      </div>
-    </section>
+      </List>
+    </Section>
   );
 }

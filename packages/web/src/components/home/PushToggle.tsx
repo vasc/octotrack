@@ -1,9 +1,10 @@
 import type { PushState } from "../../hooks/usePush.ts";
+import { Button } from "../ui/Button.tsx";
+import { Note } from "../ui/Note.tsx";
 
-const SAID: Readonly<Record<Exclude<PushState, "off">, string>> = {
-  unsupported: "",
-  on: "Buzzing this device for urgent questions and the top two lines",
-  blocked: "Notifications are blocked for this site in the browser's settings",
+const SAID: Readonly<Record<Exclude<PushState, "off" | "unsupported">, string>> = {
+  on: "Buzzing this device",
+  blocked: "Notifications blocked",
   "turning-on": "Turning on…",
 };
 
@@ -19,19 +20,9 @@ export function PushToggle({
 }) {
   if (state === "unsupported") return null;
   return (
-    <span className="push-toggle">
-      {state === "off" ? (
-        <button type="button" className="btn" onClick={onTurnOn}>
-          Buzz this device
-        </button>
-      ) : (
-        <span className="muted">{SAID[state]}</span>
-      )}
-      {error === null ? null : (
-        <span className="error-text" role="alert">
-          {error}
-        </span>
-      )}
-    </span>
+    <>
+      {state === "off" ? <Button onClick={onTurnOn}>Buzz this device</Button> : <Note>{SAID[state]}</Note>}
+      {error === null ? null : <Note error>{error}</Note>}
+    </>
   );
 }

@@ -1,4 +1,6 @@
 import type { PendingChoice } from "@octotrack/core/schemas";
+import { Button } from "../ui/Button.tsx";
+import { Toast, Toasts } from "../ui/Toast.tsx";
 
 /** What the Undo bar needs to know about a line a Stop would leave without its owner. */
 export interface UndoLine {
@@ -12,11 +14,9 @@ function inSeconds(dueAt: string, now: number): string {
   return `in ${seconds} second${seconds === 1 ? "" : "s"}`;
 }
 
-/** What a Stop does to the line its owner leaves, as E-States says it. */
+/** What a Stop does to the line its owner leaves. */
 function afterStop(line: UndoLine): string {
-  return line.waitsOnYou
-    ? `${line.title} waits on you, so no new session starts until you answer.`
-    : `${line.title} then looks for another owner.`;
+  return line.waitsOnYou ? `${line.title} waits on you.` : `${line.title} looks for another owner.`;
 }
 
 /**
@@ -38,44 +38,46 @@ export function UndoBar({
   /** A Stop of a line's owner: undo it, and move the line to up next instead. */
   onPause?: (id: number, line: string) => void;
 }) {
-  const waiting = pending.filter((choice) => choice.state === "pending");
-  const newest = waiting.at(-1)?.id;
   return (
-    <div className="undo-bar" role="status" aria-live="polite">
+    <Toasts>
       {[...pending].reverse().map((choice) => {
         if (choice.state === "failed") {
           return (
-            <div key={choice.id} className="undo-choice" data-failed="true">
-              <span role="alert">
-                {choice.summary} did not happen: {choice.error ?? "no reason was given"}
-              </span>
-              <button type="button" className="btn" onClick={() => onUndo(choice.id)}>
-                Dismiss
-              </button>
-            </div>
+            <Toast
+              key={choice.id}
+              failed
+              actions={
+                <Button variant="quiet" onClick={() => onUndo(choice.id)}>
+                  Dismiss
+                </Button>
+              }
+            >
+              {choice.summary} did not happen: {choice.error ?? "no reason was given"}
+            </Toast>
           );
         }
         const line = choice.line === null ? undefined : lines[choice.line];
         return (
-          <div key={choice.id} className="undo-choice">
-            <span>
-              {choice.summary}{" "}
-              {/* The countdown ticks every second; announcing each tick would drown out the rest. */}
-              <span aria-hidden="true">{inSeconds(choice.dueAt, now)}</span>
-              {line === undefined ? "" : `. ${afterStop(line)}`}
-            </span>
-            {choice.id === newest ? <span className="muted">u to undo</span> : null}
-            {choice.line === null || onPause === undefined ? null : (
-              <button type="button" className="btn" onClick={() => onPause(choice.id, choice.line ?? "")}>
-                Pause the line instead
-              </button>
-            )}
-            <button type="button" className="btn" onClick={() => onUndo(choice.id)}>
-              Undo
-            </button>
-          </div>
+          <Toast
+            key={choice.id}
+            actions={
+              <>
+                {choice.line === null || onPause === undefined ? null : (
+                  <Button onClick={() => onPause(choice.id, choice.line ?? "")}>
+                    Pause the line instead
+                  </Button>
+                )}
+                <Button onClick={() => onUndo(choice.id)}>Undo</Button>
+              </>
+            }
+          >
+            {choice.summary}{" "}
+            {/* The countdown ticks every second; announcing each tick would drown out the rest. */}
+            <span aria-hidden="true">{inSeconds(choice.dueAt, now)}</span>
+            {line === undefined ? "" : `. ${afterStop(line)}`}
+          </Toast>
         );
       })}
-    </div>
+    </Toasts>
   );
 }

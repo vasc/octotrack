@@ -1,7 +1,9 @@
+import { Actions } from "../ui/Actions.tsx";
+import { Button } from "../ui/Button.tsx";
 import type { Line } from "@octotrack/core/schemas";
 
 /**
- * The choices a proposal has, numbered for the keys, the recommended one filled: Start, Up next, Table, Fold into when
+ * The choices a proposal has, numbered for the keys, the recommended one filled and the rest words: Start, Up next, Table, Fold into when
  * there is a line to fold into, and Not a line; or Drop for a line back from tabled, since it was a line.
  */
 export function ProposalChoices({
@@ -28,74 +30,33 @@ export function ProposalChoices({
   onDrop(): void;
 }) {
   const is = (placement: NonNullable<Line["recommendation"]>) => recommended === placement;
-  const last = canFold ? "5" : "4";
+  const variant = (placement: NonNullable<Line["recommendation"]>) => (is(placement) ? "primary" : "plain");
+  const last = canFold ? 5 : 4;
   return (
-    <div className="proposal-choices">
-      <button
-        type="button"
-        className="btn"
-        aria-label={`Start ${title}`}
-        data-choice="1"
-        data-primary={is("start")}
-        onClick={onStart}
-      >
-        Start{is("start") ? " · recommended" : ""}
-      </button>
-      <button
-        type="button"
-        className="btn"
-        aria-label={`Up next ${title}`}
-        data-choice="2"
-        data-primary={is("up_next")}
-        onClick={onQueue}
-      >
-        Up next{is("up_next") ? " · recommended" : ""}
-      </button>
-      <button
-        type="button"
-        className="btn"
-        aria-label={`Table ${title}`}
-        data-choice="3"
-        data-primary={is("table")}
-        onClick={onTable}
-      >
+    <Actions>
+      <Button aria-label={`Start ${title}`} choice={1} variant={variant("start")} onClick={onStart}>
+        Start
+      </Button>
+      <Button aria-label={`Up next ${title}`} choice={2} variant={variant("up_next")} onClick={onQueue}>
+        Up next
+      </Button>
+      <Button aria-label={`Table ${title}`} choice={3} variant={variant("table")} onClick={onTable}>
         Table
-      </button>
+      </Button>
       {canFold ? (
-        <button
-          type="button"
-          className="btn"
-          aria-label={`Fold ${title}`}
-          data-choice="4"
-          data-primary={is("fold")}
-          onClick={onFold}
-        >
+        <Button aria-label={`Fold ${title}`} choice={4} variant={variant("fold")} onClick={onFold}>
           Fold into
-        </button>
+        </Button>
       ) : null}
       {fromTable ? (
-        <button
-          type="button"
-          className="btn"
-          data-quiet="true"
-          aria-label={`Drop ${title}`}
-          data-choice={last}
-          onClick={onDrop}
-        >
+        <Button variant="quiet" aria-label={`Drop ${title}`} choice={last} onClick={onDrop}>
           Drop
-        </button>
+        </Button>
       ) : (
-        <button
-          type="button"
-          className="btn"
-          data-quiet="true"
-          aria-label={`Not a line: ${title}`}
-          data-choice={last}
-          onClick={onReject}
-        >
+        <Button variant="quiet" aria-label={`Not a line: ${title}`} choice={last} onClick={onReject}>
           Not a line
-        </button>
+        </Button>
       )}
-    </div>
+    </Actions>
   );
 }

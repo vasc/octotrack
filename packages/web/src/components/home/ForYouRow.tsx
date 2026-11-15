@@ -1,91 +1,104 @@
 import type { ForYou } from "@octotrack/core/schemas";
-import { useId } from "react";
+import type { ReactNode } from "react";
 import { refOf } from "../../lib/focus.ts";
 import { URGENT_REASON } from "../../lib/lines.ts";
+import { Focusable } from "../ui/Focusable.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
+import { Row } from "../ui/Row.tsx";
 
-/** Something waiting on the developer, as one row that opens it: what it is, its title, and the case for it. */
-export function ForYouRow({ item, onOpen }: { item: ForYou; onOpen(ref: string): void }) {
+/**
+ * Something waiting on the developer: one row that opens it, saying what it is, its title and the case for it; or,
+ * with focus, the item itself in its place, which the keys act on.
+ */
+export function ForYouRow({
+  item,
+  label,
+  focused,
+  onOpen,
+  children,
+}: {
+  item: ForYou;
+  /** What a screen reader says when focus reaches it. */
+  label: string;
+  focused: boolean;
+  onOpen(ref: string): void;
+  /** The item opened, drawn while it has focus. */
+  children?: ReactNode;
+}) {
   const ref = refOf(item);
-  // Named by what it does; described by what it is, so a screen reader hears the title too.
-  const text = useId();
+  if (focused && children !== undefined)
+    return (
+      <Focusable focusRef={ref} label={label} focused>
+        {children}
+      </Focusable>
+    );
+  const { kind, tone, title, note } = rowText(item);
   return (
-    <button
-      type="button"
-      aria-describedby={text}
-      className="item-row"
-      data-kind={item.kind}
-      data-urgent={item.kind === "question" && item.card.decision.urgentReason !== null}
-      aria-label={`Open ${ref}`}
-      onClick={() => onOpen(ref)}
-    >
-      <span className="item-row-text" id={text}>
-        {rowText(item)}
-      </span>
-      <span className="item-row-open" aria-hidden="true">
-        ›
-      </span>
-    </button>
+    <Row
+      focusRef={ref}
+      label={label}
+      openLabel={`Open ${ref}`}
+      kind={kind}
+      tone={tone}
+      title={title}
+      {...(note === null ? {} : { note })}
+      onOpen={() => onOpen(ref)}
+    />
   );
 }
 
-function rowText(item: ForYou) {
+function rowText(item: ForYou): {
+  kind: string;
+  tone: "needs" | "stuck";
+  title: ReactNode;
+  note: ReactNode;
+} {
   switch (item.kind) {
     case "question": {
       const { decision } = item.card;
       const recommended = decision.options.find((option) => option.key === decision.recommendation);
-      return (
-        <>
-          <span className="item-kind">
-            {decision.urgentReason === null ? "Question" : `Urgent · ${URGENT_REASON[decision.urgentReason]}`}{" "}
-            · {decision.ref}
-          </span>{" "}
-          <b>{decision.title}</b>{" "}
-          {recommended === undefined ? null : (
-            <span className="item-note">
-              Recommended {recommended.label}
+      return {
+        kind:
+          decision.urgentReason === null
+            ? `Question · ${decision.ref}`
+            : `Urgent · ${URGENT_REASON[decision.urgentReason]} · ${decision.ref}`,
+        tone: decision.urgentReason === null ? "needs" : "stuck",
+        title: decision.title,
+        note:
+          recommended === undefined ? null : (
+            <>
+              Recommended: {recommended.label}
               {decision.recommendationWhy === null ? null : (
                 <>
-                  : <Markdown text={decision.recommendationWhy} inline />
+                  {" "}
+                  · <Markdown text={decision.recommendationWhy} inline />
                 </>
               )}
-            </span>
-          )}
-        </>
-      );
+            </>
+          ),
+      };
     }
     case "task": {
       const { task, frees } = item;
-      return (
-        <>
-          <span className="item-kind">
-            Task · {task.ref}
-            {task.place === null ? "" : ` · at ${task.place}`}
-          </span>{" "}
-          <b>{task.title}</b>{" "}
-          {frees !== null ? (
-            <span className="item-note">
-              Frees {frees.ref}: {frees.title}.
-            </span>
+      return {
+        kind: `Task · ${task.ref}${task.place === null ? "" : ` · at ${task.place}`}`,
+        tone: "needs",
+        title: task.title,
+        note:
+          frees !== null ? (
+            `Frees ${frees.ref}: ${frees.title}`
           ) : task.outcome === null || task.outcome === "" ? null : (
-            <span className="item-note">
-              Report: <Markdown text={task.outcome} inline />
-            </span>
-          )}
-        </>
-      );
+            <Markdown text={task.outcome} inline />
+          ),
+      };
     }
     case "done":
     case "done_when":
-      return (
-        <>
-          <span className="item-kind">
-            {item.kind === "done" ? "Proposed done" : "Proposed done when"} · {item.line}
-          </span>{" "}
-          <span className="item-note">
-            <Markdown text={item.text} inline />
-          </span>
-        </>
-      );
+      return {
+        kind: `${item.kind === "done" ? "Proposed done" : "Proposed done when"} · ${item.line}`,
+        tone: "needs",
+        title: <Markdown text={item.text} inline />,
+        note: null,
+      };
   }
 }

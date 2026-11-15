@@ -3,7 +3,6 @@ import { LinePanelHead } from "../components/entity/LinePanelHead.tsx";
 import { OwnerBox } from "../components/entity/OwnerBox.tsx";
 import { PlanList } from "../components/entity/PlanList.tsx";
 import { SummaryBox } from "../components/entity/SummaryBox.tsx";
-import { FoldedSection } from "../components/home/FoldedSection.tsx";
 import { ForYouRow } from "../components/home/ForYouRow.tsx";
 import { OwnWorkBox } from "../components/entity/OwnWorkBox.tsx";
 import { TellBox } from "../components/entity/TellBox.tsx";
@@ -18,10 +17,12 @@ import { UpNextRow } from "../components/home/UpNextRow.tsx";
 import { WorkingLine } from "../components/home/WorkingLine.tsx";
 import { UndoBar } from "../components/layout/UndoBar.tsx";
 import { TopBar } from "../components/layout/TopBar.tsx";
-import { NewLineCard } from "../components/lines/NewLineCard.tsx";
+import { LineHandle } from "../components/home/LineHandle.tsx";
+import { Fold } from "../components/ui/Fold.tsx";
+import { List } from "../components/ui/List.tsx";
 import { Markdown } from "../components/ui/Markdown.tsx";
 import { TextBox } from "../components/ui/TextBox.tsx";
-import { DesignSection, Example } from "./Example.tsx";
+import { DesignSection, Example, SheetExample } from "./Example.tsx";
 import { decision, decisionCard, issue, line, pendingChoice } from "./fixtures.ts";
 
 const NOOP = () => {};
@@ -66,53 +67,73 @@ export function LinesGallery() {
         />
       </Example>
       <Example label="A working line, waiting on you">
-        <WorkingLine
-          index={2}
-          line={line({
-            headline: "Printed; the short board fits. One answer and one measurement from the final print.",
-          })}
-          crew={{
-            owner: { name: "panel-widgets", state: "asleep" },
-            helpers: [],
-            scoper: null,
-            search: null,
-          }}
-          details={{
-            start: null,
-            step: { position: 3, of: 4, title: "settle board and opening" },
-            forYou: [{ kind: "question", card: QUESTION }],
-            stepIn: false,
-            stepInReason: null,
-            stepInKind: null,
-            waitingOnYou: false,
-            held: { questions: 0, tasks: 0 },
-            reconfirming: 0,
-            sinceSummary: 0,
-            scopedSteps: 4,
-            answers: [
-              {
-                ref: "D-40",
-                title: "Which plug?",
-                answer: "USB-C on the side",
-                status: "carried_out",
-                by: "panel-widgets",
-                at: "2026-11-14T08:40:00.000Z",
-                note: "model set to the short board",
-                unwoken: null,
-              },
-            ],
-          }}
-        >
-          <div className="home-items">
-            <ForYouRow item={{ kind: "question", card: QUESTION }} onOpen={NOOP} />
-          </div>
-        </WorkingLine>
+        <List>
+          <WorkingLine
+            handle={
+              <LineHandle
+                title="Sendspin enclosure"
+                number={2}
+                canMoveUp
+                canMoveDown
+                canQueue
+                onMove={NOOP}
+              />
+            }
+            line={line({
+              headline: "Printed; the short board fits. One answer and one measurement from the final print.",
+            })}
+            crew={{
+              owner: { name: "panel-widgets", state: "asleep" },
+              helpers: [],
+              scoper: null,
+              search: null,
+            }}
+            details={{
+              start: null,
+              step: { position: 3, of: 4, title: "settle board and opening" },
+              forYou: [{ kind: "question", card: QUESTION }],
+              stepIn: false,
+              stepInReason: null,
+              stepInKind: null,
+              waitingOnYou: false,
+              held: { questions: 0, tasks: 0 },
+              reconfirming: 0,
+              sinceSummary: 0,
+              scopedSteps: 4,
+              answers: [
+                {
+                  ref: "D-40",
+                  title: "Which plug?",
+                  answer: "USB-C on the side",
+                  status: "carried_out",
+                  by: "panel-widgets",
+                  at: "2026-11-14T08:40:00.000Z",
+                  note: "model set to the short board",
+                  unwoken: null,
+                },
+              ],
+            }}
+          >
+            <List>
+              <ForYouRow
+                item={{ kind: "question", card: QUESTION }}
+                label="Question D-34"
+                focused={false}
+                onOpen={NOOP}
+              />
+            </List>
+          </WorkingLine>
+        </List>
       </Example>
       <Example label="A task, one row, and opened">
-        <ForYouRow
-          item={{ kind: "task", task: TASK, frees: { ref: "OCT-41", title: "the real wake test" } }}
-          onOpen={NOOP}
-        />
+        <List>
+          <ForYouRow
+            item={{ kind: "task", task: TASK, frees: { ref: "OCT-41", title: "the real wake test" } }}
+            label="Task OCT-7"
+            focused={false}
+            onOpen={NOOP}
+          />
+        </List>
         <TaskCard
           task={TASK}
           words=""
@@ -128,54 +149,60 @@ export function LinesGallery() {
       <Example label="Spread thin">
         <SpreadThin working={8} noOwner={2} waiting={3} />
       </Example>
-      <Example label="Starting a line that waited">
-        <StartSheetView
-          line={line({ title: "Wall mount", doneWhenProposal: "It hangs flush with the cable hidden." })}
-          held={[
-            { ref: "D-41", kind: "question", title: "Which wall?", line: "L-3", current: true, since: "" },
-            {
-              ref: "PANEL-9",
-              kind: "task",
-              title: "Measure the stud spacing",
-              line: "L-3",
-              current: true,
-              since: "",
-            },
-          ]}
-          questions={[
-            decision({
-              ref: "D-41",
-              title: "Which wall?",
-              context: "The hall has studs at 40 cm; the study is brick.",
-              options: [
-                { key: "a", label: "The hall", description: "Screws into the studs." },
-                { key: "b", label: "The study", description: "Needs plugs." },
-              ],
-              recommendation: "a",
-              recommendationWhy: "the studs hold it without plugs.",
-            }),
-          ]}
-          onDoneWhen={NOOP}
-          onAnswer={NOOP}
-          onStart={NOOP}
-          onCancel={NOOP}
-        />
-      </Example>
+      <SheetExample label="Start a line that waited">
+        {(close) => (
+          <StartSheetView
+            line={line({ title: "Wall mount", doneWhenProposal: "It hangs flush with the cable hidden." })}
+            held={[
+              { ref: "D-41", kind: "question", title: "Which wall?", line: "L-3", current: true, since: "" },
+              {
+                ref: "PANEL-9",
+                kind: "task",
+                title: "Measure the stud spacing",
+                line: "L-3",
+                current: true,
+                since: "",
+              },
+            ]}
+            questions={[
+              decision({
+                ref: "D-41",
+                title: "Which wall?",
+                context: "The hall has studs at 40 cm; the study is brick.",
+                options: [
+                  { key: "a", label: "The hall", description: "Screws into the studs." },
+                  { key: "b", label: "The study", description: "Needs plugs." },
+                ],
+                recommendation: "a",
+                recommendationWhy: "the studs hold it without plugs.",
+              }),
+            ]}
+            onDoneWhen={NOOP}
+            onAnswer={NOOP}
+            onStart={close}
+            onCancel={close}
+          />
+        )}
+      </SheetExample>
       <Example label="Telling a line, and a line of your own">
         <TellBox line="L-1" to="panel-widgets" words="" onWords={NOOP} onSend={NOOP} />
         <OwnWorkBox line="L-7" words="" onWords={NOOP} onTask={NOOP} onNote={NOOP} />
       </Example>
       <Example label="A case for done, one row, and opened">
-        <ForYouRow
-          item={{
-            kind: "done",
-            line: "L-1",
-            text: "Printed, fitted and in use.",
-            by: "panel",
-            doneWhen: "a printed case holds the board",
-          }}
-          onOpen={NOOP}
-        />
+        <List>
+          <ForYouRow
+            item={{
+              kind: "done",
+              line: "L-1",
+              text: "Printed, fitted and in use.",
+              by: "panel",
+              doneWhen: "a printed case holds the board",
+            }}
+            label="Proposed as done: L-1"
+            focused={false}
+            onOpen={NOOP}
+          />
+        </List>
         <LineProposalCard
           proposal={{
             kind: "done",
@@ -203,70 +230,82 @@ export function LinesGallery() {
         />
       </Example>
       <Example label="A line nobody could be found for">
-        <WorkingLine
-          index={5}
-          line={line({ title: "South Tyrol trip" })}
-          crew={{ owner: null, helpers: [], scoper: null, search: { step: 3, since: "" } }}
-        >
-          <StepIn
+        <List>
+          <WorkingLine
+            handle={<LineHandle title="South Tyrol trip" number={5} canMoveUp canMoveDown onMove={NOOP} />}
             line={line({ title: "South Tyrol trip" })}
-            reason="trips.2, started for it, exited at once: the agent command is not logged in. Octotrack tries again by itself, less often each time."
-            onRetry={NOOP}
-            onOwn={NOOP}
-            onTable={NOOP}
-          />
-        </WorkingLine>
+            crew={{ owner: null, helpers: [], scoper: null, search: { step: 3, since: "" } }}
+          >
+            <StepIn
+              line={line({ title: "South Tyrol trip" })}
+              reason="trips.2, started for it, exited at once: the agent command is not logged in. Octotrack tries again by itself, less often each time."
+              onRetry={NOOP}
+              onOwn={NOOP}
+              onTable={NOOP}
+            />
+          </WorkingLine>
+        </List>
       </Example>
       <Example label="Up next">
-        <UpNextRow
-          index={6}
-          line={line({
-            state: "up_next",
-            title: "Wall mount",
-            doneWhen: "the panel hangs flush on the hallway wall.",
-          })}
-          details={{
-            start: null,
-            step: null,
-            forYou: [],
-            stepIn: false,
-            stepInReason: null,
-            stepInKind: null,
-            waitingOnYou: false,
-            held: { questions: 0, tasks: 1 },
-            reconfirming: 0,
-            sinceSummary: 0,
-            scopedSteps: 0,
-            answers: [],
-          }}
-          onStart={NOOP}
-        />
+        <List>
+          <UpNextRow
+            handle={<LineHandle title="Wall mount" number={6} canMoveUp canMoveDown={false} onMove={NOOP} />}
+            line={line({
+              state: "up_next",
+              title: "Wall mount",
+              doneWhen: "the panel hangs flush on the hallway wall.",
+            })}
+            details={{
+              start: null,
+              step: null,
+              forYou: [],
+              stepIn: false,
+              stepInReason: null,
+              stepInKind: null,
+              waitingOnYou: false,
+              held: { questions: 0, tasks: 1 },
+              reconfirming: 0,
+              sinceSummary: 0,
+              scopedSteps: 0,
+              answers: [],
+            }}
+            onStart={NOOP}
+          />
+        </List>
       </Example>
       <Example label="A proposal, with the agent's case">
-        <ProposalCard
-          line={line({
-            ref: "L-3",
-            title: "Widgets redesign",
-            state: "proposed",
-            proposedBy: "panel-widgets",
-            recommendation: "up_next",
-            recommendationWhy: "The enclosure's final print moves the screen's mounting points.",
-          })}
-          foldTargets={[line()]}
-          onStart={NOOP}
-          onQueue={NOOP}
-          onTable={NOOP}
-          onFold={NOOP}
-          onReject={NOOP}
-          onDrop={NOOP}
-        />
+        <List>
+          <ProposalCard
+            line={line({
+              ref: "L-3",
+              title: "Widgets redesign",
+              state: "proposed",
+              proposedBy: "panel-widgets",
+              recommendation: "up_next",
+              recommendationWhy: "The enclosure's final print moves the screen's mounting points.",
+            })}
+            foldTargets={[line()]}
+            onStart={NOOP}
+            onQueue={NOOP}
+            onTable={NOOP}
+            onFold={NOOP}
+            onReject={NOOP}
+            onDrop={NOOP}
+          />
+        </List>
       </Example>
       <Example label="Tabled, folded">
-        <FoldedSection title="Tabled" names={["Podcast cleanup"]}>
-          <QuietRow
-            line={line({ title: "Podcast cleanup", state: "tabled", tabledReason: "The disk is not tight" })}
-          />
-        </FoldedSection>
+        <Fold title="Tabled" count={1} summary="Podcast cleanup">
+          <List>
+            <QuietRow
+              line={line({
+                title: "Podcast cleanup",
+                state: "tabled",
+                tabledReason: "The disk is not tight",
+              })}
+            />
+          </List>
+        </Fold>
       </Example>
       <Example label="Markdown, as agents write it">
         <Markdown
@@ -291,9 +330,6 @@ export function LinesGallery() {
           onUndo={NOOP}
         />
       </Example>
-      <Example label="Adding a line">
-        <NewLineCard repos={["PANEL", "GARDEN"]} onAdd={NOOP} onCancel={NOOP} />
-      </Example>
       <Example label="A line opened: head, moves, summary">
         <LinePanelHead line={line({ ref: "L-7" })} position="Line 2 of 5" repos={["PANEL"]} />
         <LineActions line={line()} owner="panel-widgets" onChoose={NOOP} onTable={NOOP} />
@@ -304,7 +340,6 @@ export function LinesGallery() {
               "The base is printed and the **26 mm board** fits it. **Next:** measure, then print the final base.",
             summaryAt: "2026-11-14T09:40:00.000Z",
           })}
-          owner="panel-widgets"
         />
       </Example>
       <Example label="A line's plan, and its owner">

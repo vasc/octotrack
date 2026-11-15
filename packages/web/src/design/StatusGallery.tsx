@@ -38,7 +38,6 @@ export function StatusGallery() {
             pr({ checks: "failing" }),
             pr({ ref: "PR-8", number: 8, checks: "passing", title: "Second" }),
           ]}
-          holder="panel-widgets"
         />
         <SyncFailures failures={[{ repo: "acme/app", error: "gh is not logged in", updatedAt: "" }]} />
       </DesignSection>

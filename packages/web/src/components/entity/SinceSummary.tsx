@@ -1,11 +1,15 @@
 import type { FeedEvent } from "@octotrack/core/schemas";
-import { timeLabel } from "../../lib/format.ts";
+import { Link } from "../ui/Link.tsx";
 import { navigate } from "../../lib/router.ts";
-import { RefText } from "../ui/RefText.tsx";
+import { Facts } from "../ui/Facts.tsx";
+import { List } from "../ui/List.tsx";
+import { Note } from "../ui/Note.tsx";
+import { Section } from "../ui/Section.tsx";
+import { EventRow } from "./EventList.tsx";
 
 /**
  * Until its summary is rewritten, a line lists everything newer than the summary, one row each, with what the
- * developer has already seen folded to one row, so reading the line never means reading its history.
+ * developer has already seen folded to one line, so reading the line never means reading its history.
  */
 export function SinceSummary({
   line,
@@ -26,35 +30,28 @@ export function SinceSummary({
   const newer = events.filter((event) => summaryAt === null || event.ts > summaryAt);
   const unseen = newer.filter((event) => seenAt === null || event.ts > seenAt);
   const seen = newer.length - unseen.length;
+  const log = `/log?q=${encodeURIComponent(`line:${line}`)}`;
   return (
-    <section className="panel-section" aria-label="New since the summary">
-      <h2 className="panel-label">
-        {summaryAt === null ? "So far" : "New since the summary"} · {newer.length}
-        {more ? "+" : ""}
-      </h2>
-      <div className="since-list">
-        {unseen.map((event) => (
-          <span key={event.seq} className="since-row">
-            <span className="muted">{timeLabel(event.ts)}</span> <RefText text={event.summary} />
-          </span>
-        ))}
-        {seen === 0 ? null : <span className="muted">{seen} you have seen</span>}
-        <span className="muted">
-          Everything newer than the summary; any you have seen fold to one row.
-          {more ? " These are only the newest; the rest are in the Log." : ""}
-        </span>
-        <a
-          href={`/log?q=line:${line}`}
-          className="panel-link"
-          onClick={(event) => {
-            if (event.metaKey || event.ctrlKey) return;
-            event.preventDefault();
-            navigate(`/log?q=${encodeURIComponent(`line:${line}`)}`);
-          }}
-        >
-          This line in the log
-        </a>
-      </div>
-    </section>
+    <Section
+      title={summaryAt === null ? "So far" : "New since the summary"}
+      count={newer.length}
+      aside={
+        <Facts>
+          {more ? "newest only" : null}
+          <Link href={log} onGo={navigate}>
+            This line in the log
+          </Link>
+        </Facts>
+      }
+    >
+      {unseen.length === 0 ? null : (
+        <List>
+          {unseen.map((event) => (
+            <EventRow key={event.seq} event={event} />
+          ))}
+        </List>
+      )}
+      {seen === 0 ? null : <Note>{seen} you have seen</Note>}
+    </Section>
   );
 }

@@ -18,9 +18,12 @@ export function useLineHandles(h: HomeActions) {
     index: number,
     count: number,
     section: LineSection,
+    /** Its number in the order, which is the handle's face. */
+    number: number = index + 1,
   ): ReactNode => (
     <LineHandle
       title={title}
+      number={number}
       canMoveUp={index > 0}
       canMoveDown={index < count - 1}
       canQueue={section === "working"}

@@ -1,6 +1,11 @@
 import type { ForYou } from "@octotrack/core/schemas";
 import { useState } from "react";
+import { Actions } from "../ui/Actions.tsx";
+import { Button } from "../ui/Button.tsx";
+import { Item } from "../ui/Item.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
+import { Note } from "../ui/Note.tsx";
+import { Stack } from "../ui/Pairs.tsx";
 import { TextBox } from "../ui/TextBox.tsx";
 
 export type LineProposal = Extract<ForYou, { kind: "done" | "done_when" }>;
@@ -24,73 +29,60 @@ export function LineProposalCard({ proposal, title, onAccept, onDecline }: LineP
   const [why, setWhy] = useState<string | null>(null);
   const done = proposal.kind === "done";
   return (
-    <article className="line-proposal" aria-label={done ? `${title} is done?` : `New done when for ${title}`}>
-      <p className="panel-label" data-tone="info">
-        {done ? "Proposed as done" : "Done when changed"}
-        {proposal.by === null ? "" : ` · ${proposal.by}`}
-      </p>
+    <Item
+      label={done ? `${title} is done?` : `New done when for ${title}`}
+      kind={`${done ? "Proposed as done" : "Done when changed"}${proposal.by === null ? "" : ` · ${proposal.by}`}`}
+      title={<Markdown text={proposal.kind === "done" ? proposal.doneWhen : proposal.text} inline />}
+    >
       {proposal.kind === "done" ? (
-        <>
-          <p className="line-proposal-claim">
-            Done when "<Markdown text={proposal.doneWhen} inline />
-            ": met.
-          </p>
-          <div className="summary-text">
-            <Markdown text={proposal.text} />
-          </div>
-        </>
+        <Markdown text={proposal.text} />
       ) : (
-        <p className="line-proposal-claim">
-          "<Markdown text={proposal.was} inline />" became "<Markdown text={proposal.text} inline />
-          ".
+        <Note>
+          Was: <Markdown text={proposal.was} inline />
           {proposal.why === null ? null : (
             <>
-              {" "}
-              Why: <Markdown text={proposal.why} inline />
+              {" · "}
+              <Markdown text={proposal.why} inline />
             </>
           )}
-        </p>
+        </Note>
       )}
       {why === null ? (
-        <div className="question-actions">
-          <button type="button" className="btn" data-primary="true" data-choice="1" onClick={onAccept}>
+        <Actions>
+          <Button variant="primary" choice={1} onClick={onAccept}>
             {done ? "Done" : "Accept"}
-          </button>
-          <button
-            type="button"
-            className="btn"
-            data-choice="2"
-            onClick={() => (done ? setWhy("") : onDecline(""))}
-          >
+          </Button>
+          <Button choice={2} onClick={() => (done ? setWhy("") : onDecline(""))}>
             {done ? "Not yet" : "Keep current"}
-          </button>
-        </div>
+          </Button>
+        </Actions>
       ) : (
         <form
-          className="question-own"
           onSubmit={(event) => {
             event.preventDefault();
             onDecline(why.trim());
             setWhy(null);
           }}
         >
-          <TextBox
-            label={`What ${proposal.line} still needs`}
-            placeholder="What is missing"
-            value={why}
-            onChange={setWhy}
-            autoFocus
-          />
-          <div className="question-actions">
-            <button type="submit" className="btn" data-primary="true">
-              Not yet
-            </button>
-            <button type="button" className="btn" onClick={() => setWhy(null)}>
-              Cancel
-            </button>
-          </div>
+          <Stack>
+            <TextBox
+              label={`What ${proposal.line} still needs`}
+              placeholder="What is missing"
+              value={why}
+              onChange={setWhy}
+              autoFocus
+            />
+            <Actions>
+              <Button type="submit" variant="primary">
+                Not yet
+              </Button>
+              <Button variant="quiet" onClick={() => setWhy(null)}>
+                Cancel
+              </Button>
+            </Actions>
+          </Stack>
         </form>
       )}
-    </article>
+    </Item>
   );
 }

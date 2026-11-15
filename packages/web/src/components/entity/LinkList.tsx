@@ -1,7 +1,10 @@
 import type { EntitySummary, Link } from "@octotrack/core/schemas";
 import { humanize } from "../../lib/format.ts";
 import { StatusBadge } from "../ui/Badge.tsx";
+import { Facts } from "../ui/Facts.tsx";
+import { List } from "../ui/List.tsx";
 import { RefLink } from "../ui/RefLink.tsx";
+import { Row } from "../ui/Row.tsx";
 import { Section } from "../ui/Section.tsx";
 
 /** How to say a relation from the point of view of the item being shown. */
@@ -25,26 +28,30 @@ export interface LinkListProps {
   linked: readonly EntitySummary[];
 }
 
+/** What an item connects to, one row each: the other item's title, how it relates, its ref and its state. */
 export function LinkList({ entityRef, links, linked }: LinkListProps) {
   if (links.length === 0) return null;
   return (
-    <Section title="Connections" note={String(links.length)}>
-      <div className="rows">
+    <Section title="Connections" count={links.length}>
+      <List>
         {links.map((link) => {
           const { label, other } = describe(link, entityRef);
           const summary = linked.find((item) => item.ref === other);
           return (
-            <div className="row" key={`${link.fromRef}|${link.rel}|${link.toRef}`}>
-              <span className="muted no-shrink">{label}</span>
-              <RefLink value={other} />
-              <span className="row-title row-title--static" title={summary?.title}>
-                {summary?.title}
-              </span>
-              {summary === undefined ? null : <StatusBadge value={summary.status} />}
-            </div>
+            <Row
+              key={`${link.fromRef}|${link.rel}|${link.toRef}`}
+              title={summary === undefined ? <RefLink value={other} /> : summary.title}
+              facts={
+                <Facts>
+                  {label}
+                  {summary === undefined ? null : <RefLink value={other} />}
+                  {summary === undefined ? null : <StatusBadge value={summary.status} />}
+                </Facts>
+              }
+            />
           );
         })}
-      </div>
+      </List>
     </Section>
   );
 }

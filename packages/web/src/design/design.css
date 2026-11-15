@@ -1,0 +1,107 @@
+/*
+ * The /design specimen page's own layout: its columns, one per mode, and how each example is labelled. The examples
+ * themselves are the product's components, styled only by ui.css.
+ */
+
+.design-page {
+  min-height: 100%;
+  overflow: auto;
+  height: 100%;
+}
+
+.design-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  padding: var(--space-6) var(--space-10);
+  border-bottom: 1px solid var(--line);
+}
+
+.design-columns {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+}
+
+.design-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-14);
+  min-width: 0;
+  padding: var(--space-10);
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.design-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.design-section > h2 {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+.design-label {
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+}
+
+.design-example {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.design-swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(calc(var(--tile-width) / 2), 1fr));
+  gap: var(--space-4);
+}
+
+.design-swatch {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--ink-2);
+  min-width: 0;
+}
+
+.design-swatch > span:first-child {
+  flex: none;
+  width: var(--space-11);
+  height: var(--space-11);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+}
+
+.design-bar {
+  height: var(--space-5);
+  background: var(--ink-3);
+  border-radius: var(--radius-sm);
+}
+
+.design-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.design-card {
+  width: var(--space-32);
+  height: var(--space-16);
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+}
+
+@media (max-width: 720px) {
+  .design-columns {
+    grid-auto-flow: row;
+  }
+}

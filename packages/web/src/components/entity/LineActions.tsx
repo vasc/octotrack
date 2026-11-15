@@ -1,10 +1,12 @@
 import type { Line } from "@octotrack/core/schemas";
 import { useState } from "react";
-import { LINE_STATE_LABEL } from "../../lib/lines.ts";
+import type { LineChoice } from "../../lib/said.ts";
 import { FoldPicker } from "../home/FoldPicker.tsx";
 import { TableForm } from "../lines/TableForm.tsx";
-
-import type { LineChoice } from "../../lib/said.ts";
+import { Actions } from "../ui/Actions.tsx";
+import { Button } from "../ui/Button.tsx";
+import { Menu, MenuAction } from "../ui/Menu.tsx";
+import { Note } from "../ui/Note.tsx";
 
 export interface LineActionsProps {
   line: Line;
@@ -19,10 +21,7 @@ export interface LineActionsProps {
   onFold?: (into: string) => void;
 }
 
-/**
- * Where a line stands and how to move it, as E-Line draws it: its state, the moves that state allows (Done asks
- * before it ends the line), the rarer ones under More, and what a move away does to its agents.
- */
+/** How to move a line: the moves its state allows in one row, Done asking first, and the rarer ones under More. */
 export function LineActions({
   line,
   owner = null,
@@ -32,8 +31,8 @@ export function LineActions({
   foldTargets = [],
   onFold,
 }: LineActionsProps) {
-  const [mode, setMode] = useState<"table" | "done" | "more" | "fold" | null>(null);
-  const ended = line.state === "done" || line.state === "dropped";
+  const [mode, setMode] = useState<"table" | "done" | "fold" | null>(null);
+  if (line.state === "done" || line.state === "dropped") return null;
   if (mode === "table") {
     return (
       <TableForm
@@ -63,82 +62,67 @@ export function LineActions({
   }
   if (mode === "done") {
     return (
-      <div className="line-moves">
-        <span>
-          Done is final:{" "}
-          {owner === null ? "its open work closes with it" : `${owner} closes out its open work`}.
-        </span>
-        <button
-          type="button"
-          className="btn"
-          data-primary="true"
-          onClick={() => {
-            onChoose("done");
-            setMode(null);
-          }}
-        >
-          Done
-        </button>
-        <button type="button" className="btn" onClick={() => setMode(null)}>
-          Cancel
-        </button>
-      </div>
+      <>
+        <Note>Done is final.</Note>
+        <Actions>
+          <Button
+            variant="primary"
+            onClick={() => {
+              onChoose("done");
+              setMode(null);
+            }}
+          >
+            Done
+          </Button>
+          <Button onClick={() => setMode(null)}>Cancel</Button>
+        </Actions>
+      </>
     );
   }
-  const move = (choice: LineChoice, label: string) => (
-    <button type="button" className="btn" onClick={() => onChoose(choice)}>
-      {label}
-    </button>
-  );
+  const waiting = line.state === "up_next" || line.state === "tabled" || line.state === "proposed";
+  const canFold = onFold !== undefined && foldTargets.length > 0;
   return (
-    <div className="line-moves">
-      <span className="line-state">{LINE_STATE_LABEL[line.state]}</span>
-      {line.state === "working" ? move("queue", "Move to up next") : null}
-      {line.state === "up_next" || line.state === "tabled" || line.state === "proposed"
-        ? move("start", "Start")
-        : null}
-      {line.state === "tabled" || line.state === "proposed" ? move("queue", "Up next") : null}
-      {ended || line.state === "tabled" ? null : (
-        <button type="button" className="btn" onClick={() => setMode("table")}>
-          Table
-        </button>
-      )}
-      {line.state === "working" ? (
-        <button type="button" className="btn" onClick={() => setMode("done")}>
-          Done
-        </button>
+    <Actions>
+      {line.state === "working" ? <Button onClick={() => onChoose("queue")}>Move to up next</Button> : null}
+      {waiting ? (
+        <Button variant="primary" onClick={() => onChoose("start")}>
+          Start
+        </Button>
       ) : null}
-      {line.state === "proposed" && onFold !== undefined && foldTargets.length > 0 ? (
-        <button type="button" className="btn" onClick={() => setMode("fold")}>
-          Fold into
-        </button>
+      {line.state === "tabled" || line.state === "proposed" ? (
+        <Button onClick={() => onChoose("queue")}>Up next</Button>
       ) : null}
-      {line.state === "proposed" ? move("reject", "Not a line") : null}
-      {ended || line.state === "proposed" ? null : mode === "more" ? (
-        <>
-          {move("drop", "Drop")}
-          {onFold === undefined || foldTargets.length === 0 ? null : (
-            <button type="button" className="btn" onClick={() => setMode("fold")}>
-              Fold into another
-            </button>
+      {line.state === "tabled" ? null : <Button onClick={() => setMode("table")}>Table</Button>}
+      {line.state === "working" ? <Button onClick={() => setMode("done")}>Done</Button> : null}
+      {line.state === "proposed" && canFold ? (
+        <Button onClick={() => setMode("fold")}>Fold into</Button>
+      ) : null}
+      {line.state === "proposed" ? <Button onClick={() => onChoose("reject")}>Not a line</Button> : null}
+      {line.state === "proposed" ? null : (
+        <Menu label="More: drop this line, fold it into another" icon="more" menuLabel="More">
+          {(close) => (
+            <>
+              <MenuAction
+                onSelect={() => {
+                  close();
+                  onChoose("drop");
+                }}
+              >
+                Drop
+              </MenuAction>
+              <MenuAction
+                disabled={!canFold}
+                onSelect={() => {
+                  close();
+                  setMode("fold");
+                }}
+              >
+                Fold into another
+              </MenuAction>
+            </>
           )}
-        </>
-      ) : (
-        <button
-          type="button"
-          className="btn"
-          aria-label="More: drop this line, fold it into another"
-          onClick={() => setMode("more")}
-        >
-          More
-        </button>
+        </Menu>
       )}
-      {line.state === "working" && owner !== null ? (
-        <span className="line-moves-note">
-          Up next, Table, Done, Drop and I'll own it give {owner} 15 minutes to wind down. Table asks why;
-          Done and Drop also close or fold what is open.
-        </span>
-      ) : null}
-    </div>
+    </Actions>
   );
 }

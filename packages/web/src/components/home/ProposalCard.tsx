@@ -6,13 +6,11 @@ import { TableForm } from "../lines/TableForm.tsx";
 import { FoldPicker } from "./FoldPicker.tsx";
 import { ProposalCase } from "./ProposalCase.tsx";
 import { ProposalChoices } from "./ProposalChoices.tsx";
+import { URGENT_REASON } from "../../lib/lines.ts";
+import { Facts } from "../ui/Facts.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
-
-const URGENT: Readonly<Record<NonNullable<Line["urgentReason"]>, string>> = {
-  broken: "something is broken",
-  time_boxed: "it is time-boxed",
-  costs_money: "waiting costs money",
-};
+import { TextLink } from "../ui/RefLink.tsx";
+import { Row } from "../ui/Row.tsx";
 
 /** How long ago, as a phrase: "just now", "2h ago". */
 function age(iso: string, now: number): string {
@@ -64,52 +62,34 @@ export function ProposalCard({
   const [mode, setMode] = useState<"table" | "fold" | null>(null);
   const fromTable = line.tabledReason !== null;
   return (
-    <article
-      className="proposal-card"
-      aria-label={line.title}
-      data-selected={focused}
-      aria-current={focused ? "true" : undefined}
-      data-focus-ref={line.ref}
-      tabIndex={-1}
-      data-urgent={line.urgentReason !== null}
+    <Row
+      label={line.title}
+      focusRef={line.ref}
+      current={focused}
+      {...(line.urgentReason === null
+        ? {}
+        : { kind: `Urgent · ${URGENT_REASON[line.urgentReason]}`, tone: "stuck" as const })}
+      title={<TextLink onClick={() => openEntity(line.ref)}>{line.title}</TextLink>}
+      facts={
+        <Facts>
+          {line.proposedBy === null ? null : `${line.proposedBy}, ${age(line.createdAt, now)}`}
+          {repos.length === 0 ? null : repos.join(", ")}
+          {firstStep === null || firstStep === undefined ? null : `first step: ${firstStep}`}
+          {line.fromRef === null ? null : `from ${line.fromRef}`}
+        </Facts>
+      }
+      {...(line.doneWhen === ""
+        ? {}
+        : {
+            note: (
+              <>
+                Done when <Markdown text={line.doneWhen} inline />
+              </>
+            ),
+          })}
     >
-      <div className="proposal-text">
-        {line.urgentReason === null ? null : (
-          <p className="home-urgent">Urgent: {URGENT[line.urgentReason]}</p>
-        )}
-        <p>
-          <button type="button" className="line-link" onClick={() => openEntity(line.ref)}>
-            {line.title}
-          </button>
-          {/* The dots between facts are drawn by the stylesheet, so facts on a line of their own start clean. */}{" "}
-          <span className="line-facts" data-separated="true">
-            {line.proposedBy === null ? null : (
-              <span>
-                proposed by {line.proposedBy}, {age(line.createdAt, now)}
-              </span>
-            )}
-            {repos.length === 0 ? null : <span className="mono">{repos.join(", ")}</span>}
-            {firstStep === null || firstStep === undefined ? null : <span>first step: {firstStep}</span>}
-            {line.fromRef === null ? null : <span>from before ({line.fromRef})</span>}
-            {line.doneWhen === "" ? null : (
-              <span>
-                done when <Markdown text={line.doneWhen} inline />
-              </span>
-            )}
-          </span>
-        </p>
-        <ProposalCase line={line} lastUpNext={lastUpNext} />
-      </div>
-      {mode === "table" ? (
-        <TableForm
-          title={line.title}
-          onTable={(reason, lookAgainAt) => {
-            onTable(line.ref, reason, lookAgainAt);
-            setMode(null);
-          }}
-          onCancel={() => setMode(null)}
-        />
-      ) : mode === "fold" ? (
+      <ProposalCase line={line} lastUpNext={lastUpNext} />
+      {mode === "fold" ? (
         <FoldPicker
           title={line.title}
           targets={foldTargets}
@@ -130,6 +110,16 @@ export function ProposalCard({
           onDrop={() => onDrop(line.ref)}
         />
       )}
-    </article>
+      {mode === "table" ? (
+        <TableForm
+          title={line.title}
+          onTable={(reason, lookAgainAt) => {
+            onTable(line.ref, reason, lookAgainAt);
+            setMode(null);
+          }}
+          onCancel={() => setMode(null)}
+        />
+      ) : null}
+    </Row>
   );
 }

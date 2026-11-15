@@ -1,11 +1,12 @@
 import type { Issue } from "@octotrack/core/schemas";
 import { sinceText } from "../../lib/format.ts";
+import { Facts } from "../ui/Facts.tsx";
+import { Item } from "../ui/Item.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
+import { Label } from "../ui/Note.tsx";
+import { RefLink } from "../ui/RefLink.tsx";
 
-/**
- * A task that has closed, opened again: what it was, how it closed and when (done, could not be done, or withdrawn by
- * its agent), and what was sent back or why not.
- */
+/** A task that has closed: what it was, how and when it closed, and what was sent back. */
 export function TaskClosed({
   task,
   closed,
@@ -24,19 +25,25 @@ export function TaskClosed({
   // A task of the developer's own sends nothing back: its result is only the word Done.
   const sent = task.outcome === "" || task.result === null || task.result === "" ? null : task.result;
   return (
-    <article className="task" aria-label={task.title}>
-      <p className="for-you-kind">
-        Task · {task.ref}
-        {task.place === null ? "" : ` · at ${task.place}`}
-      </p>
-      <h3 className="question-title">{task.title}</h3>
-      <section className="task-form" aria-label="How it closed">
-        <span className="panel-label">
+    <Item
+      label={task.title}
+      tone="none"
+      kind={
+        <Facts>
+          Task
+          <RefLink value={task.ref} />
+          {task.place === null ? null : `at ${task.place}`}
+        </Facts>
+      }
+      title={task.title}
+    >
+      <section aria-label="How it closed">
+        <Label>
           {said}
           {task.closedAt === null ? "" : ` ${sinceText(task.closedAt)}`}
-        </span>
+        </Label>
         {sent === null ? null : <Markdown text={sent} />}
       </section>
-    </article>
+    </Item>
   );
 }

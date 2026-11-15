@@ -5,7 +5,6 @@ import { contracts } from "@octotrack/core/contracts";
 import type { HomeView, Issue, Line } from "@octotrack/core/schemas";
 import { useMemo } from "react";
 import type { Move } from "../components/home/LineHandle.tsx";
-import type { NewLine } from "../components/lines/NewLineCard.tsx";
 import { useChoices } from "./useChoices.ts";
 import { useOpMutation, useOpQuery } from "./useOp.ts";
 
@@ -87,16 +86,6 @@ export function useHome() {
     at: (place: string | null) => at.mutate(place === null ? {} : { place }),
     repos,
     repoName: (key: string) => repoNames.get(key) ?? key,
-    add: (line: NewLine) =>
-      choices.make(
-        contracts.lineAdd.name,
-        line,
-        line.where === "working"
-          ? `Starting ${line.title}`
-          : line.where === "tabled"
-            ? `Tabling ${line.title}`
-            : `Adding ${line.title} to up next`,
-      ),
     start: (ref: string) => choices.make(contracts.lineStart.name, { ref }, LINE_SAID.start(titleOf(ref))),
     queue: (ref: string) => choices.make(contracts.lineQueue.name, { ref }, LINE_SAID.queue(titleOf(ref))),
     reject: (ref: string) => choices.make(contracts.lineReject.name, { ref }, LINE_SAID.reject(titleOf(ref))),

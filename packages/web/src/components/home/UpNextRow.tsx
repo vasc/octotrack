@@ -1,25 +1,25 @@
 import type { Line, LineCrew, LineHome } from "@octotrack/core/schemas";
 import type { ReactNode } from "react";
 import type { DropTarget } from "../../hooks/useDragOrder.ts";
+import { lineFocusRef } from "../../lib/focus.ts";
 import { crewText } from "../../lib/lines.ts";
 import { openEntity } from "../../lib/router.ts";
+import { Button } from "../ui/Button.tsx";
+import { Facts } from "../ui/Facts.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
-import { lineFocusRef } from "../../lib/focus.ts";
+import { TextLink } from "../ui/RefLink.tsx";
+import { Row } from "../ui/Row.tsx";
 
-function heldText(held: LineHome["held"]): string {
+function heldText(held: LineHome["held"]): string | null {
   const parts = [
     held.questions === 0 ? null : `${held.questions} question${held.questions === 1 ? "" : "s"}`,
     held.tasks === 0 ? null : `${held.tasks} task${held.tasks === 1 ? "" : "s"}`,
   ].filter((part) => part !== null);
-  return parts.length === 0 ? "nothing held" : `${parts.join(" and ")} held`;
+  return parts.length === 0 ? null : `${parts.join(" and ")} held`;
 }
 
-/**
- * A line up next, one row of the up-next card: its place in the order, what it holds, how far scoping got, what
- * finishes it, and Start, which opens its Start sheet.
- */
+/** A line up next, one row: its number, what it holds, how far scoping got, what finishes it, and Start. */
 export function UpNextRow({
-  index,
   line,
   crew,
   details,
@@ -28,11 +28,10 @@ export function UpNextRow({
   drop,
   onStart,
 }: {
-  index: number;
   line: Line;
   crew?: LineCrew;
   details?: LineHome;
-  /** Its handle: drag it onto another line, or open it to move the line. */
+  /** Its number in the order, which drags it or opens its moves. */
   handle?: ReactNode;
   focused?: boolean;
   /** Where another line can be dropped, to land before this one. */
@@ -41,49 +40,41 @@ export function UpNextRow({
 }) {
   const scoping =
     details === undefined || details.scopedSteps === 0
-      ? "not scoped yet"
-      : `scoped: ${details.scopedSteps} step${details.scopedSteps === 1 ? "" : "s"}`;
+      ? "not scoped"
+      : `${details.scopedSteps} step${details.scopedSteps === 1 ? "" : "s"} scoped`;
   return (
-    <li
-      className="next-row"
-      aria-label={line.title}
-      data-selected={focused}
-      aria-current={focused ? "true" : undefined}
-      data-focus-ref={lineFocusRef(line.ref)}
-      tabIndex={-1}
-      {...drop}
-    >
-      <span className="line-gutter">{handle}</span>
-      <span className="line-num">{index}</span>
-      <span className="next-row-text">
-        <button type="button" className="line-link" onClick={() => openEntity(line.ref)}>
-          {line.title}
-        </button>
-        <span className="line-facts">
-          {details === undefined ? null : <span> · {heldText(details.held)}</span>}
-          {details === undefined || details.reconfirming === 0 ? null : (
-            <span> · {details.reconfirming} re-confirming</span>
-          )}
-          <span> · {scoping}</span>
-          {line.doneWhenProposal === null ? null : <span> · done when changed</span>}
-          {crewText(crew).map((words) => (
-            <span key={words}> · {words}</span>
-          ))}
-        </span>
-        {line.doneWhen === "" ? null : (
-          <span className="next-row-done">
-            Done when <Markdown text={line.doneWhen} inline />
-          </span>
-        )}
-      </span>
-      <button
-        type="button"
-        className="btn"
-        aria-label={`Start ${line.title}`}
-        onClick={() => onStart(line.ref)}
-      >
-        Start
-      </button>
-    </li>
+    <Row
+      label={line.title}
+      focusRef={lineFocusRef(line.ref)}
+      current={focused}
+      {...(drop === undefined ? {} : { drop })}
+      {...(handle === undefined ? {} : { lead: handle })}
+      title={<TextLink onClick={() => openEntity(line.ref)}>{line.title}</TextLink>}
+      facts={
+        <Facts>
+          {details === undefined ? null : heldText(details.held)}
+          {details === undefined || details.reconfirming === 0
+            ? null
+            : `${details.reconfirming} re-confirming`}
+          {scoping}
+          {line.doneWhenProposal === null ? null : "done when changed"}
+          {crewText(crew)}
+        </Facts>
+      }
+      {...(line.doneWhen === ""
+        ? {}
+        : {
+            note: (
+              <>
+                Done when <Markdown text={line.doneWhen} inline />
+              </>
+            ),
+          })}
+      trailing={
+        <Button aria-label={`Start ${line.title}`} onClick={() => onStart(line.ref)}>
+          Start
+        </Button>
+      }
+    />
   );
 }

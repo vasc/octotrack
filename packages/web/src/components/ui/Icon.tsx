@@ -56,7 +56,7 @@ export type IconName = keyof typeof PATHS;
 export function Icon({ name }: { name: IconName }) {
   return (
     <svg
-      className="icon"
+      className="ui-icon"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"

@@ -1,18 +1,20 @@
 import type { Line, LineCrew, LineHome } from "@octotrack/core/schemas";
 import type { ReactNode } from "react";
 import type { DropTarget } from "../../hooks/useDragOrder.ts";
-import { openEntity } from "../../lib/router.ts";
-import { AnswerStatus } from "./AnswerStatus.tsx";
-import { Markdown } from "../ui/Markdown.tsx";
-import { LineMeta } from "./LineMeta.tsx";
 import { lineFocusRef } from "../../lib/focus.ts";
+import { openEntity } from "../../lib/router.ts";
+import { List } from "../ui/List.tsx";
+import { Markdown } from "../ui/Markdown.tsx";
+import { TextLink } from "../ui/RefLink.tsx";
+import { Row } from "../ui/Row.tsx";
+import { AnswerStatus } from "./AnswerStatus.tsx";
+import { LineMeta } from "./LineMeta.tsx";
 
 export interface WorkingLineProps {
-  index: number;
   line: Line;
   crew?: LineCrew;
   details?: LineHome;
-  /** Its handle: drag it onto another line, or open it to move the line. */
+  /** Its number in the order, which drags it or opens its moves. */
   handle?: ReactNode;
   /** What waits on the developer, and Step in. */
   children?: ReactNode;
@@ -20,20 +22,15 @@ export interface WorkingLineProps {
   focused?: boolean;
   /** Where another line can be dropped, to land before this one. */
   drop?: DropTarget;
-  /**
-   * Folded: at a place the line is one row, its title then what it holds; folded on a phone it keeps its facts and
-   * headline but not its answers.
-   */
+  /** Folded: at a place the line is its title and what it holds; folded on a phone it keeps its facts and headline. */
   fold?: "at" | "phone" | null;
 }
 
 /**
- * A line being worked on, as a card: its handle and place in the order, its title with who is on it and its plan step,
- * its headline and how many changes came after it, what became of its answers, and what it needs from you, indented
- * under it.
+ * A line being worked on, as one row: its number, its title with who is on it and its step, its headline, what
+ * became of its answers, and under it what it needs from you.
  */
 export function WorkingLine({
-  index,
   line,
   crew,
   details,
@@ -43,54 +40,53 @@ export function WorkingLine({
   drop,
   fold = null,
 }: WorkingLineProps) {
+  const since = details?.sinceSummary ?? 0;
+  const answers = fold !== null ? [] : (details?.answers ?? []);
   return (
-    <li className="line-card-item">
-      <article
-        className="line-card"
-        aria-label={line.title}
-        data-selected={focused}
-        aria-current={focused ? "true" : undefined}
-        data-focus-ref={lineFocusRef(line.ref)}
-        tabIndex={-1}
-        {...drop}
-      >
-        <div className="line-card-head">
-          <span className="line-gutter">{handle}</span>
-          <span className="line-num">{index}</span>
-          <div className="line-card-text">
-            <h3 className="line-card-title">
-              <button type="button" className="line-link" onClick={() => openEntity(line.ref)}>
-                {line.title}
-              </button>
-            </h3>
-            {fold === "at" || line.ownedBy === null ? null : <span className="line-facts"> · yours</span>}
-            {fold === "at" ? null : (
+    <Row
+      label={line.title}
+      focusRef={lineFocusRef(line.ref)}
+      current={focused}
+      {...(drop === undefined ? {} : { drop })}
+      {...(handle === undefined ? {} : { lead: handle })}
+      title={<TextLink onClick={() => openEntity(line.ref)}>{line.title}</TextLink>}
+      {...(fold === "at"
+        ? {}
+        : {
+            facts: (
               <LineMeta
                 owned={line.ownedBy !== null}
                 {...(crew === undefined ? {} : { crew })}
                 {...(details === undefined ? {} : { details })}
               />
-            )}
-            {fold === "at" || line.headline === null ? null : (
-              <div className="line-headline">
+            ),
+          })}
+      {...(fold === "at" || line.headline === null
+        ? {}
+        : {
+            note: (
+              <>
                 <Markdown text={line.headline} inline />
-                {details === undefined || details.sinceSummary === 0 ? null : (
+                {since === 0 ? null : (
                   <>
-                    {" "}
-                    <button type="button" className="since-link" onClick={() => openEntity(line.ref)}>
-                      {details.sinceSummary} change{details.sinceSummary === 1 ? "" : "s"} since the summary
-                    </button>
+                    {" · "}
+                    <TextLink onClick={() => openEntity(line.ref)}>
+                      {since} change{since === 1 ? "" : "s"} since
+                    </TextLink>
                   </>
                 )}
-              </div>
-            )}
-          </div>
-        </div>
-        {fold !== null
-          ? null
-          : (details?.answers ?? []).map((answer) => <AnswerStatus key={answer.ref} answer={answer} />)}
-        {children}
-      </article>
-    </li>
+              </>
+            ),
+          })}
+    >
+      {answers.length === 0 ? null : (
+        <List>
+          {answers.map((answer) => (
+            <AnswerStatus key={answer.ref} answer={answer} />
+          ))}
+        </List>
+      )}
+      {children}
+    </Row>
   );
 }

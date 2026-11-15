@@ -1,21 +1,18 @@
 import type { Decision } from "@octotrack/core/schemas";
-import { Badge, StatusBadge } from "../ui/Badge.tsx";
+import { Facts } from "../ui/Facts.tsx";
 import { RefLink } from "../ui/RefLink.tsx";
 import { TimeAgo } from "../ui/TimeAgo.tsx";
 
+/** What a question is, in small facts: its ref, its kind, its priority when it is not the usual, its repo, who asked. */
 export function DecisionMeta({ decision }: { decision: Decision }) {
   return (
-    <div className="decision-top">
+    <Facts>
       <RefLink value={decision.ref} />
-      <Badge tone={decision.kind === "architecture" || decision.kind === "product" ? "info" : "neutral"}>
-        {decision.kind}
-      </Badge>
-      {decision.priority === "medium" || decision.priority === "none" ? null : (
-        <StatusBadge value={decision.priority} />
-      )}
-      {decision.project === null ? null : <span>{decision.project}</span>}
-      <span>asked by {decision.requestedBy}</span>
+      {decision.kind}
+      {decision.priority === "medium" || decision.priority === "none" ? null : decision.priority}
+      {decision.project}
+      {`asked by ${decision.requestedBy}`}
       <TimeAgo iso={decision.createdAt} />
-    </div>
+    </Facts>
   );
 }

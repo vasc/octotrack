@@ -1,56 +1,61 @@
 import type { FeedEvent } from "@octotrack/core/schemas";
 import type { ReactNode } from "react";
 import { isRoutine, routineSentence } from "../../lib/log.ts";
+import { Fact, Facts } from "../ui/Facts.tsx";
+import { List } from "../ui/List.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
+import { Note } from "../ui/Note.tsx";
+import { Row } from "../ui/Row.tsx";
 import { LogRow } from "./LogRow.tsx";
 
 /**
- * A group of changes not seen: a head with its mark, name and headline, each change a row, and the routine ones in one
- * sentence. With only routine changes the sentence sits in the head; with none, the head says nothing is new.
+ * A group of changes not seen, one row: its lead, title and ref, how many are unseen and the headline; under it each
+ * change a row, and the routine ones counted. With only routine changes the count is its fact; with none, nothing new.
  */
 export function LogGroup({
   label,
-  mark,
-  name,
+  lead,
+  title,
+  refText = null,
   headline = null,
   events,
 }: {
   /** What the group is called to a screen reader. */
   label: string;
   /** The line's number, or a dot for a group that is no line. */
-  mark: ReactNode;
-  name: ReactNode;
+  lead: ReactNode;
+  title: ReactNode;
+  refText?: string | null;
   headline?: string | null;
   events: readonly FeedEvent[];
 }) {
   const rows = events.filter((event) => !isRoutine(event));
   const sentence = routineSentence(events);
   return (
-    <article className="log-line" aria-label={label}>
-      <div className="log-line-head">
-        {mark}
-        <span>
-          {name}
-          {events.length === 0 ? <span className="muted"> · nothing new</span> : null}
-          {events.length > 0 && rows.length === 0 ? (
-            <span className="muted"> · {sentence}, all routine</span>
-          ) : null}
-          {rows.length === 0 || headline === null ? null : (
-            <span className="log-headline">
-              <Markdown text={headline} inline />
-            </span>
-          )}
-        </span>
-        {rows.length === 0 ? null : <span className="log-unseen">{rows.length} unseen</span>}
-      </div>
+    <Row
+      label={label}
+      lead={lead}
+      title={title}
+      facts={
+        <Facts>
+          {refText}
+          {events.length === 0 ? "nothing new" : null}
+          {events.length > 0 && rows.length === 0 ? `${sentence}, all routine` : null}
+          {rows.length === 0 ? null : <Fact tone="strong">{rows.length} unseen</Fact>}
+        </Facts>
+      }
+      note={rows.length === 0 || headline === null ? undefined : <Markdown text={headline} inline />}
+    >
       {rows.length === 0 ? null : (
-        <ul className="log-rows">
-          {rows.map((event) => (
-            <LogRow key={event.seq} event={event} />
-          ))}
-          {sentence === null ? null : <li className="muted">Also routine: {sentence}.</li>}
-        </ul>
+        <>
+          <List>
+            {rows.map((event) => (
+              <LogRow key={event.seq} event={event} />
+            ))}
+          </List>
+          {sentence === null ? null : <Note>Also routine: {sentence}.</Note>}
+        </>
       )}
-    </article>
+    </Row>
   );
 }

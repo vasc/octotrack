@@ -1,20 +1,18 @@
-import { focusLabel } from "../../lib/focus.ts";
 import type { DecisionCard } from "@octotrack/core/schemas";
+import { focusLabel } from "../../lib/focus.ts";
 import { DecisionCardItem } from "../decisions/DecisionCardItem.tsx";
-import { FocusTarget } from "./FocusTarget.tsx";
-import { FoldedSection } from "./FoldedSection.tsx";
+import { Fold } from "../ui/Fold.tsx";
+import { List } from "../ui/List.tsx";
+import { Section } from "../ui/Section.tsx";
 import { ForYouRow } from "./ForYouRow.tsx";
-import { HomeSection } from "./HomeSection.tsx";
 
 /**
- * Questions that stand apart from the lines: urgent ones at the very top, and ones from before lines below every line.
- * Each is a row until it has focus, like any question, so a key meant for another never answers it. On a phone the ones
- * from before lines fold to one row, like the other sections, and opening one keeps that section; urgent ones never
- * fold.
+ * Questions that stand apart from the lines: urgent ones at the very top, and ones on no line below every line. Each
+ * is a row until it has focus, so a key meant for another never answers it. On a phone the ones on no line fold to one
+ * row, held open while one of them has focus; urgent ones never fold.
  */
 export function QuestionList({
   title,
-  note,
   cards,
   focus,
   inspecting,
@@ -24,9 +22,7 @@ export function QuestionList({
   folded = false,
 }: {
   title: string;
-  /** On a phone, folded to one row like the other sections, until one of them has focus. */
   folded?: boolean;
-  note?: string;
   cards: readonly DecisionCard[];
   focus: string | null;
   /** A panel is open over home: it takes the keys. */
@@ -36,44 +32,40 @@ export function QuestionList({
   onPostponed(ref: string): void;
 }) {
   if (cards.length === 0) return null;
-  const items = (
-    <div className="line-items" data-flush="true">
-      {cards.map((card) => (
-        <FocusTarget
-          key={card.decision.ref}
-          focusRef={card.decision.ref}
-          label={focusLabel({ kind: "question", card })}
-          focused={card.decision.ref === focus}
-        >
-          {card.decision.ref === focus ? (
+  const rows = (
+    <List>
+      {cards.map((card) =>
+        card.decision.ref === focus ? (
+          <ForYouRow
+            key={card.decision.ref}
+            item={{ kind: "question", card }}
+            label={focusLabel({ kind: "question", card })}
+            focused
+            onOpen={onOpen}
+          >
             <DecisionCardItem card={card} active={!inspecting} armed={armed} onPostponed={onPostponed} />
-          ) : (
-            <ForYouRow item={{ kind: "question", card }} onOpen={onOpen} />
-          )}
-        </FocusTarget>
-      ))}
-    </div>
+          </ForYouRow>
+        ) : (
+          <ForYouRow
+            key={card.decision.ref}
+            item={{ kind: "question", card }}
+            label={focusLabel({ kind: "question", card })}
+            focused={false}
+            onOpen={onOpen}
+          />
+        ),
+      )}
+    </List>
   );
-  if (folded) {
+  if (folded)
     return (
-      // In a row of tiles, as the other folded sections are, so the tile is one row high. Opening one of its questions
-      // keeps it the same section, held open around it.
-      <div className="tiles">
-        <FoldedSection
-          title={title}
-          names={cards.map((card) => card.decision.title)}
-          named={false}
-          held={cards.some((card) => card.decision.ref === focus)}
-        >
-          {items}
-        </FoldedSection>
-      </div>
+      <Fold title={title} count={cards.length} held={cards.some((card) => card.decision.ref === focus)}>
+        {rows}
+      </Fold>
     );
-  }
   return (
-    <HomeSection title={title} count={cards.length} {...(note === undefined ? {} : { note })}>
-      {/* One sheet, a row per question, as every section draws its rows. */}
-      <div className="sheet">{items}</div>
-    </HomeSection>
+    <Section title={title} count={cards.length}>
+      {rows}
+    </Section>
   );
 }

@@ -7,7 +7,11 @@ import { usePanelFocus } from "../../hooks/usePanelFocus.ts";
 import { useReloadOnNewBuild } from "../../hooks/useReloadOnNewBuild.ts";
 import { useSeen } from "../../hooks/useSeen.ts";
 import { useTopBar } from "../../hooks/useTopBar.ts";
-import { backEntity, navigate, useRoute } from "../../lib/router.ts";
+import { backEntity, navigate, setParams, useRoute } from "../../lib/router.ts";
+import { useNewLine } from "../../hooks/useNewLine.ts";
+import { NewLineSheet } from "../lines/NewLineSheet.tsx";
+import { Side } from "../ui/Panel.tsx";
+import { Note } from "../ui/Note.tsx";
 import { EntityPanel } from "../entity/EntityPanel.tsx";
 import { KeyHelp } from "../home/KeyHelp.tsx";
 import { ErrorState } from "../ui/states.tsx";
@@ -34,6 +38,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   // The picker is the browser's to focus; g p reaches it through its element.
   const atPicker = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLElement>(null);
+  const newLine = useNewLine();
+  const adding = params.get("new") === "1";
   usePanelFocus(panel, entity);
   const { at, setAt } = bar;
   const keys = useMemo((): HotkeyMap => {
@@ -57,14 +63,14 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [entity, keysOpen, openKeys, closeKeys, at, setAt, path]);
   useHotkeys(keys);
   return (
-    <div className="shell">
+    <>
       <TopBar
         path={path}
         counts={bar.counts}
         places={bar.places}
         at={bar.at}
         onAt={bar.setAt}
-        onNewLine={() => navigate("/?new=1")}
+        onNewLine={() => setParams({ new: "1" })}
         onKeys={openKeys}
         atRef={atPicker}
         appearance={look.appearance}
@@ -72,24 +78,30 @@ export function AppShell({ children }: { children: ReactNode }) {
         onMode={look.setMode}
       />
       <KeysHeldProvider value={keysOpen}>
-        <main className="main">
+        <main>
           {/* What is shown no longer updates by itself: said quietly, as patterns.md asks of anything stale. */}
-          {live === "offline" ? (
-            <p className="muted live-note" role="status">
-              Not live: reconnecting. What is shown may be out of date.
-            </p>
-          ) : null}
+          {live === "offline" ? <Note>Not live: reconnecting</Note> : null}
           {keysOpen ? <KeyHelp onClose={closeKeys} /> : null}
           {bar.error === null ? null : <ErrorState error={bar.error} />}
           {isPending ? null : error !== null && data === undefined ? <ErrorState error={error} /> : children}
           <PendingChoices />
         </main>
         {entity === null ? null : (
-          <aside className="panel" aria-label={entity} ref={panel} tabIndex={-1}>
+          <Side label={entity} ref={panel}>
             <EntityPanel key={entity} entityRef={entity} />
-          </aside>
+          </Side>
         )}
+        {adding ? (
+          <NewLineSheet
+            repos={newLine.repos}
+            onAdd={(line) => {
+              newLine.add(line);
+              setParams({ new: null });
+            }}
+            onCancel={() => setParams({ new: null })}
+          />
+        ) : null}
       </KeysHeldProvider>
-    </div>
+    </>
   );
 }

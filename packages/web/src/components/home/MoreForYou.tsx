@@ -1,3 +1,4 @@
+import { Row } from "../ui/Row.tsx";
 import type { ForYou } from "@octotrack/core/schemas";
 
 function described(items: readonly ForYou[]): string {
@@ -21,9 +22,5 @@ function described(items: readonly ForYou[]): string {
 
 /** The rest of what a line needs from the developer, one link away, saying what it is. */
 export function MoreForYou({ items, onShow }: { items: readonly ForYou[]; onShow(): void }) {
-  return (
-    <button type="button" className="more-link" onClick={onShow}>
-      +{items.length} more for you: {described(items)}
-    </button>
-  );
+  return <Row tone="none" title={`${items.length} more: ${described(items)}`} onOpen={onShow} />;
 }

@@ -1,4 +1,10 @@
 import type { FeedEvent, Line } from "@octotrack/core/schemas";
+import { Actions } from "../ui/Actions.tsx";
+import { Button } from "../ui/Button.tsx";
+import { List } from "../ui/List.tsx";
+import { Note } from "../ui/Note.tsx";
+import { Section } from "../ui/Section.tsx";
+import { EmptyState } from "../ui/states.tsx";
 import { LineLog } from "./LineLog.tsx";
 import { LogRow } from "./LogRow.tsx";
 import { LooseSection } from "./LooseSection.tsx";
@@ -54,39 +60,42 @@ export function UnseenLog({
     ? 0
     : events.filter((event) => !REFUSED.has(event.type) && waiting.some((line) => line.ref === event.line))
         .length;
+  const sheet = shown.length > 0 || loose.length > 0 || elsewhere.length > 0;
   return (
-    <div className="log" role="feed" aria-label="Activity">
+    <>
       {refused.length === 0 ? null : (
-        <ul className="log-refused" aria-label="Rule breaks">
-          {refused.map((event) => (
-            <LogRow key={event.seq} event={event} />
+        <Section title="Rule breaks">
+          <List>
+            {refused.map((event) => (
+              <LogRow key={event.seq} event={event} />
+            ))}
+          </List>
+        </Section>
+      )}
+      {sheet ? (
+        <List>
+          {shown.map((line, index) => (
+            <LineLog
+              key={line.ref}
+              line={line}
+              number={index + 1}
+              events={events.filter((event) => event.line === line.ref && !REFUSED.has(event.type))}
+            />
           ))}
-        </ul>
-      )}
-      {/* One sheet, a row per line, as home draws its sections. */}
-      <div className="sheet">
-        {shown.map((line, index) => (
-          <LineLog
-            key={line.ref}
-            line={line}
-            number={index + 1}
-            events={events.filter((event) => event.line === line.ref && !REFUSED.has(event.type))}
-          />
-        ))}
-        <LooseSection title="On no line" events={loose} />
-        <LooseSection title="Elsewhere" events={elsewhere} />
-      </div>
+          <LooseSection title="On no line" events={loose} />
+          <LooseSection title="Elsewhere" events={elsewhere} />
+        </List>
+      ) : refused.length === 0 ? (
+        <EmptyState>Nothing new</EmptyState>
+      ) : null}
       {includeWaiting || waiting.length === 0 ? null : (
-        <p className="log-foot">
-          <span className="muted">
-            Up next and tabled: {leftOut} change{leftOut === 1 ? "" : "s"} left out. Rule breaks show at the
-            top.
-          </span>{" "}
-          <button type="button" className="btn" onClick={onShowWaiting}>
-            Show them
-          </button>
-        </p>
+        <Actions>
+          <Note>Up next and tabled: {leftOut} more</Note>
+          <Button variant="quiet" onClick={onShowWaiting}>
+            Show
+          </Button>
+        </Actions>
       )}
-    </div>
+    </>
   );
 }

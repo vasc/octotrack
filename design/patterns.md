@@ -98,8 +98,8 @@ urgent, has no owner or is stuck reads in the warm tone, as words and a small do
 ## Sheets, not cards
 
 Each section is one sheet, its lines rows divided by hairlines. Nothing inside a line is a box of its own: a task, a
-question, Step in or a proposal sits on its line as text and buttons. Focus is a quiet tint of the row or item the keys
-act on. Corners are small, 4 to 8px, and no coloured bar runs down the side of anything.
+question, Step in or a proposal sits on its line as text and buttons. Focus is a band of quiet tint across the sheet, edge to edge,
+on the row or item the keys act on; in the panel, where the opened item is the only one, it needs none. Corners are small, 4 to 8px, and no coloured bar runs down the side of anything.
 
 A list of waiting items reads as rows: what it is in small grey words after a dot, the title at reading weight, the
 case for it in a quiet line, a chevron to open it. Opening one keeps it in its section, aligned with the rows around it,
@@ -107,3 +107,10 @@ its options a plain list rather than boxes. Buttons speak at the size of the tex
 
 An item's choices are one light row: the way forward filled, the rest words that act, never a grid of bordered
 buttons. The numbers a key would press show beside them only where there is a keyboard and a pointer.
+
+## A task of its own is a sheet
+
+New line, tabling, starting a line that waited, Record answers and the keys each open a `Sheet` over the whole page and
+its bar, so nothing behind it seems to apply: from the bottom on a phone, a panel in the middle on a wide screen, its
+title and Cancel at the top and its one way forward at the foot. A short form that belongs to an item, such as an answer
+in your own words or a checkout path, stays in place under it.
