@@ -361,8 +361,11 @@ Decisions made from that:
   order with checks and drift confirmations folded, waiting lines left out unless asked for, refused writes always in;
   a line also lists what is newer than its summary. `task add` and `note add` on the developer's own lines; tasks on a
   line with no repo go in a repo named ME. Try now retries every line stopped the same way; Start one anyway starts
-  one past the cap, once; at the cap the lowest running helper Octotrack started is asked to make room before the
-  developer is. The developer's stop command runs once per Stop. A gone session's worktree goes to the next session on its line.
+  one past the cap, once, for the owner search it was asked in (fourth audit, A3: it stayed armed when an agent took
+  the line first, or in watch mode, and passed the cap unasked when the line next needed an owner; watch mode now
+  spends it as it notes the start); at the cap the lowest running helper Octotrack started is asked to make room before the
+  developer is. The developer's stop command runs once per Stop, and only when the runner did not end the session itself
+  (fourth audit, A23: it ran for both). A gone session's worktree goes to the next session on its line.
   `repo checkout` sets where worktrees are made from, and the runner otherwise finds the main checkout with
   `--git-common-dir`. Home has the header counts as one group of links, the spread-thin nudge, To top and To up next, the Start
   sheet, I'm at, Tell, Stop on the owner, Change answer, Later and Not urgent, the developer's own box, and every key
@@ -402,7 +405,16 @@ Decisions made from that:
   - _One rule decides whether a line can be started,_ shared by `runner.due`, making room and Step in, so a helper is
     never asked to give way for a line the runner would not start (one that never took it, waits to retry, or has no
     repo), and only a running helper is asked, since an asleep one holds no session. _Trade-off:_ a few more queries per
-    tick, against three copies of the rule drifting apart, which is what the audit found.
+    tick, against three copies of the rule drifting apart, which is what the audit found. (Fourth audit, A20:) the
+    same rule now also says why: home sends each line's `stepInReason` with `stepIn`, worded in core (no start command,
+    watching only, never took it, keeps failing at once, keeps taking it and leaving, no repo, every session busy),
+    and its kind as `stepInKind` (`no_start_command`, `watch_only`, `failing`, `left`, `never_took`, `clone_failed`,
+    `no_repo`, `at_cap`), so the dashboard picks Step in's fixes without reading the words. `clone_failed` comes from
+    the runner, which records on the start (`runner.exited` with `cause: checkout`) that it found no usable checkout
+    of the repo: a clone that failed, or something other than a whole clone of it where the clone goes. _Why:_ the
+    dashboard worked the reason out again from the runner's status and the last start, had no case for a line with no
+    repo, and told it was at the cap instead; it took a failed clone from a regular expression over the session's
+    output, so output that mentioned a clone offered Set its checkout instead of Try now.
   - _A start is judged by when it ended._ Only an exit before the five-minute check-in, having run no command, counts as
     failing at once and is retried by itself; one that outlived its check-in ran, whatever its exit code, and waits for
     Try now like any other that never took its line. Each start records when its process exited, so one past its
@@ -413,13 +425,30 @@ Decisions made from that:
     works in it. A retry whose worktree was removed is made again on the branch it left.
   - _Pull requests are closed only in the GitHub repo of the issues they implement,_ and never while they also
     implement an open issue or one on a line that has not ended. _Why:_ a pull request's row names any repo its writer
-    likes, and closing work still wanted cannot be undone from Octotrack.
+    likes, and closing work still wanted cannot be undone from Octotrack. (Fourth audit, A4:) a close that gh refuses
+    (no permission, an archived repo, the network) is recorded (`runner.closed` with its error), said in the Log once
+    per pull request with gh's last line (`runner.pr_close_failed`), and tried again after 2, 10, 60 then every 360
+    minutes, as a failing start is. _Why:_ it was only written to the console and asked of gh again every ten seconds,
+    without end, while D14 says the Log says what the runner closed.
   - _No process inherits an identity._ The server the CLI starts drops `OCTO_AGENT` and `OCTO_DEVELOPER`, and every
     command, session and wake the server runs is given only its own: a session its name, a wake the agent woken (or,
     for a question from before lines, its asker). _Why:_ the server is often started by an agent's first command, and a
     woken session would otherwise act as that agent.
-  - _Commands are bounded and answered._ git and gh get two minutes, clones and setup commands thirty, the stop command
-    ten, and a wake thirty; each is killed at its deadline and reported. Output is read as it comes and raced once the command
+  - _Commands are bounded and answered._ The runner's git and gh get two minutes, clones and setup commands thirty, the
+    stop command ten, and a wake thirty; pull request sync's gh calls get thirty seconds each (`OCTO_GH_TIMEOUT_MS`),
+    since a busy repo answers in about six and a stuck call must not hold every later sync (fourth audit, A25: this
+    said two minutes for all gh). Each is killed at its deadline and reported. (Fourth audit, A1:) a command with a
+    deadline runs in a process group of its own and is killed with everything it started. A wake killed at its
+    deadline reached its session, so it is recorded as ended (`agent.woken` with `ended: deadline`, and
+    `agent.wake_ended` in the Log), not as a failed wake: the agent keeps its line, asleep, and is woken again when
+    something waits. While a wake runs, its process id is recorded: the cap counts the woken session for as long, up
+    to the wake's deadline, however silent it is, and Stop ends the wake's process group as it does a session's.
+    _Why:_ the deadline killed only the adapter, so the `claude` it resumed kept working, unseen, while the wake was
+    recorded as failed ("Exit 124"): the agent was declared gone, its claim ended, a new session was started for the
+    line and handed the orphan's worktree, Stop could not reach it, and the cap stopped counting it after fifteen
+    minutes. A clone or setup command cut short likewise left git writing into a folder the runner then removed.
+    _Trade-off:_ a session woken for longer than thirty minutes is cut off mid-work, though resumable; the deadline
+    is what keeps a wake from holding a process for good. Output is read as it comes and raced once the command
     exits, so a child it leaves holding the pipes cannot hang the runner. Only names and refs of the narrow form are
     filled into the developer's commands. A push service that cannot be reached costs that browser its notification
     and nothing else: the rest are sent and recorded, so a line still buzzes once. (Third audit: unless no browser
@@ -439,7 +468,12 @@ Decisions made from that:
     instead of running `gh` in the agent's shell and reporting the result. _Why:_ any agent could write pull request
     rows through sync, past the line rules `pr upsert` keeps, and say a repo's sync failed or was fine. _Trade-off:_ the
     sync runs with the server's `gh` and environment, not the caller's; on this one machine they are the same login.
-    `gh` now runs on the same bounded path as every other command the server runs.
+    `gh` now runs on the same bounded path as every other command the server runs. (Fourth audit, A24:) a repo named
+    in the request is synced only if a project here names it, as D11 says; any other is reported as an error and
+    never fetched. A scheduled sync that finds one running waits for it and then runs, once however many intervals
+    passed, rather than being dropped. _Why:_ any caller could have the server run `gh` for any owner/name and write
+    that repo's pull requests into the tracker, linked to issues by branch or keyword, and a long list held the sync
+    while every scheduled sync was dropped with nothing recorded, so pull request status went stale.
   - _A pull request implements an issue by its branch name, a closing keyword, or `--issue`,_ as D14 says; a bare
     mention ("see PANEL-1 for background") no longer links it. Links an earlier mention made stay, but the runner does
     not act on them (below). _Why:_ every link is a reason the runner may close the pull request on GitHub with a line.
@@ -470,7 +504,12 @@ Decisions made from that:
     second such exit in a row raises Step in. A session that ran longer, or kept its line asleep, resets the count.
     _Why:_ a start command that exits after taking the line, as `claude -p "…octo line take {line}"` does, was replaced
     every 40 seconds without limit; the cap bounds how many run at once, not how fast they are replaced. _Trade-off:_ a
-    session that does a short job and exits is replaced only after the wait.
+    session that does a short job and exits is replaced only after the wait. (Fourth audit, A2:) a session the
+    developer sent away is not leaving at once: one stopped, released by the developer, or whose line was tabled, done,
+    dropped or owned (a wind-down notice) since it started exits as `exited`, says why in the log, and the next start
+    neither waits nor counts it. _Why:_ a Stop within the fifteen minutes was logged as failed, made the next start
+    wait, and a second one raised Step in blaming the session. An agent's own release still counts: a session that
+    takes its line and releases it at once would otherwise be replaced every minute, as N1 found.
   - _Starting a session has two steps._ `runner.start` reserves the name, the worktree and the line's turn; the runner
     then makes the checkout, worktree and setup in the background, spawns the process and records it with
     `runner.spawned`, which starts the five-minute check-in and asks again whether the session should run: a line
@@ -941,8 +980,9 @@ The append-only `events` table is the feed and also what event clauses in watche
   have a full page, so a rare filter on a very long log takes several requests.
 - Every waiting agent re-evaluates on every write. With 40 agents hanging, a write takes about 290ms instead of 6ms.
 - PRs are synced for repos with a GitHub name set. A PR reported by hand for any other repo is never refreshed.
-- Octotrack cannot kill a session it did not start; Stop refuses its writes and tells it, and runs the developer's
-  stop command if one is set.
+- Octotrack cannot kill a session it did not start, unless the server is running a wake for it; Stop refuses its
+  writes and tells it, and runs the developer's stop command if one is set. Stop ends processes only while the local
+  runner is set up.
 - After a reboot, a session's process id may be reused; one that started more than two minutes after the session's
   spawn is taken as another process, which a reuse within those two minutes would defeat.
 - Lists stop at their limit with no paging: the dashboard says so, and the CLI allows `--limit` up to 1000.

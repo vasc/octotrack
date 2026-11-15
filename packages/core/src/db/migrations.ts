@@ -350,6 +350,24 @@ const MIGRATIONS: readonly Migration[] = [
   `
   ALTER TABLE issues ADD COLUMN fields TEXT NOT NULL DEFAULT '[]';
   `,
+  // Pull requests the runner could not close on GitHub: how many times in a row, gh's last word, and when to try again.
+  `
+  CREATE TABLE runner_close_failures (
+    pr TEXT PRIMARY KEY,
+    attempts INTEGER NOT NULL,
+    error TEXT NOT NULL,
+    at TEXT NOT NULL,
+    nextTryAt TEXT NOT NULL
+  );
+  `,
+  // The process a wake runs, while it runs: the cap counts it, and Stop ends it.
+  `
+  ALTER TABLE agents ADD COLUMN wakePid INTEGER;
+  `,
+  // What stopped a start, when the runner knows it: "checkout" for a repo it found no usable checkout of.
+  `
+  ALTER TABLE runner_starts ADD COLUMN cause TEXT;
+  `,
 ];
 
 const UserVersion = z.object({ user_version: z.number().int() });
