@@ -1344,6 +1344,8 @@ describe("lines of work", () => {
             name: started.name,
             code: 1,
             output: "OCT has no GitHub repo to clone, and no checkout is set for it",
+            // As the runner reports a start it could find no usable checkout for.
+            cause: "checkout",
           },
           asServer,
         );
@@ -1577,6 +1579,30 @@ describe("lines of work", () => {
         expect(
           server.tracker.call(c.homeShow, {}, asDeveloper).lines[mine.ref]?.forYou.map((item) => item.kind),
         ).toEqual(["task"]),
+      );
+    });
+
+    test("a task of the developer's own is done with one press, worded by its title", async () => {
+      const mine = server.tracker.call(
+        c.lineAdd,
+        { title: "Tax archive", doneWhen: "Filed.", where: "working" },
+        asDeveloper,
+      );
+      const task = server.tracker.call(
+        c.taskAdd,
+        { line: mine.ref, title: "Scan the receipts" },
+        asDeveloper,
+      );
+      navigate("/");
+      const view = renderApp(<App />);
+      const opened = within(await view.findByRole("article", { name: "Scan the receipts" }));
+      fireEvent.click(opened.getByRole("button", { name: "Done" }));
+      await view.findByText(/Marking "Scan the receipts" done/);
+      await answerNow(view);
+      await waitFor(() =>
+        expect(
+          server.tracker.call(c.issueList, { query: `ref:${task.ref}` }, asDeveloper)[0]?.issue.status,
+        ).toBe("done"),
       );
     });
 

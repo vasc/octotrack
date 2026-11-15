@@ -30,10 +30,13 @@ export function OwnerBox({
   onOwn,
   onHand,
   waitingOnYou = false,
+  stepIn = null,
 }: {
   line: Line;
   /** All the line's open work waits on the developer. */
   waitingOnYou?: boolean;
+  /** Why no owner can be found, as Step in says it, when the line needs the developer to step in. */
+  stepIn?: string | null;
   crew: LineCrew | undefined;
   repos: readonly string[];
   onStop(name: string): void;
@@ -53,7 +56,11 @@ export function OwnerBox({
             <b>You</b> own it. No agent writes to it until you hand it back.
           </>
         ) : owner === null ? (
-          <>No agent owns it yet. Octotrack is looking for one.</>
+          stepIn === null ? (
+            <>No agent owns it yet. Octotrack is looking for one.</>
+          ) : (
+            <>No agent owns it yet, and none can be found: {stepIn}</>
+          )
         ) : (
           <>
             <b>{owner.name}</b> writes the summary and hears what you tell it.{" "}

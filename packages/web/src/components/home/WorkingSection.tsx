@@ -90,9 +90,8 @@ export function WorkingSection({
             >
               <LineStepIn
                 line={line}
-                start={details?.start ?? null}
-                needed={details?.stepIn === true}
-                runner={home.runner}
+                reason={details?.stepInReason ?? null}
+                kind={details?.stepInKind ?? null}
                 focused={focus === stepInRef(line.ref)}
                 folded={at !== null}
                 h={h}
