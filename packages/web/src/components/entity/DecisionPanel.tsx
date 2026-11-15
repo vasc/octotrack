@@ -5,11 +5,13 @@ import { useChoices } from "../../hooks/useChoices.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
 import { DecisionCardItem } from "../decisions/DecisionCardItem.tsx";
 import { DecisionMeta } from "../decisions/DecisionMeta.tsx";
+import { HeldDecision } from "../decisions/HeldDecision.tsx";
+import { ErrorState, LoadingState } from "../ui/states.tsx";
 import { RefLink } from "../ui/RefLink.tsx";
 import { KeyValues } from "./KeyValues.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
 
-function OpenDecision({ decision }: { decision: Decision }) {
+function OpenDecision({ decision, waitsFor }: { decision: Decision; waitsFor: readonly string[] }) {
   const queue = useOpQuery(contracts.decisionQueue, { query: `ref:${decision.ref}` });
   const choices = useChoices();
   const [card] = queue.data ?? [];
@@ -18,7 +20,15 @@ function OpenDecision({ decision }: { decision: Decision }) {
   return (
     <>
       {/* The decision being inspected is the one the keys answer. Home stands down while this is open. */}
-      {card === undefined ? null : <DecisionCardItem card={card} active armed={!waiting} />}
+      {queue.isPending ? (
+        <LoadingState />
+      ) : queue.error !== null ? (
+        <ErrorState error={queue.error} />
+      ) : card === undefined ? (
+        <HeldDecision decision={decision} waitsFor={waitsFor} />
+      ) : (
+        <DecisionCardItem card={card} active armed={!waiting} />
+      )}
       <div>
         <button
           type="button"
@@ -96,9 +106,16 @@ function ClosedDecision({ decision }: { decision: Decision }) {
   );
 }
 
-export function DecisionPanel({ decision }: { decision: Decision }) {
+export function DecisionPanel({
+  decision,
+  waitsFor,
+}: {
+  decision: Decision;
+  /** Open work that blocks it: a task whose outcome would settle it, which it waits behind. */
+  waitsFor: readonly string[];
+}) {
   return decision.status === "open" ? (
-    <OpenDecision decision={decision} />
+    <OpenDecision decision={decision} waitsFor={waitsFor} />
   ) : (
     <ClosedDecision decision={decision} />
   );

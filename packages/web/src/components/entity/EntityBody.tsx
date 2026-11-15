@@ -5,10 +5,21 @@ import { PrPanel } from "./PrPanel.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
 
 /** The part that differs by kind of item. */
-export function EntityBody({ entity }: { entity: EntityDetail["entity"] }) {
+export function EntityBody({
+  entity,
+  links,
+}: {
+  entity: EntityDetail["entity"];
+  links: EntityDetail["links"];
+}) {
   // A line has a panel of its own, which EntityPanel shows instead.
   if ("doneWhen" in entity) return null;
-  if ("options" in entity) return <DecisionPanel decision={entity} />;
+  if ("options" in entity) {
+    const waitsFor = links
+      .filter((link) => link.rel === "blocks" && link.toRef === entity.ref)
+      .map((link) => link.fromRef);
+    return <DecisionPanel decision={entity} waitsFor={waitsFor} />;
+  }
   if ("number" in entity) return <PrPanel pr={entity} />;
   if ("priority" in entity) return null;
   if ("rule" in entity) {

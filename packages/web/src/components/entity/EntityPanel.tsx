@@ -36,7 +36,7 @@ export function EntityPanel({ entityRef }: { entityRef: string }) {
   return (
     <div className="detail">
       <EntityHeader summary={summary} />
-      <EntityBody entity={entity} />
+      <EntityBody entity={entity} links={links} />
       {openDrift.length === 0 ? null : (
         <Section title="Out of date" note={String(openDrift.length)}>
           {openDrift.map((item) => (

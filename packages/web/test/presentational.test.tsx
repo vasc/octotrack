@@ -1,4 +1,5 @@
 import { navigate } from "../src/lib/router.ts";
+import { HeldDecision } from "../src/components/decisions/HeldDecision.tsx";
 import type { TaskOutcome } from "../src/lib/tasks.ts";
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 import { useState } from "react";
@@ -2625,5 +2626,20 @@ describe("HistoryList", () => {
     const view = render(<HistoryList events={[]} />);
     view.getByRole("heading", { name: "History" });
     expect(view.queryByRole("button")).toBeNull();
+  });
+});
+
+describe("HeldDecision", () => {
+  test("says a question waits for its line to start, and shows it read only", () => {
+    const view = render(
+      <HeldDecision
+        decision={decision({ line: "L-3", heldAt: "2026-11-01T00:00:00.000Z", recommendationWhy: "Proven." })}
+        waitsFor={[]}
+      />,
+    );
+    view.getByText(/Held while L-3 is not being worked on/);
+    view.getByText(/Why: Proven./);
+    // Nothing to answer with: the only button is its ref.
+    expect(view.getAllByRole("button").map((button) => button.textContent)).toEqual(["D-1"]);
   });
 });
