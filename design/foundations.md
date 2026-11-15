@@ -143,6 +143,9 @@ E · One list boards draw it.
 | `--touch-target`      | The least height of anything tapped on a touch screen                                        |
 | `--control-height`    | Every control on a desktop: buttons, selects, the bar's pills; one height, so a row lines up |
 | `--icon-size`         | The few icons, beside words or alone in a control that names itself                          |
+| `--tile-width`        | A tile's width before it grows to fill its row: folded sections' tiles, and swatches at half |
+| `--field-narrow`      | A box for one short value, such as a measurement, side by side with others                   |
+| `--text-box-tall`     | A box for several lines at once, such as Record answers                                      |
 | `--line-gutter`       | The handle's column on a line, before its number                                             |
 | `--line-indent`       | Where a line's title starts; what the line holds is indented to it                           |
 | `--text-input-touch`  | Text fields on a touch screen. Below 16px, iOS zooms the page on focus                       |

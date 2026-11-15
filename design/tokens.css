@@ -105,6 +105,12 @@
   --touch-target: 44px;
   --control-height: 32px;
   --icon-size: 16px;
+  /* A tile's width before it grows to fill its row: tiles of folded sections, swatches at half. */
+  --tile-width: 300px;
+  /* A box for one short value, such as a measurement, side by side with others. */
+  --field-narrow: calc(var(--control-height) * 4);
+  /* A box for several lines at once, such as Record answers. */
+  --text-box-tall: 84px;
   /* Where a line's title starts, past its handle and number: what it holds lines up under the title. */
   --line-gutter: var(--space-12);
   --line-indent: calc(var(--line-gutter) + var(--space-11) + 2 * var(--space-5));
