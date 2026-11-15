@@ -3,7 +3,7 @@ import { suggest } from "../src/hooks/useSuggestions.ts";
 import { validateQuery } from "../src/hooks/useFilter.ts";
 import { dayLabel, filterTerm, humanize, splitRefs, timeAgo, timeLabel, toneOf } from "../src/lib/format.ts";
 import { nextFocus } from "../src/lib/focus.ts";
-import { heldOnTabled } from "../src/lib/lines.ts";
+import { heldOnTabled, lineFacts, undoLines } from "../src/lib/lines.ts";
 import { taskOutcome } from "../src/lib/tasks.ts";
 import { issue } from "../src/design/fixtures.ts";
 import { closeEntity, navigate, openEntity, setParams } from "../src/lib/router.ts";
@@ -185,5 +185,27 @@ describe("taskOutcome", () => {
     expect(taskOutcome(issue({ outcome: "Grams" }), {}, " ")).toBeNull();
     expect(taskOutcome(issue({ outcome: "Grams" }), {}, " 212 g ")).toEqual({ result: "212 g" });
     expect(taskOutcome(issue({ outcome: "" }), {}, "")).toEqual({ result: "Done" });
+  });
+});
+
+describe("whether a line waits on the developer", () => {
+  // L-1 has a question for the developer and work its agents can do; all of L-2's work waits on the developer.
+  const enclosure = { ref: "L-1", title: "Enclosure" };
+  const mount = { ref: "L-2", title: "Mount" };
+  const lines = [enclosure, mount];
+  const facts = { "L-1": { waitingOnYou: false }, "L-2": { waitingOnYou: true } };
+
+  test("the roster says so only when all of a line's work waits, and says nothing of a line it does not know", () => {
+    expect(lineFacts(lines, facts, "L-1")).toEqual({ lineTitle: "Enclosure", waitsOnYou: false });
+    expect(lineFacts(lines, facts, "L-2")).toEqual({ lineTitle: "Mount", waitsOnYou: true });
+    expect(lineFacts(lines, facts, "L-9")).toEqual({});
+    expect(lineFacts(lines, facts, null)).toEqual({});
+  });
+
+  test("so does the Undo bar", () => {
+    expect(undoLines({ working: [enclosure], upNext: [mount], lines: facts })).toEqual({
+      "L-1": { title: "Enclosure", waitsOnYou: false },
+      "L-2": { title: "Mount", waitsOnYou: true },
+    });
   });
 });
