@@ -364,6 +364,10 @@ const MIGRATIONS: readonly Migration[] = [
   `
   ALTER TABLE agents ADD COLUMN wakePid INTEGER;
   `,
+  // What stopped a start, when the runner knows it: "checkout" for a repo it found no usable checkout of.
+  `
+  ALTER TABLE runner_starts ADD COLUMN cause TEXT;
+  `,
 ];
 
 const UserVersion = z.object({ user_version: z.number().int() });

@@ -407,9 +407,14 @@ Decisions made from that:
     repo), and only a running helper is asked, since an asleep one holds no session. _Trade-off:_ a few more queries per
     tick, against three copies of the rule drifting apart, which is what the audit found. (Fourth audit, A20:) the
     same rule now also says why: home sends each line's `stepInReason` with `stepIn`, worded in core (no start command,
-    watching only, never took it, keeps failing at once, keeps taking it and leaving, no repo, every session busy).
-    _Why:_ the dashboard worked the reason out again from the runner's status and the last start, had no case for a
-    line with no repo, and told it was at the cap instead.
+    watching only, never took it, keeps failing at once, keeps taking it and leaving, no repo, every session busy),
+    and its kind as `stepInKind` (`no_start_command`, `watch_only`, `failing`, `left`, `never_took`, `clone_failed`,
+    `no_repo`, `at_cap`), so the dashboard picks Step in's fixes without reading the words. `clone_failed` comes from
+    the runner, which records on the start (`runner.exited` with `cause: checkout`) that it found no usable checkout
+    of the repo: a clone that failed, or something other than a whole clone of it where the clone goes. _Why:_ the
+    dashboard worked the reason out again from the runner's status and the last start, had no case for a line with no
+    repo, and told it was at the cap instead; it took a failed clone from a regular expression over the session's
+    output, so output that mentioned a clone offered Set its checkout instead of Try now.
   - _A start is judged by when it ended._ Only an exit before the five-minute check-in, having run no command, counts as
     failing at once and is retried by itself; one that outlived its check-in ran, whatever its exit code, and waits for
     Try now like any other that never took its line. Each start records when its process exited, so one past its

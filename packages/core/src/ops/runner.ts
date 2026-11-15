@@ -11,7 +11,8 @@ import {
 import { agentState, RUNNING_WINDOW_MS, WAKE_DEADLINE_MS } from "../agents/state.ts";
 import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
-import type { Line, LineStart, RunnerDue, RunnerStatus, StartRole } from "../schemas.ts";
+import { StartCause } from "../schemas.ts";
+import type { Line, LineStart, RunnerDue, RunnerStatus, StartRole, StepInKind } from "../schemas.ts";
 import { addNotice, claimOf, claimsOn, getAgent } from "../store/agents.ts";
 import { emit, nextNumber } from "../store/common.ts";
 import type { Ctx } from "../store/context.ts";
@@ -53,6 +54,8 @@ const StartRow = z.object({
   exitCode: z.number().int().nullable(),
   /** It ran and took its line: its name is used up, so a retry after it gets a new one. */
   ran: z.number().int(),
+  /** What stopped it before it ran, when the runner knows: no usable checkout of the repo. */
+  cause: StartCause.nullable(),
 });
 type StartRow = z.infer<typeof StartRow>;
 const SettingRow = z.object({ key: z.string(), value: z.string() });
@@ -396,47 +399,84 @@ export function makeRoom(ctx: Ctx): void {
   );
 }
 
+/** Why the developer is asked to step in: its kind, for the fixes that fit, and its words. */
+interface StepIn {
+  kind: StepInKind;
+  reason: string;
+}
+
 /**
- * Why a working line needs the developer to step in, in their terms, or null if it does not: no owner was found,
- * nothing is starting for it, its work does not all wait on the developer, and the runner cannot help (not set up,
- * watching only, a start that keeps failing or never took the line, nowhere to start one, or every session busy with
- * no helper to give way). One rule, so home, the runner and notifications agree, and the dashboard shows the reason
- * the server decided rather than working out its own (fourth audit, A20).
+ * Why a working line needs the developer to step in, or null if it does not: no owner was found, nothing is starting
+ * for it, its work does not all wait on the developer, and the runner cannot help (not set up, watching only, a start
+ * that keeps failing or never took the line, nowhere to start one, or every session busy with no helper to give way).
+ * One rule, so home, the runner and notifications agree, and the dashboard shows the reason and offers the fixes the
+ * server decided rather than working them out again (fourth audit, A20).
  */
-export function stepInReason(ctx: Ctx, line: Line): string | null {
+function stepInOf(ctx: Ctx, line: Line): StepIn | null {
   const start = ownerStart(ctx, line);
   if (start.kind === "not_needed" || start.kind === "on_its_way") return null;
   const status = runnerStatus(ctx);
   if (!status.configured) {
-    return `No agent took ${line.ref}, and none can be started for it: no start command is set on this machine. Add "start": ["claude", "-p", "You are {name}. Run: octo line take {line}"] to ~/.octotrack/agent-setup.json, then Try now.`;
+    return {
+      kind: "no_start_command",
+      reason: `No agent took ${line.ref}, and none can be started for it: no start command is set on this machine. Add "start": ["claude", "-p", "You are {name}. Run: octo line take {line}"] to ~/.octotrack/agent-setup.json, then Try now.`,
+    };
   }
   if (status.dryRun) {
-    return `No agent took ${line.ref}. The runner is watching only, so it noted it would start one. Set dryRun to false in ~/.octotrack/agent-setup.json to let it.`;
+    return {
+      kind: "watch_only",
+      reason: `No agent took ${line.ref}. The runner is watching only, so it noted it would start one. Set dryRun to false in ~/.octotrack/agent-setup.json to let it.`,
+    };
   }
-  if (start.kind === "never_took") return `${start.last.name} ran but never took ${line.ref}.`;
+  if (start.kind === "never_took") {
+    return { kind: "never_took", reason: `${start.last.name} ran but never took ${line.ref}.` };
+  }
   if (start.kind === "no_repo") {
-    return `No agent took ${line.ref}, and none can be started for it: it names no repo to work in. Give it a repo, or take it on yourself.`;
+    return {
+      kind: "no_repo",
+      reason: `No agent took ${line.ref}, and none can be started for it: it names no repo to work in. Give it a repo, or take it on yourself.`,
+    };
   }
   // A first failure is retried by itself in minutes; a start that keeps failing needs the developer.
   if (start.last?.state === "failed") {
     if (start.last.attempts < 2) return null;
     if (start.last.ran === 1) {
-      return `${start.last.name} took ${line.ref} and left soon after, with no way to wake it. Octotrack starts the next one less often each time: keep the session running, or have it register a wake address (octo agent register --wake).`;
+      return {
+        kind: "left",
+        reason: `${start.last.name} took ${line.ref} and left soon after, with no way to wake it. Octotrack starts the next one less often each time: keep the session running, or have it register a wake address (octo agent register --wake).`,
+      };
     }
     const said = start.last.output?.trim().split("\n").at(-1)?.trim() ?? "";
-    return `${start.last.name}, started for it, exited at once${said === "" ? "" : `: ${said}`}. Octotrack tries again by itself, less often each time.`;
+    return {
+      // The runner says when it found no usable checkout; nothing is read into the output.
+      kind: start.last.cause === "checkout" ? "clone_failed" : "failing",
+      reason: `${start.last.name}, started for it, exited at once${said === "" ? "" : `: ${said}`}. Octotrack tries again by itself, less often each time.`,
+    };
   }
   // Started anyway, past the cap: a session is on its way.
   if (startsAnyway(ctx, line)) return null;
   // At the cap with a running helper Octotrack started, that helper gives way instead: only owners everywhere needs
   // the developer.
   if (status.cap - activeSessions(ctx) > 0 || lowestRunningHelper(ctx) !== null) return null;
-  return `No agent took ${line.ref}, and every session Octotrack may run is busy (at most ${status.cap}).`;
+  return {
+    kind: "at_cap",
+    reason: `No agent took ${line.ref}, and every session Octotrack may run is busy (at most ${status.cap}).`,
+  };
+}
+
+/** Why a working line needs the developer to step in, in their terms, or null if it does not. */
+export function stepInReason(ctx: Ctx, line: Line): string | null {
+  return stepInOf(ctx, line)?.reason ?? null;
+}
+
+/** The kind of that reason, for the fixes that fit, or null if there is none. */
+export function stepInKind(ctx: Ctx, line: Line): StepInKind | null {
+  return stepInOf(ctx, line)?.kind ?? null;
 }
 
 /** Whether a working line needs the developer to step in: whenever there is a reason to. */
 export function stepInFor(ctx: Ctx, line: Line): boolean {
-  return stepInReason(ctx, line) !== null;
+  return stepInOf(ctx, line) !== null;
 }
 
 /** The repo of the current step's first unclaimed issue, else the line's first-listed repo. */
@@ -705,8 +745,8 @@ export const runnerOps = [
       : null;
     const kept = told === null ? output : `${output === null ? "" : `${output}\n`}${told}`;
     ctx.sql.run(
-      "UPDATE runner_starts SET state = ?, output = ?, endedAt = ?, exitedAt = ?, nextTryAt = ?, exitCode = ?, ran = ? WHERE id = ?",
-      [state, kept, ctx.now, ctx.now, nextTryAt, input.code, took ? 1 : 0, start.id],
+      "UPDATE runner_starts SET state = ?, output = ?, endedAt = ?, exitedAt = ?, nextTryAt = ?, exitCode = ?, ran = ?, cause = ? WHERE id = ?",
+      [state, kept, ctx.now, ctx.now, nextTryAt, input.code, took ? 1 : 0, input.cause ?? null, start.id],
     );
     const claim = keeps ? claimOf(ctx, input.name) : endClaim(ctx, input.name, "exit");
     if (agent !== null && !keeps) {

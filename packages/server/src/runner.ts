@@ -1,6 +1,6 @@
 import { closeSync, existsSync, mkdirSync, openSync, readFileSync, renameSync, rmSync } from "node:fs";
 import { dirname, join, sep } from "node:path";
-import { type Caller, contracts, type RunnerDue, type Tracker } from "@octotrack/core";
+import { type Caller, contracts, type RunnerDue, type StartCause, type Tracker } from "@octotrack/core";
 import { z } from "zod";
 import { childEnv } from "./env.ts";
 import { octoHome } from "./paths.ts";
@@ -257,8 +257,12 @@ export function createRunner(options: {
     tracker.call(contracts.runnerRestarted, { alive }, RUNNER);
   })();
 
-  const ended = (name: string, code: number, output: string) =>
-    tracker.call(contracts.runnerExited, { name, code, output }, RUNNER);
+  const ended = (name: string, code: number, output: string, cause?: StartCause) =>
+    tracker.call(
+      contracts.runnerExited,
+      { name, code, output, ...(cause === undefined ? {} : { cause }) },
+      RUNNER,
+    );
 
   /** The GitHub repo a checkout's origin points at, to compare with the one a repo names. */
   const originOf = async (path: string): Promise<string | null> => {
@@ -379,7 +383,8 @@ export function createRunner(options: {
     }
     const checkout = await inTurn(`repo:${due.repo}`, () => checkoutFor(due.repo));
     if ("error" in checkout) {
-      ended(started.name, 1, checkout.error);
+      // Said as its cause, so Step in offers to set a checkout without reading the words (A20).
+      ended(started.name, 1, checkout.error, "checkout");
       return;
     }
     const worktree = await inTurn(`checkout:${checkout.path}`, () =>

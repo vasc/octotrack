@@ -40,6 +40,7 @@ import {
   PushSubscription,
   RunnerClose,
   RunnerDue,
+  StartCause,
   StartRole,
   RunnerStatus,
   RunnerWorktree,
@@ -245,8 +246,14 @@ export const contracts = {
   ),
   runnerExited: write(
     "runner.exited",
-    "Record that a session Octotrack started has exited, with its code and last output",
-    z.strictObject({ name: z.string(), code: z.number().int(), output: z.string() }),
+    "Record that a session Octotrack started has exited, with its code and last output, and why when the runner knows",
+    z.strictObject({
+      name: z.string(),
+      code: z.number().int(),
+      output: z.string(),
+      /** What stopped it before it ran, as the runner saw it: no usable checkout of the repo. */
+      cause: StartCause.optional(),
+    }),
     LineStart,
   ),
   runnerRetry: write(

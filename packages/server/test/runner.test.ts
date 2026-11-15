@@ -909,6 +909,18 @@ describe("what the fourth audit found in the local runner", () => {
     expect(closes()).toHaveLength(2);
   });
 
+  test("a start that found no checkout says so on the start, so Step in offers to set one, not a guess from output", async () => {
+    const w = world(
+      { repos: {} },
+      { "gh repo clone": { code: 1, stderr: "GraphQL: Could not resolve to a Repository" } },
+    );
+    await w.tick();
+    w.later(3);
+    await w.tick();
+    const home = w.tracker.call(c.homeShow, {}, DEV).lines[w.line.ref];
+    expect([home?.start?.attempts, home?.stepInKind]).toEqual([2, "clone_failed"]);
+  });
+
   test("A23: Stop ends a session the runner started, and does not also run the stop command for it", async () => {
     const w = world({ stop: ["tmux", "kill-session", "-t", "{name}"] });
     await w.tick();
