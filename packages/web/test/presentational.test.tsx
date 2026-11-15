@@ -412,8 +412,13 @@ describe("TopBar", () => {
     expect(nav.getByRole("link", { name: "Log" }).getAttribute("aria-current")).toBe("page");
     expect(view.getByRole("link", { name: "4 to answer" }).getAttribute("href")).toBe("/?focus=D-56");
     expect(view.getByRole("link", { name: "1 to step in" }).getAttribute("data-count")).toBe("toStepIn");
-    fireEvent.change(view.getByRole("combobox"), { target: { value: "the Mac" } });
+    expect(view.queryByRole("combobox")).toBeNull();
+    fireEvent.click(view.getByRole("button", { name: "I'm at: All places" }));
+    const menu = within(view.getByRole("menu", { name: "I'm at" }));
+    expect(menu.getByRole("menuitemradio", { name: "All places" }).getAttribute("aria-checked")).toBe("true");
+    fireEvent.click(menu.getByRole("menuitemradio", { name: "the Mac" }));
     expect(onAt).toHaveBeenCalledWith("the Mac");
+    expect(view.queryByRole("menu")).toBeNull();
     fireEvent.click(view.getByRole("button", { name: "New line" }));
     expect(onNewLine).toHaveBeenCalledTimes(1);
   });
@@ -453,7 +458,7 @@ describe("TopBar", () => {
         onKeys={() => {}}
       />,
     );
-    expect(view.queryByRole("combobox")).toBeNull();
+    expect(view.queryByRole("button", { name: /I'm at/ })).toBeNull();
     expect(view.queryByRole("status", { name: "Waiting on you" })).toBeNull();
   });
 });

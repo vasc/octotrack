@@ -1190,11 +1190,12 @@ describe("lines of work", () => {
       await view.findByRole("article", { name: "Which board?" });
       fireEvent.keyDown(window, { key: "g" });
       fireEvent.keyDown(window, { key: "p" });
-      const picker = view.getByRole("combobox", { name: "I'm at" });
+      const picker = view.getByRole("button", { name: "I'm at: All places" });
       expect(document.activeElement).toBe(picker);
-      fireEvent.change(picker, { target: { value: "the bench" } });
+      fireEvent.click(picker);
+      fireEvent.click(view.getByRole("menuitemradio", { name: "the bench" }));
       await view.findByRole("region", { name: "At the bench" });
-      picker.blur();
+      (document.activeElement instanceof HTMLElement ? document.activeElement : picker).blur();
       fireEvent.keyDown(window, { key: "Escape" });
       await gone(() => view.queryByRole("region", { name: "At the bench" }));
     });
@@ -1452,9 +1453,8 @@ describe("lines of work", () => {
       );
       navigate("/");
       const view = renderApp(<App />);
-      fireEvent.change(await view.findByRole("combobox", { name: "I'm at" }), {
-        target: { value: "the bench" },
-      });
+      fireEvent.click(await view.findByRole("button", { name: "I'm at: All places" }));
+      fireEvent.click(view.getByRole("menuitemradio", { name: "the bench" }));
       const at = within(await view.findByRole("region", { name: "At the bench" }));
       at.getByText(/Everything else is folded\. Ends by itself in \d+ hours?\./);
       const line = within(view.getByRole("article", { name: "Sendspin enclosure" }));
