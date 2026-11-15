@@ -14,6 +14,9 @@ const REFUSED: ReadonlySet<string> = new Set([
   "pr.after_wind_down",
 ]);
 
+/** Lines that show only when something changed on them. */
+const ONLY_WHEN_CHANGED: ReadonlySet<Line["state"]> = new Set(["proposed", "done", "dropped"]);
+
 /** Lines whose changes wait until asked for: up next and tabled are quiet. Every other line is shown. */
 const QUIET: ReadonlySet<Line["state"]> = new Set(["up_next", "tabled"]);
 
@@ -35,7 +38,11 @@ export function UnseenLog({
   onShowWaiting(): void;
 }) {
   const refused = events.filter((event) => REFUSED.has(event.type));
-  const shown = lines.filter((line) => includeWaiting || !QUIET.has(line.state));
+  // A proposal or a finished line shows only when something changed on it: "nothing new" on each would bury the rest.
+  const changed = new Set(events.map((event) => event.line));
+  const shown = lines
+    .filter((line) => includeWaiting || !QUIET.has(line.state))
+    .filter((line) => !ONLY_WHEN_CHANGED.has(line.state) || changed.has(line.ref));
   const waiting = lines.filter((line) => QUIET.has(line.state));
   const known = new Set(lines.map((line) => line.ref));
   const loose = events.filter((event) => event.line === null && !REFUSED.has(event.type));

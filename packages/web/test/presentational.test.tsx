@@ -1948,6 +1948,24 @@ describe("UnseenLog", () => {
     at(1, { line: "L-2", type: "write.refused", summary: "panel was refused a write on L-2" }),
   ];
 
+  test("a proposal or a finished line with nothing new is left out; a working line says nothing new", () => {
+    const view = render(
+      <UnseenLog
+        events={[]}
+        lines={[
+          line({ ref: "L-1", title: "Enclosure", state: "working" }),
+          line({ ref: "L-3", title: "Wall mount", state: "proposed" }),
+          line({ ref: "L-4", title: "Seerr", state: "done" }),
+        ]}
+        includeWaiting={false}
+        onShowWaiting={() => {}}
+      />,
+    );
+    within(view.getByRole("article", { name: "Enclosure" })).getByText(/nothing new/);
+    expect(view.queryByRole("article", { name: "Wall mount" })).toBeNull();
+    expect(view.queryByRole("article", { name: "Seerr" })).toBeNull();
+  });
+
   test("drops nothing: a proposal, a line just done and a line it does not know each show; late pull requests go to the top", () => {
     const proposed = line({ ref: "L-3", title: "Wall mount", state: "proposed" });
     const done = line({ ref: "L-4", title: "Seerr", state: "done" });
