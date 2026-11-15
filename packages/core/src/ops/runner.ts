@@ -722,14 +722,16 @@ export const runnerOps = [
     // A session that took its line and can be woken is only asleep: it keeps its line (D14's agent states). Any
     // other is gone, and what it held is offered on.
     const keeps = took && agent !== null && agent.wakeAddress !== null;
-    // The developer stopped it, released it, or moved its line on: it was sent away rather than leaving by itself.
-    const sentAway = took ? sentAwayFrom(ctx, start) : null;
+    // The developer stopped it, released it, or moved its line on: it was sent away rather than leaving by itself,
+    // whether it took its line or not. One stopped before it took its line did not fail to start, and is never retried
+    // under the stopped name (fifth audit, B11).
+    const sentAway = sentAwayFrom(ctx, start);
     // One that took its line and left at once by itself, with no way to wake it, waits like a failed start before the
     // next.
     const leftAtOnce = took && !keeps && sentAway === null && sinceSpawn < LEFT_AT_ONCE_MS;
     const state: LineStart["state"] = leftAtOnce
       ? "failed"
-      : took
+      : took || sentAway !== null
         ? "exited"
         : atOnce && !ranCommands && input.code !== 0
           ? "failed"

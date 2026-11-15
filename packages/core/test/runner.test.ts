@@ -1102,3 +1102,45 @@ describe("the roster's start attempts (fourth audit A22)", () => {
     expect([view?.line, view?.lastLine]).toEqual([null, line.ref]);
   });
 });
+
+describe("what the fifth audit found in the runner", () => {
+  function spawn(w: ReturnType<typeof world>, line: string, pid: number) {
+    const started = w.tracker.call(c.runnerStart, { line, repo: "PANEL" }, w.runner);
+    expect(w.tracker.call(c.runnerSpawned, { name: started.name, pid }, w.runner).go).toBe(true);
+    return started.name;
+  }
+  const due = (w: ReturnType<typeof world>) =>
+    w.tracker.call(c.runnerDue, {}, w.runner).map((item) => [item.line, item.name]);
+  const exits = (w: ReturnType<typeof world>) =>
+    w.tracker
+      .call(c.feedList, { query: "event:runner.failed,runner.exited" }, w.dev)
+      .events.map((event) => [event.type, event.summary]);
+
+  test("B11: a session stopped before it took its line exited, and is not retried under the stopped name", () => {
+    const w = world();
+    w.cap(1);
+    const line = w.line("Enclosure");
+    w.later(1);
+    const name = spawn(w, line.ref, 101);
+    w.later(1);
+    w.tracker.call(c.agentStop, { name }, w.dev);
+    w.tracker.call(c.runnerExited, { name, code: 143, output: "" }, w.runner);
+    expect(exits(w)).toEqual([["runner.exited", `${name} exited (code 143), stopped by the developer`]]);
+    // As after any Stop, the next session starts as soon as the search allows, with no wait and a new name.
+    expect(due(w)).toEqual([[line.ref, null]]);
+    const home = w.tracker.call(c.homeShow, {}, w.dev).lines[line.ref];
+    expect([home?.stepIn, home?.start?.state]).toEqual([false, "exited"]);
+  });
+
+  test("B11: so is one stopped after its check-in that never took its line", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    w.later(1);
+    const name = spawn(w, line.ref, 101);
+    w.later(10);
+    w.tracker.call(c.agentStop, { name }, w.dev);
+    w.tracker.call(c.runnerExited, { name, code: 143, output: "" }, w.runner);
+    expect(exits(w)).toEqual([["runner.exited", `${name} exited (code 143), stopped by the developer`]]);
+    expect(w.tracker.call(c.homeShow, {}, w.dev).lines[line.ref]?.stepIn).toBe(false);
+  });
+});
