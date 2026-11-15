@@ -66,6 +66,7 @@ export function WorkingLine({
             {fold === "at" || line.ownedBy === null ? null : <span className="line-facts"> · yours</span>}
             {fold === "at" ? null : (
               <LineMeta
+                owned={line.ownedBy !== null}
                 {...(crew === undefined ? {} : { crew })}
                 {...(details === undefined ? {} : { details })}
               />
