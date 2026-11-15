@@ -752,6 +752,28 @@ export const LineStart = z.object({
 export type LineStart = z.infer<typeof LineStart>;
 
 /** What home shows for one line beyond the line itself. */
+/**
+ * Why Step in is raised, as a kind, so the dashboard offers the fixes that fit without reading the words: no start
+ * command set, watching only, starts that exit at once, sessions that take the line and leave, one that ran but never
+ * took it, no usable checkout of the repo (a clone that failed, or something else where the clone goes), no repo to
+ * start in, or every session busy.
+ */
+export const StepInKind = z.enum([
+  "no_start_command",
+  "watch_only",
+  "failing",
+  "left",
+  "never_took",
+  "clone_failed",
+  "no_repo",
+  "at_cap",
+]);
+export type StepInKind = z.infer<typeof StepInKind>;
+
+/** Why a start stopped, when the runner knows it: it found no usable checkout of the repo. */
+export const StartCause = z.enum(["checkout"]);
+export type StartCause = z.infer<typeof StartCause>;
+
 export const LineHome = z.object({
   /** The latest session Octotrack started for it, if any. */
   start: LineStart.nullable(),
@@ -766,6 +788,8 @@ export const LineHome = z.object({
    * one rule the runner and notifications share, so the dashboard never works it out for itself.
    */
   stepInReason: z.string().nullable(),
+  /** The kind of that reason, null exactly when it is. */
+  stepInKind: StepInKind.nullable(),
   /** All of a working line's open work waits on the developer: no agent has anything to pick up meanwhile. */
   waitingOnYou: z.boolean(),
   /** On a line not being worked on: the questions and tasks it holds. */

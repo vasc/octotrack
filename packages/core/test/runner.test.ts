@@ -853,6 +853,9 @@ describe("Step in says why, as the server decides it (fourth audit, A20)", () =>
     const home = w.tracker.call(c.homeShow, {}, w.dev).lines[line];
     return home?.stepIn === true ? home.stepInReason : `no step in, yet ${home?.stepInReason}`;
   };
+  /** Which kind of reason, so the dashboard offers the fixes that fit without reading the words. */
+  const kind = (w: ReturnType<typeof world>, line: string) =>
+    w.tracker.call(c.homeShow, {}, w.dev).lines[line]?.stepInKind;
 
   test("with no start command set on this machine", () => {
     const w = world();
@@ -862,6 +865,7 @@ describe("Step in says why, as the server decides it (fourth audit, A20)", () =>
     expect(reason(w, line.ref)).toBe(
       `No agent took ${line.ref}, and none can be started for it: no start command is set on this machine. Add "start": ["claude", "-p", "You are {name}. Run: octo line take {line}"] to ~/.octotrack/agent-setup.json, then Try now.`,
     );
+    expect(kind(w, line.ref)).toBe("no_start_command");
   });
 
   test("while the runner is watching only", () => {
@@ -872,6 +876,7 @@ describe("Step in says why, as the server decides it (fourth audit, A20)", () =>
     expect(reason(w, line.ref)).toBe(
       `No agent took ${line.ref}. The runner is watching only, so it noted it would start one. Set dryRun to false in ~/.octotrack/agent-setup.json to let it.`,
     );
+    expect(kind(w, line.ref)).toBe("watch_only");
   });
 
   test("at the cap, with no helper to give way", () => {
@@ -885,6 +890,7 @@ describe("Step in says why, as the server decides it (fourth audit, A20)", () =>
     expect(reason(w, second.ref)).toBe(
       `No agent took ${second.ref}, and every session Octotrack may run is busy (at most 1).`,
     );
+    expect(kind(w, second.ref)).toBe("at_cap");
   });
 
   test("when the last session ran but never took the line", () => {
@@ -895,6 +901,7 @@ describe("Step in says why, as the server decides it (fourth audit, A20)", () =>
     w.later(6);
     w.tracker.sweep();
     expect(reason(w, line.ref)).toBe(`${name} ran but never took ${line.ref}.`);
+    expect(kind(w, line.ref)).toBe("never_took");
   });
 
   test("when starts keep failing at once, with the last one's own words", () => {
@@ -909,6 +916,7 @@ describe("Step in says why, as the server decides it (fourth audit, A20)", () =>
     expect(reason(w, line.ref)).toBe(
       `${name}, started for it, exited at once: not logged in. Octotrack tries again by itself, less often each time.`,
     );
+    expect(kind(w, line.ref)).toBe("failing");
   });
 
   test("when sessions keep taking the line and leaving at once", () => {
@@ -927,6 +935,41 @@ describe("Step in says why, as the server decides it (fourth audit, A20)", () =>
     expect(reason(w, line.ref)).toBe(
       `${last} took ${line.ref} and left soon after, with no way to wake it. Octotrack starts the next one less often each time: keep the session running, or have it register a wake address (octo agent register --wake).`,
     );
+    expect(kind(w, line.ref)).toBe("left");
+  });
+
+  test("when starts keep failing because the runner found no checkout of the repo to work in", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    w.later(1);
+    const name = spawn(w, line.ref, 101);
+    const failed = {
+      name,
+      code: 1,
+      output: "Cloning vasc/homepanel failed: not found",
+      cause: "checkout",
+    } as const;
+    w.tracker.call(c.runnerExited, failed, w.runner);
+    w.later(3);
+    expect(spawn(w, line.ref, 102)).toBe(name);
+    w.tracker.call(c.runnerExited, failed, w.runner);
+    expect(kind(w, line.ref)).toBe("clone_failed");
+    expect(reason(w, line.ref)).toBe(
+      `${name}, started for it, exited at once: Cloning vasc/homepanel failed: not found. Octotrack tries again by itself, less often each time.`,
+    );
+  });
+
+  test("but output that only mentions a clone is no failed clone", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    w.later(1);
+    const name = spawn(w, line.ref, 101);
+    const failed = { name, code: 1, output: "Error: could not clone the session" };
+    w.tracker.call(c.runnerExited, failed, w.runner);
+    w.later(3);
+    spawn(w, line.ref, 102);
+    w.tracker.call(c.runnerExited, failed, w.runner);
+    expect(kind(w, line.ref)).toBe("failing");
   });
 
   test("when the line names no repo to start a session in", () => {
@@ -937,6 +980,7 @@ describe("Step in says why, as the server decides it (fourth audit, A20)", () =>
     expect(reason(w, line.ref)).toBe(
       `No agent took ${line.ref}, and none can be started for it: it names no repo to work in. Give it a repo, or take it on yourself.`,
     );
+    expect(kind(w, line.ref)).toBe("no_repo");
   });
 
   test("and says nothing while no step in is needed", () => {
@@ -945,6 +989,7 @@ describe("Step in says why, as the server decides it (fourth audit, A20)", () =>
     w.later(1);
     spawn(w, line.ref, 101);
     expect(w.tracker.call(c.homeShow, {}, w.dev).lines[line.ref]?.stepInReason).toBeNull();
+    expect(kind(w, line.ref)).toBeNull();
   });
 });
 
