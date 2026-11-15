@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { guardLineWrite, windingDown } from "../agents/claims.ts";
+import { guardOnLine, windingDown } from "../agents/claims.ts";
 import { contracts, type PrInput } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
 import { extractIssueRefs, implementedRefs, normalizeRef } from "../refs.ts";
@@ -265,11 +265,12 @@ function upsertPr(ctx: Ctx, input: PrInput): { pr: PullRequest; changed: boolean
 
 export const prOps = [
   bind(contracts.prUpsert, (ctx, input) => {
-    // An agent reporting a pull request is working on the lines of the issues it implements, which their state allows or
-    // refuses, counted, as any other work there.
+    // An agent reporting a pull request is working on the lines of the issues it implements: named, linked already or
+    // named by its branch or a closing keyword. Each must be its own line, in a state that takes work, or the report
+    // would link, or rewrite, another line's pull request from outside it.
     const existing = getPrByNumber(ctx, input.repo, input.number);
     for (const issue of implementedIssues(ctx, existing?.ref ?? null, input))
-      guardLineWrite(ctx, issue.line, "work");
+      guardOnLine(ctx, issue.line, "work", issue.ref);
     const pr = upsertPr(ctx, input).pr;
     // Reported, not seen on GitHub: until sync confirms it, the runner never closes it.
     ctx.sql.run("UPDATE prs SET githubAt = NULL WHERE ref = ?", [pr.ref]);
