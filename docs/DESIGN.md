@@ -361,7 +361,9 @@ Decisions made from that:
   order with checks and drift confirmations folded, waiting lines left out unless asked for, refused writes always in;
   a line also lists what is newer than its summary. `task add` and `note add` on the developer's own lines; tasks on a
   line with no repo go in a repo named ME. Try now retries every line stopped the same way; Start one anyway starts
-  one past the cap, once; at the cap the lowest running helper Octotrack started is asked to make room before the
+  one past the cap, once, for the owner search it was asked in (fourth audit, A3: it stayed armed when an agent took
+  the line first, or in watch mode, and passed the cap unasked when the line next needed an owner; watch mode now
+  spends it as it notes the start); at the cap the lowest running helper Octotrack started is asked to make room before the
   developer is. The developer's stop command runs once per Stop, and only when the runner did not end the session itself
   (fourth audit, A23: it ran for both). A gone session's worktree goes to the next session on its line.
   `repo checkout` sets where worktrees are made from, and the runner otherwise finds the main checkout with

@@ -763,6 +763,45 @@ describe("what the fourth audit found in the runner", () => {
     expect(exits(w)).toEqual([["runner.exited", `${name} exited (code 0), after ${line.ref} moved on`]]);
   });
 
+  test("A3: Start one anyway is for the search it was asked in: once an agent takes the line, it is spent", () => {
+    const w = world();
+    w.cap(1);
+    const first = w.line("Enclosure");
+    w.later(1);
+    spawn(w, first.ref, 101);
+    const second = w.line("Firmware");
+    w.later(2);
+    expect(w.tracker.call(c.homeShow, {}, w.dev).lines[second.ref]?.stepIn).toBe(true);
+    w.tracker.call(c.runnerRetry, { line: second.ref, anyway: true }, w.dev);
+    // Before the runner acts, an agent already here takes the line.
+    w.tracker.call(c.agentRegister, { repo: "PANEL" }, w.session("helperish", "/x"));
+    w.tracker.call(c.lineTake, { ref: second.ref }, w.session("helperish", "/x"));
+    expect(due(w)).toEqual([]);
+    // Days later it lets the line go; nobody asked to pass the cap this time.
+    w.later(60 * 24 * 3);
+    w.tracker.call(c.lineRelease, {}, w.session("helperish", "/x"));
+    w.later(2);
+    expect(due(w)).toEqual([]);
+    expect(w.tracker.call(c.homeShow, {}, w.dev).lines[second.ref]?.stepIn).toBe(true);
+  });
+
+  test("A3: in watch mode Start one anyway is noted once and spent, not kept for when the runner may act", () => {
+    const w = world();
+    w.cap(1);
+    const first = w.line("Enclosure");
+    w.later(1);
+    spawn(w, first.ref, 101);
+    const second = w.line("Firmware");
+    w.later(2);
+    w.tracker.call(c.runnerReport, { configured: true, cap: 1, dryRun: true }, w.runner);
+    w.tracker.call(c.runnerRetry, { line: second.ref, anyway: true }, w.dev);
+    expect(due(w)).toEqual([[second.ref, null]]);
+    w.tracker.call(c.runnerDry, { line: second.ref, repo: "PANEL" }, w.runner);
+    w.later(60 * 24);
+    w.tracker.call(c.runnerReport, { configured: true, cap: 1, dryRun: false }, w.runner);
+    expect(due(w)).toEqual([]);
+  });
+
   test("A2: nor one the developer released from its line", () => {
     const w = world();
     const line = w.line("Enclosure");
