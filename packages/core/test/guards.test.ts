@@ -801,4 +801,27 @@ describe("agents write only to the line they are on, the rest of it (fourth audi
     expect(w.as(w.dev, c.issueList, { query: `ref:${w.issue}` })[0]?.issue.status).toBe("in_progress");
     expect(w.as(w.owner, c.issueRelease, { refs: [w.issue] })[0]?.status).toBe("todo");
   });
+
+  test("done when: the agent that proposed a line cannot propose a new one once it started, from another line", () => {
+    const w = world();
+    const proposal = w.as(w.owner, c.linePropose, {
+      title: "Stand",
+      doneWhen: "It stands.",
+      repos: ["PANEL"],
+      recommendation: "start",
+      why: "It is next.",
+    }).ref;
+    expect(w.as(w.owner, c.lineDoneWhen, { ref: proposal, doneWhen: "It stands up." }).doneWhen).toBe(
+      "It stands up.",
+    );
+    w.as(w.dev, c.lineStart, { ref: proposal });
+    const refusal = w.refused(() =>
+      w.as(w.owner, c.lineDoneWhen, { ref: proposal, doneWhen: "Hijacked", why: "x" }),
+    );
+    expect(refusal.code).toBe("forbidden");
+    expect(w.as(w.dev, c.lineShow, { ref: proposal }).line.doneWhenProposal).toBeNull();
+    expect(
+      w.as(w.owner, c.lineDoneWhen, { ref: w.line, doneWhen: "It closes.", why: "Lid" }).doneWhenProposal,
+    ).toBe("It closes.");
+  });
 });

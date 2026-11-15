@@ -518,8 +518,10 @@ export const lineOps = [
       return updated;
     }
     const claim = claimOf(ctx, ctx.actor);
+    // Its proposer writes a proposal's done when only while it is a proposal; once placed, the line is its agents'.
     const mayPropose =
-      (claim !== null && claim.line === line.ref && claim.role !== "helper") || line.proposedBy === ctx.actor;
+      (claim !== null && claim.line === line.ref && claim.role !== "helper") ||
+      (line.state === "proposed" && line.proposedBy === ctx.actor);
     if (!mayPropose) {
       throw new OctoError(
         "forbidden",
@@ -527,7 +529,7 @@ export const lineOps = [
         `Take it first: octo line take ${line.ref}`,
       );
     }
-    guardLineWrite(ctx, line.ref, "scope");
+    guardOnLine(ctx, line.ref, "scope", line.ref);
     // A proposed line's done when is still its agent's own words, so it writes it directly. Any other line's is the
     // developer's to accept: on a working line as an item for them, on a waiting one in its Start sheet.
     const direct = line.state === "proposed";
