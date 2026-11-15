@@ -532,6 +532,21 @@ describe("the inspector", () => {
     expect(server.calls.filter((name) => name === "choice.make")).toHaveLength(1);
   });
 
+  test("a note posted from the panel waits with Undo, then shows under Updates", async () => {
+    const decision = seedDecision();
+    navigate(`/?ref=${decision.ref}`);
+    const view = renderApp(<App />);
+    const panel = within(await view.findByRole("complementary", { name: decision.ref }));
+    fireEvent.change(await panel.findByLabelText(`Post an update on ${decision.ref}`), {
+      target: { value: "Asked the vendor" },
+    });
+    fireEvent.click(panel.getByRole("button", { name: "Post" }));
+    await view.findByText(/Posting a note on D-1: Asked the vendor/);
+    await panel.findByRole("button", { name: "Posting" });
+    await answerNow(view);
+    await panel.findByText("Asked the vendor");
+  });
+
   test("says when a ref does not exist", async () => {
     navigate("/?ref=OCT-404");
     const view = renderApp(<App />);
@@ -551,9 +566,13 @@ describe("drift", () => {
 
     fireEvent.change(note, { target: { value: "It is done" } });
     fireEvent.click(panel.getByRole("button", { name: "Updated" }));
-    await panel.findByText(/has not changed/);
+    await answerNow(view);
+    // Refused, as any choice is: the Undo bar says why, and the drift stays.
+    await view.findByText(/has not changed/);
+    panel.getByLabelText("Note for DR-1");
 
     fireEvent.click(panel.getByRole("button", { name: "Nothing to update" }));
+    await answerNow(view);
     await gone(() => panel.queryByLabelText("Note for DR-1"));
     expect(server.act(c.driftList, { query: "status:verified" })[0]?.note).toBe("It is done");
   });
@@ -2278,6 +2297,30 @@ describe("lines of work", () => {
       panel.getByText("The base fits either board.");
       panel.getByText(/The short board: Fits as printed/);
       panel.getByText(/It fits already./);
+    });
+
+    test("an issue's drift shows on it, and answering it waits with Undo", async () => {
+      const { issue } = withIssue();
+      server.act(c.issueUpdate, { refs: [issue.ref], status: "in_review" }, "octo.1");
+      server.tracker.sweep();
+      const drift = server.act(c.driftList, { query: "status:open rule:in-review-without-pr" })[0];
+      if (drift === undefined) throw new Error("No drift was raised");
+      navigate(`/?ref=${issue.ref}`);
+      const view = renderApp(<App />);
+      const panel = within(await view.findByRole("complementary", { name: issue.ref }));
+      const out = within(await panel.findByRole("region", { name: "Out of date" }));
+      const item = within(out.getByRole("article", { name: drift.ref }));
+      fireEvent.change(item.getByLabelText(`Note for ${drift.ref}`), {
+        target: { value: "The PR is on its way" },
+      });
+      fireEvent.click(item.getByRole("button", { name: "Nothing to update" }));
+      await view.findByRole("button", { name: "Undo" });
+      await answerNow(view);
+      await waitFor(() =>
+        expect(server.act(c.driftList, { query: "status:verified" }).map((item) => item.ref)).toContain(
+          drift.ref,
+        ),
+      );
     });
 
     test("a closed task says how it closed and what was sent, and offers nothing to send again", async () => {

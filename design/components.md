@@ -157,30 +157,31 @@ Home is one list: every line in the developer's order, with what each needs from
 
 Opens from any ref as a panel over the right of the page, so the list keeps its place behind it.
 
-| Component        | Kind       | What it is                                                                                                                                              |
-| ---------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `EntityHeader`   | Pure       | Ref, kind, status, title and close                                                                                                                      |
-| `KeyValues`      | Pure       | Label and value pairs. Empty values are left out                                                                                                        |
-| `LinkList`       | Pure       | Connections, worded from this item's point of view: "blocked by", not "blocks"                                                                          |
-| `HistoryList`    | Pure       | What has happened to this item                                                                                                                          |
-| `PrPanel`        | Pure       | A pull request's details                                                                                                                                |
-| `LineActions`    | Pure       | What the developer can do with a line: place, table, finish, own, stop its owner, and answer its proposals                                              |
-| `LinePanelItem`  | Structural | A line opened, as E-Line draws it: head, moves, summary, what it needs from you, plan beside what is new and its owner, Tell. Marked seen when it opens |
-| `OwnerBox`       | Pure       | Who speaks for the line, Stop on its owner, I'll own it, or Hand to an agent on a line of yours                                                         |
-| `PlanList`       | Pure       | The plan: each step done, now or next, with its issues and their pull requests and checks                                                               |
-| `PanelForYou`    | Structural | What the line needs from you, in its panel: the first opened, the rest one row each                                                                     |
-| `SummaryBox`     | Pure       | The line's summary: the headline that stands alone, the rest, and how fresh it is                                                                       |
-| `LinePanelHead`  | Pure       | The top of a line opened: its place in the order, ref and repos, title, done when, and Esc                                                              |
-| `TellBox`        | Pure       | Tell: a free message to the line's owner, named in its label; empty, a nudge                                                                            |
-| `OwnWorkBox`     | Pure       | On a line the developer owns, one growing box that adds a task or a note                                                                                |
-| `SinceSummary`   | Pure       | Until a line's summary is rewritten: everything newer, one row each, with what was seen folded to one row                                               |
-| `EntityBody`     | Pure       | Picks the right body for the kind of item                                                                                                               |
-| `DecisionPanel`  | Structural | An open decision as a card, or a closed one as its record                                                                                               |
-| `IssuePanel`     | Structural | A task or an issue opened in place, as E-Issue: a task's form and what it frees; an issue's waits, pull requests, activity and Tell                     |
-| `PullRequestBox` | Pure       | An issue's pull requests with their checks, and whose they are to fix and merge                                                                         |
-| `ActivityList`   | Pure       | What happened to an item lately, newest first, one row each                                                                                             |
-| `UpdatesSection` | Structural | Updates on this item, and a box to post one                                                                                                             |
-| `EntityPanel`    | Structural | Loads it all                                                                                                                                            |
+| Component        | Kind       | What it is                                                                                                                                                       |
+| ---------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `EntityHeader`   | Pure       | Ref, kind, status, title and close                                                                                                                               |
+| `KeyValues`      | Pure       | Label and value pairs. Empty values are left out                                                                                                                 |
+| `LinkList`       | Pure       | Connections, worded from this item's point of view: "blocked by", not "blocks"                                                                                   |
+| `HistoryList`    | Pure       | What has happened to this item                                                                                                                                   |
+| `PrPanel`        | Pure       | A pull request's details                                                                                                                                         |
+| `LineActions`    | Pure       | What the developer can do with a line: place, table, finish, own, stop its owner, and answer its proposals                                                       |
+| `LinePanelItem`  | Structural | A line opened, as E-Line draws it: head, moves, summary, what it needs from you, plan beside what is new and its owner, Tell. Marked seen when it opens          |
+| `OwnerBox`       | Pure       | Who speaks for the line, Stop on its owner, I'll own it, or Hand to an agent on a line of yours                                                                  |
+| `PlanList`       | Pure       | The plan: each step done, now or next, with its issues and their pull requests and checks                                                                        |
+| `PanelForYou`    | Structural | What the line needs from you, in its panel: the first opened, the rest one row each                                                                              |
+| `SummaryBox`     | Pure       | The line's summary: the headline that stands alone, the rest, and how fresh it is                                                                                |
+| `LinePanelHead`  | Pure       | The top of a line opened: its place in the order, ref and repos, title, done when, and Esc                                                                       |
+| `TellBox`        | Pure       | Tell: a free message to the line's owner, named in its label; empty, a nudge                                                                                     |
+| `OwnWorkBox`     | Pure       | On a line the developer owns, one growing box that adds a task or a note                                                                                         |
+| `SinceSummary`   | Pure       | Until a line's summary is rewritten: everything newer, one row each, with what was seen folded to one row                                                        |
+| `EntityBody`     | Pure       | Picks the right body for the kind of item                                                                                                                        |
+| `DecisionPanel`  | Structural | An open decision as a card, or a closed one as its record                                                                                                        |
+| `IssuePanel`     | Structural | A task or an issue opened in place, as E-Issue: a task's form and what it frees, or how it closed; an issue's waits, pull requests, activity and Tell; its drift |
+| `OpenDrift`      | Structural | What is out of date about the open line, issue or item, each answered with Undo; a refusal says why in the Undo bar                                              |
+| `PullRequestBox` | Pure       | An issue's pull requests with their checks, and whose they are to fix and merge                                                                                  |
+| `ActivityList`   | Pure       | What happened to an item lately, newest first, one row each                                                                                                      |
+| `UpdatesSection` | Structural | Updates on this item, and a box to post one, which waits with Undo                                                                                               |
+| `EntityPanel`    | Structural | Loads it all                                                                                                                                                     |
 
 ## Also in the language, not components
 
