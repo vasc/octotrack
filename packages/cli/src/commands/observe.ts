@@ -59,7 +59,7 @@ export const observeCommands: Command[] = [
       timeout: WATCH_OPTIONS.timeout,
     },
     examples: [
-      'octo feed "kind:decision project:OCT since:1d"',
+      'octo feed "kind:decision repo:OCT since:1d"',
       "octo feed --view Blockers",
       'octo feed -f "-actor:github"',
     ],
@@ -176,7 +176,7 @@ export const observeCommands: Command[] = [
       "octo watch D-3                                   # anything touching D-3",
       "octo watch --until 'ref:D-3 status:decided'      # cannot miss it, even if already decided",
       "octo watch --until-none 'ref:D-3,D-4 status:open' # until both are answered",
-      "octo watch --on 'kind:pr project:OCT to:merged'  # a PR in OCT merges",
+      "octo watch --on 'kind:pr repo:OCT to:merged'  # a PR in OCT merges",
       "octo watch --on 'event:decision.resolved' --on 'checks:failing' --timeout 30m",
       "octo watch --on 'to:passing ref:PR-3' --until 'ref:D-3 status:decided' --all",
     ],

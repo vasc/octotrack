@@ -1,10 +1,12 @@
 import { describe, expect, test } from "bun:test";
+import { join } from "node:path";
 import { contracts } from "@octotrack/core";
 import { Args, parse, parseDuration, quoteValue, UsageError } from "../src/args.ts";
 import { parseOption } from "../src/commands/decisions.ts";
 import { normalizeRelation } from "../src/commands/network.ts";
 import { buildSpec } from "../src/commands/observe.ts";
 import { queryFrom } from "../src/commands/shared.ts";
+import { AGENT_GUIDE } from "../src/guide.ts";
 import { COMMANDS, resolveCommand } from "../src/registry.ts";
 
 describe("every operation is reachable from the CLI", () => {
@@ -42,6 +44,21 @@ describe("repo, the word lines use", () => {
       expect(repo?.command.ops).toEqual(project?.command.ops ?? []);
     }
     expect(resolveCommand(["repo", "checkout", "OCT", "/src/oct"])?.command.ops).toEqual(["repo.checkout"]);
+  });
+});
+
+describe("the CLI says repo where it used to say project", () => {
+  test("in the guide, in every command's help, and in what pr sync tells you to run", async () => {
+    expect(AGENT_GUIDE).not.toMatch(/\bproject:|octo project/);
+    const words = COMMANDS.filter((command) => command.path[0] !== "project").flatMap((command) => [
+      command.summary,
+      ...(command.examples ?? []),
+      ...Object.values(command.options ?? {}).map((spec) => spec.description),
+    ]);
+    expect(words.filter((text) => /\bproject:|octo project|a project names/.test(text))).toEqual([]);
+    const network = await Bun.file(join(import.meta.dir, "../src/commands/network.ts")).text();
+    expect(network).not.toContain("octo project");
+    expect(network).toContain("octo repo update <KEY> --repo owner/name");
   });
 });
 
