@@ -72,7 +72,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <main className="main">
           {/* What is shown no longer updates by itself: said quietly, as patterns.md asks of anything stale. */}
           {live === "offline" ? (
-            <p className="muted" role="status">
+            <p className="muted live-note" role="status">
               Not live: reconnecting. What is shown may be out of date.
             </p>
           ) : null}

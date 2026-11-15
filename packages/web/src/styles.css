@@ -387,6 +387,13 @@ p {
   color: var(--ink-3);
 }
 
+/* Not live: above the page, in the page's own width and margins, never against the window's edge. */
+.live-note {
+  max-width: var(--page-width);
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-16) 0;
+}
+
 .chip {
   background: none;
   border: 0;
@@ -1195,6 +1202,9 @@ p {
   }
   .page {
     padding: var(--space-6) var(--space-8) var(--space-8);
+  }
+  .live-note {
+    padding: var(--space-6) var(--space-8) 0;
   }
   .decision-actions {
     flex-wrap: wrap;

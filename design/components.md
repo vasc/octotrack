@@ -189,12 +189,13 @@ Opens from any ref as a panel over the right of the page, so the list keeps its 
 
 ## Also in the language, not components
 
-| Class     | What it is                                                                                            |
-| --------- | ----------------------------------------------------------------------------------------------------- |
-| `.btn`    | A button. `data-primary` is the one action a form is for. At most one per form                        |
-| `.field`  | A text input                                                                                          |
-| `.select` | A small select, for picking a value to add, such as a repo; never for a change of state               |
-| `.chip`   | Quiet text that acts: a filter, a link                                                                |
-| `.tab`    | One of a set of mutually exclusive views, with `aria-pressed`: the specimen's themes                  |
-| `.row`    | One line in a list, divided from the next by `--line`                                                 |
-| `.card`   | A plain box that reads as an object, on the specimen; line cards and proposals have their own classes |
+| Class        | What it is                                                                                            |
+| ------------ | ----------------------------------------------------------------------------------------------------- |
+| `.btn`       | A button. `data-primary` is the one action a form is for. At most one per form                        |
+| `.field`     | A text input                                                                                          |
+| `.select`    | A small select, for picking a value to add, such as a repo; never for a change of state               |
+| `.chip`      | Quiet text that acts: a filter, a link                                                                |
+| `.tab`       | One of a set of mutually exclusive views, with `aria-pressed`: the specimen's themes                  |
+| `.row`       | One line in a list, divided from the next by `--line`                                                 |
+| `.card`      | A plain box that reads as an object, on the specimen; line cards and proposals have their own classes |
+| `.live-note` | "Not live: reconnecting" above the page, in the page's own width and margins                          |
