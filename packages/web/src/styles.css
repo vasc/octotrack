@@ -2102,7 +2102,20 @@ p {
 .proposal-choices {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-3);
+  gap: var(--space-2) var(--space-3);
+}
+
+/* A proposal's and Step in's choices are one light row: the way forward filled, the rest words that act. */
+.proposal-choices > .btn:not([data-primary="true"]),
+.step-in .decision-actions > .btn:not([data-primary="true"]) {
+  background: none;
+  border-color: transparent;
+  padding: 0 var(--space-5);
+}
+
+.proposal-choices > .btn:not([data-primary="true"]):hover:not(:disabled),
+.step-in .decision-actions > .btn:not([data-primary="true"]):hover:not(:disabled) {
+  background: var(--surface-2);
 }
 
 /* Tabled and done lately: two tiles side by side, each naming its lines. */
@@ -2153,6 +2166,11 @@ p {
 
 .tile .rows {
   padding: 0 var(--space-9) var(--space-6);
+}
+
+/* A proposal in a folded section reaches the section's edges, so its focus tint does too; its text stays aligned. */
+.tile .rows > .proposal-card {
+  margin: 0 calc(-1 * var(--space-9));
 }
 
 /* A new line, as E-Propose draws it. */
@@ -2275,12 +2293,14 @@ p {
 }
 
 /* The focused item's numbered choices, drawn by the number its key presses: only on an item the keys act on, never on a
-   line itself, whose numbers belong to its items. */
+   line itself, whose numbers belong to its items, and only where there is a keyboard to press them. */
+@media (pointer: fine) {
 [data-focus-ref][data-selected="true"]:not(.line-card):not(.next-row) [data-choice]::before {
   content: attr(data-choice) " · ";
   font-family: var(--mono);
   font-size: var(--text-xs);
   color: var(--ink-3);
+}
 }
 
 .reorder {
@@ -2502,14 +2522,6 @@ p {
   }
   .proposal-text .line-facts[data-separated="true"] > span:first-child::before {
     content: none;
-  }
-  .proposal-choices {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  /* The recommended choice takes the whole width, so "Start · recommended" is never cut to half a phone. */
-  .proposal-choices > [data-primary="true"] {
-    grid-column: 1 / -1;
   }
   .line-handle {
     width: var(--control-height);
