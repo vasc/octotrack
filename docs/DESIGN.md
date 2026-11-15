@@ -471,7 +471,12 @@ Decisions made from that:
     second such exit in a row raises Step in. A session that ran longer, or kept its line asleep, resets the count.
     _Why:_ a start command that exits after taking the line, as `claude -p "…octo line take {line}"` does, was replaced
     every 40 seconds without limit; the cap bounds how many run at once, not how fast they are replaced. _Trade-off:_ a
-    session that does a short job and exits is replaced only after the wait.
+    session that does a short job and exits is replaced only after the wait. (Fourth audit, A2:) a session the
+    developer sent away is not leaving at once: one stopped, released by the developer, or whose line was tabled, done,
+    dropped or owned (a wind-down notice) since it started exits as `exited`, says why in the log, and the next start
+    neither waits nor counts it. _Why:_ a Stop within the fifteen minutes was logged as failed, made the next start
+    wait, and a second one raised Step in blaming the session. An agent's own release still counts: a session that
+    takes its line and releases it at once would otherwise be replaced every minute, as N1 found.
   - _Starting a session has two steps._ `runner.start` reserves the name, the worktree and the line's turn; the runner
     then makes the checkout, worktree and setup in the background, spawns the process and records it with
     `runner.spawned`, which starts the five-minute check-in and asks again whether the session should run: a line

@@ -197,8 +197,8 @@ however quiet, and sessions Octotrack started that were woken after they exited 
 check-in runs from the moment the session's process starts, and a session whose line was tabled, or found an owner,
 while it was set up is ended at once. A start that exits within its check-in is retried by itself, later each time
 (2, 10, 60, then 360 minutes); one that ran longer and never took its line waits for Try now. So does a session that
-takes its line and exits within fifteen minutes with no wake address: the next one waits as a failed start does, and
-twice in a row asks you to step in, so a start command that exits after taking the line is not run again every minute.
+takes its line and exits by itself within fifteen minutes with no wake address (one you stopped or released, or
+whose line you moved on, did not leave by itself): the next one waits as a failed start does, and twice in a row asks you to step in, so a start command that exits after taking the line is not run again every minute.
 
 Stop ends the whole process group of a session Octotrack started. `stop` is for sessions it did not start, such as
 `["tmux", "kill-session", "-t", "{name}"]` for ones kept in tmux; it runs once when the developer stops an agent. In

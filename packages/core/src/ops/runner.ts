@@ -173,6 +173,31 @@ function activeSessions(ctx: Ctx): number {
   return liveSessions(ctx).size;
 }
 
+/** How the developer sent a session away from its line, by the notice it was given, said as its exit's reason. */
+const SENT_AWAY: Readonly<Record<string, (line: string) => string>> = {
+  stop: () => "stopped by the developer",
+  released: () => "released by the developer",
+  wind_down: (line) => `after ${line} moved on`,
+};
+
+/**
+ * Whether the developer sent a session away since it started: stopped it, released it from its line, or moved its line
+ * on (tabled, done, dropped or theirs, which winds it down). Its exit soon after is then not leaving at once, and is
+ * never held against the next start (fourth audit, A2). An agent's own release is not: a session that takes its line
+ * and releases it at once would otherwise be replaced every minute, as one that takes it and exits was (N1).
+ */
+function sentAwayFrom(ctx: Ctx, start: StartRow): string | null {
+  const notice = one(
+    ctx,
+    z.object({ kind: z.string(), line: z.string().nullable() }),
+    `SELECT kind, line FROM notices WHERE agent = ? AND kind IN ('stop', 'released', 'wind_down') AND createdAt >= ?
+     ORDER BY id DESC LIMIT 1`,
+    [start.name, start.startedAt],
+  );
+  if (notice === null) return null;
+  return SENT_AWAY[notice.kind]?.(notice.line ?? start.line) ?? null;
+}
+
 /** What stopped a start, so that Try now can retry every line stopped the same way: its last line of output. */
 function stoppedBy(start: { state: string; output: string | null }): string {
   if (start.state === "never_took") return "never took";
@@ -587,8 +612,11 @@ export const runnerOps = [
     // A session that took its line and can be woken is only asleep: it keeps its line (D14's agent states). Any
     // other is gone, and what it held is offered on.
     const keeps = took && agent !== null && agent.wakeAddress !== null;
-    // One that took its line and left at once, with no way to wake it, waits like a failed start before the next.
-    const leftAtOnce = took && !keeps && sinceSpawn < LEFT_AT_ONCE_MS;
+    // The developer stopped it, released it, or moved its line on: it was sent away rather than leaving by itself.
+    const sentAway = took ? sentAwayFrom(ctx, start) : null;
+    // One that took its line and left at once by itself, with no way to wake it, waits like a failed start before the
+    // next.
+    const leftAtOnce = took && !keeps && sentAway === null && sinceSpawn < LEFT_AT_ONCE_MS;
     const state: LineStart["state"] = leftAtOnce
       ? "failed"
       : took
@@ -626,7 +654,7 @@ export const runnerOps = [
           ? `${input.name} exited at once (code ${input.code}); trying again later${output === null ? "" : `: ${output.split("\n").at(-1) ?? ""}`}`
           : state === "never_took"
             ? `${input.name} ran but never took ${start.line}${input.code === 0 ? "" : ` (code ${input.code})`}`
-            : `${input.name} exited (code ${input.code})`,
+            : `${input.name} exited (code ${input.code})${sentAway === null ? "" : `, ${sentAway}`}`,
       attrs: { status: state },
     });
     return {
