@@ -179,6 +179,7 @@ Opens from any ref as a panel over the right of the page, so the list keeps its 
 | `DecisionPanel`  | Structural | An open decision as a card, or a closed one as its record                                                                                                        |
 | `IssuePanel`     | Structural | A task or an issue opened in place, as E-Issue: a task's form and what it frees, or how it closed; an issue's waits, pull requests, activity and Tell; its drift |
 | `OpenDrift`      | Structural | What is out of date about the open line, issue or item, each answered with Undo; a refusal says why in the Undo bar                                              |
+| `TaskFrees`      | Pure       | What a task frees: each freed issue, openable, with its title and who Done reaches, now or whoever takes it                                                      |
 | `PullRequestBox` | Pure       | An issue's pull requests with their checks, and whose they are to fix and merge                                                                                  |
 | `ActivityList`   | Pure       | What happened to an item lately, newest first, one row each                                                                                                      |
 | `UpdatesSection` | Structural | Updates on this item, and a box to post one, which waits with Undo                                                                                               |
