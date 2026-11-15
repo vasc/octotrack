@@ -26,24 +26,24 @@ in isolation. **Structural** ones load data and pass it on to pure ones, so they
 
 What agents ask, answered in one press where it waits: on its line, or at the top when urgent.
 
-| Component          | Kind       | What it is                                                                                                                                                                                                                                                    |
-| ------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DecisionCardView` | Pure       | A question opened, as E-Home draws it: a strip saying what it is and what it holds up, the situation, options side by side that answer in one press, the reason for the recommendation under them, In my own words and Later. A dark border when it has focus |
-| `QuestionStrip`    | Pure       | The line over a question: what it is (urgent with its reason, the line it stands apart from), its ref, and what it holds up or who asked                                                                                                                      |
-| `QuestionOptions`  | Pure       | A question's options side by side, each saying what happens, numbered, the recommended one marked, its reason directly under them                                                                                                                             |
-| `OwnWords`         | Pure       | An answer in the developer's own words: a box that takes the cursor, Send (Sending while it waits) and Cancel                                                                                                                                                 |
-| `DecisionMeta`     | Pure       | The top line: ref, type, priority, repo, who asked, how long ago                                                                                                                                                                                              |
-| `HeldDecision`     | Pure       | An open question not in the queue, opened by its ref: why it is held (the task it waits for, or its line), then the question read only                                                                                                                        |
-| `BatchPanelView`   | Pure       | Logging decisions made elsewhere, one per line                                                                                                                                                                                                                |
-| `DecisionCardItem` | Structural | A card with its form state and, when active, its keys                                                                                                                                                                                                         |
-| `BatchPanel`       | Structural | The batch panel's parsing and sending                                                                                                                                                                                                                         |
+| Component          | Kind       | What it is                                                                                                                                                                                                                                                       |
+| ------------------ | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DecisionCardView` | Pure       | A question opened, as E-Home draws it: a strip saying what it is and what it holds up, the situation, options side by side that answer in one press, the reason for the recommendation under them, In my own words and Later. An accent border when it has focus |
+| `QuestionStrip`    | Pure       | The line over a question: what it is (urgent with its reason, the line it stands apart from), its ref, and what it holds up or who asked                                                                                                                         |
+| `QuestionOptions`  | Pure       | A question's options side by side, each saying what happens, numbered, the recommended one marked, its reason directly under them                                                                                                                                |
+| `OwnWords`         | Pure       | An answer in the developer's own words: a box that takes the cursor, Send (Sending while it waits) and Cancel                                                                                                                                                    |
+| `DecisionMeta`     | Pure       | The top line: ref, type, priority, repo, who asked, how long ago                                                                                                                                                                                                 |
+| `HeldDecision`     | Pure       | An open question not in the queue, opened by its ref: why it is held (the task it waits for, or its line), then the question read only                                                                                                                           |
+| `BatchPanelView`   | Pure       | Logging decisions made elsewhere, one per line                                                                                                                                                                                                                   |
+| `DecisionCardItem` | Structural | A card with its form state and, when active, its keys                                                                                                                                                                                                            |
+| `BatchPanel`       | Structural | The batch panel's parsing and sending                                                                                                                                                                                                                            |
 
 `DecisionCardView` states:
 
 | State     | Looks like                                                                              |
 | --------- | --------------------------------------------------------------------------------------- |
 | A row     | Unfocused, a question is one row on its line: what it is, its title, the recommendation |
-| Focused   | Opened, with a dark border and k ↑ j ↓ quietly beside it; its numbers answer it         |
+| Focused   | Opened, with an accent border and k ↑ j ↓ beside it; its numbers answer it              |
 | Urgent    | Red, with its reason and the line it stands apart from; a row in red until focused      |
 | Own words | A box that takes the cursor; Send, which says Sending while the answer waits            |
 | Waiting   | Its answer waits with Undo; its keys stand down until it takes effect                   |
@@ -146,15 +146,15 @@ Home is one list: every line in the developer's order, with what each needs from
 
 ## The frame: `layout/`
 
-| Component        | Kind       | What it is                                                                                                                                                                                                |
-| ---------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `NavItem`        | Pure       | One of Lines, Log and Agents in the bar, marked when it is the page you are on                                                                                                                            |
-| `TopBar`         | Pure       | The bar on every page: Octotrack, Lines, Log and Agents; what waits as one quiet group of counts, urgent apart; I'm at, New line, Appearance and the keys. On a phone the pages become tabs at the bottom |
-| `AppearanceMenu` | Pure       | Appearance, one quiet button in the bar: the eight themes, each previewed in its own colours by a swatch carrying its palette, then as the system, light or dark; the current ones checked                |
-| `AtMenu`         | Pure       | I'm at: a button with a pin and the place, opening All places and the developer's places, the current one bold; never a select                                                                            |
-| `AppShell`       | Structural | The bar, the page, and an opened ref as a panel over the right of the page. Holds the live connection and the keys every page has                                                                         |
-| `UndoBar`        | Pure       | Choices waiting to take effect, newest first, each saying what it does and in how many seconds, with Undo; failed ones say why                                                                            |
-| `PendingChoices` | Structural | The Undo bar on every page; u undoes the newest choice                                                                                                                                                    |
+| Component        | Kind       | What it is                                                                                                                                                                                                        |
+| ---------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NavItem`        | Pure       | One of Lines, Log and Agents in the bar, marked when it is the page you are on                                                                                                                                    |
+| `TopBar`         | Pure       | The bar on every page: Octotrack, Lines, Log and Agents; what waits as one quiet group of counts, urgent apart; I'm at, New line, Appearance and the keys. On a phone the pages become tabs at the bottom         |
+| `AppearanceMenu` | Pure       | Appearance, one quiet button in the bar: the eight themes, each previewed by a swatch carrying its palette: its ground with its accent and attention, then as the system, light or dark; the current ones checked |
+| `AtMenu`         | Pure       | I'm at: a button with a pin and the place, opening All places and the developer's places, the current one bold; never a select                                                                                    |
+| `AppShell`       | Structural | The bar, the page, and an opened ref as a panel over the right of the page. Holds the live connection and the keys every page has                                                                                 |
+| `UndoBar`        | Pure       | Choices waiting to take effect, newest first, each saying what it does and in how many seconds, with Undo; failed ones say why                                                                                    |
+| `PendingChoices` | Structural | The Undo bar on every page; u undoes the newest choice                                                                                                                                                            |
 
 ## The inspector: `entity/`
 

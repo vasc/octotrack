@@ -53,9 +53,7 @@ export function AppearanceMenu({
                 onPalette(palette.id);
               }}
             >
-              <span className="swatch" data-palette={palette.id} aria-hidden="true">
-                <span />
-              </span>
+              <span className="swatch" data-palette={palette.id} aria-hidden="true" />
               {palette.name}
             </button>
           ))}

@@ -79,5 +79,5 @@ it returns.
 
 ## Color in a screen
 
-Most of a screen should be ink on ground. Marks and badges carry status in small doses. Amber is reserved for what needs
-you. If a screen looks colorful, something is overusing tones.
+Most of a screen should be ink on ground. Marks and badges carry status in small doses. Attention is reserved for what needs
+you, and the accent for what you are acting on. If a screen looks colorful, something is overusing tones.

@@ -14,6 +14,18 @@ body,
   margin: 0;
 }
 
+/* The theme's ground behind the whole page, past the fold too, and its accent in the browser's own controls. */
+:root {
+  background: var(--bg);
+  accent-color: var(--accent);
+  caret-color: var(--accent);
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
 body {
   background: var(--bg);
   color: var(--ink);
@@ -42,7 +54,7 @@ p {
 }
 
 :focus-visible {
-  outline: var(--border-focus) solid var(--attention);
+  outline: var(--border-focus) solid var(--accent);
   outline-offset: 1px;
 }
 
@@ -99,8 +111,8 @@ p {
 }
 
 .nav-item[aria-current="page"] {
-  background: var(--ink);
-  color: var(--bg);
+  background: var(--accent);
+  color: var(--on-accent);
 }
 
 .nav-count {
@@ -250,7 +262,7 @@ p {
 }
 
 .section-link:hover {
-  color: var(--ink);
+  color: var(--accent);
 }
 
 /* Filter */
@@ -271,7 +283,7 @@ p {
 }
 
 .filter-input:focus {
-  border-color: var(--ink-3);
+  border-color: var(--accent);
 }
 
 .filter-input[aria-invalid="true"] {
@@ -356,7 +368,7 @@ p {
 }
 
 .ref:hover {
-  color: var(--ink);
+  color: var(--accent);
   text-decoration: underline;
 }
 
@@ -388,7 +400,7 @@ p {
 }
 
 .chip:hover {
-  color: var(--ink);
+  color: var(--accent);
   text-decoration: underline;
 }
 
@@ -446,14 +458,14 @@ p {
 }
 
 .btn[data-primary="true"] {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: var(--bg);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
 }
 
 .btn[data-primary="true"]:hover:not(:disabled) {
   opacity: var(--opacity-hover);
-  background: var(--ink);
+  background: var(--accent);
 }
 
 /* Text fields are the height of every other control, and as rounded, so a field and its button line up. */
@@ -467,7 +479,7 @@ p {
 }
 
 .field:focus {
-  border-color: var(--ink-3);
+  border-color: var(--accent);
 }
 
 .select {
@@ -520,6 +532,7 @@ p {
 /* The choice in force, in a menu of choices. */
 .menu-item[aria-checked="true"] {
   font-weight: var(--weight-bold);
+  color: var(--accent);
 }
 
 .state {
@@ -638,7 +651,7 @@ p {
 }
 
 .question[data-selected="true"] {
-  border: var(--border-focus) solid var(--ink);
+  border: var(--border-focus) solid var(--accent);
 }
 
 .question-strip {
@@ -1082,8 +1095,8 @@ p {
 }
 
 .tab[aria-pressed="true"] {
-  background: var(--surface-2);
-  border-color: var(--line-strong);
+  background: var(--accent-soft);
+  border-color: var(--accent);
   color: var(--ink);
 }
 
@@ -1154,7 +1167,7 @@ p {
   }
   .top-nav .nav-item[aria-current="page"] {
     background: none;
-    color: var(--ink);
+    color: var(--accent);
     font-weight: var(--weight-bold);
   }
   /* The bar's own order on a phone: New beside the page's name, I'm at across the width under the counts. */
@@ -1411,7 +1424,7 @@ p {
 }
 
 .panel-link {
-  color: var(--ink-2);
+  color: var(--accent);
   text-decoration: underline;
 }
 
@@ -1784,7 +1797,7 @@ p {
 
 .menu-item:hover:not(:disabled),
 .menu-item:focus-visible {
-  background: var(--surface-2);
+  background: var(--accent-soft);
 }
 
 .menu-item:disabled {
@@ -1819,22 +1832,15 @@ p {
   white-space: nowrap;
 }
 
-/* A theme previewing itself: it carries its palette, so its ground and ink are that theme's, in the page's mode. */
+/* A theme previewing itself: it carries its palette, so it shows that theme's ground, accent and attention side by
+   side, in the page's mode. */
 .swatch {
-  position: relative;
   flex: none;
-  width: var(--icon-size);
+  width: calc(var(--icon-size) * 2.5);
   height: var(--icon-size);
   border: 1px solid var(--line-strong);
-  border-radius: var(--radius-pill);
-  background: var(--bg);
-}
-
-.swatch > span {
-  position: absolute;
-  inset: var(--space-2);
-  border-radius: var(--radius-pill);
-  background: var(--ink);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, var(--bg) 0 40%, var(--accent) 40% 70%, var(--attention) 70%);
 }
 
 .line-num {
@@ -1857,7 +1863,7 @@ p {
 }
 
 .line-link:hover {
-  color: var(--attention);
+  color: var(--accent);
 }
 
 .line-facts {
@@ -1878,13 +1884,14 @@ p {
   color: var(--ink-2);
 }
 
-/* The headline is out of date by this much: a link to the line, which lists what came after it. */
+/* The headline is out of date by this much: a link to the line, which lists what came after it. A link, in the accent:
+   bringing the summary up to date is the owner's work, not something that needs the developer. */
 .since-link {
   padding: 0;
   border: 0;
   background: none;
   font: inherit;
-  color: var(--attention);
+  color: var(--accent);
   text-decoration: underline;
   cursor: pointer;
 }
@@ -1959,7 +1966,7 @@ p {
 }
 
 .more-link:hover {
-  color: var(--ink);
+  color: var(--accent);
   text-decoration: underline;
 }
 
@@ -2005,7 +2012,7 @@ p {
 }
 
 .step-in[data-selected="true"] {
-  border: var(--border-focus) solid var(--ink);
+  border: var(--border-focus) solid var(--accent);
 }
 
 .proposal {
@@ -2254,7 +2261,7 @@ p {
 }
 
 .focus-wrap[data-selected="true"] > :is(.task, .proposal) {
-  border: var(--border-focus) solid var(--ink);
+  border: var(--border-focus) solid var(--accent);
 }
 
 /* The focused item's numbered choices, drawn by the number its key presses: only on an item the keys act on, never on a
@@ -2318,7 +2325,7 @@ p {
 }
 
 .markdown a {
-  color: var(--info);
+  color: var(--accent);
   text-decoration: underline;
 }
 
@@ -2589,7 +2596,7 @@ p {
 }
 
 .focus-wrap[data-selected="true"] > .line-proposal {
-  border: var(--border-focus) solid var(--ink);
+  border: var(--border-focus) solid var(--accent);
 }
 
 .line-proposal-claim {

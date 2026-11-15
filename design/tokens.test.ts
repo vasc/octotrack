@@ -17,24 +17,16 @@ function filesUnder(dir: string): string[] {
 const rootBlock = /:root \{([\s\S]*?)\n\}/.exec(tokensCss)?.[1] ?? "";
 const tokenNames = [...rootBlock.matchAll(/^\s*(--[a-z0-9-]+):/gm)].flatMap((match) => match[1] ?? []);
 
-/** Each theme's own block: the ground, lines and ink it redefines over Paper, which is :root. */
+/** Each theme's own block: every colour, redefined over Paper, which is :root. */
 const palettes = new Map(
   [...tokensCss.matchAll(/\[data-palette="([a-z]+)"\] \{([\s\S]*?)\n\}/g)].map(
     (match) => [match[1] ?? "", match[2] ?? ""] as const,
   ),
 );
-const PALETTE_TOKENS = [
-  "--bg",
-  "--surface",
-  "--surface-2",
-  "--line",
-  "--line-faint",
-  "--line-strong",
-  "--line-field",
-  "--ink",
-  "--ink-2",
-  "--ink-3",
-];
+/** Every colour Paper defines: a theme chooses all of them, so none is left at Paper's value in another theme. */
+const COLOR_TOKENS = [...rootBlock.matchAll(/^\s*(--[a-z0-9-]+): light-dark\(/gm)].flatMap(
+  (match) => match[1] ?? [],
+);
 
 function hexOf(name: string, theme: "light" | "dark", palette = "paper"): string {
   const pattern = new RegExp(`${name}: light-dark\\((#[0-9a-f]{6}), (#[0-9a-f]{6})\\);`);
@@ -65,7 +57,12 @@ const PAIRS: readonly (readonly [string, string, number])[] = [
   ...["--bg", "--surface", "--surface-2"].flatMap((ground) =>
     ["--ink", "--ink-2", "--ink-3"].map((ink) => [ink, ground, TEXT] as const),
   ),
-  ["--bg", "--ink", TEXT], // The primary button.
+  ...["--bg", "--surface", "--surface-2", "--accent-soft"].map(
+    (ground) => ["--accent", ground, TEXT] as const,
+  ), // Links, a chosen item.
+  ["--on-accent", "--accent", TEXT], // The primary button, the page you are on.
+  ["--ink", "--accent-soft", TEXT], // An item under the pointer in a menu.
+  ["--surface", "--bad", TEXT], // A button that ends something.
   ["--attention", "--attention-soft", TEXT],
   ["--attention", "--bg", TEXT],
   ["--attention", "--surface", TEXT],
@@ -76,8 +73,8 @@ const PAIRS: readonly (readonly [string, string, number])[] = [
   ["--info", "--info-soft", TEXT],
   ["--bad", "--bg", TEXT], // Error text.
   ["--bad", "--surface", TEXT],
-  ["--attention", "--bg", FOCUS_RING],
-  ["--attention", "--surface", FOCUS_RING],
+  ["--accent", "--bg", FOCUS_RING],
+  ["--accent", "--surface", FOCUS_RING],
 ];
 
 describe("contrast", () => {
@@ -91,11 +88,26 @@ describe("contrast", () => {
     expect(ratio).toBeGreaterThanOrEqual(minimum);
   });
 
-  test("there are eight themes, Paper and seven more, each redefining the same ground, lines and ink", () => {
+  test("there are eight themes, Paper and seven more, each choosing every colour", () => {
     expect(themes).toHaveLength(8);
+    expect(COLOR_TOKENS).toContain("--accent");
+    expect(COLOR_TOKENS).toContain("--attention");
     for (const [palette, block] of palettes) {
       const names = [...block.matchAll(/^\s*(--[a-z0-9-]+):/gm)].map((match) => match[1]);
-      expect({ palette, names }).toEqual({ palette, names: PALETTE_TOKENS });
+      expect({ palette, names }).toEqual({ palette, names: COLOR_TOKENS });
+    }
+  });
+
+  test("each theme looks like itself: no two share an accent or an attention colour", () => {
+    for (const token of ["--accent", "--attention", "--bg"]) {
+      for (const mode of ["light", "dark"] as const) {
+        const values = themes.map((palette) => hexOf(token, mode, palette));
+        expect({ token, mode, distinct: new Set(values).size }).toEqual({
+          token,
+          mode,
+          distinct: themes.length,
+        });
+      }
     }
   });
 });

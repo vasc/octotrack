@@ -7,17 +7,10 @@ revisited. Nothing here is a settled requirement unless it quotes one.
 
 The real starting points for iterating.
 
-### Is amber right?
-
-Amber was picked because it reads as "needs attention" without reading as "broken". It is close to `--warn`, the yellow
-used for pending and review-requested. Side by side they are easy to confuse, especially in light mode, and that weakens
-[principle 1](principles.md#1-attention-is-the-scarce-thing-and-it-has-one-color). Options: move attention to a color no
-status uses, or make `--warn` more neutral.
-
 ### There is no identity
 
-The design is deliberately quiet, but it also has no point of view: system fonts, a neutral stone palette. That is a fine
-default and also what many tools look like. A distinctive monospace for refs, or a sharper accent, might give it character
+The design is deliberately quiet, but it also has little point of view: system fonts, and colour that comes from the
+theme the developer picks. That is a fine default and also what many tools look like. A distinctive monospace for refs might give it character
 at no cost in speed.
 
 ### Is density right for long sessions?
@@ -55,12 +48,15 @@ further down, each marked _Replaced_ there.
 
 - **Three pages: Lines, Log and Agents.** The decisions, pull requests, drift, issues and repos pages went, and with
   them the rail. A question is answered on its line, a pull request shows on its issue, drift on what it is about.
-- **One focus on home, a dark border with a quiet `k ↑ j ↓` beside it.** The word Focused, which the boards drew, was
+- **One focus on home, a border in the accent with a quiet `k ↑ j ↓` beside it.** The word Focused, which the boards drew, was
   left out at the developer's word; the hint shows only with a mouse or trackpad, where there is room.
 - **One press answers, and every choice waits with Undo.** A stray key costs nothing, so there is no confirm step.
   Reordering, I'm at and Record answers act at once.
 - **One control height** (`--control-height`) for every desktop control, a few inline icons, and no ellipsis on a
   button that asks first.
+- **A theme chooses every colour.** Eight themes, each with its own ground, accent, attention and statuses, mixed from
+  seeds in `scripts/themes.ts` and checked for contrast. Attention moved off amber in Paper to an orange that `--warn`'s
+  yellow cannot be mistaken for, which settles the old question of whether amber was right.
 - **I'm at is a menu of places, never a select,** so no arrow key changes where you are.
 - **The key list is the one modal,** so no key acts behind it. The Start sheet opens in place.
 - **A lost connection is said quietly:** "Not live: reconnecting" under the bar until it returns.

@@ -397,7 +397,7 @@ Rose, High contrast), each in light and dark, and the mode: as the system, light
 
 Keys: `j` `k` items, `J` `K` lines, `1`-`9` the focused item's numbered choices, `w` answer in your own words, `l`
 later, `u` undo, `o` or `Enter` open its line, `t` tell its owner, `Alt` with the arrows to move it, `g p` I'm at, `g u`
-the urgent question, `/` search, `r` record answers, `Esc` close, `?` all of them. The focused item has a dark border,
+the urgent question, `/` search, `r` record answers, `Esc` close, `?` all of them. The focused item has a border in the theme's accent,
 with a quiet `k ↑ j ↓` beside it where the window has room.
 
 Decisions made elsewhere can be logged back as you remember them, with `r` on home (Record answers, kept as a draft

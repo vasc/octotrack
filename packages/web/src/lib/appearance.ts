@@ -49,3 +49,13 @@ export function applyAppearance(root: HTMLElement, appearance: Appearance): void
   if (appearance.mode === "system") root.removeAttribute("data-mode");
   else root.setAttribute("data-mode", appearance.mode);
 }
+
+/**
+ * The browser's own bar, on a phone, in the page's ground: read from the page once its theme is set, so it follows the
+ * theme and the mode instead of staying the dark index.html starts with. Nothing to read leaves it as it was.
+ */
+export function tintBrowserBar(root: HTMLElement): void {
+  const ground = root.ownerDocument.defaultView?.getComputedStyle(root).backgroundColor ?? "";
+  if (ground === "" || ground === "transparent" || ground === "rgba(0, 0, 0, 0)") return;
+  root.ownerDocument.querySelector('meta[name="theme-color"]')?.setAttribute("content", ground);
+}

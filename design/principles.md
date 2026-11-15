@@ -22,7 +22,7 @@ two pull against each other, the earlier one wins.
 ## 1. Attention is the scarce thing, and it has one color
 
 One person reads what many agents write. The design's job is to make clear what needs that person, and the rest can
-recede. So amber means exactly one thing: this needs you. A question, a task, what to send back. It is
+recede. So the attention colour, whatever hue the theme gives it, means exactly one thing: this needs you. A question, a task, what to send back. It is
 never decoration, never a brand color and never just emphasis, because the first time it means something else it stops
 working.
 

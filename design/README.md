@@ -52,7 +52,8 @@ These are one-line edits in `tokens.css` that change the whole product:
 - **Density:** `--space-unit: 2px`. Try `2.5px` for roomier, or `1.75px` for tighter.
 - **Reading size:** `--text-md: 13px`, the size of nearly everything. Change the rest of the scale with it.
 - **Corners:** the three `--radius-*` values.
-- **The attention color:** `--attention`, `--attention-soft` and `--attention-line`. Amber was chosen, not given.
+- **A theme's colours:** its seeds in `scripts/themes.ts`, then `bun scripts/themes.ts`. Every colour of every theme
+  is mixed from those and checked for contrast; Foundations, under Themes, says how.
 - **One control height:** `--control-height`, which every button, field and pill on a desktop shares.
 
 [log.md](log.md) lists the bigger open questions.

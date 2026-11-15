@@ -10,38 +10,45 @@
   color-scheme: light dark;
 
   /* Ground: the page and what sits on it, from furthest back to nearest. Values from the E · One list boards. */
-  --bg: light-dark(#f7f7f5, #121211);
-  --surface: light-dark(#ffffff, #1b1b1a);
-  --surface-2: light-dark(#fafafa, #232322);
-  --line: light-dark(#e4e4e7, #2f2f2e);
-  --line-faint: light-dark(#f4f4f5, #262625);
-  --line-strong: light-dark(#d4d4d8, #3d3d3b);
+  --bg: light-dark(#f6f6f4, #121212);
+  --surface: light-dark(#ffffff, #1b1b1b);
+  --surface-2: light-dark(#f9f9f8, #232323);
+  --line: light-dark(#d9d9d8, #2f2f2f);
+  --line-faint: light-dark(#f1f1f1, #282828);
+  --line-strong: light-dark(#c7c7c6, #414141);
   /* The edge of a box you type into. */
-  --line-field: light-dark(#a1a1aa, #5a5a58);
+  --line-field: light-dark(#999999, #70706f);
 
   /* Ink: text, from most to least important. All three must stay readable at the smallest size. */
   --ink: light-dark(#18181b, #f2f2f0);
-  --ink-2: light-dark(#3f3f46, #c4c4c0);
-  --ink-3: light-dark(#52525b, #a3a39e);
+  --ink-2: light-dark(#4a4a4c, #d3d3d1);
+  --ink-3: light-dark(#646466, #aeaead);
+
+  /* Accent: the theme's own colour, for what the developer is acting on: the primary button, the page they are on,
+     focus, links, the chosen item in a menu. It never says that something needs them: that is attention. */
+  --accent: light-dark(#2b59c3, #8fb0ff);
+  --accent-soft: light-dark(#e3e9f7, #323949);
+  /* What reads on a filled accent. */
+  --on-accent: light-dark(#ffffff, #121212);
 
   /* Attention: means "this needs you": questions and tasks. Nothing else may use it, or it stops meaning anything. */
-  --attention: light-dark(#92400e, #fbbf24);
-  --attention-soft: light-dark(#fffbeb, #2e2309);
-  --attention-line: light-dark(#fcd34d, #8a6514);
+  --attention: light-dark(#a21caf, #e879f9);
+  --attention-soft: light-dark(#f3e1f5, #442e47);
+  --attention-line: light-dark(#d18ed7, #77457f);
 
   /* Status: says how a thing stands. Never the only signal: always paired with a word or a glyph. */
-  --good: light-dark(#166534, #4ade80);
-  --good-soft: light-dark(#f0fdf4, #10291a);
+  --good: light-dark(#15773a, #4ade80);
+  --good-soft: light-dark(#e1eee6, #24422f);
   /* Bad is also Step in: a line no agent could be found for. */
-  --bad: light-dark(#991b1b, #f87171);
-  --bad-soft: light-dark(#fef2f2, #331616);
-  --bad-line: light-dark(#fca5a5, #7f2a2a);
-  --warn: light-dark(#a16207, #facc15);
-  --warn-soft: light-dark(#fef9c3, #2e2708);
+  --bad: light-dark(#b91c1c, #f87676);
+  --bad-soft: light-dark(#f6e1e1, #472c2c);
+  --bad-line: light-dark(#dc8e8e, #7e4242);
+  --warn: light-dark(#955b09, #facc15);
+  --warn-soft: light-dark(#f3ebdf, #483e1a);
   /* Info is also what agents propose, waiting for your yes. */
-  --info: light-dark(#1e40af, #93c5fd);
-  --info-soft: light-dark(#eff6ff, #14233f);
-  --info-line: light-dark(#bfdbfe, #2c4a7a);
+  --info: light-dark(#0f736c, #5eead4);
+  --info-soft: light-dark(#e0edec, #284440);
+  --info-line: light-dark(#87bbb7, #39786e);
 
   /* Type: Inter where it is installed, else the system's own face, because a web font is a wait. */
   --font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
@@ -92,8 +99,8 @@
   /* Elevation: only for what floats over content. Everything else is separated by a line. */
   --shadow-popover: 0 6px 20px rgb(0 0 0 / 0.14);
   --shadow-panel: -12px 0 40px rgb(0 0 0 / 0.08);
-  /* The one focus on home: a dark ring, so a key never acts on another item than this. */
-  --shadow-focus: 0 0 0 var(--border-focus) var(--ink);
+  /* The one focus on home: a ring in the accent, so a key never acts on another item than this. */
+  --shadow-focus: 0 0 0 var(--border-focus) var(--accent);
   /* Edges thicker than a hairline: focus (its ring and the focused item's border), and an item's accent edge. */
   --border-focus: 2px;
   --border-accent: 3px;
@@ -175,107 +182,221 @@
 }
 
 /*
- * Themes: eight palettes, each in light and dark. Paper is the one above; the rest redefine only the ground, its lines
- * and the ink, so attention, status and focus keep one meaning in every theme. A palette is set on the page, or on any
- * element to preview it there, and the mode follows the system unless the developer picks one. foundations.md says
- * more; `bun test design` checks every palette's contrast in both modes.
+ * Themes: eight, each in light and dark. Paper is :root above; every other theme redefines every colour: the ground,
+ * its lines, the ink, the accent, attention and the four statuses, each tuned to sit in that theme. Attention and the
+ * statuses keep their meaning and their family (good is green, bad is red) but take the theme's own hue. A palette is
+ * set on the page, or on any element to preview it there, and the mode follows the system unless the developer picks
+ * one. The colours are mixed and contrast-checked by scripts/themes.ts; `bun test design` checks every pairing in
+ * every theme and both modes.
  */
 /* Slate. */
 [data-palette="slate"] {
-  --bg: light-dark(#e9eef3, #0e141c);
-  --surface: light-dark(#f8fafc, #151d28);
-  --surface-2: light-dark(#f1f5f9, #1c2633);
-  --line: light-dark(#d3dce6, #283547);
-  --line-faint: light-dark(#e3e9f0, #1f2a39);
-  --line-strong: light-dark(#bccad8, #354559);
-  --line-field: light-dark(#8796aa, #53657d);
+  --bg: light-dark(#e3e9f0, #0c1219);
+  --surface: light-dark(#f4f7fa, #141c27);
+  --surface-2: light-dark(#ebf0f6, #1b2432);
+  --line: light-dark(#c7ced6, #292f36);
+  --line-faint: light-dark(#e6eaee, #212934);
+  --line-strong: light-dark(#b6bdc6, #3b4148);
+  --line-field: light-dark(#8a919d, #6b7177);
   --ink: light-dark(#0f172a, #eef3f8);
-  --ink-2: light-dark(#2f3d52, #c4d0dd);
-  --ink-3: light-dark(#44546a, #95a6ba);
+  --ink-2: light-dark(#42495a, #d0d5da);
+  --ink-3: light-dark(#5d6473, #abb0b5);
+  --accent: light-dark(#4338ca, #a5b4fc);
+  --accent-soft: light-dark(#e7e5f8, #313a52);
+  --on-accent: light-dark(#ffffff, #0c1219);
+  --attention: light-dark(#0e726f, #5eead4);
+  --attention-soft: light-dark(#e0f1f0, #23454a);
+  --attention-line: light-dark(#86cac4, #357975);
+  --good: light-dark(#14743b, #4ade80);
+  --good-soft: light-dark(#e1eee6, #1f4339);
+  --bad: light-dark(#b91c1c, #f87676);
+  --bad-soft: light-dark(#f6e1e1, #422d36);
+  --bad-line: light-dark(#dc8e8e, #7b4248);
+  --warn: light-dark(#8f590b, #fbbf24);
+  --warn-soft: light-dark(#f3ebdf, #423d26);
+  --info: light-dark(#a21caf, #f0abfc);
+  --info-soft: light-dark(#f3e1f5, #403952);
+  --info-line: light-dark(#d18ed7, #775c87);
 }
 
 /* Sand. */
 [data-palette="sand"] {
-  --bg: light-dark(#f1e7d6, #19140c);
-  --surface: light-dark(#fdf9f1, #221b11);
-  --surface-2: light-dark(#f7f0e3, #2b2318);
-  --line: light-dark(#e2d3bb, #3c3122);
-  --line-faint: light-dark(#ede2cf, #31281b);
-  --line-strong: light-dark(#d2bf9f, #4d402c);
-  --line-field: light-dark(#a38f70, #73624a);
+  --bg: light-dark(#eee1cb, #19130a);
+  --surface: light-dark(#faf3e6, #231b10);
+  --surface-2: light-dark(#f3e9d8, #2c2317);
+  --line: light-dark(#d5c8b3, #363026);
+  --line-faint: light-dark(#eee6da, #30281d);
+  --line-strong: light-dark(#c5b8a5, #474138);
+  --line-field: light-dark(#9c907f, #766f65);
   --ink: light-dark(#2a2016, #f6efe3);
-  --ink-2: light-dark(#4a3c2b, #d9ccb5);
-  --ink-3: light-dark(#5e4d38, #b0a088);
+  --ink-2: light-dark(#52473b, #dcd5c9);
+  --ink-3: light-dark(#6b6052, #b5afa3);
+  --accent: light-dark(#9f481e, #f2a37c);
+  --accent-soft: light-dark(#f3e8e2, #4c3626);
+  --on-accent: light-dark(#ffffff, #19130a);
+  --attention: light-dark(#1d4ed8, #93c5fd);
+  --attention-soft: light-dark(#e2e8fa, #393d3f);
+  --attention-line: light-dark(#8ea7ec, #55687b);
+  --good: light-dark(#476c10, #a3e635);
+  --good-soft: light-dark(#e8eee0, #3d4417);
+  --bad: light-dark(#9f1239, #fb7689);
+  --bad-soft: light-dark(#f3e0e5, #4e2c27);
+  --bad-line: light-dark(#cf899c, #844245);
+  --warn: light-dark(#8c560a, #facc15);
+  --warn-soft: light-dark(#f3ebdf, #4e3e11);
+  --info: light-dark(#6d28d9, #c4b5fd);
+  --info-soft: light-dark(#ece3fa, #433a3f);
+  --info-line: light-dark(#b694ec, #6b607b);
 }
 
 /* Forest. */
 [data-palette="forest"] {
-  --bg: light-dark(#e3eee3, #0b170e);
-  --surface: light-dark(#f8fbf7, #112015);
-  --surface-2: light-dark(#eef5ee, #17291c);
-  --line: light-dark(#cbdccb, #213826);
-  --line-faint: light-dark(#dde9dd, #1a2e1f);
-  --line-strong: light-dark(#b3c9b3, #2d4733);
-  --line-field: light-dark(#7f9a80, #4a6b51);
+  --bg: light-dark(#dae8da, #09150c);
+  --surface: light-dark(#eff6ee, #0f1f13);
+  --surface-2: light-dark(#e3eee3, #15281a);
+  --line: light-dark(#c0cec0, #263229);
+  --line-faint: light-dark(#e2e9e1, #1c2c20);
+  --line-strong: light-dark(#afbeb0, #38443b);
+  --line-field: light-dark(#859587, #68736a);
   --ink: light-dark(#0f2214, #eaf5ec);
-  --ink-2: light-dark(#2a4230, #bfd6c4);
-  --ink-3: light-dark(#3d5743, #93b09a);
+  --ink-2: light-dark(#3c4e40, #d0dbd2);
+  --ink-3: light-dark(#566759, #aab5ac);
+  --accent: light-dark(#3f6b0c, #a3e635);
+  --accent-soft: light-dark(#e6ecdf, #2d471a);
+  --on-accent: light-dark(#ffffff, #09150c);
+  --attention: light-dark(#a425b4, #f0abfc);
+  --attention-soft: light-dark(#f7e3f9, #3c3b42);
+  --attention-line: light-dark(#e093e9, #745e7c);
+  --good: light-dark(#0f6f67, #5eead4);
+  --good-soft: light-dark(#e0edec, #1f483a);
+  --bad: light-dark(#b91c1c, #fca5a5);
+  --bad-soft: light-dark(#f6e1e1, #3e3a30);
+  --bad-line: light-dark(#dc8e8e, #7a5b55);
+  --warn: light-dark(#8b5809, #fde047);
+  --warn-soft: light-dark(#f3ebdf, #3f461d);
+  --info: light-dark(#1e40af, #93c5fd);
+  --info-soft: light-dark(#e2e6f5, #294042);
+  --info-line: light-dark(#8fa0d7, #4a6a7c);
 }
 
 /* Ocean. */
 [data-palette="ocean"] {
-  --bg: light-dark(#e2edf8, #08121f);
-  --surface: light-dark(#f7fbff, #0e1a2c);
-  --surface-2: light-dark(#edf4fb, #142338);
-  --line: light-dark(#c8d9ec, #1f324c);
-  --line-faint: light-dark(#dbe7f4, #18293f);
-  --line-strong: light-dark(#aec6e0, #2a4262);
-  --line-field: light-dark(#7d97b8, #46648c);
+  --bg: light-dark(#d7e6f5, #06101c);
+  --surface: light-dark(#eef5fd, #0c1829);
+  --surface-2: light-dark(#e2edf9, #122136);
+  --line: light-dark(#bccbdb, #232d39);
+  --line-faint: light-dark(#e0e8f1, #192536);
+  --line-strong: light-dark(#acbbcb, #353f4b);
+  --line-field: light-dark(#8190a1, #656f7a);
   --ink: light-dark(#0a1a2e, #e8f1fc);
-  --ink-2: light-dark(#23405f, #bcd0e8);
-  --ink-3: light-dark(#375474, #8fa9c9);
+  --ink-2: light-dark(#3b4b5e, #cad3de);
+  --ink-3: light-dark(#556577, #a4adb8);
+  --accent: light-dark(#035f92, #38bdf8);
+  --accent-soft: light-dark(#deeaf1, #153952);
+  --on-accent: light-dark(#ffffff, #06101c);
+  --attention: light-dark(#7739e5, #c4b5fd);
+  --attention-soft: light-dark(#eee5fd, #313753);
+  --attention-line: light-dark(#be9df6, #5f5f88);
+  --good: light-dark(#047154, #34d399);
+  --good-soft: light-dark(#deede9, #143d3f);
+  --bad: light-dark(#b91c1c, #f87171);
+  --bad-soft: light-dark(#f6e1e1, #3b2a37);
+  --bad-line: light-dark(#dc8e8e, #764049);
+  --warn: light-dark(#8c580c, #fde047);
+  --warn-soft: light-dark(#f3ebdf, #3c402f);
+  --info: light-dark(#be185d, #f9a8d4);
+  --info-soft: light-dark(#f7e1ea, #3b354b);
+  --info-line: light-dark(#df8cae, #775976);
 }
 
 /* Plum. */
 [data-palette="plum"] {
-  --bg: light-dark(#eee6f3, #150d1a);
-  --surface: light-dark(#fbf8fd, #1e1424);
-  --surface-2: light-dark(#f4eef8, #271b2f);
-  --line: light-dark(#dccfe6, #362641);
-  --line-faint: light-dark(#e9e0f0, #2d2036);
-  --line-strong: light-dark(#c9b6d8, #473353);
-  --line-field: light-dark(#9883ab, #6c547f);
+  --bg: light-dark(#e7dcef, #130b18);
+  --surface: light-dark(#f6f0fa, #1c1222);
+  --surface-2: light-dark(#ede4f4, #25182c);
+  --line: light-dark(#cdc2d5, #302935);
+  --line-faint: light-dark(#e9e3ed, #291f2f);
+  --line-strong: light-dark(#bdb2c5, #423b47);
+  --line-field: light-dark(#93889b, #726a77);
   --ink: light-dark(#1e1426, #f5eef9);
-  --ink-2: light-dark(#3d2e4a, #d6c6e0);
-  --ink-3: light-dark(#54435f, #ab97ba);
+  --ink-2: light-dark(#4d4355, #d4cdd8);
+  --ink-3: light-dark(#675d6f, #afa8b3);
+  --accent: light-dark(#7322b8, #c69cfa);
+  --accent-soft: light-dark(#ede2f6, #3e2e4d);
+  --on-accent: light-dark(#ffffff, #130b18);
+  --attention: light-dark(#2458cf, #bfdbfe);
+  --attention-soft: light-dark(#e3ebfc, #3d3a4e);
+  --attention-line: light-dark(#92b1f5, #656c85);
+  --good: light-dark(#166f39, #4ade80);
+  --good-soft: light-dark(#e1eee6, #253b35);
+  --bad: light-dark(#be123c, #fb7185);
+  --bad-soft: light-dark(#f7e0e6, #492536);
+  --bad-line: light-dark(#df899e, #803d4f);
+  --warn: light-dark(#89540d, #facc15);
+  --warn-soft: light-dark(#f3ebdf, #48371f);
+  --info: light-dark(#116c67, #5eead4);
+  --info-soft: light-dark(#e0edec, #293d46);
+  --info-line: light-dark(#87bbb7, #3a7372);
 }
 
 /* Rose. */
 [data-palette="rose"] {
-  --bg: light-dark(#f5e6e7, #1a0d10);
-  --surface: light-dark(#fffafa, #241417);
-  --surface-2: light-dark(#faf0f1, #2e1b1f);
-  --line: light-dark(#e8d1d3, #40282c);
-  --line-faint: light-dark(#f1e2e3, #352124);
-  --line-strong: light-dark(#dbbbbf, #53353a);
-  --line-field: light-dark(#ad8a8f, #7f5960);
+  --bg: light-dark(#f2dde1, #190b0f);
+  --surface: light-dark(#fbf1f3, #231217);
+  --surface-2: light-dark(#f6e6ea, #2d191f);
+  --line: light-dark(#d7c3c7, #36292c);
+  --line-faint: light-dark(#eee4e6, #301f24);
+  --line-strong: light-dark(#c7b3b7, #483b3e);
+  --line-field: light-dark(#9c898d, #786a6e);
   --ink: light-dark(#26141a, #fbeef0);
-  --ink-2: light-dark(#4a2f36, #e0c5c9);
-  --ink-3: light-dark(#61454b, #bc969c);
+  --ink-2: light-dark(#564349, #d7cacc);
+  --ink-3: light-dark(#705c62, #b3a6a9);
+  --accent: light-dark(#b0164f, #f58bb9);
+  --accent-soft: light-dark(#f5e1e8, #4d2a37);
+  --on-accent: light-dark(#ffffff, #190b0f);
+  --attention: light-dark(#116d66, #2dd4bf);
+  --attention-soft: light-dark(#e0edec, #253939);
+  --attention-line: light-dark(#87bbb7, #286963);
+  --good: light-dark(#187038, #4ade80);
+  --good-soft: light-dark(#e1eee6, #2b3b2c);
+  --bad: light-dark(#b91c1c, #f87272);
+  --bad-soft: light-dark(#f6e1e1, #4e2529);
+  --bad-line: light-dark(#dc8e8e, #833d40);
+  --warn: light-dark(#8c550a, #facc15);
+  --warn-soft: light-dark(#f3ebdf, #4e3717);
+  --info: light-dark(#1d4ed8, #93c5fd);
+  --info-soft: light-dark(#e2e8fa, #393645);
+  --info-line: light-dark(#8ea7ec, #55637f);
 }
 
 /* High contrast. */
 [data-palette="contrast"] {
   --bg: light-dark(#ffffff, #000000);
-  --surface: light-dark(#ffffff, #0a0a0a);
-  --surface-2: light-dark(#f2f2f2, #141414);
-  --line: light-dark(#8a8a8a, #6b6b6b);
-  --line-faint: light-dark(#d4d4d4, #3a3a3a);
-  --line-strong: light-dark(#5c5c5c, #8f8f8f);
-  --line-field: light-dark(#404040, #b0b0b0);
+  --surface: light-dark(#ffffff, #000000);
+  --surface-2: light-dark(#f0f0f0, #121212);
+  --line: light-dark(#c0c0c0, #3f3f3f);
+  --line-faint: light-dark(#e2e2e2, #1d1d1d);
+  --line-strong: light-dark(#999999, #666666);
+  --line-field: light-dark(#343434, #cbcbcb);
   --ink: light-dark(#000000, #ffffff);
-  --ink-2: light-dark(#1a1a1a, #e6e6e6);
-  --ink-3: light-dark(#333333, #cccccc);
+  --ink-2: light-dark(#3d3d3d, #c2c2c2);
+  --ink-3: light-dark(#606060, #9d9d9d);
+  --accent: light-dark(#0000cc, #00ffff);
+  --accent-soft: light-dark(#dedef8, #003333);
+  --on-accent: light-dark(#ffffff, #000000);
+  --attention: light-dark(#8000a0, #ffff00);
+  --attention-soft: light-dark(#eedef3, #333300);
+  --attention-line: light-dark(#c080d0, #737300);
+  --good: light-dark(#006b00, #00ff66);
+  --good-soft: light-dark(#deecde, #003314);
+  --bad: light-dark(#b00000, #ff6b6b);
+  --bad-soft: light-dark(#f5dede, #331515);
+  --bad-line: light-dark(#d88080, #733030);
+  --warn: light-dark(#7a4f00, #ffb000);
+  --warn-soft: light-dark(#eee8de, #332300);
+  --info: light-dark(#006a6a, #d9a6ff);
+  --info-soft: light-dark(#deecec, #2b2133);
+  --info-line: light-dark(#80b5b5, #624b73);
 }
 
 /* The mode the developer picked, over the system's. */

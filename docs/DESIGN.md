@@ -395,15 +395,21 @@ Decisions made from that:
   way it was given. _Decided:_ the dashboard keeps a task's boxes as one draft, its values and note together, so the
   choice that closes the task deletes all of it at once; a draft written as plain words before is read as the note.
 - **Eight themes, each in light and dark.** The developer: "Also at the end build 8 themes light and dark mode each".
-  _Decided:_ a theme is a palette over the ground, its lines and the ink only; attention, status and focus keep one
-  colour in every theme, since they carry meaning and a theme is a look. The themes are Paper (the boards' own), Slate,
+  The first themes changed only the ground, its lines and the ink, and the developer said "your these only seem to
+  change the background color and poorly, only above the fold, and they dont change the accent colors at all", then
+  "the point is to change the gods damn amber, a theme chooses all colors". _Decided:_ a theme chooses every colour:
+  the ground, lines, ink, an accent for what the developer acts on (the primary button, the page they are on, focus,
+  links), attention and the four statuses. Meaning is kept by family, not by one fixed hue: attention is still the one
+  colour for what needs you in its theme, good still a green, bad still a red. The colours come from seeds in
+  `scripts/themes.ts`, which mixes the rest and moves every text colour until it reads, so a theme cannot be made
+  unreadable by hand; the ground is set on `:root` so it covers the whole page. The themes are Paper (the boards' own), Slate,
   Sand, Forest, Ocean, Plum, Rose and High contrast; the mode is as the system, light or dark. They are picked in an
   Appearance menu in the bar, each theme previewed in its own colours, and kept per device in browser storage, since a
   phone and a desk may want different ones and nothing else depends on it; `index.html` applies the choice before the
   first paint. `bun test design` holds every theme to the same contrast in both modes.
 - **Focus is a border, with the keys beside it, not a word.** The developer, looking at the built home: "focused text on
   lines is unnecessary, reminding about j an k shortcuts to the side would be better, in a subtle way". The word
-  Focused, which the boards draw over the focused item, is gone; the item keeps its dark border, and out in the margin
+  Focused, which the boards draw over the focused item, is gone; the item keeps its border, in the theme's accent, and out in the margin
   beside it a quiet "k ↑ j ↓" says how to move on. _Decided:_ the hint shows only with a mouse or trackpad (keys belong
   to a keyboard) and where the window leaves a margin for it, and a screen reader is not told it, since focus moving
   already says where it is.
@@ -987,7 +993,7 @@ you", answers wait in its inbox, and the next answer, finished task or Tell star
 - **Keys move the browser's own focus.** j and k move focus between items, top to bottom as drawn: an urgent question,
   the lines with their items, then Proposed. Tab moves within the focused item, and 1–9 pick its numbered choices,
   numbered in the order drawn, sheets included: an option, a step-in action, a proposal's choice, Done or Can't do it,
-  Accept or Keep current, Done or Not yet. There is only one focus, marked with a dark border and, where the window has
+  Accept or Keep current, Done or Not yet. There is only one focus, marked with a border in the theme's accent and, where the window has
   room, a quiet "k ↑ j ↓" beside it (D13), so a key never acts on an item other than the one in focus. Live updates
   never move it: new items appear without taking focus. After a choice, focus goes to the line's next item for you, then
   the next line; after Later, to the next item. Shift with J and K steps through the lines themselves, Working on then

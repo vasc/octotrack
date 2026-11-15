@@ -12,13 +12,24 @@ specimen shows both.
 ### Themes
 
 There are eight themes, each in light and dark: Paper (the tokens below), Slate, Sand, Forest, Ocean, Plum, Rose and High
-contrast. A theme is a palette, `[data-palette="…"]` in `tokens.css`, that redefines only the ground, its lines and the
-ink: `--bg`, `--surface`, `--surface-2`, `--line`, `--line-faint`, `--line-strong`, `--line-field`, `--ink`, `--ink-2`
-and `--ink-3`. Attention, status, tones and focus stay the same in every theme, so what they mean never changes with
-the look. A palette set on any element applies inside it, which is how the Appearance menu previews each theme. The
-developer picks a theme and a mode in that menu; this device keeps the choice, and `index.html` applies it before the
-first paint. `bun test design` checks every pairing's contrast in every theme and both modes. A new theme is one more
-block of the same ten tokens, and one more entry in `packages/web/src/lib/appearance.ts`.
+contrast. A theme chooses every colour: `[data-palette="…"]` in `tokens.css` redefines the ground, its lines, the ink, the
+accent, attention and the four statuses. What a colour means never changes with the theme, only its hue: attention is
+still the one colour for what needs you, good is still a green and bad a red, each tuned to sit in that theme, and no
+two themes share an accent or an attention colour. Paper's accent is a blue and its attention an orange; Slate is
+indigo with pink, Sand terracotta with cobalt, Forest moss with orange, Ocean sea blue with coral, Plum violet with gold,
+Rose raspberry with teal, and High contrast pure blue with magenta in light, cyan with yellow in dark.
+
+The colours are not picked by hand one by one. `scripts/themes.ts` holds each theme's seeds (its ground, ink, accent,
+attention and statuses, in each mode), mixes the lines, the quieter inks, the tints and the edges from them, moves
+every colour that is read as text toward the ink until it reaches its contrast on every ground and tint it sits on,
+and writes the result into `tokens.css`. To change a theme, change its seeds and run `bun scripts/themes.ts`; to add
+one, add its seeds there and an entry in `packages/web/src/lib/appearance.ts`. `bun test design` checks every pairing
+in every theme and both modes, that each theme defines every colour, and that the themes stay distinct.
+
+A palette set on any element applies inside it, which is how the Appearance menu previews each theme: a swatch shows
+the theme's ground with its accent and attention side by side. The developer picks a theme and a mode in that menu;
+this device keeps the choice, `index.html` applies it before the first paint, the theme's ground covers the whole page
+(it is set on `:root`, not only on the body), and the phone's browser bar takes the same ground.
 
 ### Ground
 
@@ -42,13 +53,24 @@ From furthest back to nearest. Separation comes from lines and these small steps
 | `--ink-2` | Supporting text: context, descriptions, refs |
 | `--ink-3` | Metadata: who, when, counts, hints           |
 
+### Accent
+
+The theme's own colour, for what the developer is acting on. It never says that something needs them: that is
+attention.
+
+| Token           | Use for                                                                                                                                    |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--accent`      | The primary button, the page you are on, focus rings and the focused item's edge, links, the chosen item in a menu, a field being typed in |
+| `--accent-soft` | Behind an item under the pointer in a menu, a pressed tab, selected text                                                                   |
+| `--on-accent`   | Text on a filled accent: the primary button, the page you are on                                                                           |
+
 ### Attention
 
 Means "this needs you". See [principle 1](principles.md#1-attention-is-the-scarce-thing-and-it-has-one-color).
 
 | Token              | Use for                                                                                   |
 | ------------------ | ----------------------------------------------------------------------------------------- |
-| `--attention`      | Text and focus rings; the edge of the recommended option                                  |
+| `--attention`      | Text; the edge of the recommended option                                                  |
 | `--attention-soft` | Behind attention text, and the recommended option                                         |
 | `--attention-line` | The edge of a question or task as a row. Decorative only: it does not reach text contrast |
 
@@ -133,18 +155,18 @@ The names are multiples of the unit: `--space-4` is four units.
 
 Only what floats over content gets a shadow. Everything else is separated by a line.
 
-| Token                | Use for                                                            |
-| -------------------- | ------------------------------------------------------------------ |
-| `--shadow-popover`   | The filter's suggestions, the Undo bar                             |
-| `--shadow-panel`     | A line, task or issue opened over the right of the page            |
-| `--shadow-focus`     | The one focus on home: the line or item the keys act on            |
-| `--border-focus`     | Edges for focus: the focus ring and the focused item's dark border |
-| `--border-accent`    | An item's accent edge, such as a question's left edge              |
-| `--opacity-disabled` | A control that cannot act now                                      |
-| `--opacity-hover`    | A filled button under the pointer                                  |
-| `--z-popover`        | Above the page                                                     |
-| `--z-panel`          | Above popovers                                                     |
-| `--z-undo`           | Above an open panel: a choice made there shows its Undo            |
+| Token                | Use for                                                       |
+| -------------------- | ------------------------------------------------------------- |
+| `--shadow-popover`   | The filter's suggestions, the Undo bar                        |
+| `--shadow-panel`     | A line, task or issue opened over the right of the page       |
+| `--shadow-focus`     | The one focus on home: the line or item the keys act on       |
+| `--border-focus`     | Edges for focus: the focus ring and the focused item's border |
+| `--border-accent`    | An item's accent edge, such as a question's left edge         |
+| `--opacity-disabled` | A control that cannot act now                                 |
+| `--opacity-hover`    | A filled button under the pointer                             |
+| `--z-popover`        | Above the page                                                |
+| `--z-panel`          | Above popovers                                                |
+| `--z-undo`           | Above an open panel: a choice made there shows its Undo       |
 
 ## Layout
 
@@ -183,7 +205,7 @@ There is none, and so there are no tokens for it. Things appear. See
 
 ## Focus
 
-`:focus-visible` draws a 2px ring in `--attention` everywhere. This product is meant to be driven by keyboard, so focus
-must always be visible. Inputs also shift their edge to `--ink-3` on focus. The one focus on home is the exception: its
-item takes a dark `--border-focus` edge in `--ink` instead of the ring, and, with a mouse or trackpad and room in the
+`:focus-visible` draws a 2px ring in `--accent` everywhere. This product is meant to be driven by keyboard, so focus
+must always be visible. Inputs also shift their edge to `--accent` on focus. The one focus on home is the exception: its
+item takes a `--border-focus` edge in `--accent` instead of the ring, and, with a mouse or trackpad and room in the
 margin, a quiet "k ↑ j ↓" beside it in `--ink-3`, which a screen reader is not told.

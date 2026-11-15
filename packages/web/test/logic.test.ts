@@ -26,7 +26,7 @@ import { askedText, cantSummary, doneSummary, howClosed, isTask, taskOutcome } f
 import { issueLinks } from "../src/lib/links.ts";
 import { moreSinceSummary } from "../src/lib/log.ts";
 import { doneWhenSaid, LINE_SAID } from "../src/lib/said.ts";
-import { DEFAULT_APPEARANCE, PALETTES, readAppearance } from "../src/lib/appearance.ts";
+import { DEFAULT_APPEARANCE, PALETTES, readAppearance, tintBrowserBar } from "../src/lib/appearance.ts";
 import { decision, decisionCard, event, issue } from "../src/design/fixtures.ts";
 import { closeEntity, navigate, openEntity, setParams } from "../src/lib/router.ts";
 
@@ -436,5 +436,34 @@ describe("appearance", () => {
     expect(readAppearance("not json")).toEqual(DEFAULT_APPEARANCE);
     expect(readAppearance('{"palette":"neon","mode":"dark"}')).toEqual(DEFAULT_APPEARANCE);
     expect(DEFAULT_APPEARANCE).toEqual({ palette: "paper", mode: "system" });
+  });
+});
+
+describe("tintBrowserBar", () => {
+  test("the phone's browser bar takes the page's ground, so it is the theme's and not a fixed dark", () => {
+    const meta = document.createElement("meta");
+    meta.setAttribute("name", "theme-color");
+    meta.setAttribute("content", "#141413");
+    document.head.append(meta);
+    const root = document.createElement("div");
+    root.style.backgroundColor = "rgb(215, 230, 245)";
+    document.body.append(root);
+    tintBrowserBar(root);
+    expect(meta.getAttribute("content")).toBe("rgb(215, 230, 245)");
+    root.remove();
+    meta.remove();
+  });
+
+  test("with no ground to read, the bar keeps what it had", () => {
+    const meta = document.createElement("meta");
+    meta.setAttribute("name", "theme-color");
+    meta.setAttribute("content", "#141413");
+    document.head.append(meta);
+    const root = document.createElement("div");
+    document.body.append(root);
+    tintBrowserBar(root);
+    expect(meta.getAttribute("content")).toBe("#141413");
+    root.remove();
+    meta.remove();
   });
 });
