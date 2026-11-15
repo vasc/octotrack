@@ -83,11 +83,12 @@ export function AgentsPage() {
         <p>
           <b>Taking.</b> <span className="mono">line take L-7</span> makes it owner, else helper, else says
           why; never another line. Bare, it finds the highest working line in its repo with no owner, else a
-          helper's place, else scoping.
+          helper's place, else scoping. On its own line it gets its next issue, or is told why there is none.
         </p>
         <p>
           <b>Keeping.</b> Claims end on release, Stop, a failed wake, or the exit of a session Octotrack
-          started; never on a timer, since a line can run for weeks.
+          started; never on a timer, since a line can run for weeks. The full rules are three tables in the
+          design doc.
         </p>
       </div>
     </div>

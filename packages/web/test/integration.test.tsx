@@ -2510,6 +2510,19 @@ describe("lines of work", () => {
       opened.getByText(whole(`Frees ${issue.ref}: Fit the board.`));
     });
 
+    test("a Tell about an issue nobody holds names the line's owner, whom it reaches", async () => {
+      withIssue();
+      const loose = server.act(
+        c.issueCreate,
+        { project: "OCT", title: "Nobody's yet", line: "L-1" },
+        "octo.1",
+      );
+      navigate(`/?ref=${loose.ref}`);
+      const view = renderApp(<App />);
+      const panel = within(await view.findByRole("complementary", { name: loose.ref }));
+      await panel.findByLabelText("Message to octo.1, who owns L-1");
+    });
+
     test("a closed task says how it closed and what was sent, and offers nothing to send again", async () => {
       const { task } = withIssue();
       server.tracker.call(c.taskDone, { ref: task.ref, result: "41, 38 and 12 mm" }, asDeveloper);
@@ -2552,7 +2565,7 @@ describe("lines of work", () => {
       const view = renderApp(<App />);
       const panel = within(await view.findByRole("complementary", { name: issue.ref }));
       const section = within(panel.getByRole("region", { name: `Issue ${issue.ref}` }));
-      within(section.getByRole("navigation", { name: "Where this is" })).getByText(/step 1/);
+      await within(section.getByRole("navigation", { name: "Where this is" })).findByText(/step 1 of 1/);
       section.getByRole("heading", { name: "Fit the board" });
       section.getByText("held by octo.1");
       expect(section.getAllByRole("button", { name: task.ref }).length).toBeGreaterThan(0);

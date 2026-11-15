@@ -2,6 +2,7 @@ import { contracts } from "@octotrack/core/contracts";
 import type { EntityDetail, Issue } from "@octotrack/core/schemas";
 import { useChoices } from "../../hooks/useChoices.ts";
 import { useIssueTell } from "../../hooks/useIssueTell.ts";
+import { usePlanStep } from "../../hooks/usePlanStep.ts";
 import { useHome } from "../../hooks/useHome.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
 import { issueLinks } from "../../lib/links.ts";
@@ -32,6 +33,15 @@ export function IssuePanel({ issue, detail }: { issue: Issue; detail: EntityDeta
   const task = isTask(issue);
   const open = issue.status !== "done" && issue.status !== "cancelled";
   const { frees, waitsOn } = issueLinks(issue.ref, detail.links);
+  const step = usePlanStep(issue.line, issue.step);
+  // A Tell about an issue reaches whoever holds it, else the line's owner, as the server delivers it.
+  const owner = issue.line === null ? null : (h.home.data?.crews[issue.line]?.owner?.name ?? null);
+  const tellTo =
+    issue.assignee !== null
+      ? `${issue.assignee}, who holds ${issue.ref}`
+      : owner === null
+        ? null
+        : `${owner}, who owns ${issue.line ?? ""}`;
   const freed = detail.linked.filter((item) => frees.includes(item.ref));
   return (
     <section className="line-panel" aria-label={`${task ? "Task" : "Issue"} ${issue.ref}`}>
@@ -42,7 +52,14 @@ export function IssuePanel({ issue, detail }: { issue: Issue; detail: EntityDeta
               <button type="button" className="panel-link line-link" onClick={() => openEntity(line.ref)}>
                 {line.title}
               </button>
-              {issue.step === null ? null : <> · step {issue.step}</>} ·{" "}
+              {issue.step === null ? null : (
+                <>
+                  {" "}
+                  · step {issue.step}
+                  {step === null ? "" : ` of ${step.of}`}
+                </>
+              )}{" "}
+              ·{" "}
             </>
           )}
           <span className="mono">{issue.ref}</span>
@@ -89,7 +106,7 @@ export function IssuePanel({ issue, detail }: { issue: Issue; detail: EntityDeta
           {issue.line === null ? null : (
             <TellBox
               line={issue.line}
-              to={issue.assignee === null ? null : `${issue.assignee}, who holds ${issue.ref}`}
+              to={tellTo}
               words={tell.draft.value}
               sending={tell.sending}
               onWords={tell.draft.change}

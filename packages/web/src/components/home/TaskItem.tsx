@@ -2,7 +2,7 @@ import type { Issue } from "@octotrack/core/schemas";
 import { useChoices } from "../../hooks/useChoices.ts";
 import { useDraft } from "../../hooks/useDraft.ts";
 import { useOutcomeDraft } from "../../hooks/useOutcomeDraft.ts";
-import { useStepTitle } from "../../hooks/useStepTitle.ts";
+import { usePlanStep } from "../../hooks/usePlanStep.ts";
 import type { TaskOutcome } from "../../lib/tasks.ts";
 import { NotKept } from "../ui/NotKept.tsx";
 import { TaskCard } from "./TaskCard.tsx";
@@ -21,7 +21,7 @@ export function TaskItem({
   onCant(task: Issue, why: string): void;
 }) {
   const draft = useOutcomeDraft(task.ref);
-  const holdsUp = useStepTitle(task.line, task.step);
+  const holdsUp = usePlanStep(task.line, task.step)?.title ?? null;
   const why = useDraft(`task-why:${task.ref}`);
   const { waiting } = useChoices();
   return (
