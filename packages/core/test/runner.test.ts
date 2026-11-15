@@ -483,11 +483,7 @@ describe("closing pull requests only when it is safe (third audit, N2)", () => {
     const error = "GraphQL: Resource not accessible by integration\nexit 1";
     e.w.tracker.call(c.runnerClosed, { pr, error }, e.w.runner);
     expect(failed()).toEqual([
-      [
-        pr,
-        e.line.ref,
-        `Could not close ${pr} on GitHub with ${e.line.ref}: exit 1. Trying again later.`,
-      ],
+      [pr, e.line.ref, `Could not close ${pr} on GitHub with ${e.line.ref}: exit 1. Trying again later.`],
     ]);
     expect(e.closes()).toEqual([]);
     e.w.later(2);
