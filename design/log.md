@@ -25,35 +25,45 @@ at no cost in speed.
 Body text is 13px and metadata is 11px. Both pass contrast, but 11px is small for hours of reading. Try `--space-unit` and
 `--text-md` one step up and see what is lost.
 
-### Should the rail hold something other than PRs first?
-
-It shows PR status, then waiting agents, then drift. An agent hanging right now is arguably more urgent than PR status, and
-is the least visible of the three.
-
 ### Icons
 
-There are none. Status is words, and PR glyphs are characters. It keeps things fast and honest, but a row of words takes
-longer to scan than a row of shapes, and `A`, `C` and `R` for review have to be learned.
+There are few: plus, pin, keyboard, grip and chevron, inline beside words or alone in a control that names itself.
+Status is words, and PR glyphs are characters. It keeps things fast and honest, but a row of words takes longer to scan
+than a row of shapes, and `A`, `C` and `R` for review have to be learned.
 
-### Feed marks are color alone
+### Log marks are color alone
 
-The mark beside a feed row carries tone with no shape. The sentence says the same thing, so nothing is lost, but scanning
+The mark beside a log row carries tone with no shape. The sentence says the same thing, so nothing is lost, but scanning
 the marks is harder with color blindness. Shapes would fix it.
 
 ### Keyboard reach
 
-Keys drive the decision queue, but not the feed, the rail or other pages. There is no way to move through feed rows, open
-one, or go to another page from the keyboard.
-
-### What does a project look like at a glance?
-
-`ProjectCardView` is a list of counts. Whether a project is healthy has to be worked out by reading them.
+Keys drive home: items, lines, choices, Undo, I'm at and the urgent question. Elsewhere there is only `/` to search,
+`?` and `Esc`. There is no way to move through log rows or the roster, open one, or go to another page from the
+keyboard.
 
 ### States not on the specimen
 
 Hover and focus can only be seen by hovering and tabbing. The specimen does not show them side by side.
 
 ## Decisions
+
+### Taken with lines of work
+
+The dashboard was rebuilt to the E · One list boards (docs/DESIGN.md, D13 and D14). These replaced several decisions
+further down, each marked _Replaced_ there.
+
+- **Three pages: Lines, Log and Agents.** The decisions, pull requests, drift, issues and repos pages went, and with
+  them the rail. A question is answered on its line, a pull request shows on its issue, drift on what it is about.
+- **One focus on home, a dark border with a quiet `k ↑ j ↓` beside it.** The word Focused, which the boards drew, was
+  left out at the developer's word; the hint shows only with a mouse or trackpad, where there is room.
+- **One press answers, and every choice waits with Undo.** A stray key costs nothing, so there is no confirm step.
+  Reordering, I'm at and Record answers act at once.
+- **One control height** (`--control-height`) for every desktop control, a few inline icons, and no ellipsis on a
+  button that asks first.
+- **I'm at is a menu of places, never a select,** so no arrow key changes where you are.
+- **The key list is the one modal,** so no key acts behind it. The Start sheet opens in place.
+- **A lost connection is said quietly:** "Not live: reconnecting" under the bar until it returns.
 
 ### Taken when this folder was extracted from the implementation
 
@@ -77,29 +87,40 @@ These changed how the product looks, slightly. All of them are visible at `/desi
 ### Taken while building
 
 - **What became of an answer is visible.** Deciding is not the end of it, so the log says whether anyone picked it up and
-  what they did, and the decisions page leads with answers nobody has heard.
+  what they did. _Replaced:_ each line now says what became of its recent answers, with Change answer; the decisions page
+  is gone.
 - **An own answer is one of the choices.** The note field always accepted one, but only a placeholder said so. Options
-  written by an agent do not always apply, so `Something else` sits with them, and the feed quotes the words as the answer.
-- **Postponing moves a decision down and nothing else.** It stays open and counted, an agent waiting on it keeps waiting, and
-  it stays down until someone brings it back or answers. A snooze timer was left out: it would be one more thing bringing
-  decisions back at a moment nobody chose.
+  written by an agent do not always apply, so In my own words (`w`) sits with them, and the log quotes the words as the
+  answer.
+- **Postponing moves a decision down and nothing else.** It is called Later now, and moves a question to the bottom of
+  its line. It stays open and counted, an agent waiting on it keeps waiting, and it stays down until someone brings it
+  back or answers. A snooze timer was left out: it would be one more thing bringing decisions back at a moment nobody
+  chose.
 - **Postponing moves on without arming the next card,** the same rule as when a card goes away.
 - **Touch follows the input, not the width.** `pointer: coarse` raises type, gives controls a 44px height and hides key
   hints, so a phone on its side still gets it.
 - **The queue lists five closed decisions beside the feed.** With 25 open, the rows pushed the feed off the screen. The rest
-  are one tap away on the decisions page, which lists them all.
+  are one tap away on the decisions page, which lists them all. _Replaced:_ there is no queue or decisions page; questions
+  wait on their lines.
 - **Project links stay hidden on phones.** The strip would get too long, and the Projects page reaches them.
+  _Replaced:_ the strip and the Projects page are gone; a repo is a `repo:` search on the Log.
 - **The keys disarm when the open card goes away.** The next card opens, and `j` arms it. It costs a keypress when deciding
-  several in a row, and it means a key meant for one decision cannot answer another.
-- **The open card is always first.** Otherwise a re-rank moves it in the DOM, which takes focus away from the note being typed.
-- **One decision open at a time, on every page.** Three open cards pushed the feed off the screen.
+  several in a row, and it means a key meant for one decision cannot answer another. _Replaced:_ after a choice, focus
+  moves to the line's next item, and while a choice waits with Undo its keys stand down.
+- **The open card is always first.** Otherwise a re-rank moves it in the DOM, which takes focus away from the note being
+  typed. _Replaced:_ there is no rank; live updates never move home's one focus.
+- **One decision open at a time, on every page.** Three open cards pushed the feed off the screen. On home, only the
+  focused item opens in full.
 - **The open card does not follow the ranking.** A live re-rank could otherwise make a keypress decide the wrong thing.
+  _Replaced:_ the developer's line order replaced the ranking.
 - **Deciding is not optimistic.** A round trip takes milliseconds locally, and removing the card early would unmount the
   form that has to show a refusal.
-- **Two steps to decide.** Pick, then confirm. A stray key cannot answer anything on its own.
-- **No modals.** Everything is answered in place or in the inspector.
+- **Two steps to decide.** Pick, then confirm. A stray key cannot answer anything on its own. _Replaced:_ one press,
+  with Undo.
+- **No modals.** Everything is answered in place or in the inspector. The key list is now the one modal.
 - **No animation.** Nothing should look slower than it is.
 - **System fonts.** A web font is a wait.
 - **Drift about state only offers "Nothing to update".** It clears by itself when fixed, so "Updated" could only be false.
-- **`PrStrip` below 1180px.** PR status should not disappear because the window is narrower.
+- **`PrStrip` below 1180px.** PR status should not disappear because the window is narrower. _Replaced:_ the strip is
+  gone; a pull request's status shows on its issue and in its line's plan.
 - **No component library.** The product needs a small vocabulary, and a library brings a large one with its own look.

@@ -6,7 +6,7 @@ The developer keeps one ordered list: what is being worked on, what is up next, 
 keep them true, and ask only what is theirs to decide, in questions that stand alone. Everything runs on one machine,
 as one binary, with a local SQLite file.
 
-![The feed: a ranked decision queue over filterable activity, with PR status alongside](docs/feed.jpg)
+![Home: every line of work in the developer's order, each with what it needs from them in place: a task opened on the focused line, Step in where no agent could be found](docs/home.jpg)
 
 What makes it different from a normal tracker:
 
@@ -37,7 +37,7 @@ bun run build
 bun link
 ```
 
-That puts `octo` on your PATH. The server starts itself on the first command.
+That puts `octo` on your PATH, running from this checkout. The server starts itself on the first command, on port 4747.
 
 ```bash
 octo repo create OCT "My project" --repo owner/name
@@ -55,48 +55,12 @@ OCTO_HOME=/tmp/octo-demo OCTO_URL=http://127.0.0.1:4799 octo seed demo
 
 Then open <http://127.0.0.1:4799>.
 
-### Letting Claude Code sessions write
+### Installing it as one binary
 
-In auto mode, Claude Code's permission classifier can refuse `octo` writes as writes to an external system. Sessions then
-file nothing. To allow them, add this to `~/.claude/settings.json`, merging it with what is already there:
-
-```json
-{
-  "permissions": {
-    "allow": ["Bash(octo *)", "Bash(OCTO_AGENT=* octo *)"]
-  },
-  "autoMode": {
-    "allow": [
-      "$defaults",
-      "Running the `octo` CLI, including writes (lines, issues, questions, tasks, status posts, projects, PR links, drift attestations) and with an OCTO_AGENT=name prefix or --agent flag. Octotrack is the user's own local tracker on 127.0.0.1:4747, built for AI agents to write to, and the user has authorized every session to use it."
-    ]
-  }
-}
-```
-
-The allow rules cover plain commands. The `autoMode` entry is for commands that still reach the classifier. Sessions that
-were already running picked this up without a restart.
-
-### Using it from your phone
-
-The server only listens on loopback, so publish it to your tailnet with `tailscale serve`. Never use Funnel: there is no
-login, and Funnel is public.
-
-```bash
-tailscale serve --bg 4747
-```
-
-Add the name it prints to `~/.octotrack/allowed-hosts`, one per line, then restart the server:
-
-```bash
-octo server stop
-```
-
-Any `octo` command starts it again. Every device your tailnet's access rules allow can then read and answer decisions.
-
-So that the link works after a reboot, have the server start at login on macOS. Put this in
-`~/Library/LaunchAgents/octotrack.server.plist`, with your paths, then load it with
-`launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/octotrack.server.plist`:
+The live install runs one compiled `octo`, which carries the CLI, the server and the dashboard, so the CLI and the
+server always come from the same build, and a change in the checkout never changes the CLI under a server still running
+older code. A LaunchAgent keeps the server running from login on macOS. Put this in
+`~/Library/LaunchAgents/octotrack.server.plist`, with your paths:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -107,8 +71,7 @@ So that the link works after a reboot, have the server start at login on macOS. 
   <string>octotrack.server</string>
   <key>ProgramArguments</key>
   <array>
-    <string>/Users/you/.bun/bin/bun</string>
-    <string>/Users/you/.bun/bin/octo</string>
+    <string>/Users/you/.octotrack/bin/octo</string>
     <string>serve</string>
   </array>
   <key>EnvironmentVariables</key>
@@ -126,8 +89,78 @@ So that the link works after a reboot, have the server start at login on macOS. 
 </plist>
 ```
 
-`gh` has to be on that `PATH` for PR status. Leave `KeepAlive` out: `octo server stop` ends the server with a signal, which
-launchd would treat as a crash and undo, and it would retry forever whenever an on-demand server already holds the port.
+`gh` has to be on that `PATH` for PR status, and so does whatever the runner's start and setup commands run. Leave
+`KeepAlive` out: `octo server stop` ends the server with a signal, which launchd would treat as a crash and undo, and it
+would retry forever whenever an on-demand server already holds the port. Then build and install:
+
+```bash
+bun scripts/deploy.ts
+```
+
+It builds the dashboard and the binary (`scripts/build-binary.ts`, into `build/octo`); rehearses the migration on a copy
+of `~/.octotrack/octo.db` and deploys nothing if a ref would stop resolving or anything would be lost; backs the
+database up to `octo-backup-before-v<N>.db` beside it when the schema moves; installs the binary to
+`~/.octotrack/bin/octo`; points the `octo` on your PATH, the LaunchAgent and the `claude` wake adapter at it; restarts
+the server; and checks that the new build is the one answering. It finds the LaunchAgent as the file in
+`~/Library/LaunchAgents` with `octotrack` in its name, and changes only its program, keeping the rest. Each file it
+changes is kept first as `.previous`, so the last deploy can be undone:
+
+```bash
+bun scripts/deploy.ts --rollback
+```
+
+That puts back the binary, the link, the LaunchAgent and the wake adapters from before the last deploy, and restarts.
+It never touches the database. To see what a migration would do without deploying, run
+`bun scripts/rehearse-migration.ts`, optionally with the path of a database: it migrates a copy and prints what was kept
+or lost.
+
+An `octo` that reaches a server from another build says so once. `octo server stop` ends the old server, and the next
+command starts the new one, outside launchd. To have launchd run it again instead, restart the LaunchAgent by the
+label in its plist:
+
+```bash
+launchctl kickstart -k gui/$(id -u)/octotrack.server
+```
+
+### Letting Claude Code sessions write
+
+In auto mode, Claude Code's permission classifier can refuse `octo` writes as writes to an external system. Sessions
+then file nothing. To allow them, add this to `~/.claude/settings.json`, merging it with what is already there:
+
+```json
+{
+  "permissions": {
+    "allow": ["Bash(octo *)", "Bash(OCTO_AGENT=* octo *)"]
+  },
+  "autoMode": {
+    "allow": [
+      "$defaults",
+      "Running the `octo` CLI, including writes (lines, issues, questions, tasks, status posts, projects, PR links, drift attestations) and with an OCTO_AGENT=name prefix or --agent flag. Octotrack is the user's own local tracker on 127.0.0.1:4747, built for AI agents to write to, and the user has authorized every session to use it."
+    ]
+  }
+}
+```
+
+The allow rules cover plain commands. The `autoMode` entry is for commands that still reach the classifier. Sessions
+that were already running picked this up without a restart.
+
+### Using it from your phone
+
+The server only listens on loopback, so publish it to your tailnet with `tailscale serve`. Never use Funnel: there is no
+login, and Funnel is public.
+
+```bash
+tailscale serve --bg 4747
+```
+
+Add the name it prints to `~/.octotrack/allowed-hosts`, one per line, then restart the server:
+
+```bash
+octo server stop
+```
+
+Any `octo` command starts it again. Every device your tailnet's access rules allow can then read and answer decisions.
+So that the link works after a reboot, install it with its LaunchAgent, as above.
 
 ## For agents
 
@@ -157,8 +190,35 @@ octo issue claim OCT-4
 octo decision ask "Which queue?" --context "Deliveries must survive a restart." -o sqs="SQS::Managed, new to us" -o redis="Redis::Already deployed" --recommend redis --why "No new service to run"
 ```
 
+For what only the developer can do, such as a measurement, an agent files a task at one of the developer's places, and
+can name each thing to send back:
+
+```bash
+octo task file "Measure the board" --place "the bench" --outcome "In mm" --field Length --field Holes
+```
+
 When the developer tells an agent in conversation to do one of their operations, it relays their words:
-`octo line start L-4 --said "yes, start the wall mount"`. The log quotes them.
+`octo line start L-4 --said "yes, start the wall mount"`. The log quotes them. From your own terminal, `--me` (or
+`OCTO_DEVELOPER=1`) makes you the developer: `octo task done PANEL-7 --value "Length=41 mm" --value Holes=38 --me`.
+
+### Waking agents
+
+An agent that registered a wake address, such as `claude:<session-id>`, is woken when something waits for it. What a
+wake runs is set only in `~/.octotrack/wake-adapters.json` on this machine, never by a request:
+
+```json
+{
+  "claude": {
+    "command": ["/Users/you/.octotrack/bin/octo", "adapter", "claude", "--", "{address}", "{message}"]
+  }
+}
+```
+
+`{address}` is what follows `claude:`, and `{message}` names only what waits, never tracker text. `octo adapter claude`
+resumes the session with `claude -p --resume`, from the folder it ran in. A deploy points the `claude` entry at the new
+binary. A wake whose adapter has no entry here fails, and a failed wake makes its agent gone, ending its claims, so set
+this up before agents register addresses. An agent registered with `--no-wake` is never woken, and hears what waits on
+its next command.
 
 ### Starting sessions on their own
 
@@ -174,6 +234,8 @@ until `~/.octotrack/agent-setup.json` exists, and starts in watch mode, only not
   "repos": { "PANEL": { "checkout": "/Users/you/src/homepanel", "setup": [["bun", "install"]] } }
 }
 ```
+
+A repo's entry may also give its own `start`, used for sessions in that repo instead of the one above.
 
 Only `{line}` and `{name}` are filled in, so tracker text never becomes a prompt, and only when they have the narrow
 form of a name (letters, digits, `.`, `_` and `-`, not first), so a name such as `*` or `-rf` never reaches a command.
@@ -300,16 +362,24 @@ around, `octo drift claim DR-4` keeps the others off it.
 
 ## The dashboard
 
-Home is every line in your order: working on, with what each needs from you in place; up next; proposals; tabled.
-Everything an agent does shows up without a reload, and nothing that arrives moves the item you are on. Every choice
-waits five seconds with Undo. `I'm at…` opens the tasks for one of your places; the Log shows what changed since you
-last looked at each line.
+There are three pages. Home, at `/`, is every line in your order: working on, with what each needs from you in place;
+up next; proposed; tabled. Any ref opens in a panel over it: a line with its summary, plan and Tell, a task with what to
+send back, an issue with its pull requests and drift. The Log, at `/log`, shows what changed since you last looked at
+each line, with a search over everything and Mark all seen. Agents, at `/agents`, is the roster, with Stop, Release and
+Lift.
 
-Keys: `j` `k` items, `J` `K` lines, `1`-`9` the focused item's choices, `Enter` answer, `p` later, `u` undo, `g u` the
-urgent question, `o` open its line, `t` table it, `Alt` with the arrows to move it, `r` record answers, `?` all of them.
+Everything an agent does shows up without a reload, and nothing that arrives moves the item you are on. While the
+connection is lost, a quiet line says "Not live: reconnecting". Every choice waits five seconds with Undo, answers, Mark
+all seen, drift answers and notes included; reordering, I'm at and Record answers act at once. I'm at opens the tasks
+for one of your places.
 
-Decisions made elsewhere can be logged back as you remember them, with `r` on Lines, on the Decisions page, or with
-`octo decision batch`:
+Keys: `j` `k` items, `J` `K` lines, `1`-`9` the focused item's numbered choices, `w` answer in your own words, `l`
+later, `u` undo, `o` or `Enter` open its line, `t` tell its owner, `Alt` with the arrows to move it, `g p` I'm at, `g u`
+the urgent question, `/` search, `r` record answers, `Esc` close, `?` all of them. The focused item has a dark border,
+with a quiet `k ↑ j ↓` beside it where the window has room.
+
+Decisions made elsewhere can be logged back as you remember them, with `r` on home (Record answers, kept as a draft
+while you type; `Esc` closes it and keeps what you typed), or with `octo decision batch`:
 
 ```text
 D-3 redis Agreed on the call
@@ -319,14 +389,16 @@ D-5 - None of the options, doing this instead
 
 ## Configuration
 
-| Variable               | Default                  | Meaning                                                                            |
-| ---------------------- | ------------------------ | ---------------------------------------------------------------------------------- |
-| `OCTO_AGENT`           | `agent`                  | Who is acting                                                                      |
-| `OCTO_URL`             | `http://127.0.0.1:4747`  | The server. Loopback URLs start it on demand                                       |
-| `OCTO_HOME`            | `~/.octotrack`           | Where the database and server log live                                             |
-| `OCTO_PR_SYNC_SECONDS` | `120`                    | How often the server pulls PR status with `gh`. 0 disables it                      |
-| `OCTO_DEVELOPER`       | unset                    | `1` makes an interactive terminal with no agent name the developer, as `--me` does |
-| `OCTO_PUSH_CONTACT`    | an address naming no one | Who push services may contact about the notifications this server sends            |
+| Variable               | Default                  | Meaning                                                                                                 |
+| ---------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `OCTO_AGENT`           | unset                    | Who is acting, as `--agent` says. With none, a write is refused unless one agent works in this checkout |
+| `OCTO_URL`             | `http://127.0.0.1:4747`  | The server. Loopback URLs start it on demand                                                            |
+| `OCTO_HOME`            | `~/.octotrack`           | Where the database, the server log, the installed binary and the `~/.octotrack` files above live        |
+| `OCTO_PR_SYNC_SECONDS` | `120`                    | How often the server pulls PR status with `gh`. 0 disables it                                           |
+| `OCTO_GH_TIMEOUT_MS`   | `30000`                  | How long pull request sync gives each `gh` call                                                         |
+| `OCTO_DEVELOPER`       | unset                    | `1` makes an interactive terminal with no agent name the developer, as `--me` does                      |
+| `OCTO_PUSH_CONTACT`    | an address naming no one | Who push services may contact about the notifications this server sends                                 |
+| `OCTO_PORT`            | `4747`                   | The port `scripts/deploy.ts` checks the new build on                                                    |
 
 ## Development
 
@@ -334,14 +406,21 @@ D-5 - None of the options, doing this instead
 bun run check
 ```
 
-That runs types, lint and all tests. Casts are a lint error through `scripts/no-casts.grit`, and so are type arguments that assert what the page or the query cache holds (`querySelectorAll<…>`, `closest<…>`, `getQueryData<…>`); `as const` is allowed.
+That runs types, lint and all tests, the dashboard's included, which run on their own with a DOM
+(`bun run --cwd packages/web test`). `bun test design` checks the design language alone. Casts are a lint error through
+`scripts/no-casts.grit`, and so are type arguments that assert what the page or the query cache holds
+(`querySelectorAll<…>`, `closest<…>`, `getQueryData<…>`); `as const` is allowed.
+
+For the dashboard with live reload, run `bun run dev:web` and open <http://localhost:4748>; it sends `/api` to the
+server on 4747. A change reaches the installed binary only through `bun scripts/deploy.ts`.
 
 | Package           | Holds                                                                                     |
 | ----------------- | ----------------------------------------------------------------------------------------- |
 | `packages/core`   | Schemas, operations, query language, drift and watch engines. No runtime-specific imports |
-| `packages/server` | The HTTP app, the SQLite driver and the `gh` sync                                         |
+| `packages/server` | The HTTP app, the SQLite driver, the `gh` sync, the runner, wakes, Web Push, installing   |
 | `packages/cli`    | The `octo` command                                                                        |
 | `packages/web`    | The dashboard                                                                             |
+| `scripts`         | Building the binary, deploying and rolling back, rehearsing a migration, the casts rule   |
 
 `docs/DESIGN.md` explains the technical decisions behind all of this, and their trade-offs. `design/` holds the design
 language, which the dashboard imports, with a live specimen at `/design`.

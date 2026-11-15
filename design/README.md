@@ -25,11 +25,8 @@ Then go to `/design` on that address. Add `?theme=dark` or `?theme=light` to loo
 
 ## Change it
 
-For live reload while you work, run the server and the dev build, then open <http://localhost:4748/design>:
-
-```bash
-octo serve
-```
+For live reload while you work, run the dev build, then open <http://localhost:4748/design>. The specimen needs no
+data; the rest of the dashboard sends `/api` to the server on 4747, which the installed one already runs.
 
 ```bash
 bun run dev:web
@@ -43,7 +40,9 @@ bun run dev:web
    bun test design
    ```
 
-3. Run `bun run build` so that `octo serve` picks the change up without the dev build.
+3. The installed binary carries the dashboard inside it, so a change reaches it only with `bun scripts/deploy.ts` (see
+   the [README](../README.md#installing-it-as-one-binary)). A server run from the checkout serves `packages/web/dist`,
+   which `bun run build` refreshes.
 4. If it was a decision rather than a tweak, add a line to [log.md](log.md) saying what and why.
 
 ## Some changes to try first

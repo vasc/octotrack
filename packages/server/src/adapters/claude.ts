@@ -3,7 +3,8 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 
 /**
- * The wake adapter for Claude Code: `bun claude.ts <session-id> <message>`. Claude Code only resumes a session from the folder
+ * The wake adapter for Claude Code: `octo adapter claude -- <session-id> <message>`, which the server's wake adapters run
+ * (or `bun claude.ts <session-id> <message>` from a checkout). Claude Code only resumes a session from the folder
  * it ran in, and the server runs from somewhere else, so this finds that folder from the session's transcript first. Nothing
  * here is known to the tracker, which only sees `claude:<session-id>`. See docs/DESIGN.md, D12.
  */
@@ -36,7 +37,7 @@ export async function wakeClaude(
 ): Promise<number> {
   const [sessionId, message] = args;
   if (sessionId === undefined || message === undefined) {
-    console.error("Usage: claude.ts <session-id> <message>");
+    console.error("Usage: octo adapter claude -- <session-id> <message>");
     return 2;
   }
   const folder = findSessionFolder(options.projectsDir ?? join(homedir(), ".claude", "projects"), sessionId);

@@ -8,5 +8,7 @@
 - Inside `waitFor`, do not use `expect(element).toBeNull()`. See the `gone` helper in
   `packages/web/test/integration.test.tsx` for why.
 - Design decisions and their reasoning live in `docs/DESIGN.md`. Update it when one changes.
+- The live install is one compiled binary. A change reaches it only through `bun scripts/deploy.ts`, which rehearses
+  the migration first and backs the database up when the schema moves; `--rollback` undoes the last deploy.
 - The design language lives in `design/`. Dashboard styles take values from `design/tokens.css`, and `bun test design`
   enforces it. Read `design/README.md` before changing how anything looks.
