@@ -102,6 +102,13 @@ describe("the dashboard uses the language instead of going around it", () => {
     expect(off).toEqual([]);
   });
 
+  test("nothing takes the focus ring away, apart from items whose own border shows their focus", () => {
+    const ringless = [
+      ...stylesCss.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/([^{}]+)\{([^{}]*outline:\s*none[^{}]*)\}/g),
+    ].map((match) => (match[1] ?? "").trim());
+    expect(ringless).toEqual(["[data-focus-ref]:focus-visible"]);
+  });
+
   test("line height comes from the leading or the spacing scale", () => {
     const off = declarations
       .filter(({ property }) => property === "line-height")
