@@ -429,8 +429,10 @@ Decisions made from that:
     command, session and wake the server runs is given only its own: a session its name, a wake the agent woken (or,
     for a question from before lines, its asker). _Why:_ the server is often started by an agent's first command, and a
     woken session would otherwise act as that agent.
-  - _Commands are bounded and answered._ git and gh get two minutes, clones and setup commands thirty, the stop command
-    ten, and a wake thirty; each is killed at its deadline and reported. Output is read as it comes and raced once the command
+  - _Commands are bounded and answered._ The runner's git and gh get two minutes, clones and setup commands thirty, the
+    stop command ten, and a wake thirty; pull request sync's gh calls get thirty seconds each (`OCTO_GH_TIMEOUT_MS`),
+    since a busy repo answers in about six and a stuck call must not hold every later sync (fourth audit, A25: this
+    said two minutes for all gh). Each is killed at its deadline and reported. Output is read as it comes and raced once the command
     exits, so a child it leaves holding the pipes cannot hang the runner. Only names and refs of the narrow form are
     filled into the developer's commands. A push service that cannot be reached costs that browser its notification
     and nothing else: the rest are sent and recorded, so a line still buzzes once. (Third audit: unless no browser
