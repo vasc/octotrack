@@ -544,6 +544,10 @@ Decisions made from that:
     the line's inbox; the task closes as cancelled with "Withdrawn: why" as its result. _Why:_ it was recorded and
     delivered as the developer's Can't do it, so the log and the line read as the developer turning down work they
     never saw.
+  - _Changes since the summary leave out the developer's own doings and reorders,_ on home's count and in the line's
+    panel, which lists them with the same query (`sinceSummaryQuery`: `line:L-n -actor:dev -event:line.reordered`).
+    _Why:_ two drags and a nudge showed as "3 changes since the summary"; the developer's own actions are never news to
+    them, and a reorder changes only where the line stands.
 - **Departures, each for a reason.**
   - _The pages from before lines are gone:_ Decisions, Pull requests, Drift, Issues and Repos. Nothing linked to them
     any more, and the issues page changed status through a select with no Undo. Questions are answered on home, a
