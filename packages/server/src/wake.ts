@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import {
   type AgentWake,
   type Caller,
@@ -8,14 +7,13 @@ import {
   type Tracker,
   WAKE_DEADLINE_MS,
 } from "@octotrack/core";
-import { z } from "zod";
 import { childEnv } from "./env.ts";
 import { processShell, type RunnerShell } from "./runner.ts";
 import { runProcess } from "./spawn.ts";
 
-const WakeAdapter = z.object({ command: z.array(z.string().min(1)).min(1) });
-const WakeAdapters = z.record(z.string(), WakeAdapter);
-export type WakeAdapters = z.infer<typeof WakeAdapters>;
+import type { WakeAdapters } from "./wake-adapters.ts";
+
+export { loadWakeAdapters, type WakeAdapters } from "./wake-adapters.ts";
 
 export interface WakeResult {
   exitCode: number;
@@ -36,25 +34,6 @@ export type WakeRunner = (
 
 const DISPATCHER: Caller = { actor: "octotrack", channel: "cli", system: true };
 const STDERR_KEPT = 300;
-
-/**
- * What a wake can run comes only from this file on the machine. With no authentication, a request naming its own command
- * would let any device that can reach the server run anything. See docs/DESIGN.md, D12.
- */
-export function loadWakeAdapters(path: string): WakeAdapters {
-  let content: string;
-  try {
-    content = readFileSync(path, "utf8");
-  } catch {
-    return {};
-  }
-  try {
-    return WakeAdapters.parse(JSON.parse(content));
-  } catch (error) {
-    console.error(`[wake] ignoring ${path}: ${error instanceof Error ? error.message : String(error)}`);
-    return {};
-  }
-}
 
 /**
  * No shell is involved, so that nothing in an address or a message can be read as a command. The woken session gets

@@ -75,7 +75,13 @@ export function pointWakeAdaptersAt(json: string, binary: string): string {
   if (claude === undefined) return json;
   const next = {
     ...adapters,
-    claude: { ...claude, command: [binary, "adapter", "claude", "--", "{address}", "{message}"] },
+    claude: {
+      // What it fits and what address to give, for the guide, unless the developer wrote their own.
+      for: "a session Octotrack started, or any Claude Code session not open in a terminal",
+      address: "$CLAUDE_CODE_SESSION_ID",
+      ...claude,
+      command: [binary, "adapter", "claude", "--", "{address}", "{message}"],
+    },
   };
   return `${JSON.stringify(next, null, 2)}\n`;
 }

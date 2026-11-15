@@ -235,6 +235,14 @@ if "we can avoid having the session actively hang on octo".
   running it, so a crash leaves a session unwoken rather than woken twice, and the answer is still in the inbox.
 - **The tracker knows no tool.** It stores an opaque address. An adapter in `~/.octotrack/wake-adapters.json` turns that into
   a command, so another tool needs one more entry and no code.
+- **Each adapter says what it fits, and the guide lists what this machine has.** An entry may carry `for` (when an agent
+  should use it, in plain words) and `address` (what to give after the colon), and `octo guide` prints the adapters set
+  up here with both, instead of naming one. _Why:_ the guide once told every agent to register `claude:` with its
+  session id, which resumes a session headlessly; the developer's agents run open in GNU screen, where that starts a
+  second copy beside the open one, and an agent rewrote the guide for screen instead (vasc/octotrack#1, closed), which
+  fitted that machine and no other. What fits depends on the machine and how each agent runs, so the guide reads it from
+  the machine. _Decided:_ the claude adapter does not try to detect a session open in a terminal; nothing it can see
+  tells an open interactive session from one that ended, so the guide says which sessions it fits instead.
 - **A request can never supply the command.** There is no authentication (D10), so that would let any device that can reach
   the server run anything. Addresses are also narrow enough that they cannot pass for an option or mean anything to a shell, no
   shell is involved, and the wake message holds only the ref, so tracker text never becomes a prompt.

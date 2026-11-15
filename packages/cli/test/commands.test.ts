@@ -7,7 +7,9 @@ import { parseOption } from "../src/commands/decisions.ts";
 import { normalizeRelation } from "../src/commands/network.ts";
 import { buildSpec } from "../src/commands/observe.ts";
 import { queryFrom } from "../src/commands/shared.ts";
-import { AGENT_GUIDE } from "../src/guide.ts";
+import { agentGuide } from "../src/guide.ts";
+
+const AGENT_GUIDE = agentGuide({});
 import { COMMANDS, resolveCommand } from "../src/registry.ts";
 
 describe("every operation is reachable from the CLI", () => {
@@ -231,5 +233,31 @@ describe("output reaches a pipe whole", () => {
       ),
     );
     expect(readers).toEqual([]);
+  });
+});
+
+describe("the guide says how this machine can wake an agent, naming no adapter it lacks", () => {
+  test("it lists the adapters set up here, each with what it fits and the address to give", () => {
+    const guide = agentGuide({
+      claude: {
+        command: ["octo", "adapter", "claude", "--", "{address}", "{message}"],
+        for: "a session Octotrack started, or any Claude Code session not open in a terminal",
+        address: "$CLAUDE_CODE_SESSION_ID",
+      },
+      screen: {
+        command: ["screen", "-S", "{address}", "-p", "0", "-X", "stuff", "{message}"],
+        for: "inside GNU screen",
+      },
+    });
+    expect(guide).toContain("octo agent register --wake claude:$CLAUDE_CODE_SESSION_ID");
+    expect(guide).toContain("a session Octotrack started, or any Claude Code session not open in a terminal");
+    expect(guide).toContain("octo agent register --wake screen:<address>");
+    expect(guide).toContain("inside GNU screen");
+  });
+
+  test("with none set up, it says to register with --no-wake, and names no adapter", () => {
+    const guide = agentGuide({});
+    expect(guide).toContain("No wake adapter is set up on this machine");
+    expect(guide).not.toContain("claude:");
   });
 });

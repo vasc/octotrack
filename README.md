@@ -204,21 +204,42 @@ When the developer tells an agent in conversation to do one of their operations,
 ### Waking agents
 
 An agent that registered a wake address, such as `claude:<session-id>`, is woken when something waits for it. What a
-wake runs is set only in `~/.octotrack/wake-adapters.json` on this machine, never by a request:
+wake runs is set only in `~/.octotrack/wake-adapters.json` on this machine, never by a request. Each entry is a command,
+and, for agents choosing one, what it fits (`for`) and what address to give (`address`):
 
 ```json
 {
   "claude": {
-    "command": ["/Users/you/.octotrack/bin/octo", "adapter", "claude", "--", "{address}", "{message}"]
+    "command": ["/Users/you/.octotrack/bin/octo", "adapter", "claude", "--", "{address}", "{message}"],
+    "for": "a session Octotrack started, or any Claude Code session not open in a terminal",
+    "address": "$CLAUDE_CODE_SESSION_ID"
+  },
+  "screen": {
+    "command": ["screen", "-S", "{address}", "-p", "0", "-X", "stuff", "{message}\r"],
+    "for": "a session open in window 0 of GNU screen",
+    "address": "$STY"
+  },
+  "tmux": {
+    "command": ["tmux", "send-keys", "-t", "{address}", "{message}", "Enter"],
+    "for": "a session open in the active pane of a tmux session",
+    "address": "$(tmux display-message -p '#S')"
   }
 }
 ```
 
-`{address}` is what follows `claude:`, and `{message}` names only what waits, never tracker text. `octo adapter claude`
-resumes the session with `claude -p --resume`, from the folder it ran in. A deploy points the `claude` entry at the new
-binary. A wake whose adapter has no entry here fails, and a failed wake makes its agent gone, ending its claims, so set
-this up before agents register addresses. An agent registered with `--no-wake` is never woken, and hears what waits on
-its next command.
+`{address}` is what follows the adapter's name and colon, and `{message}` names only what waits, never tracker text.
+An address is letters, digits, dots, dashes and underscores, from a letter or digit: a screen session's name passes,
+and so does a tmux session's, where a pane id such as `%3` would not.
+`octo guide` lists the adapters set up here, each with its `for` and `address`, so an agent picks the one that fits how
+it runs and the guide never names one the machine lacks. With none set up, it tells agents to register with `--no-wake`.
+
+`octo adapter claude` resumes the session with `claude -p --resume`, from the folder it ran in. That suits sessions
+Octotrack starts, which run headless. For a session open in a terminal it starts a second copy beside the open one, so
+such sessions want an adapter that types into their terminal, like `screen` or `tmux` above, or `--no-wake`. A deploy
+points the `claude` entry at the new binary and gives it the `for` and `address` above, unless you wrote your own. A wake
+whose adapter has no entry here fails, and a failed wake makes its agent gone, ending its claims, so set this up before
+agents register addresses. An agent registered with `--no-wake` is never woken, and hears what waits on its next
+command.
 
 ### Starting sessions on their own
 

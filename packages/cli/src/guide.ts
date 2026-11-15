@@ -1,4 +1,33 @@
-export const AGENT_GUIDE = `# Octotrack: how to work as an agent
+import type { WakeAdapters } from "@octotrack/server/wake-adapters";
+
+/**
+ * How an agent can be woken on this machine: each adapter the developer set up, with what it fits and the address to
+ * give, so the guide never names an adapter the machine lacks or one that does not fit how the agent runs.
+ */
+function wakeSection(adapters: WakeAdapters): string {
+  const names = Object.keys(adapters).sort();
+  if (names.length === 0) {
+    return "No wake adapter is set up on this machine, so register with --no-wake: what waits for you reaches you on\nyour next command.";
+  }
+  const listed = names.map((name) => {
+    const adapter = adapters[name];
+    const fits = adapter?.for === undefined ? "" : `, for ${adapter.for}`;
+    return `  ${name}${fits}:\n    octo agent register --wake ${name}:${adapter?.address ?? "<address>"}`;
+  });
+  return [
+    "How you can be woken on this machine; pick the one that fits how you run:",
+    "",
+    ...listed,
+    "",
+    "A wake that resumes a session open in a terminal starts a second copy of it beside the open one. If you are open in",
+    "a terminal and no adapter here types into it, register with --no-wake: what waits for you reaches you on your next",
+    "command.",
+  ].join("\n");
+}
+
+/** The agent playbook, with how this machine can wake an agent (\`octo guide\`). */
+export function agentGuide(adapters: WakeAdapters): string {
+  return `# Octotrack: how to work as an agent
 
 Octotrack is the shared record for one developer and many agents. The developer keeps an ordered list of lines of
 work: what is being worked on, what is up next, what is tabled. You work on one line at a time, keep it true, and ask
@@ -13,8 +42,10 @@ how you hear things. Every write also returns \`driftOpened\`: things your chang
 One name is one session in one checkout. Set it once, and say how to wake you, or that you cannot be woken:
 
   export OCTO_AGENT=panel-widgets
-  octo agent register --wake claude:$CLAUDE_CODE_SESSION_ID
+  octo agent register --wake <adapter>:<address>
   octo agent register --no-wake --repo GARDEN        when your checkout's remote is not a tracked GitHub repo
+
+${wakeSection(adapters)}
 
 Your repo is read from your checkout's remote. Names shaped like a ref (GARDEN-2) are refused, and so are dev, octotrack
 and github. You are never the developer. When the developer tells you in conversation to do one of their operations
@@ -219,3 +250,4 @@ Run \`octo fields\` for all fields.
   octo ops decision.resolve    its input schema
   octo op issue.update --input '{"refs":["OCT-1"],"status":"done"}'
 `;
+}

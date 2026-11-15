@@ -1,3 +1,4 @@
+import { wakeAdaptersPath } from "@octotrack/server/paths";
 import { writeFileSync } from "node:fs";
 import { BatchOp, contracts as c, type Counts } from "@octotrack/core";
 import {
@@ -12,7 +13,8 @@ import { z } from "zod";
 import { UsageError } from "../args.ts";
 import { ConnectionError, RemoteError } from "../client.ts";
 import type { Command } from "../command.ts";
-import { AGENT_GUIDE } from "../guide.ts";
+import { agentGuide } from "../guide.ts";
+import { loadWakeAdapters } from "@octotrack/server/wake-adapters";
 import * as r from "../render.ts";
 import { seedDemo } from "../seed.ts";
 import { compact } from "./shared.ts";
@@ -401,7 +403,7 @@ export const systemCommands: Command[] = [
     summary: "The agent playbook. Point agents at this, or paste it into their instructions",
     ops: [],
     async run() {
-      console.log(AGENT_GUIDE);
+      console.log(agentGuide(loadWakeAdapters(wakeAdaptersPath())));
     },
   },
   {

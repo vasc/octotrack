@@ -12,7 +12,14 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { backupDatabase, type CommandRunner, install, pointPlistAt, rollback } from "../src/install.ts";
+import {
+  backupDatabase,
+  type CommandRunner,
+  install,
+  pointPlistAt,
+  pointWakeAdaptersAt,
+  rollback,
+} from "../src/install.ts";
 
 const PLIST = `<?xml version="1.0" encoding="UTF-8"?>
 <plist version="1.0">
@@ -159,5 +166,35 @@ describe("backing up the database", () => {
     const copy = new Database(first, { readonly: true });
     expect(copy.query("SELECT name FROM things").all()).toEqual([{ name: "in the wal" }]);
     copy.close();
+  });
+});
+
+describe("the wake adapters a deploy writes", () => {
+  test("the claude entry says what it fits and what address an agent gives, unless it already says so", () => {
+    const written = JSON.parse(
+      pointWakeAdaptersAt(
+        JSON.stringify({
+          claude: { command: ["bun", "claude.ts", "{address}", "{message}"] },
+          screen: {
+            command: ["screen", "-S", "{address}", "-X", "stuff", "{message}"],
+            for: "inside GNU screen",
+          },
+        }),
+        "/bin/octo",
+      ),
+    );
+    expect(written.claude.for).toContain("not open in a terminal");
+    expect(written.claude.address).toBe("$CLAUDE_CODE_SESSION_ID");
+    expect(written.screen).toEqual({
+      command: ["screen", "-S", "{address}", "-X", "stuff", "{message}"],
+      for: "inside GNU screen",
+    });
+    const own = JSON.parse(
+      pointWakeAdaptersAt(
+        JSON.stringify({ claude: { command: ["x"], for: "my own words", address: "$MINE" } }),
+        "/bin/octo",
+      ),
+    );
+    expect([own.claude.for, own.claude.address]).toEqual(["my own words", "$MINE"]);
   });
 });
