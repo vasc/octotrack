@@ -1,3 +1,4 @@
+import { whenText } from "../../lib/format.ts";
 import type { Line } from "@octotrack/core/schemas";
 import { openEntity } from "../../lib/router.ts";
 
@@ -19,7 +20,7 @@ export function QuietRow({
         </button>
         <div className="row-sub">
           {line.tabledReason === null ? null : <span>{line.tabledReason}</span>}
-          {line.lookAgainAt === null ? null : <span>look again {line.lookAgainAt.slice(0, 10)}</span>}
+          {line.lookAgainAt === null ? null : <span>look again {whenText(line.lookAgainAt)}</span>}
         </div>
       </div>
       {onQueue === undefined ? null : (

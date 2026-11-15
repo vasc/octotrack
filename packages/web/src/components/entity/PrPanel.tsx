@@ -1,3 +1,4 @@
+import { whenText } from "../../lib/format.ts";
 import type { PullRequest } from "@octotrack/core/schemas";
 import { humanize } from "../../lib/format.ts";
 import { StatusBadge } from "../ui/Badge.tsx";
@@ -21,7 +22,7 @@ export function PrPanel({ pr }: { pr: PullRequest }) {
           ["Branch", pr.baseRef === "" ? pr.headRef : `${pr.headRef} → ${pr.baseRef}`],
           ["Size", `+${pr.additions} -${pr.deletions}`],
           ["Author", pr.author],
-          ["Synced", pr.syncedAt?.slice(0, 16).replace("T", " ")],
+          ["Synced", pr.syncedAt === null ? null : whenText(pr.syncedAt)],
         ]}
       />
       {pr.body === "" ? null : <Markdown text={pr.body} />}

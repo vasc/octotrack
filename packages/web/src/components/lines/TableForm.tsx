@@ -1,3 +1,4 @@
+import { whenText } from "../../lib/format.ts";
 import { useState } from "react";
 
 /** What tabling does, in words: what stays held, and who winds down. */
@@ -78,8 +79,8 @@ export function TableForm({
       <p className="muted">{consequences(held, owner)}</p>
       {lookAgain === "" ? null : (
         <p className="muted">
-          On {lookAgain} it comes back under Proposed, counted in "to accept", with your reason beside it and
-          the choices any proposal has.
+          {whenText(lookAgain).replace(/^on/, "On")} it comes back under Proposed, counted in "to accept",
+          with your reason beside it and the choices any proposal has.
         </p>
       )}
       <div className="question-actions">

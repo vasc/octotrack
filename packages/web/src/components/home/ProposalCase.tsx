@@ -1,3 +1,4 @@
+import { whenText } from "../../lib/format.ts";
 import type { Line } from "@octotrack/core/schemas";
 import { Markdown } from "../ui/Markdown.tsx";
 
@@ -17,7 +18,7 @@ export function ProposalCase({ line, lastUpNext = null }: { line: Line; lastUpNe
     return (
       <p className="proposal-case">
         Back to look at, as you asked: {line.tabledReason}
-        {line.lookAgainAt === null ? "" : ` (${line.lookAgainAt.slice(0, 10)})`}
+        {line.lookAgainAt === null ? "" : ` (look again ${whenText(line.lookAgainAt)})`}
       </p>
     );
   }

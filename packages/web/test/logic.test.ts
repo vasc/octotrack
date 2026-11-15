@@ -7,6 +7,7 @@ import {
   filterTerm,
   humanize,
   sinceText,
+  whenText,
   splitRefs,
   timeAgo,
   timeLabel,
@@ -72,10 +73,23 @@ describe("format", () => {
     expect(timeAgo("2026-01-01T12:00:00.000Z", now)).toBe("2026-01-01");
   });
 
-  test("dayLabel", () => {
-    expect(dayLabel("2026-11-07T01:00:00.000Z", now)).toBe("Today");
-    expect(dayLabel("2026-11-06T23:00:00.000Z", now)).toBe("Yesterday");
-    expect(dayLabel("2026-11-01T23:00:00.000Z", now)).toBe("2026-11-01");
+  test("dayLabel decides the day in local time, as the times beside it are", () => {
+    // Local dates, so this holds in any time zone: a quarter past midnight is today, not yesterday.
+    const local = new Date(2026, 10, 7, 12, 0).getTime();
+    expect(dayLabel(new Date(2026, 10, 7, 0, 15).toISOString(), local)).toBe("Today");
+    expect(dayLabel(new Date(2026, 10, 6, 23, 45).toISOString(), local)).toBe("Yesterday");
+    expect(dayLabel(new Date(2026, 10, 1, 23, 0).toISOString(), local)).toBe("2026-11-01");
+  });
+
+  test("whenText words a time as the boards do, in local time", () => {
+    const local = new Date(2026, 10, 7, 12, 0).getTime();
+    expect(whenText(new Date(2026, 10, 7, 7, 20).toISOString(), local)).toBe("at 07:20");
+    expect(whenText(new Date(2026, 10, 4, 9, 0).toISOString(), local)).toBe("on Wednesday");
+    expect(whenText(new Date(2026, 10, 10, 9, 0).toISOString(), local)).toBe("on Tuesday");
+    expect(whenText(new Date(2026, 9, 1, 9, 0).toISOString(), local)).toBe("on 1 October");
+    expect(whenText(new Date(2027, 1, 1, 9, 0).toISOString(), local)).toBe("on 1 February 2027");
+    // A date alone, as a look-again date is kept, is that day wherever the viewer is.
+    expect(whenText("2027-02-01", local)).toBe("on 1 February 2027");
   });
 
   test("tones and names", () => {

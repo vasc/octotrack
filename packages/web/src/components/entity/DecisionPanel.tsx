@@ -1,6 +1,6 @@
 import { contracts } from "@octotrack/core/contracts";
 import type { Decision } from "@octotrack/core/schemas";
-import { humanize } from "../../lib/format.ts";
+import { humanize, whenText } from "../../lib/format.ts";
 import { useChoices } from "../../hooks/useChoices.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
 import { DecisionCardItem } from "../decisions/DecisionCardItem.tsx";
@@ -58,7 +58,10 @@ function ClosedDecision({ decision }: { decision: Decision }) {
           ["Outcome", chosen?.label],
           ["Note", decision.resolutionNote],
           ["Decided by", decision.decidedBy],
-          ["When", decision.decidedAt?.slice(0, 16).replace("T", " ")],
+          [
+            "When",
+            decision.decidedAt === null ? null : whenText(decision.decidedAt).replace(/^(at|on) /, ""),
+          ],
           ["How", decision.channel === null ? null : humanize(decision.channel)],
           [
             "Source",
