@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B · Instrument</title>
+<style>
+  :root {
+    --ground: #101012;
+    --sheet: #17171a;
+    --raise: #1e1e22;
+    --rule: #26262b;
+    --rule-2: #313137;
+    --ink: #ececef;
+    --ink-2: #b4b4bb;
+    --ink-3: #7c7c85;
+    --needs: #8b8cf6;
+    --needs-dim: #2a2a4a;
+    --warm: #e2a65c;
+    --sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--ground); }
+  body { margin: 0; color: var(--ink); font: 13.5px/1.45 var(--sans); -webkit-font-smoothing: antialiased; }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+
+  .bar { height: 48px; display: flex; align-items: center; gap: 4px; padding: 0 20px; border-bottom: 1px solid var(--rule); }
+  .word { font-weight: 600; font-size: 13px; margin-right: 18px; letter-spacing: -0.01em; }
+  .tab { padding: 5px 10px; border-radius: 6px; color: var(--ink-3); font-size: 13px; }
+  .tab[aria-current] { color: var(--ink); background: var(--raise); }
+  .waits { margin-left: auto; display: flex; gap: 16px; color: var(--ink-3); font-size: 12.5px; }
+  .waits b { color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; margin-right: 3px; }
+  .waits .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--warm); margin-right: 6px; transform: translateY(-1px); }
+  .new { margin-left: 16px; padding: 5px 10px; border-radius: 6px; background: var(--ink); color: var(--ground); font-weight: 500; font-size: 12.5px; }
+
+  main { max-width: 980px; margin: 0 auto; padding: 28px 20px 100px; }
+  .group { display: flex; align-items: baseline; gap: 8px; padding: 0 4px 10px; font-size: 12.5px; color: var(--ink-3); }
+  .group h2 { margin: 0; font-size: 12.5px; font-weight: 600; color: var(--ink); }
+  .group .hint { margin-left: auto; }
+
+  .sheet { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; }
+  .row { display: grid; grid-template-columns: 22px 14px minmax(0, 1fr) auto; gap: 0 12px; align-items: baseline; padding: 12px 16px; }
+  .row + .row, .detail + .row { border-top: 1px solid var(--rule); }
+  .n { color: var(--ink-3); font: 12px var(--mono); }
+  .state { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--ink-3); transform: translateY(1px); }
+  .state.working { border-color: var(--ink-2); background: conic-gradient(var(--ink-2) 0 25%, transparent 0); }
+  .state.stuck { border-color: var(--warm); }
+  .title { font-weight: 500; color: var(--ink); }
+  .meta { color: var(--ink-3); margin-left: 8px; }
+  .meta .who { color: var(--ink-2); }
+  .meta .warm { color: var(--warm); }
+  .right { color: var(--ink-3); font-size: 12px; display: flex; gap: 10px; align-items: center; }
+  .needs-tag { color: var(--needs); font-size: 12px; font-weight: 500; }
+
+  .detail { padding: 2px 16px 16px 64px; }
+  .summary { margin: 0 0 12px; color: var(--ink-2); max-width: 70ch; }
+  .summary a { color: var(--ink); text-decoration-color: var(--rule-2); text-underline-offset: 3px; }
+  .ask { padding: 2px 0 2px 14px; border-left: 2px solid var(--needs); }
+  .ask .kind { font-size: 11.5px; color: var(--needs); font-weight: 500; }
+  .ask .kind span { color: var(--ink-3); font-weight: 400; }
+  .ask h3 { margin: 4px 0 10px; font-size: 14.5px; font-weight: 600; }
+  .ask label { display: block; color: var(--ink-2); margin-bottom: 6px; font-size: 12.5px; }
+  .field { width: 100%; max-width: 560px; font: inherit; color: var(--ink); background: var(--sheet); border: 1px solid var(--rule-2); border-radius: 6px; padding: 8px 10px; outline: none; }
+  .field::placeholder { color: var(--ink-3); }
+  .choices { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
+  .choice { font-size: 12.5px; padding: 5px 10px; border-radius: 6px; border: 1px solid var(--rule-2); color: var(--ink-2); }
+  .choice kbd { font: 11px var(--mono); color: var(--ink-3); margin-right: 6px; }
+  .choice.primary { background: var(--needs); border-color: var(--needs); color: #0c0c1a; font-weight: 500; }
+  .choice.primary kbd { color: #34346b; }
+  .inline { display: flex; gap: 10px; align-items: baseline; color: var(--ink-2); }
+  .inline .needs-tag::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--needs); margin-right: 6px; transform: translateY(-1px); }
+  .inline b { color: var(--ink); font-weight: 500; }
+  .inline .open { margin-left: auto; color: var(--ink-2); font-size: 12px; }
+  .inline .needs-tag { white-space: nowrap; }
+
+  section + section { margin-top: 32px; }
+  .empty { padding: 14px 16px; color: var(--ink-3); }
+
+  @media (max-width: 720px) {
+    body { font-size: 15px; }
+    .bar { height: auto; padding: 12px 16px; flex-wrap: wrap; gap: 6px 14px; }
+    .word, .tab { display: none; }
+    .waits { margin: 0; flex: 1; flex-wrap: wrap; gap: 4px 14px; font-size: 13.5px; }
+    .waits span { white-space: nowrap; }
+    .new { margin: 0; }
+    main { padding: 20px 12px 96px; }
+    .row { grid-template-columns: 14px minmax(0, 1fr); padding: 12px 14px; }
+    .row .n, .row .right { display: none; }
+    .meta { display: block; margin: 2px 0 0; }
+    .detail { padding: 0 14px 14px 40px; }
+    .tabs { position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-around; padding: 10px 0 14px; background: var(--sheet); border-top: 1px solid var(--rule); color: var(--ink-3); }
+    .tabs span[aria-current] { color: var(--ink); font-weight: 600; }
+  }
+  @media (min-width: 721px) { .tabs { display: none; } }
+</style>
+</head>
+<body>
+  <header class="bar">
+    <span class="word">Octotrack</span>
+    <button class="tab" aria-current="page">Lines</button><button class="tab">Log</button><button class="tab">Agents</button>
+    <div class="waits">
+      <span><i class="dot"></i><b>1</b>urgent</span><span><b>2</b>to do</span><span><b>2</b>to accept</span><span><b>2</b>to step in</span>
+    </div>
+    <button class="new">New line</button>
+  </header>
+  <main>
+    <section>
+      <div class="group"><h2>Working on</h2><span>4</span><span class="hint">Your order is everyone's order</span></div>
+      <div class="sheet">
+        <div class="row">
+          <span class="n">1</span><span class="state working"></span>
+          <span><span class="title">One plan, one meal</span><span class="meta"><span class="warm">no owner yet</span> · step 1 of 4, Mock it up</span></span>
+          <span class="right"><span class="needs-tag">Waiting on you</span></span>
+        </div>
+        <div class="detail">
+          <p class="summary">Mockup ready after six rejected restyles. Nothing built until you answer. <a href="#">3 changes since the summary</a></p>
+          <div class="ask">
+            <div class="kind">Task for you <span>· MEALS-1 · at the Mac</span></div>
+            <h3>Try the mockup on the phone</h3>
+            <label>Does it read at arm's length?</label>
+            <input class="field" placeholder="What you saw">
+            <div class="choices"><button class="choice primary"><kbd>1</kbd>Done</button><button class="choice"><kbd>2</kbd>Can't do it</button></div>
+          </div>
+        </div>
+        <div class="row">
+          <span class="n">2</span><span class="state working"></span>
+          <span><span class="title">Sendspin enclosure</span><span class="meta"><span class="who">panel-widgets</span> · quiet</span></span>
+          <span class="right"><span class="needs-tag">Waiting on you</span></span>
+        </div>
+        <div class="detail">
+          <p class="summary">Printed; the short board fits. One answer and one measurement from the final print.</p>
+          <div class="inline"><span class="needs-tag">Task</span><span><b>Measure the board and its holes</b> · at the bench</span><button class="open">Open</button></div>
+        </div>
+        <div class="row">
+          <span class="n">3</span><span class="state stuck"></span>
+          <span><span class="title">South Tyrol trip</span><span class="meta"><span class="warm">no owner: step in</span> · step 2 of 3</span></span>
+          <span class="right">L-3</span>
+        </div>
+        <div class="detail">
+          <p class="summary">No agent took L-3, and none can be started: no start command is set on this machine.</p>
+          <div class="choices"><button class="choice primary"><kbd>1</kbd>Try now</button><button class="choice"><kbd>2</kbd>Table it</button><button class="choice"><kbd>3</kbd>I'll own it</button></div>
+        </div>
+        <div class="row">
+          <span class="n">4</span><span class="state working"></span>
+          <span><span class="title">Wall mount</span><span class="meta"><span class="who">panel-widgets</span> · step 1 of 2, Model the bracket</span></span>
+          <span class="right">2h</span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="group"><h2>Up next</h2><span>0</span></div>
+      <div class="sheet"><div class="empty">Nothing is up next. Agents scope a line here when you queue it.</div></div>
+    </section>
+
+    <section>
+      <div class="group"><h2>Proposed</h2><span>2</span><span class="hint">from agents</span></div>
+      <div class="sheet">
+        <div class="row">
+          <span class="n">P</span><span class="state stuck"></span>
+          <span><span class="title">Restore the garden feed</span><span class="meta"><span class="warm">urgent</span> · garden-sensor · done when readings arrive again</span></span>
+          <span class="right">18h</span>
+        </div>
+        <div class="detail">
+          <p class="summary">The done sensor line's service stopped answering. Recommended: start it now.</p>
+          <div class="choices"><button class="choice primary"><kbd>1</kbd>Start</button><button class="choice"><kbd>2</kbd>Up next</button><button class="choice"><kbd>3</kbd>Table</button></div>
+        </div>
+        <div class="row">
+          <span class="n">P</span><span class="state"></span>
+          <span><span class="title">Widgets redesign</span><span class="meta">panel-widgets · done when the new card forms are on every panel screen</span></span>
+          <span class="right">20h</span>
+        </div>
+      </div>
+    </section>
+  </main>
+  <nav class="tabs"><span aria-current="page">Lines</span><span>Log</span><span>Agents</span></nav>
+</body>
+</html>
