@@ -21,6 +21,7 @@ export function WaitingSections({
   focus,
   starting,
   narrow = false,
+  phone = false,
   handle,
   drop,
   onStarting,
@@ -31,8 +32,10 @@ export function WaitingSections({
   focus: string | null;
   /** The waiting line whose Start sheet is open. */
   starting: string | null;
-  /** On a phone, up next and proposals fold to tiles too, as E-Phone draws them. */
+  /** On a phone, or at a place, up next and proposals fold to tiles too, as E-Phone draws them. */
   narrow?: boolean;
+  /** On a phone the tiles name nothing, for want of room: the name and the count. */
+  phone?: boolean;
   /** A line's handle, which drags it or opens its moves. */
   handle(title: string, ref: string, index: number, count: number, section: "working" | "up_next"): ReactNode;
   drop(ref: string, section: "working" | "up_next"): DropTarget;
@@ -59,7 +62,13 @@ export function WaitingSections({
   };
   const quiet = (
     <>
-      <FoldedSection title="Tabled" lines={home.tabled} dashed note={heldOnTabled(home)}>
+      <FoldedSection
+        title="Tabled"
+        names={home.tabled.map((line) => line.title)}
+        named={!phone}
+        dashed
+        note={heldOnTabled(home)}
+      >
         {home.tabled.map((line) => (
           <div key={line.ref}>
             <QuietRow line={line} onStart={onStarting} onQueue={h.queue} />
@@ -67,7 +76,7 @@ export function WaitingSections({
           </div>
         ))}
       </FoldedSection>
-      <FoldedSection title="Done lately" lines={home.doneLately}>
+      <FoldedSection title="Done lately" names={home.doneLately.map((line) => line.title)} named={!phone}>
         {home.doneLately.map((line) => (
           <QuietRow key={line.ref} line={line} />
         ))}
@@ -125,10 +134,15 @@ export function WaitingSections({
   if (narrow) {
     return (
       <div className="tiles">
-        <FoldedSection title="Up next" lines={home.upNext}>
+        <FoldedSection title="Up next" names={home.upNext.map((line) => line.title)} named={!phone}>
           {upNextList}
         </FoldedSection>
-        <FoldedSection title="Proposed by agents" lines={home.proposed} tone="info">
+        <FoldedSection
+          title="Proposed by agents"
+          names={home.proposed.map((line) => line.title)}
+          named={!phone}
+          tone="info"
+        >
           {proposals}
         </FoldedSection>
         {quiet}

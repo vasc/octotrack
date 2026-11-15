@@ -83,7 +83,7 @@ export function HomePage() {
       {home === undefined ? null : (
         <>
           {home.working.length === 0 && home.upNext.length === 0 ? (
-            <FirstRun proposals={home.proposed} repos={h.repos.length} onAccept={h.acceptRecommended} />
+            <FirstRun proposals={home.proposed} onAccept={h.acceptRecommended} />
           ) : Object.values(home.counts).every((count) => count === 0) ? (
             <NothingNeedsYou working={runningAgents(home)} next={nextAsk(home)} />
           ) : null}
@@ -134,12 +134,14 @@ export function HomePage() {
             starting={starting}
             // At a place everything else folds, up next and proposals included; urgent questions never do.
             narrow={narrow || at !== null}
+            phone={narrow}
             handle={handle}
             drop={drop}
             onStarting={setStarting}
           />
           <QuestionList
             title="On no line"
+            folded={narrow}
             note="from before lines; their agents should put each on its line"
             cards={home.noLine}
             focus={focus}

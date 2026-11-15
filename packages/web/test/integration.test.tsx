@@ -2415,6 +2415,35 @@ describe("lines of work", () => {
     }
   });
 
+  test("on a phone, questions on no line fold to one row like the other sections; urgent ones never do", async () => {
+    const realMatchMedia = window.matchMedia;
+    Object.assign(window, {
+      matchMedia: (media: string) => ({
+        matches: true,
+        media,
+        addEventListener() {},
+        removeEventListener() {},
+      }),
+    });
+    try {
+      seedLines();
+      const options = [{ key: "a", label: "Yes", description: "Go ahead." }];
+      server.act(c.decisionAsk, { title: "An old question", context: "Context.", options }, "octo.9");
+      server.act(c.decisionAsk, { title: "Another old one", context: "Context.", options }, "octo.9");
+      navigate("/");
+      const view = renderApp(<App />);
+      const tile = within(await view.findByRole("region", { name: "On no line" }));
+      expect(tile.getByRole("button", { name: /On no line · 2/ }).getAttribute("aria-expanded")).toBe(
+        "false",
+      );
+      expect(tile.queryByRole("button", { name: "Open D-1" })).toBeNull();
+      fireEvent.click(tile.getByRole("button", { name: /On no line · 2/ }));
+      tile.getByRole("button", { name: "Open D-1" });
+    } finally {
+      Object.assign(window, { matchMedia: realMatchMedia });
+    }
+  });
+
   test("a tapped notification opens its question focused, and opening the app is noted for the next buzz", async () => {
     seedLines();
     server.act(c.agentRegister, { repo: "OCT" }, "octo.1");

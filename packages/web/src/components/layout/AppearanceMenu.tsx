@@ -19,7 +19,7 @@ export function AppearanceMenu({
   const theme = PALETTES.find((palette) => palette.id === appearance.palette)?.name ?? "Paper";
   const mode = MODES.find((candidate) => candidate.id === appearance.mode)?.name ?? "As the system";
   return (
-    <span className="picker-wrap" ref={menu.wrap}>
+    <span className="menu-wrap" ref={menu.wrap}>
       <button
         ref={menu.button}
         type="button"

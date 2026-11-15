@@ -506,8 +506,15 @@ p {
   color: var(--ink-2);
 }
 
-.picker-wrap > .menu {
+.picker-wrap > .menu,
+.menu-wrap > .menu {
   top: calc(100% + var(--space-2));
+}
+
+/* A button with its menu under it, such as Appearance. */
+.menu-wrap {
+  position: relative;
+  display: inline-flex;
 }
 
 /* The choice in force, in a menu of choices. */
@@ -1090,7 +1097,8 @@ p {
     gap: var(--space-3) var(--space-6);
   }
   .brand-name,
-  .top-actions .btn-icon {
+  .top-keys,
+  .top-new-more {
     display: none;
   }
   /* The bar on a phone, as E-Phone draws it: the page and New, then the counts, then where you are. */
@@ -1101,12 +1109,31 @@ p {
     font-size: var(--text-heading);
     font-weight: var(--weight-bold);
   }
-  .top-new {
+  .top-new,
+  .menu-wrap {
     order: 1;
   }
-  .top-counts {
+  /* What waits, as one line of words under the page's name, as E-Phone writes it: "5 to answer · 3 to do". */
+  .top-waiting {
     order: 2;
     width: 100%;
+    flex-wrap: wrap;
+  }
+  .top-counts {
+    flex-wrap: wrap;
+    background: none;
+    border: 0;
+  }
+  .top-count {
+    padding: 0;
+  }
+  .top-count + .top-count {
+    border-left: 0;
+  }
+  .top-count + .top-count::before {
+    content: "·";
+    margin: 0 var(--space-4);
+    color: var(--ink-3);
   }
   .top-nav {
     position: fixed;
@@ -1217,28 +1244,10 @@ p {
   .filter-input {
     font-size: var(--text-input-touch);
   }
-  /* On a phone, as E-Phone draws it: four cells across, the number above its words. */
-  .top-counts {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(0, 1fr);
-    border-radius: var(--radius-lg);
-  }
-  .top-count {
-    min-height: var(--touch-target);
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0;
-    padding: var(--space-2);
-    font-size: var(--text-xs);
-  }
-  .top-count-n {
-    font-size: var(--text-heading);
-  }
+  /* Each count a full finger's height, its number beside its words as everywhere else. */
+  .top-count,
   .top-urgent {
     min-height: var(--touch-target);
-    align-items: center;
   }
 }
 

@@ -831,19 +831,37 @@ describe("lines of work", () => {
     expect(handlers.onReject).toHaveBeenCalledTimes(1);
   });
 
-  test("FoldedSection names its lines on one row and shows them only when asked", () => {
+  test("FoldedSection names at most three of its lines on one row, and shows them only when asked", () => {
     const view = render(
-      <FoldedSection
-        title="Tabled"
-        lines={[line({ title: "Podcast cleanup" }), line({ ref: "L-2", title: "Bike fit" })]}
-      >
+      <FoldedSection title="Tabled" names={["Podcast cleanup", "Bike fit"]}>
         <p>the rows</p>
       </FoldedSection>,
     );
     view.getByText(/Podcast cleanup, Bike fit/);
-    expect(view.queryByText("the rows")).toBeNull();
-    fireEvent.click(view.getByRole("button", { name: /Show/ }));
-    view.getByText("the rows");
+    view.unmount();
+    const many = render(
+      <FoldedSection title="Proposed" names={["A", "B", "C", "D", "E"]}>
+        <p>the rows</p>
+      </FoldedSection>,
+    );
+    many.getByText(/A, B, C and 2 more/);
+    many.unmount();
+    // On a phone, as E-Phone draws it: the name and the count, no titles.
+    const phone = render(
+      <FoldedSection title="Up next" names={["A", "B", "C", "D"]} named={false}>
+        <p>the rows</p>
+      </FoldedSection>,
+    );
+    expect(phone.getByRole("button", { name: /Up next/ }).textContent).toBe("Up next · 4Show");
+    phone.unmount();
+    const again = render(
+      <FoldedSection title="Tabled" names={["Podcast cleanup", "Bike fit"]}>
+        <p>the rows</p>
+      </FoldedSection>,
+    );
+    expect(again.queryByText("the rows")).toBeNull();
+    fireEvent.click(again.getByRole("button", { name: /Show/ }));
+    again.getByText("the rows");
   });
 
   test("QuietRow says why a tabled line waits and brings it back", () => {
@@ -1300,7 +1318,7 @@ describe("agents and first run", () => {
     expect(onRelease).toHaveBeenCalledWith("panel");
   });
 
-  test("FirstRun accepts every recommended placement it can, and says how to start with none", () => {
+  test("FirstRun accepts every recommended placement it can, says when there is none to accept, and how to start", () => {
     const onAccept = mock((_refs: string[]) => {});
     const view = render(
       <FirstRun
@@ -1309,16 +1327,28 @@ describe("agents and first run", () => {
           line({ ref: "L-2", state: "proposed", recommendation: "fold" }),
           line({ ref: "L-3", state: "proposed", recommendation: "start" }),
         ]}
-        repos={15}
         onAccept={onAccept}
       />,
     );
-    view.getByText(/^Your 15 repos have no lines yet\. Agents with each repo propose real lines/);
+    view.getByText(
+      "2 of the 3 proposed lines carry a recommended placement. Accept them at once, then change any you disagree with.",
+    );
     fireEvent.click(view.getByRole("button", { name: "Accept recommended placements" }));
     expect(onAccept).toHaveBeenCalledWith(["L-1", "L-3"]);
     view.getByText("with Undo");
     view.unmount();
-    render(<FirstRun proposals={[]} repos={0} onAccept={onAccept} />).getByText("octo guide");
+    const old = render(
+      <FirstRun
+        proposals={[line({ ref: "L-1", state: "proposed", recommendation: null })]}
+        onAccept={onAccept}
+      />,
+    );
+    old.getByText(
+      "Nothing is placed yet. The proposed line came from before lines, with no recommendation: place it yourself, or wait for its agent to propose a real line.",
+    );
+    expect(old.queryByRole("button")).toBeNull();
+    old.unmount();
+    render(<FirstRun proposals={[]} onAccept={onAccept} />).getByText("octo guide");
   });
 });
 

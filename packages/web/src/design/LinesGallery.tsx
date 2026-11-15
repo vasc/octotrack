@@ -262,10 +262,7 @@ export function LinesGallery() {
         />
       </Example>
       <Example label="Tabled, folded">
-        <FoldedSection
-          title="Tabled"
-          lines={[line({ title: "Podcast cleanup", state: "tabled", tabledReason: "The disk is not tight" })]}
-        >
+        <FoldedSection title="Tabled" names={["Podcast cleanup"]}>
           <QuietRow
             line={line({ title: "Podcast cleanup", state: "tabled", tabledReason: "The disk is not tight" })}
           />

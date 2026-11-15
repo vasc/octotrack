@@ -92,9 +92,10 @@ export function TopBar({
               {...(atRef === undefined ? {} : { buttonRef: atRef })}
             />
           )}
-          <button type="button" className="btn top-new" onClick={onNewLine}>
+          {/* "New" alone on a phone, as E-Phone writes it; its name is always New line. */}
+          <button type="button" className="btn top-new" aria-label="New line" onClick={onNewLine}>
             <Icon name="plus" />
-            New line
+            New<span className="top-new-more"> line</span>
           </button>
           <AppearanceMenu appearance={appearance} onPalette={onPalette} onMode={onMode} />
           <button

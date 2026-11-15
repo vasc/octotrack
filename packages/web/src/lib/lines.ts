@@ -179,3 +179,9 @@ export const STEP_IN_SHORT: Readonly<Record<StepInKind, string>> = {
   no_repo: "it names no repo",
   at_cap: "every session is busy",
 };
+
+/** What a folded section holds, by name: up to three, then how many more. */
+export function foldedNames(names: readonly string[], shown = 3): string {
+  const first = names.slice(0, shown).join(", ");
+  return names.length <= shown ? first : `${first} and ${names.length - shown} more`;
+}
