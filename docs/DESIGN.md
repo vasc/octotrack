@@ -405,7 +405,11 @@ Decisions made from that:
   - _One rule decides whether a line can be started,_ shared by `runner.due`, making room and Step in, so a helper is
     never asked to give way for a line the runner would not start (one that never took it, waits to retry, or has no
     repo), and only a running helper is asked, since an asleep one holds no session. _Trade-off:_ a few more queries per
-    tick, against three copies of the rule drifting apart, which is what the audit found.
+    tick, against three copies of the rule drifting apart, which is what the audit found. (Fourth audit, A20:) the
+    same rule now also says why: home sends each line's `stepInReason` with `stepIn`, worded in core (no start command,
+    watching only, never took it, keeps failing at once, keeps taking it and leaving, no repo, every session busy).
+    _Why:_ the dashboard worked the reason out again from the runner's status and the last start, had no case for a
+    line with no repo, and told it was at the cap instead.
   - _A start is judged by when it ended._ Only an exit before the five-minute check-in, having run no command, counts as
     failing at once and is retried by itself; one that outlived its check-in ran, whatever its exit code, and waits for
     Try now like any other that never took its line. Each start records when its process exited, so one past its
