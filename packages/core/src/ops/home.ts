@@ -7,7 +7,7 @@ import { one, rows } from "../store/context.ts";
 import { allLines } from "../store/entities.ts";
 import { DecisionRow, IssueRow, PlanStepRow } from "../store/rows.ts";
 import { buildQueue } from "./decisions.ts";
-import { lineStart, runnerStatus, stepInFor } from "./runner.ts";
+import { lineStart, runnerStatus, stepInFor, stepInReason } from "./runner.ts";
 import { atView, heldOn, reconfirmingOn } from "./tasks.ts";
 
 const DONE_LATELY_MS = 7 * 24 * 60 * 60 * 1000;
@@ -161,6 +161,7 @@ export function buildHome(ctx: Ctx): HomeView {
     return {
       start: lineStart(ctx, line.ref),
       stepIn: stepInFor(ctx, line),
+      stepInReason: stepInReason(ctx, line),
       waitingOnYou: working && waitingOnYou(ctx, line.ref),
       step:
         current === undefined ? null : { position: current.position, of: steps.length, title: current.title },

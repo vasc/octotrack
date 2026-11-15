@@ -239,7 +239,7 @@ function lowestRunningHelper(ctx: Ctx): { agent: string; line: string; since: st
 type OwnerStart =
   | { kind: "not_needed" }
   | { kind: "on_its_way" }
-  | { kind: "never_took" }
+  | { kind: "never_took"; last: StartRow }
   | { kind: "retrying"; last: StartRow }
   | { kind: "no_repo" }
   | { kind: "ready"; repo: string; last: StartRow | null };
@@ -255,7 +255,7 @@ function ownerStart(ctx: Ctx, line: Line): OwnerStart {
   if (startingOn(ctx, line.ref) > 0) return { kind: "on_its_way" };
   const last = latestOn(ctx, line.ref, "owner");
   if (last?.state === "never_took" && (last.nextTryAt === null || last.nextTryAt > ctx.now))
-    return { kind: "never_took" };
+    return { kind: "never_took", last };
   if (last?.state === "failed" && last.nextTryAt !== null && last.nextTryAt > ctx.now)
     return { kind: "retrying", last };
   const repo = repoFor(ctx, line.ref, line.repos);
@@ -360,24 +360,46 @@ export function makeRoom(ctx: Ctx): void {
 }
 
 /**
- * Whether a working line needs the developer to step in: no owner was found, nothing is starting for it, its work does
- * not all wait on the developer, and the runner cannot help (not set up, watching only, a start that keeps failing or
- * never took the line, nowhere to start one, or every session busy with no helper to give way). One rule, so home, the
- * runner and notifications agree.
+ * Why a working line needs the developer to step in, in their terms, or null if it does not: no owner was found,
+ * nothing is starting for it, its work does not all wait on the developer, and the runner cannot help (not set up,
+ * watching only, a start that keeps failing or never took the line, nowhere to start one, or every session busy with
+ * no helper to give way). One rule, so home, the runner and notifications agree, and the dashboard shows the reason
+ * the server decided rather than working out its own (fourth audit, A20).
  */
-export function stepInFor(ctx: Ctx, line: Line): boolean {
+export function stepInReason(ctx: Ctx, line: Line): string | null {
   const start = ownerStart(ctx, line);
-  if (start.kind === "not_needed" || start.kind === "on_its_way") return false;
+  if (start.kind === "not_needed" || start.kind === "on_its_way") return null;
   const status = runnerStatus(ctx);
-  if (!status.configured || status.dryRun) return true;
-  if (start.kind === "never_took" || start.kind === "no_repo") return true;
+  if (!status.configured) {
+    return `No agent took ${line.ref}, and none can be started for it: no start command is set on this machine. Add "start": ["claude", "-p", "You are {name}. Run: octo line take {line}"] to ~/.octotrack/agent-setup.json, then Try now.`;
+  }
+  if (status.dryRun) {
+    return `No agent took ${line.ref}. The runner is watching only, so it noted it would start one. Set dryRun to false in ~/.octotrack/agent-setup.json to let it.`;
+  }
+  if (start.kind === "never_took") return `${start.last.name} ran but never took ${line.ref}.`;
+  if (start.kind === "no_repo") {
+    return `No agent took ${line.ref}, and none can be started for it: it names no repo to work in. Give it a repo, or take it on yourself.`;
+  }
   // A first failure is retried by itself in minutes; a start that keeps failing needs the developer.
-  if (start.last?.state === "failed") return start.last.attempts >= 2;
+  if (start.last?.state === "failed") {
+    if (start.last.attempts < 2) return null;
+    if (start.last.ran === 1) {
+      return `${start.last.name} took ${line.ref} and left soon after, with no way to wake it. Octotrack starts the next one less often each time: keep the session running, or have it register a wake address (octo agent register --wake).`;
+    }
+    const said = start.last.output?.trim().split("\n").at(-1)?.trim() ?? "";
+    return `${start.last.name}, started for it, exited at once${said === "" ? "" : `: ${said}`}. Octotrack tries again by itself, less often each time.`;
+  }
   // Started anyway, past the cap: a session is on its way.
-  if (startsAnyway(ctx, line)) return false;
+  if (startsAnyway(ctx, line)) return null;
   // At the cap with a running helper Octotrack started, that helper gives way instead: only owners everywhere needs
   // the developer.
-  return status.cap - activeSessions(ctx) <= 0 && lowestRunningHelper(ctx) === null;
+  if (status.cap - activeSessions(ctx) > 0 || lowestRunningHelper(ctx) !== null) return null;
+  return `No agent took ${line.ref}, and every session Octotrack may run is busy (at most ${status.cap}).`;
+}
+
+/** Whether a working line needs the developer to step in: whenever there is a reason to. */
+export function stepInFor(ctx: Ctx, line: Line): boolean {
+  return stepInReason(ctx, line) !== null;
 }
 
 /** The repo of the current step's first unclaimed issue, else the line's first-listed repo. */

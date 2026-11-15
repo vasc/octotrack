@@ -814,3 +814,108 @@ describe("what the fourth audit found in the runner", () => {
     expect(exits(w)).toEqual([["runner.exited", `${name} exited (code 0), released by the developer`]]);
   });
 });
+
+describe("Step in says why, as the server decides it (fourth audit, A20)", () => {
+  function spawn(w: ReturnType<typeof world>, line: string, pid: number) {
+    const started = w.tracker.call(c.runnerStart, { line, repo: "PANEL" }, w.runner);
+    expect(w.tracker.call(c.runnerSpawned, { name: started.name, pid }, w.runner).go).toBe(true);
+    return started.name;
+  }
+  const reason = (w: ReturnType<typeof world>, line: string) => {
+    const home = w.tracker.call(c.homeShow, {}, w.dev).lines[line];
+    return home?.stepIn === true ? home.stepInReason : `no step in, yet ${home?.stepInReason}`;
+  };
+
+  test("with no start command set on this machine", () => {
+    const w = world();
+    w.tracker.call(c.runnerReport, { configured: false, cap: 0, dryRun: true }, w.runner);
+    const line = w.line("Enclosure");
+    w.later(1);
+    expect(reason(w, line.ref)).toBe(
+      `No agent took ${line.ref}, and none can be started for it: no start command is set on this machine. Add "start": ["claude", "-p", "You are {name}. Run: octo line take {line}"] to ~/.octotrack/agent-setup.json, then Try now.`,
+    );
+  });
+
+  test("while the runner is watching only", () => {
+    const w = world();
+    w.tracker.call(c.runnerReport, { configured: true, cap: 1, dryRun: true }, w.runner);
+    const line = w.line("Enclosure");
+    w.later(1);
+    expect(reason(w, line.ref)).toBe(
+      `No agent took ${line.ref}. The runner is watching only, so it noted it would start one. Set dryRun to false in ~/.octotrack/agent-setup.json to let it.`,
+    );
+  });
+
+  test("at the cap, with no helper to give way", () => {
+    const w = world();
+    w.cap(1);
+    const first = w.line("Enclosure");
+    w.later(1);
+    spawn(w, first.ref, 101);
+    const second = w.line("Firmware");
+    w.later(1);
+    expect(reason(w, second.ref)).toBe(
+      `No agent took ${second.ref}, and every session Octotrack may run is busy (at most 1).`,
+    );
+  });
+
+  test("when the last session ran but never took the line", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    w.later(1);
+    const name = spawn(w, line.ref, 101);
+    w.later(6);
+    w.tracker.sweep();
+    expect(reason(w, line.ref)).toBe(`${name} ran but never took ${line.ref}.`);
+  });
+
+  test("when starts keep failing at once, with the last one's own words", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    w.later(1);
+    const name = spawn(w, line.ref, 101);
+    w.tracker.call(c.runnerExited, { name, code: 1, output: "Starting\nnot logged in" }, w.runner);
+    w.later(3);
+    expect(spawn(w, line.ref, 102)).toBe(name);
+    w.tracker.call(c.runnerExited, { name, code: 1, output: "Starting\nnot logged in" }, w.runner);
+    expect(reason(w, line.ref)).toBe(
+      `${name}, started for it, exited at once: not logged in. Octotrack tries again by itself, less often each time.`,
+    );
+  });
+
+  test("when sessions keep taking the line and leaving at once", () => {
+    const w = world();
+    w.cap(1);
+    const line = w.line("Enclosure");
+    let last = "";
+    for (const pid of [101, 102]) {
+      w.later(4);
+      last = spawn(w, line.ref, pid);
+      w.tracker.call(c.lineTake, { ref: line.ref }, w.session(last));
+      w.later(1);
+      w.tracker.call(c.runnerExited, { name: last, code: 0, output: "" }, w.runner);
+    }
+    w.later(1);
+    expect(reason(w, line.ref)).toBe(
+      `${last} took ${line.ref} and left soon after, with no way to wake it. Octotrack starts the next one less often each time: keep the session running, or have it register a wake address (octo agent register --wake).`,
+    );
+  });
+
+  test("when the line names no repo to start a session in", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    w.driver.run("DELETE FROM line_repos WHERE line = ?", [line.ref]);
+    w.later(1);
+    expect(reason(w, line.ref)).toBe(
+      `No agent took ${line.ref}, and none can be started for it: it names no repo to work in. Give it a repo, or take it on yourself.`,
+    );
+  });
+
+  test("and says nothing while no step in is needed", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    w.later(1);
+    spawn(w, line.ref, 101);
+    expect(w.tracker.call(c.homeShow, {}, w.dev).lines[line.ref]?.stepInReason).toBeNull();
+  });
+});

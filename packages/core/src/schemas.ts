@@ -761,6 +761,11 @@ export const LineHome = z.object({
   forYou: z.array(ForYou),
   /** A working line that needs the developer to step in: nobody could be found and nothing is starting. */
   stepIn: z.boolean(),
+  /**
+   * Why the developer is asked to step in, in their terms, or null when they are not: decided with `stepIn` by the
+   * one rule the runner and notifications share, so the dashboard never works it out for itself.
+   */
+  stepInReason: z.string().nullable(),
   /** All of a working line's open work waits on the developer: no agent has anything to pick up meanwhile. */
   waitingOnYou: z.boolean(),
   /** On a line not being worked on: the questions and tasks it holds. */
