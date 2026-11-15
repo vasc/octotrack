@@ -8,23 +8,14 @@ function capitalized(text: string): string {
 }
 
 /**
- * The line over a question: Focused when it has focus, what it is (urgent with its reason, and the line it stands apart
- * from), its ref, and what it holds up or who asked.
+ * The line over a question: what it is (urgent with its reason, and the line it stands apart from), its ref, and what
+ * it holds up or who asked.
  */
-export function QuestionStrip({
-  card,
-  selected,
-  line,
-}: {
-  card: DecisionCard;
-  selected: boolean;
-  line: LinePlace | null;
-}) {
+export function QuestionStrip({ card, line }: { card: DecisionCard; line: LinePlace | null }) {
   const { decision } = card;
   const openWork = card.blocks.filter((item) => item.status !== "done" && item.status !== "cancelled");
   return (
     <div className="question-strip">
-      {selected ? <span className="question-focused">Focused</span> : null}
       {decision.urgentReason === null ? (
         <span className="question-kind">Question</span>
       ) : (
