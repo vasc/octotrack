@@ -83,6 +83,7 @@ async function data<S extends z.ZodType>(
 }
 
 const WithRef = z.object({ ref: z.string() });
+const Shown = z.object({ data: z.object({ entity: z.object({ body: z.string() }) }) });
 const Fired = z.object({ fired: z.boolean() });
 
 async function serverPid(): Promise<number> {
@@ -122,6 +123,54 @@ describe("output", () => {
     const text = await octo(["project", "list", "--text"]);
     expect(text.stdout).toContain("Octotrack");
     expect(text.stdout).not.toContain("{");
+  });
+
+  test("a long answer reaches a slow reader whole", async () => {
+    // About 200 KB, more than a pipe holds at once. Bun's console.log dropped what a full pipe could not take, once
+    // anything had read process.stdout.
+    const body = "detail ".repeat(30_000).trim();
+    const issue = await data(
+      WithRef,
+      ["issue", "create", "Long", "-p", "OCT", "--body-file", "-"],
+      "agent-a",
+      body,
+    );
+    // A shell pipe whose reader waits before reading, so octo's output fills it. Bun.spawn's own pipe never fills: Bun
+    // reads it as the output comes.
+    const proc = Bun.spawn(
+      ["sh", "-c", '"$0" "$1" show "$2" | { sleep 0.5; cat; }', "bun", MAIN, issue.ref],
+      {
+        env: env("agent-a"),
+        stdin: "ignore",
+        stdout: "pipe",
+        stderr: "pipe",
+      },
+    );
+    const shown = await finish(proc);
+    expect(shown.code).toBe(0);
+    expect(Shown.parse(parseJson(shown.stdout)).data.entity.body).toBe(body);
+  });
+
+  test("a long answer reaches a slow reader whole when typed at a terminal, as octo show --json | jq is", async () => {
+    // Asking whether the developer is at a terminal read process.stdout too, so a pipe typed at a terminal lost output.
+    const body = "detail ".repeat(30_000).trim();
+    const issue = await data(
+      WithRef,
+      ["issue", "create", "Long", "-p", "OCT", "--body-file", "-"],
+      "agent-a",
+      body,
+    );
+    const out = join(home, "piped.json");
+    const line = `"${process.execPath}" "${MAIN}" show ${issue.ref} | { sleep 0.5; cat; } > "${out}"`;
+    // A pseudo-terminal on stdin, as in a terminal; stdout is the pipe.
+    const command =
+      process.platform === "darwin"
+        ? ["script", "-q", "/dev/null", "sh", "-c", line]
+        : ["script", "-qec", line, "/dev/null"];
+    await finish(
+      Bun.spawn(command, { env: env("agent-a"), stdin: "ignore", stdout: "pipe", stderr: "pipe" }),
+    );
+    expect(Shown.parse(parseJson(await Bun.file(out).text())).data.entity.body).toBe(body);
   });
 
   test("errors are structured, with a hint, and a useful exit code", async () => {

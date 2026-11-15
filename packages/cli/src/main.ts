@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import { isatty } from "node:tty";
 import { OctoError } from "@octotrack/core";
 import { serverUrl } from "@octotrack/server/paths";
 import { ZodError } from "zod";
@@ -87,7 +88,7 @@ function leadingWords(argv: readonly string[]): string[] {
 function pickFormat(argv: readonly string[]): boolean {
   if (argv.includes("--json")) return true;
   if (argv.includes("--text")) return false;
-  return process.stdout.isTTY !== true;
+  return !isatty(1);
 }
 
 function report(json: boolean, code: string, message: string, hint: string | null): void {
@@ -132,7 +133,7 @@ export function whoIsCalling(
 ): { actor: string | null; identity: Identity } {
   const fromEnv = process.env.OCTO_AGENT?.trim() || undefined;
   const agent = agentFlag?.trim() || fromEnv;
-  const interactive = process.stdin.isTTY === true && process.stdout.isTTY === true;
+  const interactive = isatty(0) && isatty(1);
   const developer = me || (agent === undefined && interactive && process.env.OCTO_DEVELOPER === "1");
   if (me && agent !== undefined) {
     throw new UsageError(
