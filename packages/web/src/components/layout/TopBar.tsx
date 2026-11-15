@@ -2,6 +2,8 @@ import type { HomeCounts } from "@octotrack/core/schemas";
 import type { RefObject } from "react";
 import { navigate } from "../../lib/router.ts";
 import { Icon } from "../ui/Icon.tsx";
+import type { Appearance, Mode, Palette } from "../../lib/appearance.ts";
+import { AppearanceMenu } from "./AppearanceMenu.tsx";
 import { AtMenu } from "./AtMenu.tsx";
 import { NavItem } from "./NavItem.tsx";
 
@@ -25,6 +27,10 @@ export interface TopBarProps {
   onKeys(): void;
   /** The I'm at button, which g p focuses. */
   atRef?: RefObject<HTMLButtonElement | null>;
+  /** The theme and mode in use on this device. */
+  appearance: Appearance;
+  onPalette(palette: Palette): void;
+  onMode(mode: Mode): void;
 }
 
 const PAGE_NAMES: Readonly<Record<string, string>> = {
@@ -35,7 +41,19 @@ const PAGE_NAMES: Readonly<Record<string, string>> = {
 };
 
 /** Lines, Log and Agents, what waits on the developer, where they are, and New line. One bar on every page. */
-export function TopBar({ path, counts, places, at, onAt, onNewLine, onKeys, atRef }: TopBarProps) {
+export function TopBar({
+  path,
+  counts,
+  places,
+  at,
+  onAt,
+  onNewLine,
+  onKeys,
+  atRef,
+  appearance,
+  onPalette,
+  onMode,
+}: TopBarProps) {
   // Urgent stands apart, in front; the rest are one quiet group.
   const urgent = counts.find((count) => count.key === "urgent");
   const waiting = counts.filter((count) => count.key !== "urgent");
@@ -78,6 +96,7 @@ export function TopBar({ path, counts, places, at, onAt, onNewLine, onKeys, atRe
             <Icon name="plus" />
             New line
           </button>
+          <AppearanceMenu appearance={appearance} onPalette={onPalette} onMode={onMode} />
           <button
             type="button"
             className="btn btn-icon top-keys"

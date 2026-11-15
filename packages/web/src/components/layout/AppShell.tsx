@@ -1,4 +1,5 @@
 import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
+import { useAppearance } from "../../hooks/useAppearance.ts";
 import { useBootstrap } from "../../hooks/useBootstrap.ts";
 import { type HotkeyMap, KeysHeldProvider, useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useLiveUpdates } from "../../hooks/useLiveUpdates.ts";
@@ -20,6 +21,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { path, params } = useRoute();
   const { data, error, isPending } = useBootstrap();
   const bar = useTopBar();
+  const look = useAppearance();
   const live = useLiveUpdates();
   useSeen();
   const [keysOpen, setKeysOpen] = useState(false);
@@ -62,6 +64,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         onNewLine={() => navigate("/?new=1")}
         onKeys={openKeys}
         atRef={atPicker}
+        appearance={look.appearance}
+        onPalette={look.setPalette}
+        onMode={look.setMode}
       />
       <KeysHeldProvider value={keysOpen}>
         <main className="main">

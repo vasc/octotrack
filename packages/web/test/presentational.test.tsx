@@ -7,6 +7,7 @@ import { LineBox } from "../src/components/ui/LineBox.tsx";
 import { Loaded } from "../src/components/ui/Loaded.tsx";
 import { TaskFrees } from "../src/components/entity/TaskFrees.tsx";
 import { TaskClosed } from "../src/components/home/TaskClosed.tsx";
+import { AppearanceMenu } from "../src/components/layout/AppearanceMenu.tsx";
 import type { TaskOutcome } from "../src/lib/tasks.ts";
 import { describe, expect, mock, test } from "bun:test";
 import { useState } from "react";
@@ -398,6 +399,9 @@ describe("TopBar", () => {
     const onNewLine = mock(() => {});
     const view = render(
       <TopBar
+        appearance={{ palette: "paper", mode: "system" }}
+        onPalette={() => {}}
+        onMode={() => {}}
         path="/log"
         counts={counts}
         places={["the bench", "the Mac"]}
@@ -426,6 +430,9 @@ describe("TopBar", () => {
   test("draws the counts as one group of number and words, with urgent apart in front of it", () => {
     const view = render(
       <TopBar
+        appearance={{ palette: "paper", mode: "system" }}
+        onPalette={() => {}}
+        onMode={() => {}}
         path="/"
         counts={[{ key: "urgent" as const, label: "urgent", count: 1, to: "D-60" }, ...counts]}
         places={[]}
@@ -449,6 +456,9 @@ describe("TopBar", () => {
   test("leaves out I'm at when the developer has no places, and the counts when nothing waits", () => {
     const view = render(
       <TopBar
+        appearance={{ palette: "paper", mode: "system" }}
+        onPalette={() => {}}
+        onMode={() => {}}
         path="/"
         counts={[]}
         places={[]}
@@ -2841,5 +2851,49 @@ describe("TaskClosed", () => {
     );
     view.getByText("Withdrawn by octo.1 2h ago");
     expect(view.queryByText(/Could not be done/)).toBeNull();
+  });
+});
+
+describe("AppearanceMenu", () => {
+  test("offers the eight themes and the mode, each previewed, the current ones checked", () => {
+    const onPalette = mock((_palette: string) => {});
+    const onMode = mock((_mode: string) => {});
+    const view = render(
+      <AppearanceMenu
+        appearance={{ palette: "sand", mode: "system" }}
+        onPalette={onPalette}
+        onMode={onMode}
+      />,
+    );
+    fireEvent.click(view.getByRole("button", { name: "Appearance: Sand, as the system" }));
+    const menu = within(view.getByRole("menu", { name: "Appearance" }));
+    expect(menu.getAllByRole("menuitemradio").map((item) => item.textContent)).toEqual([
+      "Paper",
+      "Slate",
+      "Sand",
+      "Forest",
+      "Ocean",
+      "Plum",
+      "Rose",
+      "High contrast",
+      "As the system",
+      "Light",
+      "Dark",
+    ]);
+    expect(menu.getByRole("menuitemradio", { name: "Sand" }).getAttribute("aria-checked")).toBe("true");
+    expect(menu.getByRole("menuitemradio", { name: "As the system" }).getAttribute("aria-checked")).toBe(
+      "true",
+    );
+    // Each theme previews itself: its swatch carries the palette.
+    expect(
+      menu.getByRole("menuitemradio", { name: "Ocean" }).querySelector("[data-palette='ocean']"),
+    ).not.toBeNull();
+    fireEvent.click(menu.getByRole("menuitemradio", { name: "Ocean" }));
+    expect(onPalette).toHaveBeenCalledWith("ocean");
+    fireEvent.click(view.getByRole("button", { name: "Appearance: Sand, as the system" }));
+    fireEvent.click(
+      within(view.getByRole("menu", { name: "Appearance" })).getByRole("menuitemradio", { name: "Dark" }),
+    );
+    expect(onMode).toHaveBeenCalledWith("dark");
   });
 });

@@ -5,8 +5,20 @@ real components at `/design`.
 
 ## Color
 
-Each color is `light-dark(light, dark)`, so one line covers both themes. The theme follows the operating system.
-`[data-theme]` forces one on part of a page, which is how the specimen shows both.
+Each color is `light-dark(light, dark)`, so one line covers both modes. The mode follows the operating system unless the
+developer picks light or dark (`data-mode` on the page). `[data-theme]` forces one on part of a page, which is how the
+specimen shows both.
+
+### Themes
+
+There are eight themes, each in light and dark: Paper (the tokens below), Slate, Sand, Forest, Ocean, Plum, Rose and High
+contrast. A theme is a palette, `[data-palette="…"]` in `tokens.css`, that redefines only the ground, its lines and the
+ink: `--bg`, `--surface`, `--surface-2`, `--line`, `--line-faint`, `--line-strong`, `--line-field`, `--ink`, `--ink-2`
+and `--ink-3`. Attention, status, tones and focus stay the same in every theme, so what they mean never changes with
+the look. A palette set on any element applies inside it, which is how the Appearance menu previews each theme. The
+developer picks a theme and a mode in that menu; this device keeps the choice, and `index.html` applies it before the
+first paint. `bun test design` checks every pairing's contrast in every theme and both modes. A new theme is one more
+block of the same ten tokens, and one more entry in `packages/web/src/lib/appearance.ts`.
 
 ### Ground
 

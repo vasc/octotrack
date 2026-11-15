@@ -174,6 +174,119 @@
   --tone-mark: var(--attention-line);
 }
 
+/*
+ * Themes: eight palettes, each in light and dark. Paper is the one above; the rest redefine only the ground, its lines
+ * and the ink, so attention, status and focus keep one meaning in every theme. A palette is set on the page, or on any
+ * element to preview it there, and the mode follows the system unless the developer picks one. foundations.md says
+ * more; `bun test design` checks every palette's contrast in both modes.
+ */
+/* Slate. */
+[data-palette="slate"] {
+  --bg: light-dark(#e9eef3, #0e141c);
+  --surface: light-dark(#f8fafc, #151d28);
+  --surface-2: light-dark(#f1f5f9, #1c2633);
+  --line: light-dark(#d3dce6, #283547);
+  --line-faint: light-dark(#e3e9f0, #1f2a39);
+  --line-strong: light-dark(#bccad8, #354559);
+  --line-field: light-dark(#8796aa, #53657d);
+  --ink: light-dark(#0f172a, #eef3f8);
+  --ink-2: light-dark(#2f3d52, #c4d0dd);
+  --ink-3: light-dark(#44546a, #95a6ba);
+}
+
+/* Sand. */
+[data-palette="sand"] {
+  --bg: light-dark(#f1e7d6, #19140c);
+  --surface: light-dark(#fdf9f1, #221b11);
+  --surface-2: light-dark(#f7f0e3, #2b2318);
+  --line: light-dark(#e2d3bb, #3c3122);
+  --line-faint: light-dark(#ede2cf, #31281b);
+  --line-strong: light-dark(#d2bf9f, #4d402c);
+  --line-field: light-dark(#a38f70, #73624a);
+  --ink: light-dark(#2a2016, #f6efe3);
+  --ink-2: light-dark(#4a3c2b, #d9ccb5);
+  --ink-3: light-dark(#5e4d38, #b0a088);
+}
+
+/* Forest. */
+[data-palette="forest"] {
+  --bg: light-dark(#e3eee3, #0b170e);
+  --surface: light-dark(#f8fbf7, #112015);
+  --surface-2: light-dark(#eef5ee, #17291c);
+  --line: light-dark(#cbdccb, #213826);
+  --line-faint: light-dark(#dde9dd, #1a2e1f);
+  --line-strong: light-dark(#b3c9b3, #2d4733);
+  --line-field: light-dark(#7f9a80, #4a6b51);
+  --ink: light-dark(#0f2214, #eaf5ec);
+  --ink-2: light-dark(#2a4230, #bfd6c4);
+  --ink-3: light-dark(#3d5743, #93b09a);
+}
+
+/* Ocean. */
+[data-palette="ocean"] {
+  --bg: light-dark(#e2edf8, #08121f);
+  --surface: light-dark(#f7fbff, #0e1a2c);
+  --surface-2: light-dark(#edf4fb, #142338);
+  --line: light-dark(#c8d9ec, #1f324c);
+  --line-faint: light-dark(#dbe7f4, #18293f);
+  --line-strong: light-dark(#aec6e0, #2a4262);
+  --line-field: light-dark(#7d97b8, #46648c);
+  --ink: light-dark(#0a1a2e, #e8f1fc);
+  --ink-2: light-dark(#23405f, #bcd0e8);
+  --ink-3: light-dark(#375474, #8fa9c9);
+}
+
+/* Plum. */
+[data-palette="plum"] {
+  --bg: light-dark(#eee6f3, #150d1a);
+  --surface: light-dark(#fbf8fd, #1e1424);
+  --surface-2: light-dark(#f4eef8, #271b2f);
+  --line: light-dark(#dccfe6, #362641);
+  --line-faint: light-dark(#e9e0f0, #2d2036);
+  --line-strong: light-dark(#c9b6d8, #473353);
+  --line-field: light-dark(#9883ab, #6c547f);
+  --ink: light-dark(#1e1426, #f5eef9);
+  --ink-2: light-dark(#3d2e4a, #d6c6e0);
+  --ink-3: light-dark(#54435f, #ab97ba);
+}
+
+/* Rose. */
+[data-palette="rose"] {
+  --bg: light-dark(#f5e6e7, #1a0d10);
+  --surface: light-dark(#fffafa, #241417);
+  --surface-2: light-dark(#faf0f1, #2e1b1f);
+  --line: light-dark(#e8d1d3, #40282c);
+  --line-faint: light-dark(#f1e2e3, #352124);
+  --line-strong: light-dark(#dbbbbf, #53353a);
+  --line-field: light-dark(#ad8a8f, #7f5960);
+  --ink: light-dark(#26141a, #fbeef0);
+  --ink-2: light-dark(#4a2f36, #e0c5c9);
+  --ink-3: light-dark(#61454b, #bc969c);
+}
+
+/* High contrast. */
+[data-palette="contrast"] {
+  --bg: light-dark(#ffffff, #000000);
+  --surface: light-dark(#ffffff, #0a0a0a);
+  --surface-2: light-dark(#f2f2f2, #141414);
+  --line: light-dark(#8a8a8a, #6b6b6b);
+  --line-faint: light-dark(#d4d4d4, #3a3a3a);
+  --line-strong: light-dark(#5c5c5c, #8f8f8f);
+  --line-field: light-dark(#404040, #b0b0b0);
+  --ink: light-dark(#000000, #ffffff);
+  --ink-2: light-dark(#1a1a1a, #e6e6e6);
+  --ink-3: light-dark(#333333, #cccccc);
+}
+
+/* The mode the developer picked, over the system's. */
+[data-mode="light"] {
+  color-scheme: light;
+}
+
+[data-mode="dark"] {
+  color-scheme: dark;
+}
+
 /* Forces a theme on part of a page, which is how /design shows both at once. */
 [data-theme="light"] {
   color-scheme: light;

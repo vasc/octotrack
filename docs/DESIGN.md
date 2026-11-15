@@ -394,6 +394,13 @@ Decisions made from that:
   with the note after it, which the line's inbox and the log say on one line, so an agent reads one answer whichever
   way it was given. _Decided:_ the dashboard keeps a task's boxes as one draft, its values and note together, so the
   choice that closes the task deletes all of it at once; a draft written as plain words before is read as the note.
+- **Eight themes, each in light and dark.** The developer: "Also at the end build 8 themes light and dark mode each".
+  _Decided:_ a theme is a palette over the ground, its lines and the ink only; attention, status and focus keep one
+  colour in every theme, since they carry meaning and a theme is a look. The themes are Paper (the boards' own), Slate,
+  Sand, Forest, Ocean, Plum, Rose and High contrast; the mode is as the system, light or dark. They are picked in an
+  Appearance menu in the bar, each theme previewed in its own colours, and kept per device in browser storage, since a
+  phone and a desk may want different ones and nothing else depends on it; `index.html` applies the choice before the
+  first paint. `bun test design` holds every theme to the same contrast in both modes.
 - **Focus is a border, with the keys beside it, not a word.** The developer, looking at the built home: "focused text on
   lines is unnecessary, reminding about j an k shortcuts to the side would be better, in a subtle way". The word
   Focused, which the boards draw over the focused item, is gone; the item keeps its dark border, and out in the margin

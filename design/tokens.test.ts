@@ -17,8 +17,28 @@ function filesUnder(dir: string): string[] {
 const rootBlock = /:root \{([\s\S]*?)\n\}/.exec(tokensCss)?.[1] ?? "";
 const tokenNames = [...rootBlock.matchAll(/^\s*(--[a-z0-9-]+):/gm)].flatMap((match) => match[1] ?? []);
 
-function hexOf(name: string, theme: "light" | "dark"): string {
-  const match = new RegExp(`${name}: light-dark\\((#[0-9a-f]{6}), (#[0-9a-f]{6})\\);`).exec(rootBlock);
+/** Each theme's own block: the ground, lines and ink it redefines over Paper, which is :root. */
+const palettes = new Map(
+  [...tokensCss.matchAll(/\[data-palette="([a-z]+)"\] \{([\s\S]*?)\n\}/g)].map(
+    (match) => [match[1] ?? "", match[2] ?? ""] as const,
+  ),
+);
+const PALETTE_TOKENS = [
+  "--bg",
+  "--surface",
+  "--surface-2",
+  "--line",
+  "--line-faint",
+  "--line-strong",
+  "--line-field",
+  "--ink",
+  "--ink-2",
+  "--ink-3",
+];
+
+function hexOf(name: string, theme: "light" | "dark", palette = "paper"): string {
+  const pattern = new RegExp(`${name}: light-dark\\((#[0-9a-f]{6}), (#[0-9a-f]{6})\\);`);
+  const match = pattern.exec(palettes.get(palette) ?? "") ?? pattern.exec(rootBlock);
   const value = theme === "light" ? match?.[1] : match?.[2];
   if (value === undefined) throw new Error(`${name} is not a light-dark() color`);
   return value;
@@ -61,13 +81,23 @@ const PAIRS: readonly (readonly [string, string, number])[] = [
 ];
 
 describe("contrast", () => {
-  test.each(PAIRS.flatMap((pair) => (["light", "dark"] as const).map((theme) => [...pair, theme] as const)))(
-    "%s on %s reaches %d in %s",
-    (foreground, background, minimum, theme) => {
-      const ratio = contrast(hexOf(foreground, theme), hexOf(background, theme));
-      expect(ratio).toBeGreaterThanOrEqual(minimum);
-    },
-  );
+  const themes = ["paper", ...palettes.keys()];
+  test.each(
+    themes.flatMap((palette) =>
+      PAIRS.flatMap((pair) => (["light", "dark"] as const).map((mode) => [...pair, mode, palette] as const)),
+    ),
+  )("%s on %s reaches %d in %s %s", (foreground, background, minimum, mode, palette) => {
+    const ratio = contrast(hexOf(foreground, mode, palette), hexOf(background, mode, palette));
+    expect(ratio).toBeGreaterThanOrEqual(minimum);
+  });
+
+  test("there are eight themes, Paper and seven more, each redefining the same ground, lines and ink", () => {
+    expect(themes).toHaveLength(8);
+    for (const [palette, block] of palettes) {
+      const names = [...block.matchAll(/^\s*(--[a-z0-9-]+):/gm)].map((match) => match[1]);
+      expect({ palette, names }).toEqual({ palette, names: PALETTE_TOKENS });
+    }
+  });
 });
 
 describe("the dashboard uses the language instead of going around it", () => {

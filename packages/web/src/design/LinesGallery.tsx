@@ -48,6 +48,9 @@ export function LinesGallery() {
     <DesignSection title="Lines of work">
       <Example label="What waits on you">
         <TopBar
+          appearance={{ palette: "paper", mode: "system" }}
+          onPalette={() => {}}
+          onMode={() => {}}
           path="/"
           counts={[
             { key: "toAnswer", label: "to answer", count: 4, to: "D-56" },

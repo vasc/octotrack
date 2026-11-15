@@ -26,6 +26,7 @@ import { askedText, cantSummary, doneSummary, howClosed, isTask, taskOutcome } f
 import { issueLinks } from "../src/lib/links.ts";
 import { moreSinceSummary } from "../src/lib/log.ts";
 import { doneWhenSaid, LINE_SAID } from "../src/lib/said.ts";
+import { DEFAULT_APPEARANCE, PALETTES, readAppearance } from "../src/lib/appearance.ts";
 import { decision, decisionCard, event, issue } from "../src/design/fixtures.ts";
 import { closeEntity, navigate, openEntity, setParams } from "../src/lib/router.ts";
 
@@ -412,5 +413,28 @@ describe("how a line's choices read in the Undo bar", () => {
     expect(LINE_SAID.table("Enclosure")).toBe("Tabling Enclosure");
     expect(doneWhenSaid("Enclosure", true)).toBe("Accepting the new done when for Enclosure");
     expect(doneWhenSaid("Enclosure", false)).toBe("Keeping Enclosure's done when");
+  });
+});
+
+describe("appearance", () => {
+  test("eight themes, Paper first", () => {
+    expect(PALETTES.map((palette) => palette.id)).toEqual([
+      "paper",
+      "slate",
+      "sand",
+      "forest",
+      "ocean",
+      "plum",
+      "rose",
+      "contrast",
+    ]);
+  });
+
+  test("reads what was stored, and falls back to Paper following the system for anything else", () => {
+    expect(readAppearance('{"palette":"ocean","mode":"dark"}')).toEqual({ palette: "ocean", mode: "dark" });
+    expect(readAppearance(null)).toEqual(DEFAULT_APPEARANCE);
+    expect(readAppearance("not json")).toEqual(DEFAULT_APPEARANCE);
+    expect(readAppearance('{"palette":"neon","mode":"dark"}')).toEqual(DEFAULT_APPEARANCE);
+    expect(DEFAULT_APPEARANCE).toEqual({ palette: "paper", mode: "system" });
   });
 });

@@ -2656,6 +2656,25 @@ describe("lines of work", () => {
   });
 });
 
+describe("appearance", () => {
+  test("a theme and a mode picked apply to the whole page and are kept on this device", async () => {
+    localStorage.removeItem("octotrack.appearance");
+    navigate("/");
+    const view = renderApp(<App />);
+    fireEvent.click(await view.findByRole("button", { name: "Appearance: Paper, as the system" }));
+    fireEvent.click(view.getByRole("menuitemradio", { name: "Forest" }));
+    fireEvent.click(view.getByRole("button", { name: "Appearance: Forest, as the system" }));
+    fireEvent.click(view.getByRole("menuitemradio", { name: "Dark" }));
+    await waitFor(() => expect(document.documentElement.getAttribute("data-palette")).toBe("forest"));
+    expect(document.documentElement.getAttribute("data-mode")).toBe("dark");
+    expect(JSON.parse(localStorage.getItem("octotrack.appearance") ?? "null")).toEqual({
+      palette: "forest",
+      mode: "dark",
+    });
+    localStorage.removeItem("octotrack.appearance");
+  });
+});
+
 describe("buzzing this device", () => {
   const asDeveloper = { actor: "dev", channel: "dashboard" } as const;
   const existing = { endpoint: "https://push.example/phone", keys: { p256dh: "BKey", auth: "secret" } };

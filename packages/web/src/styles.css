@@ -1782,6 +1782,51 @@ p {
   cursor: default;
 }
 
+/* A menu opened from the right end of the bar opens toward the page, not off its edge. */
+.menu-end {
+  left: auto;
+  right: 0;
+}
+
+/* A group's name in a menu, such as Theme and Mode: words for the eye; the items name themselves. */
+.menu-label {
+  padding: var(--space-3) var(--space-5) var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--label-spacing);
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.menu-item:has(.swatch) {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* The appearance menu names every theme on one line. */
+.menu-end .menu-item {
+  white-space: nowrap;
+}
+
+/* A theme previewing itself: it carries its palette, so its ground and ink are that theme's, in the page's mode. */
+.swatch {
+  position: relative;
+  flex: none;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--bg);
+}
+
+.swatch > span {
+  position: absolute;
+  inset: var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+}
+
 .line-num {
   font-weight: var(--weight-bold);
   color: var(--ink-3);

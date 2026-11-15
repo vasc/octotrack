@@ -146,14 +146,15 @@ Home is one list: every line in the developer's order, with what each needs from
 
 ## The frame: `layout/`
 
-| Component        | Kind       | What it is                                                                                                                                                                                    |
-| ---------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `NavItem`        | Pure       | One of Lines, Log and Agents in the bar, marked when it is the page you are on                                                                                                                |
-| `TopBar`         | Pure       | The bar on every page: Octotrack, Lines, Log and Agents; what waits as one quiet group of counts, urgent apart; I'm at, New line and the keys. On a phone the pages become tabs at the bottom |
-| `AtMenu`         | Pure       | I'm at: a button with a pin and the place, opening All places and the developer's places, the current one bold; never a select                                                                |
-| `AppShell`       | Structural | The bar, the page, and an opened ref as a panel over the right of the page. Holds the live connection and the keys every page has                                                             |
-| `UndoBar`        | Pure       | Choices waiting to take effect, newest first, each saying what it does and in how many seconds, with Undo; failed ones say why                                                                |
-| `PendingChoices` | Structural | The Undo bar on every page; u undoes the newest choice                                                                                                                                        |
+| Component        | Kind       | What it is                                                                                                                                                                                                |
+| ---------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NavItem`        | Pure       | One of Lines, Log and Agents in the bar, marked when it is the page you are on                                                                                                                            |
+| `TopBar`         | Pure       | The bar on every page: Octotrack, Lines, Log and Agents; what waits as one quiet group of counts, urgent apart; I'm at, New line, Appearance and the keys. On a phone the pages become tabs at the bottom |
+| `AppearanceMenu` | Pure       | Appearance, one quiet button in the bar: the eight themes, each previewed in its own colours by a swatch carrying its palette, then as the system, light or dark; the current ones checked                |
+| `AtMenu`         | Pure       | I'm at: a button with a pin and the place, opening All places and the developer's places, the current one bold; never a select                                                                            |
+| `AppShell`       | Structural | The bar, the page, and an opened ref as a panel over the right of the page. Holds the live connection and the keys every page has                                                                         |
+| `UndoBar`        | Pure       | Choices waiting to take effect, newest first, each saying what it does and in how many seconds, with Undo; failed ones say why                                                                            |
+| `PendingChoices` | Structural | The Undo bar on every page; u undoes the newest choice                                                                                                                                                    |
 
 ## The inspector: `entity/`
 
