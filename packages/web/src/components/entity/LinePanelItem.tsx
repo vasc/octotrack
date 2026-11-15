@@ -1,5 +1,6 @@
 import { sinceSummaryQuery } from "@octotrack/core/query";
 import { forYouCounts, linePosition } from "../../lib/lines.ts";
+import { moreSinceSummary } from "../../lib/log.ts";
 import { contracts } from "@octotrack/core/contracts";
 import type { Drift, Line } from "@octotrack/core/schemas";
 import { useState } from "react";
@@ -102,7 +103,11 @@ export function LinePanelItem({ line, drift }: { line: Line; drift: readonly Dri
               events={since.data?.events ?? []}
               summaryAt={line.summaryAt}
               seenAt={seenAt}
-              more={since.data?.nextBefore !== null && since.data?.nextBefore !== undefined}
+              more={moreSinceSummary(
+                since.data?.events ?? [],
+                line.summaryAt,
+                since.data?.nextBefore ?? null,
+              )}
             />
           </Loaded>
           <OwnerBox
