@@ -4,6 +4,7 @@ import { useChoices } from "../../hooks/useChoices.ts";
 import { useClock } from "../../hooks/useClock.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
 import { type HotkeyMap, useHotkeys } from "../../hooks/useHotkeys.ts";
+import { undoLines } from "../../lib/lines.ts";
 import { ErrorState } from "../ui/states.tsx";
 import { UndoBar, type UndoLine } from "./UndoBar.tsx";
 
@@ -14,16 +15,10 @@ export function PendingChoices() {
   const choices = useChoices();
   const home = useOpQuery(contracts.homeShow, {});
   const now = useClock(choices.pending.some((choice) => choice.state === "pending"));
-  const lines = useMemo((): Record<string, UndoLine> => {
-    const data = home.data;
-    if (data === undefined) return {};
-    return Object.fromEntries(
-      [...data.working, ...data.upNext].map((line) => {
-        const forYou = data.lines[line.ref]?.forYou.length ?? 0;
-        return [line.ref, { title: line.title, waitsOnYou: forYou > 0 }];
-      }),
-    );
-  }, [home.data]);
+  const lines = useMemo(
+    (): Record<string, UndoLine> => (home.data === undefined ? {} : undoLines(home.data)),
+    [home.data],
+  );
   const newest = choices.pending.filter((choice) => choice.state === "pending").at(-1);
   const { undo } = choices;
   const keys = useMemo(

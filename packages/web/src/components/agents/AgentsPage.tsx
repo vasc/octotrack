@@ -1,4 +1,4 @@
-import { homeLines } from "../../lib/lines.ts";
+import { homeLines, lineFacts } from "../../lib/lines.ts";
 import { contracts } from "@octotrack/core/contracts";
 import { useChoices } from "../../hooks/useChoices.ts";
 import { useHome } from "../../hooks/useHome.ts";
@@ -19,11 +19,7 @@ export function AgentsPage() {
   const h = useHome();
   const home = h.home.data;
   const lines = homeLines(home);
-  function lineFacts(ref: string | null): { lineTitle?: string; waitsOnYou?: boolean } {
-    const line = lines.find((candidate) => candidate.ref === ref);
-    if (line === undefined || home === undefined) return {};
-    return { lineTitle: line.title, waitsOnYou: (home.lines[line.ref]?.forYou.length ?? 0) > 0 };
-  }
+  const facts = (ref: string | null) => lineFacts(lines, home?.lines ?? {}, ref);
   return (
     <div className="page">
       <div className="log-head">
@@ -63,7 +59,7 @@ export function AgentsPage() {
                   key={agent.name}
                   agent={agent}
                   {...(agent.repo === null ? {} : { repo: h.repoName(agent.repo) })}
-                  {...lineFacts(agent.line)}
+                  {...facts(agent.line)}
                   onStop={(name) => choices.make(contracts.agentStop.name, { name }, `Stopping ${name}`)}
                   onLift={(name) =>
                     choices.make(contracts.agentLift.name, { name }, `Lifting ${name}'s stop`)
