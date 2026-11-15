@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { createContext, useContext, useEffect } from "react";
 
 export type HotkeyMap = Readonly<Record<string, () => void>>;
 
@@ -32,11 +32,20 @@ function nameOf(event: KeyboardEvent): string {
 }
 
 /**
- * Single-key shortcuts, Alt with a key, and g followed by a key. They stay out of the way while typing and of browser
- * shortcuts that use Cmd or Ctrl.
+ * True while something modal is open over the page, such as the key list: every key map under it stands down, so a
+ * stray key behind it costs nothing (D14). The shell, which opens and closes it, sits above and keeps its keys.
+ */
+const KeysHeld = createContext(false);
+export const KeysHeldProvider = KeysHeld.Provider;
+
+/**
+ * Single-key shortcuts, Alt with a key, and g followed by a key. They stay out of the way while typing, of browser
+ * shortcuts that use Cmd or Ctrl, and of anything modal open over them.
  */
 export function useHotkeys(keys: HotkeyMap): void {
+  const held = useContext(KeysHeld);
   useEffect(() => {
+    if (held) return;
     const handler = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || isTyping(event.target)) return;
       // Enter on a focused control belongs to that control.
@@ -51,5 +60,5 @@ export function useHotkeys(keys: HotkeyMap): void {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [keys]);
+  }, [keys, held]);
 }

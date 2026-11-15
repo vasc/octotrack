@@ -1,6 +1,6 @@
 import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
 import { useBootstrap } from "../../hooks/useBootstrap.ts";
-import { type HotkeyMap, useHotkeys } from "../../hooks/useHotkeys.ts";
+import { type HotkeyMap, KeysHeldProvider, useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useLiveUpdates } from "../../hooks/useLiveUpdates.ts";
 import { useSeen } from "../../hooks/useSeen.ts";
 import { useTopBar } from "../../hooks/useTopBar.ts";
@@ -58,17 +58,19 @@ export function AppShell({ children }: { children: ReactNode }) {
         onKeys={openKeys}
         atRef={atPicker}
       />
-      <main className="main">
-        {keysOpen ? <KeyHelp onClose={closeKeys} /> : null}
-        {bar.error === null ? null : <ErrorState error={bar.error} />}
-        {isPending ? null : error !== null && data === undefined ? <ErrorState error={error} /> : children}
-        <PendingChoices />
-      </main>
-      {entity === null ? null : (
-        <aside className="panel" aria-label={entity}>
-          <EntityPanel key={entity} entityRef={entity} />
-        </aside>
-      )}
+      <KeysHeldProvider value={keysOpen}>
+        <main className="main">
+          {keysOpen ? <KeyHelp onClose={closeKeys} /> : null}
+          {bar.error === null ? null : <ErrorState error={bar.error} />}
+          {isPending ? null : error !== null && data === undefined ? <ErrorState error={error} /> : children}
+          <PendingChoices />
+        </main>
+        {entity === null ? null : (
+          <aside className="panel" aria-label={entity}>
+            <EntityPanel key={entity} entityRef={entity} />
+          </aside>
+        )}
+      </KeysHeldProvider>
     </div>
   );
 }
