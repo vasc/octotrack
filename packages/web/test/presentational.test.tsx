@@ -3065,7 +3065,7 @@ describe("useReloadOnNewBuild", () => {
     const reload = mock(() => {});
     renderHook(() =>
       useReloadOnNewBuild({
-        running: "http://mini/assets/index-OLD.js",
+        loaded: () => ["/assets/index-OLD.js"],
         fetchPage: async () => served,
         reload,
       }),
@@ -3078,7 +3078,7 @@ describe("useReloadOnNewBuild", () => {
     const reload = mock(() => {});
     renderHook(() =>
       useReloadOnNewBuild({
-        running: "http://mini/assets/index-OLD.js",
+        loaded: () => ["/assets/index-OLD.js"],
         fetchPage: async () => served,
         reload,
       }),
@@ -3094,7 +3094,7 @@ describe("useReloadOnNewBuild", () => {
     document.body.append(box);
     box.focus();
     const typingTab = renderHook(() =>
-      useReloadOnNewBuild({ running: "http://mini/assets/index-OLD.js", fetchPage, reload }),
+      useReloadOnNewBuild({ loaded: () => ["/assets/index-OLD.js"], fetchPage, reload }),
     );
     document.dispatchEvent(new Event("visibilitychange"));
     await waitFor(() => expect(fetchPage).toHaveBeenCalledTimes(1));
@@ -3103,7 +3103,7 @@ describe("useReloadOnNewBuild", () => {
     box.remove();
     renderHook(() =>
       useReloadOnNewBuild({
-        running: "http://mini/assets/index-NEW.js",
+        loaded: () => ["/assets/index-NEW.js"],
         fetchPage: async () => served,
         reload,
       }),

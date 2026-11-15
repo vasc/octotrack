@@ -473,21 +473,32 @@ describe("tintBrowserBar", () => {
 });
 
 describe("newBuild", () => {
-  const page = (script: string) =>
-    `<!doctype html><head><script type="module" crossorigin src="${script}"></script></head>`;
+  const page = (...assets: string[]) =>
+    `<!doctype html><head>${assets
+      .map((asset) =>
+        asset.endsWith(".css")
+          ? `<link rel="stylesheet" crossorigin href="${asset}">`
+          : `<script type="module" crossorigin src="${asset}"></script>`,
+      )
+      .join("")}</head>`;
+  const loaded = ["/assets/index-A.js", "/assets/style-A.css"];
 
-  test("is the served page's script when it is not the one running", () => {
-    expect(newBuild("http://mini/assets/index-OLD.js", page("/assets/index-NEW.js"))).toBe(
-      "/assets/index-NEW.js",
-    );
+  test("names what the served page loads that this page did not, a new stylesheet alone included", () => {
+    expect(newBuild(loaded, page("/assets/index-A.js", "/assets/style-B.css"))).toEqual([
+      "/assets/style-B.css",
+    ]);
+    expect(newBuild(loaded, page("/assets/index-B.js", "/assets/style-A.css"))).toEqual([
+      "/assets/index-B.js",
+    ]);
   });
 
-  test("is nothing while the running script is the served one", () => {
-    expect(newBuild("http://mini/assets/index-SAME.js", page("/assets/index-SAME.js"))).toBeNull();
+  test("is nothing while the served page loads what this page loaded, whatever this page loaded since", () => {
+    expect(newBuild(loaded, page("/assets/index-A.js", "/assets/style-A.css"))).toEqual([]);
+    expect(newBuild([...loaded, "/assets/MarkdownView-C.js"], page(...loaded))).toEqual([]);
   });
 
-  test("is nothing outside a built page, or when the page names no script", () => {
-    expect(newBuild("http://localhost:5173/src/lib/build.ts", page("/assets/index-NEW.js"))).toBeNull();
-    expect(newBuild("http://mini/assets/index-OLD.js", "<html>Bad gateway</html>")).toBeNull();
+  test("is nothing when the served page is not a built one, such as an error page or a dev server's", () => {
+    expect(newBuild(loaded, "<html>Bad gateway</html>")).toEqual([]);
+    expect(newBuild([], '<script type="module" src="/src/main.tsx"></script>')).toEqual([]);
   });
 });

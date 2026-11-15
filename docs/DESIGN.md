@@ -452,8 +452,8 @@ Decisions made from that:
 
   The fix still did not reach the developer's phone: Safari keeps an open tab's code, so a deploy never reached the page
   they had open, and they kept tapping the old broken menu. _Decided:_ an open tab loads a new build by itself when it
-  comes back into view (or Safari restores it from memory): it reads the served page, and if that names another bundle
-  than the one running, it reloads, unless a box has focus. Drafts are kept on the server as they are typed, so a reload
+  comes back into view (or Safari restores it from memory): it reads the served page, and if that loads a script or
+  stylesheet this page did not (a deploy that changed only styles included), it reloads, unless a box has focus. Drafts are kept on the server as they are typed, so a reload
   loses nothing.
 
   Then the developer said "I need you to stop treating meaning by color as the most important thing and design colors

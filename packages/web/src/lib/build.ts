@@ -1,15 +1,23 @@
-/** The script this page is running: its own bundle, `/assets/index-….js` once built. */
-export const RUNNING_SCRIPT = import.meta.url;
+/** The built files a page names: its scripts and stylesheets under /assets/, as paths. */
+function assetsIn(html: string): string[] {
+  return [...html.matchAll(/\s(?:src|href)="(\/assets\/[^"?#]+)"/g)].flatMap((match) => match[1] ?? []);
+}
 
 /**
- * The served page's script when it is not the one this page is running: a deploy has happened since the page loaded.
- * Nothing when they match, when this page is not a built one (a dev server runs the sources), or when what was served
- * names no script, as an error page does.
+ * What the served page loads that this page did not: a deploy since this page loaded, a new stylesheet alone
+ * included. Only that direction counts, since this page also loads chunks of its own on demand. Nothing when the served
+ * page names no built files, as an error page or a dev server's does.
  */
-export function newBuild(running: string, servedPage: string): string | null {
-  const runningPath = /\/assets\/index-[^/?#]+\.js/.exec(running)?.[0];
-  if (runningPath === undefined) return null;
-  const served = /<script[^>]*\ssrc="(\/assets\/index-[^"]+\.js)"/.exec(servedPage)?.[1];
-  if (served === undefined || served === runningPath) return null;
-  return served;
+export function newBuild(loaded: readonly string[], servedPage: string): string[] {
+  return assetsIn(servedPage).filter((asset) => !loaded.includes(asset));
+}
+
+/** The built files this page has loaded: the scripts and stylesheets in its document, as paths. */
+export function loadedAssets(): string[] {
+  return [...document.querySelectorAll("script[src], link[href]")].flatMap((element) => {
+    const url = element.getAttribute("src") ?? element.getAttribute("href");
+    if (url === null) return [];
+    const path = new URL(url, document.baseURI).pathname;
+    return path.startsWith("/assets/") ? [path] : [];
+  });
 }
