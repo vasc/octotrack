@@ -28,7 +28,8 @@ const GLOBAL_OPTIONS: OptionSpecs = {
 function optionLine(name: string, spec: OptionSpec): string {
   const short = spec.short === undefined ? "    " : `-${spec.short}, `;
   const value = spec.type === "string" ? " <value>" : "";
-  return `  ${short}--${name}${value}\n        ${spec.description}`;
+  const aliases = (spec.aliases ?? []).map((alias) => `, --${alias}`).join("");
+  return `  ${short}--${name}${value}${aliases}\n        ${spec.description}`;
 }
 
 function commandHelp(command: Command): string {

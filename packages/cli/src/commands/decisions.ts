@@ -75,7 +75,7 @@ function looksLikeJson(text: string): boolean {
 const decisionFields = {
   kind: { ...STRING, description: "technical, architecture, product, approval" },
   priority: { ...STRING, description: "urgent, high, medium, low, none" },
-  project: { ...STRING, short: "p", description: "Project key" },
+  repo: { ...STRING, short: "p", aliases: ["project"], description: "Repo key" },
   context: { ...STRING, description: "Background the decider needs" },
   "context-file": { ...STRING, description: "Read context from a file, - for stdin" },
   option: { ...MANY, short: "o", description: "An option: key=Label or key=Label::description. Repeatable" },
@@ -109,7 +109,7 @@ export const decisionCommands: Command[] = [
     },
     examples: [
       'octo decision ask "Which board goes in?" --context "<the situation>" -o a="26 mm::Print as it is" -o b="30 mm::Remodel first, a day" --recommend a --why "Antenna gain does not matter at 2 m"',
-      'octo decision ask "Which queue?" -p OCT -o sqs=SQS -o redis="Redis::Cheaper, less durable" --recommend redis --blocks OCT-4 --wait',
+      'octo decision ask "Which queue?" --repo OCT -o sqs=SQS -o redis="Redis::Cheaper, less durable" --recommend redis --blocks OCT-4 --wait',
     ],
     ops: [c.decisionAsk.name],
     async run(ctx, args) {
@@ -121,7 +121,7 @@ export const decisionCommands: Command[] = [
           context: await textOption(args, "context"),
           kind: args.str("kind"),
           priority: args.str("priority"),
-          project: args.str("project"),
+          project: args.str("repo"),
           options: optionsFrom(args),
           recommendation: args.str("recommend"),
           dueAt: args.str("due"),
@@ -156,7 +156,7 @@ export const decisionCommands: Command[] = [
       ...decisionFields,
       title: { ...STRING, description: "New title" },
       why: { ...STRING, description: "Why you recommend what you do. Required with --recommend on a line" },
-      "no-project": { type: "boolean", description: "Detach from its project" },
+      "no-repo": { type: "boolean", aliases: ["no-project"], description: "Detach from its repo" },
       "if-version": { ...STRING, description: "Only if still at this version" },
     },
     ops: [c.decisionUpdate.name],
@@ -169,7 +169,7 @@ export const decisionCommands: Command[] = [
           context: await textOption(args, "context"),
           kind: args.str("kind"),
           priority: args.str("priority"),
-          project: args.flag("no-project") ? null : args.str("project"),
+          project: args.flag("no-repo") ? null : args.str("repo"),
           options: optionsFrom(args),
           recommendation: args.str("recommend"),
           why: args.str("why"),
@@ -282,7 +282,7 @@ export const decisionCommands: Command[] = [
       context: { ...STRING, description: "Background" },
       "context-file": { ...STRING, description: "Read context from a file, - for stdin" },
       kind: decisionFields.kind,
-      project: decisionFields.project,
+      repo: decisionFields.repo,
       at: { ...STRING, description: "When it was decided" },
       source: { ...STRING, description: "Link to where it was decided" },
       affects: { ...MANY, description: "Items to re-check, repeatable" },
@@ -291,7 +291,7 @@ export const decisionCommands: Command[] = [
       issue: { ...STRING, description: "The issue it concerns. Default: the one you hold on that line" },
     },
     examples: [
-      'octo decision record "Use SQLite locally" --chosen SQLite -p OCT --kind architecture --at 2026-11-01 --me',
+      'octo decision record "Use SQLite locally" --chosen SQLite --repo OCT --kind architecture --at 2026-11-01 --me',
       'octo decision record "Lay the board flat" --chosen Flat --said "<the developer\'s words>"',
     ],
     ops: [c.decisionRecord.name],
@@ -306,7 +306,7 @@ export const decisionCommands: Command[] = [
           note: args.str("note"),
           context: await textOption(args, "context"),
           kind: args.str("kind"),
-          project: args.str("project"),
+          project: args.str("repo"),
           decidedAt: args.str("at"),
           sourceUrl: args.str("source"),
           affects: args.optionalList("affects"),
@@ -466,12 +466,12 @@ export const decisionCommands: Command[] = [
       ...LIST_OPTIONS,
       status: { ...MANY, description: "Filter by status" },
       type: { ...MANY, description: "Filter by kind: technical, architecture, product, approval" },
-      project: { ...MANY, short: "p", description: "Filter by project" },
+      repo: { ...MANY, short: "p", aliases: ["project"], description: "Filter by repo" },
     },
     examples: ["octo decision list --type architecture"],
     ops: [c.decisionList.name],
     async run({ client, out }, args) {
-      const outcome = await client.call(c.decisionList, listInput(args, ["status", "type", "project"]));
+      const outcome = await client.call(c.decisionList, listInput(args, ["status", "type", "repo"]));
       out.result(outcome, () => r.renderDecisions(outcome.data));
     },
   },
@@ -479,10 +479,13 @@ export const decisionCommands: Command[] = [
     path: ["decision", "queue"],
     usage: "[QUERY]",
     summary: "Open decisions, most important first, with the reasons why",
-    options: { ...LIST_OPTIONS, project: { ...MANY, short: "p", description: "Filter by project" } },
+    options: {
+      ...LIST_OPTIONS,
+      repo: { ...MANY, short: "p", aliases: ["project"], description: "Filter by repo" },
+    },
     ops: [c.decisionQueue.name],
     async run({ client, out }, args) {
-      const outcome = await client.call(c.decisionQueue, listInput(args, ["project"]));
+      const outcome = await client.call(c.decisionQueue, listInput(args, ["repo"]));
       out.result(outcome, () => r.renderQueue(outcome.data));
     },
   },
