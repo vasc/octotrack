@@ -713,3 +713,65 @@ describe("the runner's smaller findings in the third audit (N22)", () => {
     ]);
   });
 });
+
+describe("what the fourth audit found in the runner", () => {
+  function spawn(w: ReturnType<typeof world>, line: string, pid: number) {
+    const started = w.tracker.call(c.runnerStart, { line, repo: "PANEL" }, w.runner);
+    expect(w.tracker.call(c.runnerSpawned, { name: started.name, pid }, w.runner).go).toBe(true);
+    return started.name;
+  }
+  const due = (w: ReturnType<typeof world>) =>
+    w.tracker.call(c.runnerDue, {}, w.runner).map((item) => [item.line, item.name]);
+  const exits = (w: ReturnType<typeof world>) =>
+    w.tracker
+      .call(c.feedList, { query: "event:runner.failed,runner.exited" }, w.dev)
+      .events.map((event) => [event.type, event.summary]);
+
+  test("A2: a session the developer stops soon after it took its line did not leave at once", () => {
+    const w = world();
+    w.cap(1);
+    const line = w.line("Enclosure");
+    for (const pid of [101, 102]) {
+      w.later(1);
+      const name = spawn(w, line.ref, pid);
+      w.tracker.call(c.lineTake, { ref: line.ref }, w.session(name));
+      w.later(3);
+      w.tracker.call(c.agentStop, { name }, w.dev);
+      w.tracker.call(c.runnerExited, { name, code: 143, output: "" }, w.runner);
+      w.later(1);
+      // As after any Stop, the next session starts as soon as the search allows, with no wait.
+      expect(due(w)).toEqual([[line.ref, null]]);
+    }
+    expect(exits(w)).toEqual([
+      ["runner.exited", "panel.2 exited (code 143), stopped by the developer"],
+      ["runner.exited", "panel.1 exited (code 143), stopped by the developer"],
+    ]);
+    const home = w.tracker.call(c.homeShow, {}, w.dev).lines[line.ref];
+    expect([home?.stepIn, home?.start?.state, home?.start?.attempts]).toEqual([false, "exited", 1]);
+  });
+
+  test("A2: nor does one whose line was tabled soon after it took it, and that exits in its wind-down", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    w.later(1);
+    const name = spawn(w, line.ref, 101);
+    w.tracker.call(c.lineTake, { ref: line.ref }, w.session(name));
+    w.later(2);
+    w.tracker.call(c.lineTable, { ref: line.ref, reason: "Not now." }, w.dev);
+    w.later(3);
+    w.tracker.call(c.runnerExited, { name, code: 0, output: "" }, w.runner);
+    expect(exits(w)).toEqual([["runner.exited", `${name} exited (code 0), after ${line.ref} moved on`]]);
+  });
+
+  test("A2: nor one the developer released from its line", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    w.later(1);
+    const name = spawn(w, line.ref, 101);
+    w.tracker.call(c.lineTake, { ref: line.ref }, w.session(name));
+    w.later(2);
+    w.tracker.call(c.agentRelease, { name }, w.dev);
+    w.tracker.call(c.runnerExited, { name, code: 0, output: "" }, w.runner);
+    expect(exits(w)).toEqual([["runner.exited", `${name} exited (code 0), released by the developer`]]);
+  });
+});
