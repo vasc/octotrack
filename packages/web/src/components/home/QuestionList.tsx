@@ -9,7 +9,8 @@ import { HomeSection } from "./HomeSection.tsx";
 /**
  * Questions that stand apart from the lines: urgent ones at the very top, and ones from before lines below every line.
  * Each is a row until it has focus, like any question, so a key meant for another never answers it. On a phone the ones
- * from before lines fold to one row, like the other sections; urgent ones never fold.
+ * from before lines fold to one row, like the other sections, and opening one keeps that section; urgent ones never
+ * fold.
  */
 export function QuestionList({
   title,
@@ -53,11 +54,17 @@ export function QuestionList({
       ))}
     </div>
   );
-  if (folded && !cards.some((card) => card.decision.ref === focus)) {
+  if (folded) {
     return (
-      // In a row of tiles, as the other folded sections are, so the tile is one row high.
+      // In a row of tiles, as the other folded sections are, so the tile is one row high. Opening one of its questions
+      // keeps it the same section, held open around it.
       <div className="tiles">
-        <FoldedSection title={title} names={cards.map((card) => card.decision.title)} named={false}>
+        <FoldedSection
+          title={title}
+          names={cards.map((card) => card.decision.title)}
+          named={false}
+          held={cards.some((card) => card.decision.ref === focus)}
+        >
           {items}
         </FoldedSection>
       </div>
@@ -65,7 +72,8 @@ export function QuestionList({
   }
   return (
     <HomeSection title={title} count={cards.length} {...(note === undefined ? {} : { note })}>
-      {items}
+      {/* One sheet, a row per question, as every section draws its rows. */}
+      <div className="sheet">{items}</div>
     </HomeSection>
   );
 }

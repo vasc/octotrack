@@ -12,6 +12,7 @@ export function FoldedSection({
   note,
   dashed = false,
   tone,
+  held = false,
   children,
 }: {
   title: string;
@@ -24,13 +25,22 @@ export function FoldedSection({
   dashed?: boolean;
   /** Proposals wait for your yes, in the theme's own colour. */
   tone?: "info";
+  /** One of its items is open: shown, with nothing that would hide it, so the section stays the same around it. */
+  held?: boolean;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   if (names.length === 0) return null;
+  const shown = open || held;
   return (
-    <section aria-label={title} className="tile" data-dashed={dashed} data-open={open} data-tone={tone}>
-      <button type="button" className="tile-head" aria-expanded={open} onClick={() => setOpen(!open)}>
+    <section aria-label={title} className="tile" data-dashed={dashed} data-open={shown} data-tone={tone}>
+      <button
+        type="button"
+        className="tile-head"
+        aria-expanded={shown}
+        disabled={held}
+        onClick={() => setOpen(!open)}
+      >
         <span>
           <b>
             {title} · {names.length}
@@ -43,9 +53,9 @@ export function FoldedSection({
             </span>
           ) : null}
         </span>
-        <span className="tile-show">{open ? "Hide" : "Show"}</span>
+        {held ? null : <span className="tile-show">{open ? "Hide" : "Show"}</span>}
       </button>
-      {open ? <div className="rows">{children}</div> : null}
+      {shown ? <div className="rows">{children}</div> : null}
     </section>
   );
 }

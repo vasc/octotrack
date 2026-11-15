@@ -88,6 +88,8 @@
   --space-32: calc(var(--space-unit) * 32);
 
   /* Shape: buttons, items, cards and panels, from smallest to largest. */
+  /* A row that reaches its sheet's edges, whose tint must meet them square. */
+  --radius-none: 0;
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
@@ -102,6 +104,8 @@
   --border-focus: 2px;
   /* A small round mark: urgent in the bar, and the kind of an item that needs you. */
   --dot-size: 6px;
+  /* How far a sheet's rows sit in from its edges: their text, and the tint that shows focus, line up on it. */
+  --row-inset: var(--space-8);
   /* A control that cannot act now, and a filled button under the pointer. */
   --opacity-disabled: 0.5;
   --opacity-hover: 0.88;
@@ -153,11 +157,11 @@
 /* A phone is held further away and tapped, so reading text steps up. Spacing stays, and targets grow on their own. */
 @media (pointer: coarse) {
   :root {
-    --text-xs: 13px;
-    --text-sm: 14px;
-    --text-md: 16px;
-    --text-lg: 16px;
-    --text-xl: 19px;
+    --text-xs: 12px;
+    --text-sm: 13px;
+    --text-md: 15px;
+    --text-lg: 15px;
+    --text-xl: 17px;
   }
 }
 

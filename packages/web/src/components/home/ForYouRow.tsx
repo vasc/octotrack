@@ -22,7 +22,9 @@ export function ForYouRow({ item, onOpen }: { item: ForYou; onOpen(ref: string):
       <span className="item-row-text" id={text}>
         {rowText(item)}
       </span>
-      <span className="item-row-open">Open</span>
+      <span className="item-row-open" aria-hidden="true">
+        ›
+      </span>
     </button>
   );
 }

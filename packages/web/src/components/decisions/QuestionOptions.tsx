@@ -22,7 +22,9 @@ export function QuestionOptions({ decision, onAnswer }: { decision: Decision; on
             >
               <span className="question-option-head">
                 <b>
-                  {index + 1} · {option.label}
+                  {/* The number its key presses; only where there is a keyboard to press it. */}
+                  <span className="question-option-key">{index + 1} · </span>
+                  {option.label}
                 </b>
                 {option.key === decision.recommendation ? (
                   <span className="question-recommended">recommended</span>

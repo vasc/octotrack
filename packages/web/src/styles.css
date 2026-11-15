@@ -423,6 +423,8 @@ p {
   gap: var(--space-3);
   min-height: var(--control-height);
   padding: 0 var(--space-6);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
   background: var(--surface);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-md);
@@ -662,30 +664,43 @@ p {
   color: var(--ink-3);
 }
 
+/* What it is, as a row says it: small grey words after a dot in the one colour for what needs you. */
 .question-kind {
-  font-weight: var(--weight-bold);
-  color: var(--attention);
-  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-weight: var(--weight-medium);
+  color: var(--ink-3);
+}
+
+.question-kind::before {
+  content: "";
+  flex: none;
+  width: var(--dot-size);
+  height: var(--dot-size);
+  border-radius: var(--radius-pill);
+  background: var(--attention);
 }
 
 .question-strip .ref {
-  color: var(--attention);
+  color: var(--ink-3);
 }
 
 .question-title {
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
   font-weight: var(--weight-semibold);
   line-height: var(--leading-tight);
 }
 
 .question-context {
+  font-size: var(--text-sm);
   color: var(--ink-2);
 }
 
 .question-options {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-4);
+  gap: var(--space-2) var(--space-4);
 }
 
 .question-options[data-columns="1"] {
@@ -696,25 +711,23 @@ p {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+/* An option is a line of words that answers: no box; the recommended one says so in words. */
 .question-option {
   text-align: left;
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  padding: var(--space-4) var(--space-6);
+  padding: var(--space-4) var(--space-5);
+  margin: 0 calc(-1 * var(--space-5));
   border-radius: var(--radius-md);
-  border: 1px solid var(--line-strong);
-  background: var(--surface);
+  border: 0;
+  background: none;
+  font-size: var(--text-sm);
   cursor: pointer;
 }
 
 .question-option:hover {
-  border-color: var(--ink-3);
-}
-
-.question-option[data-recommended="true"] {
-  border-color: var(--attention);
-  background: var(--attention-soft);
+  background: var(--surface-2);
 }
 
 .question-option-head {
@@ -1867,7 +1880,7 @@ p {
 
 .line-card-title {
   display: inline;
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
   font-weight: var(--weight-semibold);
 }
 
@@ -1949,23 +1962,27 @@ p {
   background: var(--surface-2);
 }
 
-/* What kind of item, after a small dot in the one colour for what needs you. */
+/* What kind of item, in small grey words after a dot in the one colour for what needs you. */
 .item-kind {
   display: inline-flex;
   align-items: center;
   gap: var(--space-3);
   font-size: var(--text-xs);
-  font-weight: var(--weight-bold);
-  color: var(--attention);
-  text-transform: uppercase;
+  font-weight: var(--weight-medium);
+  color: var(--ink-3);
 }
 
 .item-kind::before {
   content: "";
+  flex: none;
   width: var(--dot-size);
   height: var(--dot-size);
   border-radius: var(--radius-pill);
-  background: currentColor;
+  background: var(--attention);
+}
+
+.item-row[data-urgent="true"] .item-kind::before {
+  background: var(--warn);
 }
 
 .item-row:is([data-kind="done"], [data-kind="done_when"]) .item-kind {
@@ -1976,8 +1993,25 @@ p {
   color: var(--ink-2);
 }
 
-.item-row-open {
+.item-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.item-row-text b {
+  font-weight: var(--weight-medium);
+  color: var(--ink);
+}
+
+.item-row .item-note {
   font-size: var(--text-sm);
+  color: var(--ink-3);
+}
+
+.item-row-open {
+  font-size: var(--text-lg);
   color: var(--ink-3);
 }
 
@@ -2078,7 +2112,7 @@ p {
 
 /* What agents propose: a row of its section's sheet; the recommended choice is the filled one. */
 .proposal-card {
-  padding: var(--space-6) var(--space-9);
+  padding: var(--space-6) var(--row-inset);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--space-4) var(--space-8);
@@ -2122,7 +2156,7 @@ p {
 .tiles {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-6);
+  gap: var(--space-4);
 }
 
 /* A folded section: a sheet whose head opens it. */
@@ -2148,7 +2182,7 @@ p {
   justify-content: space-between;
   align-items: center;
   gap: var(--space-6);
-  padding: var(--space-6) var(--space-9);
+  padding: var(--space-5) var(--row-inset);
   border: 0;
   background: none;
   text-align: left;
@@ -2165,12 +2199,26 @@ p {
 }
 
 .tile .rows {
-  padding: 0 var(--space-9) var(--space-6);
+  padding: 0 var(--row-inset) var(--space-3);
 }
 
-/* A proposal in a folded section reaches the section's edges, so its focus tint does too; its text stays aligned. */
-.tile .rows > .proposal-card {
-  margin: 0 calc(-1 * var(--space-9));
+/* What a sheet or a folded section holds reaches its edges, so a focus tint does too; text keeps one inset. */
+.tile .rows > :is(.proposal-card, .line-items) {
+  margin: 0 calc(-1 * var(--row-inset));
+}
+
+:is(.sheet, .tile) .line-items {
+  gap: 0;
+}
+
+:is(.sheet, .tile) .line-items > * + * {
+  border-top: 1px solid var(--line);
+}
+
+:is(.sheet, .tile) :is(.item-row, .question) {
+  margin: 0;
+  border-radius: var(--radius-none);
+  padding: var(--space-5) var(--row-inset);
 }
 
 /* A new line, as E-Propose draws it. */
@@ -2294,6 +2342,12 @@ p {
 
 /* The focused item's numbered choices, drawn by the number its key presses: only on an item the keys act on, never on a
    line itself, whose numbers belong to its items, and only where there is a keyboard to press them. */
+@media (pointer: coarse) {
+  .question-option-key {
+    display: none;
+  }
+}
+
 @media (pointer: fine) {
 [data-focus-ref][data-selected="true"]:not(.line-card):not(.next-row) [data-choice]::before {
   content: attr(data-choice) " · ";
@@ -2565,6 +2619,10 @@ p {
 .question[data-urgent="true"] .question-kind,
 .item-row[data-urgent="true"] .item-kind {
   color: var(--warn);
+}
+
+.question[data-urgent="true"] .question-kind::before {
+  background: var(--warn);
 }
 
 /* Nothing needs you: the calmest screen, and the most common good state (E-States 1). */

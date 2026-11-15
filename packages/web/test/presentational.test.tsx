@@ -153,7 +153,8 @@ describe("DecisionCardView", () => {
     view.getByRole("heading", { name: "Which queue?" });
     view.getByText("We need at-least-once delivery.");
     view.getByText("2 agents waiting");
-    view.getByText("1 · SQS");
+    // Numbered for its key: the number is its own piece, so a touch screen can leave it out.
+    expect(view.getByRole("button", { name: /SQS/ }).textContent).toContain("1 · SQS");
     view.getByText("Managed");
     const redis = view.getByRole("button", { name: /Redis/ });
     within(redis).getByText("recommended");
@@ -917,6 +918,18 @@ describe("lines of work", () => {
     expect(again.queryByText("the rows")).toBeNull();
     fireEvent.click(again.getByRole("button", { name: /Show/ }));
     again.getByText("the rows");
+  });
+
+  test("FoldedSection stays the same section while one of its items is open, and offers nothing that would hide it", () => {
+    const view = render(
+      <FoldedSection title="On no line" names={["D-10", "D-24"]} named={false} held>
+        <p>the rows, one opened</p>
+      </FoldedSection>,
+    );
+    view.getByText("the rows, one opened");
+    const head = view.getByRole("button", { name: /On no line/ });
+    expect(head.textContent).toBe("On no line · 2");
+    expect(head.hasAttribute("disabled")).toBe(true);
   });
 
   test("QuietRow says why a tabled line waits and brings it back", () => {

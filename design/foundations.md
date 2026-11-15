@@ -145,6 +145,7 @@ The names are multiples of the unit: `--space-4` is four units.
 
 | Token           | Use for                                             |
 | --------------- | --------------------------------------------------- |
+| `--radius-none` | A row reaching its sheet's edges, its tint square   |
 | `--radius-sm`   | Small marks, progress bars, badges                  |
 | `--radius-md`   | Buttons, inputs, options, repo chips                |
 | `--radius-lg`   | Questions, tasks and rows under a line              |
@@ -156,17 +157,18 @@ The names are multiples of the unit: `--space-4` is four units.
 
 Only what floats over content gets a shadow. Everything else is separated by a line.
 
-| Token                | Use for                                                       |
-| -------------------- | ------------------------------------------------------------- |
-| `--shadow-popover`   | The filter's suggestions, the Undo bar                        |
-| `--shadow-panel`     | A line, task or issue opened over the right of the page       |
-| `--border-focus`     | Edges for focus: the focus ring and the focused item's border |
-| `--dot-size`         | A small round mark: urgent in the bar, an item's kind         |
-| `--opacity-disabled` | A control that cannot act now                                 |
-| `--opacity-hover`    | A filled button under the pointer                             |
-| `--z-popover`        | Above the page                                                |
-| `--z-panel`          | Above popovers                                                |
-| `--z-undo`           | Above an open panel: a choice made there shows its Undo       |
+| Token                | Use for                                                                            |
+| -------------------- | ---------------------------------------------------------------------------------- |
+| `--shadow-popover`   | The filter's suggestions, the Undo bar                                             |
+| `--shadow-panel`     | A line, task or issue opened over the right of the page                            |
+| `--border-focus`     | Edges for focus: the focus ring and the focused item's border                      |
+| `--dot-size`         | A small round mark: urgent in the bar, an item's kind                              |
+| `--row-inset`        | How far a sheet's rows sit from its edges: their text and focus tint line up on it |
+| `--opacity-disabled` | A control that cannot act now                                                      |
+| `--opacity-hover`    | A filled button under the pointer                                                  |
+| `--z-popover`        | Above the page                                                                     |
+| `--z-panel`          | Above popovers                                                                     |
+| `--z-undo`           | Above an open panel: a choice made there shows its Undo                            |
 
 ## Layout
 
