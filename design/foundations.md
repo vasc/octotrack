@@ -172,4 +172,6 @@ There is none, and so there are no tokens for it. Things appear. See
 ## Focus
 
 `:focus-visible` draws a 2px ring in `--attention` everywhere. This product is meant to be driven by keyboard, so focus
-must always be visible. Inputs also shift their edge to `--ink-3` on focus.
+must always be visible. Inputs also shift their edge to `--ink-3` on focus. The one focus on home is the exception: its
+item takes a dark `--border-focus` edge in `--ink` instead of the ring, and, with a mouse or trackpad and room in the
+margin, a quiet "k ↑ j ↓" beside it in `--ink-3`, which a screen reader is not told.

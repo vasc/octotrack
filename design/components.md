@@ -141,7 +141,7 @@ Home is one list: every line in the developer's order, with what each needs from
 
 | Component        | Kind       | What it is                                                                                                                                                                                                                 |
 | ---------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `AgentsPage`     | Structural | The roster, then who is waiting now and what is registered                                                                                                                                                                 |
+| `AgentsPage`     | Structural | The roster, Buzz this device, and the agent states and how agents take and keep lines, in brief                                                                                                                            |
 | `AgentRosterRow` | Pure       | One agent: repo, its line (or the line it was started for, or last owned), last command, wake, what it is doing (a start that never ran a command: "retried since Tuesday, each exits at once"), and Stop, Release or Lift |
 
 ## The frame: `layout/`
@@ -188,12 +188,12 @@ Opens from any ref as a panel over the right of the page, so the list keeps its 
 
 ## Also in the language, not components
 
-| Class     | What it is                                                                     |
-| --------- | ------------------------------------------------------------------------------ |
-| `.btn`    | A button. `data-primary` is the one action a form is for. At most one per form |
-| `.field`  | A text input                                                                   |
-| `.select` | A small select, for changing a value in place                                  |
-| `.chip`   | Quiet text that acts: a filter, a link                                         |
-| `.tab`    | One of a set of mutually exclusive views, with `aria-pressed`                  |
-| `.row`    | One line in a list, divided from the next by `--line`                          |
-| `.card`   | Only when something needs to read as an object: a repo, a proposal             |
+| Class     | What it is                                                                                            |
+| --------- | ----------------------------------------------------------------------------------------------------- |
+| `.btn`    | A button. `data-primary` is the one action a form is for. At most one per form                        |
+| `.field`  | A text input                                                                                          |
+| `.select` | A small select, for picking a value to add, such as a repo; never for a change of state               |
+| `.chip`   | Quiet text that acts: a filter, a link                                                                |
+| `.tab`    | One of a set of mutually exclusive views, with `aria-pressed`: the specimen's themes                  |
+| `.row`    | One line in a list, divided from the next by `--line`                                                 |
+| `.card`   | A plain box that reads as an object, on the specimen; line cards and proposals have their own classes |

@@ -25,11 +25,12 @@ Fix it and this clears by itself, or use --verified if it is correct as it is.
 
 Say why it is empty, and how to change that.
 
-| Situation                | Text                                                                           |
-| ------------------------ | ------------------------------------------------------------------------------ |
-| No projects yet          | `No projects yet.`, then `octo project create OCT Octotrack --repo owner/name` |
-| A filter matched nothing | `Nothing matches this filter.`                                                 |
-| Everything is fine       | `Nothing is out of date.`                                                      |
+| Situation                | Text                                                                               |
+| ------------------------ | ---------------------------------------------------------------------------------- |
+| No lines yet             | `No lines yet. Add one above, or point an agent at the guide…`, then `octo guide`  |
+| No agent has checked in  | `No agent has checked in yet.`, then `export OCTO_AGENT=claude-feature-x`          |
+| A search matched nothing | `Nothing matches this search.`                                                     |
+| Nothing waits on you     | `Nothing needs you.`, then who is working and where the next ask likely comes from |
 
 Good news can be stated flatly. There is no need to celebrate it.
 

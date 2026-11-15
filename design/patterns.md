@@ -41,9 +41,10 @@ the build", "waiting on you".
 
 ## Filtering
 
-The Log shows what has not been seen, line by line in the developer's order. A search goes through the whole log
-instead. Text you type is the source of truth: clicking a chip adds a term, a half-typed or invalid query shows why under
-the box while the previous results stay up, and the search lives in the URL.
+The Log shows what has not been seen, line by line in the developer's order, and Mark all seen, which waits with Undo,
+empties it. A search goes through the whole log instead. Text you type is the source of truth: clicking a chip adds a
+term, a half-typed or invalid query shows why under the box while the previous results stay up, and the search lives in
+the URL.
 
 ## The panel
 
@@ -54,14 +55,15 @@ A task shows what to send back; an issue its pull requests and what happened lat
 ## Answering in place
 
 Questions, tasks, proposals, Step in and drift are all answered where you see them. State changes are buttons, never a
-select an arrow key could change. Nothing needs a separate form or a modal; the Start sheet and the key list open in
-place.
+select an arrow key could change, and I'm at is a menu of places for the same reason. Nothing needs a separate form;
+the Start sheet opens in place, and the key list is the one modal, so that no key acts behind it.
 
 ## Live updates
 
 The page never asks you to refresh, and never moves what you are on. New items appear on their lines, counts change, and
 a question someone else answered leaves. Drafts follow between devices, but a box with focus keeps what it shows.
-Everything catches up when a lost connection returns.
+While the connection is lost, a quiet line under the bar says "Not live: reconnecting", and everything catches up when
+it returns.
 
 ## Loading, empty, error
 

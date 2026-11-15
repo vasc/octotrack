@@ -16,9 +16,10 @@ One name is one session in one checkout. Set it once, and say how to wake you, o
   octo agent register --wake claude:$CLAUDE_CODE_SESSION_ID
   octo agent register --no-wake --repo GARDEN        when your checkout's remote is not a tracked GitHub repo
 
-Your repo is read from your checkout's remote. Names shaped like a ref (GARDEN-2) are refused. You are never the
-developer. When the developer tells you in conversation to do one of their operations (start a line, stop an agent),
-relay their words with \`--said "<exactly what they said>"\`. It is recorded with your name.
+Your repo is read from your checkout's remote. Names shaped like a ref (GARDEN-2) are refused, and so are dev, octotrack
+and github. You are never the developer. When the developer tells you in conversation to do one of their operations
+(start a line, stop an agent), relay their words with \`--said "<exactly what they said>"\`. It is recorded with your
+name.
 
 ## Taking a line
 
@@ -89,17 +90,22 @@ A measurement, a login, a play-test: file a task, at one of the developer's plac
 The task frees the issue you hold. Name each thing to send back with --field, a short label on one line with no = or
 :, such as Length: the developer gets a one-line box for each, and Done needs them all. Its outcome comes back to you
 like an answer, one "Name: value" per field. The task is the developer's from then on: only they finish it, or say it
-cannot be done. If it no longer stands, withdraw it with octo held withdraw. Once closed it stays closed: if it is
-needed again, file a new task.
+cannot be done. If they tell you the outcome in conversation, relay it with their words:
+
+  octo task done PANEL-9 --value "Length=41 mm" --said "<exactly what they said>"
+
+If it no longer stands, withdraw it with octo held withdraw. Once closed it stays closed: if it is needed again, file
+a new task.
 
 ## Proposing lines
 
   octo line propose "Wall mount" --done-when "It hangs flush, cable hidden" -r PANEL \\
     --recommend up_next --why "The enclosure's final print moves the mounting points"
 
-Only the developer places lines. Work on no line in your repo shows as unplaced-work drift: put each issue on its line,
-or propose a line for it, and re-propose or reject the proposals that came from before. An issue that waits on the
-developer is a task: file it, and close the issue.
+Only the developer places lines. When they ask you in conversation to start or queue a new one, propose it with
+--place start or --place queue and --said, and it is placed at once. Work on no line in your repo shows as
+unplaced-work drift: put each issue on its line, or propose a line for it, and re-propose or reject the proposals that
+came from before. An issue that waits on the developer is a task: file it, and close the issue.
 
 When something is broken on a line no agent may work on (a done service, say), propose a line for it as urgent. It
 stands first for the developer, with Start first:
