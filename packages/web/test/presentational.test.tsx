@@ -73,6 +73,7 @@ import type {
   EntitySummary,
   ForYou,
   HomeView,
+  Issue,
   LineCrew,
   LineHome,
   LineStart,
@@ -2186,7 +2187,7 @@ describe("AtUpNext", () => {
   });
 
   test("sends a task done with what was found, and one of the developer's own as Done", async () => {
-    const onTaskDone = mock((_ref: string, _outcome: TaskOutcome) => {});
+    const onTaskDone = mock((_task: Issue, _outcome: TaskOutcome) => {});
     const view = renderApp(
       <AtUpNext
         tasks={tasks}
@@ -2200,14 +2201,20 @@ describe("AtUpNext", () => {
     const drill = view.getByRole("article", { name: "Find the drill" });
     fireEvent.change(within(drill).getByLabelText("What OCT-5 found"), { target: { value: " Top shelf " } });
     fireEvent.click(within(drill).getByRole("button", { name: "Done" }));
-    await waitFor(() => expect(onTaskDone).toHaveBeenCalledWith("OCT-5", { result: "Top shelf" }));
+    await waitFor(() =>
+      expect(onTaskDone).toHaveBeenCalledWith(expect.objectContaining({ ref: "OCT-5" }), {
+        result: "Top shelf",
+      }),
+    );
     const sweep = view.getByRole("article", { name: "Sweep the shed" });
     fireEvent.click(within(sweep).getByRole("button", { name: "Done" }));
-    await waitFor(() => expect(onTaskDone).toHaveBeenCalledWith("OCT-6", { result: "Done" }));
+    await waitFor(() =>
+      expect(onTaskDone).toHaveBeenCalledWith(expect.objectContaining({ ref: "OCT-6" }), { result: "Done" }),
+    );
   });
 
   test("closes a task as not doable, with why", async () => {
-    const onTaskCant = mock((_ref: string, _why: string) => {});
+    const onTaskCant = mock((_task: Issue, _why: string) => {});
     const view = renderApp(
       <AtUpNext
         tasks={tasks}
@@ -2224,7 +2231,9 @@ describe("AtUpNext", () => {
       target: { value: "Lent out" },
     });
     fireEvent.click(within(drill).getByRole("button", { name: "Close it" }));
-    await waitFor(() => expect(onTaskCant).toHaveBeenCalledWith("OCT-5", "Lent out"));
+    await waitFor(() =>
+      expect(onTaskCant).toHaveBeenCalledWith(expect.objectContaining({ ref: "OCT-5" }), "Lent out"),
+    );
   });
 });
 
@@ -2514,13 +2523,19 @@ describe("AtPlaceItems", () => {
     const task = view.getByRole("article", { name: "Measure the grip" });
     fireEvent.change(within(task).getByLabelText("What PANEL-1 found"), { target: { value: "41, 38" } });
     fireEvent.click(within(task).getByRole("button", { name: "Done" }));
-    await waitFor(() => expect(h.taskDone).toHaveBeenCalledWith("PANEL-1", { result: "41, 38" }));
+    await waitFor(() =>
+      expect(h.taskDone).toHaveBeenCalledWith(expect.objectContaining({ ref: "PANEL-1" }), {
+        result: "41, 38",
+      }),
+    );
     fireEvent.click(within(task).getByRole("button", { name: "Can't do it" }));
     fireEvent.change(within(task).getByLabelText("Why PANEL-1 cannot be done"), {
       target: { value: "No calipers" },
     });
     fireEvent.click(within(task).getByRole("button", { name: "Close it" }));
-    await waitFor(() => expect(h.taskCant).toHaveBeenCalledWith("PANEL-1", "No calipers"));
+    await waitFor(() =>
+      expect(h.taskCant).toHaveBeenCalledWith(expect.objectContaining({ ref: "PANEL-1" }), "No calipers"),
+    );
   });
 });
 

@@ -13,7 +13,7 @@ import {
 } from "../src/lib/format.ts";
 import { nextFocus } from "../src/lib/focus.ts";
 import { heldOnTabled, lineFacts, undoLines } from "../src/lib/lines.ts";
-import { askedText, taskOutcome } from "../src/lib/tasks.ts";
+import { askedText, cantSummary, doneSummary, taskOutcome } from "../src/lib/tasks.ts";
 import { issue } from "../src/design/fixtures.ts";
 import { closeEntity, navigate, openEntity, setParams } from "../src/lib/router.ts";
 
@@ -236,5 +236,30 @@ describe("askedText", () => {
     expect(
       askedText({ createdAt: "2026-11-01T10:00:00.000Z", confirmedAt: "2026-11-14T11:59:50.000Z" }, now),
     ).toBe("re-confirmed just now");
+  });
+});
+
+describe("how a task's choices read in the Undo bar", () => {
+  const task = issue({ ref: "OCT-1", title: "Measure the grip", outcome: "In mm" });
+
+  test("Done says what is sent and to which line, as it happens", () => {
+    expect(doneSummary(task, { result: "26 mm" }, "Sendspin enclosure")).toBe(
+      'Sending "26 mm" to Sendspin enclosure',
+    );
+    expect(
+      doneSummary(
+        task,
+        { values: { Length: "41 mm", Holes: "38 mm" }, result: "Warped" },
+        "Sendspin enclosure",
+      ),
+    ).toBe('Sending "Length 41 mm, Holes 38 mm" to Sendspin enclosure');
+    expect(doneSummary(task, { result: "26 mm" }, null)).toBe('Sending "26 mm" for OCT-1');
+    expect(doneSummary(issue({ title: "Sweep the shed", outcome: "" }), { result: "Done" }, null)).toBe(
+      'Marking "Sweep the shed" done',
+    );
+  });
+
+  test("Can't do it says it closes the task as not done, and why", () => {
+    expect(cantSummary(task, "No calipers")).toBe("Closing OCT-1 as not done: No calipers");
   });
 });

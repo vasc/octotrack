@@ -13,8 +13,8 @@ export function TaskItem({
   onCant,
 }: {
   task: Issue;
-  onDone(ref: string, outcome: TaskOutcome): void;
-  onCant(ref: string, why: string): void;
+  onDone(task: Issue, outcome: TaskOutcome): void;
+  onCant(task: Issue, why: string): void;
 }) {
   const draft = useOutcomeDraft(task.ref);
   const why = useDraft(`task-why:${task.ref}`);
@@ -31,8 +31,8 @@ export function TaskItem({
         onWhy={(words) => (words === "" ? why.clear() : why.change(words))}
         sending={waiting(task.ref)}
         // Kept first: a save landing after the task closed would bring a deleted draft back.
-        onDone={(outcome) => void draft.flush().then(() => onDone(task.ref, outcome))}
-        onCant={(reason) => void why.flush().then(() => onCant(task.ref, reason))}
+        onDone={(outcome) => void draft.flush().then(() => onDone(task, outcome))}
+        onCant={(reason) => void why.flush().then(() => onCant(task, reason))}
       />
       <NotKept error={draft.error ?? why.error} />
     </>
