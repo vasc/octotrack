@@ -1,3 +1,4 @@
+import { whenText } from "../src/lib/format.ts";
 import { navigate } from "../src/lib/router.ts";
 import { HeldDecision } from "../src/components/decisions/HeldDecision.tsx";
 import { OutcomeFields } from "../src/components/home/OutcomeFields.tsx";
@@ -807,7 +808,7 @@ describe("lines of work", () => {
         {...handlers}
       />,
     );
-    back.getByText("Back to look at, as you asked: The disk is not tight (2027-02-01)");
+    back.getByText("Back to look at, as you asked: The disk is not tight (look again on 1 February 2027)");
     expect(back.queryByRole("button", { name: "Not a line: Sendspin enclosure" })).toBeNull();
     fireEvent.click(back.getByRole("button", { name: "Drop Sendspin enclosure" }));
     expect(handlers.onDrop).toHaveBeenCalledWith("L-1");
@@ -838,7 +839,7 @@ describe("lines of work", () => {
       />,
     );
     view.getByText("Not now");
-    view.getByText("look again 2027-01-05");
+    view.getByText("look again on 5 January 2027");
     fireEvent.click(view.getByRole("button", { name: "Start Sendspin enclosure" }));
     expect(onStart).toHaveBeenCalledWith("L-1");
   });
@@ -1363,7 +1364,7 @@ describe("tabling and a line's own choices", () => {
     );
     fireEvent.change(view.getByLabelText("Look again on"), { target: { value: "2027-02-01" } });
     view.getByText(
-      /^On 2027-02-01 it comes back under Proposed, counted in "to accept", with your reason beside it/,
+      /^On 1 February 2027 it comes back under Proposed, counted in "to accept", with your reason beside it/,
     );
   });
 
@@ -2057,7 +2058,7 @@ describe("PullRequestBox", () => {
     within(box).getByText("Drop the cache");
     within(box).getByText("✓ checks pass");
     within(box).getByText("✗ checks failing");
-    expect(within(box).getAllByText("+10 −2 · opened 2026-11-07")).toHaveLength(2);
+    expect(within(box).getAllByText(`+10 −2 · opened ${whenText(pr().createdAt)}`)).toHaveLength(2);
     within(box).getByText("merged");
     within(box).getByText(
       "Checks are agents' to fix, never yours. claude-a merges once they pass, and asks first if it wants your eyes.",

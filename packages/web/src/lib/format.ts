@@ -27,11 +27,57 @@ export function dayWord(iso: string, now: number = Date.now()): string {
   return now - Date.parse(iso) < 7 * DAY ? (WEEKDAY_NAMES[new Date(iso).getDay()] ?? label) : label;
 }
 
+/** A date as the viewer's own calendar has it. */
+function localDay(at: Date): string {
+  return `${at.getFullYear()}-${String(at.getMonth() + 1).padStart(2, "0")}-${String(at.getDate()).padStart(2, "0")}`;
+}
+
+/** The day a heading in the log stands for, in the viewer's own time, as the times beside it are. */
 export function dayLabel(iso: string, now: number = Date.now()): string {
-  const day = iso.slice(0, 10);
-  if (day === new Date(now).toISOString().slice(0, 10)) return "Today";
-  if (day === new Date(now - DAY).toISOString().slice(0, 10)) return "Yesterday";
+  const day = localDay(new Date(iso));
+  const today = new Date(now);
+  if (day === localDay(today)) return "Today";
+  const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+  if (day === localDay(yesterday)) return "Yesterday";
   return day;
+}
+
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+/** A date alone, such as a look-again date, means that day where the viewer is, not midnight in London. */
+function parseWhen(iso: string): Date {
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  return dateOnly === null
+    ? new Date(iso)
+    : new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]));
+}
+
+/**
+ * When, as the boards write it after a verb: "at 07:20" today, "on Tuesday" within a week either way, else "on 1
+ * February", with the year when it is not this one. In the viewer's own time.
+ */
+export function whenText(iso: string, now: number = Date.now()): string {
+  const at = parseWhen(iso);
+  const today = new Date(now);
+  if (localDay(at) === localDay(today)) {
+    return `at ${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
+  }
+  if (Math.abs(now - at.getTime()) < 6 * DAY) return `on ${WEEKDAY_NAMES[at.getDay()] ?? localDay(at)}`;
+  const year = at.getFullYear() === today.getFullYear() ? "" : ` ${at.getFullYear()}`;
+  return `on ${at.getDate()} ${MONTHS[at.getMonth()] ?? ""}${year}`;
 }
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];

@@ -1,3 +1,4 @@
+import { whenText } from "../../lib/format.ts";
 import { ErrorState, LoadingState } from "../ui/states.tsx";
 import type { PullRequest } from "@octotrack/core/schemas";
 
@@ -41,7 +42,7 @@ export function PullRequestBox({
             {CHECKS[pr.checks]}
           </span>
           <span className="muted">
-            +{pr.additions} −{pr.deletions} · opened {pr.createdAt.slice(0, 10)}
+            +{pr.additions} −{pr.deletions} · opened {whenText(pr.createdAt)}
           </span>
           <span className="muted">{pr.state}</span>
         </div>
