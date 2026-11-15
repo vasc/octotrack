@@ -118,6 +118,24 @@ describe("questions on home", () => {
     );
   });
 
+  test("with the key list open, a number key answers nothing behind it, and Esc closes the list", async () => {
+    seedDecision();
+    const view = renderApp(<App />);
+    await view.findByRole("heading", { name: "Which queue?" });
+    fireEvent.keyDown(window, { key: "?" });
+    await view.findByRole("dialog", { name: "Keys" });
+    // As a keyboard does: at what has focus, the list's Close button.
+    fireEvent.keyDown(document.activeElement ?? window, { key: "2" });
+    fireEvent.keyDown(document.activeElement ?? window, { key: "j" });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(view.queryByRole("button", { name: "Undo" })).toBeNull();
+    expect(server.tracker.call(c.choiceList, {}, { actor: "dev", channel: "dashboard" })).toEqual([]);
+    fireEvent.keyDown(window, { key: "Escape" });
+    await gone(() => view.queryByRole("dialog", { name: "Keys" }));
+    fireEvent.keyDown(window, { key: "2" });
+    await view.findByRole("button", { name: "Undo" });
+  });
+
   test("one question is open at a time, and j and k move between them", async () => {
     seedDecision({ title: "First", priority: "urgent" });
     seedDecision({ title: "Second", priority: "low" });

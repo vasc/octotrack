@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 /** Every key, as one list behind ?, in E-States' words. */
 export const HOME_KEYS: readonly (readonly [string, string])[] = [
   ["j k", "next and previous thing for you, across lines"],
@@ -20,8 +21,23 @@ export const HOME_KEYS: readonly (readonly [string, string])[] = [
 ];
 
 export function KeyHelp({ onClose }: { onClose(): void }) {
+  // Shown modal, so focus and clicks stay in the list until it closes: the browser's dialog is outside React.
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const element = dialog.current;
+    if (element !== null && !element.open) element.showModal();
+  }, []);
   return (
-    <dialog open className="start-sheet" aria-label="Keys">
+    <dialog
+      ref={dialog}
+      className="start-sheet"
+      aria-label="Keys"
+      onCancel={(event) => {
+        // Esc: the shell closes the list, so the browser does not close it behind React's back.
+        event.preventDefault();
+        onClose();
+      }}
+    >
       <dl className="key-help">
         {HOME_KEYS.map(([keys, what]) => (
           <div key={keys} className="key-help-row">
