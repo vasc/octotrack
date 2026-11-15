@@ -645,6 +645,8 @@ describe("what the re-audit found", () => {
   });
 
   test("a gh that ignores termination, or leaves a child holding its output, cannot overrun the deadline", async () => {
+    // Only a repo a project names is synced (fourth audit, A24).
+    await octo(["project", "create", "STUB", "Stubborn repo", "--repo", "acme/stubborn", "--me"], "");
     fakeGh("#!/bin/sh\ntrap '' TERM\nsleep 30 &\nwait\n");
     try {
       const started = Date.now();
@@ -790,6 +792,9 @@ case "$*" in
 esac
 `;
     await octo(["pr", "upsert", "acme/good#9", "Still open as far as we know"]);
+    // Only repos a project names are synced (fourth audit, A24).
+    await octo(["project", "create", "GOOD", "Good repo", "--repo", "acme/good", "--me"], "");
+    await octo(["project", "create", "MISS", "Missing repo", "--repo", "acme/missing", "--me"], "");
     fakeGh(script);
     let result: Result;
     try {
