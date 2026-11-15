@@ -139,14 +139,22 @@ function isClosed(status: IssueStatus): boolean {
 /**
  * An open task is the developer's: they finish it with Done or Can't do it, which report back through the line's inbox.
  * An agent closing, reopening or taking it through the generic issue operations would skip that report and take it out
- * of the developer's to do; it withdraws a task that no longer stands instead.
+ * of the developer's to do; it withdraws a task that no longer stands instead. A closed task stays closed: reopening it
+ * would put it back in to do with its old result, so a new need is a new task (fifth audit, B12).
  */
 function guardTask(ctx: Ctx, issue: Issue, change: { status?: IssueStatus; assignee?: string | null }): void {
   if (ctx.developer || ctx.system) return;
-  if (issue.assignee !== DEVELOPER || issue.outcome === null || isClosed(issue.status)) return;
+  if (issue.assignee !== DEVELOPER || issue.outcome === null) return;
   const moves = change.status !== undefined && change.status !== issue.status;
   const reassigns = change.assignee !== undefined && change.assignee !== issue.assignee;
   if (!moves && !reassigns) return;
+  if (isClosed(issue.status)) {
+    throw new OctoError(
+      "forbidden",
+      `${issue.ref} is a task the developer closed: it is not reopened or taken`,
+      `If it is needed again, file a new task: octo task file "<what>" --place "<where>" --outcome "<what to send back>".`,
+    );
+  }
   throw new OctoError(
     "forbidden",
     `${issue.ref} is a task for the developer: only they finish it, or say it cannot be done`,

@@ -438,6 +438,22 @@ export type Agent = z.infer<typeof Agent>;
 export const AgentWake = z.object({ agent: z.string(), address: z.string(), message: z.string() });
 export type AgentWake = z.infer<typeof AgentWake>;
 
+/** How a wake's process ended: by itself, killed at its deadline, ended for the developer's Stop, or it failed. */
+export const WakeEnd = z.enum(["exited", "deadline", "stopped", "error"]);
+export type WakeEnd = z.infer<typeof WakeEnd>;
+
+/**
+ * A wake whose end is not recorded: one the server runs, or one a restart left behind, for the server to settle. Its
+ * process, once spawned, and when it began; stopped when the developer has stopped its agent since.
+ */
+export const RunningWake = z.object({
+  agent: z.string(),
+  pid: z.number().int().nullable(),
+  since: z.string(),
+  stopped: z.boolean(),
+});
+export type RunningWake = z.infer<typeof RunningWake>;
+
 /** See docs/DESIGN.md, the agent state table. Never decided by silence alone. */
 export const AgentState = z.enum(["running", "asleep", "quiet", "gone", "stopped"]);
 export type AgentState = z.infer<typeof AgentState>;
@@ -499,6 +515,7 @@ export const NoticeKind = z.enum([
   "released",
   "not_yet",
   "release_asked",
+  "wake_deadline",
 ]);
 export type NoticeKind = z.infer<typeof NoticeKind>;
 

@@ -83,7 +83,7 @@ export const workCommands: Command[] = [
     usage: "<title>",
     summary: "Create an issue",
     options: {
-      project: { ...STRING, short: "p", description: "Project key (required)" },
+      repo: { ...STRING, short: "p", aliases: ["project"], description: "Repo key (required)" },
       body: { ...STRING, short: "b", description: "Details" },
       "body-file": { ...STRING, description: "Read details from a file, - for stdin" },
       status: { ...STRING, description: "backlog, todo, in_progress, in_review, blocked, done, cancelled" },
@@ -97,11 +97,11 @@ export const workCommands: Command[] = [
       "blocked-by": { ...MANY, description: "That item blocks this issue, repeatable" },
       "derived-from": { ...MANY, description: "Flag this issue when that item changes, repeatable" },
     },
-    examples: ['octo issue create "Add retry" -p OCT --priority high --blocked-by D-3'],
+    examples: ['octo issue create "Add retry" --repo OCT --priority high --blocked-by D-3'],
     ops: [c.issueCreate.name],
     async run({ client, out }, args) {
-      const project = args.str("project");
-      if (project === undefined) throw new UsageError("Missing --project");
+      const project = args.str("repo");
+      if (project === undefined) throw new UsageError("Missing --repo");
       const outcome = await client.call(
         c.issueCreate,
         compact({
@@ -129,21 +129,21 @@ export const workCommands: Command[] = [
     summary: "List issues",
     options: {
       ...LIST_OPTIONS,
-      project: { ...MANY, short: "p", description: "Filter by project" },
+      repo: { ...MANY, short: "p", aliases: ["project"], description: "Filter by repo" },
       status: { ...MANY, description: "Filter by status" },
       assignee: { ...MANY, description: "Filter by assignee, none for unassigned" },
       label: { ...MANY, short: "l", description: "Filter by label" },
       priority: { ...MANY, description: "Filter by priority" },
     },
     examples: [
-      "octo issue list ready:true -p OCT",
+      "octo issue list ready:true --repo OCT",
       'octo issue list "status:todo,in_progress -assignee:none"',
     ],
     ops: [c.issueList.name],
     async run({ client, out }, args) {
       const outcome = await client.call(
         c.issueList,
-        listInput(args, ["project", "status", "assignee", "label", "priority"]),
+        listInput(args, ["repo", "status", "assignee", "label", "priority"]),
       );
       out.result(outcome, () => r.renderIssues(outcome.data));
     },
@@ -234,10 +234,13 @@ export const workCommands: Command[] = [
     path: ["milestone", "list"],
     usage: "[QUERY]",
     summary: "List milestones",
-    options: { ...LIST_OPTIONS, project: { ...MANY, short: "p", description: "Filter by project" } },
+    options: {
+      ...LIST_OPTIONS,
+      repo: { ...MANY, short: "p", aliases: ["project"], description: "Filter by repo" },
+    },
     ops: [c.milestoneList.name],
     async run({ client, out }, args) {
-      const outcome = await client.call(c.milestoneList, listInput(args, ["project"]));
+      const outcome = await client.call(c.milestoneList, listInput(args, ["repo"]));
       out.result(outcome, () => r.renderMilestones(outcome.data));
     },
   },
@@ -247,12 +250,12 @@ export const workCommands: Command[] = [
     summary: "List ideas",
     options: {
       ...LIST_OPTIONS,
-      project: { ...MANY, short: "p", description: "Filter by project" },
+      repo: { ...MANY, short: "p", aliases: ["project"], description: "Filter by repo" },
       status: { ...MANY, description: "Filter by status" },
     },
     ops: [c.ideaList.name],
     async run({ client, out }, args) {
-      const outcome = await client.call(c.ideaList, listInput(args, ["project", "status"]));
+      const outcome = await client.call(c.ideaList, listInput(args, ["repo", "status"]));
       out.result(outcome, () => r.renderIdeas(outcome.data));
     },
   },

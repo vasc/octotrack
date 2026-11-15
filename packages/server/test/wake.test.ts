@@ -285,9 +285,7 @@ describe("a wake that runs past its deadline (fourth audit, A1)", () => {
       },
     });
     await dispatcher.dispatch();
-    expect(stopsDuringRun).toEqual([
-      { name: "panel", wake: { pid: 4242, since: "2026-11-14T09:20:00.000Z" } },
-    ]);
+    expect(stopsDuringRun).toEqual([{ name: "panel", woken: true }]);
     const agent = tracker.call(c.agentList, {}, dev).find((item) => item.name === "panel");
     expect([agent?.state, agent?.line, agent?.wakeError]).toEqual(["asleep", line.ref, null]);
     const events = tracker.call(c.feedList, { query: "event:agent.wake_ended,agent.gone" }, dev).events;
@@ -325,5 +323,181 @@ describe("a wake that runs past its deadline (fourth audit, A1)", () => {
     }
     if (alive) process.kill(session, "SIGKILL");
     expect(alive).toBe(false);
+  });
+});
+
+describe("wakes the server settles (fifth audit, B1, B3, B10)", () => {
+  const DEV = { actor: "dev", channel: "dashboard" } as const;
+  const PANEL = { actor: "panel", channel: "cli" } as const;
+  const SERVER = { actor: "octotrack", channel: "cli", system: true } as const;
+
+  /** Waits for what a dispatch started, up to a second, and says whether it came. */
+  async function until(done: () => boolean): Promise<boolean> {
+    const deadline = Date.now() + 1000;
+    while (!done() && Date.now() < deadline) await Bun.sleep(5);
+    return done();
+  }
+
+  /** An asleep agent on a working line with a Tell waiting, and processes the test says are alive or not. */
+  function world(living: number[] = []) {
+    let now = "2026-11-14T09:00:00.000Z";
+    const tracker = new Tracker(openSqlite(":memory:"), () => now);
+    tracker.call(c.projectCreate, { key: "PANEL", name: "Panel" }, DEV);
+    const line = tracker.call(
+      c.lineAdd,
+      { title: "Enclosure", doneWhen: "Done.", repos: ["PANEL"], where: "working" },
+      DEV,
+    );
+    tracker.call(c.agentRegister, { wake: "test:panel-session", repo: "PANEL" }, PANEL);
+    tracker.call(c.lineTake, { ref: line.ref }, PANEL);
+    now = "2026-11-14T09:20:00.000Z";
+    tracker.call(c.lineTell, { line: line.ref, body: "Look at the base." }, DEV);
+    const alive = new Set(living);
+    const ended: number[] = [];
+    /** Each run's process, which runs until the test or an end lets it finish. */
+    const runs: { pid: number; finish: (result: WakeResult) => void }[] = [];
+    let pid = 4000;
+    const dispatcher = createWakeDispatcher({
+      tracker,
+      adapters: ADAPTERS,
+      clock: () => Date.parse(now),
+      processes: {
+        async alive(id) {
+          return alive.has(id);
+        },
+        end(id) {
+          ended.push(id);
+          alive.delete(id);
+          runs.find((run) => run.pid === id)?.finish({ exitCode: 143, stderr: "" });
+        },
+      },
+      run: (_argv, _env, onSpawn) =>
+        new Promise<WakeResult>((finish) => {
+          pid += 1;
+          alive.add(pid);
+          runs.push({ pid, finish });
+          onSpawn?.(pid);
+        }),
+    });
+    const agent = () => tracker.call(c.agentList, {}, DEV).find((item) => item.name === "panel");
+    const events = (query: string) =>
+      tracker.call(c.feedList, { query }, DEV).events.map((event) => event.summary);
+    return {
+      tracker,
+      line,
+      dispatcher,
+      runs,
+      ended,
+      agent,
+      events,
+      later(minutes: number) {
+        now = new Date(Date.parse(now) + minutes * 60_000).toISOString();
+      },
+    };
+  }
+
+  test("B1: an agent whose wake runs is not woken again by what is told it meanwhile", async () => {
+    const w = world();
+    const stop = w.dispatcher.listen();
+    void w.dispatcher.dispatch();
+    expect(await until(() => w.runs.length === 1)).toBe(true);
+    w.later(16);
+    w.tracker.call(c.lineTell, { line: w.line.ref, body: "And the lid." }, DEV);
+    w.tracker.call(c.lineTell, { line: w.line.ref, body: "And the hinge." }, DEV);
+    await Bun.sleep(50);
+    expect(w.runs).toHaveLength(1);
+    w.runs[0]?.finish({ exitCode: 0, stderr: "" });
+    // Ended, what was told meanwhile wakes it again.
+    expect(await until(() => w.runs.length === 2)).toBe(true);
+    w.runs[1]?.finish({ exitCode: 0, stderr: "" });
+    stop();
+    await w.dispatcher.settled();
+  });
+
+  test("B1: a wake a restart left past its deadline is ended at start, and its session woken to carry on", async () => {
+    const w = world([4242]);
+    w.tracker.call(c.agentWoken, { name: "panel" }, SERVER);
+    w.tracker.call(c.agentWoken, { name: "panel", pid: 4242 }, SERVER);
+    w.later(45);
+    void w.dispatcher.dispatch();
+    expect(await until(() => w.runs.length === 1)).toBe(true);
+    expect(w.ended).toEqual([4242]);
+    expect(w.events("event:agent.wake_ended")).toEqual([
+      `panel's wake ran past its deadline, so its process was ended. It keeps ${w.line.ref}, and is woken again to carry on.`,
+    ]);
+    w.runs[0]?.finish({ exitCode: 0, stderr: "" });
+    await w.dispatcher.settled();
+  });
+
+  test("B1: one a restart left within its deadline is watched: not woken again, and ended once its deadline comes", async () => {
+    const w = world([4242]);
+    w.tracker.call(c.agentWoken, { name: "panel" }, SERVER);
+    w.tracker.call(c.agentWoken, { name: "panel", pid: 4242 }, SERVER);
+    w.later(10);
+    w.tracker.call(c.lineTell, { line: w.line.ref, body: "And the lid." }, DEV);
+    await w.dispatcher.dispatch();
+    expect([w.ended, w.runs.length]).toEqual([[], 0]);
+    w.later(21);
+    void w.dispatcher.dispatch();
+    // Ended at its deadline, it is woken again to carry on, with the Tell it had not read.
+    expect(await until(() => w.runs.length === 1)).toBe(true);
+    expect(w.ended).toEqual([4242]);
+    w.runs[0]?.finish({ exitCode: 0, stderr: "" });
+    await w.dispatcher.settled();
+  });
+
+  test("B1: one a restart left whose process has ended since is recorded as ended, and nothing is killed", async () => {
+    const w = world();
+    w.tracker.call(c.agentWoken, { name: "panel" }, SERVER);
+    w.tracker.call(c.agentWoken, { name: "panel", pid: 4242 }, SERVER);
+    w.later(5);
+    await w.dispatcher.dispatch();
+    expect(w.ended).toEqual([]);
+    expect(w.tracker.call(c.agentWaking, {}, SERVER)).toEqual([]);
+    // The Tell came before that wake, which read it.
+    expect(w.runs).toHaveLength(0);
+  });
+
+  test("B3: a wake killed at its deadline is followed by one that tells its session to carry on", async () => {
+    const w = world();
+    const first = w.dispatcher.dispatch();
+    expect(await until(() => w.runs.length === 1)).toBe(true);
+    w.later(30);
+    w.runs[0]?.finish({ exitCode: 124, stderr: "Killed", timedOut: true });
+    await first;
+    void w.dispatcher.dispatch();
+    expect(await until(() => w.runs.length === 2)).toBe(true);
+    expect(w.agent()?.state).toBe("asleep");
+    w.runs[1]?.finish({ exitCode: 0, stderr: "" });
+    await w.dispatcher.settled();
+  });
+
+  test("B10: Stop ends a running wake by itself, with no runner set up, and says so", async () => {
+    const w = world();
+    const stop = w.dispatcher.listen();
+    void w.dispatcher.dispatch();
+    expect(await until(() => w.runs.length === 1)).toBe(true);
+    const pid = w.runs[0]?.pid ?? 0;
+    w.tracker.call(c.agentStop, { name: "panel" }, DEV);
+    await w.dispatcher.settled();
+    expect(w.ended).toEqual([pid]);
+    expect(w.agent()?.state).toBe("stopped");
+    expect(w.events("event:agent.wake_ended,agent.gone")).toEqual([
+      "panel's wake was ended, as the developer stopped it",
+    ]);
+    expect(w.tracker.call(c.agentWaking, {}, SERVER)).toEqual([]);
+    stop();
+  });
+
+  test("B10: Stop ends a wake a restart left running too", async () => {
+    const w = world([4242]);
+    w.tracker.call(c.agentWoken, { name: "panel" }, SERVER);
+    w.tracker.call(c.agentWoken, { name: "panel", pid: 4242 }, SERVER);
+    w.tracker.call(c.agentStop, { name: "panel" }, DEV);
+    await w.dispatcher.dispatch();
+    expect(w.ended).toEqual([4242]);
+    expect(w.events("event:agent.wake_ended")).toEqual([
+      "panel's wake was ended, as the developer stopped it",
+    ]);
   });
 });

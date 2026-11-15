@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { z } from "zod";
 import type { Contract } from "../src/contracts.ts";
 import { contracts as c } from "../src/contracts.ts";
+import { migrate } from "../src/db/migrations.ts";
 import { OctoError } from "../src/errors.ts";
 import type { Caller } from "../src/tracker.ts";
 import { Tracker } from "../src/tracker.ts";
@@ -252,6 +253,22 @@ describe("the developer's and the server's names are not agents' names", () => {
       "PANEL",
     ]);
     expect(w.as(w.agent("old agent"), c.agentRegister, {}).name).toBe("old agent");
+  });
+
+  test("rows an early release made for the server's own callers are not agents, and are not listed", () => {
+    // Early releases recorded every caller as seen, the server's included, so a live database has rows for them.
+    const driver = memoryDriver();
+    migrate(driver, 24);
+    for (const name of ["octotrack", "github", "panel"]) {
+      driver.run("INSERT INTO agents (name, firstSeenAt, lastSeenAt) VALUES (?, ?, ?)", [
+        name,
+        "2026-11-14T08:59:00.000Z",
+        "2026-11-14T08:59:00.000Z",
+      ]);
+    }
+    const tracker = new Tracker(driver, () => "2026-11-14T09:00:00.000Z");
+    const roster = tracker.call(c.agentList, {}, { actor: "dev", channel: "dashboard" });
+    expect(roster.map((agent) => [agent.name, agent.state])).toEqual([["panel", "running"]]);
   });
 });
 
@@ -791,6 +808,28 @@ describe("agents write only to the line they are on, the rest of it (fourth audi
     expect(
       w.as(w.owner, c.heldWithdraw, { refs: [task], why: "Found it in the datasheet" }).withdrawn,
     ).toEqual([task]);
+  });
+
+  test("issue update and claim: an agent cannot reopen or take a task the developer closed (fifth audit, B12)", () => {
+    const w = world();
+    w.as(w.dev, c.placeAdd, { name: "the bench" });
+    const task = w.as(w.owner, c.taskFile, {
+      title: "Measure",
+      place: "the bench",
+      outcome: "Width in mm",
+    }).ref;
+    w.as(w.dev, c.taskCant, { ref: task, why: "No calipers" });
+    for (const change of [{ status: "todo" }, { status: "done" }, { assignee: "panel" }] as const) {
+      const refusal = w.refused(() => w.as(w.owner, c.issueUpdate, { refs: [task], ...change }));
+      expect(refusal.code).toBe("forbidden");
+      expect(refusal.hint).toContain("octo task file");
+    }
+    expect(w.refused(() => w.as(w.owner, c.issueClaim, { refs: [task], force: true })).code).toBe(
+      "forbidden",
+    );
+    const kept = w.as(w.dev, c.issueList, { query: `ref:${task}` })[0]?.issue;
+    expect([kept?.status, kept?.assignee, kept?.result]).toEqual(["cancelled", "dev", "No calipers"]);
+    expect(w.as(w.dev, c.homeShow, {}).counts.toDo).toBe(0);
   });
 
   test("issue release: an agent cannot move another line's unclaimed work back to todo", () => {

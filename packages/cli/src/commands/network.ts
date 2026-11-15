@@ -120,16 +120,17 @@ export const networkCommands: Command[] = [
       state: { ...MANY, description: "Filter by state" },
       checks: { ...MANY, description: "Filter by checks" },
       review: { ...MANY, description: "Filter by review" },
-      repo: { ...MANY, description: "Filter by repo" },
-      project: { ...MANY, short: "p", description: "Filter by project" },
+      repo: {
+        ...MANY,
+        short: "p",
+        aliases: ["project"],
+        description: "Filter by repo: its key (PANEL) or its GitHub owner/name",
+      },
     },
     examples: ["octo pr list --state open --checks failing"],
     ops: [c.prList.name],
     async run({ client, out }, args) {
-      const outcome = await client.call(
-        c.prList,
-        listInput(args, ["state", "checks", "review", "repo", "project"]),
-      );
+      const outcome = await client.call(c.prList, listInput(args, ["state", "checks", "review", "repo"]));
       out.result(outcome, () => r.renderPrs(outcome.data));
     },
   },
@@ -214,7 +215,7 @@ export const networkCommands: Command[] = [
     summary: "Post a status update to the feed, optionally about an item",
     options: {
       on: { ...STRING, description: "The item it is about" },
-      project: { ...STRING, short: "p", description: "Project key" },
+      repo: { ...STRING, short: "p", aliases: ["project"], description: "Repo key" },
       level: { ...STRING, description: "info, progress, warning, blocker, done" },
     },
     examples: ['octo post "Retry works, adding tests" --on OCT-4 --level progress'],
@@ -225,7 +226,7 @@ export const networkCommands: Command[] = [
         compact({
           body: args.requirePositional(0, "text"),
           target: args.str("on"),
-          project: args.str("project"),
+          project: args.str("repo"),
           level: args.str("level"),
         }),
       );
@@ -249,14 +250,14 @@ export const networkCommands: Command[] = [
     summary: "What is out of date and needs an update or a check. Open only, unless the query names a status",
     options: {
       ...LIST_OPTIONS,
-      project: { ...MANY, short: "p", description: "Filter by project" },
+      repo: { ...MANY, short: "p", aliases: ["project"], description: "Filter by repo" },
       assignee: { ...MANY, description: "Filter by agent; none for unassigned" },
       rule: { ...MANY, description: "Filter by rule" },
     },
-    examples: ["octo drift list -p OCT", "octo drift list status:verified"],
+    examples: ["octo drift list --repo OCT", "octo drift list status:verified"],
     ops: [c.driftList.name],
     async run({ client, out }, args) {
-      const outcome = await client.call(c.driftList, listInput(args, ["project", "assignee", "rule"]));
+      const outcome = await client.call(c.driftList, listInput(args, ["repo", "assignee", "rule"]));
       out.result(outcome, () => r.renderDriftList(outcome.data));
     },
   },
