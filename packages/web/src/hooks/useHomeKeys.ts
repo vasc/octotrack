@@ -1,6 +1,6 @@
 import type { HomeView } from "@octotrack/core/schemas";
 import { type RefObject, useMemo } from "react";
-import { firstOf, isQuestion, lineOf } from "../lib/focus.ts";
+import { firstOf, focusItem, isQuestion, lineOf } from "../lib/focus.ts";
 import { openEntity } from "../lib/router.ts";
 import type { HotkeyMap } from "./useHotkeys.ts";
 
@@ -13,9 +13,7 @@ const ENTER = "Enter";
  * the key presses the button it names, as a click would.
  */
 function pressChoice(page: HTMLElement | null, focus: string, number: string): void {
-  const item = [...(page?.querySelectorAll<HTMLElement>("[data-focus-ref]") ?? [])].find(
-    (element) => element.dataset.focusRef === focus,
-  );
+  const item = page === null ? undefined : focusItem(page, focus);
   const button = item?.querySelector(`[data-choice="${number}"]`);
   if (button instanceof HTMLButtonElement && !button.disabled) button.click();
 }

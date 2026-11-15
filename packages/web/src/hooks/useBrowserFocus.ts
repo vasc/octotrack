@@ -1,3 +1,4 @@
+import { focusItem } from "../lib/focus.ts";
 import { type RefObject, useEffect } from "react";
 
 function isTyping(element: HTMLElement): boolean {
@@ -11,7 +12,8 @@ function isTyping(element: HTMLElement): boolean {
 
 function focusRefOf(target: EventTarget | null): string | null {
   if (!(target instanceof HTMLElement)) return null;
-  return target.closest<HTMLElement>("[data-focus-ref]")?.dataset.focusRef ?? null;
+  const item = target.closest("[data-focus-ref]");
+  return item instanceof HTMLElement ? (item.dataset.focusRef ?? null) : null;
 }
 
 /**
@@ -33,9 +35,7 @@ export function useBrowserFocus(
     if (moved === 0 || focus === null || container.current === null) return;
     const active = document.activeElement;
     if (active instanceof HTMLElement && isTyping(active)) return;
-    const target = [...container.current.querySelectorAll<HTMLElement>("[data-focus-ref]")].find(
-      (element) => element.dataset.focusRef === focus,
-    );
+    const target = focusItem(container.current, focus);
     if (target !== undefined && !target.contains(active)) target.focus();
   }, [container, moved]);
 

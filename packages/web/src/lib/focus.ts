@@ -202,3 +202,10 @@ export function stepLineFocus(home: HomeView, focus: string | null, forward: boo
   if (above) return lines[0] ?? null;
   return forward ? null : (lines.at(-1) ?? null);
 }
+
+/** The element on the page drawn for an item in home's focus order, found by its ref, as the browser holds it. */
+export function focusItem(root: ParentNode, ref: string): HTMLElement | undefined {
+  return [...root.querySelectorAll("[data-focus-ref]")]
+    .filter((element) => element instanceof HTMLElement)
+    .find((element) => element.dataset.focusRef === ref);
+}
