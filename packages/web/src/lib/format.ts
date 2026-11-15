@@ -18,6 +18,15 @@ export function sinceText(iso: string, now: number = Date.now()): string {
   return ago === iso.slice(0, 10) ? `on ${ago}` : `${ago} ago`;
 }
 
+const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+/** A day in words that stand after "since" or "on": today, yesterday, a weekday within the week, else the date. */
+export function dayWord(iso: string, now: number = Date.now()): string {
+  const label = dayLabel(iso, now);
+  if (label === "Today" || label === "Yesterday") return label.toLowerCase();
+  return now - Date.parse(iso) < 7 * DAY ? (WEEKDAY_NAMES[new Date(iso).getDay()] ?? label) : label;
+}
+
 export function dayLabel(iso: string, now: number = Date.now()): string {
   const day = iso.slice(0, 10);
   if (day === new Date(now).toISOString().slice(0, 10)) return "Today";

@@ -59,7 +59,7 @@ export function AgentsPage() {
                   key={agent.name}
                   agent={agent}
                   {...(agent.repo === null ? {} : { repo: h.repoName(agent.repo) })}
-                  {...facts(agent.line)}
+                  {...facts(agent.line ?? agent.start?.line ?? agent.lastLine)}
                   onStop={(name) => choices.make(contracts.agentStop.name, { name }, `Stopping ${name}`)}
                   onLift={(name) =>
                     choices.make(contracts.agentLift.name, { name }, `Lifting ${name}'s stop`)

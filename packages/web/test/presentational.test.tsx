@@ -1120,7 +1120,66 @@ describe("agents and first run", () => {
     state: "asleep",
     line: "L-2",
     role: "owner",
+    lastLine: null,
+    start: null,
     ...overrides,
+  });
+
+  test("AgentRosterRow shows a session started for a line that never ran a command, as E-Agents does", () => {
+    const now = Date.parse("2026-11-14T12:00:00.000Z");
+    const view = render(
+      <table>
+        <tbody>
+          <AgentRosterRow
+            agent={agent({
+              name: "trips.2",
+              line: null,
+              role: null,
+              wakeAddress: null,
+              startedBy: "octotrack",
+              state: "gone",
+              start: {
+                line: "L-9",
+                state: "failed",
+                attempts: 3,
+                since: "2026-11-10T09:00:00.000Z",
+                exitCode: 1,
+              },
+            })}
+            lineTitle="South Tyrol trip"
+            now={now}
+            onStop={() => {}}
+            onLift={() => {}}
+            onRelease={() => {}}
+          />
+        </tbody>
+      </table>,
+    );
+    const row = within(view.getByRole("row", { name: "trips.2" }));
+    row.getByRole("button", { name: "L-9" });
+    row.getByText(/South Tyrol trip/);
+    row.getByText(/, started for it/);
+    row.getByText("never");
+    row.getByText("retried since Tuesday, each exits at once (exit 1)");
+  });
+
+  test("AgentRosterRow names the line a gone agent last owned", () => {
+    const view = render(
+      <table>
+        <tbody>
+          <AgentRosterRow
+            agent={agent({ name: "roadtrip", line: null, role: null, state: "gone", lastLine: "L-9" })}
+            lineTitle="South Tyrol trip"
+            onStop={() => {}}
+            onLift={() => {}}
+            onRelease={() => {}}
+          />
+        </tbody>
+      </table>,
+    );
+    const row = within(view.getByRole("row", { name: "roadtrip" }));
+    row.getByRole("button", { name: "L-9" });
+    row.getByText(/, last owner/);
   });
 
   test("AgentRosterRow says where an agent is and how to reach it, and offers Stop or Lift", () => {
