@@ -368,6 +368,13 @@ const MIGRATIONS: readonly Migration[] = [
   `
   ALTER TABLE runner_starts ADD COLUMN cause TEXT;
   `,
+  // Early releases recorded every caller as seen, the server's own included, so a database from then has agent rows for
+  // the developer's, Octotrack's and GitHub sync's names. Those were never agents: the roster listed them as running.
+  `
+  DELETE FROM line_claims WHERE lower(agent) IN ('dev', 'octotrack', 'github');
+  DELETE FROM notices WHERE lower(agent) IN ('dev', 'octotrack', 'github');
+  DELETE FROM agents WHERE lower(name) IN ('dev', 'octotrack', 'github');
+  `,
 ];
 
 const UserVersion = z.object({ user_version: z.number().int() });

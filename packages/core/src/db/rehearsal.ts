@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { RESERVED_NAMES } from "../agents/state.ts";
 import { contracts } from "../contracts.ts";
 import type { Tracker } from "../tracker.ts";
 import type { SqlDriver } from "./driver.ts";
@@ -53,6 +54,23 @@ function count(driver: SqlDriver, table: string, present: Set<string>): number {
   return Count.parse(driver.all(`SELECT COUNT(*) AS count FROM ${table}`))[0]?.count ?? 0;
 }
 
+/**
+ * Agents, leaving out rows an early release made for the developer's and the server's own names: those were never
+ * agents, and a migration removes them.
+ */
+function countAgents(driver: SqlDriver, present: Set<string>): number {
+  if (!present.has("agents")) return 0;
+  const reserved = [...RESERVED_NAMES];
+  return (
+    Count.parse(
+      driver.all(
+        `SELECT COUNT(*) AS count FROM agents WHERE lower(name) NOT IN (${reserved.map(() => "?").join(", ")})`,
+        reserved,
+      ),
+    )[0]?.count ?? 0
+  );
+}
+
 function totals(driver: SqlDriver): Omit<Inventory, "refs"> {
   const present = tables(driver);
   const counters = present.has("counters")
@@ -72,7 +90,7 @@ function totals(driver: SqlDriver): Omit<Inventory, "refs"> {
   return {
     events: count(driver, "events", present),
     links: count(driver, "links", present),
-    agents: count(driver, "agents", present),
+    agents: countAgents(driver, present),
     counters,
     openDriftByRule,
   };
