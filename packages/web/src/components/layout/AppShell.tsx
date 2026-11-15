@@ -2,6 +2,7 @@ import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
 import { useBootstrap } from "../../hooks/useBootstrap.ts";
 import { type HotkeyMap, KeysHeldProvider, useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useLiveUpdates } from "../../hooks/useLiveUpdates.ts";
+import { usePanelFocus } from "../../hooks/usePanelFocus.ts";
 import { useSeen } from "../../hooks/useSeen.ts";
 import { useTopBar } from "../../hooks/useTopBar.ts";
 import { backEntity, navigate, useRoute } from "../../lib/router.ts";
@@ -27,6 +28,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const entity = params.get("ref");
   // The picker is the browser's to focus; g p reaches it through its element.
   const atPicker = useRef<HTMLSelectElement>(null);
+  const panel = useRef<HTMLElement>(null);
+  usePanelFocus(panel, entity);
   const { at, setAt } = bar;
   const keys = useMemo((): HotkeyMap => {
     // Esc closes what is on top: the key list, then a panel (back to the one it was opened from, if any), then the
@@ -66,7 +69,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <PendingChoices />
         </main>
         {entity === null ? null : (
-          <aside className="panel" aria-label={entity}>
+          <aside className="panel" aria-label={entity} ref={panel} tabIndex={-1}>
             <EntityPanel key={entity} entityRef={entity} />
           </aside>
         )}
