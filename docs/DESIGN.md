@@ -540,6 +540,10 @@ Decisions made from that:
     line break in a value forged rows in the "- Name: value" list, so an agent read a name twice; a name with `=` could
     be filed but never answered from the CLI, which splits `--value` at the first `=`; and one with `:` read as another
     name and value.
+  - _An agent withdrawing a task is its own event,_ `task.withdrawn`, naming the agent and its why, and puts nothing in
+    the line's inbox; the task closes as cancelled with "Withdrawn: why" as its result. _Why:_ it was recorded and
+    delivered as the developer's Can't do it, so the log and the line read as the developer turning down work they
+    never saw.
 - **Departures, each for a reason.**
   - _The pages from before lines are gone:_ Decisions, Pull requests, Drift, Issues and Repos. Nothing linked to them
     any more, and the issues page changed status through a select with no Undo. Questions are answered on home, a

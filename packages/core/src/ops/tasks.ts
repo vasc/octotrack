@@ -157,39 +157,44 @@ function outcomeOf(
   };
 }
 
-function closeTask(
-  ctx: Ctx,
-  task: Issue,
-  status: "done" | "cancelled",
-  result: string,
-  outcome: string = result,
-): Issue {
+/**
+ * How a task closes: Done and Can't do it are the developer's, and go to whoever holds the issue it frees; withdrawn is
+ * an agent saying it no longer stands, which tells nobody anything they did not already know.
+ */
+type TaskEnd = "done" | "cant" | "withdrawn";
+
+function closeTask(ctx: Ctx, task: Issue, end: TaskEnd, result: string, outcome: string = result): Issue {
   // The line's inbox and the log say it on one line.
   const said = oneLine(outcome);
+  const status = end === "done" ? "done" : "cancelled";
   const changes = applyPatch(ctx, "issues", task.ref, task, { status, result, closedAt: ctx.now });
   // The half-written outcome, and any half-written reason it cannot be done, are answered now.
   ctx.sql.run("DELETE FROM drafts WHERE key IN (?, ?)", [`task:${task.ref}`, `task-why:${task.ref}`]);
-  const kind = status === "done" ? "task_done" : "task_cant";
   const frees = freedBy(ctx, task.ref);
-  if (task.line !== null) {
+  if (task.line !== null && end !== "withdrawn") {
     addToInbox(
       ctx,
       task.line,
-      kind,
+      end === "done" ? "task_done" : "task_cant",
       task.ref,
       frees,
-      status === "done"
+      end === "done"
         ? `${task.ref} done: ${said} ("${task.title}")`
         : `${task.ref} could not be done: ${said} ("${task.title}")`,
     );
   }
   emit(ctx, {
-    type: status === "done" ? "task.done" : "task.cant",
+    type: end === "done" ? "task.done" : end === "cant" ? "task.cant" : "task.withdrawn",
     kind: "issue",
     ref: task.ref,
     project: task.project,
     line: task.line,
-    summary: status === "done" ? `${task.ref} done: ${said}` : `${task.ref} could not be done: ${said}`,
+    summary:
+      end === "done"
+        ? `${task.ref} done: ${said}`
+        : end === "cant"
+          ? `${task.ref} could not be done: ${said}`
+          : `${task.ref} withdrawn by ${ctx.actor}: ${said}`,
     attrs: { status },
     changes,
   });
@@ -383,7 +388,7 @@ export const taskOps = [
 
   bind(contracts.taskCant, (ctx, input) => {
     requireDeveloper(ctx, "say a task cannot be done");
-    return closeTask(ctx, requireTask(ctx, input.ref), "cancelled", input.why);
+    return closeTask(ctx, requireTask(ctx, input.ref), "cant", input.why);
   }),
 
   bind(contracts.placeList, (ctx) => places(ctx)),
@@ -462,13 +467,10 @@ export const taskOps = [
         );
       }
       if (entity.kind === "decision") withdrawQuestion(ctx, entity.value.ref, input.why);
-      else
-        closeTask(
-          ctx,
-          requireTask(ctx, entity.value.ref),
-          "cancelled",
-          input.why ?? "Withdrawn: it no longer stands",
-        );
+      else {
+        const why = input.why ?? "it no longer stands";
+        closeTask(ctx, requireTask(ctx, entity.value.ref), "withdrawn", `Withdrawn: ${why}`, why);
+      }
       withdrawn.push(entity.value.ref);
     }
     return { withdrawn };
