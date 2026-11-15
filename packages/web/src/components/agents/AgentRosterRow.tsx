@@ -1,5 +1,6 @@
 import type { AgentView } from "@octotrack/core/schemas";
 import { openEntity } from "../../lib/router.ts";
+import { dayWord } from "../../lib/format.ts";
 import { TimeAgo } from "../ui/TimeAgo.tsx";
 
 /** What an agent is doing now, in a few words, as E-Agents writes it. */
@@ -23,6 +24,24 @@ function nowText(agent: AgentView, waitsOnYou: boolean): string {
   }
 }
 
+/** How a session Octotrack started, which has run no command, went: E-Agents' "retried since Tuesday, each exits at once". */
+function startText(start: NonNullable<AgentView["start"]>, now: number): string {
+  const exit = start.exitCode === null ? "" : ` (exit ${start.exitCode})`;
+  switch (start.state) {
+    case "starting":
+    case "running":
+      return "starting";
+    case "failed":
+      return start.attempts > 1
+        ? `retried since ${dayWord(start.since, now)}, each exits at once${exit}`
+        : `exited at once${exit}`;
+    case "never_took":
+      return "ran but never took its line";
+    case "exited":
+      return `exited${exit}`;
+  }
+}
+
 /** The kind of session a wake address reaches, or none. */
 function wakeText(agent: AgentView): string {
   if (agent.wakeAddress === null) return "none";
@@ -38,6 +57,7 @@ export function AgentRosterRow({
   repo,
   lineTitle,
   waitsOnYou = false,
+  now = Date.now(),
   onStop,
   onLift,
   onRelease,
@@ -49,33 +69,42 @@ export function AgentRosterRow({
   lineTitle?: string;
   /** Its line has questions or tasks waiting on the developer. */
   waitsOnYou?: boolean;
+  now?: number;
   onStop(name: string): void;
   onLift(name: string): void;
   onRelease(name: string): void;
 }) {
+  // The line it is on; else the one it was started for, or the one it last owned, each said as such.
+  const shown = agent.line ?? agent.start?.line ?? agent.lastLine;
+  const relation =
+    agent.line !== null
+      ? agent.role === null
+        ? ""
+        : `, ${agent.role}`
+      : agent.start !== null
+        ? ", started for it"
+        : ", last owner";
   return (
     <tr aria-label={agent.name} data-state={agent.state}>
       <th scope="row">{agent.name}</th>
       <td className="mono">{repo ?? agent.repo ?? "none"}</td>
       <td>
-        {agent.line === null ? (
+        {shown === null ? (
           <span className="muted">none</span>
         ) : (
           <>
-            <button type="button" className="line-link mono" onClick={() => openEntity(agent.line ?? "")}>
-              {agent.line}
+            <button type="button" className="line-link mono" onClick={() => openEntity(shown)}>
+              {shown}
             </button>
             {lineTitle === undefined ? null : <> {lineTitle}</>}
-            {agent.role === null ? null : <span className="muted">, {agent.role}</span>}
+            <span className="muted">{relation}</span>
           </>
         )}
       </td>
-      <td className="muted">
-        <TimeAgo iso={agent.lastSeenAt} />
-      </td>
+      <td className="muted">{agent.start === null ? <TimeAgo iso={agent.lastSeenAt} /> : "never"}</td>
       <td className="muted">{wakeText(agent)}</td>
       <td className="agent-now">
-        {nowText(agent, waitsOnYou)}
+        {agent.start === null ? nowText(agent, waitsOnYou) : startText(agent.start, now)}
         {agent.note === null ? null : <span className="agent-note">{agent.note}</span>}
       </td>
       <td className="agent-actions">

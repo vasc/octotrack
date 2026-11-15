@@ -458,7 +458,23 @@ export const AgentView = Agent.extend({
   state: AgentState,
   line: z.string().nullable(),
   role: ClaimRole.nullable(),
+  /** The line it last owned, once it holds none: what a gone or quiet agent was on. */
+  lastLine: z.string().nullable(),
+  /**
+   * For a session Octotrack started that has not run a command since: its latest start, the line it is for, how many
+   * times it was tried and since when, and how it last ended.
+   */
+  start: z
+    .object({
+      line: z.string(),
+      state: z.enum(["starting", "running", "failed", "never_took", "exited"]),
+      attempts: z.number().int(),
+      since: z.string(),
+      exitCode: z.number().int().nullable(),
+    })
+    .nullable(),
 });
+
 export type AgentView = z.infer<typeof AgentView>;
 
 export const NoticeKind = z.enum([

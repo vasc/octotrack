@@ -1059,3 +1059,46 @@ describe("a wake that runs past its deadline (fourth audit, A1)", () => {
     expect(w.tracker.call(c.feedList, { query: "event:agent.gone" }, w.dev).events).toEqual([]);
   });
 });
+
+describe("the roster's start attempts (fourth audit A22)", () => {
+  test("an agent Octotrack started that has run no command says which line it was started for, how often, since when", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    const other = w.line("Mount");
+    w.later(1);
+    const first = "2026-11-14T09:01:00.000Z";
+    w.tracker.call(c.runnerStart, { line: line.ref, repo: "PANEL", worktree: "/wt/panel.1" }, w.runner);
+    w.tracker.call(c.runnerExited, { name: "panel.1", code: 1, output: "claude: not logged in" }, w.runner);
+    w.later(3);
+    w.tracker.call(c.runnerStart, { line: line.ref, repo: "PANEL", worktree: "/wt/panel.1" }, w.runner);
+    w.tracker.call(c.runnerExited, { name: "panel.1", code: 1, output: "claude: not logged in" }, w.runner);
+    const started = w.tracker.call(
+      c.runnerStart,
+      { line: other.ref, repo: "PANEL", worktree: "/wt/panel.2" },
+      w.runner,
+    );
+    w.later(1);
+    w.tracker.call(c.agentRegister, { repo: "PANEL" }, w.session(started.name));
+    const roster = w.tracker.call(c.agentList, {}, w.dev);
+    expect(roster.find((agent) => agent.name === "panel.1")?.start).toEqual({
+      line: line.ref,
+      state: "failed",
+      attempts: 2,
+      since: first,
+      exitCode: 1,
+    });
+    // One that ran a command is at work as an agent: its start is history.
+    expect(roster.find((agent) => agent.name === started.name)?.start).toBeNull();
+  });
+
+  test("a gone agent's view names the line it last owned", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    const panel = w.session("panel");
+    w.tracker.call(c.agentRegister, { repo: "PANEL" }, panel);
+    w.tracker.call(c.lineTake, { ref: line.ref }, panel);
+    w.tracker.call(c.lineRelease, {}, panel);
+    const view = w.tracker.call(c.agentList, {}, w.dev).find((agent) => agent.name === "panel");
+    expect([view?.line, view?.lastLine]).toEqual([null, line.ref]);
+  });
+});

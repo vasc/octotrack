@@ -139,10 +139,10 @@ Home is one list: every line in the developer's order, with what each needs from
 
 ## Agents: `agents/`
 
-| Component        | Kind       | What it is                                                                                                                  |
-| ---------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `AgentsPage`     | Structural | The roster, then who is waiting now and what is registered                                                                  |
-| `AgentRosterRow` | Pure       | One agent: state, repo, line and role, last command, wake address; Stop or Lift; Release on a quiet agent that holds a line |
+| Component        | Kind       | What it is                                                                                                                                                                                                                 |
+| ---------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AgentsPage`     | Structural | The roster, then who is waiting now and what is registered                                                                                                                                                                 |
+| `AgentRosterRow` | Pure       | One agent: repo, its line (or the line it was started for, or last owned), last command, wake, what it is doing (a start that never ran a command: "retried since Tuesday, each exits at once"), and Stop, Release or Lift |
 
 ## The frame: `layout/`
 

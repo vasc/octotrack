@@ -3,6 +3,7 @@ import { suggest } from "../src/hooks/useSuggestions.ts";
 import { validateQuery } from "../src/hooks/useFilter.ts";
 import {
   dayLabel,
+  dayWord,
   filterTerm,
   humanize,
   sinceText,
@@ -345,5 +346,15 @@ describe("a line's place and its items, for the line panel", () => {
       "Telling whoever holds OCT-1: Try the 40 mm one",
     );
     expect(tellSummary("Enclosure's owner", "")).toBe("Nudging Enclosure's owner");
+  });
+});
+
+describe("dayWord", () => {
+  const now = Date.parse("2026-11-14T12:00:00.000Z");
+  test("today, yesterday, a weekday within the week, else the date", () => {
+    expect(dayWord("2026-11-14T08:00:00.000Z", now)).toBe("today");
+    expect(dayWord("2026-11-13T08:00:00.000Z", now)).toBe("yesterday");
+    expect(dayWord("2026-11-10T09:00:00.000Z", now)).toBe("Tuesday");
+    expect(dayWord("2026-10-01T09:00:00.000Z", now)).toBe("2026-10-01");
   });
 });
