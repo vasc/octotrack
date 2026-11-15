@@ -1,8 +1,7 @@
-import type { TaskOutcome } from "../../lib/tasks.ts";
 import type { Issue, Line } from "@octotrack/core/schemas";
+import type { ReactNode } from "react";
 import { askedText } from "../../lib/tasks.ts";
 import { FocusTarget } from "./FocusTarget.tsx";
-import { TaskItem } from "./TaskItem.tsx";
 
 /**
  * While you're here, from lines up next: tasks for this place that wait on lines not started yet, each with its
@@ -13,8 +12,7 @@ export function AtUpNext({
   lines,
   firstNumber,
   focus,
-  onTaskDone,
-  onTaskCant,
+  task: draw,
 }: {
   tasks: readonly Issue[];
   /** Up next, in order, to name each task's line and its number. */
@@ -22,8 +20,8 @@ export function AtUpNext({
   /** The number of the first up-next line on the list. */
   firstNumber: number;
   focus: string | null;
-  onTaskDone(task: Issue, outcome: TaskOutcome): void;
-  onTaskCant(task: Issue, why: string): void;
+  /** How a task is drawn, with its choices. */
+  task(task: Issue): ReactNode;
 }) {
   if (tasks.length === 0) return null;
   return (
@@ -39,7 +37,7 @@ export function AtUpNext({
                 {line === undefined ? "" : `${firstNumber + at} ${line.title}, up next · `}
                 {task.ref} · {askedText(task)}
               </p>
-              <TaskItem task={task} onDone={onTaskDone} onCant={onTaskCant} />
+              {draw(task)}
             </FocusTarget>
           );
         })}

@@ -4,6 +4,7 @@ import type { DropTarget } from "../../hooks/useDragOrder.ts";
 import type { HomeActions } from "../../hooks/useHome.ts";
 import { lineFocusRef, refOf, stepInRef } from "../../lib/focus.ts";
 import { AtPlaceItems } from "./AtPlaceItems.tsx";
+import { TaskItem } from "./TaskItem.tsx";
 import { HomeSection } from "./HomeSection.tsx";
 import { LineForYou } from "./LineForYou.tsx";
 import { LineForYouItem } from "./LineForYouItem.tsx";
@@ -98,7 +99,14 @@ export function WorkingSection({
                 onFocus={onFocus}
               />
               {at !== null ? (
-                <AtPlaceItems forYou={forYou} at={at} focus={focus} h={h} item={item} onFocus={onFocus} />
+                <AtPlaceItems
+                  forYou={forYou}
+                  at={at}
+                  focus={focus}
+                  task={(task) => <TaskItem task={task} onDone={h.taskDone} onCant={h.taskCant} />}
+                  item={item}
+                  onFocus={onFocus}
+                />
               ) : (
                 <LineForYou
                   forYou={forYou}

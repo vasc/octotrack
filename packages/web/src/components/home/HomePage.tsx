@@ -18,6 +18,7 @@ import { QuestionList } from "./QuestionList.tsx";
 import { RecordAnswers } from "./RecordAnswers.tsx";
 import { SpreadThin } from "./SpreadThin.tsx";
 import { WaitingSections } from "./WaitingSections.tsx";
+import { TaskItem } from "./TaskItem.tsx";
 import { WorkingSection } from "./WorkingSection.tsx";
 
 const NO_KEYS = {};
@@ -121,8 +122,7 @@ export function HomePage() {
               lines={home.upNext}
               firstNumber={home.working.length + 1}
               focus={focus}
-              onTaskDone={h.taskDone}
-              onTaskCant={h.taskCant}
+              task={(task) => <TaskItem task={task} onDone={h.taskDone} onCant={h.taskCant} />}
             />
           )}
           <WaitingSections
