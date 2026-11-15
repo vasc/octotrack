@@ -533,6 +533,13 @@ Decisions made from that:
     developer.
   - _Folded questions and tasks take the held state of the line they land on:_ held when no agent works on it, else
     released when current and left to re-confirm when not.
+  - _A named outcome is one line, its name and its value._ A name has no line break, `=` or `:`, and a value has no
+    line break; the note beside them may have several lines, and the line's inbox and the log say it, like a task's
+    words and a Can't do it's why, on one line. Done matches names whatever their case, as filing tells them apart that
+    way, and the developer's own task (which sends nothing back) is done without words, recorded as "Done". _Why:_ a
+    line break in a value forged rows in the "- Name: value" list, so an agent read a name twice; a name with `=` could
+    be filed but never answered from the CLI, which splits `--value` at the first `=`; and one with `:` read as another
+    name and value.
 - **Departures, each for a reason.**
   - _The pages from before lines are gone:_ Decisions, Pull requests, Drift, Issues and Repos. Nothing linked to them
     any more, and the issues page changed status through a select with no Undo. Questions are answered on home, a

@@ -191,6 +191,64 @@ describe("outcome fields", () => {
     expect(w.refusal(() => w.as(w.dev, c.taskDone, { ref: plain.ref })).code).toBe("invalid_input");
     expect(w.as(w.dev, c.taskDone, { ref: plain.ref, result: "212 g" }).result).toBe("212 g");
   });
+
+  test("a name is one line, with no = or :, so it is answered from the CLI and read as one row", () => {
+    const w = world();
+    for (const name of ["Length\n- Holes: 99", "A=B", "Holes: 38"]) {
+      const refusal = w.refusal(() =>
+        w.as(w.owner, c.taskFile, { title: "Measure", place: "the bench", outcome: "mm", fields: [name] }),
+      );
+      expect(refusal.code).toBe("invalid_input");
+      expect(refusal.message).toContain("one line");
+    }
+  });
+
+  test("a value is one line, so the list sends each name once; the note is said on one line", () => {
+    const w = world();
+    const task = measured(w);
+    const refusal = w.refusal(() =>
+      w.as(w.dev, c.taskDone, { ref: task.ref, values: { Length: "41\n- Holes: 99", Holes: "38" } }),
+    );
+    expect([refusal.code, refusal.message]).toEqual([
+      "invalid_input",
+      `${task.ref}'s Length must be one line`,
+    ]);
+    const done = w.as(w.dev, c.taskDone, {
+      ref: task.ref,
+      values: { Length: "41", Holes: "38" },
+      result: "Warped.\nSanded it flat.",
+    });
+    expect(done.result).toBe("- Length: 41\n- Holes: 38\n\nWarped.\nSanded it flat.");
+    const said = w.notices(w.owner).map((notice) => notice.body);
+    expect(said.some((body) => body.includes("Length: 41; Holes: 38; Warped. Sanded it flat."))).toBe(true);
+    expect(said.every((body) => !body.includes("\n"))).toBe(true);
+    const plain = w.as(w.owner, c.taskFile, { title: "Weigh it", place: "the bench", outcome: "Grams" });
+    w.as(w.dev, c.taskDone, { ref: plain.ref, result: "212 g,\nwith the lid" });
+    expect(w.as(w.dev, c.feedList, { query: `ref:${plain.ref} event:task.done` }).events[0]?.summary).toBe(
+      `${plain.ref} done: 212 g, with the lid`,
+    );
+  });
+
+  test("Done matches the names whatever their case, as filing does", () => {
+    const w = world();
+    const task = measured(w);
+    expect(w.as(w.dev, c.taskDone, { ref: task.ref, values: { length: "41", HOLES: "38" } }).result).toBe(
+      "- Length: 41\n- Holes: 38",
+    );
+    const twice = measured(w);
+    expect(
+      w.refusal(() =>
+        w.as(w.dev, c.taskDone, { ref: twice.ref, values: { length: "41", Length: "42", Holes: "38" } }),
+      ).message,
+    ).toBe(`${twice.ref}'s Length is given twice`);
+  });
+
+  test("the developer's own task is done without words", () => {
+    const w = world();
+    const mine = w.as(w.dev, c.lineAdd, { title: "Tax", doneWhen: "Filed.", repos: [], where: "working" });
+    const task = w.as(w.dev, c.taskAdd, { line: mine.ref, title: "Scan the receipts" });
+    expect(w.as(w.dev, c.taskDone, { ref: task.ref }).result).toBe("Done");
+  });
 });
 
 describe("held work on lines not being worked on", () => {
