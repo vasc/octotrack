@@ -2181,6 +2181,32 @@ describe("lines of work", () => {
       expect(heard.map((notice) => notice.body).join(" ")).toContain("41, 38, 12");
     });
 
+    test("a question held behind a task opens with its situation, its options and what it waits for", async () => {
+      const { task } = withIssue();
+      const asked = server.act(
+        c.decisionAsk,
+        {
+          title: "Which board?",
+          context: "The base fits either board.",
+          options: [
+            { key: "short", label: "The short board", description: "Fits as printed" },
+            { key: "long", label: "The long board", description: "Needs a reprint" },
+          ],
+          recommendation: "short",
+          why: "It fits already.",
+          waitsFor: task.ref,
+        },
+        "octo.1",
+      );
+      navigate(`/?ref=${asked.ref}`);
+      const view = renderApp(<App />);
+      const panel = within(await view.findByRole("complementary", { name: asked.ref }));
+      await panel.findByText(`Held: waits for ${task.ref}, which would settle it.`);
+      panel.getByText("The base fits either board.");
+      panel.getByText(/The short board: Fits as printed/);
+      panel.getByText(/It fits already./);
+    });
+
     test("a closed task says how it closed and what was sent, and offers nothing to send again", async () => {
       const { task } = withIssue();
       server.tracker.call(c.taskDone, { ref: task.ref, result: "41, 38 and 12 mm" }, asDeveloper);
