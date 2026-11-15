@@ -301,6 +301,17 @@ function helpersWanted(
   return count > 0 ? { repos: work.slice(coming).map((item) => item.project), count, last } : null;
 }
 
+/**
+ * Whether the developer's Start one anyway still stands for a line: it was asked for the search under way, and is spent
+ * once that search ends, by an agent taking the line or the line leaving working on, as it is by a start or by watch
+ * mode noting it. Kept from an earlier search, it would pass the cap days later, unasked (fourth audit, A3).
+ */
+function startsAnyway(ctx: Ctx, line: Line): boolean {
+  if (line.startAnyway === null) return false;
+  const search = searchOf(ctx, line.ref);
+  return search !== null && line.startAnyway >= search.since;
+}
+
 /** A line whose owner is still being looked for among agents already here: a session started now could take its turn. */
 function seekingOwner(ctx: Ctx, line: Line): boolean {
   if (line.ownedBy !== null || claimsOn(ctx, line.ref).some((claim) => claim.role === "owner")) return false;
@@ -326,8 +337,8 @@ export function makeRoom(ctx: Ctx): void {
   const status = runnerStatus(ctx);
   if (!status.configured || status.dryRun || status.cap - activeSessions(ctx) > 0) return;
   // Start one anyway goes past the cap, so it needs no room.
-  const line = allLines(ctx, "WHERE state = 'working' AND startAnyway IS NULL").find(
-    (candidate) => ownerStart(ctx, candidate).kind === "ready",
+  const line = allLines(ctx, "WHERE state = 'working'").find(
+    (candidate) => !startsAnyway(ctx, candidate) && ownerStart(ctx, candidate).kind === "ready",
   );
   const helper = lowestRunningHelper(ctx);
   if (line === undefined || helper === null) return;
@@ -363,7 +374,7 @@ export function stepInFor(ctx: Ctx, line: Line): boolean {
   // A first failure is retried by itself in minutes; a start that keeps failing needs the developer.
   if (start.last?.state === "failed") return start.last.attempts >= 2;
   // Started anyway, past the cap: a session is on its way.
-  if (line.startAnyway !== null) return false;
+  if (startsAnyway(ctx, line)) return false;
   // At the cap with a running helper Octotrack started, that helper gives way instead: only owners everywhere needs
   // the developer.
   return status.cap - activeSessions(ctx) <= 0 && lowestRunningHelper(ctx) === null;
@@ -451,7 +462,7 @@ export const runnerOps = [
       const start = ownerStart(ctx, line);
       if (start.kind !== "ready") return [];
       // Start one anyway: past the cap, once, without taking a slot from another line.
-      if (line.startAnyway === null) {
+      if (!startsAnyway(ctx, line)) {
         if (slots <= 0) return [];
         slots -= 1;
       }
@@ -699,6 +710,8 @@ export const runnerOps = [
     requireRunner(ctx);
     const line = requireLine(ctx, input.line);
     const role = input.role ?? "owner";
+    // Watch mode notes a Start one anyway as it would start it, and so spends it: it is not kept for later (A3).
+    if (role === "owner") ctx.sql.run("UPDATE lines SET startAnyway = NULL WHERE ref = ?", [line.ref]);
     // Once per search for an owner, or for helpers once per owner, not once a tick (third audit, N22).
     const since =
       role === "owner"
