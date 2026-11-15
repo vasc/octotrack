@@ -827,3 +827,18 @@ describe("sessions as real processes (third audit, N9 and N10)", () => {
     await session.exited;
   });
 });
+
+describe("what the fourth audit found in the local runner", () => {
+  test("A23: Stop ends a session the runner started, and does not also run the stop command for it", async () => {
+    const w = world({ stop: ["tmux", "kill-session", "-t", "{name}"] });
+    await w.tick();
+    w.tracker.call(c.lineTake, { ref: w.line.ref }, { actor: "panel.1", channel: "cli" });
+    w.tracker.call(c.agentStop, { name: "panel.1" }, DEV);
+    await w.tick();
+    await w.tick();
+    expect(w.ended).toEqual([1001]);
+    expect(w.ran.filter((command) => command.startsWith("tmux"))).toEqual([]);
+    const ran = w.tracker.call(c.feedList, { query: "event:runner.stop_ran" }, DEV).events;
+    expect(ran.map((event) => event.summary)).toEqual(["Ended panel.1's process"]);
+  });
+});

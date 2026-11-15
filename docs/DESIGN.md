@@ -362,7 +362,8 @@ Decisions made from that:
   a line also lists what is newer than its summary. `task add` and `note add` on the developer's own lines; tasks on a
   line with no repo go in a repo named ME. Try now retries every line stopped the same way; Start one anyway starts
   one past the cap, once; at the cap the lowest running helper Octotrack started is asked to make room before the
-  developer is. The developer's stop command runs once per Stop. A gone session's worktree goes to the next session on its line.
+  developer is. The developer's stop command runs once per Stop, and only when the runner did not end the session itself
+  (fourth audit, A23: it ran for both). A gone session's worktree goes to the next session on its line.
   `repo checkout` sets where worktrees are made from, and the runner otherwise finds the main checkout with
   `--git-common-dir`. Home has the header counts as one group of links, the spread-thin nudge, To top and To up next, the Start
   sheet, I'm at, Tell, Stop on the owner, Change answer, Later and Not urgent, the developer's own box, and every key
