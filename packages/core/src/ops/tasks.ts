@@ -67,10 +67,28 @@ function freedBy(ctx: Ctx, task: string): string | null {
   );
 }
 
-/** A task's names, as given, refused when two differ only in case: each is a box of its own. */
+const LINE_BREAK = /[\r\n]/;
+
+/** Text said on one line, as the line's inbox and the log say a task's outcome. */
+function oneLine(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+/**
+ * A task's names, as given: each one line, with no = (the CLI answers `--value Name=value`) and no : (the outcome reads
+ * "Name: value"), so a name can be answered and read as one row; refused when two differ only in case, since each is a
+ * box of its own.
+ */
 function distinctFields(fields: readonly string[]): string[] {
   const seen = new Set<string>();
   for (const field of fields) {
+    if (LINE_BREAK.test(field) || field.includes("=") || field.includes(":")) {
+      throw new OctoError(
+        "invalid_input",
+        `"${oneLine(field)}" must be one line, with no = or :`,
+        "Name each outcome with a short label, such as Length: it is answered as --value Length=41.",
+      );
+    }
     const key = field.toLowerCase();
     if (seen.has(key))
       throw new OctoError("invalid_input", `"${field}" is named twice`, "Give each outcome its own name.");
@@ -79,9 +97,37 @@ function distinctFields(fields: readonly string[]): string[] {
   return [...fields];
 }
 
+/** The values Done gives, under the task's own names, matched whatever their case, as names are told apart. */
+function valuesByName(task: Issue, values: Readonly<Record<string, string>>): Map<string, string> {
+  const named = new Map<string, string>();
+  for (const [given, value] of Object.entries(values)) {
+    const name = task.fields.find((field) => field.toLowerCase() === given.trim().toLowerCase());
+    if (name === undefined) {
+      throw new OctoError(
+        "invalid_input",
+        `${task.ref} asks for no ${given}`,
+        `It asks for: ${task.fields.join(", ")}.`,
+      );
+    }
+    if (named.has(name)) throw new OctoError("invalid_input", `${task.ref}'s ${name} is given twice`);
+    const trimmed = value.trim();
+    // Each value is one row of the list: a line break in one would read as rows of its own.
+    if (LINE_BREAK.test(trimmed)) {
+      throw new OctoError(
+        "invalid_input",
+        `${task.ref}'s ${name} must be one line`,
+        "Put anything longer in the note beside the values.",
+      );
+    }
+    named.set(name, trimmed);
+  }
+  return named;
+}
+
 /**
- * What Done reports: a task's named outcomes as a list, each filled, then any note; or, with none named, its words.
- * `said` is the same on one line, for the line's inbox and the log.
+ * What Done reports: a task's named outcomes as a list, each filled, then any note; or, with none named, its words. The
+ * developer's own task has nothing to send anyone, so it is done without words. `said` is the same on one line, for the
+ * line's inbox and the log.
  */
 function outcomeOf(
   task: Issue,
@@ -89,19 +135,14 @@ function outcomeOf(
   note: string | null,
 ): { result: string; said: string } {
   if (task.fields.length === 0) {
-    if (note === null)
+    if (note === null) {
+      if (task.outcome === "") return { result: "Done", said: "Done" };
       throw new OctoError("invalid_input", `${task.ref} needs what you found`, "Pass the outcome.");
-    return { result: note, said: note };
+    }
+    return { result: note, said: oneLine(note) };
   }
-  const unknown = Object.keys(values).find((name) => !task.fields.includes(name));
-  if (unknown !== undefined) {
-    throw new OctoError(
-      "invalid_input",
-      `${task.ref} asks for no ${unknown}`,
-      `It asks for: ${task.fields.join(", ")}.`,
-    );
-  }
-  const missing = task.fields.filter((name) => (values[name] ?? "").trim() === "");
+  const named = valuesByName(task, values);
+  const missing = task.fields.filter((name) => (named.get(name) ?? "") === "");
   if (missing.length > 0) {
     throw new OctoError(
       "invalid_input",
@@ -109,10 +150,10 @@ function outcomeOf(
       "Fill every named outcome.",
     );
   }
-  const filled = task.fields.map((name) => `${name}: ${(values[name] ?? "").trim()}`);
+  const filled = task.fields.map((name) => `${name}: ${named.get(name) ?? ""}`);
   return {
     result: [filled.map((line) => `- ${line}`).join("\n"), ...(note === null ? [] : [note])].join("\n\n"),
-    said: [...filled, ...(note === null ? [] : [note])].join("; "),
+    said: [...filled, ...(note === null ? [] : [oneLine(note)])].join("; "),
   };
 }
 
@@ -121,8 +162,10 @@ function closeTask(
   task: Issue,
   status: "done" | "cancelled",
   result: string,
-  said: string = result,
+  outcome: string = result,
 ): Issue {
+  // The line's inbox and the log say it on one line.
+  const said = oneLine(outcome);
   const changes = applyPatch(ctx, "issues", task.ref, task, { status, result, closedAt: ctx.now });
   // The half-written outcome, and any half-written reason it cannot be done, are answered now.
   ctx.sql.run("DELETE FROM drafts WHERE key IN (?, ?)", [`task:${task.ref}`, `task-why:${task.ref}`]);

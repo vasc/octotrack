@@ -83,8 +83,10 @@ A measurement, a login, a play-test: file a task, at one of the developer's plac
     --field Length --field Holes --field "USB-C grip" --field Flange --field Clearance
   octo decision ask "Which board?" ... --waits-for PANEL-9     a question the task would settle waits behind it
 
-The task frees the issue you hold. Name each thing to send back with --field: the developer gets a box for each, and
-Done needs them all. Its outcome comes back to you like an answer, one "Name: value" per field.
+The task frees the issue you hold. Name each thing to send back with --field, a short label on one line with no = or
+:, such as Length: the developer gets a one-line box for each, and Done needs them all. Its outcome comes back to you
+like an answer, one "Name: value" per field. The task is the developer's from then on: only they finish it, or say it
+cannot be done. If it no longer stands, withdraw it with octo held withdraw.
 
 ## Proposing lines
 

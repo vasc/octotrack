@@ -19,7 +19,10 @@ export const taskCommands: Command[] = [
       "body-file": { ...STRING, description: "Read details from a file, - for stdin" },
       line: { ...STRING, description: "The line it waits on. Default: yours" },
       frees: { ...STRING, description: "The issue it frees. Default: the one you hold" },
-      field: { ...MANY, description: "A named outcome, each sent back on its own; repeatable" },
+      field: {
+        ...MANY,
+        description: "A named outcome, each sent back on its own: one line, with no = or :; repeatable",
+      },
     },
     examples: [
       'octo task file "Measure the grip" --place "the bench" --outcome "The five numbers, in mm"',
@@ -56,11 +59,12 @@ export const taskCommands: Command[] = [
     options: {
       value: {
         ...MANY,
-        description: "A named outcome as Name=value, each one the task asks for; repeatable",
+        description: "A named outcome as Name=value (one line), each one the task asks for; repeatable",
       },
     },
     examples: [
       "octo task done PANEL-6 41 mm --me",
+      "octo task done ME-3 --me",
       'octo task done PANEL-7 --value "Length=41 mm" --value Holes=38 --me',
     ],
     ops: [c.taskDone.name],
