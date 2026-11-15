@@ -283,10 +283,14 @@ function firstOfferFor(ctx: Ctx, line: Line): string | null {
   return claim === null || claim.role === "scoper" ? agent.name : null;
 }
 
-/** A line becoming working: its scoper owns it, a wind-down in progress is called off, and an empty line is searched for. */
+/**
+ * A line becoming working: its scoper owns it, a wind-down in progress is called off, and an empty line is searched for.
+ * Its held work is released only if agents work on it: one the developer owns, tabled and started again, keeps it held
+ * until it is handed back (fifth audit, B2).
+ */
 function beginWorking(ctx: Ctx, line: Line): void {
   ctx.sql.run("UPDATE lines SET windDownUntil = NULL, windDownWrites = 0 WHERE ref = ?", [line.ref]);
-  releaseCurrentWork(ctx, line.ref);
+  settleHeldWork(ctx, line);
   // A line that names no repo has nowhere for an agent to work: it is the developer's own.
   if (line.repos.length === 0 && line.ownedBy === null) {
     ctx.sql.run("UPDATE lines SET ownedBy = 'dev' WHERE ref = ?", [line.ref]);
