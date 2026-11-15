@@ -429,6 +429,12 @@ Decisions made from that:
   of what waits beside a plus for New line and the theme; the tab bar drops its fixed band of padding for the home
   indicator's own inset; and the page's bottom padding is the tab bar's height, not twice it. Checked in Safari in the
   iOS Simulator, not only in a narrowed desktop browser.
+
+  The fix still did not reach the developer's phone: Safari keeps an open tab's code, so a deploy never reached the page
+  they had open, and they kept tapping the old broken menu. _Decided:_ an open tab loads a new build by itself when it
+  comes back into view (or Safari restores it from memory): it reads the served page, and if that names another bundle
+  than the one running, it reloads, unless a box has focus. Drafts are kept on the server as they are typed, so a reload
+  loses nothing.
 - **Focus is a border, with the keys beside it, not a word.** The developer, looking at the built home: "focused text on
   lines is unnecessary, reminding about j an k shortcuts to the side would be better, in a subtle way". The word
   Focused, which the boards draw over the focused item, is gone; the item keeps its border, in the theme's accent, and out in the margin

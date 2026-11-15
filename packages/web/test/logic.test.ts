@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { newBuild } from "../src/lib/build.ts";
 import { suggest } from "../src/hooks/useSuggestions.ts";
 import { validateQuery } from "../src/hooks/useFilter.ts";
 import {
@@ -465,5 +466,25 @@ describe("tintBrowserBar", () => {
     expect(meta.getAttribute("content")).toBe("#141413");
     root.remove();
     meta.remove();
+  });
+});
+
+describe("newBuild", () => {
+  const page = (script: string) =>
+    `<!doctype html><head><script type="module" crossorigin src="${script}"></script></head>`;
+
+  test("is the served page's script when it is not the one running", () => {
+    expect(newBuild("http://mini/assets/index-OLD.js", page("/assets/index-NEW.js"))).toBe(
+      "/assets/index-NEW.js",
+    );
+  });
+
+  test("is nothing while the running script is the served one", () => {
+    expect(newBuild("http://mini/assets/index-SAME.js", page("/assets/index-SAME.js"))).toBeNull();
+  });
+
+  test("is nothing outside a built page, or when the page names no script", () => {
+    expect(newBuild("http://localhost:5173/src/lib/build.ts", page("/assets/index-NEW.js"))).toBeNull();
+    expect(newBuild("http://mini/assets/index-OLD.js", "<html>Bad gateway</html>")).toBeNull();
   });
 });

@@ -4,6 +4,7 @@ import { useBootstrap } from "../../hooks/useBootstrap.ts";
 import { type HotkeyMap, KeysHeldProvider, useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useLiveUpdates } from "../../hooks/useLiveUpdates.ts";
 import { usePanelFocus } from "../../hooks/usePanelFocus.ts";
+import { useReloadOnNewBuild } from "../../hooks/useReloadOnNewBuild.ts";
 import { useSeen } from "../../hooks/useSeen.ts";
 import { useTopBar } from "../../hooks/useTopBar.ts";
 import { backEntity, navigate, useRoute } from "../../lib/router.ts";
@@ -20,6 +21,8 @@ import { TopBar } from "./TopBar.tsx";
 export function AppShell({ children }: { children: ReactNode }) {
   const { path, params } = useRoute();
   const { data, error, isPending } = useBootstrap();
+  // A tab left open, as on a phone, picks up a deploy when it comes back into view.
+  useReloadOnNewBuild();
   const bar = useTopBar();
   const look = useAppearance();
   const live = useLiveUpdates();

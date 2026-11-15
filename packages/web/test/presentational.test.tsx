@@ -11,7 +11,8 @@ import { AppearanceMenu } from "../src/components/layout/AppearanceMenu.tsx";
 import type { TaskOutcome } from "../src/lib/tasks.ts";
 import { describe, expect, mock, test } from "bun:test";
 import { useState } from "react";
-import { fireEvent, render, within } from "@testing-library/react";
+import { fireEvent, render, renderHook, waitFor, within } from "@testing-library/react";
+import { useReloadOnNewBuild } from "../src/hooks/useReloadOnNewBuild.ts";
 import { QueryClient, QueryObserver } from "@tanstack/react-query";
 import { BatchPanelView } from "../src/components/decisions/BatchPanelView.tsx";
 import { DecisionCardView } from "../src/components/decisions/DecisionCardView.tsx";
@@ -3039,5 +3040,61 @@ describe("AppearanceMenu", () => {
       relatedTarget: view.getByRole("button", { name: "Elsewhere" }),
     });
     expect(view.queryByRole("menu", { name: "Appearance" })).toBeNull();
+  });
+});
+
+describe("useReloadOnNewBuild", () => {
+  const served = '<script type="module" crossorigin src="/assets/index-NEW.js"></script>';
+
+  test("a tab coming back into view after a deploy loads the new build", async () => {
+    const reload = mock(() => {});
+    renderHook(() =>
+      useReloadOnNewBuild({
+        running: "http://mini/assets/index-OLD.js",
+        fetchPage: async () => served,
+        reload,
+      }),
+    );
+    document.dispatchEvent(new Event("visibilitychange"));
+    await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
+  });
+
+  test("Safari restoring the page from memory checks too", async () => {
+    const reload = mock(() => {});
+    renderHook(() =>
+      useReloadOnNewBuild({
+        running: "http://mini/assets/index-OLD.js",
+        fetchPage: async () => served,
+        reload,
+      }),
+    );
+    window.dispatchEvent(new Event("pageshow"));
+    await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
+  });
+
+  test("never reloads under someone typing, nor when the build is the same", async () => {
+    const reload = mock(() => {});
+    const fetchPage = mock(async () => served);
+    const box = document.createElement("textarea");
+    document.body.append(box);
+    box.focus();
+    const typingTab = renderHook(() =>
+      useReloadOnNewBuild({ running: "http://mini/assets/index-OLD.js", fetchPage, reload }),
+    );
+    document.dispatchEvent(new Event("visibilitychange"));
+    await waitFor(() => expect(fetchPage).toHaveBeenCalledTimes(1));
+    expect(reload).not.toHaveBeenCalled();
+    typingTab.unmount();
+    box.remove();
+    renderHook(() =>
+      useReloadOnNewBuild({
+        running: "http://mini/assets/index-NEW.js",
+        fetchPage: async () => served,
+        reload,
+      }),
+    );
+    document.dispatchEvent(new Event("visibilitychange"));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(reload).not.toHaveBeenCalled();
   });
 });

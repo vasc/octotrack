@@ -14,6 +14,9 @@ indicator's room below them, and the page leaves room for the tabs and no more.
 A menu or a list of suggestions closes when focus moves out of it or on a tap elsewhere, never on a blur that moves
 focus nowhere: Safari gives a tapped button no focus, so that blur comes under every tap on an item.
 
+A tab left open picks up a deploy by itself when it comes back into view, unless a box has focus, so a phone never keeps
+running yesterday's code.
+
 ## Home: one list of lines
 
 Home, at `/`, is every line of work in the developer's order: working on, up next, proposed, then tabled and done lately
