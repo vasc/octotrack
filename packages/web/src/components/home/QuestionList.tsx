@@ -1,3 +1,4 @@
+import { focusLabel } from "../../lib/focus.ts";
 import type { DecisionCard } from "@octotrack/core/schemas";
 import { DecisionCardItem } from "../decisions/DecisionCardItem.tsx";
 import { FocusTarget } from "./FocusTarget.tsx";
@@ -36,6 +37,7 @@ export function QuestionList({
           <FocusTarget
             key={card.decision.ref}
             focusRef={card.decision.ref}
+            label={focusLabel({ kind: "question", card })}
             focused={card.decision.ref === focus}
           >
             {card.decision.ref === focus ? (

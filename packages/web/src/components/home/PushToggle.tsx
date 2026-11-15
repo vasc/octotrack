@@ -27,7 +27,11 @@ export function PushToggle({
       ) : (
         <span className="muted">{SAID[state]}</span>
       )}
-      {error === null ? null : <span className="error-text">{error}</span>}
+      {error === null ? null : (
+        <span className="error-text" role="alert">
+          {error}
+        </span>
+      )}
     </span>
   );
 }

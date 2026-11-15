@@ -1,6 +1,20 @@
 import type { ForYou, HomeCounts, HomeView } from "@octotrack/core/schemas";
 
 /** What an item is known by in focus order: a question's or task's ref; a proposal about a line, by its kind and line. */
+/** What a screen reader says when focus moves to an item: its kind, ref and title, or the line a proposal is about. */
+export function focusLabel(item: ForYou, line = ""): string {
+  switch (item.kind) {
+    case "question":
+      return `Question ${item.card.decision.ref}, ${item.card.decision.title}`;
+    case "task":
+      return `Task ${item.task.ref}, ${item.task.title}`;
+    case "done":
+      return `Proposed as done: ${line}`;
+    case "done_when":
+      return `A new done when proposed: ${line}`;
+  }
+}
+
 export function refOf(item: ForYou): string {
   switch (item.kind) {
     case "question":

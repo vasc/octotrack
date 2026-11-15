@@ -1,6 +1,6 @@
 import type { ForYou } from "@octotrack/core/schemas";
 import type { HomeActions } from "../../hooks/useHome.ts";
-import { refOf } from "../../lib/focus.ts";
+import { focusLabel, refOf } from "../../lib/focus.ts";
 import { FocusTarget } from "./FocusTarget.tsx";
 import { ForYouItem } from "./ForYouItem.tsx";
 
@@ -25,7 +25,7 @@ export function LineForYouItem({
 }) {
   const ref = refOf(item);
   return (
-    <FocusTarget focusRef={ref} focused={ref === focus}>
+    <FocusTarget focusRef={ref} label={focusLabel(item, title)} focused={ref === focus}>
       <ForYouItem
         item={item}
         title={title}

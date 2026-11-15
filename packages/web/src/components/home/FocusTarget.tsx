@@ -6,16 +6,21 @@ import type { ReactNode } from "react";
  */
 export function FocusTarget({
   focusRef,
+  label,
   focused,
   children,
 }: {
   focusRef: string;
+  /** What a screen reader says when focus moves here. */
+  label: string;
   focused: boolean;
   children: ReactNode;
 }) {
   return (
     <div
       className="focus-wrap"
+      role="group"
+      aria-label={label}
       data-focus-ref={focusRef}
       data-selected={focused}
       aria-current={focused ? "true" : undefined}

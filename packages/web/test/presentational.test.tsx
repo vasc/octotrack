@@ -1227,6 +1227,13 @@ describe("why a line needs the developer to step in", () => {
   });
 });
 
+describe("PushToggle, failing", () => {
+  test("announces why buzzing could not be turned on", () => {
+    const view = render(<PushToggle state="off" error="Permission denied" onTurnOn={() => {}} />);
+    expect(view.getByRole("alert").textContent).toBe("Permission denied");
+  });
+});
+
 describe("PushToggle", () => {
   test("offers to buzz this device until it does, says when it does or cannot, and hides where there is no push", () => {
     const onTurnOn = mock(() => {});
@@ -2109,18 +2116,20 @@ describe("MoreForYou", () => {
 describe("FocusTarget", () => {
   test("wraps its item where the browser can focus it, outlined and current when it has home's focus", () => {
     const focused = render(
-      <FocusTarget focusRef="D-7" focused>
+      <FocusTarget focusRef="D-7" label="Question D-7, Which?" focused>
         <p>Which?</p>
       </FocusTarget>,
     );
-    const wrap = focused.getByText("Which?").parentElement;
+    // A screen reader names what focus moved to.
+    const wrap = focused.getByRole("group", { name: "Question D-7, Which?" });
+    within(wrap).getByText("Which?");
     expect(wrap?.getAttribute("data-focus-ref")).toBe("D-7");
     expect(wrap?.getAttribute("data-selected")).toBe("true");
     expect(wrap?.getAttribute("aria-current")).toBe("true");
     expect(wrap?.getAttribute("tabindex")).toBe("-1");
     focused.unmount();
     const other = render(
-      <FocusTarget focusRef="D-7" focused={false}>
+      <FocusTarget focusRef="D-7" label="Question D-7, Which?" focused={false}>
         <p>Which?</p>
       </FocusTarget>,
     );
