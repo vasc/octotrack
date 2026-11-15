@@ -1876,6 +1876,21 @@ describe("home's smaller pieces", () => {
     expect(onAnyway).toHaveBeenCalledWith("L-1");
     expect(cap.queryByRole("button", { name: "Try now" })).toBeNull();
   });
+
+  test("StepIn's way forward is the filled main action, never a red button that urges", () => {
+    const view = render(
+      <StepIn
+        line={line()}
+        reason="No start command."
+        onRetry={() => {}}
+        onOwn={() => {}}
+        onTable={() => {}}
+      />,
+    );
+    const tryNow = view.getByRole("button", { name: "Try now" });
+    expect(tryNow.getAttribute("data-primary")).toBe("true");
+    expect(tryNow.getAttribute("data-tone")).toBeNull();
+  });
 });
 
 describe("LineHandle", () => {

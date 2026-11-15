@@ -79,7 +79,7 @@ export function StepIn({
             <button
               type="button"
               className="btn"
-              data-tone="bad"
+              data-primary="true"
               data-choice={number("checkout")}
               onClick={() => setMode("checkout")}
             >
@@ -90,7 +90,7 @@ export function StepIn({
             <button
               type="button"
               className="btn"
-              data-tone="bad"
+              data-primary="true"
               data-choice={number("retry")}
               onClick={() => onRetry(line.ref)}
             >
@@ -101,7 +101,7 @@ export function StepIn({
             <button
               type="button"
               className="btn"
-              data-tone="bad"
+              data-primary="true"
               data-choice={number("anyway")}
               onClick={() => onAnyway(line.ref)}
             >

@@ -122,34 +122,24 @@ p {
   font-variant-numeric: tabular-nums;
 }
 
-/* What waits on the developer, as one quiet group: each count a bold number, then plain words. */
+/* What waits on the developer, as plain words in a row: each count a number in ink, then quieter words. */
 .top-counts {
   display: inline-flex;
-  align-items: stretch;
+  align-items: center;
+  gap: var(--space-8);
   font-size: var(--text-sm);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-pill);
-  overflow: hidden;
 }
 
 .top-count {
   display: inline-flex;
   align-items: center;
   gap: var(--space-3);
-  /* Inside the pill's two hairlines, so the pill itself is one control high. */
-  min-height: calc(var(--control-height) - 2 * 1px);
-  padding: 0 var(--space-6);
-  color: var(--ink-2);
+  min-height: var(--control-height);
+  color: var(--ink-3);
   text-decoration: none;
 }
 
-.top-count + .top-count {
-  border-left: 1px solid var(--line);
-}
-
 .top-count:hover {
-  background: var(--surface-2);
   color: var(--ink);
 }
 
@@ -166,19 +156,27 @@ p {
   gap: var(--space-4);
 }
 
-/* Urgent stands apart, in front of the group, in red. */
+/* Urgent goes first, marked by a small warm dot: noticed, not shouted. */
 .top-urgent {
   display: inline-flex;
   align-items: center;
   gap: var(--space-3);
   min-height: var(--control-height);
-  padding: 0 var(--space-6);
   font-size: var(--text-sm);
-  color: var(--bad);
-  background: var(--bad-soft);
-  border: 1px solid var(--bad-line);
-  border-radius: var(--radius-pill);
+  color: var(--ink-3);
   text-decoration: none;
+}
+
+.top-urgent::before {
+  content: "";
+  width: var(--dot-size);
+  height: var(--dot-size);
+  border-radius: var(--radius-pill);
+  background: var(--warn);
+}
+
+.top-urgent:hover {
+  color: var(--ink);
 }
 
 .top-urgent .top-count-n {
@@ -432,11 +430,9 @@ p {
   white-space: nowrap;
 }
 
-/* A choice that sends something now, in the color of what it acts on. */
+/* A choice that ends something: its word in red, never a red slab. */
 .btn[data-tone="bad"] {
-  background: var(--bad);
-  border-color: var(--bad);
-  color: var(--surface);
+  color: var(--bad);
 }
 
 .btn[data-tone="attention"] {
@@ -579,7 +575,6 @@ p {
 .decision {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-left: var(--border-accent) solid var(--attention-line);
   border-radius: var(--radius-lg);
   padding: var(--space-5) var(--space-6);
   display: flex;
@@ -643,20 +638,19 @@ p {
   font-size: var(--text-sm);
 }
 
-/* A question opened, as E-Home and E-Line draw it: a dark border when it has focus, options side by side. */
+/* A question opened, part of its line rather than a box of its own: focus tints it, options side by side. */
 
 .question {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  padding: var(--space-6) var(--space-8);
+  border-radius: var(--radius-md);
+  padding: var(--space-5) var(--space-6);
+  margin: 0 calc(-1 * var(--space-6));
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 }
 
 .question[data-selected="true"] {
-  border: var(--border-focus) solid var(--accent);
+  background: var(--accent-soft);
 }
 
 .question-strip {
@@ -1560,10 +1554,9 @@ p {
   gap: var(--space-4);
 }
 
-.log-line {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-xl);
+/* A line's changes: a row of the Log's one sheet. */
+.log-line + .log-line {
+  border-top: 1px solid var(--line);
 }
 
 .log-line-head {
@@ -1644,7 +1637,7 @@ p {
 
 .agents-table tr[data-state="stopped"] .agent-now,
 .agents-table tr[data-state="gone"] .agent-now {
-  color: var(--bad);
+  color: var(--warn);
 }
 
 .agent-actions {
@@ -1673,7 +1666,7 @@ p {
 }
 
 .home-urgent {
-  color: var(--bad);
+  color: var(--warn);
   font-weight: var(--weight-semibold);
   font-size: var(--text-sm);
 }
@@ -1722,26 +1715,42 @@ p {
   list-style: none;
 }
 
+/* Each section is one sheet, its lines rows divided by hairlines: no cards, and nothing boxed inside a line. */
 .line-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
 }
 
 .line-card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-xl);
   padding: var(--space-7) var(--space-9);
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
 }
 
+.line-list > * + * {
+  border-top: 1px solid var(--line);
+}
+
+/* The one focus: a quiet tint on the row the keys act on. */
 .line-card[data-selected="true"],
 .next-row[data-selected="true"],
 .proposal-card[data-selected="true"] {
-  box-shadow: var(--shadow-focus);
+  background: var(--accent-soft);
+}
+
+/* The tint follows the sheet's own corners at its ends. */
+.line-card:first-child[data-selected="true"] {
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
+}
+
+.line-card:last-child[data-selected="true"] {
+  border-bottom-left-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
 }
 
 .line-card-head {
@@ -1880,7 +1889,7 @@ p {
 }
 
 .line-facts [data-tone="bad"] {
-  color: var(--bad);
+  color: var(--warn);
 }
 
 .line-facts[data-separated="true"] > span::before {
@@ -1927,27 +1936,36 @@ p {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--space-5);
   align-items: center;
-  padding: var(--space-4) var(--space-7);
-  border: 1px solid var(--attention-line);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
+  padding: var(--space-3) var(--space-6);
+  margin: 0 calc(-1 * var(--space-6));
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
   text-align: left;
   cursor: pointer;
 }
 
 .item-row:hover {
-  border-color: var(--attention);
+  background: var(--surface-2);
 }
 
-.item-row:is([data-kind="done"], [data-kind="done_when"]) {
-  border-color: var(--info-line);
-}
-
+/* What kind of item, after a small dot in the one colour for what needs you. */
 .item-kind {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
   font-size: var(--text-xs);
   font-weight: var(--weight-bold);
   color: var(--attention);
   text-transform: uppercase;
+}
+
+.item-kind::before {
+  content: "";
+  width: var(--dot-size);
+  height: var(--dot-size);
+  border-radius: var(--radius-pill);
+  background: currentColor;
 }
 
 .item-row:is([data-kind="done"], [data-kind="done_when"]) .item-kind {
@@ -1991,21 +2009,13 @@ p {
   gap: var(--space-4);
 }
 
-.task {
-  background: var(--surface);
-  border: 1px solid var(--attention-line);
-  border-radius: var(--radius-lg);
-  padding: var(--space-6) var(--space-8);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.step-in {
-  border: 1px solid var(--bad-line);
-  border-radius: var(--radius-lg);
-  background: var(--bad-soft);
-  padding: var(--space-5) var(--space-7);
+/* A task, Step in and a proposal sit on their line as text and buttons; focus tints them. */
+.task,
+.step-in,
+.proposal {
+  border-radius: var(--radius-md);
+  padding: var(--space-5) var(--space-6);
+  margin: 0 calc(-1 * var(--space-6));
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -2014,29 +2024,20 @@ p {
 .step-in-label {
   font-size: var(--text-xs);
   font-weight: var(--weight-bold);
-  color: var(--bad);
+  color: var(--warn);
   text-transform: uppercase;
   margin-right: var(--space-3);
 }
 
 .step-in[data-selected="true"] {
-  border: var(--border-focus) solid var(--accent);
-}
-
-.proposal {
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  padding: var(--space-6) var(--space-9);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
+  background: var(--accent-soft);
 }
 
 /* Up next: one card, a row per line. */
 .next-list {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
@@ -2046,7 +2047,7 @@ p {
   gap: var(--space-5);
   align-items: center;
   padding: var(--space-5) var(--space-9);
-  border-bottom: 1px solid var(--line-faint);
+  border-bottom: 1px solid var(--line);
 }
 
 .next-row:last-child {
@@ -2064,20 +2065,25 @@ p {
   color: var(--ink-2);
 }
 
-/* What agents propose waits for your yes, in the theme's own colour; the recommended choice is the filled one. */
-.proposal-card {
+/* One sheet holding a section's rows, as Working on's line list does. */
+.sheet {
   background: var(--surface);
-  border: 1px solid var(--info-line);
-  border-radius: var(--radius-xl);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+.sheet > .proposal-card:first-child {
+  border-top: 0;
+}
+
+/* What agents propose: a row of its section's sheet; the recommended choice is the filled one. */
+.proposal-card {
   padding: var(--space-6) var(--space-9);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--space-4) var(--space-8);
   align-items: center;
-}
-
-.proposal-card[data-urgent="true"] {
-  border-color: var(--bad);
+  border-top: 1px solid var(--line);
 }
 
 .proposal-card .line-link {
@@ -2106,21 +2112,17 @@ p {
   gap: var(--space-6);
 }
 
+/* A folded section: a sheet whose head opens it. */
 .tile {
   flex: 1 1 var(--tile-width);
-  background: var(--surface-2);
+  background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
 }
 
 .tile[data-dashed="true"] {
+  background: none;
   border-style: dashed;
-  border-color: var(--line-field);
-}
-
-.tile[data-tone="info"] {
-  background: var(--info-soft);
-  border-color: var(--info-line);
 }
 
 .tile[data-open="true"] {
@@ -2259,7 +2261,7 @@ p {
   color: var(--ink-2);
 }
 
-/* The one focus: a dark border, so a key never acts on another item than this one. */
+/* The one focus: a quiet tint, so a key never acts on another item than this one. */
 /* A fieldset only to name the item for a screen reader: none of the browser's own box. */
 .focus-wrap {
   min-width: 0;
@@ -2269,7 +2271,7 @@ p {
 }
 
 .focus-wrap[data-selected="true"] > :is(.task, .proposal) {
-  border: var(--border-focus) solid var(--accent);
+  background: var(--accent-soft);
 }
 
 /* The focused item's numbered choices, drawn by the number its key presses: only on an item the keys act on, never on a
@@ -2409,11 +2411,9 @@ p {
   .line-answer {
     margin-left: 0;
   }
-  /* Lines lie flat on the page on a phone; only what waits on you is a card. */
+  /* A line's row is inset as far as its items reach out, so a focused item's tint meets the sheet's edge. */
   .line-card {
-    padding: 0;
-    border: 0;
-    background: none;
+    padding: var(--space-6);
   }
   /* The handle stays on a phone, the only way to reorder there: a full touch target beside the number. Only the
      title sits beside them; what the line says runs the full width below, as E-Phone draws it. */
@@ -2549,27 +2549,10 @@ p {
   background: var(--bad-soft);
 }
 
-/* An urgent question stands at the very top, in red, apart from its line (E-States 8). */
-.question[data-urgent="true"] {
-  border-color: var(--bad-line);
-  background: var(--bad-soft);
-}
-
-.question[data-urgent="true"][data-selected="true"] {
-  border-color: var(--bad);
-}
-
-.question[data-urgent="true"] .question-kind {
-  color: var(--bad);
-}
-
-.item-row[data-urgent="true"] {
-  border-color: var(--bad-line);
-  background: var(--bad-soft);
-}
-
+/* An urgent question stands at the very top, apart from its line (E-States 8), its kind in the warm tone. */
+.question[data-urgent="true"] .question-kind,
 .item-row[data-urgent="true"] .item-kind {
-  color: var(--bad);
+  color: var(--warn);
 }
 
 /* Nothing needs you: the calmest screen, and the most common good state (E-States 1). */
@@ -2596,19 +2579,18 @@ p {
   padding: var(--space-6) 0;
 }
 
-/* A proposal about the line itself: done, or a changed done when (E-States 9). */
+/* A proposal about the line itself: done, or a changed done when (E-States 9). Part of its line, not a box. */
 .line-proposal {
-  background: var(--surface);
-  border: 1px solid var(--info-line);
-  border-radius: var(--radius-lg);
-  padding: var(--space-6) var(--space-8);
+  border-radius: var(--radius-md);
+  padding: var(--space-5) var(--space-6);
+  margin: 0 calc(-1 * var(--space-6));
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 }
 
 .focus-wrap[data-selected="true"] > .line-proposal {
-  border: var(--border-focus) solid var(--accent);
+  background: var(--accent-soft);
 }
 
 .line-proposal-claim {
@@ -2661,7 +2643,7 @@ p {
 }
 
 .spread-thin-cost[data-tone="bad"] {
-  color: var(--bad);
+  color: var(--warn);
 }
 
 .spread-thin-cost[data-tone="attention"] {
@@ -2680,7 +2662,7 @@ p {
 }
 
 .line-answer[data-status="wake_failed"] .line-answer-text {
-  color: var(--bad);
+  color: var(--warn);
 }
 
 /* A focused item shows focus with its own dark border; the browser's ring around it would draw a second one. */

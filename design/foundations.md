@@ -87,7 +87,6 @@ Each has a strong and a soft version: the strong one for text and marks, and the
 | `--bad-line`            | The edge of a Step in box. Decorative only                                                 |
 | `--warn`, `--warn-soft` | Not finished yet, or worth a look: pending, review requested                               |
 | `--info`, `--info-soft` | What agents propose and wait for your yes on; in progress. The accent's hue in every theme |
-| `--info-line`           | The edge of a proposal. Decorative only                                                    |
 
 ### Tones
 
@@ -161,9 +160,8 @@ Only what floats over content gets a shadow. Everything else is separated by a l
 | -------------------- | ------------------------------------------------------------- |
 | `--shadow-popover`   | The filter's suggestions, the Undo bar                        |
 | `--shadow-panel`     | A line, task or issue opened over the right of the page       |
-| `--shadow-focus`     | The one focus on home: the line or item the keys act on       |
 | `--border-focus`     | Edges for focus: the focus ring and the focused item's border |
-| `--border-accent`    | An item's accent edge, such as a question's left edge         |
+| `--dot-size`         | A small round mark: urgent in the bar, an item's kind         |
 | `--opacity-disabled` | A control that cannot act now                                 |
 | `--opacity-hover`    | A filled button under the pointer                             |
 | `--z-popover`        | Above the page                                                |

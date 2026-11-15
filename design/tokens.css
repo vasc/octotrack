@@ -48,7 +48,6 @@
   /* Info is what agents propose, waiting for your yes: in the theme's own colour. */
   --info: light-dark(#1f2328, #e6edf3);
   --info-soft: light-dark(#eaeef2, #262c36);
-  --info-line: light-dark(#afb8c1, #484f58);
 
   /* Type: Inter where it is installed, else the system's own face, because a web font is a wait. */
   --font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
@@ -89,21 +88,20 @@
   --space-32: calc(var(--space-unit) * 32);
 
   /* Shape: buttons, items, cards and panels, from smallest to largest. */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 14px;
-  --radius-2xl: 16px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 8px;
+  --radius-2xl: 10px;
   --radius-pill: 999px;
 
   /* Elevation: only for what floats over content. Everything else is separated by a line. */
   --shadow-popover: 0 6px 20px rgb(0 0 0 / 0.14);
   --shadow-panel: -12px 0 40px rgb(0 0 0 / 0.08);
-  /* The one focus on home: a ring in the accent, so a key never acts on another item than this. */
-  --shadow-focus: 0 0 0 var(--border-focus) var(--accent);
-  /* Edges thicker than a hairline: focus (its ring and the focused item's border), and an item's accent edge. */
+  /* Edges thicker than a hairline: the keyboard's focus ring on a control. */
   --border-focus: 2px;
-  --border-accent: 3px;
+  /* A small round mark: urgent in the bar, and the kind of an item that needs you. */
+  --dot-size: 6px;
   /* A control that cannot act now, and a filled button under the pointer. */
   --opacity-disabled: 0.5;
   --opacity-hover: 0.88;
@@ -215,7 +213,6 @@
   --warn-soft: light-dark(#f3e8bd, #3a3214);
   --info: light-dark(#1b6aa5, #6db3e6);
   --info-soft: light-dark(#dde8ef, #0a3f53);
-  --info-line: light-dark(#8db6cf, #2d6f8f);
 }
 
 /* Gruvbox, Pavel Pertsev's retro palette: cream by day, warm charcoal by night; its faded blue is its own colour, purple needs you. */
@@ -245,7 +242,6 @@
   --warn-soft: light-dark(#f5e1a6, #3f351c);
   --info: light-dark(#076678, #83a598);
   --info-soft: light-dark(#d9e6e8, #2c3634);
-  --info-line: light-dark(#82aab4, #5b7a72);
 }
 
 /* Catppuccin: Latte by day, Mocha by night; mauve is its own colour, peach needs you. */
@@ -275,7 +271,6 @@
   --warn-soft: light-dark(#f2e6cf, #38352f);
   --info: light-dark(#7a2ee0, #cba6f7);
   --info-soft: light-dark(#e4daf7, #352d4b);
-  --info-line: light-dark(#b48ef0, #7a649a);
 }
 
 /* Rosé Pine: Dawn by day, the main palette by night; pine is its own colour, iris needs you. */
@@ -305,7 +300,6 @@
   --warn-soft: light-dark(#f8e9d4, #362d28);
   --info: light-dark(#286983, #9ccfd8);
   --info-soft: light-dark(#dde9eb, #24363f);
-  --info-line: light-dark(#8fb5c2, #557d87);
 }
 
 /* Nord, Arctic Ice Studio's palette: snow storm by day, polar night by night; frost is its own colour, aurora purple needs you. */
@@ -335,7 +329,6 @@
   --warn-soft: light-dark(#ece3cf, #474436);
   --info: light-dark(#40618c, #88c0d0);
   --info-soft: light-dark(#d6e0ec, #344756);
-  --info-line: light-dark(#94a9c4, #5f7f8d);
 }
 
 /* Everforest, sainnhe's palette: parchment by day, green-grey by night; its green is its own colour, purple needs you. */
@@ -365,7 +358,6 @@
   --warn-soft: light-dark(#faedcd, #423f36);
   --info: light-dark(#566500, #a7c080);
   --info-soft: light-dark(#e9edcd, #3c4433);
-  --info-line: light-dark(#a9b46a, #6f8150);
 }
 
 /* High contrast: black on white and white on black, for sun or for low vision. */
@@ -395,7 +387,6 @@
   --warn-soft: light-dark(#eee8de, #332300);
   --info: light-dark(#0000cc, #00ffff);
   --info-soft: light-dark(#dedef8, #003333);
-  --info-line: light-dark(#8080e6, #007373);
 }
 
 /* The mode the developer picked, over the system's. */

@@ -63,16 +63,19 @@ export function UnseenLog({
           ))}
         </ul>
       )}
-      {shown.map((line, index) => (
-        <LineLog
-          key={line.ref}
-          line={line}
-          number={index + 1}
-          events={events.filter((event) => event.line === line.ref && !REFUSED.has(event.type))}
-        />
-      ))}
-      <LooseSection title="On no line" events={loose} />
-      <LooseSection title="Elsewhere" events={elsewhere} />
+      {/* One sheet, a row per line, as home draws its sections. */}
+      <div className="sheet">
+        {shown.map((line, index) => (
+          <LineLog
+            key={line.ref}
+            line={line}
+            number={index + 1}
+            events={events.filter((event) => event.line === line.ref && !REFUSED.has(event.type))}
+          />
+        ))}
+        <LooseSection title="On no line" events={loose} />
+        <LooseSection title="Elsewhere" events={elsewhere} />
+      </div>
       {includeWaiting || waiting.length === 0 ? null : (
         <p className="log-foot">
           <span className="muted">

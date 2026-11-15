@@ -160,7 +160,8 @@ export function WaitingSections({
       </HomeSection>
       {home.proposed.length === 0 ? null : (
         <HomeSection title="Proposed" count={home.proposed.length}>
-          {proposals}
+          {/* One sheet, a row per proposal, as Working on draws its lines. Folded on a phone, the fold is the sheet. */}
+          <div className="sheet">{proposals}</div>
         </HomeSection>
       )}
       <div className="tiles">{quiet}</div>

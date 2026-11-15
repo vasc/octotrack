@@ -4,8 +4,8 @@ How components combine, and why.
 
 ## The frame
 
-One bar on top: Octotrack, Lines, Log and Agents; what waits on you, as one quiet group of counts with urgent apart in
-red; I'm at, New line and the keys. Under it, the page. Any ref opens as a panel over the right of the page, so the
+One bar on top: Octotrack, Lines, Log and Agents; what waits on you, as plain words with urgent first, after a small
+warm dot; I'm at, New line and the keys. Under it, the page. Any ref opens as a panel over the right of the page, so the
 page keeps its place behind it. Below 720px the pages become tabs at the bottom, the page you are on filled with the
 accent, and the bar above is one row: what waits, wrapping in its own column, then a plus for New line and the theme.
 The bar does not name the page, since its tab does. The tabs sit right on the browser's own bar, with only the home
@@ -23,7 +23,7 @@ Home, at `/`, is every line of work in the developer's order: working on, up nex
 folded to one row each. A working line shows who is on it, its plan step and its headline, then the first thing
 waiting on the developer; the rest are one row away (`+2 more for you`). Only the focused item opens in full: a
 question as its card, a task with Done and Can't do it. Focus starts on an urgent question, else on the first thing
-waiting, and moves when a row is opened. A working line no agent could be found for shows Step in, in red, on its own
+waiting, and moves when a row is opened. A working line no agent could be found for shows Step in, in the warm tone, on its own
 line, so the line is read once. Placing a line, tabling it, finishing it and owning it happen from its panel, which
 opens in place from its title. The order changes from each line's handle: drag it, or open it for its moves.
 
@@ -90,3 +90,12 @@ it returns.
 
 Most of a screen should be ink on ground. Marks and badges carry status in small doses. Attention is reserved for what needs
 you, and the accent for what you are acting on. If a screen looks colorful, something is overusing tones.
+
+Nothing urges with red. Red is for real errors: a bad query, a failed save, failing checks, a refused write. What is
+urgent, has no owner or is stuck reads in the warm tone, as words and a small dot, never a red pill, fill or edge.
+
+## Sheets, not cards
+
+Each section is one sheet, its lines rows divided by hairlines. Nothing inside a line is a box of its own: a task, a
+question, Step in or a proposal sits on its line as text and buttons. Focus is a quiet tint of the row or item the keys
+act on. Corners are small, 4 to 8px, and no coloured bar runs down the side of anything.

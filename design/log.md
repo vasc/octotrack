@@ -60,6 +60,9 @@ further down, each marked _Replaced_ there.
   looking at the dashboard; contrast tests are the floor. What agents propose wears the accent; attention is blue only
   in a blue theme.
 - **The phone fills the page you are on with the accent,** as a wide screen does.
+- **Sheets, not cards; warm words, not red.** The look follows direction B, Instrument (`design/directions/`): one sheet
+  per section with hairline rows, nothing boxed inside a line, focus as a tint, small corners, no side bars, red only for
+  real errors.
 - **A phone's bar names no page, and a tap in Safari reaches its menu item.** The tab says where you are; the bar is one
   row of what waits beside a plus and the theme; the tab bar sits on the browser's own bar. Menus close on focus moving
   out or a tap elsewhere, not on a blur to nowhere, which is what Safari does under every tap.

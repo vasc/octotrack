@@ -455,7 +455,17 @@ Decisions made from that:
   comes back into view (or Safari restores it from memory): it reads the served page, and if that names another bundle
   than the one running, it reloads, unless a box has focus. Drafts are kept on the server as they are typed, so a reload
   loses nothing.
-- **Focus is a border, with the keys beside it, not a word.** The developer, looking at the built home: "focused text on
+
+  Then the developer said "I need you to stop treating meaning by color as the most important thing and design colors
+  for aesthetics", "All those reds, rounded corners and cards inside cards all scream twitter bootstrap", "Design an app
+  not a theme from 2008", "I don't need to be urged to decisions through red colors everywhere", "No ai 2 px left side
+  drop shadow", and picked direction B ("Instrument", in `design/directions/`) from two mockups. _Decided:_ each
+  section is one sheet whose lines are rows divided by hairlines; nothing inside a line is a box of its own; focus is a
+  quiet tint of the row or item the keys act on, not a border or a ring; corners are 4 to 8px; no coloured bar runs
+  down the side of anything; red is kept for real errors (a bad query, a failed save, failing checks, a refused write),
+  and what is urgent, has no owner, or is stuck reads in the warm tone as words and a small dot, never as a red pill, fill
+  or edge; Step in's way forward is the filled main action; the bar's counts are plain words.
+- **Focus is a tint, with the keys beside it, not a word.** (Superseded in part above: the border became a tint.) The developer, looking at the built home: "focused text on
   lines is unnecessary, reminding about j an k shortcuts to the side would be better, in a subtle way". The word
   Focused, which the boards draw over the focused item, is gone; the item keeps its border, in the theme's accent, and out in the margin
   beside it a quiet "k ↑ j ↓" says how to move on. _Decided:_ the hint shows only with a mouse or trackpad (keys belong
