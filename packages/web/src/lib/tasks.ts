@@ -1,4 +1,4 @@
-import type { Issue } from "@octotrack/core/schemas";
+import type { FeedEvent, Issue } from "@octotrack/core/schemas";
 import { sinceText } from "./format.ts";
 
 /** What Done sends for a task: its words, or each named outcome with any note beside them. */
@@ -63,4 +63,17 @@ export function cantSummary(task: Pick<Issue, "ref">, why: string): string {
 /** A task is an issue for the developer with something to report: "dev" is the name the developer acts under. */
 export function isTask(issue: Pick<Issue, "assignee" | "outcome">): boolean {
   return issue.assignee === "dev" && issue.outcome !== null;
+}
+
+/** How a task closed and who closed it, from its history (newest first): done, could not be done, or withdrawn. */
+export function howClosed(
+  history: readonly Pick<FeedEvent, "type" | "actor">[],
+): { how: "done" | "cant" | "withdrawn"; by: string } | null {
+  const HOW = { "task.done": "done", "task.cant": "cant", "task.withdrawn": "withdrawn" } as const;
+  for (const item of history) {
+    if (item.type === "task.done" || item.type === "task.cant" || item.type === "task.withdrawn") {
+      return { how: HOW[item.type], by: item.actor };
+    }
+  }
+  return null;
 }

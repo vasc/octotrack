@@ -7,7 +7,7 @@ import { useOpQuery } from "../../hooks/useOp.ts";
 import { useStepTitle } from "../../hooks/useStepTitle.ts";
 import { issueLinks } from "../../lib/links.ts";
 import { backEntity, openEntity } from "../../lib/router.ts";
-import { isTask } from "../../lib/tasks.ts";
+import { howClosed, isTask } from "../../lib/tasks.ts";
 import { TaskClosed } from "../home/TaskClosed.tsx";
 import { TaskItem } from "../home/TaskItem.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
@@ -62,7 +62,7 @@ export function IssuePanel({ issue, detail }: { issue: Issue; detail: EntityDeta
             onCant={h.taskCant}
           />
         ) : (
-          <TaskClosed task={issue} />
+          <TaskClosed task={issue} closed={howClosed(detail.history)} />
         )
       ) : (
         <>
