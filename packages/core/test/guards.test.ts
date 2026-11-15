@@ -761,4 +761,44 @@ describe("agents write only to the line they are on, the rest of it (fourth audi
     expect(own[0]?.fired).toBe(true);
     expect(own[0]?.clauses[0]?.events.map((event) => event.type)).toEqual(["issue.created"]);
   });
+
+  test("issue update and claim: an agent cannot finish, reopen or take the developer's task", () => {
+    const w = world();
+    w.as(w.dev, c.placeAdd, { name: "the bench" });
+    const task = w.as(w.owner, c.taskFile, {
+      title: "Measure",
+      place: "the bench",
+      outcome: "Width in mm",
+    }).ref;
+    for (const change of [
+      { status: "done" },
+      { status: "cancelled" },
+      { assignee: "panel" },
+      { assignee: null },
+    ] as const) {
+      const refusal = w.refused(() => w.as(w.owner, c.issueUpdate, { refs: [task], ...change }));
+      expect(refusal.code).toBe("forbidden");
+      expect(refusal.hint).toContain("held withdraw");
+    }
+    expect(w.refused(() => w.as(w.owner, c.issueClaim, { refs: [task], force: true })).code).toBe(
+      "forbidden",
+    );
+    const kept = w.as(w.dev, c.issueList, { query: `ref:${task}` })[0]?.issue;
+    expect([kept?.status, kept?.assignee, kept?.result]).toEqual(["todo", "dev", null]);
+    expect(w.as(w.owner, c.issueUpdate, { refs: [task], title: "Measure the width" })[0]?.title).toBe(
+      "Measure the width",
+    );
+    expect(
+      w.as(w.owner, c.heldWithdraw, { refs: [task], why: "Found it in the datasheet" }).withdrawn,
+    ).toEqual([task]);
+  });
+
+  test("issue release: an agent cannot move another line's unclaimed work back to todo", () => {
+    const w = world();
+    elsewhere(w);
+    w.as(w.dev, c.issueUpdate, { refs: [w.issue], status: "in_progress" });
+    expect(w.refused(() => w.as(w.outsider, c.issueRelease, { refs: [w.issue] })).code).toBe("forbidden");
+    expect(w.as(w.dev, c.issueList, { query: `ref:${w.issue}` })[0]?.issue.status).toBe("in_progress");
+    expect(w.as(w.owner, c.issueRelease, { refs: [w.issue] })[0]?.status).toBe("todo");
+  });
 });
