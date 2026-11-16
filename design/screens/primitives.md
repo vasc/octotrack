@@ -63,7 +63,7 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 - Designed in: Primitives.dc.html, Field
 - What it shows: a label over a box, in empty, focus, filled, invalid, disabled and not saved.
 - Changes from today:
-  - Focus is the 2 px ink ring (today a 1 px accent border).
+  - Focus is the grey focus edge with its soft halo (today a 1 px accent border).
   - Invalid says why under the box: "A full path, starting with /".
   - Disabled has its own look.
   - Not saved is said under the box: "Not saved: the tracker did not answer. Kept here; saves when it is back."
@@ -75,7 +75,7 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 ### components/ui/Focusable.tsx
 
 - Designed in: Primitives.dc.html, Row (focused item); Main.dc.html
-- What it shows: the item the keys act on: the accent-soft fill plus the 2 px ink ring, drawn inside so it never overlaps its neighbours.
+- What it shows: the item the keys act on: the fill plus the 1 px grey focus edge, drawn inside so it never overlaps its neighbours.
 - Changes from today: the focused item gets the ring as well as the fill, so it reads without colour (today only a tint, and no ring).
 - Loading: never loads on its own.
 - Error: cannot fail on its own.
@@ -247,7 +247,7 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 
 - Designed in: Primitives.dc.html, Row
 - What it shows: lead, title, facts, note, and at the end the actions or › when it opens something; in default, hover, focused item and opens-a-panel.
-- Changes from today: the focused item has the fill plus the 2 px ink ring drawn inside the row (today only the fill); nothing ever gets a coloured side bar.
+- Changes from today: the focused item has the fill plus the 1 px grey focus edge drawn inside the row (today only the fill); nothing ever gets a coloured side bar.
 - Loading: never loads on its own; on a first load its owner draws rows as outlines (Home-States D).
 - Error: cannot fail on its own: an owner says a failure under the row ("Not moved. …", Home-States H).
 - Empty: never empty: it exists only for an entry.

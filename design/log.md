@@ -52,9 +52,12 @@ are design decisions taken there, open to change:
   reason for a recommendation lives inside the recommended option.
 - **One column in panels.** A panel reads top to bottom in order of importance; a section with nothing in it says why in
   one line instead of a bare heading or an empty column.
-- **One focus treatment:** a 2 px ink ring, outside a control and inside a row. One selected treatment: the accent-soft
-  fill. Pressed darkens a step. Disabled is a flat grey fill with grey text, never only faded. Nothing gets a coloured
-  side bar.
+- **One focus treatment:** a 1 px mid-grey edge (`#6e7781`) with a 3 px soft halo, outside a control, and the edge
+  alone inside a row; on the dark primary button the edge sits 2 px off it. The developer found the first drawing's
+  2 px ink ring "too strong", so it was softened; the edge still has 4.5:1 contrast on white, so it passes for
+  keyboard users. A chosen answer is a quiet grey edge, a faint fill and its ✓, not a heavy border. One selected
+  treatment: the accent-soft fill. Pressed darkens a step. Disabled is a flat grey fill with grey text, never only
+  faded. Nothing gets a coloured side bar.
 - **A failure is said where it happened,** with what to do and Try again, and the tracker's own hint when it sends one.
   Raw error text never reaches the page. Data that could not refresh stays, marked with the time it is from.
 - **Illustrative content is labelled.** Where no real data exists for a state, the drawing says so on the board.

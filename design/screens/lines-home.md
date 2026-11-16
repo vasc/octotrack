@@ -139,7 +139,7 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 
 - Designed in: Main.dc.html; Question-States.dc.html, state A
 - What it shows: a row that opens in place while it has focus (Main: the question opened under its line, ringed).
-- Changes from today: the focused item is ringed with the 2 px ink ring (Primitives Row) rather than only tinted.
+- Changes from today: the focused item is edged with the grey focus edge and its halo (Primitives Row) rather than only tinted.
 - Loading: never loads on its own: given its item by LineForYou.
 - Error: cannot fail on its own; the opened item's failures are its own.
 - Empty: never empty: it exists only for an item.
