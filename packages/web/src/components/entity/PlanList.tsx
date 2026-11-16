@@ -1,4 +1,4 @@
-import type { LineWork, PlanStep } from "@octotrack/core/schemas";
+import type { Line, LineWork, PlanStep } from "@octotrack/core/schemas";
 import { Fragment } from "react";
 import { humanize } from "../../lib/format.ts";
 import { Fact, Facts } from "../ui/Facts.tsx";
@@ -19,7 +19,16 @@ function ChecksWord({ checks }: { checks: Checks }) {
 }
 
 /** The plan: each step done, now or next, with its issues and their pull requests under the step it belongs to. */
-export function PlanList({ steps, work }: { steps: readonly PlanStep[]; work: readonly LineWork[] }) {
+export function PlanList({
+  steps,
+  work,
+  state = "working",
+}: {
+  steps: readonly PlanStep[];
+  work: readonly LineWork[];
+  /** How the line stands, which says who writes its plan and when. */
+  state?: Line["state"];
+}) {
   const current = steps.find((step) => step.status !== "done")?.position ?? null;
   const unplaced = work.filter((item) => item.step === null);
   const aside =
@@ -33,7 +42,13 @@ export function PlanList({ steps, work }: { steps: readonly PlanStep[]; work: re
   return (
     <Section title="Plan" {...(aside === null ? {} : { aside })}>
       {steps.length === 0 && unplaced.length === 0 ? (
-        <Note>No plan yet. Its owner writes one once it starts.</Note>
+        <Note>
+          {state === "done" || state === "dropped"
+            ? "No plan was written."
+            : state === "working"
+              ? "No plan yet. Its owner writes one."
+              : "No plan yet. Its owner writes one once it starts."}
+        </Note>
       ) : (
         <List>
           {steps.map((step) => {

@@ -12,6 +12,7 @@ import { failureText } from "../../lib/failure.ts";
 import { forYouCounts } from "../../lib/lines.ts";
 import { moreSinceSummary } from "../../lib/log.ts";
 import { backEntity, useRoute } from "../../lib/router.ts";
+import { LineStepIn } from "../home/LineStepIn.tsx";
 import { StartSheet } from "../home/StartSheet.tsx";
 import { Loaded, StaleNote } from "../ui/Loaded.tsx";
 import { NotKept } from "../ui/NotKept.tsx";
@@ -66,7 +67,10 @@ export function LinePanelItem({
   const owner = crew?.owner?.name ?? null;
   const order = home === undefined ? [] : [...home.working, ...home.upNext];
   const live = line.state !== "done" && line.state !== "dropped";
-  const forYou = home?.lines[line.ref]?.forYou ?? [];
+  const details = home?.lines[line.ref];
+  const forYou = details?.forYou ?? [];
+  // Why nobody can take the line, when it needs the developer to step in.
+  const stepIn = details?.stepIn === true ? details.stepInReason : null;
   return (
     <LinePanelHead
       line={line}
@@ -74,7 +78,18 @@ export function LinePanelItem({
       held={forYouCounts(forYou)}
       back={from === null ? undefined : { label: from, onBack: backEntity }}
       actions={
-        starting ? (
+        stepIn !== null && details !== undefined && details.stepInKind !== null ? (
+          // Nobody can take it: Step in, its reason and the action that fits, in place of the moves.
+          <LineStepIn
+            line={line}
+            reason={stepIn}
+            kind={details.stepInKind}
+            focused={false}
+            folded={false}
+            h={h}
+            onFocus={() => {}}
+          />
+        ) : starting ? (
           <StartSheet
             line={line}
             onDoneWhen={h.doneWhen}
@@ -118,7 +133,7 @@ export function LinePanelItem({
         onRetry={() => void shown.refetch()}
         at={shown.dataUpdatedAt}
       >
-        <PlanList steps={shown.data?.steps ?? []} work={shown.data?.work ?? []} />
+        <PlanList steps={shown.data?.steps ?? []} work={shown.data?.work ?? []} state={line.state} />
       </Loaded>
       <Loaded
         loaded={since.data !== undefined}
@@ -142,7 +157,6 @@ export function LinePanelItem({
         onStop={choices.stop}
         onOwn={() => choices.choose("own")}
         waitingOnYou={home?.lines[line.ref]?.waitingOnYou === true}
-        stepIn={home?.lines[line.ref]?.stepInReason ?? null}
       />
       {!live ? null : line.ownedBy !== null ? (
         <OwnWorkBox

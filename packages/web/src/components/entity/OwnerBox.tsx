@@ -18,7 +18,6 @@ export function OwnerBox({
   onStop,
   onOwn,
   waitingOnYou = false,
-  stepIn = null,
 }: {
   line: Line;
   crew: LineCrew | undefined;
@@ -28,8 +27,6 @@ export function OwnerBox({
   onOwn(): void;
   /** All the line's open work waits on the developer. */
   waitingOnYou?: boolean;
-  /** Why no owner can be found, as Step in says it, when the line needs the developer to step in. */
-  stepIn?: string | null;
 }) {
   if (line.state === "done" || line.state === "dropped") return null;
   const owner = crew?.owner ?? null;
@@ -51,7 +48,7 @@ export function OwnerBox({
         {line.ownedBy !== null ? (
           <Row title="You" />
         ) : owner === null ? (
-          <Row title="no owner" {...(stepIn === null ? {} : { note: stepIn })} />
+          <Row title="no owner" />
         ) : (
           <Row
             title={owner.name}

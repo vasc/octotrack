@@ -1050,7 +1050,7 @@ describe("a line opened", () => {
     view.getByText("Test-print");
     view.getByText("✗ checks failing");
     view.unmount();
-    render(<PlanList steps={[]} work={[]} />).getByText("No plan yet. Its owner writes one once it starts.");
+    render(<PlanList steps={[]} work={[]} />).getByText("No plan yet. Its owner writes one.");
   });
 
   test("OwnerBox names the owner and how it is, or that there is none and why", () => {
@@ -1079,9 +1079,6 @@ describe("a line opened", () => {
     helped.unmount();
     // With no owner: still being looked for, or why none can be found, as Step in says.
     render(<OwnerBox {...props} crew={undefined} />).getByText("no owner");
-    render(<OwnerBox {...props} crew={undefined} stepIn="It names no repo to work in." />).getByText(
-      "It names no repo to work in.",
-    );
     render(<OwnerBox {...props} line={line({ ownedBy: "dev" })} crew={undefined} />).getByText("You");
   });
 
@@ -1525,7 +1522,7 @@ describe("tabling and a line's own choices", () => {
     expect(sheet.getByLabelText("Look again on · optional").getAttribute("type")).toBe("date");
   });
 
-  test("LineActions offers the moves each state allows, the rare ones under More, and asks before Done", () => {
+  test("LineActions offers the moves each state allows, the rare ones under More, Done at once", () => {
     const onChoose = mock((_choice: string) => {});
     const props = { onChoose, onTable: () => {} };
     const names = (view: ReturnType<typeof render>) =>
@@ -1533,10 +1530,10 @@ describe("tabling and a line's own choices", () => {
     const working = render(<LineActions line={line()} owner="panel" {...props} />);
     // More says so in words, and its full name is for a screen reader.
     expect(names(working)).toEqual(["Done", "Move to up next", "Table", "More"]);
-    fireEvent.click(working.getByRole("button", { name: "Done" }));
-    working.getByText("Done is final.");
+    // Done waits with Undo like every choice, so it asks nothing first.
     fireEvent.click(working.getByRole("button", { name: "Done" }));
     expect(onChoose).toHaveBeenCalledWith("done");
+    expect(working.queryByText("Done is final.")).toBeNull();
     fireEvent.click(working.getByRole("button", { name: "More: drop this line, fold it into another" }));
     // Nothing to fold into: the item stays, disabled.
     expect(working.getByRole("menuitem", { name: "Fold into another" }).hasAttribute("disabled")).toBe(true);

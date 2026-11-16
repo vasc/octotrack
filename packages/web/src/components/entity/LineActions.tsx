@@ -6,7 +6,6 @@ import { TableForm } from "../lines/TableForm.tsx";
 import { Actions } from "../ui/Actions.tsx";
 import { Button } from "../ui/Button.tsx";
 import { Menu, MenuAction } from "../ui/Menu.tsx";
-import { Note } from "../ui/Note.tsx";
 
 export interface LineActionsProps {
   line: Line;
@@ -31,7 +30,7 @@ export function LineActions({
   foldTargets = [],
   onFold,
 }: LineActionsProps) {
-  const [mode, setMode] = useState<"table" | "done" | "fold" | null>(null);
+  const [mode, setMode] = useState<"table" | "fold" | null>(null);
   if (line.state === "done" || line.state === "dropped") return null;
   if (mode === "table") {
     return (
@@ -60,30 +59,11 @@ export function LineActions({
       />
     );
   }
-  if (mode === "done") {
-    return (
-      <>
-        <Note>Done is final.</Note>
-        <Actions>
-          <Button
-            variant="primary"
-            onClick={() => {
-              onChoose("done");
-              setMode(null);
-            }}
-          >
-            Done
-          </Button>
-          <Button onClick={() => setMode(null)}>Cancel</Button>
-        </Actions>
-      </>
-    );
-  }
   const waiting = line.state === "up_next" || line.state === "tabled" || line.state === "proposed";
   const canFold = onFold !== undefined && foldTargets.length > 0;
   return (
     <Actions>
-      {line.state === "working" ? <Button onClick={() => setMode("done")}>Done</Button> : null}
+      {line.state === "working" ? <Button onClick={() => onChoose("done")}>Done</Button> : null}
       {line.state === "working" ? <Button onClick={() => onChoose("queue")}>Move to up next</Button> : null}
       {waiting ? (
         <Button variant="primary" onClick={() => onChoose("start")}>

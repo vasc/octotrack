@@ -14,9 +14,11 @@ export function SummaryBox({ line, now = Date.now() }: { line: Line; now?: numbe
     >
       {none ? (
         <Note>
-          {line.state === "working"
-            ? "No summary yet. Its owner writes one."
-            : "No summary yet. Its owner writes one once the line starts."}
+          {line.state === "done" || line.state === "dropped"
+            ? "No summary was written."
+            : line.state === "working"
+              ? "No summary yet. Its owner writes one."
+              : "No summary yet. Its owner writes one once the line starts."}
         </Note>
       ) : null}
       {line.headline === null ? null : (

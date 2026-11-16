@@ -147,9 +147,16 @@ describe("PlanList", () => {
     view.getByText("Not on a step yet");
   });
 
-  test("with nothing at all, says who writes the plan", () => {
-    const view = render(<PlanList steps={[]} work={[]} />);
-    view.getByText("No plan yet. Its owner writes one once it starts.");
+  test("with nothing at all, says who writes the plan, as the line stands", () => {
+    render(<PlanList steps={[]} work={[]} state="up_next" />).getByText(
+      "No plan yet. Its owner writes one once it starts.",
+    );
+    render(<PlanList steps={[]} work={[]} state="working" />).getByText("No plan yet. Its owner writes one.");
+    render(<PlanList steps={[]} work={[]} state="done" />).getByText("No plan was written.");
+  });
+
+  test("a closed line with no summary says none was written", () => {
+    render(<SummaryBox line={line({ state: "dropped" })} />).getByText("No summary was written.");
   });
 });
 
