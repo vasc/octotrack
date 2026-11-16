@@ -281,15 +281,16 @@ Decisions made from that:
   tasks, places and summaries; the dashboard; the local runner; phone interruptions; then removing what it replaces.
 - **The live install stops running from the main checkout: it runs one compiled `octo` binary.** The investigation
   worked: `bun build --compile` carries the CLI, the server, SQLite, the built dashboard (embedded through generated
-  `with { type: "file" }` imports, since Bun rebundles HTML and scripts given as entry points) and the wake adapter
-  it then carried (`octo adapter`, so no script path outside the binary; removed since, see D12). A compiled binary starts its own
-  server by running itself, not its virtual script path. Every answer carries the server's build (`x-octo-build`, a hash of
-  the sources and the dashboard) and the CLI warns once when it differs from its own. `scripts/deploy.ts` builds,
-  rehearses the migration on a copy of the real data, backs the database up with SQLite (`VACUUM INTO` from a read-only
-  connection: the database runs in WAL mode, so a file copy can lose writes), installs to `~/.octotrack/bin/octo`, points
-  the PATH link, the LaunchAgent and the wake adapter at it, restarts, and checks the new build answers;
-  `--rollback` goes back exactly one deploy and never touches the database. _Trade-off:_ a build before every deploy,
-  against a merge to main never again changing the CLI under a server still running the old code.
+  `with { type: "file" }` imports, since Bun rebundles HTML and scripts given as entry points). A compiled binary starts
+  its own server by running itself, not its virtual script path. Every answer carries the server's build (`x-octo-build`, a hash of
+  the sources and the dashboard) and the CLI warns once when it differs from its own. `bun run build` compiles the one
+  file, for this system or any Bun target, and the file installs itself: `octo install` rehearses the migration on a copy
+  of the real data, backs the database up with SQLite (`VACUUM INTO` from a read-only connection: the database runs in
+  WAL mode, so a file copy can lose writes), puts itself in `~/.octotrack/bin`, keeping the one before, restarts the
+  server on itself and checks its build answers; `octo rollback` goes back exactly one install and never touches the
+  database. Nothing in it knows any operating system's service manager: the server starts itself on the first command,
+  and starting it at login is left to whatever the system uses. _Trade-off:_ a build before every update, against a
+  merge to main never again changing the CLI under a server still running the old code.
 - **Agents and claims, as built.** Deadlines (wind-downs, look-again dates, scoping that lapses) are settled at the start
   of every call and by the minute sweep, so no rule waits on a timer and none needs one to be correct. An agent is
   registered on its first command with its checkout, and its repo is read from that checkout's GitHub remote; an agent

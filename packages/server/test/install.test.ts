@@ -1,47 +1,9 @@
 import { Database } from "bun:sqlite";
 import { afterEach, describe, expect, test } from "bun:test";
-import {
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  readlinkSync,
-  rmSync,
-  statSync,
-  symlinkSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import {
-  backupDatabase,
-  type CommandRunner,
-  install,
-  pointPlistAt,
-  removeAdaptersRunning,
-  rollback,
-} from "../src/install.ts";
-
-const PLIST = `<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-  <key>Label</key>
-  <string>ink.example.octotrack.server</string>
-  <key>ProgramArguments</key>
-  <array>
-    <string>/Users/me/.bun/bin/bun</string>
-    <string>/Users/me/.bun/bin/octo</string>
-    <string>serve</string>
-  </array>
-  <key>StandardOutPath</key>
-  <string>/Users/me/.octotrack/server.log</string>
-</dict>
-</plist>
-`;
-
-const SCREEN = {
-  command: ["screen", "-S", "{address}", "-X", "stuff", "{message}"],
-  for: "inside GNU screen",
-};
+import { backupDatabase, placeBinary, restorePrevious } from "../src/install.ts";
 
 const dirs: string[] = [];
 afterEach(() => {
@@ -51,103 +13,49 @@ afterEach(() => {
 function scene() {
   const root = mkdtempSync(join(tmpdir(), "octo-install-"));
   dirs.push(root);
-  const checkout = join(root, "checkout", "main.ts");
-  mkdirSync(join(root, "checkout"));
-  writeFileSync(checkout, "script");
-  mkdirSync(join(root, "bin"));
-  const paths = {
-    binDir: join(root, "home", "bin"),
-    link: join(root, "bin", "octo"),
-    plist: join(root, "agent.plist"),
-    wakeAdapters: join(root, "wake-adapters.json"),
-  };
-  symlinkSync(checkout, paths.link);
-  writeFileSync(paths.plist, PLIST);
-  writeFileSync(
-    paths.wakeAdapters,
-    JSON.stringify({
-      gone: { command: [join(paths.binDir, "octo"), "adapter", "gone", "--", "{address}", "{message}"] },
-      screen: SCREEN,
-    }),
-  );
+  const binDir = join(root, "home", "bin");
   const built = join(root, "octo-built");
   writeFileSync(built, "binary one");
-  const commands: string[][] = [];
-  const run: CommandRunner = (command) => {
-    commands.push([...command]);
-    return { code: 0, output: "" };
-  };
-  return { root, checkout, paths, built, commands, run };
+  return { root, binDir, built, binary: join(binDir, "octo") };
 }
 
-describe("installing the binary as the live Octotrack", () => {
-  test("points the PATH link and the LaunchAgent at it, drops wake adapters it no longer carries, and restarts the server", () => {
+describe("putting a built file in place as the live octo", () => {
+  test("the first install creates the folder and puts the file there, runnable", () => {
     const s = scene();
-    const report = install(s.built, s.paths, s.run, 501);
-    const binary = join(s.paths.binDir, "octo");
-    expect(readFileSync(binary, "utf8")).toBe("binary one");
-    expect(readlinkSync(s.paths.link)).toBe(binary);
-    const plist = readFileSync(s.paths.plist, "utf8");
-    expect(plist).toContain(`<string>${binary}</string>\n    <string>serve</string>`);
-    expect(plist).not.toContain(".bun/bin/bun");
-    expect(plist).toContain("<string>/Users/me/.octotrack/server.log</string>");
-    expect(JSON.parse(readFileSync(s.paths.wakeAdapters, "utf8"))).toEqual({ screen: SCREEN });
-    expect(report.changed).toContain(s.paths.wakeAdapters);
-    expect(s.commands).toEqual([
-      ["launchctl", "bootout", "gui/501", s.paths.plist],
-      ["launchctl", "bootstrap", "gui/501", s.paths.plist],
-    ]);
-    expect(report.changed).toContain(s.paths.plist);
+    expect(placeBinary(s.built, s.binDir)).toBe(s.binary);
+    expect(readFileSync(s.binary, "utf8")).toBe("binary one");
+    expect(statSync(s.binary).mode & 0o111).not.toBe(0);
+    expect(existsSync(`${s.binary}.previous`)).toBe(false);
   });
 
-  test("rollback after the first deploy goes back to running from the checkout", () => {
+  test("a later install keeps the one before it, and puts a new file in place rather than writing over the running one", () => {
     const s = scene();
-    const wakeBefore = readFileSync(s.paths.wakeAdapters, "utf8");
-    install(s.built, s.paths, s.run, 501);
-    rollback(s.paths, s.run, 501);
-    expect(readlinkSync(s.paths.link)).toBe(s.checkout);
-    expect(readFileSync(s.paths.plist, "utf8")).toBe(PLIST);
-    expect(readFileSync(s.paths.wakeAdapters, "utf8")).toBe(wakeBefore);
-  });
-
-  test("rollback after a later deploy goes back one deploy, to the binary before it", () => {
-    const s = scene();
-    install(s.built, s.paths, s.run, 501);
-    const plistAfterFirst = readFileSync(s.paths.plist, "utf8");
+    placeBinary(s.built, s.binDir);
+    const running = statSync(s.binary).ino;
     writeFileSync(s.built, "binary two");
-    install(s.built, s.paths, s.run, 501);
-    rollback(s.paths, s.run, 501);
-    const binary = join(s.paths.binDir, "octo");
-    expect(readFileSync(binary, "utf8")).toBe("binary one");
-    expect(readlinkSync(s.paths.link)).toBe(binary);
-    expect(readFileSync(s.paths.plist, "utf8")).toBe(plistAfterFirst);
+    placeBinary(s.built, s.binDir);
+    expect(readFileSync(s.binary, "utf8")).toBe("binary two");
+    expect(readFileSync(`${s.binary}.previous`, "utf8")).toBe("binary one");
+    expect(statSync(s.binary).ino).not.toBe(running);
   });
 
-  test("rollback puts a new file in the binary's place rather than writing over the one that is running", () => {
+  test("rollback puts the one before back, as a new file, and goes back exactly one install", () => {
     const s = scene();
-    install(s.built, s.paths, s.run, 501);
+    placeBinary(s.built, s.binDir);
     writeFileSync(s.built, "binary two");
-    install(s.built, s.paths, s.run, 501);
-    const binary = join(s.paths.binDir, "octo");
-    const running = statSync(binary).ino;
-    rollback(s.paths, s.run, 501);
-    expect(statSync(binary).ino).not.toBe(running);
-    expect(readFileSync(binary, "utf8")).toBe("binary one");
+    placeBinary(s.built, s.binDir);
+    const running = statSync(s.binary).ino;
+    expect(restorePrevious(s.binDir)).toBe(s.binary);
+    expect(readFileSync(s.binary, "utf8")).toBe("binary one");
+    expect(statSync(s.binary).ino).not.toBe(running);
   });
 
-  test("a LaunchAgent with no program is refused rather than silently left as it was", () => {
-    expect(() => pointPlistAt("<plist><dict></dict></plist>", ["/bin/octo", "serve"])).toThrow(
-      "ProgramArguments",
-    );
-  });
-
-  test("a failed restart is an error, not a quiet success", () => {
+  test("rollback with nothing before it changes nothing and says so", () => {
     const s = scene();
-    const failing: CommandRunner = (command) => ({
-      code: command[1] === "bootstrap" ? 5 : 0,
-      output: "Bootstrap failed",
-    });
-    expect(() => install(s.built, s.paths, failing, 501)).toThrow("Bootstrap failed");
+    expect(restorePrevious(s.binDir)).toBeNull();
+    placeBinary(s.built, s.binDir);
+    expect(restorePrevious(s.binDir)).toBeNull();
+    expect(readFileSync(s.binary, "utf8")).toBe("binary one");
   });
 });
 
@@ -168,42 +76,5 @@ describe("backing up the database", () => {
     const copy = new Database(first, { readonly: true });
     expect(copy.query("SELECT name FROM things").all()).toEqual([{ name: "in the wal" }]);
     copy.close();
-  });
-});
-
-describe("the wake adapters a deploy writes", () => {
-  test("an adapter that runs the binary's adapter command is removed, since the binary no longer has one", () => {
-    const written = JSON.parse(
-      removeAdaptersRunning(
-        JSON.stringify({
-          old: {
-            command: ["/bin/octo", "adapter", "old", "--", "{address}", "{message}"],
-            for: "an old session",
-          },
-          linked: { command: ["/usr/local/bin/octo", "adapter", "old", "{address}", "{message}"] },
-          screen: SCREEN,
-          own: { command: ["/bin/my-waker", "adapter", "{address}", "{message}"] },
-        }),
-        ["/bin/octo", "/usr/local/bin/octo"],
-      ),
-    );
-    expect(written).toEqual({
-      screen: SCREEN,
-      own: { command: ["/bin/my-waker", "adapter", "{address}", "{message}"] },
-    });
-  });
-
-  test("a file with no such adapter is left exactly as the developer wrote it", () => {
-    const json = JSON.stringify({ screen: SCREEN, serve: { command: ["/bin/octo", "serve", "{address}"] } });
-    expect(removeAdaptersRunning(json, ["/bin/octo"])).toBe(json);
-  });
-
-  test("a deploy leaves a wake adapters file it has nothing to remove from unwritten", () => {
-    const s = scene();
-    const json = JSON.stringify({ screen: SCREEN });
-    writeFileSync(s.paths.wakeAdapters, json);
-    const report = install(s.built, s.paths, s.run, 501);
-    expect(readFileSync(s.paths.wakeAdapters, "utf8")).toBe(json);
-    expect(report.changed).not.toContain(s.paths.wakeAdapters);
   });
 });

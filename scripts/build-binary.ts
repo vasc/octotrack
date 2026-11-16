@@ -1,6 +1,7 @@
 /**
- * Builds Octotrack as one binary: the CLI, the server and the dashboard, so that the CLI and
- * the server always come from the same build. Usage: bun scripts/build-binary.ts [out], default build/octo.
+ * Builds Octotrack as one file: the CLI, the server and the dashboard, so that the CLI and the server always come from
+ * the same build. `build/octo install` then installs it. Usage: bun run build [--target <bun target>] [out], default
+ * build/octo for this machine; a target such as bun-linux-x64 or bun-windows-x64 builds for another one.
  *
  * The build id is a hash of the sources and the built dashboard, so the same code always gets the same id and a CLI can
  * tell when the server it reached is from another build.
@@ -27,7 +28,10 @@ function run(command: readonly string[]): void {
 }
 
 /** Builds the dashboard and the binary, and returns the build id the binary reports. */
-export function buildBinary(out: string = join(root, "build", "octo")): { binary: string; buildId: string } {
+export function buildBinary(
+  out: string = join(root, "build", "octo"),
+  target?: string,
+): { binary: string; buildId: string } {
   run([process.execPath, "run", "--cwd", "packages/web", "build"]);
 
   const sources = ["core", "server", "cli"].flatMap((name) =>
@@ -71,6 +75,7 @@ export function buildBinary(out: string = join(root, "build", "octo")): { binary
     "build",
     "--compile",
     entry,
+    ...(target === undefined ? [] : [`--target=${target}`]),
     "--outfile",
     out,
     "--define",
@@ -80,4 +85,20 @@ export function buildBinary(out: string = join(root, "build", "octo")): { binary
   return { binary: out, buildId };
 }
 
-if (import.meta.main) buildBinary(process.argv[2]);
+/** `--target bun-linux-x64` or `--target=bun-linux-x64`, and an output path, in any order. */
+function parseArgs(argv: readonly string[]): { out?: string; target?: string } {
+  let out: string | undefined;
+  let target: string | undefined;
+  for (let index = 0; index < argv.length; index++) {
+    const word = argv[index] ?? "";
+    if (word.startsWith("--target=")) target = word.slice("--target=".length);
+    else if (word === "--target") target = argv[++index];
+    else out = word;
+  }
+  return { ...(out === undefined ? {} : { out }), ...(target === undefined ? {} : { target }) };
+}
+
+if (import.meta.main) {
+  const { out, target } = parseArgs(process.argv.slice(2));
+  buildBinary(out, target);
+}

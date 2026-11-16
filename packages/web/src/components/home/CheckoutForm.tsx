@@ -26,7 +26,7 @@ export function CheckoutForm({
       <Stack>
         <Field
           label={`Checkout of ${repo}`}
-          placeholder="/Users/you/src/repo"
+          placeholder="/path/to/repo"
           value={path}
           onChange={setPath}
           autoFocus

@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { z } from "zod";
@@ -106,6 +106,24 @@ describe("the server", () => {
     expect(await serverPid()).toBeGreaterThan(0);
     const status = await octo(["server", "status", "--text"]);
     expect(status.stdout).toContain("Up at");
+  });
+});
+
+describe("installing the built file", () => {
+  test("install is refused when octo runs from source, saying how to build the one file", async () => {
+    const result = await octo(["install"]);
+    expect(result.code).toBe(2);
+    expect(parseJson(result.stdout)).toMatchObject({
+      ok: false,
+      error: { code: "usage", message: expect.stringContaining("bun run build") },
+    });
+    expect(existsSync(join(home, "bin", "octo"))).toBe(false);
+  });
+
+  test("rollback with nothing installed before says so and changes nothing", async () => {
+    const result = await octo(["rollback"]);
+    expect(result.code).toBe(1);
+    expect(parseJson(result.stdout)).toMatchObject({ ok: false, error: { code: "nothing_to_roll_back" } });
   });
 });
 

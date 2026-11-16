@@ -46,9 +46,9 @@ screen that styles itself.
    bun test design
    ```
 
-3. The installed binary carries the dashboard inside it, so a change reaches it only with `bun scripts/deploy.ts` (see
-   the [README](../README.md#installing-it-as-one-binary)). A server run from the checkout serves `packages/web/dist`,
-   which `bun run build` refreshes.
+3. The installed octo carries the dashboard inside it, so a change reaches it only with
+   `bun run build && build/octo install` (see the [README](../README.md#updating)). A server run from the checkout
+   serves `packages/web/dist`, which `bun run build` refreshes.
 4. If it was a decision rather than a tweak, add a line to [log.md](log.md) saying what and why.
 
 ## Some changes to try first

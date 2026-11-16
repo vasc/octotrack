@@ -16,7 +16,7 @@ import { print, printError } from "../write.ts";
 const STRING = { type: "string" } as const;
 const EXIT_UNREACHABLE = 3;
 
-const Health = z.object({
+export const Health = z.object({
   ok: z.boolean(),
   cursor: z.number(),
   pid: z.number().nullable(),
@@ -40,6 +40,13 @@ function renderCounts(counts: Counts): string {
     attention(counts.blockedIssues, "blocked"),
     attention(counts.waitingWatches, counts.waitingWatches === 1 ? "agent waiting" : "agents waiting"),
   ].join("  ");
+}
+
+/** The command that opens a URL in the default browser, on whatever system this runs. */
+export function opener(url: string, platform: NodeJS.Platform = process.platform): string[] {
+  if (platform === "darwin") return ["open", url];
+  if (platform === "win32") return ["cmd", "/c", "start", "", url];
+  return ["xdg-open", url];
 }
 
 export const systemCommands: Command[] = [
@@ -455,8 +462,7 @@ export const systemCommands: Command[] = [
     ops: [],
     async run({ client, out }) {
       Health.parse(await client.get("/api/health"));
-      const opener = process.platform === "darwin" ? "open" : "xdg-open";
-      Bun.spawn([opener, serverUrl()], { stdout: "ignore", stderr: "ignore" }).unref();
+      Bun.spawn(opener(serverUrl()), { stdout: "ignore", stderr: "ignore" }).unref();
       out.data({ url: serverUrl() }, () => serverUrl());
     },
   },

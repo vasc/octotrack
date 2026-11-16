@@ -6,6 +6,7 @@ import { parseOption } from "../src/commands/decisions.ts";
 import { normalizeRelation } from "../src/commands/network.ts";
 import { buildSpec } from "../src/commands/observe.ts";
 import { queryFrom } from "../src/commands/shared.ts";
+import { opener } from "../src/commands/system.ts";
 import { agentGuide } from "../src/guide.ts";
 
 const AGENT_GUIDE = agentGuide({});
@@ -217,6 +218,14 @@ describe("argument helpers", () => {
       ],
     });
     expect(() => buildSpec(new Args([], {}))).toThrow("Say what to watch");
+  });
+});
+
+describe("opening the dashboard", () => {
+  test("uses each system's own way to open a URL", () => {
+    expect(opener("http://x", "darwin")).toEqual(["open", "http://x"]);
+    expect(opener("http://x", "linux")).toEqual(["xdg-open", "http://x"]);
+    expect(opener("http://x", "win32")).toEqual(["cmd", "/c", "start", "", "http://x"]);
   });
 });
 

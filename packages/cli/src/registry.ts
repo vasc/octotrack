@@ -5,6 +5,7 @@ import { runnerCommands } from "./commands/runner.ts";
 import { taskCommands } from "./commands/tasks.ts";
 import { networkCommands } from "./commands/network.ts";
 import { observeCommands } from "./commands/observe.ts";
+import { installCommands } from "./commands/install.ts";
 import { systemCommands } from "./commands/system.ts";
 import { workCommands } from "./commands/work.ts";
 
@@ -75,6 +76,7 @@ function inD14Words(commands: readonly Command[]): Command[] {
 
 const OWN_COMMANDS: readonly Command[] = [
   ...systemCommands,
+  ...installCommands,
   ...observeCommands,
   ...lineCommands,
   ...taskCommands,

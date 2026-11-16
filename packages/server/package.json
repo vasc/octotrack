@@ -8,7 +8,9 @@
     "./build": "./src/build.ts",
     "./env": "./src/env.ts",
     "./gh": "./src/gh.ts",
+    "./install": "./src/install.ts",
     "./paths": "./src/paths.ts",
+    "./rehearse": "./src/rehearse.ts",
     "./wake-adapters": "./src/wake-adapters.ts"
   },
   "dependencies": {

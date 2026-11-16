@@ -23,7 +23,7 @@ What makes it different from a normal tracker:
 
 ## Setup
 
-Requires [Bun](https://bun.sh). `gh` is optional, and enables PR status from GitHub.
+Requires [Bun](https://bun.sh) to build. `gh` is optional, and enables PR status from GitHub.
 
 ```bash
 bun install
@@ -33,11 +33,16 @@ bun install
 bun run build
 ```
 
+That compiles one file, `build/octo`, carrying the CLI, the server and the dashboard. To build for another system, name
+its [Bun target](https://bun.sh/docs/bundler/executables), such as `bun-linux-x64`, `bun-linux-arm64` or
+`bun-windows-x64`: `bun run build --target bun-linux-x64 build/octo-linux`. Then install it:
+
 ```bash
-bun link
+build/octo install
 ```
 
-That puts `octo` on your PATH, running from this checkout. The server starts itself on the first command, on port 4747.
+It puts itself in `~/.octotrack/bin/octo` and starts the server on port 4747, and says so if that folder is not on your
+PATH yet. Add it to your PATH, then:
 
 ```bash
 octo repo create OCT "My project" --repo owner/name
@@ -47,6 +52,9 @@ octo repo create OCT "My project" --repo owner/name
 octo open
 ```
 
+The server starts itself on the first `octo` command after a reboot. To have it up before that, for the phone, have
+your system run `~/.octotrack/bin/octo serve` at login.
+
 To look around with made-up data first, without touching your real tracker:
 
 ```bash
@@ -55,73 +63,29 @@ OCTO_HOME=/tmp/octo-demo OCTO_URL=http://127.0.0.1:4799 octo seed demo
 
 Then open <http://127.0.0.1:4799>.
 
-### Installing it as one binary
+### Updating
 
-The live install runs one compiled `octo`, which carries the CLI, the server and the dashboard, so the CLI and the
-server always come from the same build, and a change in the checkout never changes the CLI under a server still running
-older code. A LaunchAgent keeps the server running from login on macOS. Put this in
-`~/Library/LaunchAgents/octotrack.server.plist`, with your paths:
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>Label</key>
-  <string>octotrack.server</string>
-  <key>ProgramArguments</key>
-  <array>
-    <string>/Users/you/.octotrack/bin/octo</string>
-    <string>serve</string>
-  </array>
-  <key>EnvironmentVariables</key>
-  <dict>
-    <key>PATH</key>
-    <string>/Users/you/.bun/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
-  </dict>
-  <key>RunAtLoad</key>
-  <true/>
-  <key>StandardOutPath</key>
-  <string>/Users/you/.octotrack/server.log</string>
-  <key>StandardErrorPath</key>
-  <string>/Users/you/.octotrack/server.log</string>
-</dict>
-</plist>
-```
-
-`gh` has to be on that `PATH` for PR status, and so does whatever the runner's start and setup commands run. Leave
-`KeepAlive` out: `octo server stop` ends the server with a signal, which launchd would treat as a crash and undo, and it
-would retry forever whenever an on-demand server already holds the port. Then build and install:
+Build again and install the new file the same way:
 
 ```bash
-bun scripts/deploy.ts
+bun run build && build/octo install
 ```
 
-It builds the dashboard and the binary (`scripts/build-binary.ts`, into `build/octo`); rehearses the migration on a copy
-of `~/.octotrack/octo.db` and deploys nothing if a ref would stop resolving or anything would be lost; backs the
-database up to `octo-backup-before-v<N>.db` beside it when the schema moves; installs the binary to
-`~/.octotrack/bin/octo`; points the `octo` on your PATH and the LaunchAgent at it; removes any wake adapter that runs
-the binary's old `octo adapter` command, which no longer exists; restarts the server; and checks that the new build is
-the one answering. It finds the LaunchAgent as the file in `~/Library/LaunchAgents` with `octotrack` in its name, and
-changes only its program, keeping the rest. Each file it changes is kept first as `.previous`, so the last deploy can
-be undone:
+Before anything changes, it rehearses the migration on a copy of `~/.octotrack/octo.db` and installs nothing if a ref
+would stop resolving or anything would be lost. It backs the database up to `octo-backup-before-v<N>.db` beside it when
+the schema moves, keeps the octo it replaces as `octo.previous`, restarts the server on the new one, and checks that
+the new build is the one answering. To go back one install:
 
 ```bash
-bun scripts/deploy.ts --rollback
+octo rollback
 ```
 
-That puts back the binary, the link, the LaunchAgent and the wake adapters from before the last deploy, and restarts.
-It never touches the database. To see what a migration would do without deploying, run
-`bun scripts/rehearse-migration.ts`, optionally with the path of a database: it migrates a copy and prints what was kept
-or lost.
+That puts the previous octo back and restarts the server on it. It never touches the database. To see what a migration
+would do without installing, run `bun scripts/rehearse-migration.ts`, optionally with the path of a database: it
+migrates a copy and prints what was kept or lost.
 
-An `octo` that reaches a server from another build says so once. `octo server stop` ends the old server, and the next
-command starts the new one, outside launchd. To have launchd run it again instead, restart the LaunchAgent by the
-label in its plist:
-
-```bash
-launchctl kickstart -k gui/$(id -u)/octotrack.server
-```
+The CLI and the server always come from the same file, so a change in the checkout never changes the CLI under a
+server still running older code. An `octo` that reaches a server from another build says so once.
 
 ### Letting agents write
 
@@ -145,7 +109,7 @@ octo server stop
 ```
 
 Any `octo` command starts it again. Every device your tailnet's access rules allow can then read and answer decisions.
-So that the link works after a reboot, install it with its LaunchAgent, as above.
+So that the link works after a reboot, have your system start `octo serve` at login, as above.
 
 ## For agents
 
@@ -233,7 +197,7 @@ until `~/.octotrack/agent-setup.json` exists, and starts in watch mode, only not
   "start": ["your-agent", "--prompt", "You are {name}. Run: octo line take {line}, then work on it"],
   "cap": 1,
   "dryRun": false,
-  "repos": { "PANEL": { "checkout": "/Users/you/src/homepanel", "setup": [["bun", "install"]] } }
+  "repos": { "PANEL": { "checkout": "/path/to/homepanel", "setup": [["bun", "install"]] } }
 }
 ```
 
@@ -250,7 +214,7 @@ run for it. A wake left running by a server restart is watched by its process id
 
 Each session runs in a fresh worktree on `octo/<name>`, under `worktrees` (by default `worktrees` in Octotrack's home,
 so `OCTO_HOME` moves it too), made from the repo's main checkout: the one named here, the one set with
-`octo repo checkout PANEL /Users/you/src/homepanel`, one an agent works in whose origin is the repo's GitHub repo, or a
+`octo repo checkout PANEL /path/to/homepanel`, one an agent works in whose origin is the repo's GitHub repo, or a
 clone `gh` makes under `clones` (by default `clones` in Octotrack's home). A clone is made beside its place and moved
 there only once whole. A new session never takes over a branch Octotrack did not make for it. Worktrees are removed
 only when clean, pushed and unused. A gone session's worktree goes to the next session on its line once nobody else
@@ -401,7 +365,6 @@ D-5 - None of the options, doing this instead
 | `OCTO_GH_TIMEOUT_MS`   | `30000`                  | How long pull request sync gives each `gh` call                                                         |
 | `OCTO_DEVELOPER`       | unset                    | `1` makes an interactive terminal with no agent name the developer, as `--me` does                      |
 | `OCTO_PUSH_CONTACT`    | an address naming no one | Who push services may contact about the notifications this server sends                                 |
-| `OCTO_PORT`            | `4747`                   | The port `scripts/deploy.ts` checks the new build on                                                    |
 
 ## Development
 
@@ -415,7 +378,8 @@ That runs types, lint and all tests, the dashboard's included, which run on thei
 (`querySelectorAll<…>`, `closest<…>`, `getQueryData<…>`); `as const` is allowed.
 
 For the dashboard with live reload, run `bun run dev:web` and open <http://localhost:4748>; it sends `/api` to the
-server on 4747. A change reaches the installed binary only through `bun scripts/deploy.ts`.
+server on 4747. A change reaches the installed octo only through `bun run build && build/octo install`. To run
+`octo` straight from the checkout while working on it, `bun link` puts that one on your PATH instead.
 
 | Package           | Holds                                                                                     |
 | ----------------- | ----------------------------------------------------------------------------------------- |
