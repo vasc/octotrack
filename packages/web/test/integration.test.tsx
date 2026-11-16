@@ -2306,6 +2306,43 @@ describe("lines of work", () => {
       expect(opened.getByLabelText("Holes")).toHaveProperty("value", "38");
     });
 
+    test("an outcome typed before the task's draft has loaded joins it, never replacing what was kept", async () => {
+      const task = measuring();
+      const kept = JSON.stringify({ values: { Length: "41" }, note: "" });
+      server.tracker.call(c.draftSave, { key: `task:${task.ref}`, text: kept }, asDeveloper);
+      // The draft is held back until the developer has typed, as a slow answer would.
+      let release = () => {};
+      const held = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      const fetchNow = globalThis.fetch;
+      Object.assign(globalThis, {
+        fetch: async (input: string | URL | Request, init?: RequestInit) => {
+          if (String(input).includes("draft.get") && String(init?.body ?? "").includes(`task:${task.ref}`)) {
+            await held;
+          }
+          return fetchNow(input, init);
+        },
+      });
+      try {
+        navigate("/");
+        const view = renderApp(<App />);
+        const opened = within(await view.findByRole("article", { name: "Measure the board" }));
+        fireEvent.change(opened.getByLabelText("Holes"), { target: { value: "38" } });
+        release();
+        await waitFor(() => expect(opened.getByLabelText("Length")).toHaveProperty("value", "41"));
+        await waitFor(() =>
+          expect(
+            JSON.parse(
+              server.tracker.call(c.draftGet, { key: `task:${task.ref}` }, asDeveloper)?.text ?? "{}",
+            ),
+          ).toEqual({ values: { Length: "41", Holes: "38" }, note: "" }),
+        );
+      } finally {
+        Object.assign(globalThis, { fetch: fetchNow });
+      }
+    });
+
     test("a draft written as plain words, before named outcomes, is read as the note", async () => {
       const task = measuring();
       server.tracker.call(c.draftSave, { key: `task:${task.ref}`, text: "41 by 38, roughly" }, asDeveloper);

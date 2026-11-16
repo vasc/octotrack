@@ -64,6 +64,8 @@ export function useDraft(key: string) {
   );
   return {
     value: typed ?? saved.data?.text ?? "",
+    /** The server's draft has arrived, so what is typed can be joined to it. */
+    loaded: saved.data !== undefined,
     error,
     change(text: string) {
       setTyped(text);
