@@ -67,7 +67,23 @@ export function StartSheet({
   return (
     <StartSheetView
       sheetRef={sheet}
-      {...(loading ? { status: failure === null ? <LoadingState /> : <ErrorState error={failure} /> } : {})}
+      {...(loading
+        ? {
+            status:
+              failure === null ? (
+                <LoadingState label="Loading what waited for it" />
+              ) : (
+                <ErrorState
+                  title="Could not load what waited for it."
+                  error={failure}
+                  onRetry={() => {
+                    void held.refetch();
+                    void questions.refetch();
+                  }}
+                />
+              ),
+          }
+        : {})}
       line={line}
       held={current}
       questions={questions.data ?? []}

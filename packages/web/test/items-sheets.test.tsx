@@ -4,6 +4,7 @@ import { AnswerStatus } from "../src/components/home/AnswerStatus.tsx";
 import { CheckoutForm } from "../src/components/home/CheckoutForm.tsx";
 import { KeyHelp } from "../src/components/home/KeyHelp.tsx";
 import { StepIn } from "../src/components/home/StepIn.tsx";
+import { StartSheetView } from "../src/components/home/StartSheetView.tsx";
 import { NewLineSheet } from "../src/components/lines/NewLineSheet.tsx";
 import { line } from "../src/design/fixtures.ts";
 
@@ -105,5 +106,44 @@ describe("NewLineSheet, as drawn", () => {
     const view = render(<NewLineSheet {...props} onDraft={onDraft} />);
     fireEvent.change(view.getByLabelText("What it is"), { target: { value: "Backups" } });
     expect(onDraft).toHaveBeenCalledWith({ title: "Backups", doneWhen: "" });
+  });
+});
+
+describe("StartSheetView, as drawn", () => {
+  test("says how many waited, and Start stays on while what waited loads", () => {
+    const view = render(
+      <StartSheetView
+        line={line({ title: "Labyrinth level editor" })}
+        held={[
+          { ref: "D-4", kind: "question", title: "Which engine?", line: "L-1", current: true, since: "" },
+          { ref: "PANEL-9", kind: "task", title: "Measure the studs", line: "L-1", current: true, since: "" },
+        ]}
+        questions={[]}
+        onDoneWhen={noop}
+        onAnswer={noop}
+        onStart={noop}
+        onCancel={noop}
+        status={<p>loading</p>}
+      />,
+    );
+    expect(view.getByRole("button", { name: "Start" }).hasAttribute("disabled")).toBe(false);
+    view.unmount();
+    const loaded = render(
+      <StartSheetView
+        line={line({ title: "Labyrinth level editor" })}
+        held={[
+          { ref: "D-4", kind: "question", title: "Which engine?", line: "L-1", current: true, since: "" },
+          { ref: "PANEL-9", kind: "task", title: "Measure the studs", line: "L-1", current: true, since: "" },
+        ]}
+        questions={[]}
+        onDoneWhen={noop}
+        onAnswer={noop}
+        onStart={noop}
+        onCancel={noop}
+      />,
+    );
+    loaded.getByText("1 question and 1 task waited for it.");
+    // A held question no longer open to answer here still shows, by its title.
+    loaded.getByText("Which engine?");
   });
 });
