@@ -17,6 +17,9 @@ export function useChoices() {
   const now = useOpMutation(contracts.choiceNow);
   return {
     pending: pending.data ?? [],
+    /** The choices waiting could not load: the Undo bar says so, with Try again. */
+    pendingError: pending.data === undefined ? pending.error : null,
+    retryPending: () => void pending.refetch(),
     /** Whether a choice about this item, or carrying this draft's words, is waiting with Undo. */
     waiting: (refOrDraft: string) =>
       (pending.data ?? []).some(

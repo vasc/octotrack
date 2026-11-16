@@ -35,10 +35,16 @@ export function useTopBar() {
     counts,
     places: (places.data ?? []).map((place) => place.name),
     at: data?.at?.place ?? null,
-    /** Why saying where the developer is did not work. */
+    /** Why saying where the developer is did not work, until the next try. */
     error: at.error,
+    /** The places could not load. */
+    placesError: places.error,
+    retryPlaces: () => void places.refetch(),
     /** A change of place is on its way. */
     atBusy: at.isPending,
-    setAt: (place: string | null) => at.mutate(place === null ? {} : { place }),
+    setAt: (place: string | null) => {
+      at.reset();
+      at.mutate(place === null ? {} : { place });
+    },
   };
 }

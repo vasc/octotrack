@@ -21,6 +21,17 @@ export class OctoError extends Error {
   }
 }
 
+/**
+ * Input that does not fit an operation's schema: said in full for an agent or the CLI, but not something to show a
+ * person as it is, since it is a bug in whatever sent it.
+ */
+export class InputError extends OctoError {
+  constructor(message: string, hint: string | null = null) {
+    super("invalid_input", message, hint);
+    this.name = "InputError";
+  }
+}
+
 export function notFound(ref: string): OctoError {
   return new OctoError(
     "not_found",

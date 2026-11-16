@@ -18,6 +18,7 @@ export function Menu({
   iconOnPhone = false,
   disabled = false,
   busy,
+  failed,
   children,
 }: {
   /** The button's name for a screen reader, which says what is chosen now. */
@@ -40,6 +41,8 @@ export function Menu({
   disabled?: boolean;
   /** A choice from it is on its way: its words give way to this, as a busy button's do. */
   busy?: string | undefined;
+  /** A choice from it that failed, said under the button until the next try. */
+  failed?: string | undefined;
   /** Its items, each given a way to close the menu once picked. */
   children(close: () => void): ReactNode;
 }) {
@@ -90,6 +93,11 @@ export function Menu({
           </>
         )}
       </button>
+      {failed === undefined ? null : (
+        <span className="ui-menu-failed" role="alert">
+          {failed}
+        </span>
+      )}
       {menu.open ? (
         <div
           className="ui-menu-list"

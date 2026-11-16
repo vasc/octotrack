@@ -19,6 +19,7 @@ import { AppStrips } from "./AppStrips.tsx";
 import { PartBoundary } from "./PartBoundary.tsx";
 import { PendingChoices } from "./PendingChoices.tsx";
 import { TopBar } from "./TopBar.tsx";
+import { failureText } from "../../lib/failure.ts";
 
 /**
  * Every page: the bar, the page, and whatever ref is open, as a panel over the right of the page so the list keeps its
@@ -78,6 +79,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         onKeys={openKeys}
         atRef={atPicker}
         atBusy={bar.atBusy}
+        atFailed={bar.error === null ? undefined : failureText(bar.error).text}
+        onRetryPlaces={bar.placesError === null ? undefined : bar.retryPlaces}
         appearance={look.appearance}
         onPalette={look.setPalette}
         onMode={look.setMode}
@@ -91,7 +94,6 @@ export function AppShell({ children }: { children: ReactNode }) {
             onLoadNow={build.loadNow}
           />
           {keysOpen ? <KeyHelp onClose={closeKeys} onLines={path === "/" || path === "/lines"} /> : null}
-          {bar.error === null ? null : <ErrorState error={bar.error} />}
           <PartBoundary>
             {isPending ? (
               <LoadingState label="Loading the page" />

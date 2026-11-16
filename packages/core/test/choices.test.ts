@@ -70,6 +70,18 @@ describe("every choice waits a few seconds with Undo", () => {
     expect(failed.error).toContain("cannot be rejected");
   });
 
+  test("a choice that fails for a reason not written for people says so plainly, never raw text", () => {
+    const w = world();
+    const broken = w.tracker.call(
+      c.choiceMake,
+      { op: "line.start", input: { nope: 1 }, summary: "Started something" },
+      w.dev,
+    );
+    const failed = w.tracker.call(c.choiceNow, { id: broken.id }, w.dev);
+    expect(failed.state).toBe("failed");
+    expect(failed.error).toBe("The tracker could not take it as it was sent; nothing changed.");
+  });
+
   test("the draft a choice was typed in is kept through Undo and deleted once it takes effect", () => {
     const w = world();
     const draft = (key: string) => w.tracker.call(c.draftGet, { key }, w.dev).text;

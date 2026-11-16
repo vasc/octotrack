@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Contract } from "../contracts.ts";
-import { OctoError } from "../errors.ts";
+import { InputError } from "../errors.ts";
 import type { Ctx } from "../store/context.ts";
 
 /** One operation with its generics erased. Input is validated inside `run`, so callers can pass raw JSON. */
@@ -26,8 +26,7 @@ export function bind<I extends z.ZodType, O extends z.ZodType>(
     run(ctx, raw) {
       const parsed = contract.input.safeParse(raw ?? {});
       if (!parsed.success) {
-        throw new OctoError(
-          "invalid_input",
+        throw new InputError(
           `Invalid input for ${contract.name}: ${z.prettifyError(parsed.error)}`,
           `Run \`octo ops ${contract.name}\` to see the input schema.`,
         );

@@ -228,7 +228,7 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 ### components/home/QuietRow.tsx
 
 - Designed in: More-States.dc.html, state D (the folds opened); Home.dc.html (closed)
-- What it shows: a tabled or done line in its fold: title, the reason and when to look again; tabled ones offer Up next and Start.
+- What it shows: a tabled or done line in its fold: title, the reason ("No reason given" when there is none) and when to look again; tabled ones offer Up next and Start; a done one says "✓ done Tue". Who closed it is not drawn, as the tracker does not record it on the line.
 - Changes from today: none drawn; follows Row.
 - Loading: never loads on its own.
 - Error: cannot fail on its own; Up next and Start report their own failures.

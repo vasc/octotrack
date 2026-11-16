@@ -30,6 +30,10 @@ export interface TopBarProps {
   atRef?: RefObject<HTMLButtonElement | null>;
   /** A change of place is on its way. */
   atBusy?: boolean;
+  /** Why the last change of place did not work. */
+  atFailed?: string | undefined;
+  /** The places could not load: said beside the bar's controls, with Try again. */
+  onRetryPlaces?: (() => void) | undefined;
   appearance: Appearance;
   onPalette(palette: Palette): void;
   onMode(mode: Mode): void;
@@ -49,6 +53,8 @@ export function TopBar({
   onKeys,
   atRef,
   atBusy = false,
+  atFailed,
+  onRetryPlaces,
   appearance,
   onPalette,
   onMode,
@@ -90,12 +96,18 @@ export function TopBar({
       }
       actions={
         <>
+          {onRetryPlaces === undefined ? null : (
+            <Button variant="quiet" onClick={onRetryPlaces}>
+              Places did not load · Try again
+            </Button>
+          )}
           {places.length === 0 ? null : (
             <AtMenu
               places={places}
               at={at}
               onAt={onAt}
               busy={atBusy}
+              failed={atFailed}
               {...(atRef === undefined ? {} : { buttonRef: atRef })}
             />
           )}

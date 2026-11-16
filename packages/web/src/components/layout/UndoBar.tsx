@@ -36,6 +36,7 @@ export function UndoBar({
   onUndo,
   onDismiss,
   onPause,
+  loadFailed = null,
 }: {
   /** Choices the tracker never took: their request failed. */
   refused?: readonly Refusal[];
@@ -47,9 +48,23 @@ export function UndoBar({
   onUndo(id: number): void;
   /** A Stop of a line's owner: undo it, and move the line to up next instead. */
   onPause?: (id: number, line: string) => void;
+  /** Why the choices waiting could not load, with a way to try again. */
+  loadFailed?: { reason: string; onRetry(): void } | null;
 }) {
   return (
     <Toasts>
+      {loadFailed === null ? null : (
+        <Toast
+          failed
+          actions={
+            <Button variant="quiet" onClick={loadFailed.onRetry}>
+              Try again
+            </Button>
+          }
+        >
+          Could not load the choices waiting. {loadFailed.reason}
+        </Toast>
+      )}
       {refused.map((refusal) => (
         <Toast
           key={`refused-${refusal.id}`}

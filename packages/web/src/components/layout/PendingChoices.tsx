@@ -8,6 +8,7 @@ import { useRefused } from "../../hooks/useRefused.ts";
 import { type HotkeyMap, useHotkeys } from "../../hooks/useHotkeys.ts";
 import { undoLines } from "../../lib/lines.ts";
 import { UndoBar, type UndoLine } from "./UndoBar.tsx";
+import { failureText } from "../../lib/failure.ts";
 
 const NO_KEYS: HotkeyMap = {};
 
@@ -40,6 +41,11 @@ export function PendingChoices() {
       now={now}
       lines={lines}
       onUndo={choices.undo}
+      loadFailed={
+        choices.pendingError === null
+          ? null
+          : { reason: failureText(choices.pendingError).text, onRetry: choices.retryPending }
+      }
       onPause={(id, line) => {
         choices.undo(id);
         choices.make(

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { contracts } from "../contracts.ts";
-import { OctoError } from "../errors.ts";
+import { InputError, OctoError } from "../errors.ts";
 import { Channel, PendingChoice } from "../schemas.ts";
 import type { Ctx } from "../store/context.ts";
 import { one, rows } from "../store/context.ts";
@@ -112,8 +112,12 @@ export function applyChoice(ctx: Ctx, row: ChoiceRow): PendingChoice {
     // The words went out with it, so the box they were typed in starts empty; Undo or a failure keeps them.
     if (row.draft !== null) ctx.sql.run("DELETE FROM drafts WHERE key = ?", [row.draft]);
   } catch (error) {
+    // Only the tracker's own refusals are written for people; anything else, such as input the op cannot read, is said
+    // plainly, since the page shows this to the developer as it is.
     ctx.sql.run("UPDATE pending_choices SET state = 'failed', error = ? WHERE id = ?", [
-      error instanceof Error ? error.message : String(error),
+      error instanceof OctoError && !(error instanceof InputError)
+        ? error.message
+        : "The tracker could not take it as it was sent; nothing changed.",
       row.id,
     ]);
   }

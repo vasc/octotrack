@@ -9,6 +9,7 @@ export function AtMenu({
   onAt,
   buttonRef,
   busy = false,
+  failed,
 }: {
   places: readonly string[];
   at: string | null;
@@ -16,6 +17,8 @@ export function AtMenu({
   buttonRef?: RefObject<HTMLButtonElement | null>;
   /** The change is being sent. */
   busy?: boolean;
+  /** Why the last change did not work, said under the button until the next try. */
+  failed?: string | undefined;
 }) {
   const shown = at ?? "All places";
   return (
@@ -25,6 +28,7 @@ export function AtMenu({
       text={shown}
       menuLabel="I'm at"
       busy={busy ? "Changing…" : undefined}
+      failed={failed === undefined ? undefined : `Not changed: ${failed}`}
       {...(buttonRef === undefined ? {} : { buttonRef })}
     >
       {(close) => (

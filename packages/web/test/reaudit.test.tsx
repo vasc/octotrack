@@ -11,6 +11,7 @@ import { FirstRun } from "../src/components/home/FirstRun.tsx";
 import { ForYouRow } from "../src/components/home/ForYouRow.tsx";
 import { LineProposalCard } from "../src/components/home/LineProposalCard.tsx";
 import { OwnerBox } from "../src/components/entity/OwnerBox.tsx";
+import { AtMenu } from "../src/components/layout/AtMenu.tsx";
 import { UndoBar } from "../src/components/layout/UndoBar.tsx";
 import { Button } from "../src/components/ui/Button.tsx";
 import { Waiting } from "../src/components/ui/Waiting.tsx";
@@ -315,5 +316,30 @@ describe("useRetryEvery", () => {
     const calls = retry.mock.calls.length;
     await new Promise((resolve) => setTimeout(resolve, 30));
     expect(retry.mock.calls.length).toBe(calls);
+  });
+});
+
+describe("failures said where they happened", () => {
+  test("the Undo bar says when the choices waiting could not load, with Try again", () => {
+    const onRetry = mock(() => {});
+    const view = render(
+      <UndoBar
+        pending={[]}
+        now={0}
+        lines={{}}
+        onUndo={noop}
+        loadFailed={{ reason: "The tracker did not answer.", onRetry }}
+      />,
+    );
+    view.getByText(/Could not load the choices waiting\. The tracker did not answer\./);
+    fireEvent.click(view.getByRole("button", { name: "Try again" }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  test("I'm at says a change that did not work under its button", () => {
+    const view = render(
+      <AtMenu places={["Home"]} at={null} onAt={noop} failed="The tracker did not answer." />,
+    );
+    expect(view.getByRole("alert").textContent).toBe("Not changed: The tracker did not answer.");
   });
 });
