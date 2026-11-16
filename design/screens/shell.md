@@ -40,8 +40,8 @@ the canvas at https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 ### components/layout/AppearanceMenu.tsx
 
 - Designed in: Shell.dc.html, state C
-- What it shows: "Appearance": "Theme" with ✓ Paper, Solarized, Gruvbox "and 5 more"; "Mode" with ✓ As the system, Light, Dark.
-- Changes from today: ticks, swatches and item text each start at one x position, and group labels line up with the item text (today three different starts); the theme list shows three and "and 5 more".
+- What it shows: "Appearance": "Theme" with all eight: ✓ Paper, Solarized, Gruvbox, Catppuccin, Rosé Pine, Nord, Everforest, High contrast, each swatch its ground; "Mode" with ✓ As the system, Light, Dark.
+- Changes from today: ticks, swatches and item text each start at one x position, and group labels line up with the item text (today three different starts); all eight themes are listed, since eight rows fit a menu.
 - Loading: never loads on its own: the choices are fixed.
 - Error: cannot fail on its own: a choice that cannot be stored still applies for the visit, as today.
 - Empty: never empty: the choices are fixed.

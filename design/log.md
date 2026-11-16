@@ -73,6 +73,10 @@ are design decisions taken there, open to change:
   number on its home row already says it.
 - **The accent is for what you answer or do,** questions and tasks. Proposed is a heading like the others, and a
   proposal's advice reads "Recommends Start:" in ink.
+- **Red is for what broke.** A merge conflict is ordinary work: it is a fact row with the warn glyph, after the
+  developer found the red box "way too strong for a merge conflict".
+- **A button that needs input stays live** and asks for it where it is missing, rather than greying out: the developer
+  could not tell what state the greyed Updated was in.
 - **Loading is drawn, not said.** Outlines of the rows show something loads; the words are for screen readers only.
 
 These answer the open question "States not on the specimen": hover, focus, pressed, disabled and busy are drawn side by

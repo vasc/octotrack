@@ -71,7 +71,7 @@ importance. Loading, a failed part and not found follow `Line-States.dc.html` st
 ### components/entity/PrPanel.tsx
 
 - Designed in: Panels.dc.html, state B
-- What it shows: "Open · vasc/stack#4 ↗ · by vasc · 9 days · +33 −2"; then what needs attention first ("✗ Merge conflict with main. It cannot merge until feat/draft-prs is rebased."); then Checks, Review, Branch and Synced; then the body.
+- What it shows: "Open · vasc/stack#4 ↗ · by vasc · 9 days · +33 −2"; then its facts, a conflict first among them ("Merge ▲ conflicts with main; feat/draft-prs needs a rebase", the warn glyph, no box and no red), then Checks, Review, Branch and Synced; then the body.
 - Changes from today:
   - State, link, author, age and size move into one facts line; the external link carries ↗.
   - The thing that needs attention first is stated in a box above the pairs, in words.
@@ -124,4 +124,4 @@ importance. Loading, a failed part and not found follow `Line-States.dc.html` st
 - Changes from today: a sentence title saying what to check (today the rule's name, "issue closed pr open"); the note field is labelled as required and what to write; while an answer waits with Undo, the pressed button shows its busy word until it takes effect, as Agents A does for Stop (today both stay live and can send twice).
 - Loading: the buttons show their busy word while sending (Primitives Button).
 - Error: a failed answer is said under the buttons, note kept, with Try again; a refusal at effect time goes to the Undo bar.
-- Empty: Updated and Nothing to update are off until the note has words.
+- Empty: Updated and Nothing to update are always live; pressed with no note, the box is marked and says "Write what changed, or why nothing had to", and nothing is sent.
