@@ -10,13 +10,13 @@ import { TextLink } from "../ui/RefLink.tsx";
 import { Note } from "../ui/Note.tsx";
 import { Row } from "../ui/Row.tsx";
 
-/** What a waiting line holds, per kind present: "1 question held", "1 question, 2 tasks held". */
+/** What a waiting line holds, per kind present: "1 question held", "1 question and 2 tasks held". */
 function heldWords(held: LineHome["held"]): string | null {
   const parts = [
     held.questions === 0 ? null : `${held.questions} question${held.questions === 1 ? "" : "s"}`,
     held.tasks === 0 ? null : `${held.tasks} task${held.tasks === 1 ? "" : "s"}`,
   ].filter((part) => part !== null);
-  return parts.length === 0 ? null : `${parts.join(", ")} held`;
+  return parts.length === 0 ? null : `${parts.join(" and ")} held`;
 }
 
 /** A line up next, one row: its number, how far scoping got, what it holds, and Start. */

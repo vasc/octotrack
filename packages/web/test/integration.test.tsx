@@ -2449,7 +2449,7 @@ describe("lines of work", () => {
     const view = renderApp(<App />);
     const calm = within(await view.findByRole("region", { name: "Nothing needs you" }));
     calm.getByText("1 agent working");
-    calm.getByText(/the next ask likely comes from Enclosure, Model the opening/);
+    calm.getByText(/the next ask likely comes from Enclosure, step 1/);
     // It comes first, before any line.
     const working = view.getByRole("region", { name: "Working on" });
     expect(

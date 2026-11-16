@@ -39,19 +39,44 @@ export function ProposalGroups({
   return (
     <>
       {groups.map(([group, lines], index) => (
-        <ProposalGroup key={group} title={GROUP_TITLE[group]} lines={lines} open={index === 0} card={card} />
+        <ProposalGroup
+          key={group}
+          group={group}
+          title={GROUP_TITLE[group]}
+          lines={lines}
+          open={index === 0}
+          card={card}
+        />
       ))}
     </>
   );
 }
 
+/**
+ * What a folded group holds, in a sentence: what the group means where that says more than a sample ("Old milestones
+ * and ideas from before lines existed."), else its first title and how many more.
+ */
+function meaning(group: Group, lines: readonly Line[]): string {
+  if (group === "fold") {
+    return lines.length === 1
+      ? "One line its agent found is part of another line's work."
+      : `${lines.length} lines their agents found are part of other lines' work.`;
+  }
+  if (group === "none" && lines.every((line) => line.fromRef !== null)) {
+    return "Old milestones and ideas from before lines existed.";
+  }
+  return `Includes ${lines[0]?.title ?? ""}${lines.length > 1 ? `, and ${lines.length - 1} more.` : "."}`;
+}
+
 /** One group: open with its first few and "Show N more", or folded to a sample with Show. */
 function ProposalGroup({
+  group,
   title,
   lines,
   open,
   card,
 }: {
+  group: Group;
   title: string;
   lines: readonly Line[];
   open: boolean;
@@ -76,10 +101,7 @@ function ProposalGroup({
         : {})}
     >
       {shown === 0 ? (
-        <Note>
-          Includes {lines[0]?.title}
-          {rest > 1 ? `, and ${rest - 1} more.` : "."}
-        </Note>
+        <Note>{meaning(group, lines)}</Note>
       ) : (
         <>
           <List>{visible.map(card)}</List>

@@ -29,6 +29,8 @@ export interface ProposalCardProps {
   lastUpNext?: string | null;
   /** A move of it waits with Undo. */
   busy?: boolean;
+  /** Drawn under a group that already says the move, as on first run. */
+  grouped?: boolean;
 }
 
 /**
@@ -48,6 +50,7 @@ export function ProposalCard({
   repoKeys = [],
   lastUpNext = null,
   busy = false,
+  grouped = false,
 }: ProposalCardProps) {
   const [mode, setMode] = useState<"table" | "fold" | null>(null);
   const fromTable = line.tabledReason !== null;
@@ -67,7 +70,7 @@ export function ProposalCard({
           {line.proposedBy === null ? null : `proposed by ${line.proposedBy}`}
         </Facts>
       }
-      note={<ProposalCase line={line} lastUpNext={lastUpNext} />}
+      note={<ProposalCase line={line} lastUpNext={lastUpNext} whyOnly={grouped} />}
       trailing={
         <ProposalChoices
           title={line.title}

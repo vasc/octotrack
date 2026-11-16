@@ -11,9 +11,18 @@ export const MOVE_WORD: Readonly<Record<NonNullable<Line["recommendation"]>, str
 
 /**
  * Where its agent recommends a proposal goes and why, in one sentence ("Recommends Start: the release is built"); or,
- * for a line back from tabled, the reason it was tabled. Words in a line, drawn as its row's note.
+ * for a line back from tabled, the reason it was tabled. Drawn as its row's note.
  */
-export function ProposalCase({ line, lastUpNext = null }: { line: Line; lastUpNext?: string | null }) {
+export function ProposalCase({
+  line,
+  lastUpNext = null,
+  whyOnly = false,
+}: {
+  line: Line;
+  lastUpNext?: string | null;
+  /** Under a group that already says the move, as on first run: only the why. */
+  whyOnly?: boolean;
+}) {
   if (line.tabledReason !== null)
     return (
       <>
@@ -22,6 +31,8 @@ export function ProposalCase({ line, lastUpNext = null }: { line: Line; lastUpNe
       </>
     );
   if (line.recommendation === null) return null;
+  if (whyOnly)
+    return line.recommendationWhy === null ? null : <Markdown text={line.recommendationWhy} inline />;
   return (
     <>
       <b>

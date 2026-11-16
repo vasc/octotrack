@@ -16,16 +16,23 @@ export function QuietRow({
   onStart?: (ref: string) => void;
   onQueue?: (ref: string) => void;
 }) {
-  const hasNote = line.tabledReason !== null || line.lookAgainAt !== null;
+  const done = line.state === "done" || line.state === "dropped";
+  // A tabled line always says why it waits, if only that no reason was given; a closed one says when it closed.
+  const hasNote = !done || line.tabledReason !== null || line.lookAgainAt !== null;
   return (
     <Row
       label={line.title}
       title={<TextLink onClick={() => openEntity(line.ref)}>{line.title}</TextLink>}
+      {...(done
+        ? {
+            facts: `${line.state === "done" ? "✓ done" : "– dropped"} ${whenText(line.updatedAt).replace(/^(at|on) /, "")}`,
+          }
+        : {})}
       {...(hasNote
         ? {
             note: (
               <Facts>
-                {line.tabledReason}
+                {line.tabledReason ?? "No reason given"}
                 {line.lookAgainAt === null ? null : `look again ${whenText(line.lookAgainAt)}`}
               </Facts>
             ),

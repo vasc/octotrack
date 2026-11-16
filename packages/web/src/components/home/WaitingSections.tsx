@@ -59,7 +59,8 @@ export function WaitingSections({
   const named = (titles: readonly string[], note?: string | null) =>
     titles.length === 0
       ? undefined
-      : `${foldedNames(titles)}${note === undefined || note === null ? "" : ` · ${note}`}`;
+      : // A phone has room for one name before "and N more"; a wider screen for two.
+        `${foldedNames(titles, narrow ? 1 : 2)}${note === undefined || note === null ? "" : ` · ${note}`}`;
   const upNext = (
     <List>
       {home.upNext.map((line, index) => {
@@ -92,6 +93,7 @@ export function WaitingSections({
     <ProposalCard
       key={line.ref}
       busy={h.held.has(line.ref)}
+      grouped={firstRun}
       line={line}
       focused={focus === line.ref}
       foldTargets={[...home.working, ...home.upNext]}

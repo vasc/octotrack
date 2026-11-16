@@ -21,6 +21,8 @@ import { SpreadThin } from "./SpreadThin.tsx";
 import { WaitingSections } from "./WaitingSections.tsx";
 import { TaskItem } from "./TaskItem.tsx";
 import { WorkingSection } from "./WorkingSection.tsx";
+import { lineFocusRef } from "../../lib/focus.ts";
+import { Section } from "../ui/Section.tsx";
 
 const NO_KEYS = {};
 
@@ -73,7 +75,11 @@ export function HomePage() {
   return (
     <Page title="Lines" hideTitle ref={page}>
       {recording ? <RecordAnswers onClose={() => setRecording(false)} /> : null}
-      {h.home.isPending && h.home.error === null ? <LoadingState label="Loading your lines" /> : null}
+      {h.home.isPending && h.home.error === null ? (
+        <Section title="Working on">
+          <LoadingState label="Loading your lines" />
+        </Section>
+      ) : null}
       {/* Once loaded, a refresh that fails is the bar's Not live strip; before, the page says why it is empty. */}
       {h.home.error === null || home !== undefined ? null : (
         <NotAnswering host={window.location.host} onRetry={() => void h.home.refetch()} />
@@ -122,6 +128,16 @@ export function HomePage() {
                   working={home.working.length}
                   noOwner={linesWithNoOwner(home)}
                   waiting={linesWaitingOnYou(home)}
+                  onNoOwner={() => {
+                    const first = home.working.find(
+                      (line) => home.crews[line.ref]?.owner == null && line.ownedBy === null,
+                    );
+                    if (first !== undefined) choose(lineFocusRef(first.ref));
+                  }}
+                  onWaiting={() => {
+                    const first = home.working.find((line) => home.lines[line.ref]?.waitingOnYou === true);
+                    if (first !== undefined) choose(lineFocusRef(first.ref));
+                  }}
                 />
               }
               onFocus={choose}

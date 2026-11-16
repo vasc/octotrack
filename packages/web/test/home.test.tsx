@@ -270,9 +270,25 @@ describe("LineMeta, with nothing waiting on you", () => {
 });
 
 describe("QuietRow", () => {
-  test("a done line with neither reason nor date has no note line", () => {
-    const view = render(<QuietRow line={line({ state: "done", tabledReason: null, lookAgainAt: null })} />);
+  test("a done line with neither reason nor date has no note, and says it is done and when", () => {
+    const view = render(
+      <QuietRow
+        line={line({
+          state: "done",
+          tabledReason: null,
+          lookAgainAt: null,
+          updatedAt: "2026-11-01T10:00:00Z",
+        })}
+      />,
+    );
     expect(view.container.querySelector(".ui-row-note")).toBeNull();
+    view.getByText(/^✓ done /);
+  });
+
+  test("a tabled line with no reason says so", () => {
+    render(<QuietRow line={line({ state: "tabled", tabledReason: null, lookAgainAt: null })} />).getByText(
+      "No reason given",
+    );
   });
 
   test("a tabled line says why it waits and when to look again", () => {
@@ -280,5 +296,53 @@ describe("QuietRow", () => {
       <QuietRow line={line({ state: "tabled", tabledReason: "the play-test first", lookAgainAt: null })} />,
     );
     view.getByText("the play-test first");
+  });
+});
+
+describe("a line folded on a phone", () => {
+  test("is one row, its title and facts, without its headline", () => {
+    const view = render(
+      <WorkingLine line={line({ headline: "Docker disk capped at 60 GB." })} fold="phone" />,
+    );
+    expect(view.queryByText("Docker disk capped at 60 GB.")).toBeNull();
+  });
+});
+
+describe("first run's groups", () => {
+  test("a folded group says what it means where a sample would say less", () => {
+    const view = render(
+      <ProposalGroups
+        proposals={[
+          line({ ref: "L-1", title: "Start me", state: "proposed", recommendation: "start" }),
+          line({ ref: "L-2", title: "Part of another", state: "proposed", recommendation: "fold" }),
+          line({ ref: "L-3", title: "Old idea", state: "proposed", recommendation: null, fromRef: "I-7" }),
+        ]}
+        card={(proposal) => <p key={proposal.ref}>{proposal.title}</p>}
+      />,
+    );
+    view.getByText("One line its agent found is part of another line's work.");
+    view.getByText("Old milestones and ideas from before lines existed.");
+  });
+
+  test("under a group, a proposal's case is only its why", () => {
+    const view = render(
+      <ProposalCard
+        line={line({
+          state: "proposed",
+          recommendation: "start",
+          recommendationWhy: "the release is built.",
+        })}
+        foldTargets={[]}
+        grouped
+        onStart={() => {}}
+        onQueue={() => {}}
+        onTable={() => {}}
+        onFold={() => {}}
+        onReject={() => {}}
+        onDrop={() => {}}
+      />,
+    );
+    view.getByText("the release is built.");
+    expect(view.queryByText(/Recommends/)).toBeNull();
   });
 });

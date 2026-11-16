@@ -58,7 +58,7 @@ export function runningAgents(home: HomeView): number {
 export function nextAsk(home: HomeView): { title: string; step: string | null } | null {
   for (const line of home.working) {
     const step = home.lines[line.ref]?.step;
-    if (step != null) return { title: line.title, step: step.title };
+    if (step != null) return { title: line.title, step: `step ${step.position}` };
   }
   const first = home.working[0];
   return first === undefined ? null : { title: first.title, step: null };
@@ -186,8 +186,8 @@ export const STEP_IN_SHORT: Readonly<Record<StepInKind, string>> = {
   at_cap: "every session is busy",
 };
 
-/** What a folded section holds, by name: up to three, then how many more. */
-export function foldedNames(names: readonly string[], shown = 3): string {
+/** What a folded section holds, by name: the first few, then how many more. */
+export function foldedNames(names: readonly string[], shown: number): string {
   const first = names.slice(0, shown).join(", ");
   return names.length <= shown ? first : `${first} and ${names.length - shown} more`;
 }

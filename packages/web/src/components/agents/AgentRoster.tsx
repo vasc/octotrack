@@ -33,7 +33,11 @@ export function AgentRoster({
         : {
             foot: (
               <TextLink onClick={() => setAll(true)}>
-                {folded.length} more quiet: {foldedNames(folded.map((agent) => agent.name))}
+                {folded.length} more quiet:{" "}
+                {foldedNames(
+                  folded.map((agent) => agent.name),
+                  4,
+                )}
               </TextLink>
             ),
           })}

@@ -23,7 +23,10 @@ export interface WorkingLineProps {
   focused?: boolean;
   /** Where another line can be dropped, to land before this one. */
   drop?: DropTarget;
-  /** Folded: at a place the line is its title and what it holds; folded on a phone it keeps its facts and headline. */
+  /**
+   * Folded: at a place the line is its title and what it holds; folded on a phone it is one row, its title and facts,
+   * with the first thing it needs from you as a short row under it.
+   */
   fold?: "at" | "phone" | null;
   /** Its last move did not take: said under it, where it stayed. */
   notMoved?: boolean;
@@ -64,7 +67,7 @@ export function WorkingLine({
               />
             ),
           })}
-      {...(fold === "at" || line.headline === null ? {} : { note: <Markdown text={line.headline} inline /> })}
+      {...(fold !== null || line.headline === null ? {} : { note: <Markdown text={line.headline} inline /> })}
     >
       {answers.length === 0 ? null : (
         <List>
