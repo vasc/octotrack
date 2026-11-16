@@ -22,10 +22,18 @@ function ChecksWord({ checks }: { checks: Checks }) {
 export function PlanList({ steps, work }: { steps: readonly PlanStep[]; work: readonly LineWork[] }) {
   const current = steps.find((step) => step.status !== "done")?.position ?? null;
   const unplaced = work.filter((item) => item.step === null);
+  const aside =
+    steps.length === 0
+      ? work.length === 0
+        ? null
+        : `not scoped yet · ${work.length} issue${work.length === 1 ? "" : "s"} already on it`
+      : current === null
+        ? null
+        : `step ${current} of ${steps.length}`;
   return (
-    <Section title="Plan" {...(current === null ? {} : { aside: `step ${current} of ${steps.length}` })}>
+    <Section title="Plan" {...(aside === null ? {} : { aside })}>
       {steps.length === 0 && unplaced.length === 0 ? (
-        <Note>No plan yet</Note>
+        <Note>No plan yet. Its owner writes one once it starts.</Note>
       ) : (
         <List>
           {steps.map((step) => {
@@ -44,7 +52,7 @@ export function PlanList({ steps, work }: { steps: readonly PlanStep[]; work: re
             );
           })}
           {unplaced.length === 0 ? null : (
-            <Row lead="·" title="On no step" facts={String(unplaced.length)}>
+            <Row title="Not on a step yet">
               <WorkList items={unplaced} />
             </Row>
           )}

@@ -306,6 +306,24 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 - Error: the failed form above.
 - Empty: nothing waiting: nothing shown.
 
+### components/ui/Labelled.tsx
+
+- Designed in: Line.dc.html; Line-States.dc.html, states A, B
+- What it shows: "Done when" small and grey, its sentence under it at body size.
+- Changes from today: new; a lone fact was a one-row two-column table with a wide gutter.
+- Loading: never loads on its own.
+- Error: cannot fail on its own.
+- Empty: its owner leaves it out when there is no sentence.
+
+### components/ui/Callout.tsx
+
+- Designed in: Line-States.dc.html, states B, D
+- What it shows: "Recommended: start it." in the attention colour with its reason in ink, on the attention tint; the warm form for Step in.
+- Changes from today: new.
+- Loading: never loads on its own.
+- Error: cannot fail on its own.
+- Empty: never empty: it always has its lead.
+
 ### components/ui/Waiting.tsx
 
 - Designed in: Question-States.dc.html, state C

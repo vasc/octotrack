@@ -15,14 +15,7 @@ import {
   toneOf,
 } from "../src/lib/format.ts";
 import { focusLabel, nextFocus } from "../src/lib/focus.ts";
-import {
-  forYouCounts,
-  heldOnTabled,
-  lineFacts,
-  linePosition,
-  tellSummary,
-  undoLines,
-} from "../src/lib/lines.ts";
+import { forYouCounts, heldOnTabled, lineFacts, heldText, tellSummary, undoLines } from "../src/lib/lines.ts";
 import { askedText, cantSummary, doneSummary, howClosed, isTask, taskOutcome } from "../src/lib/tasks.ts";
 import { issueLinks } from "../src/lib/links.ts";
 import { moreSinceSummary } from "../src/lib/log.ts";
@@ -344,15 +337,11 @@ describe("isTask", () => {
   });
 });
 
-describe("a line's place and its items, for the line panel", () => {
-  const order = [
-    { ref: "L-1", title: "Enclosure" },
-    { ref: "L-2", title: "Mount" },
-  ];
-
-  test("says where a line stands in the order, or nothing for one outside it", () => {
-    expect(linePosition(order, "L-2")).toBe("Line 2 of 2");
-    expect(linePosition(order, "L-9")).toBeNull();
+describe("a line's items, for the line panel", () => {
+  test("says what a waiting line holds, or nothing when it holds none", () => {
+    expect(heldText({ questions: 1, tasks: 2 })).toBe("1 question, 2 tasks, released when it starts");
+    expect(heldText({ questions: 0, tasks: 1 })).toBe("1 task, released when it starts");
+    expect(heldText({ questions: 0, tasks: 0 })).toBeNull();
   });
 
   test("counts what waits on the developer by kind", () => {

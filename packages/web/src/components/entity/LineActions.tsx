@@ -21,7 +21,7 @@ export interface LineActionsProps {
   onFold?: (into: string) => void;
 }
 
-/** How to move a line: the moves its state allows in one row, Done asking first, and the rarer ones under More. */
+/** How to move a line: the moves its state allows in one row, the main one first, and the rarer ones under More. */
 export function LineActions({
   line,
   owner = null,
@@ -83,6 +83,7 @@ export function LineActions({
   const canFold = onFold !== undefined && foldTargets.length > 0;
   return (
     <Actions>
+      {line.state === "working" ? <Button onClick={() => setMode("done")}>Done</Button> : null}
       {line.state === "working" ? <Button onClick={() => onChoose("queue")}>Move to up next</Button> : null}
       {waiting ? (
         <Button variant="primary" onClick={() => onChoose("start")}>
@@ -93,13 +94,12 @@ export function LineActions({
         <Button onClick={() => onChoose("queue")}>Up next</Button>
       ) : null}
       {line.state === "tabled" ? null : <Button onClick={() => setMode("table")}>Table</Button>}
-      {line.state === "working" ? <Button onClick={() => setMode("done")}>Done</Button> : null}
       {line.state === "proposed" && canFold ? (
         <Button onClick={() => setMode("fold")}>Fold into</Button>
       ) : null}
       {line.state === "proposed" ? <Button onClick={() => onChoose("reject")}>Not a line</Button> : null}
       {line.state === "proposed" ? null : (
-        <Menu label="More: drop this line, fold it into another" icon="more" menuLabel="More">
+        <Menu label="More: drop this line, fold it into another" text="More" menuLabel="More">
           {(close) => (
             <>
               <MenuAction

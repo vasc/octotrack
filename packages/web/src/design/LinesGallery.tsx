@@ -186,7 +186,16 @@ export function LinesGallery() {
       </SheetExample>
       <Example label="Telling a line, and a line of your own">
         <TellBox line="L-1" to="panel-widgets" words="" onWords={NOOP} onSend={NOOP} />
-        <OwnWorkBox line="L-7" words="" onWords={NOOP} onTask={NOOP} onNote={NOOP} />
+        <OwnWorkBox
+          line="L-7"
+          words=""
+          onWords={NOOP}
+          onTask={NOOP}
+          onNote={NOOP}
+          repos={["PANEL"]}
+          allRepos={["PANEL"]}
+          onHand={NOOP}
+        />
       </Example>
       <Example label="A case for done, one row, and opened">
         <List>
@@ -331,7 +340,7 @@ export function LinesGallery() {
         />
       </Example>
       <Example label="A line opened: head, moves, summary">
-        <LinePanelHead line={line({ ref: "L-7" })} position="Line 2 of 5" repos={["PANEL"]} />
+        <LinePanelHead line={line({ ref: "L-7" })} repos={["PANEL"]} />
         <LineActions line={line()} owner="panel-widgets" onChoose={NOOP} onTable={NOOP} />
         <SummaryBox
           line={line({
@@ -368,10 +377,9 @@ export function LinesGallery() {
             scoper: null,
             search: null,
           }}
-          repos={["PANEL"]}
+          repoNames={["PANEL"]}
           onStop={NOOP}
           onOwn={NOOP}
-          onHand={NOOP}
         />
       </Example>
     </DesignSection>

@@ -8,14 +8,13 @@ import { useHome } from "../../hooks/useHome.ts";
 import { useLineChoices } from "../../hooks/useLineChoices.ts";
 import { useMarkSeen } from "../../hooks/useMarkSeen.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
-import { forYouCounts, linePosition } from "../../lib/lines.ts";
+import { forYouCounts } from "../../lib/lines.ts";
 import { moreSinceSummary } from "../../lib/log.ts";
-import { useRoute } from "../../lib/router.ts";
+import { backEntity, useRoute } from "../../lib/router.ts";
 import { StartSheet } from "../home/StartSheet.tsx";
 import { Loaded, StaleNote } from "../ui/Loaded.tsx";
 import { NotKept } from "../ui/NotKept.tsx";
 import { Note } from "../ui/Note.tsx";
-import { Columns, Stack } from "../ui/Pairs.tsx";
 import { ErrorState } from "../ui/states.tsx";
 import { LineActions } from "./LineActions.tsx";
 import { LinePanelHead } from "./LinePanelHead.tsx";
@@ -29,8 +28,8 @@ import { SummaryBox } from "./SummaryBox.tsx";
 import { TellBox } from "./TellBox.tsx";
 
 /**
- * A line opened, as E-Line draws it: where it stands and how to move it, its summary, what it needs from you, its plan
- * beside what is new and who owns it, and Tell. Opening it marks it seen.
+ * A line opened, in one column read top to bottom: where it stands and how to move it, what it needs from you, its
+ * summary, its plan, what happened, who owns it, then Tell. Opening it marks it seen.
  */
 export function LinePanelItem({
   line,
@@ -54,8 +53,11 @@ export function LinePanelItem({
   // As it was when the panel opened: opening it marks the line seen, which must not fold what is being read now.
   const [seenAt] = useState(line.seenAt);
   const [starting, setStarting] = useState(false);
+  const params = useRoute().params;
   // Opened with t from home: straight to Tell.
-  const telling = useRoute().params.get("act") === "tell";
+  const telling = params.get("act") === "tell";
+  // Opened from another panel: Back returns there.
+  const from = params.get("from");
   const home = h.home.data;
   const crew = home?.crews[line.ref];
   const owner = crew?.owner?.name ?? null;
@@ -65,8 +67,9 @@ export function LinePanelItem({
   return (
     <LinePanelHead
       line={line}
-      position={linePosition(order, line.ref)}
       repos={line.repos.map(h.repoName)}
+      held={forYouCounts(forYou)}
+      back={from === null ? undefined : { label: from, onBack: backEntity }}
       actions={
         starting ? (
           <StartSheet
@@ -102,39 +105,30 @@ export function LinePanelItem({
           Could not mark {line.ref} seen: {unmarked.message}
         </Note>
       )}
-      <SummaryBox line={line} />
       <PanelForYou title={line.title} items={forYou} h={h} />
+      <SummaryBox line={line} />
       <OpenDrift drift={drift} />
-      <Columns>
-        <Loaded loaded={shown.data !== undefined} error={shown.error} label="Loading the plan">
-          <PlanList steps={shown.data?.steps ?? []} work={shown.data?.work ?? []} />
-        </Loaded>
-        <Stack>
-          <Loaded loaded={since.data !== undefined} error={since.error} label="Loading what is new">
-            <SinceSummary
-              line={line.ref}
-              events={since.data?.events ?? []}
-              summaryAt={line.summaryAt}
-              seenAt={seenAt}
-              more={moreSinceSummary(
-                since.data?.events ?? [],
-                line.summaryAt,
-                since.data?.nextBefore ?? null,
-              )}
-            />
-          </Loaded>
-          <OwnerBox
-            line={line}
-            crew={crew}
-            repos={h.repos}
-            onStop={choices.stop}
-            onOwn={() => choices.choose("own")}
-            onHand={choices.hand}
-            waitingOnYou={home?.lines[line.ref]?.waitingOnYou === true}
-            stepIn={home?.lines[line.ref]?.stepInReason ?? null}
-          />
-        </Stack>
-      </Columns>
+      <Loaded loaded={shown.data !== undefined} error={shown.error} label="Loading the plan">
+        <PlanList steps={shown.data?.steps ?? []} work={shown.data?.work ?? []} />
+      </Loaded>
+      <Loaded loaded={since.data !== undefined} error={since.error} label="Loading what happened">
+        <SinceSummary
+          line={line.ref}
+          events={since.data?.events ?? []}
+          summaryAt={line.summaryAt}
+          seenAt={seenAt}
+          more={moreSinceSummary(since.data?.events ?? [], line.summaryAt, since.data?.nextBefore ?? null)}
+        />
+      </Loaded>
+      <OwnerBox
+        line={line}
+        crew={crew}
+        repoNames={line.repos.map(h.repoName)}
+        onStop={choices.stop}
+        onOwn={() => choices.choose("own")}
+        waitingOnYou={home?.lines[line.ref]?.waitingOnYou === true}
+        stepIn={home?.lines[line.ref]?.stepInReason ?? null}
+      />
       {!live ? null : line.ownedBy !== null ? (
         <OwnWorkBox
           line={line.ref}
@@ -142,6 +136,9 @@ export function LinePanelItem({
           onWords={own.change}
           onTask={(title) => void own.flush().then(() => choices.addTask(title))}
           onNote={(body) => void own.flush().then(() => choices.addNote(body))}
+          repos={line.repos}
+          allRepos={h.repos}
+          onHand={choices.hand}
           sending={choicesWaiting(`own:${line.ref}`)}
         />
       ) : line.state === "working" ? (

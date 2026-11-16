@@ -4,6 +4,7 @@ import type {
   Line,
   LineCrew,
   LineHome,
+  LinePlacement,
   StepInKind,
   UrgentReason,
 } from "@octotrack/core/schemas";
@@ -137,10 +138,21 @@ export function logLines(home: HomeView | undefined): readonly Line[] {
     : [...home.working, ...home.proposed, ...home.doneLately, ...home.upNext, ...home.tabled];
 }
 
-/** Where a line stands among working and up next, as the line panel heads it, or null for one outside the order. */
-export function linePosition(order: readonly Pick<Line, "ref">[], ref: string): string | null {
-  const at = order.findIndex((candidate) => candidate.ref === ref);
-  return at === -1 ? null : `Line ${at + 1} of ${order.length}`;
+/** What a proposer recommends, as words that end "Recommended: …". */
+export const RECOMMENDED_MOVE: Readonly<Record<LinePlacement, string>> = {
+  start: "start it",
+  up_next: "up next",
+  table: "table it",
+  fold: "fold it into another line",
+};
+
+/** What a waiting line holds, in words: "1 question, 2 tasks, released when it starts", or null when it holds none. */
+export function heldText(held: { questions: number; tasks: number }): string | null {
+  const parts = [
+    held.questions === 0 ? null : `${held.questions} question${held.questions === 1 ? "" : "s"}`,
+    held.tasks === 0 ? null : `${held.tasks} task${held.tasks === 1 ? "" : "s"}`,
+  ].filter((part) => part !== null);
+  return parts.length === 0 ? null : `${parts.join(", ")}, released when it starts`;
 }
 
 /** What waits on the developer on a line, counted by kind: what tabling it would hold. */

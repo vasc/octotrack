@@ -1,7 +1,7 @@
 import { Actions } from "../ui/Actions.tsx";
 import { Button } from "../ui/Button.tsx";
-import { Section } from "../ui/Section.tsx";
-import { TextBox } from "../ui/TextBox.tsx";
+import { Field } from "../ui/Field.tsx";
+import { Stack } from "../ui/Pairs.tsx";
 
 export interface TellBoxProps {
   line: string;
@@ -16,26 +16,31 @@ export interface TellBoxProps {
   sending?: boolean;
 }
 
-/** Tell: a free message to whoever owns the line, closing nothing. Empty, it is a nudge. Cmd+Enter sends it. */
+/**
+ * Tell: a free message to whoever owns the line, closing nothing, under a visible label naming who it reaches. Empty,
+ * it is a nudge, and the box says so. Cmd+Enter sends it.
+ */
 export function TellBox({ line, to, words, onWords, onSend, focus = false, sending = false }: TellBoxProps) {
   const send = () => {
     if (!sending) onSend(words.trim());
   };
   const who = to ?? `whoever takes ${line}`;
   return (
-    <Section title={`Tell ${who}`}>
-      <TextBox
-        label={`Message to ${who}`}
+    <Stack>
+      <Field
+        label={`Tell ${who}`}
+        placeholder="Leave it empty to nudge"
         value={words}
         onChange={onWords}
         onSubmit={send}
         autoFocus={focus}
+        multiline
       />
       <Actions>
         <Button variant="primary" disabled={sending} onClick={send}>
-          {sending ? "Sending" : words.trim() === "" ? "Nudge" : "Tell"}
+          {sending ? "Sending…" : words.trim() === "" ? "Nudge" : "Tell"}
         </Button>
       </Actions>
-    </Section>
+    </Stack>
   );
 }

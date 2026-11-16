@@ -1019,19 +1019,16 @@ describe("lines of work", () => {
 });
 
 describe("a line opened", () => {
-  test("LinePanelHead says where the line sits, its ref and repos, and what finishes it", () => {
-    const view = render(
-      <LinePanelHead line={line({ ref: "L-7" })} position="Line 2 of 5" repos={["vasc/homepanel"]} />,
-    );
+  test("LinePanelHead says how the line stands, its ref and repos, and what finishes it", () => {
+    const view = render(<LinePanelHead line={line({ ref: "L-7" })} repos={["vasc/homepanel"]} />);
     view.getByText("Working on");
-    view.getByText(/Line 2 of 5/);
     view.getByText("vasc/homepanel");
     view.getByRole("heading", { name: "Sendspin enclosure" });
     view.getByText("A printed case holds the board and takes the USB-C plug.");
     view.getByRole("button", { name: "Close" });
   });
 
-  test("SummaryBox puts the headline first, says when it was written, and says when there is none", () => {
+  test("SummaryBox puts the headline first, says how old it is, and says when there is none", () => {
     const view = render(
       <SummaryBox
         line={line({
@@ -1039,13 +1036,14 @@ describe("a line opened", () => {
           summary: "The base is printed.",
           summaryAt: "2026-11-14T09:40:00Z",
         })}
+        now={Date.parse("2026-11-14T10:40:00Z")}
       />,
     );
     view.getByText("Printed; it fits.");
     view.getByText("The base is printed.");
-    view.getByText("at 09:40");
+    view.getByText("1h ago");
     view.unmount();
-    render(<SummaryBox line={line()} />).getByText("none yet");
+    render(<SummaryBox line={line()} />).getByText("No summary yet. Its owner writes one.");
   });
 
   test("PlanList marks each step done, now or next, with its issues and their pull requests' checks", () => {
@@ -1083,7 +1081,7 @@ describe("a line opened", () => {
     view.getByText("Test-print");
     view.getByText("✗ checks failing");
     view.unmount();
-    render(<PlanList steps={[]} work={[]} />).getByText("No plan yet");
+    render(<PlanList steps={[]} work={[]} />).getByText("No plan yet. Its owner writes one once it starts.");
   });
 
   test("OwnerBox names the owner and how it is, or that there is none and why", () => {
@@ -1093,7 +1091,7 @@ describe("a line opened", () => {
       scoper: null,
       search: null,
     });
-    const props = { line: line(), repos: ["OCT"], onStop: () => {}, onOwn: () => {}, onHand: () => {} };
+    const props = { line: line(), repoNames: ["OCT"], onStop: () => {}, onOwn: () => {} };
     const asleep = render(<OwnerBox {...props} crew={crew("asleep")} waitingOnYou />);
     asleep.getByText("panel-widgets");
     asleep.getByText("asleep");
@@ -1118,9 +1116,8 @@ describe("a line opened", () => {
     render(<OwnerBox {...props} line={line({ ownedBy: "dev" })} crew={undefined} />).getByText("You");
   });
 
-  test("OwnerBox offers Stop on the owner and I'll own it, or Hand to an agent on a line of yours", () => {
+  test("OwnerBox offers Stop on the owner and I'll own it, and nothing on a line of yours", () => {
     const onStop = mock((_name: string) => {});
-    const onHand = mock((_repos: string[]) => {});
     const crew: LineCrew = {
       owner: { name: "panel", state: "asleep" },
       helpers: [],
@@ -1128,7 +1125,7 @@ describe("a line opened", () => {
       search: null,
     };
     const view = render(
-      <OwnerBox line={line()} crew={crew} repos={["OCT"]} onStop={onStop} onOwn={() => {}} onHand={onHand} />,
+      <OwnerBox line={line()} crew={crew} repoNames={["OCT"]} onStop={onStop} onOwn={() => {}} />,
     );
     fireEvent.click(view.getByRole("button", { name: "Stop panel" }));
     expect(onStop).toHaveBeenCalledWith("panel");
@@ -1138,9 +1135,25 @@ describe("a line opened", () => {
       <OwnerBox
         line={line({ ownedBy: "dev", repos: [] })}
         crew={undefined}
-        repos={["OCT"]}
+        repoNames={[]}
         onStop={onStop}
         onOwn={() => {}}
+      />,
+    );
+    expect(mine.queryByRole("button")).toBeNull();
+  });
+
+  test("OwnWorkBox hands a line with no repo over only once one is picked", () => {
+    const onHand = mock((_repos: string[]) => {});
+    const mine = render(
+      <OwnWorkBox
+        line="L-2"
+        words=""
+        onWords={() => {}}
+        onTask={() => {}}
+        onNote={() => {}}
+        repos={[]}
+        allRepos={["OCT"]}
         onHand={onHand}
       />,
     );
@@ -1532,8 +1545,8 @@ describe("tabling and a line's own choices", () => {
     const names = (view: ReturnType<typeof render>) =>
       view.getAllByRole("button").map((button) => button.textContent);
     const working = render(<LineActions line={line()} owner="panel" {...props} />);
-    // The More menu is an icon, named for a screen reader.
-    expect(names(working)).toEqual(["Move to up next", "Table", "Done", ""]);
+    // More says so in words, and its full name is for a screen reader.
+    expect(names(working)).toEqual(["Done", "Move to up next", "Table", "More"]);
     fireEvent.click(working.getByRole("button", { name: "Done" }));
     working.getByText("Done is final.");
     fireEvent.click(working.getByRole("button", { name: "Done" }));
@@ -1695,14 +1708,14 @@ describe("saying something to a line", () => {
   test("TellBox names who it reaches, and sends nothing typed as a nudge", () => {
     const onSend = mock((_words: string) => {});
     const nobody = render(<TellBox line="L-1" to={null} words="" onWords={() => {}} onSend={onSend} />);
-    nobody.getByLabelText("Message to whoever takes L-1");
+    nobody.getByLabelText("Tell whoever takes L-1");
     fireEvent.click(nobody.getByRole("button", { name: "Nudge" }));
     expect(onSend).toHaveBeenCalledWith("");
     nobody.unmount();
     const owner = render(
       <TellBox line="L-1" to="octo.1" words=" Black " onWords={() => {}} onSend={onSend} />,
     );
-    owner.getByRole("heading", { name: "Tell octo.1" });
+    owner.getByLabelText("Tell octo.1");
     fireEvent.click(owner.getByRole("button", { name: "Tell" }));
     expect(onSend).toHaveBeenCalledWith("Black");
   });
@@ -1710,13 +1723,21 @@ describe("saying something to a line", () => {
   test("OwnWorkBox adds what is typed as a task or a note, and nothing when empty", () => {
     const onTask = mock((_title: string) => {});
     const onNote = mock((_body: string) => {});
+    const hand = { repos: ["OCT"], allRepos: ["OCT"], onHand: () => {} };
     const empty = render(
-      <OwnWorkBox line="L-2" words="" onWords={() => {}} onTask={onTask} onNote={onNote} />,
+      <OwnWorkBox line="L-2" words="" onWords={() => {}} onTask={onTask} onNote={onNote} {...hand} />,
     );
     expect(empty.getByRole("button", { name: "Add as a task" }).hasAttribute("disabled")).toBe(true);
     empty.unmount();
     const typed = render(
-      <OwnWorkBox line="L-2" words="Scan receipts" onWords={() => {}} onTask={onTask} onNote={onNote} />,
+      <OwnWorkBox
+        line="L-2"
+        words="Scan receipts"
+        onWords={() => {}}
+        onTask={onTask}
+        onNote={onNote}
+        {...hand}
+      />,
     );
     fireEvent.click(typed.getByRole("button", { name: "Add as a note" }));
     expect(onNote).toHaveBeenCalledWith("Scan receipts");
@@ -2203,7 +2224,7 @@ describe("SinceSummary", () => {
     expect(view.queryByText(/only the newest/)).toBeNull();
     view.getByText("Plan set");
     view.getByText("Base made");
-    view.getByText("1 you have seen");
+    view.getByRole("button", { name: "Show the 1 you have seen" });
     expect(view.queryByText("Lid made")).toBeNull();
     expect(view.queryByText("Before the summary")).toBeNull();
   });
@@ -2842,7 +2863,7 @@ describe("SinceSummary, past one page", () => {
       />,
     );
     view.getByText("newest only");
-    expect(view.getByRole("link", { name: "This line in the log" }).getAttribute("href")).toBe(
+    expect(view.getByRole("link", { name: "This line in the log →" }).getAttribute("href")).toBe(
       `/log?q=${encodeURIComponent("line:L-1")}`,
     );
   });

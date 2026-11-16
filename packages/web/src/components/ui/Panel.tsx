@@ -1,30 +1,40 @@
 import type { ReactNode, Ref } from "react";
+import { Button } from "./Button.tsx";
 
 /**
  * An item opened by its ref, over the right of the page so the list keeps its place behind it; the whole screen on a
- * phone. Where it sits, small and grey, then its title, and Close; then its sections.
+ * phone. Where it sits, small and grey, then Back to the panel it was opened from and Close, which always shuts it;
+ * then its title and its sections.
  */
 export function Panel({
   crumbs,
   title,
   onClose,
+  back,
+  head,
   children,
 }: {
   crumbs?: ReactNode;
   title?: ReactNode;
   onClose(): void;
+  /** Opened from another panel: the ref it came from, and the way back to it. */
+  back?: { label: string; onBack(): void } | undefined;
+  /** What belongs with the title, such as what finishes it and its moves; a hairline then sets the sections apart. */
+  head?: ReactNode;
   children?: ReactNode;
 }) {
   return (
     <div className="ui-panel">
       <header className="ui-panel-head">
         <div className="ui-panel-crumbs">{crumbs}</div>
-        <button type="button" className="ui-button" data-variant="quiet" aria-label="Close" onClick={onClose}>
-          Close
-        </button>
+        {back === undefined ? null : <Button onClick={back.onBack}>‹ Back to {back.label}</Button>}
+        <Button onClick={onClose}>Close</Button>
       </header>
       {title === undefined ? null : <h1 className="ui-panel-title">{title}</h1>}
-      <div className="ui-panel-body">{children}</div>
+      {head === undefined ? null : <div className="ui-panel-top">{head}</div>}
+      <div className="ui-panel-body" data-under-head={head === undefined ? undefined : "true"}>
+        {children}
+      </div>
     </div>
   );
 }
