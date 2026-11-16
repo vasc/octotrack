@@ -235,3 +235,10 @@ describe("ProposalGroups", () => {
     expect(view.queryByRole("region", { name: /Recommended to table/ })).toBeNull();
   });
 });
+
+describe("a move that failed", () => {
+  test("is said under the line that moved", () => {
+    const view = render(<WorkingLine line={line()} notMoved />);
+    view.getByText("Not moved. The tracker did not answer; it is back where it was.");
+  });
+});

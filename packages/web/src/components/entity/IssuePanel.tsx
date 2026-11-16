@@ -1,7 +1,6 @@
 import { contracts } from "@octotrack/core/contracts";
 import type { EntityDetail, Issue } from "@octotrack/core/schemas";
 import { Fragment } from "react";
-import { useChoices } from "../../hooks/useChoices.ts";
 import { useHome } from "../../hooks/useHome.ts";
 import { useIssueTell } from "../../hooks/useIssueTell.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
@@ -20,7 +19,6 @@ import { Code } from "../ui/Note.tsx";
 import { Stack } from "../ui/Pairs.tsx";
 import { Panel } from "../ui/Panel.tsx";
 import { RefLink, TextLink } from "../ui/RefLink.tsx";
-import { ErrorState } from "../ui/states.tsx";
 import { EventList } from "./EventList.tsx";
 import { OpenDrift } from "./OpenDrift.tsx";
 import { PullRequestBox } from "./PullRequestBox.tsx";
@@ -45,7 +43,6 @@ export function IssuePanel({
   staleAt?: number;
 }) {
   const h = useHome();
-  const choices = useChoices();
   const prs = useOpQuery(contracts.prList, { query: `linked:${issue.ref} kind:pr` });
   const tell = useIssueTell(issue);
   const line = issue.line === null ? null : h.lineOf(issue.line);
@@ -120,7 +117,6 @@ export function IssuePanel({
       )}
       <OpenDrift drift={detail.drift} />
       <NotKept error={tell.draft.error} />
-      {choices.failure === null ? null : <ErrorState error={choices.failure} />}
     </Panel>
   );
 }

@@ -1,5 +1,6 @@
 import type { PendingChoice } from "@octotrack/core/schemas";
 import { Button } from "../ui/Button.tsx";
+import type { Refusal } from "../../lib/refused.ts";
 import { Toast, Toasts } from "../ui/Toast.tsx";
 
 /** What the Undo bar needs to know about a line a Stop would leave without its owner. */
@@ -27,11 +28,16 @@ function afterStop(line: UndoLine): string {
  */
 export function UndoBar({
   pending,
+  refused = [],
   now,
   lines,
   onUndo,
+  onDismiss,
   onPause,
 }: {
+  /** Choices the tracker never took: their request failed. */
+  refused?: readonly Refusal[];
+  onDismiss?: (id: number) => void;
   pending: readonly PendingChoice[];
   /** The time now, in milliseconds, for the countdown. */
   now: number;
@@ -42,6 +48,19 @@ export function UndoBar({
 }) {
   return (
     <Toasts>
+      {refused.map((refusal) => (
+        <Toast
+          key={`refused-${refusal.id}`}
+          failed
+          actions={
+            <Button variant="quiet" onClick={() => onDismiss?.(refusal.id)}>
+              Dismiss
+            </Button>
+          }
+        >
+          {refusal.summary}. {refusal.reason}
+        </Toast>
+      ))}
       {[...pending].reverse().map((choice) => {
         if (choice.state === "failed") {
           return (

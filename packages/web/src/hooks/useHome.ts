@@ -3,7 +3,10 @@ import { cantSummary, doneSummary, type TaskOutcome } from "../lib/tasks.ts";
 import { homeLines } from "../lib/lines.ts";
 import { contracts } from "@octotrack/core/contracts";
 import type { HomeView, Issue, Line } from "@octotrack/core/schemas";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import type { z } from "zod";
+import { failureText } from "../lib/failure.ts";
+import { REFUSED } from "../lib/refused.ts";
 import type { Move } from "../components/home/LineHandle.tsx";
 import { useChoices } from "./useChoices.ts";
 import { useOpMutation, useOpQuery } from "./useOp.ts";
@@ -38,6 +41,13 @@ export function useHome() {
   // key, so they act at once; every other choice waits with Undo (D13).
   const order = useOpMutation(contracts.lineOrder);
   const at = useOpMutation(contracts.at);
+  // The line whose last move the tracker did not take: said under that line until it moves again.
+  const [notMoved, setNotMoved] = useState<string | null>(null);
+  const move = (input: z.input<typeof contracts.lineOrder.input>) =>
+    order.mutate(input, {
+      onSuccess: () => setNotMoved(null),
+      onError: () => setNotMoved(input.ref),
+    });
   const places = useOpQuery(contracts.placeList, {});
   const choices = useChoices();
   const { pending } = choices;
@@ -66,7 +76,7 @@ export function useHome() {
     home,
     lineOf,
     held,
-    failure: order.error ?? at.error ?? choices.failure,
+    notMoved,
     places: (places.data ?? []).map((place) => place.name),
     // Try now retries every line stopped the same way: one fix, such as logging in, fixes them all.
     retry: (ref: string) =>
@@ -83,7 +93,11 @@ export function useHome() {
         { repo, path, retry: line },
         `Setting ${repoNames.get(repo) ?? repo}'s checkout to ${path}, then trying ${titleOf(line)} again`,
       ),
-    at: (place: string | null) => at.mutate(place === null ? {} : { place }),
+    at: (place: string | null) =>
+      at.mutate(place === null ? {} : { place }, {
+        onError: (error) =>
+          REFUSED.add(place === null ? "Leaving the place" : `I'm at ${place}`, failureText(error).text),
+      }),
     repos,
     repoName: (key: string) => repoNames.get(key) ?? key,
     start: (ref: string) => choices.make(contracts.lineStart.name, { ref }, LINE_SAID.start(titleOf(ref))),
@@ -123,10 +137,10 @@ export function useHome() {
     taskCant: (task: Issue, why: string) =>
       choices.make(contracts.taskCant.name, { ref: task.ref, why }, cantSummary(task, why)),
     /** Dragged onto another line: it lands before it. */
-    dropBefore: (ref: string, before: string) => order.mutate({ ref, before }),
+    dropBefore: (ref: string, before: string) => move({ ref, before }),
     reorder(ref: string, direction: Move) {
       if (direction === "top") {
-        order.mutate({ ref, to: "top" });
+        move({ ref, to: "top" });
         return;
       }
       if (direction === "up_next") {
@@ -142,7 +156,7 @@ export function useHome() {
       const index = section.findIndex((candidate) => candidate.ref === ref);
       const neighbour = section[direction === "up" ? index - 1 : index + 1];
       if (neighbour === undefined) return;
-      order.mutate(direction === "up" ? { ref, before: neighbour.ref } : { ref, after: neighbour.ref });
+      move(direction === "up" ? { ref, before: neighbour.ref } : { ref, after: neighbour.ref });
     },
   };
 }

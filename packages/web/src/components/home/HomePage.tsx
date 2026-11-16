@@ -67,7 +67,6 @@ export function HomePage() {
   return (
     <Page title="Lines" hideTitle ref={page}>
       {recording ? <RecordAnswers onClose={() => setRecording(false)} /> : null}
-      {h.failure === null ? null : <ErrorState error={h.failure} />}
       {h.home.isPending ? <LoadingState /> : null}
       {h.home.error === null ? null : <ErrorState error={h.home.error} />}
       {home === undefined ? null : (

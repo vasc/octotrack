@@ -71,6 +71,7 @@ export function WaitingSections({
         return (
           <UpNextRow
             key={line.ref}
+            notMoved={h.notMoved === line.ref}
             line={line}
             {...(crew === undefined ? {} : { crew })}
             {...(details === undefined ? {} : { details })}

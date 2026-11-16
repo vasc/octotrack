@@ -3,9 +3,9 @@ import { useMemo } from "react";
 import { useChoices } from "../../hooks/useChoices.ts";
 import { useClock } from "../../hooks/useClock.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
+import { useRefused } from "../../hooks/useRefused.ts";
 import { type HotkeyMap, useHotkeys } from "../../hooks/useHotkeys.ts";
 import { undoLines } from "../../lib/lines.ts";
-import { ErrorState } from "../ui/states.tsx";
 import { UndoBar, type UndoLine } from "./UndoBar.tsx";
 
 const NO_KEYS: HotkeyMap = {};
@@ -13,6 +13,7 @@ const NO_KEYS: HotkeyMap = {};
 /** The Undo bar on every page, with u undoing the newest choice. */
 export function PendingChoices() {
   const choices = useChoices();
+  const refused = useRefused();
   const home = useOpQuery(contracts.homeShow, {});
   const now = useClock(choices.pending.some((choice) => choice.state === "pending"));
   const lines = useMemo(
@@ -31,6 +32,8 @@ export function PendingChoices() {
     <>
       <UndoBar
         pending={choices.pending}
+        refused={refused.items}
+        onDismiss={refused.dismiss}
         now={now}
         lines={lines}
         onUndo={choices.undo}
@@ -43,7 +46,6 @@ export function PendingChoices() {
           );
         }}
       />
-      {choices.failure === null ? null : <ErrorState error={choices.failure} />}
     </>
   );
 }

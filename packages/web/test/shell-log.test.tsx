@@ -1,5 +1,6 @@
-import { describe, expect, test } from "bun:test";
-import { render } from "@testing-library/react";
+import { describe, expect, mock, test } from "bun:test";
+import { fireEvent, render } from "@testing-library/react";
+import { refusals } from "../src/lib/refused.ts";
 import { UndoBar } from "../src/components/layout/UndoBar.tsx";
 import { SyncFailures } from "../src/components/prs/SyncFailures.tsx";
 import { Page } from "../src/components/ui/Page.tsx";
@@ -67,5 +68,33 @@ describe("SyncFailures", () => {
     );
     view.getByText("Pull request status is stale for vasc/stack");
     view.getByText("gh: not logged in. It picks up again by itself once that is fixed.");
+  });
+});
+
+describe("refused requests", () => {
+  test("a choice the tracker never took is said in the Undo bar, until dismissed", () => {
+    const onDismiss = mock((_id: number) => {});
+    const view = render(
+      <UndoBar
+        now={0}
+        lines={{}}
+        pending={[]}
+        refused={[{ id: 7, summary: "Starting Wall mount", reason: "The tracker did not answer." }]}
+        onUndo={() => {}}
+        onDismiss={onDismiss}
+      />,
+    );
+    view.getByText(whole("Did not happen: Starting Wall mount. The tracker did not answer."));
+    fireEvent.click(view.getByRole("button", { name: "Dismiss" }));
+    expect(onDismiss).toHaveBeenCalledWith(7);
+  });
+
+  test("the store keeps each refusal until it is dismissed", () => {
+    const store = refusals();
+    const first = store.add("Starting Wall mount", "The tracker did not answer.");
+    store.add("Tabling Mount", "The tracker did not answer.");
+    expect(store.list().map((item) => item.summary)).toEqual(["Starting Wall mount", "Tabling Mount"]);
+    store.dismiss(first);
+    expect(store.list().map((item) => item.summary)).toEqual(["Tabling Mount"]);
   });
 });

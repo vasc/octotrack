@@ -77,6 +77,7 @@ export function WorkingSection({
             return (
               <WorkingLine
                 key={line.ref}
+                notMoved={h.notMoved === line.ref}
                 focused={focus === lineFocusRef(line.ref)}
                 drop={drop(line.ref, "working")}
                 fold={at !== null ? "at" : folded ? "phone" : null}

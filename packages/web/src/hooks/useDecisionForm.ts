@@ -1,7 +1,6 @@
 import { contracts } from "@octotrack/core/contracts";
 import type { Decision, PendingChoice } from "@octotrack/core/schemas";
 import { useState } from "react";
-import { failureText } from "../lib/failure.ts";
 import { useChoices } from "./useChoices.ts";
 import { useDraft } from "./useDraft.ts";
 import { useLinePlace } from "./useLinePlace.ts";
@@ -54,7 +53,7 @@ export function useDecisionForm(decision: Decision, onPostponed?: (ref: string) 
   // Null until the box is opened or closed by hand: then words already typed open it, and closing keeps them.
   const [writing, setWriting] = useState<boolean | null>(null);
   const [picked, setPicked] = useState<string | null>(null);
-  const { resolve, error } = useResolveDecision();
+  const { resolve } = useResolveDecision();
   const choices = useChoices();
   const line = useLinePlace(decision.line);
   const to = line?.title ?? decision.ref;
@@ -63,12 +62,11 @@ export function useDecisionForm(decision: Decision, onPostponed?: (ref: string) 
   return {
     ownWords: open ? draft.value : null,
     sending: choices.waiting(key),
+    // A send the tracker never took is said in the Undo bar, as every refused choice is.
     error:
-      error === null
-        ? draft.error === null
-          ? null
-          : "Not saved: the tracker did not answer. Kept here; saves when it is back."
-        : failureText(error).text,
+      draft.error === null
+        ? null
+        : "Not saved: the tracker did not answer. Kept here; saves when it is back.",
     waiting:
       pending === undefined
         ? null

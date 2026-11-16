@@ -81,6 +81,9 @@ are design decisions taken there, open to change:
   icon all disable to the same pale fill, faint edge and grey text.
 - **Reordering shows itself.** Every row that can move carries a six-dot grip beside its number, always drawn: the
   developer found "there is no discoverability on reordeing" once only the number and a grab cursor were left.
+- **A choice the tracker never took is said in the Undo bar,** "Did not happen: {what}. {why}" with Dismiss, the
+  same place a choice refused when it takes effect is said; before, most were silent and the rest showed at the top
+  of the page. A move that fails is the exception the drawing makes: said under the line that moved.
 - **Loading is drawn, not said.** Outlines of the rows show something loads; the words are for screen readers only.
 
 These answer the open question "States not on the specimen": hover, focus, pressed, disabled and busy are drawn side by

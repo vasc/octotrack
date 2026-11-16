@@ -21,7 +21,6 @@ export function useResolveDecision() {
   const choices = useChoices();
   return {
     isPending: false,
-    error: choices.failure,
     resolve(input: ResolveInput): void {
       choices.make(
         contracts.decisionResolve.name,

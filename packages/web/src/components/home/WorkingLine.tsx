@@ -5,6 +5,7 @@ import { lineFocusRef } from "../../lib/focus.ts";
 import { openEntity } from "../../lib/router.ts";
 import { List } from "../ui/List.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
+import { Note } from "../ui/Note.tsx";
 import { TextLink } from "../ui/RefLink.tsx";
 import { Row } from "../ui/Row.tsx";
 import { AnswerStatus } from "./AnswerStatus.tsx";
@@ -24,6 +25,8 @@ export interface WorkingLineProps {
   drop?: DropTarget;
   /** Folded: at a place the line is its title and what it holds; folded on a phone it keeps its facts and headline. */
   fold?: "at" | "phone" | null;
+  /** Its last move did not take: said under it, where it stayed. */
+  notMoved?: boolean;
 }
 
 /**
@@ -39,6 +42,7 @@ export function WorkingLine({
   focused = false,
   drop,
   fold = null,
+  notMoved = false,
 }: WorkingLineProps) {
   const answers = fold !== null ? [] : (details?.answers ?? []);
   return (
@@ -69,6 +73,7 @@ export function WorkingLine({
           ))}
         </List>
       )}
+      {notMoved ? <Note error>Not moved. The tracker did not answer; it is back where it was.</Note> : null}
       {children}
     </Row>
   );

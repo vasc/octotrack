@@ -17,7 +17,6 @@ const OPS: Readonly<Record<LineChoice, string>> = {
 export function useLineChoices(line: Line) {
   const choices = useChoices();
   return {
-    failure: choices.failure,
     choose: (choice: LineChoice) =>
       choices.make(OPS[choice], { ref: line.ref }, LINE_SAID[choice](line.title)),
     table: (reason: string, lookAgainAt: string | null) =>

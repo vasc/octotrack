@@ -8,7 +8,7 @@ import { homeLines, lineFacts } from "../../lib/lines.ts";
 import { PushToggle } from "../home/PushToggle.tsx";
 import { Loaded } from "../ui/Loaded.tsx";
 import { Page } from "../ui/Page.tsx";
-import { EmptyState, ErrorState } from "../ui/states.tsx";
+import { EmptyState } from "../ui/states.tsx";
 import { AgentRoster } from "./AgentRoster.tsx";
 import { AgentRosterRow } from "./AgentRosterRow.tsx";
 
@@ -38,7 +38,6 @@ export function AgentsPage() {
         />
       }
     >
-      {choices.failure === null ? null : <ErrorState error={choices.failure} />}
       <Loaded
         loaded={agents.data !== undefined}
         error={agents.error}

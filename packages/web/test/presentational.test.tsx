@@ -2223,7 +2223,7 @@ function homeActions(overrides: Partial<HomeActions> = {}): HomeActions {
     }).getCurrentResult(),
     lineOf: () => null,
     held: new Set<string>(),
-    failure: null,
+    notMoved: null,
     places: [],
     retry: mock(() => {}),
     anyway: mock(() => {}),

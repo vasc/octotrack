@@ -7,6 +7,7 @@ import { openEntity } from "../../lib/router.ts";
 import { Button } from "../ui/Button.tsx";
 import { Facts } from "../ui/Facts.tsx";
 import { TextLink } from "../ui/RefLink.tsx";
+import { Note } from "../ui/Note.tsx";
 import { Row } from "../ui/Row.tsx";
 
 /** What a waiting line holds, per kind present: "1 question held", "1 question, 2 tasks held". */
@@ -27,6 +28,7 @@ export function UpNextRow({
   focused = false,
   drop,
   onStart,
+  notMoved = false,
 }: {
   line: Line;
   crew?: LineCrew;
@@ -37,6 +39,8 @@ export function UpNextRow({
   /** Where another line can be dropped, to land before this one. */
   drop?: DropTarget;
   onStart(ref: string): void;
+  /** Its last move did not take: said under it, where it stayed. */
+  notMoved?: boolean;
 }) {
   const scoping =
     details === undefined || details.scopedSteps === 0
@@ -66,6 +70,8 @@ export function UpNextRow({
           Start
         </Button>
       }
-    />
+    >
+      {notMoved ? <Note error>Not moved. The tracker did not answer; it is back where it was.</Note> : null}
+    </Row>
   );
 }

@@ -16,7 +16,6 @@ import { StartSheet } from "../home/StartSheet.tsx";
 import { Loaded, StaleNote } from "../ui/Loaded.tsx";
 import { NotKept } from "../ui/NotKept.tsx";
 import { Note } from "../ui/Note.tsx";
-import { ErrorState } from "../ui/states.tsx";
 import { LineActions } from "./LineActions.tsx";
 import { LinePanelHead } from "./LinePanelHead.tsx";
 import { OpenDrift } from "./OpenDrift.tsx";
@@ -169,8 +168,6 @@ export function LinePanelItem({
         />
       ) : null}
       <NotKept error={tell.error ?? own.error} />
-      {choices.failure === null ? null : <ErrorState error={choices.failure} />}
-      {h.failure === null ? null : <ErrorState error={h.failure} />}
     </LinePanelHead>
   );
 }
