@@ -1,5 +1,6 @@
 import { describe, expect, mock, test } from "bun:test";
 import { fireEvent, render } from "@testing-library/react";
+import { UnseenLog } from "../src/components/feed/UnseenLog.tsx";
 import { AppStrips } from "../src/components/layout/AppStrips.tsx";
 import { PartBoundary } from "../src/components/layout/PartBoundary.tsx";
 import { whole } from "./harness.tsx";
@@ -55,5 +56,20 @@ describe("PartBoundary", () => {
     } finally {
       console.error = quiet;
     }
+  });
+});
+
+describe("UnseenLog", () => {
+  test("with nothing new, says so and that a search looks further back", () => {
+    const view = render(<UnseenLog events={[]} lines={[]} includeWaiting={false} onShowWaiting={() => {}} />);
+    view.getByRole("heading", { name: "Nothing new" });
+    view.getByText("You have seen everything on your lines. Search to look further back.");
+  });
+
+  test("until the lines load, says so rather than filing everything under Elsewhere silently", () => {
+    const view = render(
+      <UnseenLog events={[]} lines={[]} linesLoading includeWaiting={false} onShowWaiting={() => {}} />,
+    );
+    view.getByText("Loading your lines…");
   });
 });

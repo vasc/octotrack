@@ -4,7 +4,7 @@ import { Button } from "../ui/Button.tsx";
 import { List } from "../ui/List.tsx";
 import { Note } from "../ui/Note.tsx";
 import { Section } from "../ui/Section.tsx";
-import { EmptyState } from "../ui/states.tsx";
+import { Notice } from "../ui/Notice.tsx";
 import { LineLog } from "./LineLog.tsx";
 import { LogRow } from "./LogRow.tsx";
 import { LooseSection } from "./LooseSection.tsx";
@@ -34,12 +34,15 @@ const QUIET: ReadonlySet<Line["state"]> = new Set(["up_next", "tabled"]);
 export function UnseenLog({
   events,
   lines,
+  linesLoading = false,
   includeWaiting,
   onShowWaiting,
 }: {
   events: readonly FeedEvent[];
   /** Every line, in the developer's order. */
   lines: readonly Line[];
+  /** The lines are still loading: until they do, every change is filed under Elsewhere, which is said. */
+  linesLoading?: boolean;
   includeWaiting: boolean;
   onShowWaiting(): void;
 }) {
@@ -63,6 +66,7 @@ export function UnseenLog({
   const sheet = shown.length > 0 || loose.length > 0 || elsewhere.length > 0;
   return (
     <>
+      {linesLoading ? <Note>Loading your lines…</Note> : null}
       {refused.length === 0 ? null : (
         <Section title="Rule breaks">
           <List>
@@ -85,7 +89,9 @@ export function UnseenLog({
           <LooseSection title="Elsewhere" events={elsewhere} />
         </List>
       ) : refused.length === 0 ? (
-        <EmptyState>Nothing new</EmptyState>
+        <Notice title="Nothing new">
+          You have seen everything on your lines. Search to look further back.
+        </Notice>
       ) : null}
       {includeWaiting || leftOut === 0 ? null : (
         <Actions>
