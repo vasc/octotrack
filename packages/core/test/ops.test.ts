@@ -186,7 +186,7 @@ describe("decisions", () => {
 
   test("bad options and empty answers are refused", () => {
     const decision = h.call(c.decisionAsk, { title: "Q", options });
-    expect(() => h.call(c.decisionResolve, { ref: decision.ref, option: "z" })).toThrow('no option "z"');
+    expect(() => h.call(c.decisionResolve, { ref: decision.ref, option: "z" })).toThrow("no option “z”");
     expect(() => h.call(c.decisionResolve, { ref: decision.ref })).toThrow("Say what was decided");
   });
 
@@ -218,7 +218,8 @@ ${second.ref} nope
 ${third.ref} - Neither, doing something else`,
     });
     expect(results.map((result) => result.ok)).toEqual([true, false, true]);
-    expect(results[1]?.error).toContain('no option "nope"');
+    // The failure lists the options there are, so the row can be fixed without looking the question up.
+    expect(results[1]?.error).toBe(`${second.ref} has no option “nope”. Its options are a, b.`);
     expect(results[0]?.decision).toMatchObject({
       channel: "out_of_band",
       chosenOption: "a",

@@ -32,8 +32,12 @@ export function useNewLine() {
   const repos = useMemo(() => (projects.data ?? []).map((card) => card.project.ref), [projects.data]);
   return {
     repos,
+    /** The repos are still loading, or could not load. */
+    reposLoading: projects.isPending,
+    reposError: projects.error,
+    retryRepos: () => void projects.refetch(),
     draft: parse(draft.value),
-    draftError: draft.error,
+    notSaved: draft.error !== null,
     setDraft: (next: NewLineDraft) =>
       next.title === "" && next.doneWhen === "" ? draft.clear() : draft.change(JSON.stringify(next)),
     add: (line: NewLine) =>

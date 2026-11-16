@@ -48,14 +48,21 @@ export function StartSheetView({
   // Held questions no longer open to answer here, such as one answered elsewhere meanwhile, still show by title.
   const gone = heldQuestions.filter((item) => !questions.some((question) => question.ref === item.ref));
   const count = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
-  const waited = [
-    heldQuestions.length === 0 ? null : count(heldQuestions.length, "question"),
-    tasks.length === 0 ? null : count(tasks.length, "task"),
-  ].filter((part) => part !== null);
   const asked = held.flatMap((item) => {
     const question = questions.find((candidate) => candidate.ref === item.ref);
     return item.kind === "question" && question !== undefined ? [question] : [];
   });
+  // What still waits: questions answered elsewhere meanwhile no longer count.
+  const waited = [
+    asked.length === 0 ? null : count(asked.length, "question"),
+    tasks.length === 0 ? null : count(tasks.length, "task"),
+  ].filter((part) => part !== null);
+  const answerable =
+    asked.length === 0
+      ? ""
+      : asked.length === 1
+        ? " Answer it now, or start and it reaches you on the line."
+        : " Answer them now, or start and they reach you on the line.";
   // One run of numbers across the sheet: the done when's two choices, then each question's answers.
   let next = line.doneWhenProposal === null ? 1 : 3;
   const firsts = asked.map((question) => {
@@ -76,9 +83,13 @@ export function StartSheetView({
         </Actions>
       }
     >
-      {waited.length === 0 ? null : <Note>{waited.join(" and ")} waited for it.</Note>}
+      {waited.length === 0 ? null : (
+        <Note>
+          {waited.join(" and ")} waited for it.{answerable}
+        </Note>
+      )}
       {status !== undefined ? status : null}
-      {status !== undefined ? null : line.doneWhenProposal === null && held.length === 0 ? (
+      {status !== undefined ? null : line.doneWhenProposal === null && waited.length === 0 ? (
         <EmptyState>Nothing waited for it</EmptyState>
       ) : null}
       {line.doneWhenProposal === null ? null : (
@@ -101,7 +112,7 @@ export function StartSheetView({
         />
       ))}
       {status !== undefined || gone.length === 0 ? null : (
-        <List label="Questions">
+        <List label="Answered meanwhile">
           {gone.map((item) => (
             <Row key={item.ref} kind={<RefLink value={item.ref} />} title={item.title} />
           ))}

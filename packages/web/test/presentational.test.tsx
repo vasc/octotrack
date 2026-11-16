@@ -2217,6 +2217,11 @@ describe("FoldPicker", () => {
     fireEvent.change(find, { target: { value: "shel" } });
     expect(sheet.queryByRole("button", { name: "Sendspin enclosure" })).toBeNull();
     sheet.getByRole("button", { name: "Cancel" });
+    // A line is found by its ref too, and a find that matches nothing says so.
+    fireEvent.change(find, { target: { value: "L-1" } });
+    sheet.getByRole("button", { name: "Sendspin enclosure" });
+    fireEvent.change(find, { target: { value: "nothing like it" } });
+    sheet.getByText("Nothing matches");
   });
 
   test("folds into the line pressed or numbered, by its ref, and Cancel cancels", () => {

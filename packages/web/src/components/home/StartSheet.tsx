@@ -74,7 +74,7 @@ export function StartSheet({
                 <LoadingState label="Loading what waited for it" />
               ) : (
                 <ErrorState
-                  title="Could not load what waited for it."
+                  title="Could not load what waited for it. Start anyway, or try again."
                   error={failure}
                   onRetry={() => {
                     void held.refetch();

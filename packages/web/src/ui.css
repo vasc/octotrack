@@ -1725,6 +1725,12 @@
   }
 }
 
+@media (pointer: coarse) {
+  .ui-only[data-on="keyboard"] {
+    display: none;
+  }
+}
+
 /* ---------- Item: something opened in place ---------- */
 
 /* Three zones: what it is, what you do under a hairline, then other ways out. */

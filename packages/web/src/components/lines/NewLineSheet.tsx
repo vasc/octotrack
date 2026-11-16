@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { Actions } from "../ui/Actions.tsx";
 import { Button } from "../ui/Button.tsx";
 import { Field } from "../ui/Field.tsx";
 import { Chips } from "../ui/Chips.tsx";
 import { Note } from "../ui/Note.tsx";
 import { Sheet } from "../ui/Sheet.tsx";
+import { NotKept } from "../ui/NotKept.tsx";
 
 export interface NewLine {
   title: string;
@@ -36,7 +37,7 @@ function missing(title: string, doneWhen: string, repoChosen: boolean): string |
 /**
  * A new line, in a sheet of its own: what it is, when it is done, and its repos, or that it is the developer's own,
  * kept as a draft as it is typed. It goes to up next, starts, or is tabled with a reason and, if wanted, a day to look
- * at it again; while it cannot, the line under the actions says what is missing.
+ * at it again; while it cannot, the words under the actions say what is missing.
  */
 export function NewLineSheet({
   repos,
@@ -44,8 +45,14 @@ export function NewLineSheet({
   onDraft,
   onAdd,
   onCancel,
+  reposStatus,
+  notSaved = false,
 }: {
   repos: readonly string[];
+  /** The repos are loading or failed: said in the Repos list, with "None: it's mine" still usable. */
+  reposStatus?: ReactNode;
+  /** The words typed are not kept on the tracker yet. */
+  notSaved?: boolean;
   draft: NewLineDraft;
   onDraft(draft: NewLineDraft): void;
   onAdd(line: NewLine): void;
@@ -135,7 +142,8 @@ export function NewLineSheet({
               },
             ]}
           />
-          <Note>Saved as you type</Note>
+          {reposStatus}
+          {notSaved ? <NotKept unsaved /> : <Note>Saved as you type, so closing loses nothing.</Note>}
         </>
       )}
     </Sheet>

@@ -113,6 +113,18 @@ export function AppShell({ children }: { children: ReactNode }) {
         {adding ? (
           <NewLineSheet
             repos={newLine.repos}
+            notSaved={newLine.notSaved}
+            reposStatus={
+              newLine.reposLoading ? (
+                <LoadingState label="Loading the repos" />
+              ) : newLine.reposError === null ? undefined : (
+                <ErrorState
+                  title="Could not load the repos."
+                  error={newLine.reposError}
+                  onRetry={newLine.retryRepos}
+                />
+              )
+            }
             draft={newLine.draft}
             onDraft={newLine.setDraft}
             onAdd={(line) => {

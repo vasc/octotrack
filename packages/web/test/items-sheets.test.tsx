@@ -117,7 +117,7 @@ describe("NewLineSheet, as drawn", () => {
   test("says what is still missing while it cannot be added, and that it saves as typed", () => {
     const view = render(<NewLineSheet {...props} draft={{ title: "Backups", doneWhen: "" }} />);
     view.getByText("Still needs: done when, and a repo or None.");
-    view.getByText("Saved as you type");
+    view.getByText("Saved as you type, so closing loses nothing.");
     expect(view.getByLabelText("What it is").getAttribute("placeholder")).toBe(
       "Back up the Home Assistant host nightly",
     );
@@ -200,7 +200,9 @@ describe("StartSheetView, as drawn", () => {
         onCancel={noop}
       />,
     );
-    loaded.getByText("1 question and 1 task waited for it.");
+    // A held question answered meanwhile no longer counts; it is listed as answered.
+    loaded.getByText("1 task waited for it.");
+    loaded.getByRole("group", { name: "Answered meanwhile" });
     // A held question no longer open to answer here still shows, by its title.
     loaded.getByText("Which engine?");
   });
@@ -264,5 +266,19 @@ describe("HeldQuestion", () => {
     fireEvent.change(view.getByLabelText("Your answer"), { target: { value: "Tiles" } });
     fireEvent.click(view.getByRole("button", { name: "Send" }));
     expect(onOwn).toHaveBeenCalledWith("D-42", "Tiles");
+  });
+});
+
+describe("NewLineSheet, its repos and its draft", () => {
+  const props = { repos: [], onAdd: noop, onCancel: noop, draft: { title: "", doneWhen: "" }, onDraft: noop };
+
+  test("while the repos load, says so, and None stays usable", () => {
+    const view = render(<NewLineSheet {...props} reposStatus={<p>Loading the repos…</p>} />);
+    view.getByText("Loading the repos…");
+    view.getByRole("checkbox", { name: "None: it's mine" });
+  });
+
+  test("words not kept on the tracker say so", () => {
+    render(<NewLineSheet {...props} notSaved />).getByText(/^Not saved:/);
   });
 });

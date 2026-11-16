@@ -221,7 +221,7 @@ function resolveDecision(ctx: Ctx, input: ResolveInput): Decision {
     const valid = current.options.map((item) => item.key).join(", ");
     throw new OctoError(
       "invalid_input",
-      `${current.ref} has no option "${option}"`,
+      `${current.ref} has no option “${option}”. Its options are ${valid}.`,
       `Valid options: ${valid}.`,
     );
   }

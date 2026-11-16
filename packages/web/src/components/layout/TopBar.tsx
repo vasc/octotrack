@@ -104,6 +104,9 @@ export function TopBar({
           </Button>
           <Only on="wide">
             <AppearanceMenu appearance={appearance} onPalette={onPalette} onMode={onMode} />
+          </Only>
+          {/* The keys are offered wherever there is a keyboard to press them, whatever the width. */}
+          <Only on="keyboard">
             <IconButton icon="keyboard" label="Keyboard shortcuts" onClick={onKeys} />
           </Only>
           <Only on="phone">

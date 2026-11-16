@@ -88,8 +88,11 @@ export function Count({
   );
 }
 
-/** Shown only on a phone, or only on a wider screen, where the other has no room for it or no use. */
-export function Only({ on, children }: { on: "phone" | "wide"; children: ReactNode }) {
+/**
+ * Shown only on a phone, or only on a wider screen, where the other has no room for it or no use; or only where there is
+ * a fine pointer, so a keyboard is likely, as touch follows the input rather than the width.
+ */
+export function Only({ on, children }: { on: "phone" | "wide" | "keyboard"; children: ReactNode }) {
   return (
     <span className="ui-only" data-on={on}>
       {children}

@@ -125,7 +125,7 @@ describe("questions on home", () => {
     fireEvent.click(view.getByRole("button", { name: /Redis/ }));
     await answerNow(view);
     const alert = await view.findByRole("alert");
-    expect(alert.textContent).toContain('no option "redis"');
+    expect(alert.textContent).toContain("no option “redis”");
     expect(server.act(c.decisionList, { query: `ref:${decision.ref}` })[0]?.status).toBe("open");
   });
 
@@ -585,7 +585,7 @@ describe("decisions out of band", () => {
     fireEvent.keyDown(box, { key: "Enter", metaKey: true });
 
     await within(await sheet.findByRole("group", { name: "Results" })).findByText("✓ recorded");
-    view.getByText(/no option "nope"/);
+    view.getByText(/no option “nope”/);
     expect(server.act(c.decisionList, { query: `ref:${first.ref}` })[0]).toMatchObject({
       status: "decided",
       channel: "out_of_band",
