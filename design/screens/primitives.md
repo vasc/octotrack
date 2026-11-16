@@ -306,6 +306,15 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 - Error: the failed form above.
 - Empty: nothing waiting: nothing shown.
 
+### components/ui/Chips.tsx
+
+- Designed in: Sheets.dc.html, state A (Repos)
+- What it shows: "Repos" over pills that wrap: HASS, INFRA, MEDIA, PANEL, "+ 11 more", then "None: it's mine" set apart with a dashed edge; one on has the accent-soft fill.
+- Changes from today: new; repos were a list of rows.
+- Loading: never loads on its own.
+- Error: cannot fail on its own.
+- Empty: with no chips, only those set apart show.
+
 ### components/ui/Notice.tsx
 
 - Designed in: Home-FirstRun.dc.html; Home-States.dc.html, states A, B, E

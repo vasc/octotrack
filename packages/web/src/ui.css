@@ -1621,6 +1621,59 @@
   color: var(--ink-2);
 }
 
+/* Choices that can each be on or off, as small pills that wrap under their name. */
+.ui-chips {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ui-chips legend {
+  padding: 0 0 var(--space-2);
+}
+
+.ui-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.ui-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--control-height);
+  padding: 0 var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.ui-chip[data-checked="true"] {
+  border-color: var(--line-strong);
+  background: var(--accent-soft);
+}
+
+.ui-chip[data-apart="true"] {
+  border-style: dashed;
+}
+
+.ui-chip:has(input:focus-visible) {
+  border-color: var(--ink-3);
+  box-shadow: var(--shadow-focus);
+}
+
+.ui-chip input {
+  margin: 0;
+}
+
 /* One fact on its own: a small grey label over its sentence. */
 .ui-labelled {
   display: flex;

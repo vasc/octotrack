@@ -1,6 +1,7 @@
 import { whole } from "./harness.tsx";
 import { describe, expect, mock, test } from "bun:test";
 import { fireEvent, render, within } from "@testing-library/react";
+import { useState } from "react";
 import { NewLineSheet } from "../src/components/lines/NewLineSheet.tsx";
 import { Actions } from "../src/components/ui/Actions.tsx";
 import { Button } from "../src/components/ui/Button.tsx";
@@ -123,10 +124,16 @@ describe("Sheet", () => {
   });
 });
 
+/** New line with its draft held here, as the shell holds it on the tracker. */
+function DraftedNewLine({ repos, onAdd }: { repos: readonly string[]; onAdd(line: unknown): void }) {
+  const [draft, setDraft] = useState({ title: "", doneWhen: "" });
+  return <NewLineSheet repos={repos} draft={draft} onDraft={setDraft} onAdd={onAdd} onCancel={() => {}} />;
+}
+
 describe("NewLineSheet", () => {
   test("asks what it is, when it is done and its repos, and adds it to up next, starts it or tables it", () => {
     const onAdd = mock((_line: unknown) => {});
-    const view = render(<NewLineSheet repos={["PANEL", "OCT"]} onAdd={onAdd} onCancel={() => {}} />);
+    const view = render(<DraftedNewLine repos={["PANEL", "OCT"]} onAdd={onAdd} />);
     const sheet = within(view.getByRole("dialog", { name: "New line" }));
     const add = sheet.getByRole("button", { name: "Add to up next" });
     expect(add.hasAttribute("disabled")).toBe(true);
@@ -144,7 +151,7 @@ describe("NewLineSheet", () => {
 
   test("a line that is the developer's own needs no repo", () => {
     const onAdd = mock((_line: unknown) => {});
-    const view = render(<NewLineSheet repos={["PANEL"]} onAdd={onAdd} onCancel={() => {}} />);
+    const view = render(<DraftedNewLine repos={["PANEL"]} onAdd={onAdd} />);
     const sheet = within(view.getByRole("dialog", { name: "New line" }));
     fireEvent.change(sheet.getByLabelText("What it is"), { target: { value: "Taxes" } });
     fireEvent.change(sheet.getByLabelText("Done when"), { target: { value: "Filed" } });

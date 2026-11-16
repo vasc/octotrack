@@ -12,7 +12,7 @@ closed; the page behind does not react to keys. On a phone it rises from the bot
 - What it shows: "New line" and Cancel; "What it is" (placeholder "Back up the Home Assistant host nightly"), "Done when", "Repos" as checkable chips by key (four, then "+ 11 more") and "None: it's mine"; "Saved as you type, so closing loses nothing."; then "Add to up next", "Start", "Table…". Table goes to the Table sheet's fields as a second step.
 - Changes from today: the words are kept as a draft, so closing loses nothing; repos are chips that wrap instead of a list of rows, and long lists fold after four ("+ 11 more"); "Table" becomes "Table…"; while the actions are off, a line under them says what is missing; focus stays in the sheet.
 - Loading: the repo list loads from the tracker; follows the Primitives pattern: "Loading…" in the Repos list, with "None: it's mine" usable.
-- Error: if adding fails, the sheet stays open with "Not added: …" above its foot, words intact. A repo list that cannot load follows the Primitives pattern in the Repos list, with Try again. A draft not saved: "Not saved: the tracker did not answer. Kept here; saves when it is back."
+- Error: adding is a choice that waits with Undo, so a refusal is said in the Undo bar, and the words stay in the draft until the line is added. A repo list that cannot load follows the Primitives pattern in the Repos list, with Try again. A draft not saved: "Not saved: the tracker did not answer. Kept here; saves when it is back."
 - Empty: until a title, a done when and a repo (or None) are given, the three actions are off and the line under them says which is missing. No repos: only "None: it's mine".
 
 ### components/lines/TableForm.tsx

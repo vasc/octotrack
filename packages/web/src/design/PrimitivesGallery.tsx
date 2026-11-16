@@ -43,7 +43,15 @@ export function PrimitivesGallery() {
         </List>
       </Example>
       <SheetExample label="New line">
-        {(close) => <NewLineSheet repos={["PANEL", "OCT", "MEALS"]} onAdd={close} onCancel={close} />}
+        {(close) => (
+          <NewLineSheet
+            repos={["PANEL", "OCT", "MEALS"]}
+            draft={{ title: "Back up the Home Assistant host nightly", doneWhen: "" }}
+            onDraft={() => {}}
+            onAdd={close}
+            onCancel={close}
+          />
+        )}
       </SheetExample>
       <SheetExample label="Table a line">
         {(close) => (

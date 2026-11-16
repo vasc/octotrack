@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, mock, test } from "bun:test";
 import { fireEvent, render, within } from "@testing-library/react";
 import { AnswerStatus } from "../src/components/home/AnswerStatus.tsx";
 import { CheckoutForm } from "../src/components/home/CheckoutForm.tsx";
@@ -52,7 +52,15 @@ describe("CheckoutForm", () => {
 
 describe("NewLineSheet", () => {
   test("Table asks first, so it says so", () => {
-    const view = render(<NewLineSheet repos={[]} onAdd={noop} onCancel={noop} />);
+    const view = render(
+      <NewLineSheet
+        repos={[]}
+        onAdd={noop}
+        onCancel={noop}
+        draft={{ title: "", doneWhen: "" }}
+        onDraft={noop}
+      />,
+    );
     view.getByRole("button", { name: "Table…" });
   });
 });
@@ -67,5 +75,35 @@ describe("KeyHelp", () => {
     sheet.getByText("tell the owner");
     sheet.getByText("search the log");
     sheet.getByRole("button", { name: "Close" });
+  });
+});
+
+describe("NewLineSheet, as drawn", () => {
+  const repos = ["HASS", "INFRA", "MEDIA", "PANEL", "TRIP", "OCT"];
+  const props = { repos, onAdd: noop, onCancel: noop, draft: { title: "", doneWhen: "" }, onDraft: noop };
+
+  test("repos are chips, four then the rest a press away, with None: it's mine", () => {
+    const view = render(<NewLineSheet {...props} />);
+    view.getByRole("checkbox", { name: "PANEL" });
+    expect(view.queryByRole("checkbox", { name: "TRIP" })).toBeNull();
+    fireEvent.click(view.getByRole("button", { name: "+ 2 more" }));
+    view.getByRole("checkbox", { name: "TRIP" });
+    view.getByRole("checkbox", { name: "None: it's mine" });
+  });
+
+  test("says what is still missing while it cannot be added, and that it saves as typed", () => {
+    const view = render(<NewLineSheet {...props} draft={{ title: "Backups", doneWhen: "" }} />);
+    view.getByText("Still needs: done when, and a repo or None.");
+    view.getByText("Saved as you type");
+    expect(view.getByLabelText("What it is").getAttribute("placeholder")).toBe(
+      "Back up the Home Assistant host nightly",
+    );
+  });
+
+  test("what is typed goes to its draft", () => {
+    const onDraft = mock((_draft: { title: string; doneWhen: string }) => {});
+    const view = render(<NewLineSheet {...props} onDraft={onDraft} />);
+    fireEvent.change(view.getByLabelText("What it is"), { target: { value: "Backups" } });
+    expect(onDraft).toHaveBeenCalledWith({ title: "Backups", doneWhen: "" });
   });
 });

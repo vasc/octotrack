@@ -96,6 +96,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         {adding ? (
           <NewLineSheet
             repos={newLine.repos}
+            draft={newLine.draft}
+            onDraft={newLine.setDraft}
             onAdd={(line) => {
               newLine.add(line);
               setParams({ new: null });
