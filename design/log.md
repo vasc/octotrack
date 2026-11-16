@@ -67,6 +67,12 @@ are design decisions taken there, open to change:
 - **A lone fact is a label over its sentence.** "Done when" was a one-row two-column table whose gutter the developer
   called "weird"; a single fact is a small grey label stacked over its sentence, and only several facts together
   (Waits for, Look again, Held) form a table.
+- **No captions narrate the screen.** "Your order: what reaches you first, and what agents take on" and its kind were
+  removed after the developer called it "screen naration", in keeping with "The UI does not explain itself" below.
+  The crumb no longer says a line's position ("3rd of 10"): the developer asked "3rd out of 10 what", and the
+  number on its home row already says it.
+- **The accent is for what you answer or do,** questions and tasks. Proposed is a heading like the others, and a
+  proposal's advice reads "Recommends Start:" in ink.
 - **Loading is drawn, not said.** Outlines of the rows show something loads; the words are for screen readers only.
 
 These answer the open question "States not on the specimen": hover, focus, pressed, disabled and busy are drawn side by

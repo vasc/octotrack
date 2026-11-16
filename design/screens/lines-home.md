@@ -21,7 +21,7 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 ### components/home/FirstRun.tsx
 
 - Designed in: Home-FirstRun.dc.html; Home-States.dc.html, state A
-- What it shows: "Nothing is placed yet", then "Your agents proposed 67 lines. 51 carry a recommendation: 10 to start, 26 for up next, 14 to table and 1 to fold. Accept them all in one go, then reorder; or go through them below. 16 have none and wait for you." and the primary "Accept 51 recommendations".
+- What it shows: "Nothing is placed yet", then "Your agents proposed 67 lines. 51 carry a recommendation: 10 to start, 26 for up next, 14 to table and 1 to fold. 16 have none." and the primary "Accept 51 recommendations".
 - Changes from today: a heading and a paragraph that break the count down by placement replace the row "Nothing placed yet" with facts "51 of 67 proposed carry a recommendation"; the button names the count ("Accept 51 recommendations", today "Accept recommended placements").
 - Loading: never loads on its own: given the proposals by HomePage.
 - Error: Accept waits with Undo; a request that fails follows the Primitives pattern: said under the button, with Try again. Refusals at effect time go to the Undo bar.
@@ -84,11 +84,11 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 ### components/home/WorkingSection.tsx
 
 - Designed in: Home.dc.html; Home-States.dc.html, states C, D, I
-- What it shows: "Working on 3" with "Your order: what reaches you first, and what agents take on", then each line.
+- What it shows: "Working on 3", then each line, with no caption under the heading.
 - Changes from today: the aside explains the order; on a phone lines from the third on fold to one row each ("3 · Mac mini keeps enough free disk · agents on it").
 - Loading: on first load the rows are outlines under "Working on" (D).
 - Error: cannot fail on its own; a failed move is said beside the line (H).
-- Empty: follows the Primitives pattern: one line saying nothing is being worked on and that Start puts a line here (Home-FirstRun: "Start puts a line under Working on; its agent takes it").
+- Empty: follows the Primitives pattern: one line saying nothing is being worked on.
 
 ### components/home/SpreadThin.tsx
 
@@ -102,7 +102,7 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 ### components/home/WorkingLine.tsx
 
 - Designed in: Home.dc.html; Main.dc.html; Home-States.dc.html, states C, H, I
-- What it shows: the line's number, title, its facts, the headline as a note ("Docker disk capped at 60 GB; 41 GB free after the last deploy."), then what it needs from you.
+- What it shows: the line's number, title, its facts, the headline as a note, verbatim as its owner wrote it with the summary (`line.summarize`), so it never refers to the page ("Docker disk capped at 60 GB; 41 GB free after the last deploy."), then what it needs from you.
 - Changes from today: a failed move is said under the line: "Not moved. The tracker did not answer; it is back where it was." (H); the "N changes since" link is not drawn.
 - Loading: never loads on its own: given its line by WorkingSection.
 - Error: a move that fails (H), as above.
@@ -165,7 +165,7 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 ### components/home/WaitingSections.tsx
 
 - Designed in: Home.dc.html; Home-FirstRun.dc.html; Home-States.dc.html, states C, I
-- What it shows: "Up next 3" with "Scoped by idle agents, not built, until you start them"; "Proposed 2"; then the folds "Tabled 4 · Labyrinth level editor, Matter binding backend and 2 more · 1 question held ›" and "Done lately 1 · Fix the Dinis reminder ›", one under the other.
+- What it shows: "Up next 3"; "Proposed 2" in ink like every section heading, each proposal's advice as "Recommends Start: …" in ink; then the folds "Tabled 4 · Labyrinth level editor, Matter binding backend and 2 more · 1 question held ›" and "Done lately 1 · Fix the Dinis reminder ›", one under the other.
 - Changes from today: Up next gains its explaining aside; the Tabled summary ends with what it holds ("· 1 question held", today "· N questions and N tasks held"); at a place Up next, Proposed and Tabled fold shut.
 - Loading: never loads on its own: given the lines by HomePage.
 - Error: cannot fail on its own.

@@ -25,7 +25,7 @@ owner, then Tell. A section with nothing in it says why in one line instead of s
 - Designed in: Line.dc.html; Line-States.dc.html, states A–F, J
 - What it shows: crumbs (state and place in order, ref, repo), Close, the title, "Done when" over its sentence, then the line's moves.
 - Changes from today:
-  - Crumbs read "Up next · 3rd of your 10 up-next lines · L-3 · LimbicAI/hydra" (working lines: "Working on · 1st of the 4 lines you are working on") (today "Up next · Line 3 of 10 · L-3 · hydra"); owned lines add "yours" (E); the repo is its GitHub name.
+  - Crumbs read "Up next · L-3 · LimbicAI/hydra": the state, no position (the number on its home row already shows that) (today "Up next · Line 3 of 10 · L-3 · hydra"); owned lines add "yours" (E); the repo is its GitHub name.
   - Close carries no key hint (Esc is in the Keys sheet); on a phone it is "‹ Lines" (J).
   - Opened from another panel (Panels F): "‹ Back to L-57" beside Close; Esc and Back go one step back, Close shuts the panel (today Close goes back).
   - Proposed (B): "Proposed by ttube, 2d ago · L-59 · TTUBE", then "Recommended: start it." with its reason, above the moves.
@@ -43,7 +43,7 @@ owner, then Tell. A section with nothing in it says why in one line instead of s
 - Changes from today:
   - Working (A): Done, Move to up next, Table, More (Done is first; today it is last).
   - Proposed (B): Start, Up next, Table, "Fold into…", Not a line.
-  - Up next: Start, Table, More, with "Up next lines are scoped by idle agents, not built" beside them.
+  - Up next: Start, Table, More, with nothing explaining them beside them.
   - Working with no owner (D): Try now, I'll own it, Table it.
   - Phone (J): the More button is "⋯".
 - Loading: never loads on its own: given the line by LinePanelHead. A move that is waiting shows its busy word in the button (Primitives Button: "Starting…").
@@ -73,7 +73,7 @@ owner, then Tell. A section with nothing in it says why in one line instead of s
 - Designed in: Line.dc.html; Line-States.dc.html, states A, G, H, J
 - What it shows: "Plan" with "step 2 of 3", then each step with ✓ done, → now, ○ next, and under it its issues with their state and pull requests ("#418 open · ✗ checks failing").
 - Changes from today:
-  - Not scoped: the aside reads "not scoped yet · 4 issues already on it", and the unplaced work sits under "Not on a step yet · these join a step when the plan is set".
+  - Not scoped: the aside reads "not scoped yet · 4 issues already on it", and the unplaced work sits under "Not on a step yet".
   - Pull requests are listed with their check: "#405 merged · ✓".
   - Phone (J): an issue reads "Build kore's ECS image in the pull request / KECS-1 · to do"; several merged PRs fold to "4 pull requests merged ✓".
 - Loading: outlines of the rows in place of the list, under its heading (G); "Loading the plan…" for screen readers only.
