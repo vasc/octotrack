@@ -81,11 +81,7 @@ export function Count({
         onGo(href);
       }}
     >
-      {urgent ? (
-        <>
-          <Glyph tone="warn">▲</Glyph>{" "}
-        </>
-      ) : null}
+      {urgent ? <Glyph tone="warn">▲</Glyph> : null}
       <b>{n}</b>
       {label}
     </a>

@@ -15,6 +15,20 @@ export function focusLabel(item: ForYou, line = ""): string {
   }
 }
 
+/** How a folded row names an item: its kind in a word or two and its title, "Question · Which South Tyrol base?". */
+export function shortOf(item: ForYou): { kind: string; title: string } {
+  switch (item.kind) {
+    case "question":
+      return { kind: "Question", title: item.card.decision.title };
+    case "task":
+      return { kind: "Task for you", title: item.task.title };
+    case "done":
+      return { kind: "Proposed as done", title: item.text };
+    case "done_when":
+      return { kind: "Done when changed", title: item.text };
+  }
+}
+
 export function refOf(item: ForYou): string {
   switch (item.kind) {
     case "question":

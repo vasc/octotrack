@@ -1,3 +1,4 @@
+import { pageUnder } from "../src/lib/router.ts";
 import { describe, expect, test } from "bun:test";
 import { newBuild } from "../src/lib/build.ts";
 import { suggest } from "../src/hooks/useSuggestions.ts";
@@ -513,5 +514,14 @@ describe("answerWaiting", () => {
     expect(answerWaiting([later], "D-1")).toBeUndefined();
     expect(answerWaiting([later, answer, other], "D-1")?.id).toBe(2);
     expect(answerWaiting([pendingChoice({ ...answer, state: "applied" })], "D-1")).toBeUndefined();
+  });
+});
+
+describe("pageUnder", () => {
+  test("names the page a panel opens over, for its way back on a phone", () => {
+    expect(pageUnder("/")).toBe("Lines");
+    expect(pageUnder("/log")).toBe("Log");
+    expect(pageUnder("/agents")).toBe("Agents");
+    expect(pageUnder("/nowhere")).toBe("Lines");
   });
 });

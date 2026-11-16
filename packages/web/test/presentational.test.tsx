@@ -2534,11 +2534,14 @@ describe("LineForYou", () => {
     expect(view.queryByRole("button")).toBeNull();
   });
 
-  test("folded, is one row saying how many, which moves focus to the first", () => {
+  test("folded, is one short row naming the first and how many more, which moves focus to it", () => {
     const onFocus = mock((_ref: string) => {});
     const view = render(<LineForYou {...props} folded onFocus={onFocus} />);
     expect(view.queryByText(/^Drawn /)).toBeNull();
-    fireEvent.click(view.getByRole("button", { name: "3 for you" }));
+    view.getByText("Question");
+    view.getByText("Which?");
+    view.getByText("and 2 more");
+    fireEvent.click(view.getByRole("button", { name: "Open D-7" }));
     expect(onFocus).toHaveBeenCalledWith("D-7");
   });
 });

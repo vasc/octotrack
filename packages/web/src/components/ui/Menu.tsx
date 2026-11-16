@@ -15,6 +15,7 @@ export function Menu({
   lead,
   drag,
   align = "end",
+  iconOnPhone = false,
   children,
 }: {
   /** The button's name for a screen reader, which says what is chosen now. */
@@ -31,6 +32,8 @@ export function Menu({
   drag?: { onDragStart(event: DragEvent): void; onDragEnd(): void };
   /** Which edge of the button the menu lines up with: the start for a row's lead, the end in the bar. */
   align?: "start" | "end";
+  /** Its icon shows only on a phone, in place of its words, which still name it: More as "⋯". */
+  iconOnPhone?: boolean;
   /** Its items, each given a way to close the menu once picked. */
   children(close: () => void): ReactNode;
 }) {
@@ -56,11 +59,26 @@ export function Menu({
         onClick={menu.toggle}
         onBlur={menu.leave}
       >
-        {icon === undefined ? null : <Icon name={icon} />}
+        {icon === undefined ? null : iconOnPhone ? (
+          <span className="ui-only" data-on="phone">
+            <Icon name={icon} />
+          </span>
+        ) : (
+          <Icon name={icon} />
+        )}
         {lead === undefined ? null : <Icon name="grip" />}
         {lead}
-        {text}
-        {text === undefined ? null : <Icon name="chevron" />}
+        {iconOnPhone ? (
+          <span className="ui-button-words">
+            {text}
+            <Icon name="chevron" />
+          </span>
+        ) : (
+          <>
+            {text}
+            {text === undefined ? null : <Icon name="chevron" />}
+          </>
+        )}
       </button>
       {menu.open ? (
         <div

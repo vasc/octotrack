@@ -1398,6 +1398,10 @@
   font-variant-numeric: tabular-nums;
 }
 
+.ui-count .ui-glyph {
+  margin-right: var(--space-2);
+}
+
 .ui-count:hover {
   color: var(--ink);
 }
@@ -1565,10 +1569,6 @@
     padding-bottom: var(--space-2);
   }
 
-  .ui-fold-summary {
-    display: none;
-  }
-
   /* On a phone a table's headings step away and each row wraps: its lead and what acts on it, its main cell, its facts. */
   .ui-table thead {
     position: absolute;
@@ -1684,6 +1684,15 @@
   .ui-button:has(.ui-button-words) {
     width: var(--control-height);
     padding: 0;
+  }
+
+  /* A place's buttons fill its row: the way forward twice the others, an icon alone keeps its square. */
+  .ui-actions > .ui-button:not(:has(.ui-button-words)) {
+    flex: 1 1 auto;
+  }
+
+  .ui-actions > .ui-button[data-variant="primary"] {
+    flex-grow: 2;
   }
 }
 

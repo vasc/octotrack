@@ -7,7 +7,7 @@ import { useOpQuery } from "../../hooks/useOp.ts";
 import { usePlanStep } from "../../hooks/usePlanStep.ts";
 import { humanize } from "../../lib/format.ts";
 import { issueLinks } from "../../lib/links.ts";
-import { backEntity, closeEntity, openEntity, useRoute } from "../../lib/router.ts";
+import { backEntity, closeEntity, openEntity, pageUnder, useRoute } from "../../lib/router.ts";
 import { howClosed, isTask } from "../../lib/tasks.ts";
 import { TaskClosed } from "../home/TaskClosed.tsx";
 import { TaskItem } from "../home/TaskItem.tsx";
@@ -44,7 +44,8 @@ export function IssuePanel({
 }) {
   const h = useHome();
   // Opened from another panel: Back returns there, and Close shuts the panel.
-  const from = useRoute().params.get("from");
+  const route = useRoute();
+  const from = route.params.get("from");
   const prs = useOpQuery(contracts.prList, { query: `linked:${issue.ref} kind:pr` });
   const tell = useIssueTell(issue);
   const line = issue.line === null ? null : h.lineOf(issue.line);
@@ -74,6 +75,7 @@ export function IssuePanel({
       }
       {...(task ? {} : { title: issue.title })}
       onClose={closeEntity}
+      under={pageUnder(route.path)}
       back={from === null ? undefined : { label: from, onBack: backEntity }}
     >
       {stale === null ? null : <StaleNote at={staleAt} />}

@@ -1,21 +1,40 @@
 import type { Line, LineWork, PlanStep } from "@octotrack/core/schemas";
-import { Fragment } from "react";
 import { humanize } from "../../lib/format.ts";
 import { Fact, Facts } from "../ui/Facts.tsx";
 import { List } from "../ui/List.tsx";
-import { Code, Note } from "../ui/Note.tsx";
+import { Note } from "../ui/Note.tsx";
 import { RefLink } from "../ui/RefLink.tsx";
 import { Row } from "../ui/Row.tsx";
 import { Section } from "../ui/Section.tsx";
 
-type Checks = LineWork["prs"][number]["checks"];
+type Pr = LineWork["prs"][number];
 
-/** A pull request's checks in a few words; failing ones in the warm tone, since they hold the work up. */
-function ChecksWord({ checks }: { checks: Checks }) {
+/** A pull request's checks in a word or two; failing ones in the warm tone, since they hold the work up. */
+function ChecksWord({ checks }: { checks: Pr["checks"] }) {
   if (checks === "failing") return <Fact tone="stuck">✗ checks failing</Fact>;
-  if (checks === "passing") return "✓ checks";
+  if (checks === "passing") return "✓";
   if (checks === "pending") return "checks running";
   return null;
+}
+
+/** An issue's state in words: "to do", "in progress". */
+function statusWords(status: LineWork["status"]): string {
+  return status === "todo" ? "to do" : humanize(status);
+}
+
+/** One pull request by its number, its state and its checks: "#418 open · ✗ checks failing". */
+function PrFact({ pr }: { pr: Pr }) {
+  return (
+    <>
+      #{pr.number} {pr.state}
+      {pr.checks === "none" ? null : (
+        <>
+          {" · "}
+          <ChecksWord checks={pr.checks} />
+        </>
+      )}
+    </>
+  );
 }
 
 /** The plan: each step done, now or next, with its issues and their pull requests under the step it belongs to. */
@@ -77,28 +96,34 @@ export function PlanList({
   );
 }
 
-/** The issues under a step, one row each: its ref and state, and each of its pull requests with its checks. */
+/**
+ * The issues under a step, one row each: its ref and state, then its pull requests; several merged ones fold to one fact,
+ * "4 pull requests merged ✓", so the open work stands out.
+ */
 function WorkList({ items }: { items: readonly LineWork[] }) {
   return (
     <List>
-      {items.map((item) => (
-        <Row
-          key={item.ref}
-          title={item.title}
-          facts={
-            <Facts>
-              <RefLink value={item.ref} />
-              {humanize(item.status)}
-              {item.prs.map((pr) => (
-                <Fragment key={pr.ref}>
-                  <Code>{`${pr.repo.split("/").at(-1) ?? pr.repo}#${pr.number}`}</Code> {pr.state}{" "}
-                  <ChecksWord checks={pr.checks} />
-                </Fragment>
-              ))}
-            </Facts>
-          }
-        />
-      ))}
+      {items.map((item) => {
+        const merged = item.prs.filter((pr) => pr.state === "merged");
+        const folded = merged.length > 1;
+        const shown = folded ? item.prs.filter((pr) => pr.state !== "merged") : item.prs;
+        return (
+          <Row
+            key={item.ref}
+            title={item.title}
+            facts={
+              <Facts>
+                <RefLink value={item.ref} />
+                {statusWords(item.status)}
+                {shown.map((pr) => (
+                  <PrFact key={pr.ref} pr={pr} />
+                ))}
+                {folded ? `${merged.length} pull requests merged ✓` : ""}
+              </Facts>
+            }
+          />
+        );
+      })}
     </List>
   );
 }

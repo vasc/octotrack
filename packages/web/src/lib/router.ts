@@ -30,6 +30,13 @@ export interface Route {
   params: URLSearchParams;
 }
 
+/** The page a panel opens over, by name, for its way back on a phone: Lines unless it is the Log or Agents. */
+export function pageUnder(path: string): string {
+  if (path === "/log") return "Log";
+  if (path === "/agents") return "Agents";
+  return "Lines";
+}
+
 export function useRoute(): Route {
   const current = useSyncExternalStore(subscribe, snapshot);
   const url = new URL(current, "http://local");

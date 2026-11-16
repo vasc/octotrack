@@ -23,6 +23,7 @@ export function LinePanelHead({
   held,
   now = Date.now(),
   back,
+  under,
   actions,
   children,
 }: {
@@ -34,6 +35,8 @@ export function LinePanelHead({
   now?: number;
   /** Opened from another panel: the ref it came from and the way back. */
   back?: { label: string; onBack(): void } | undefined;
+  /** The page it opens over, which its way back names on a phone. */
+  under?: string;
   /** Its moves, under what finishes it. */
   actions?: ReactNode;
   children?: ReactNode;
@@ -64,6 +67,7 @@ export function LinePanelHead({
       }
       title={line.title}
       onClose={closeEntity}
+      {...(under === undefined ? {} : { under })}
       back={back}
       head={
         <Stack>

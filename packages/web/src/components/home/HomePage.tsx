@@ -134,7 +134,6 @@ export function HomePage() {
             starting={starting}
             // At a place everything else folds, up next and proposals included; urgent questions never do.
             narrow={narrow || at !== null}
-            phone={narrow}
             handle={handle}
             drop={drop}
             onStarting={setStarting}

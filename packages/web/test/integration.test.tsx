@@ -442,7 +442,7 @@ describe("live updates, with nothing but the server's own notifications", () => 
       { repo: "a/b", number: 1, title: "PR from an agent", state: "open", checks: "passing" },
       "octo.1",
     );
-    await panel.findByText(/✓ checks/);
+    await panel.findByText(whole("#1 open · ✓"));
   });
 
   test("changes that leave nothing in the log still reach the page", async () => {
@@ -2485,7 +2485,7 @@ describe("lines of work", () => {
     await waitFor(() => expect(server.tracker.call(c.agentList, {}, asDeveloper)[0]?.line).toBeNull());
   });
 
-  test("on a phone, lines past the second fold to one row saying how much waits, and open from it", async () => {
+  test("on a phone, lines past the second fold to one row naming what waits first, and open from it", async () => {
     const realMatchMedia = window.matchMedia;
     Object.assign(window, {
       matchMedia: (media: string) => ({
@@ -2512,7 +2512,8 @@ describe("lines of work", () => {
       const view = renderApp(<App />);
       const third = within(await view.findByRole("article", { name: "Third" }));
       within(view.getByRole("article", { name: "Second" })).getByRole("button", { name: "Open D-2" });
-      fireEvent.click(third.getByRole("button", { name: "1 for you" }));
+      third.getByText("Third question");
+      fireEvent.click(third.getByRole("button", { name: "Open D-3" }));
       await third.findByRole("article", { name: "Third question" });
     } finally {
       Object.assign(window, { matchMedia: realMatchMedia });
@@ -2541,6 +2542,29 @@ describe("lines of work", () => {
       expect(tile.queryByRole("button", { name: "Open D-1" })).toBeNull();
       fireEvent.click(tile.getByRole("button", { name: /^On no line 2/ }));
       tile.getByRole("button", { name: "Open D-1" });
+    } finally {
+      Object.assign(window, { matchMedia: realMatchMedia });
+    }
+  });
+
+  test("on a phone, an empty Up next still says so, and a proposal fold names what it holds", async () => {
+    const realMatchMedia = window.matchMedia;
+    Object.assign(window, {
+      matchMedia: (media: string) => ({
+        matches: true,
+        media,
+        addEventListener() {},
+        removeEventListener() {},
+      }),
+    });
+    try {
+      seedLines();
+      navigate("/");
+      const view = renderApp(<App />);
+      const upNext = within(await view.findByRole("region", { name: "Up next" }));
+      upNext.getByText("Nothing is up next");
+      const proposed = within(view.getByRole("region", { name: "Proposed" }));
+      proposed.getByRole("button", { name: /^Proposed 1 Wall mount/ });
     } finally {
       Object.assign(window, { matchMedia: realMatchMedia });
     }

@@ -24,7 +24,6 @@ export function WaitingSections({
   focus,
   starting,
   narrow = false,
-  phone = false,
   handle,
   drop,
   onStarting,
@@ -38,8 +37,6 @@ export function WaitingSections({
   starting: string | null;
   /** On a phone, or at a place, up next and proposals fold too. */
   narrow?: boolean;
-  /** On a phone a fold names nothing, for want of room: the name and the count. */
-  phone?: boolean;
   /** A line's number, which drags it or opens its moves. */
   handle(
     title: string,
@@ -60,7 +57,7 @@ export function WaitingSections({
     (line) => line.ref === starting,
   );
   const named = (titles: readonly string[], note?: string | null) =>
-    phone || titles.length === 0
+    titles.length === 0
       ? undefined
       : `${foldedNames(titles)}${note === undefined || note === null ? "" : ` · ${note}`}`;
   const upNext = (
@@ -115,7 +112,11 @@ export function WaitingSections({
     <>
       {narrow ? (
         <>
-          {home.upNext.length === 0 ? null : (
+          {firstRun ? null : home.upNext.length === 0 ? (
+            <Section title="Up next" count={0}>
+              <EmptyState>Nothing is up next</EmptyState>
+            </Section>
+          ) : (
             <Fold
               title="Up next"
               count={home.upNext.length}

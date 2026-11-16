@@ -155,6 +155,36 @@ describe("PlanList", () => {
     render(<PlanList steps={[]} work={[]} state="done" />).getByText("No plan was written.");
   });
 
+  test("an issue reads its ref and state in words, its pull requests by number with their checks", () => {
+    const pr = (number: number, state: "open" | "merged", checks: "failing" | "passing") => ({
+      ref: `PR-${number}`,
+      repo: "LimbicAI/kore",
+      number,
+      state,
+      checks,
+    });
+    const view = render(
+      <PlanList
+        steps={[{ position: 1, title: "Build the image", status: "doing", line: "L-1" }]}
+        work={[
+          { ...work("KECS-1"), step: 1, prs: [pr(418, "open", "failing")] },
+          {
+            ...work("KECS-2"),
+            step: 1,
+            status: "in_progress" as const,
+            prs: [pr(401, "merged", "passing"), pr(402, "merged", "passing"), pr(403, "merged", "passing")],
+          },
+        ]}
+      />,
+    );
+    // Facts are drawn with a dot between them; each is its own piece.
+    view.getByText("to do");
+    view.getByText(whole("#418 open · ✗ checks failing"));
+    view.getByText("in progress");
+    view.getByText("3 pull requests merged ✓");
+    expect(view.queryByText(/kore#/)).toBeNull();
+  });
+
   test("a closed line with no summary says none was written", () => {
     render(<SummaryBox line={line({ state: "dropped" })} />).getByText("No summary was written.");
   });
@@ -225,5 +255,23 @@ describe("OwnWorkBox", () => {
     const add = view.getByRole("region", { name: "Add a task or a note" });
     fireEvent.click(within(add).getByRole("button", { name: "Hand to an agent" }));
     expect(onHand).toHaveBeenCalledWith([]);
+  });
+});
+
+describe("the panel on a phone", () => {
+  test("its way back names the page under it, in place of Close", () => {
+    const onClose = mock(() => {});
+    const view = render(<Panel title="L-1" onClose={onClose} under="Log" />);
+    fireEvent.click(view.getByRole("button", { name: "‹ Log" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  test("More is ⋯ on a phone, still named More", () => {
+    const view = render(
+      <LineActions line={line({ state: "working" })} onChoose={() => {}} onTable={() => {}} />,
+    );
+    const more = view.getByRole("button", { name: /^More/ });
+    expect(more.querySelector("[data-icon='more']")).not.toBeNull();
+    expect(more.textContent).toContain("More");
   });
 });

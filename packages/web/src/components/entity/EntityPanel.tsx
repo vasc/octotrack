@@ -1,6 +1,6 @@
 import { contracts } from "@octotrack/core/contracts";
 import { useOpQuery } from "../../hooks/useOp.ts";
-import { closeEntity } from "../../lib/router.ts";
+import { closeEntity, pageUnder, useRoute } from "../../lib/router.ts";
 import { StatusBadge } from "../ui/Badge.tsx";
 import { StaleNote } from "../ui/Loaded.tsx";
 import { Panel } from "../ui/Panel.tsx";
@@ -17,9 +17,10 @@ import { UpdatesSection } from "./UpdatesSection.tsx";
 /** Any item, by ref: what it is, what it connects to, what is out of date about it, and how it got here. */
 export function EntityPanel({ entityRef }: { entityRef: string }) {
   const detail = useOpQuery(contracts.entityShow, { ref: entityRef });
+  const under = pageUnder(useRoute().path);
   if (detail.data === undefined) {
     return (
-      <Panel onClose={closeEntity}>
+      <Panel onClose={closeEntity} under={under}>
         {detail.error === null ? (
           <LoadingState label={`Loading ${entityRef}`} />
         ) : (
@@ -49,6 +50,7 @@ export function EntityPanel({ entityRef }: { entityRef: string }) {
       title={summary.title}
       head={<StatusBadge value={summary.status} />}
       onClose={closeEntity}
+      under={under}
     >
       {stale === null ? null : <StaleNote at={detail.dataUpdatedAt} />}
       <EntityBody entity={entity} links={links} />

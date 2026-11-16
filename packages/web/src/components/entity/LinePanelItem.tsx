@@ -11,7 +11,7 @@ import { useOpQuery } from "../../hooks/useOp.ts";
 import { failureText } from "../../lib/failure.ts";
 import { forYouCounts } from "../../lib/lines.ts";
 import { moreSinceSummary } from "../../lib/log.ts";
-import { backEntity, useRoute } from "../../lib/router.ts";
+import { backEntity, pageUnder, useRoute } from "../../lib/router.ts";
 import { LineStepIn } from "../home/LineStepIn.tsx";
 import { StartSheet } from "../home/StartSheet.tsx";
 import { Loaded, StaleNote } from "../ui/Loaded.tsx";
@@ -57,7 +57,8 @@ export function LinePanelItem({
   // As it was when the panel opened: opening it marks the line seen, which must not fold what is being read now.
   const [seenAt] = useState(line.seenAt);
   const [starting, setStarting] = useState(false);
-  const params = useRoute().params;
+  const route = useRoute();
+  const params = route.params;
   // Opened with t from home: straight to Tell.
   const telling = params.get("act") === "tell";
   // Opened from another panel: Back returns there.
@@ -73,6 +74,7 @@ export function LinePanelItem({
   const stepIn = details?.stepIn === true ? details.stepInReason : null;
   return (
     <LinePanelHead
+      under={pageUnder(route.path)}
       line={line}
       repos={line.repos.map(h.repoName)}
       held={forYouCounts(forYou)}
