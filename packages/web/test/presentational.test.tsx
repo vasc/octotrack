@@ -1504,8 +1504,8 @@ describe("tabling and a line's own choices", () => {
     const sheet = within(view.getByRole("dialog", { name: "Table Podcast cleanup" }));
     sheet.getByRole("heading", { name: "Table Podcast cleanup" });
     expect(document.activeElement).toBe(sheet.getByLabelText("Why it waits"));
-    sheet.getByText("Holds 2 questions · mediarr winds down");
-    expect(sheet.getByLabelText("Look again on").getAttribute("type")).toBe("date");
+    sheet.getByText("Tabling holds 2 questions until it starts again; mediarr winds down.");
+    expect(sheet.getByLabelText("Look again on · optional").getAttribute("type")).toBe("date");
   });
 
   test("LineActions offers the moves each state allows, the rare ones under More, and asks before Done", () => {
@@ -1716,7 +1716,7 @@ describe("saying something to a line", () => {
     const onTable = mock((_reason: string, _lookAgainAt: string | null) => {});
     const view = render(<TableForm title="Trip" onTable={onTable} onCancel={() => {}} />);
     fireEvent.change(view.getByLabelText("Why it waits"), { target: { value: "Winter" } });
-    fireEvent.change(view.getByLabelText("Look again on"), { target: { value: "2027-03-01" } });
+    fireEvent.change(view.getByLabelText("Look again on · optional"), { target: { value: "2027-03-01" } });
     fireEvent.click(view.getByRole("button", { name: "Table it" }));
     expect(onTable).toHaveBeenCalledWith("Winter", "2027-03-01");
   });

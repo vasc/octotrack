@@ -5,7 +5,7 @@ import { Field } from "../ui/Field.tsx";
 import { Note } from "../ui/Note.tsx";
 import { Sheet } from "../ui/Sheet.tsx";
 
-/** What tabling holds and who winds down, as two facts. */
+/** What tabling does, in one sentence: what it holds until it starts again, and who winds down. */
 function consequences(held: { questions: number; tasks: number } | undefined, owner: string | null): string {
   const parts = [
     held === undefined || held.questions === 0
@@ -13,12 +13,11 @@ function consequences(held: { questions: number; tasks: number } | undefined, ow
       : `${held.questions} question${held.questions === 1 ? "" : "s"}`,
     held === undefined || held.tasks === 0 ? null : `${held.tasks} task${held.tasks === 1 ? "" : "s"}`,
   ].filter((part) => part !== null);
-  return [
-    parts.length === 0 ? null : `Holds ${parts.join(" and ")}`,
-    owner === null ? null : `${owner} winds down`,
-  ]
-    .filter((part) => part !== null)
-    .join(" · ");
+  const holds = parts.length === 0 ? null : `Tabling holds ${parts.join(" and ")} until it starts again`;
+  const winds = owner === null ? null : `${owner} winds down`;
+  if (holds === null && winds === null) return "";
+  if (holds === null) return `Tabling it, ${winds}.`;
+  return winds === null ? `${holds}.` : `${holds}; ${winds}.`;
 }
 
 /**
@@ -59,7 +58,7 @@ export function TableForm({
       }
     >
       <Field label="Why it waits" value={reason} onChange={setReason} onSubmit={table} autoFocus />
-      <Field label="Look again on" type="date" value={lookAgain} onChange={setLookAgain} />
+      <Field label="Look again on · optional" type="date" value={lookAgain} onChange={setLookAgain} />
       {facts === "" ? null : <Note>{facts}</Note>}
     </Sheet>
   );

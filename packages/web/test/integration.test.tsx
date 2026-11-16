@@ -1694,7 +1694,9 @@ describe("lines of work", () => {
       fireEvent.click(await panel.findByRole("button", { name: "Table" }));
       const tabling = within(await view.findByRole("dialog", { name: "Table Sendspin enclosure" }));
       fireEvent.change(tabling.getByLabelText("Why it waits"), { target: { value: "After the move" } });
-      fireEvent.change(tabling.getByLabelText("Look again on"), { target: { value: "2027-02-01" } });
+      fireEvent.change(tabling.getByLabelText("Look again on · optional"), {
+        target: { value: "2027-02-01" },
+      });
       fireEvent.click(tabling.getByRole("button", { name: "Table it" }));
       await answerNow(view);
       await waitFor(() =>
