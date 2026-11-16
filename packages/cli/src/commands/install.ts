@@ -22,7 +22,7 @@ function binDir(): string {
 
 /** Ends the server answering now, if any, and waits until it no longer answers. */
 async function stopServer(client: OctoClient): Promise<void> {
-  const quiet = client.withoutAutoStart();
+  const quiet = client.withoutAutoStart().silenceBuildWarning();
   let pid: number | null;
   try {
     pid = Health.parse(await quiet.get("/api/health")).pid;
@@ -52,7 +52,13 @@ async function stopServer(client: OctoClient): Promise<void> {
 async function restartOn(client: OctoClient, binary: string): Promise<string> {
   await stopServer(client);
   rmSync(serverStoppedPath(), { force: true });
-  const fresh = new OctoClient(client.baseUrl, client.actor, [binary], true, client.identity);
+  const fresh = new OctoClient(
+    client.baseUrl,
+    client.actor,
+    [binary],
+    true,
+    client.identity,
+  ).silenceBuildWarning();
   return Health.parse(await fresh.get("/api/health")).build ?? "unknown";
 }
 

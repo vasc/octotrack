@@ -168,6 +168,12 @@ export class OctoClient {
     return new OctoClient(this.baseUrl, this.actor, this.self, false, this.identity);
   }
 
+  /** Gives no warning that the server is from another build: for installing or rolling back, which replace it. */
+  silenceBuildWarning(): this {
+    this.warnedAboutSkew = true;
+    return this;
+  }
+
   /** Housekeeping on the way out, which must not bring back a server that someone stopped. */
   async opInBackground(name: string, input: unknown): Promise<void> {
     await this.post(`/api/ops/${name}`, { input }, true);
