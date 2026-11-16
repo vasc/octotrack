@@ -56,7 +56,7 @@ export function Counts({ label, children }: { label: string; children: ReactNode
   );
 }
 
-/** One count, opening the first item it counts; urgent goes first, after a small warm dot. */
+/** One count, opening the first item it counts; urgent goes first, marked ▲ as Status marks it. */
 export function Count({
   n,
   label,

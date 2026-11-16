@@ -1419,7 +1419,7 @@
   margin-left: auto;
 }
 
-/* What waits on the developer: numbers in ink, words quieter; urgent first, after a small warm dot. */
+/* What waits on the developer: numbers in ink, words quieter; urgent first, marked ▲. */
 .ui-counts {
   display: flex;
   flex-wrap: wrap;

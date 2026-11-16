@@ -7,7 +7,7 @@ type Native = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "className" | "style
 
 /**
  * A button of one of three kinds: primary, filled, for the one way forward; plain, a word that acts; quiet, a word that
- * steps back. A choice the keys can press carries its number, drawn beside it only where the keys act.
+ * steps back. A choice the keys can press carries its number for them; no button draws it, the Keys sheet lists them.
  */
 export function Button({
   variant = "plain",

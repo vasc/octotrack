@@ -250,7 +250,9 @@ describe("NotAnswering", () => {
     const onRetry = mock(() => {});
     const view = render(<NotAnswering host="127.0.0.1:4747" onRetry={onRetry} />);
     view.getByRole("heading", { name: "The tracker is not answering" });
-    view.getByText(/Nothing answered at 127\.0\.0\.1:4747\. Any octo command starts it again\./);
+    view.getByText(
+      /Nothing answered at 127\.0\.0\.1:4747\. Any octo command starts it again; this page tries again every 30 seconds\./,
+    );
     view.getByText("octo server status");
     fireEvent.click(view.getByRole("button", { name: "Try now" }));
     expect(onRetry).toHaveBeenCalledTimes(1);

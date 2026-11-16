@@ -99,7 +99,7 @@ export function NewLineSheet({
         Start
       </Button>
       <Button disabled={!ready} onClick={() => setTabling(true)}>
-        Table…
+        Table
       </Button>
       {ready ? null : <Note>{missing(title, doneWhen, mine || picked.length > 0)}</Note>}
     </Actions>

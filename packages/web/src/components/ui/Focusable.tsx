@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 
 /**
  * One item in a page's focus order, which the browser can focus: the keys move the browser's own focus here, and a
- * click or Tab into it moves the page's focus with it. Focused, it is tinted and its numbered choices show their keys.
+ * click or Tab into it moves the page's focus with it. Focused, it is tinted with an edge inside, and its numbered
+ * choices answer to their keys.
  */
 export function Focusable({
   focusRef,

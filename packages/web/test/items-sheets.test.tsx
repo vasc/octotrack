@@ -74,7 +74,7 @@ describe("NewLineSheet", () => {
         onDraft={noop}
       />,
     );
-    view.getByRole("button", { name: "Table…" });
+    view.getByRole("button", { name: "Table" });
   });
 });
 

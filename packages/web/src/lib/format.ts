@@ -11,7 +11,7 @@ export function timeAgo(iso: string, now: number = Date.now()): string {
   return shortDate(iso, now);
 }
 
-/** How long ago, as words that stand after a verb: "just now", "5m ago", "2d ago", or "on 2026-10-01". */
+/** How long ago, as words that stand after a verb: "just now", "5m ago", "2d ago", or "on 1 Oct". */
 export function sinceText(iso: string, now: number = Date.now()): string {
   const ago = timeAgo(iso, now);
   if (ago === "now") return "just now";

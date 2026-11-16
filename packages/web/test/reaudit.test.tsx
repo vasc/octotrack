@@ -1,5 +1,5 @@
 import { describe, expect, mock, test } from "bun:test";
-import { fireEvent, render, within } from "@testing-library/react";
+import { fireEvent, render, renderHook, within } from "@testing-library/react";
 import { BatchPanelView } from "../src/components/decisions/BatchPanelView.tsx";
 import { DriftAnswer } from "../src/components/drift/DriftAnswer.tsx";
 import { AtPlaceItems } from "../src/components/home/AtPlaceItems.tsx";
@@ -15,6 +15,7 @@ import { UndoBar } from "../src/components/layout/UndoBar.tsx";
 import { Button } from "../src/components/ui/Button.tsx";
 import { Waiting } from "../src/components/ui/Waiting.tsx";
 import { decision, decisionCard, drift, line, pendingChoice } from "../src/design/fixtures.ts";
+import { useRetryEvery } from "../src/hooks/useRetryEvery.ts";
 import { glyphOf } from "../src/lib/format.ts";
 import { whole } from "./harness.tsx";
 
@@ -301,5 +302,18 @@ describe("busy words where a choice waits", () => {
     });
     // Busy before any press: the buttons are held, and neither claims to be the one on its way.
     expect(view.getByRole("button", { name: "Updated" }).hasAttribute("disabled")).toBe(true);
+  });
+});
+
+describe("useRetryEvery", () => {
+  test("asks again on its interval while shown, and stops once gone", async () => {
+    const retry = mock(() => {});
+    const shown = renderHook(() => useRetryEvery(10, retry));
+    await new Promise((resolve) => setTimeout(resolve, 35));
+    expect(retry.mock.calls.length).toBeGreaterThanOrEqual(2);
+    shown.unmount();
+    const calls = retry.mock.calls.length;
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(retry.mock.calls.length).toBe(calls);
   });
 });
