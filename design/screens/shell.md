@@ -55,6 +55,33 @@ the canvas at https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 - Error: cannot fail on its own.
 - Empty: never empty: the pages are fixed.
 
+### components/layout/AppStrips.tsx
+
+- Designed in: Home-States.dc.html, states F, G
+- What it shows: under the bar on every page, never a dialog: "Not live. Showing what was true at 14:20; reconnecting. Answers you give wait until it is back." with Try now; "A new version of Octotrack is installed. It loads when you next switch to this tab; your drafts are kept." with Load it now.
+- Changes from today: new; the lost connection was "Not live: reconnecting" with no way to retry, and a new version was never said.
+- Loading: never loads on its own: AppShell says what is true.
+- Error: the lost connection is its own error state.
+- Empty: nothing true of the whole app: nothing drawn.
+
+### components/layout/PartBoundary.tsx
+
+- Designed in: Shell.dc.html, state G
+- What it shows: its part of the page, or, when that part breaks, PartFailed in its place; one each for the page and the open panel.
+- Changes from today: new; a bug anywhere blanked the whole app.
+- Loading: never loads on its own.
+- Error: a render error in its part, shown as PartFailed.
+- Empty: never empty: it draws its part.
+
+### components/layout/PartFailed.tsx
+
+- Designed in: Shell.dc.html, state G
+- What it shows: "This part of the page failed / A bug in the dashboard, not your data. Your drafts are kept on the tracker. Reloading usually clears it; if not, the error below is what to report." with the error and Reload.
+- Changes from today: new.
+- Loading: never loads on its own.
+- Error: it is the error state.
+- Empty: never empty: it always has the error.
+
 ### components/layout/NotFoundPage.tsx
 
 - Designed in: Shell.dc.html, state F

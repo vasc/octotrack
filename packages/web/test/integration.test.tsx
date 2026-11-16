@@ -470,7 +470,7 @@ describe("live updates, with nothing but the server's own notifications", () => 
     await view.findByRole("heading", { name: "Slipped through the gap" });
   });
 
-  test("a lost connection says so quietly, until it is back", async () => {
+  test("a lost connection says what is shown and that answers wait, until it is back; Try now reconnects", async () => {
     seedLine();
     navigate("/");
     const view = renderApp(<App />);
@@ -480,8 +480,16 @@ describe("live updates, with nothing but the server's own notifications", () => 
     act(() => source.emit("hello"));
     expect(view.queryByText(/Not live/)).toBeNull();
     act(() => source.emit("error"));
-    await view.findByText("Not live: reconnecting");
-    act(() => source.emit("hello"));
+    await view.findByText(
+      wholeMatching(
+        /^Not live\. Showing what was true at \d\d:\d\d; reconnecting\. Answers you give wait until it is back\.$/,
+      ),
+    );
+    fireEvent.click(view.getByRole("button", { name: "Try now" }));
+    expect(source.closed).toBe(true);
+    const again = FakeEventSource.instances.at(-1);
+    if (again === undefined || again === source) throw new Error("No new event source");
+    act(() => again.emit("hello"));
     await gone(() => view.queryByText(/Not live/));
   });
 

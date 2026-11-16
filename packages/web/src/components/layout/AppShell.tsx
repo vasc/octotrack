@@ -11,10 +11,11 @@ import { backEntity, navigate, setParams, useRoute } from "../../lib/router.ts";
 import { useNewLine } from "../../hooks/useNewLine.ts";
 import { NewLineSheet } from "../lines/NewLineSheet.tsx";
 import { Side } from "../ui/Panel.tsx";
-import { Note } from "../ui/Note.tsx";
 import { EntityPanel } from "../entity/EntityPanel.tsx";
 import { KeyHelp } from "../home/KeyHelp.tsx";
-import { ErrorState } from "../ui/states.tsx";
+import { ErrorState, LoadingState } from "../ui/states.tsx";
+import { AppStrips } from "./AppStrips.tsx";
+import { PartBoundary } from "./PartBoundary.tsx";
 import { PendingChoices } from "./PendingChoices.tsx";
 import { TopBar } from "./TopBar.tsx";
 
@@ -26,7 +27,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { path, params } = useRoute();
   const { data, error, isPending } = useBootstrap();
   // A tab left open, as on a phone, picks up a deploy when it comes back into view.
-  useReloadOnNewBuild();
+  const build = useReloadOnNewBuild();
   const bar = useTopBar();
   const look = useAppearance();
   const live = useLiveUpdates();
@@ -81,16 +82,30 @@ export function AppShell({ children }: { children: ReactNode }) {
       />
       <KeysHeldProvider value={keysOpen}>
         <main>
-          {/* What is shown no longer updates by itself: said quietly, as patterns.md asks of anything stale. */}
-          {live === "offline" ? <Note>Not live: reconnecting</Note> : null}
+          <AppStrips
+            offlineSince={live.state === "offline" ? live.offlineSince : null}
+            onReconnect={live.reconnect}
+            newVersion={build.waiting}
+            onLoadNow={build.loadNow}
+          />
           {keysOpen ? <KeyHelp onClose={closeKeys} /> : null}
           {bar.error === null ? null : <ErrorState error={bar.error} />}
-          {isPending ? null : error !== null && data === undefined ? <ErrorState error={error} /> : children}
+          <PartBoundary>
+            {isPending ? (
+              <LoadingState label="Loading the page" />
+            ) : error !== null && data === undefined ? (
+              <ErrorState error={error} />
+            ) : (
+              children
+            )}
+          </PartBoundary>
           <PendingChoices />
         </main>
         {entity === null ? null : (
           <Side label={entity} ref={panel}>
-            <EntityPanel key={entity} entityRef={entity} />
+            <PartBoundary key={entity}>
+              <EntityPanel entityRef={entity} />
+            </PartBoundary>
           </Side>
         )}
         {adding ? (

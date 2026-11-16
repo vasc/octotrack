@@ -69,6 +69,9 @@ properties and appear on the `/design` specimen; **structural** ones load data a
 | `UndoBar`        | Pure       | `Toasts`: each choice waiting, with Undo and, for a line's owner, Pause the line instead; failed ones with Dismiss         |
 | `NotFoundPage`   | Pure       | An address that leads nowhere: what lives here instead, and Go to Lines                                                    |
 | `PendingChoices` | Structural | The Undo bar on every page, with u undoing the newest                                                                      |
+| `AppStrips`      | Pure       | What is true of the whole app, under the bar: not live with Try now, a new version with Load it now                        |
+| `PartBoundary`   | Structural | Catches a bug in one part of the page, so the rest keeps working                                                           |
+| `PartFailed`     | Pure       | A part that broke: a bug, not your data; drafts kept; the error to report and Reload                                       |
 
 ### Lines: `home/` and `lines/`
 

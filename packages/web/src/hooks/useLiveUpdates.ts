@@ -9,6 +9,14 @@ const DraftNotice = z.object({ key: z.string() });
 
 export type LiveState = "connecting" | "live" | "offline";
 
+export interface Live {
+  state: LiveState;
+  /** When the connection was lost, while it is: what is shown was true then. */
+  offlineSince: number | null;
+  /** Gives up the connection being retried and opens a new one at once. */
+  reconnect(): void;
+}
+
 /**
  * Keeps every visible query current, so that anything an agent does shows up without a reload. An external stream
  * coming into React is what useEffect is for.
@@ -21,14 +29,19 @@ export type LiveState = "connecting" | "live" | "offline";
  * A hidden tab closes its stream, because browsers allow about six connections to one host: with enough open tabs,
  * every further request would hang. It catches up through that same refresh when it comes back.
  */
-export function useLiveUpdates(): LiveState {
+export function useLiveUpdates(): Live {
   const client = useQueryClient();
   const [state, setState] = useState<LiveState>("connecting");
+  const [offlineSince, setOfflineSince] = useState<number | null>(null);
+  // Each Try now is a new attempt: the connection is opened afresh.
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let source: EventSource | null = null;
     let timer: ReturnType<typeof setTimeout> | null = null;
     let lastRefresh = 0;
+    // A retry starts over as connecting; it is offline again only if this attempt fails too.
+    if (attempt > 0) setState("connecting");
 
     const runRefresh = () => {
       lastRefresh = Date.now();
@@ -51,6 +64,7 @@ export function useLiveUpdates(): LiveState {
       source = new EventSource("/api/stream");
       source.addEventListener("hello", () => {
         setState("live");
+        setOfflineSince(null);
         refresh();
       });
       source.addEventListener("change", refresh);
@@ -61,7 +75,10 @@ export function useLiveUpdates(): LiveState {
           void client.invalidateQueries({ queryKey: [contracts.draftGet.name, { key: notice.data.key }] });
         }
       });
-      source.addEventListener("error", () => setState("offline"));
+      source.addEventListener("error", () => {
+        setState("offline");
+        setOfflineSince((since) => since ?? Date.now());
+      });
     };
     const disconnect = () => {
       source?.close();
@@ -80,7 +97,7 @@ export function useLiveUpdates(): LiveState {
       if (timer !== null) clearTimeout(timer);
       source?.close();
     };
-  }, [client]);
+  }, [client, attempt]);
 
-  return state;
+  return { state, offlineSince, reconnect: () => setAttempt((count) => count + 1) };
 }

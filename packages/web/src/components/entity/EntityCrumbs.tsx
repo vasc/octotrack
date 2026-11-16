@@ -10,7 +10,7 @@ export function EntityCrumbs({ summary }: { summary: EntitySummary }) {
     <Facts>
       <Kind tone="none">{KIND_WORD[summary.kind] ?? summary.kind}</Kind>
       <Code>{summary.ref}</Code>
-      {summary.project === null ? null : <Code>{summary.project}</Code>}
+      {summary.project === null || summary.project === summary.ref ? null : <Code>{summary.project}</Code>}
     </Facts>
   );
 }

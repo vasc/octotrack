@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { loadedAssets, newBuild } from "../lib/build.ts";
 
 type Options = {
@@ -24,14 +24,16 @@ function typing(): boolean {
 /**
  * An open tab picks up a deploy by itself. A phone keeps a tab's code for days, so without this a fix never reaches the
  * page the developer has open. Whenever the page comes back into view, or Safari restores it from memory, the served
- * page is read; if it loads a script or stylesheet this page did not, the page reloads, unless a box has focus.
- * Drafts are kept on the server as they are typed, so nothing else is lost.
+ * page is read; if it loads a script or stylesheet this page did not, the page reloads, unless a box has focus. Then
+ * the new build is waiting, said under the bar with Load it now, and loads at the next return to the tab. Drafts are
+ * kept on the server as they are typed, so nothing else is lost.
  */
 export function useReloadOnNewBuild({
   loaded = loadedAssets,
   fetchPage = servedPage,
   reload = () => window.location.reload(),
-}: Options = {}): void {
+}: Options = {}): { waiting: boolean; loadNow(): void } {
+  const [waiting, setWaiting] = useState(false);
   useEffect(() => {
     let checking = false;
     const check = () => {
@@ -39,7 +41,9 @@ export function useReloadOnNewBuild({
       checking = true;
       fetchPage()
         .then((page) => {
-          if (newBuild(loaded(), page).length > 0 && !typing()) reload();
+          if (newBuild(loaded(), page).length === 0) return;
+          if (typing()) setWaiting(true);
+          else reload();
         })
         .catch(() => {
           // Offline or restarting: the next return to the page checks again.
@@ -57,4 +61,5 @@ export function useReloadOnNewBuild({
       window.removeEventListener("focus", check);
     };
   }, [loaded, fetchPage, reload]);
+  return { waiting, loadNow: reload };
 }

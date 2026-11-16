@@ -3031,4 +3031,27 @@ describe("useReloadOnNewBuild", () => {
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(reload).not.toHaveBeenCalled();
   });
+  test("a new build held back by typing is said to be waiting, and loads on Load it now", async () => {
+    const reload = mock(() => {});
+    const box = document.createElement("textarea");
+    document.body.append(box);
+    box.focus();
+    try {
+      const tab = renderHook(() =>
+        useReloadOnNewBuild({
+          loaded: () => ["/assets/index-OLD.js"],
+          fetchPage: async () => served,
+          reload,
+        }),
+      );
+      expect(tab.result.current.waiting).toBe(false);
+      document.dispatchEvent(new Event("visibilitychange"));
+      await waitFor(() => expect(tab.result.current.waiting).toBe(true));
+      expect(reload).not.toHaveBeenCalled();
+      tab.result.current.loadNow();
+      expect(reload).toHaveBeenCalledTimes(1);
+    } finally {
+      box.remove();
+    }
+  });
 });

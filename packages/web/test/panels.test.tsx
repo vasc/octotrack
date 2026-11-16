@@ -1,4 +1,4 @@
-import { describe, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { render } from "@testing-library/react";
 import { DriftItem } from "../src/components/drift/DriftItem.tsx";
 import { EntityCrumbs } from "../src/components/entity/EntityCrumbs.tsx";
@@ -35,6 +35,25 @@ describe("EntityCrumbs", () => {
     view.getByText("Pull request");
     view.getByText("STACK");
     view.getByText("PR-1");
+  });
+
+  test("a repo is its own repo, so its key is said once", () => {
+    const view = render(
+      <EntityCrumbs
+        summary={{
+          kind: "project",
+          ref: "PANEL",
+          title: "Home panel",
+          status: "active",
+          project: "PANEL",
+          priority: null,
+          assignee: null,
+          version: 1,
+          updatedAt: "",
+        }}
+      />,
+    );
+    expect(view.getAllByText("PANEL")).toHaveLength(1);
   });
 });
 
