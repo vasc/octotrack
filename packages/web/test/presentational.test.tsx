@@ -822,7 +822,7 @@ describe("lines of work", () => {
   test("TaskCard with named outcomes has a box for each and a note, counts what is filled, and needs them all", () => {
     const onDone = mock(() => {});
     const view = render(<TypingTask onDone={onDone} onCant={() => {}} fields={["Length", "Holes"]} />);
-    view.getByText(/0 of 2 filled/);
+    view.getByText("0 of 2 filled · saved as you type");
     fireEvent.change(view.getByLabelText("Length"), { target: { value: "41 mm" } });
     view.getByText(/1 of 2 filled/);
     expect(view.getByRole("button", { name: "Done" }).hasAttribute("disabled")).toBe(true);

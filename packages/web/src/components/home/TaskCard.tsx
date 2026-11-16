@@ -130,7 +130,7 @@ export function TaskCard({
               {own ? null : (
                 <Note>
                   {named
-                    ? `${filledCount(task, values)} of ${task.fields.length} filled, saved`
+                    ? `${filledCount(task, values)} of ${task.fields.length} filled · saved as you type`
                     : "Saved as you type"}
                 </Note>
               )}
