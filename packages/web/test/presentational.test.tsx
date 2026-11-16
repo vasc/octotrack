@@ -482,20 +482,30 @@ describe("BatchPanelView", () => {
     expect(button.hasAttribute("disabled")).toBe(false);
   });
 
-  test("shows parse errors and per-line results", () => {
+  test("its box says the format, a row not understood stops Record and says which, results carry ✓ or ✗", () => {
     const view = render(
       <BatchPanelView
         {...base}
-        parseError="Line 1 is not understood"
+        parsed={[{ ref: "D-1", option: "a", note: null }]}
+        parseError="Row 3 is not understood: D-75"
         results={[
           { ref: "D-1", ok: true, error: null },
-          { ref: "D-2", ok: false, error: "No such option" },
+          { ref: "D-2", ok: false, error: "already answered" },
         ]}
       />,
     );
+    view.getByLabelText("One per row: the question, the option, a note if you like");
     view.getByRole("alert");
-    view.getByText("recorded");
-    view.getByText("No such option");
+    view.getByText("Fix row 3 first");
+    view.getByText("✓ recorded");
+    view.getByText("✗ already answered");
+  });
+
+  test("says it is recording while it sends", () => {
+    const view = render(
+      <BatchPanelView {...base} parsed={[{ ref: "D-1", option: "a", note: null }]} submitting />,
+    );
+    expect(view.getByRole("button", { name: "Recording…" }).hasAttribute("disabled")).toBe(true);
   });
 });
 

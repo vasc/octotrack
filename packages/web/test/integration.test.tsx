@@ -537,7 +537,7 @@ describe("pull requests", () => {
 });
 
 describe("decisions out of band", () => {
-  test("Record answers, behind r on home, records many and keeps the lines that failed", async () => {
+  test("Record answers, behind r on home, records many and keeps the rows that failed", async () => {
     const first = seedDecision({ title: "First" });
     const second = seedDecision({ title: "Second" });
     navigate("/");
@@ -545,7 +545,7 @@ describe("decisions out of band", () => {
     await view.findByRole("heading", { name: "First" });
     fireEvent.keyDown(window, { key: "r" });
     const sheet = within(await view.findByRole("dialog", { name: "Record answers" }));
-    const box = sheet.getByLabelText("Answers");
+    const box = sheet.getByLabelText(/^One per row/);
     fireEvent.change(box, { target: { value: `${first.ref} sqs On the call\n${second.ref} nope` } });
     // Cmd and Enter records from the box, which keeps the cursor all along.
     act(() => box.focus());
@@ -570,7 +570,9 @@ describe("decisions out of band", () => {
     const view = renderApp(<App />);
     await view.findByRole("heading", { name: "First" });
     fireEvent.keyDown(window, { key: "r" });
-    const box = within(await view.findByRole("dialog", { name: "Record answers" })).getByLabelText("Answers");
+    const box = within(await view.findByRole("dialog", { name: "Record answers" })).getByLabelText(
+      /^One per row/,
+    );
     expect(document.activeElement).toBe(box);
     fireEvent.change(box, { target: { value: `${first.ref} sqs On the call` } });
     fireEvent.keyDown(box, { key: "Escape" });
@@ -583,7 +585,7 @@ describe("decisions out of band", () => {
     );
     fireEvent.keyDown(window, { key: "r" });
     expect(
-      within(await view.findByRole("dialog", { name: "Record answers" })).getByLabelText("Answers"),
+      within(await view.findByRole("dialog", { name: "Record answers" })).getByLabelText(/^One per row/),
     ).toHaveProperty("value", `${first.ref} sqs On the call`);
   });
 

@@ -27,7 +27,7 @@ export function parseDecisionLines(text: string): DecisionLine[] {
     if (ref === undefined || option === undefined) {
       throw new OctoError(
         "invalid_input",
-        `Line ${index + 1} is not understood: ${line}`,
+        `Row ${index + 1} is not understood: ${line}`,
         "Expected: D-3 <option-key> [note], or D-3 - <note> when no option applies.",
       );
     }

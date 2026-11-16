@@ -283,11 +283,11 @@ ${third.ref} - Neither, doing something else`,
     expect(second?.reasons).toContain("urgent priority");
   });
 
-  test("line parsing rejects what it cannot read", () => {
+  test("parsing answers one per row rejects what it cannot read", () => {
     expect(parseDecisionLines("\n# note\nd-1 a hello world\n")).toEqual([
       { ref: "D-1", option: "a", note: "hello world" },
     ]);
-    expect(() => parseDecisionLines("nonsense")).toThrow("Line 1");
+    expect(() => parseDecisionLines("nonsense")).toThrow("Row 1");
   });
 });
 

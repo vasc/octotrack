@@ -29,7 +29,7 @@ export interface BatchPanelViewProps {
   recorded?: number;
 }
 
-/** Answers given elsewhere, one per line, typed as fast as they come back to mind: ref, option, an optional note. */
+/** Answers given elsewhere, one per row, typed as fast as they come back to mind: ref, option, an optional note. */
 export function BatchPanelView(props: BatchPanelViewProps) {
   const {
     text,
@@ -44,20 +44,28 @@ export function BatchPanelView(props: BatchPanelViewProps) {
     recorded = 0,
   } = props;
   const ready = parsed.length > 0 && parseError === null && !submitting;
+  // Which row stops it, as the parser names it, said beside the disabled Record.
+  const fixRow = parseError === null ? null : (/^Row (\d+)/.exec(parseError)?.[1] ?? null);
   return (
     <Sheet
       title="Record answers"
       onClose={onClose}
       actions={
         <Actions>
-          <Button variant="primary" disabled={!ready} onClick={onSubmit}>
+          <Button
+            variant="primary"
+            disabled={!ready}
+            busy={submitting ? "Recording…" : undefined}
+            onClick={onSubmit}
+          >
             Record {parsed.length === 0 ? "" : parsed.length}
           </Button>
+          {fixRow === null ? null : <Note>Fix row {fixRow} first</Note>}
         </Actions>
       }
     >
       <Field
-        label="Answers"
+        label="One per row: the question, the option, a note if you like"
         multiline
         autoFocus={autoFocus}
         replaced={recorded}
@@ -76,7 +84,7 @@ export function BatchPanelView(props: BatchPanelViewProps) {
               key={result.ref}
               kind={<RefLink value={result.ref} />}
               tone={result.ok ? "none" : "stuck"}
-              title={result.ok ? "recorded" : (result.error ?? "not recorded")}
+              title={result.ok ? "✓ recorded" : `✗ ${result.error ?? "not recorded"}`}
             />
           ))}
         </List>
