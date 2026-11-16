@@ -5,7 +5,7 @@ import { TaskFrees } from "../src/components/entity/TaskFrees.tsx";
 import { TaskClosed } from "../src/components/home/TaskClosed.tsx";
 import { AppearanceMenu } from "../src/components/layout/AppearanceMenu.tsx";
 import type { TaskOutcome } from "../src/lib/tasks.ts";
-import { describe, expect, mock, test } from "bun:test";
+import { beforeEach, describe, expect, mock, test } from "bun:test";
 import { useState } from "react";
 import { act, fireEvent, render, renderHook, waitFor, within } from "@testing-library/react";
 import { useReloadOnNewBuild } from "../src/hooks/useReloadOnNewBuild.ts";
@@ -2959,6 +2959,8 @@ describe("AppearanceMenu", () => {
 
 describe("useReloadOnNewBuild", () => {
   const served = '<script type="module" crossorigin src="/assets/index-NEW.js"></script>';
+  // Each test starts as a fresh tab, which has reloaded for no build yet.
+  beforeEach(() => sessionStorage.clear());
 
   test("a tab coming back into view after a deploy loads the new build", async () => {
     const reload = mock(() => {});
@@ -3011,6 +3013,22 @@ describe("useReloadOnNewBuild", () => {
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(reload).not.toHaveBeenCalled();
   });
+  test("never reloads twice for the same served build, so a page that keeps differing cannot loop", async () => {
+    const reload = mock(() => {});
+    const options = { loaded: () => ["/assets/index-OLD.js"], fetchPage: async () => served, reload };
+    const first = renderHook(() => useReloadOnNewBuild(options));
+    window.dispatchEvent(new Event("pageshow"));
+    await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
+    first.unmount();
+    // The reload came back with the same old assets: the served page still differs, but it was already tried.
+    const second = renderHook(() => useReloadOnNewBuild(options));
+    window.dispatchEvent(new Event("pageshow"));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(reload).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(second.result.current.waiting).toBe(true));
+    sessionStorage.clear();
+  });
+
   test("a new build held back by typing is said to be waiting, and loads on Load it now", async () => {
     const reload = mock(() => {});
     const box = document.createElement("textarea");
