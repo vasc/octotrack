@@ -1541,6 +1541,7 @@
 .ui-cell[data-place="lead"] {
   font-weight: var(--weight-semibold);
   color: var(--ink);
+  text-align: left;
   white-space: nowrap;
 }
 
