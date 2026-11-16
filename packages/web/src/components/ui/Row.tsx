@@ -11,7 +11,7 @@ type RowProps = {
   tone?: Tone;
   /** Facts after the title, small and grey: who is on it, its step. They wrap under it on a phone. */
   facts?: ReactNode;
-  /** One quiet line under the title. */
+  /** A few quiet words under the title. */
   note?: ReactNode;
   /** A narrow column before it: its number in an order, or its handle. */
   lead?: ReactNode;
@@ -128,7 +128,7 @@ export function Row(props: RowProps) {
     children === undefined || children === null || children === false ? null : (
       <div className="ui-row-body">{children}</div>
     );
-  // A named row is a thing of its own, such as a line or an agent; an unnamed one is a line of a list.
+  // A named row is a thing of its own, such as a line of work or an agent; an unnamed one is a row of a list.
   return label === undefined ? (
     <div {...shared}>
       {head}

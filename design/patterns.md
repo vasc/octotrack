@@ -72,7 +72,8 @@ the Start sheet opens in place, and the key list is the one modal, so that no ke
 
 The page never asks you to refresh, and never moves what you are on. New items appear on their lines, counts change, and
 a question someone else answered leaves. Drafts follow between devices, but a box with focus keeps what it shows.
-While the connection is lost, a quiet line under the bar says "Not live: reconnecting", and everything catches up when
+While the connection is lost, a strip under the bar says "Not live. Showing what was true at 14:20; reconnecting.",
+with Try now, and everything catches up when
 it returns.
 
 ## Loading, empty, error

@@ -12,7 +12,7 @@ ways out. A hairline separates reading from deciding.
 - What it shows: DecisionCardView wired to the question's form and keys: `1`–`9` pick, `w` own words, `l` later, `u` undo while it waits.
 - Changes from today: no button carries a key hint (the keys are in the Keys sheet; an option's number is its key); while an answer waits, Undo sits inside the card (C), so `u` and the button act on the same thing. "Background" is not drawn on any state.
 - Loading: never loads on its own: it is given the question by QuestionList, ForYouItem or DecisionPanel.
-- Error: as DecisionCardView: "Not sent. The tracker did not answer. Your pick is kept." with Send again, in the card (E).
+- Error: as DecisionCardView: an answer the tracker never took is said in the Undo bar with Dismiss (E).
 - Empty: never empty: it exists only for an open question; a question with no options is DecisionCardView's state H.
 
 ### components/decisions/DecisionCardView.tsx
@@ -31,7 +31,7 @@ ways out. A hairline separates reading from deciding.
 
 - Designed in: Main.dc.html; Question-States.dc.html, states B, C, F, I, J
 - What it shows: kind, ref, who asked, age: "Question · D-65 · asked by roadtrip · 2d"; urgent: "Urgent · something broken · L-59 Home worker · D-75 · asked by ttube · 3h".
-- Changes from today: the age is always drawn at the end (`2d`, `3h`); urgent keeps "asked by" (today it is dropped); the kind word carries the state: "Later · D-65 · put off 1h ago" (F), "Held · D-65" (I), "Answered · D-20 · by you on the dashboard · 7 Nov" (J). The kind word is in the attention colour.
+- Changes from today: the age is always drawn at the end (`2d`, `3h`); urgent keeps "asked by" (today it is dropped); the kind word carries the state: "Later · D-65 · put off 1h ago" (F). A held or answered question is not a card, so "Held · D-65" (I) and "Answered · D-20 · by you on the dashboard · 7 Nov" (J) are DecisionMeta's. The kind word is in the attention colour.
 - Loading: never loads on its own: given the question by DecisionCardView.
 - Error: cannot fail on its own: it only draws facts it is given.
 - Empty: never empty: every question has a kind and a ref.
@@ -48,8 +48,8 @@ ways out. A hairline separates reading from deciding.
 ### components/decisions/OwnWords.tsx
 
 - Designed in: Question-States.dc.html, states D, H
-- What it shows: label "Your answer, in your own words", the box, "Saved as you type, on every device" beside it, then "Send ⌘↵" and "Back to the options".
-- Changes from today: visible label instead of a hidden one; the save line is shown; "Cancel" becomes "Back to the options" and keeps the draft (today it clears it); the ⌘↵ hint is on Send. With no options (H) the placeholder is "Write your answer" and the buttons are Send and Later.
+- What it shows: label "Your answer, in your own words", the box, "Saved as you type, on every device" beside it, then "Send" and "Back to the options".
+- Changes from today: visible label instead of a hidden one; the saving note is shown; "Cancel" becomes "Back to the options" and keeps the draft (today it clears it); Cmd+Enter sends, as the Keys sheet says; no hint is on Send. With no options (H) the placeholder is "Write your answer" and the buttons are Send and Later.
 - Loading: the draft is fetched from the tracker; while it loads the box follows the Primitives pattern: the box stays usable and is not cleared when the draft arrives.
 - Error: a draft not saved follows the Primitives pattern: "Not saved: the tracker did not answer. Kept here; saves when it is back." under the box. A send that fails is DecisionCardView's state E.
 - Empty: Send is off while the box is empty.
@@ -99,5 +99,5 @@ ways out. A hairline separates reading from deciding.
   - The note shows the recommendation only, not its why.
   - Task rows read "Task · TRIP-2 · at home" (unchanged).
 - Loading: never loads on its own: given its item by its list.
-- Error: cannot fail on its own; Bring back failing follows the Primitives pattern: said in the row, with Try again.
+- Error: cannot fail on its own; Bring back waits with Undo like every choice, and one the tracker never took is said in the Undo bar.
 - Empty: never empty: it exists only for an item.

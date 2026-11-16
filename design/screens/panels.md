@@ -13,7 +13,7 @@ importance. Loading, a failed part and not found follow `Line-States.dc.html` st
 - Changes from today:
   - Opened from another panel (F): "‹ Back to L-57" and Close; Esc and Back go one step back, Close shuts the panel. The same in every panel kind.
   - An old ref (an idea or milestone that became a line) opens what it became; only one that became nothing shows its old fields, labelled "from before lines" (E).
-  - The status moves from the crumb to the facts line under the title (B: "Open").
+  - The status moves from the crumb to the row of facts under the title (B: "Open").
 - Loading: follows Line-States G: the crumb and Close at once, then "Loading…" naming what loads, never a bare panel.
 - Error: follows Line-States H: "Could not load {ref}. The tracker did not answer." with Try again; a refresh that fails keeps what was shown, marked "as of 14:20" (today "Out of date: {message}"). Not found follows Line-States I: "No {kind} {ref}" with why it may be gone, "Search the log for {ref}" and Close (today "Nothing found for {ref}").
 - Empty: never empty: every item has a title; empty sections are left out or say why in one sentence.
@@ -22,7 +22,7 @@ importance. Loading, a failed part and not found follow `Line-States.dc.html` st
 
 - Designed in: Panels.dc.html, states B, C, D, E
 - What it shows: where the item sits, in words: "PR-1 · STACK", "DR-55 · out of date · on INFRA · since 7 Nov", "PANEL · repo", "I-7 · idea, from before lines".
-- Changes from today: the raw kind badge ("pr", "drift") becomes words, and the project key joins it; the status leaves the crumb for the facts line under the title.
+- Changes from today: the raw kind badge ("pr", "drift") becomes words, and the project key joins it; the status leaves the crumb for the row of facts under the title.
 - Loading: never loads on its own: drawn once EntityPanel has the item.
 - Error: cannot fail on its own.
 - Empty: never empty: every item has a ref.
@@ -44,7 +44,7 @@ importance. Loading, a failed part and not found follow `Line-States.dc.html` st
 - Designed in: Panels.dc.html, state A; Items.dc.html, states A, B, D (a task opened by its ref)
 - What it shows: the crumb "L-57 Wall mount for the 4-inch square › PANEL-4", the title, "Blocked · nobody holds it · vasc/homepanel", the body, a note when it waits on you, Pull requests, Activity, then "Tell whoever takes L-57". A task shows TaskCard or TaskClosed instead.
 - Changes from today:
-  - The status is a word in the facts line ("Blocked"), not after "Issue".
+  - The status is a word in the row of facts ("Blocked"), not after "Issue".
   - The crumb uses ›, and the repo is its GitHub name.
 - Loading: follows Line-States G: crumb and title at once; Pull requests says "Loading pull requests…". While Lines loads, the line crumb and Tell's recipient follow the Primitives pattern instead of silently changing.
 - Error: follows Line-States H per part, with Try again. A failed Tell, Done or Can't is said where it was made (TellBox, TaskCard); today it is not shown here.
@@ -73,7 +73,7 @@ importance. Loading, a failed part and not found follow `Line-States.dc.html` st
 - Designed in: Panels.dc.html, state B
 - What it shows: "Open · vasc/stack#4 ↗ · by vasc · 9 days · +33 −2"; then its facts, a conflict first among them ("Merge ▲ conflicts with main; feat/draft-prs needs a rebase", the warn glyph, no box and no red), then Checks, Review, Branch and Synced; then the body.
 - Changes from today:
-  - State, link, author, age and size move into one facts line; the external link carries ↗.
+  - State, link, author, age and size move into one row of facts; the external link carries ↗.
   - What needs attention comes first among its facts, in words: a conflict is the Merge fact with the warn glyph, no box and no red.
   - Checks and Review read "none run" and "none asked" (today "none"); Mergeable is said by the Merge fact instead of its own pair; Synced reads "2 min ago".
   - The size uses the same minus as everywhere ("−").
@@ -105,7 +105,7 @@ importance. Loading, a failed part and not found follow `Line-States.dc.html` st
 - What it shows: "Updates" with its count, a box "Post an update", Post, then the updates with level, who and when.
 - Changes from today: none drawn. Following the panel rule that an empty section says why in one sentence, an empty list says so instead of "Updates 0".
 - Loading: the draft loads from the tracker; the box stays usable.
-- Error: a draft not saved: "Not saved: the tracker did not answer. Kept here; saves when it is back." A post that fails follows the Primitives pattern: said under Post, words kept, with Try again (today not shown).
+- Error: a draft not saved: "Not saved: the tracker did not answer. Kept here; saves when it is back." Posting it waits with Undo like every choice; a request the tracker never took, or a refusal when it takes effect, is said in the Undo bar ("Did not happen: …") with Dismiss; the words stay in the draft until it takes effect.
 - Empty: one sentence saying there are no updates yet, with the box under it.
 
 ### components/entity/OpenDrift.tsx
@@ -114,7 +114,7 @@ importance. Loading, a failed part and not found follow `Line-States.dc.html` st
 - What it shows: "Out of date" with its count, then each open drift as DriftItem.
 - Changes from today: none in its own words.
 - Loading: never loads on its own: given the drift by its panel.
-- Error: an answer that fails follows the Primitives pattern: said under that drift's buttons, note kept, with Try again (today not shown).
+- Error: each answer it waits with Undo like every choice; a request the tracker never took, or a refusal when it takes effect, is said in the Undo bar ("Did not happen: …") with Dismiss; the note stays in its box.
 - Empty: no open drift: the section is left out.
 
 ### components/drift/DriftItem.tsx
@@ -123,7 +123,7 @@ importance. Loading, a failed part and not found follow `Line-States.dc.html` st
 - What it shows: "DR-55 · out of date · on INFRA · since 7 Nov", "Check INFRA still describes reality", what changed ("D-20 was answered “Uninstall it” on … Does INFRA's description still hold?"), "Note · required: what changed, or why nothing had to", then Updated and Nothing to update.
 - Changes from today: a sentence title saying what to check (today the rule's name, "issue closed pr open"); the note field is labelled as required and what to write; while an answer waits with Undo, the pressed button shows its busy word until it takes effect, as Agents A does for Stop (today both stay live and can send twice).
 - Loading: the buttons show their busy word while sending (Primitives Button).
-- Error: a failed answer is said under the buttons, note kept, with Try again; a refusal at effect time goes to the Undo bar.
+- Error: as DriftAnswer.
 - Empty: Updated and Nothing to update are disabled until the note has words, both in the one disabled look every button shares.
 
 ### components/drift/DriftAnswer.tsx

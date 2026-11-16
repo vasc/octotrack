@@ -11,20 +11,20 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 - Designed in: Home-FirstRun.dc.html; Home.dc.html; Home-States.dc.html, states A–I; Main.dc.html
 - What it shows: Urgent, Working on, Up next, Proposed, then the Tabled and Done lately folds; at a place, that place's banner first. On first run the proposals grouped by what their agents recommend.
 - Changes from today:
-  - First run (Home-FirstRun) groups proposals under "Recommended to start", "Recommended for up next", "Recommended to table", "Recommended to fold into another" and "No recommendation", each with a line saying what that placement means; the first group is open with "Show 6 more", the rest are folded with "Show" and a sample ("Includes Put the Telegram CLI on a safe footing, and 25 more.").
+  - First run (Home-FirstRun) groups proposals under "Recommended to start", "Recommended for up next", "Recommended to table", "Recommended to fold into another" and "No recommendation", each folded to a sentence: what the placement means where that says more than a sample ("Old milestones and ideas from before lines existed."), else its first title and how many more; the first group is open with "Show 6 more", the rest are folded with "Show" and a sample ("Includes Put the Telegram CLI on a safe footing, and 25 more.").
   - Failures of moves are said beside the line that moved (H), not at the top of the page.
   - Phone (I): lines from the third on fold to one row each, and Up next folds to "Up next 3 · Finish removing the H1 switch and 2 more".
-- Loading: first load (D): the bar at once, rows drawn as outlines, "Working on" with "Loading your lines…".
+- Loading: first load (D): the bar at once, rows drawn as outlines, "Working on" over the outlines; "Loading your lines…" is for screen readers only.
 - Error: the tracker not answering on first load (E): "The tracker is not answering / Nothing answered at 127.0.0.1:4747. Any octo command starts it again; this page tries again every 30 seconds." with the command `octo server status` and Try now. After loading, a lost connection is AppShell's strip (F); a failed move is said next to the line (H).
 - Empty: no lines and no proposals (A) is FirstRun's empty state; nothing waiting is NothingNeedsYou (B).
 
 ### components/home/FirstRun.tsx
 
 - Designed in: Home-FirstRun.dc.html; Home-States.dc.html, state A
-- What it shows: "Nothing is placed yet", then "Your agents proposed 67 lines. 51 carry a recommendation: 10 to start, 26 for up next, 14 to table and 1 to fold. 16 have none." and the primary "Accept 51 recommendations".
+- What it shows: "Nothing is placed yet", then "Your agents proposed 67 lines. 51 carry a recommendation: 10 to start, 26 for up next, 14 to table and 1 to fold. 16 have none. The 1 to fold waits for you to pick the line it goes into." and the primary "Accept 50 recommendations": a proposal records only that it should fold, not into which line, so a fold is placed by hand.
 - Changes from today: a heading and a paragraph that break the count down by placement replace the row "Nothing placed yet" with facts "51 of 67 proposed carry a recommendation"; the button names the count ("Accept 51 recommendations", today "Accept recommended placements").
 - Loading: never loads on its own: given the proposals by HomePage.
-- Error: Accept waits with Undo; a request that fails follows the Primitives pattern: said under the button, with Try again. Refusals at effect time go to the Undo bar.
+- Error: Accept it waits with Undo like every choice; a request the tracker never took, or a refusal when it takes effect, is said in the Undo bar ("Did not happen: …") with Dismiss.
 - Empty: no proposals (A): "No lines yet / Add one with New line, or point an agent at the guide: it proposes lines for its repo, and they arrive here to place." with `octo guide` and a New line button.
 
 ### components/home/NothingNeedsYou.tsx
@@ -39,7 +39,7 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 ### components/home/NotAnswering.tsx
 
 - Designed in: Home-States.dc.html, state E
-- What it shows: "The tracker is not answering", "Nothing answered at 127.0.0.1:4747. Any octo command starts it again.", the command `octo server status`, and Try now.
+- What it shows: "The tracker is not answering", "Nothing answered at 127.0.0.1:4747. Any octo command starts it again; this page tries again every 30 seconds.", the command `octo server status`, and Try now; it asks again by itself every 30 seconds while shown.
 - Changes from today: new; a first load that failed showed the raw error.
 - Loading: never loads on its own: Try now asks again.
 - Error: it is itself the error.
@@ -51,7 +51,7 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 - What it shows: "At home · ends by itself in 3h" and Leave.
 - Changes from today: "ends in 3h" becomes "ends by itself in 3h".
 - Loading: Leave shows its busy word while it runs (Primitives Button: "Leaving…").
-- Error: a failed Leave follows the Primitives pattern: said under the banner, with Try again (today it shows at the top of the page).
+- Error: Leave is sent at once and says Leaving… meanwhile; a request that fails is said in the Undo bar with Dismiss.
 - Empty: never empty: shown only while at a place.
 
 ### components/home/AtPlaceItems.tsx
@@ -61,12 +61,12 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 - Changes from today: none beyond FoldedItems' words.
 - Loading: never loads on its own: given its items by WorkingSection.
 - Error: cannot fail on its own; each task's failures are its own.
-- Empty: a line with nothing at the place shows only FoldedItems' line; with no items at all nothing is drawn (today an empty box).
+- Empty: a line with nothing at the place shows only FoldedItems' row; with no items at all nothing is drawn (today an empty box).
 
 ### components/home/FoldedItems.tsx
 
 - Designed in: Home-States.dc.html, state C
-- What it shows: one quiet line: "Also on this line: 1 question".
+- What it shows: one quiet row: "Also on this line: 1 question".
 - Changes from today: prefixed "Also on this line:" (today the bare counts "1 question").
 - Loading: never loads on its own: given the items by AtPlaceItems.
 - Error: cannot fail on its own.
@@ -94,7 +94,7 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 
 - Designed in: Home.dc.html; Home-States.dc.html, states C, D, I
 - What it shows: "Working on 3", then each line, with no caption under the heading.
-- Changes from today: the aside explains the order; on a phone lines from the third on fold to one row each ("3 · Mac mini keeps enough free disk · agents on it").
+- Changes from today: on a phone lines from the third on fold to one row each ("3 · Mac mini keeps enough free disk · agents on it").
 - Loading: on first load the rows are outlines under "Working on" (D).
 - Error: cannot fail on its own; a failed move is said beside the line (H).
 - Empty: follows the Primitives pattern: one sentence saying nothing is being worked on.
@@ -120,7 +120,7 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 ### components/home/LineHandle.tsx
 
 - Designed in: Home.dc.html; Home-States.dc.html, state H; Primitives.dc.html, Row
-- What it shows: a six-dot grip in quiet grey beside the line's number, the two one button ("Move The home worker fetches new videos again") on every Working on and Up next row; it drags, and pressed it opens Move to top, Up, Down, To up next.
+- What it shows: a six-dot grip in quiet grey beside the line's number, one button ("Move The home worker fetches new videos again") on every Working on and Up next row; it drags, and pressed it opens Move to top, Up, Down, To up next.
 - Changes from today: the grip is always drawn, so reordering can be found without hovering or knowing a key (today only a bare number with a grab cursor); a failed move is said beside the line (H).
 - Loading: never loads on its own.
 - Error: "Not moved. The tracker did not answer; it is back where it was." under the line that moved (H).
@@ -139,7 +139,7 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 
 - Designed in: Main.dc.html; Home.dc.html (line 2); Home-States.dc.html, state I
 - What it shows: the first thing waiting on you under the line, then "1 more for you: a task at home".
-- Changes from today: on a phone the line's first item stays as a short row ("Question · Which South Tyrol base?") instead of folding to "{N} for you".
+- Changes from today: on a phone, a line folded past the second keeps its first item as a short row ("Question · Which South Tyrol base?", with "and N more") instead of folding to "{N} for you"; the first two lines open their items as wider screens do.
 - Loading: never loads on its own: given its items by WorkingSection.
 - Error: cannot fail on its own.
 - Empty: nothing for you renders nothing.
@@ -148,7 +148,7 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 
 - Designed in: Main.dc.html; Question-States.dc.html, state A
 - What it shows: a row that opens in place while it has focus (Main: the question opened under its line, ringed).
-- Changes from today: the focused item is edged with the grey focus edge and its halo (Primitives Row) rather than only tinted.
+- Changes from today: the focused item is tinted with the grey edge inside it (Primitives Row; the halo is for controls, not rows).
 - Loading: never loads on its own: given its item by LineForYou.
 - Error: cannot fail on its own; the opened item's failures are its own.
 - Empty: never empty: it exists only for an item.
@@ -175,7 +175,7 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 
 - Designed in: Home.dc.html; Home-FirstRun.dc.html; Home-States.dc.html, states C, I
 - What it shows: "Up next 3"; "Proposed 2" in ink like every section heading, each proposal's advice as "Recommends Start: …" in ink; then the folds "Tabled 4 · Labyrinth level editor, Matter binding backend and 2 more · 1 question held ›" and "Done lately 1 · Fix the Dinis reminder ›", one under the other.
-- Changes from today: Up next gains its explaining aside; the Tabled summary ends with what it holds ("· 1 question held", today "· N questions and N tasks held"); at a place Up next, Proposed and Tabled fold shut.
+- Changes from today: the Tabled summary ends with what it holds ("· 1 question held", today "· N questions and N tasks held"); at a place Up next, Proposed and Tabled fold shut.
 - Loading: never loads on its own: given the lines by HomePage.
 - Error: cannot fail on its own.
 - Empty: follows the Primitives pattern: an empty Up next says so in one sentence under its heading, on a phone too (today the phone shows nothing); empty Proposed, Tabled and Done lately are left out.
@@ -195,14 +195,14 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 - What it shows: the title, "L-20 · MOBS · proposed by mobs", the recommendation with its reason, then the recommended move and "Other ▾".
 - Changes from today: facts are ref, repo key and who proposed it (today "{by}, {age}", repos, first step, from); the "Done when" note is not drawn; the choices are one button plus a menu.
 - Loading: never loads on its own.
-- Error: a move whose request fails follows the Primitives pattern: said under the card, with Try again; a refusal at effect time goes to the Undo bar.
+- Error: each move it waits with Undo like every choice; a request the tracker never took, or a refusal when it takes effect, is said in the Undo bar ("Did not happen: …") with Dismiss; the pressed move says it is on its way meanwhile.
 - Empty: never empty: it exists only for a proposal.
 
 ### components/home/ProposalCase.tsx
 
 - Designed in: Home.dc.html (Proposed); Home-FirstRun.dc.html
-- What it shows: the recommendation and why in one sentence: "Start: the release is built and waits only on a play-test." On first run, under a group, only the why.
-- Changes from today: "Recommended: Start · {why}" becomes "{Move}: {why}".
+- What it shows: the recommendation and why in one sentence: "Recommends Start: the release is built and waits only on a play-test." On first run, under a group, only the why.
+- Changes from today: "Recommended: Start · {why}" becomes "Recommends Start: {why}".
 - Loading: never loads on its own.
 - Error: cannot fail on its own.
 - Empty: no recommendation renders nothing.
@@ -232,4 +232,4 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 - Changes from today: none drawn; follows Row.
 - Loading: never loads on its own.
 - Error: cannot fail on its own; Up next and Start report their own failures.
-- Empty: a done line with neither reason nor date has no note line (today an empty one).
+- Empty: a done line with neither reason nor date has no note (today an empty one); it still says it is done and when.

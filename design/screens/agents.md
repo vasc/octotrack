@@ -10,13 +10,13 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 - What it shows: "Agents" with "1 running · 24 quiet" and Buzz this device; then a table with Agent, Repo, Now and Last seen; quiet agents fold after the first few into "21 more quiet: mediarr, stack, roadtrip, chores and 17 more".
 - Changes from today: a summary of how many run; a table with column headings instead of rows of facts; quiet agents fold, while running, stopped and failed ones always show.
 - Loading: "Loading agents…".
-- Error: "Could not load agents. The tracker did not answer." with Try again (today the raw message). A refresh that fails keeps the roster, marked "As of 14:20; could not refresh." (Primitives). A failed Stop, Lift or Release is said in its row (see AgentRosterRow).
+- Error: "Could not load agents. The tracker did not answer." with Try again (today the raw message). A refresh that fails keeps the roster, marked "Could not refresh agents; as of 14:20." with Try again (Primitives). Stop, Lift and Release are said by the Undo bar if they fail (see AgentRosterRow).
 - Empty: "No agent has checked in yet / An agent appears here the first time it runs an octo command with its name." with `export OCTO_AGENT=feature-x`.
 
 ### components/agents/AgentRoster.tsx
 
 - Designed in: Agents.dc.html
-- What it shows: every agent that may need the developer, then the first three quiet ones, then "21 more quiet: mediarr, stack, roadtrip and 18 more", which shows the rest.
+- What it shows: every agent that may need the developer, then the first three quiet ones, then "21 more quiet: mediarr, stack, roadtrip, chores and 17 more", which shows the rest.
 - Changes from today: new; every quiet agent was a row.
 - Loading: never loads on its own: given the roster by AgentsPage.
 - Error: cannot fail on its own.
@@ -28,7 +28,7 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 - What it shows: a row of the roster's Table: name, repo key, what it is doing now with a glyph, last seen ("3h", or "never" for a session that ran no command), and its one action. Now reads: "● running, owner of L-59; its line waits on you", "◐ asleep, owner of L-24 · wakes by tmux", "○ quiet, still holding L-24", "● idle: nothing to take or scope in its repo", "■ stopped by you at 14:02: “wrong repo”", "■ stopped by Octotrack at 14:02, after 3 writes a line's state forbids", "▲ started for L-46; exits at once (exit 127), retried since today", "▲ started for L-46; ran but never took its line", "✕ gone: its wake failed (tmux: no session “ttube”)", "✕ gone, last owner of L-9". The agent's own note sits under Now.
 - Changes from today: a table row under headings, not a row of facts; every state has a glyph as well as words, and a failed start is ▲; the line's role is in the sentence ("owner of L-59") and the line is its ref alone, as drawn; the wake method is said ("wakes by tmux"); after Stop, Lift or Release the button reads "Stopping…" with Undo below until it takes effect.
 - Loading: never loads on its own: given the agent by AgentsPage; "Stopping…" while a choice waits.
-- Error: a request that fails follows the Primitives pattern: said in the row, with Try again; a refusal at effect time goes to the Undo bar.
+- Error: Stop, Lift and Release wait with Undo like every choice; a request the tracker never took, or a refusal when it takes effect, is said in the Undo bar ("Did not happen: …") with Dismiss.
 - Empty: never empty: it exists only for an agent.
 
 ### components/home/PushToggle.tsx

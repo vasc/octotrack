@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { contracts as c } from "../src/contracts.ts";
-import { parseDecisionLines } from "../src/decision-lines.ts";
+import { parseDecisionRows } from "../src/decision-rows.ts";
 import { OctoError } from "../src/errors.ts";
 import { type Harness, harness } from "./helpers.ts";
 
@@ -285,10 +285,10 @@ ${third.ref} - Neither, doing something else`,
   });
 
   test("parsing answers one per row rejects what it cannot read", () => {
-    expect(parseDecisionLines("\n# note\nd-1 a hello world\n")).toEqual([
+    expect(parseDecisionRows("\n# note\nd-1 a hello world\n")).toEqual([
       { ref: "D-1", option: "a", note: "hello world" },
     ]);
-    expect(() => parseDecisionLines("nonsense")).toThrow("Row 1");
+    expect(() => parseDecisionRows("nonsense")).toThrow("Row 1");
   });
 });
 

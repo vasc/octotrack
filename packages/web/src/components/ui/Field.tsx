@@ -8,7 +8,7 @@ interface FieldProps {
   /** The label is for a screen reader only, where the box's place already says what it is for. */
   hideLabel?: boolean;
   placeholder?: string | undefined;
-  /** Several lines that grow as they are typed, for anything longer than a word or two. */
+  /** A box that grows as it is typed in, for anything longer than a word or two. */
   multiline?: boolean;
   /** A date is picked rather than typed. */
   type?: "text" | "date";
@@ -17,7 +17,7 @@ interface FieldProps {
   autoFocus?: boolean;
   /** Counts replacements made on purpose here, which show even while the box holds what was typed. */
   replaced?: number;
-  /** A quiet line under the box, such as "Saved as you type, on every device"; read with the box. */
+  /** A quiet note under the box, such as "Saved as you type, on every device"; read with the box. */
   note?: ReactNode;
   /** What is typed cannot be used: the box is marked, and its note says why. */
   invalid?: boolean;
@@ -26,7 +26,7 @@ interface FieldProps {
 }
 
 /**
- * A labelled box to type into: one line, or several that grow with what is typed so long words are never written
+ * A labelled box to type into: a short one, or one that grows with what is typed so long words are never written
  * through a slot. While it has focus it keeps what was typed in it, so a draft arriving from another device never
  * changes the text under the cursor.
  */

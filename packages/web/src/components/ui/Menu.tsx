@@ -122,7 +122,7 @@ export function MenuGroup({ label, children }: { label: string; children: ReactN
   );
 }
 
-/** A quiet line closing a menu, such as how to add to it, lined up with the items' words. */
+/** A quiet note closing a menu, such as how to add to it, lined up with the items' words. */
 export function MenuNote({ children }: { children: ReactNode }) {
   return <p className="ui-menu-note">{children}</p>;
 }

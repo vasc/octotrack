@@ -1,4 +1,4 @@
-import type { DecisionLine } from "@octotrack/core/decision-lines";
+import type { DecisionRow } from "@octotrack/core/decision-rows";
 import { Actions } from "../ui/Actions.tsx";
 import { Button } from "../ui/Button.tsx";
 import { Field } from "../ui/Field.tsx";
@@ -17,7 +17,7 @@ export interface BatchResultRow {
 
 export interface BatchPanelViewProps {
   text: string;
-  parsed: readonly DecisionLine[];
+  parsed: readonly DecisionRow[];
   parseError: string | null;
   /** What the tracker says to do about a failed record, when it said. */
   hint?: string | null;

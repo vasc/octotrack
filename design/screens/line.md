@@ -30,7 +30,7 @@ owner, then Tell. A section with nothing in it says why in one sentence instead 
   - Opened from another panel (Panels F): "‹ Back to L-57" beside Close; Esc and Back go one step back, Close shuts the panel (today Close goes back).
   - Proposed (B): "Proposed by ttube, 2d ago · L-59 · TTUBE", then "Recommended: start it." with its reason, above the moves.
   - Tabled (C): "Waits for", "Look again" and "Held: 1 question, 2 tasks, released when it starts" at the top.
-  - Done (F): "Done · closed by you, Tue 14:02 · L-19".
+  - Done (F): "Done · closed Tue 14:02 · L-19". Who closed it is not drawn: the tracker does not record it on the line.
   - "Done when" is a small grey label stacked over its sentence at body size, not a one-row two-column table.
 - Loading: never loads on its own: the head comes from Lines at once (G).
 - Error: cannot fail on its own: it only draws what it is given.
@@ -47,13 +47,13 @@ owner, then Tell. A section with nothing in it says why in one sentence instead 
   - Working with no owner (D): Try now, I'll own it, Table it.
   - Phone (J): the More button is "⋯".
 - Loading: never loads on its own: given the line by LinePanelHead. A move that is waiting shows its busy word in the button (Primitives Button: "Starting…").
-- Error: a move whose request fails follows the Primitives pattern and Lines state H: said under the moves ("Not moved. The tracker did not answer.") with Try again. A move refused when it takes effect is said in the Undo bar: "Did not happen: moving L-24 to up next. It changed meanwhile; look again." with Dismiss.
+- Error: each move it waits with Undo like every choice; a request the tracker never took, or a refusal when it takes effect, is said in the Undo bar ("Did not happen: …") with Dismiss; a move refused when it takes effect reads "Did not happen: moving L-24 to up next. It changed meanwhile. Look again."
 - Empty: done or dropped lines have no moves; the head says how it closed (F).
 
 ### components/entity/SummaryBox.tsx
 
 - Designed in: Line.dc.html; Line-States.dc.html, state A
-- What it shows: "Summary", who wrote it and when ("by kore-ecs · 2h ago"), the headline in bold, then the summary.
+- What it shows: "Summary" and when it was written ("2h ago"); who wrote it is not drawn, as the tracker does not record it, the headline in bold, then the summary.
 - Changes from today: the aside names the writer and a relative age instead of "at HH:MM" (which today is UTC); the empty state is a sentence.
 - Loading: never loads on its own: it comes with the line's head.
 - Error: cannot fail on its own.
@@ -95,7 +95,7 @@ owner, then Tell. A section with nothing in it says why in one sentence instead 
 - What it shows: "Owner", the owner with its state and whether it waits on you ("kore-ecs · asleep · waits on you"), then "Stop kore-ecs" and "I'll own it".
 - Changes from today: shown on up-next lines too, saying "None until it starts. An idle agent in LimbicAI/hydra may scope it meanwhile."; with no owner on a working line the step-in moves to the head (D); when yours, "Hand to an agent" sits with the add box (E).
 - Loading: while Lines loads, follows the Primitives pattern: "Loading…" under "Owner", never "no owner".
-- Error: Stop and I'll own it wait with Undo; a request that fails follows the Primitives pattern under the buttons, with Try again. Handing to an agent with no repo to pick follows the Primitives disabled rule: Hand over off, and why beside it.
+- Error: Stop and I'll own it wait with Undo like every choice; a request the tracker never took, or a refusal when it takes effect, is said in the Undo bar ("Did not happen: …") with Dismiss. While Lines loads, the box says so instead of naming no owner. Handing to an agent with no repo picked follows the Primitives disabled rule: Hand over off, and why beside it.
 - Empty: no owner yet: "None until it starts." with who may scope it.
 
 ### components/entity/OwnWorkBox.tsx
@@ -104,7 +104,7 @@ owner, then Tell. A section with nothing in it says why in one sentence instead 
 - What it shows: "Add a task or a note", one box, then "Add as a task", "Add as a note" and "Hand to an agent".
 - Changes from today: "Hand to an agent" sits here, beside the add buttons, and gives the line back to the agents: one with a checkout of its repo takes it as for any started line, and with no repo named it first asks which; tasks and notes stay; while sending, the button shows its busy word (Primitives Button).
 - Loading: the draft loads from the tracker; follows the Primitives pattern: the box stays usable and is not cleared when the draft arrives.
-- Error: draft not saved: "Not saved: the tracker did not answer. Kept here; saves when it is back." under the box. A failed add follows the Primitives pattern: said under the buttons, words kept, with Try again.
+- Error: a draft not saved: "Not saved: the tracker did not answer. Kept here; saves when it is back." under the box. Adding it waits with Undo like every choice; a request the tracker never took, or a refusal when it takes effect, is said in the Undo bar ("Did not happen: …") with Dismiss; the words stay in the draft until it takes effect.
 - Empty: both add buttons are off while the box is empty.
 
 ### components/entity/TellBox.tsx
@@ -113,5 +113,5 @@ owner, then Tell. A section with nothing in it says why in one sentence instead 
 - What it shows: "Tell kore-ecs" (or "Tell whoever takes L-57"), the box with placeholder "Leave it empty to nudge", then Nudge (or Tell once there are words).
 - Changes from today: the heading is a visible label and the placeholder explains the empty nudge; today the box has no placeholder.
 - Loading: the draft loads from the tracker; follows the Primitives pattern: the box stays usable.
-- Error: draft not saved: "Not saved: the tracker did not answer. Kept here; saves when it is back." A failed send follows the Primitives pattern: said under the button, words kept, with Try again.
+- Error: a draft not saved: "Not saved: the tracker did not answer. Kept here; saves when it is back." Sending it waits with Undo like every choice; a request the tracker never took, or a refusal when it takes effect, is said in the Undo bar ("Did not happen: …") with Dismiss; the words stay in the draft until it takes effect.
 - Empty: the button reads Nudge.

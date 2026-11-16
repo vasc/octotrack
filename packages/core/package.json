@@ -8,7 +8,7 @@
     "./contracts": "./src/contracts.ts",
     "./query": "./src/query/index.ts",
     "./schemas": "./src/schemas.ts",
-    "./decision-lines": "./src/decision-lines.ts"
+    "./decision-rows": "./src/decision-rows.ts"
   },
   "dependencies": {
     "zod": "^4.6.7"

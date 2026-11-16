@@ -1,14 +1,14 @@
 import { contracts } from "@octotrack/core/contracts";
-import { type DecisionLine, parseDecisionLines } from "@octotrack/core/decision-lines";
+import { type DecisionRow, parseDecisionRows } from "@octotrack/core/decision-rows";
 import { useMemo, useState } from "react";
 import { useDraft } from "../../hooks/useDraft.ts";
 import { useOpMutation } from "../../hooks/useOp.ts";
 import { failureText } from "../../lib/failure.ts";
 import { BatchPanelView, type BatchResultRow } from "./BatchPanelView.tsx";
 
-function parseLines(text: string): { parsed: DecisionLine[]; error: string | null } {
+function parseRows(text: string): { parsed: DecisionRow[]; error: string | null } {
   try {
-    return { parsed: parseDecisionLines(text), error: null };
+    return { parsed: parseDecisionRows(text), error: null };
   } catch (error) {
     return { parsed: [], error: error instanceof Error ? error.message : String(error) };
   }
@@ -23,7 +23,7 @@ export function BatchPanel({ autoFocus = false, onClose }: { autoFocus?: boolean
   const [results, setResults] = useState<BatchResultRow[] | null>(null);
   const [recorded, setRecorded] = useState(0);
   const record = useOpMutation(contracts.decisionResolveBatch);
-  const { parsed, error } = useMemo(() => parseLines(text), [text]);
+  const { parsed, error } = useMemo(() => parseRows(text), [text]);
 
   return (
     <BatchPanelView

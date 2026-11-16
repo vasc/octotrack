@@ -52,7 +52,7 @@ are design decisions taken there, open to change:
   reason for a recommendation lives inside the recommended option.
 - **One column in panels.** A panel reads top to bottom in order of importance; a section with nothing in it says why in
   one sentence instead of a bare heading or an empty column.
-- **One focus treatment:** a 1 px mid-grey edge (`#6e7781`) with a 3 px soft halo, outside a control, and the edge
+- **One focus treatment:** a 1 px mid-grey edge (`--ink-3`, each theme's own) with a 3 px soft halo, outside a control, and the edge
   alone inside a row; on the dark primary button the edge sits 2 px off it. The developer found the first drawing's
   2 px ink ring "too strong", so it was softened; the edge still has 4.5:1 contrast on white, so it passes for
   keyboard users. A chosen answer is a quiet grey edge, a faint fill and its ✓, not a heavy border. One selected
@@ -116,7 +116,7 @@ further down, each marked _Replaced_ there.
   out or a tap elsewhere, not on a blur to nowhere, which is what Safari does under every tap.
 - **I'm at is a menu of places, never a select,** so no arrow key changes where you are.
 - **The key list is the one modal,** so no key acts behind it. The Start sheet opens in place.
-- **A lost connection is said quietly:** "Not live: reconnecting" under the bar until it returns.
+- **A lost connection is said in a strip under the bar:** "Not live. Showing what was true at 14:20; reconnecting. Answers you give wait until it is back." with Try now, until it returns.
 
 ### Taken when this folder was extracted from the implementation
 

@@ -59,11 +59,11 @@ From furthest back to nearest. Separation comes from lines and these small steps
 The theme's own colour, for what the developer is acting on. It never says that something needs them: that is
 attention.
 
-| Token           | Use for                                                                                                                                    |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `--accent`      | The primary button, the page you are on, focus rings and the focused item's edge, links, the chosen item in a menu, a field being typed in |
-| `--accent-soft` | Behind an item under the pointer in a menu, a pressed tab, selected text                                                                   |
-| `--on-accent`   | Text on a filled accent: the primary button, the page you are on                                                                           |
+| Token           | Use for                                                                                                                                 |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `--accent`      | The primary button, the page you are on, links, the chosen item in a menu, and the soft fill of a selected item; focus is the grey edge |
+| `--accent-soft` | Behind an item under the pointer in a menu, a pressed tab, selected text                                                                |
+| `--on-accent`   | Text on a filled accent: the primary button, the page you are on                                                                        |
 
 ### Attention
 

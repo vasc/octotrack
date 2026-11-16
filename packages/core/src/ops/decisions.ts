@@ -1,5 +1,5 @@
 import { contracts } from "../contracts.ts";
-import { parseDecisionLines } from "../decision-lines.ts";
+import { parseDecisionRows } from "../decision-rows.ts";
 import { OctoError } from "../errors.ts";
 import { buildDecisionCard } from "../queue.ts";
 import type {
@@ -565,8 +565,8 @@ export const decisionOps = [
   bind(contracts.decisionResolve, (ctx, input) => resolveDecision(ctx, input)),
 
   bind(contracts.decisionResolveBatch, (ctx, input) => {
-    const fromLines = input.text === undefined ? [] : parseDecisionLines(input.text);
-    const items = [...(input.items ?? []), ...fromLines];
+    const fromRows = input.text === undefined ? [] : parseDecisionRows(input.text);
+    const items = [...(input.items ?? []), ...fromRows];
     if (items.length === 0) throw new OctoError("invalid_input", "Nothing to record", "Pass items or text.");
     return {
       results: items.map((item) => {

@@ -30,7 +30,7 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 ### components/ui/Badge.tsx
 
 - Designed in: Primitives.dc.html, Status
-- What it shows: a state in small words with its glyph: "● needs you", "▲ urgent, stuck, step in", "✓ done, passing, merged", "✗ failing, conflict, refused", "◐ running, in progress", "○ quiet, next, not started", "– dropped, closed, withdrawn".
+- What it shows: a state in small words with its glyph: "● needs you", "▲ urgent, stuck, step in", "✓ done, passing, merged", "✗ failing, refused" (a conflict is ▲, warm), "◐ running, in progress", "○ quiet, next, not started", "– dropped, closed, withdrawn".
 - Changes from today: always a glyph and a word, never colour alone (today colour and word only, and "bad" is drawn in the warn colour).
 - Loading: never loads on its own.
 - Error: cannot fail on its own.
@@ -129,9 +129,9 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 ### components/ui/Loaded.tsx
 
 - Designed in: Primitives.dc.html, Messages in place; Line-States.dc.html, states G, H
-- What it shows: loading words until the data has come once, a failure with Try again if it never came, then the content; a later refresh that fails keeps the content and marks it stale.
-- Changes from today: the failure has Try again and the tracker's hint under it; stale reads "As of 14:20; could not refresh." (today "Out of date: {message}").
-- Loading: "Loading the plan…" (the owner names what loads).
+- What it shows: outlines until the data has come once, a failure with Try again if it never came, then the content; a later refresh that fails keeps the content and marks it stale.
+- Changes from today: the failure has Try again and the tracker's hint under it; stale reads "Could not refresh the plan; as of 14:20." with Try again (today "Out of date: {message}").
+- Loading: outlines, with "Loading the plan…" for screen readers only (the owner names what loads): loading is drawn, not said.
 - Error: "Could not load the plan. The tracker did not answer." with Try again; stale as above.
 - Empty: never empty on its own: the owner draws its empty sentence.
 
@@ -157,7 +157,7 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 
 - Designed in: Shell.dc.html, states B, C, E; Primitives.dc.html, Button (icon, open)
 - What it shows: a button opening a short menu: group labels, ticked choices, actions.
-- Changes from today: ticks, swatches and item text each start at one x position, and group labels line up with the item text; the button shows it is open; keyboard focus is the ink ring, not the hover fill; a menu can end with a quiet line saying how to add to it ("Places are added with octo place add").
+- Changes from today: ticks, swatches and item text each start at one x position, and group labels line up with the item text; the button shows it is open; keyboard focus is the edge inside the item, not the hover fill; a menu can end with a quiet note saying how to add to it ("Places are added with octo place add").
 - Loading: never loads on its own.
 - Error: cannot fail on its own: its owner says a failed choice under the button ("Not changed: …").
 - Empty: never empty: owners do not draw a menu with nothing in it.
@@ -174,8 +174,8 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 ### components/ui/Note.tsx
 
 - Designed in: Primitives.dc.html, Messages in place
-- What it shows: one quiet line that is not the item itself; the error form for a failure in place.
-- Changes from today: an error note carries the tracker's hint as the line under it when there is one.
+- What it shows: a few quiet words that are not the item itself; the error form for a failure in place.
+- Changes from today: an error note carries the tracker's hint under it when there is one.
 - Loading: never loads on its own.
 - Error: the error form above.
 - Empty: never empty: drawn only with words.
@@ -192,8 +192,8 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 ### components/ui/Page.tsx
 
 - Designed in: Log.dc.html; Agents.dc.html
-- What it shows: a page's title, a line under it saying what it shows ("what you have not seen, line by line", "1 running · 24 quiet"), and the page's own controls.
-- Changes from today: a subtitle line under the title.
+- What it shows: a page's title, a subtitle under it saying what it shows ("what you have not seen, line by line", "1 running · 24 quiet"), and the page's own controls.
+- Changes from today: a subtitle under the title.
 - Loading: never loads on its own.
 - Error: cannot fail on its own.
 - Empty: never empty: a page always has a title.
@@ -273,7 +273,7 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 ### components/ui/TextBox.tsx
 
 - Designed in: Primitives.dc.html, Field; Question-States.dc.html, state D
-- What it shows: a growing box of several lines whose label is for a screen reader only.
+- What it shows: a box that grows as words are typed, whose label is for a screen reader only.
 - Changes from today: as Field.
 - Loading: as Field.
 - Error: as Field: "Not saved: …" under it.
@@ -309,7 +309,7 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 ### components/ui/Notice.tsx
 
 - Designed in: Home-FirstRun.dc.html; Home-States.dc.html, states A, B, E
-- What it shows: "Nothing is placed yet" with its sentence and "Accept 51 recommendations"; "No lines yet" with `octo guide` and New line; "Nothing needs you"; "The tracker is not answering" in the bad tone.
+- What it shows: "Nothing is placed yet" with its sentence and "Accept 50 recommendations"; "No lines yet" with `octo guide` and New line; "Nothing needs you"; "The tracker is not answering" in the bad tone.
 - Changes from today: new; these were rows in a one-row list.
 - Loading: never loads on its own.
 - Error: its bad form is itself the error (E).

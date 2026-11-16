@@ -14,7 +14,7 @@ export function Page({
 }: {
   title: string;
   hideTitle?: boolean;
-  /** What the page shows, in a line under its title: "1 running · 24 quiet". */
+  /** What the page shows, in a few words under its title: "1 running · 24 quiet". */
   subtitle?: ReactNode;
   aside?: ReactNode;
   /** The page's element, where its keys find what they act on. */

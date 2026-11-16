@@ -9,19 +9,19 @@ closed; the page behind does not react to keys. On a phone it rises from the bot
 ### components/lines/NewLineSheet.tsx
 
 - Designed in: Sheets.dc.html, states A, B
-- What it shows: "New line" and Cancel; "What it is" (placeholder "Back up the Home Assistant host nightly"), "Done when", "Repos" as checkable chips by key (four, then "+ 11 more") and "None: it's mine"; "Saved as you type, so closing loses nothing."; then "Add to up next", "Start", "Table…". Table goes to the Table sheet's fields as a second step.
-- Changes from today: the words are kept as a draft, so closing loses nothing; repos are chips that wrap instead of a list of rows, and long lists fold after four ("+ 11 more"); "Table" becomes "Table…"; while the actions are off, a line under them says what is missing; focus stays in the sheet.
+- What it shows: "New line" and Cancel; "What it is" (placeholder "Back up the Home Assistant host nightly"), "Done when", "Repos" as checkable chips by key (four, then "+ 11 more") and "None: it's mine"; "Saved as you type, so closing loses nothing."; then "Add to up next", "Start", "Table". Table goes to the Table sheet's fields as a second step.
+- Changes from today: the words are kept as a draft, so closing loses nothing; repos are chips that wrap instead of a list of rows, and long lists fold after four ("+ 11 more"); Table asks for its reason as a second step, with no ellipsis, as no button that asks first has one; while the actions are off, the words under them say what is missing; focus stays in the sheet.
 - Loading: the repo list loads from the tracker; follows the Primitives pattern: "Loading…" in the Repos list, with "None: it's mine" usable.
 - Error: adding is a choice that waits with Undo, so a refusal is said in the Undo bar, and the words stay in the draft until the line is added. A repo list that cannot load follows the Primitives pattern in the Repos list, with Try again. A draft not saved: "Not saved: the tracker did not answer. Kept here; saves when it is back."
-- Empty: until a title, a done when and a repo (or None) are given, the three actions are off and the line under them says which is missing. No repos: only "None: it's mine".
+- Empty: until a title, a done when and a repo (or None) are given, the three actions are off and the words under them say which is missing. No repos: only "None: it's mine".
 
 ### components/lines/TableForm.tsx
 
 - Designed in: Sheets.dc.html, states B, G
 - What it shows: "Table Buzz speed follow-ups" and Cancel; "Why it waits"; "Look again on · optional"; "Tabling holds 1 question and 2 tasks until it starts again; buzz winds down."; "Table it".
 - Changes from today: the date says it is optional; the consequence is one sentence (today "Holds 1 question and 2 tasks · panel-widgets winds down").
-- Loading: never loads on its own: given what the line holds by its opener. Table it shows its busy word while it sends (Primitives Button: "Tabling…").
-- Error: a request that fails follows NewLineSheet's "Not added: …": the sheet stays open with the failure above its foot, words kept.
+- Loading: never loads on its own: given what the line holds by its opener; tabling waits with Undo from the Undo bar, so there is no busy word in the sheet.
+- Error: tabling it waits with Undo like every choice; a request the tracker never took, or a refusal when it takes effect, is said in the Undo bar ("Did not happen: …") with Dismiss; the sheet closes as the choice is made.
 - Empty: Table it is off until a reason is typed; with nothing held and no owner, the consequence sentence is left out.
 
 ### components/home/StartSheet.tsx
@@ -30,7 +30,7 @@ closed; the page behind does not react to keys. On a phone it rises from the bot
 - What it shows: StartSheetView with what waited for the line, loaded from the tracker.
 - Changes from today: Start stays on while loading and after a failure (today it is off in both).
 - Loading: "Loading what waited for it…", Start on.
-- Error: "Could not load what waited for it. Start anyway, or try again." with both buttons (today the raw message, Start off, no retry). An answer that fails follows Question-States E inside the sheet: "Not sent. The tracker did not answer. Your pick is kept." with Send again (today it has no UI).
+- Error: "Could not load what waited for it. Start anyway, or try again." with both buttons (today the raw message, Start off, no retry). An answer waits with Undo like every choice, and one the tracker never took is said in the Undo bar, which stays usable above the sheet.
 - Empty: "Nothing waited for it" and Start.
 
 ### components/home/StartSheetView.tsx
@@ -81,10 +81,10 @@ closed; the page behind does not react to keys. On a phone it rises from the bot
 ### components/decisions/BatchPanelView.tsx
 
 - Designed in: Sheets.dc.html, state E
-- What it shows: "Record answers" and Cancel; the box labelled "One per line: the question, the option, a note if you like"; the parse error; the results ("D-65 ✓ recorded", "D-20 ✗ already answered on 7 Nov"); then "Record 2" with "Fix line 3 first" beside it.
-- Changes from today: the label explains the format (today "Answers"); a parse error reads "Line 3 is not understood: D-75 has no option “fast start”. Its options are a, b, c, d."; results carry ✓ or ✗; a disabled Record says why beside it; while sending it reads "Recording…".
+- What it shows: "Record answers" and Cancel; the box labelled "One per row: the question, the option, a note if you like"; the parse error; the results ("D-65 ✓ recorded", "D-20 ✗ already answered on 7 Nov"); then "Record 2" with "Fix row 3 first" beside it.
+- Changes from today: the label explains the format (today "Answers"); a row that cannot be read says "Row 3 is not understood: …"; an option that does not exist is said in its result, "D-75 has no option “fast start”. Its options are a, b, c, d."; results carry ✓ or ✗; a disabled Record says why beside it; while sending it reads "Recording…".
 - Loading: "Recording…" on the button while sending.
-- Error: the parse error under the box; per-line failures in the results with ✗ and the reason.
+- Error: the parse error under the box; each row's failure in the results with ✗ and the reason.
 - Empty: the box, a disabled "Record", and the format shown as its placeholder.
 
 ### components/home/KeyHelp.tsx

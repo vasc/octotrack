@@ -10,7 +10,7 @@ request status stale, rule breaks), in the canvas at https://claude.ai/artifact/
 - What it shows: "Log" with "what you have not seen, line by line" under it; the search box and "Mark all seen"; stale pull request status; then the unseen log or the search results.
 - Changes from today: a subtitle says what the page shows; the search placeholder is an example query ("Search: line:L-56 since:2d actor:ttube", today "Search").
 - Loading: as FeedSection.
-- Error: a failed "Mark all seen" follows the Primitives pattern: said under the button, with Try again (today not shown); a refusal at effect time goes to the Undo bar.
+- Error: Mark all seen it waits with Undo like every choice; a request the tracker never took, or a refusal when it takes effect, is said in the Undo bar ("Did not happen: …") with Dismiss.
 - Empty: as UnseenLog and FeedSection.
 
 ### components/feed/FilterBox.tsx

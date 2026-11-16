@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 
 /**
- * One quiet line of words that are not the item itself: a reason, a time, a count. The error form says a failure in
- * place, with the tracker's hint, when it gave one, as the line under it.
+ * A few quiet words that are not the item itself: a reason, a time, a count. The error form says a failure in place,
+ * with the tracker's hint, when it gave one, under it.
  */
 export function Note({
   error = false,
