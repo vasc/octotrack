@@ -29,7 +29,14 @@ export function AgentsPage() {
     <Page
       title="Agents"
       {...(roster.length === 0 ? {} : { subtitle: rosterSummary(roster.map((agent) => agent.state)) })}
-      aside={<PushToggle state={push.state} error={push.error} onTurnOn={() => void push.turnOn()} />}
+      aside={
+        <PushToggle
+          state={push.state}
+          error={push.error}
+          onTurnOn={() => void push.turnOn()}
+          onTurnOff={() => void push.turnOff()}
+        />
+      }
     >
       {choices.failure === null ? null : <ErrorState error={choices.failure} />}
       <Loaded loaded={agents.data !== undefined} error={agents.error} label="Loading agents">

@@ -2772,7 +2772,7 @@ describe("buzzing this device", () => {
     try {
       navigate("/agents");
       const view = renderApp(<App />);
-      await view.findByText("Buzzing this device");
+      await view.findByText(/Buzzing this device/);
       await waitFor(() =>
         expect(server.tracker.call(c.pushSubscriptions, {}, { ...asDeveloper, system: true })).toEqual([
           existing,
@@ -2790,7 +2790,7 @@ describe("buzzing this device", () => {
       navigate("/agents");
       const view = renderApp(<App />);
       fireEvent.click(await view.findByRole("button", { name: "Buzz this device" }));
-      await view.findByText("Buzzing this device");
+      await view.findByText(/Buzzing this device/);
       expect(server.tracker.call(c.pushSubscriptions, {}, { ...asDeveloper, system: true })).toEqual([
         { endpoint: "https://push.example/new", keys: { p256dh: "BNew", auth: "fresh" } },
       ]);

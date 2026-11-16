@@ -1429,24 +1429,40 @@ describe("agents and first run", () => {
 
 describe("PushToggle, failing", () => {
   test("announces why buzzing could not be turned on", () => {
-    const view = render(<PushToggle state="off" error="Permission denied" onTurnOn={() => {}} />);
+    const view = render(
+      <PushToggle state="off" error="Permission denied" onTurnOn={() => {}} onTurnOff={() => {}} />,
+    );
     expect(view.getByRole("alert").textContent).toBe("Permission denied");
   });
 });
 
 describe("PushToggle", () => {
-  test("offers to buzz this device until it does, says when it does or cannot, and hides where there is no push", () => {
+  const props = { error: null, onTurnOn: () => {}, onTurnOff: () => {} };
+
+  test("offers to buzz this device until it does, and Stop turns it off again", () => {
     const onTurnOn = mock(() => {});
-    const off = render(<PushToggle state="off" error={null} onTurnOn={onTurnOn} />);
+    const onTurnOff = mock(() => {});
+    const off = render(<PushToggle {...props} state="off" onTurnOn={onTurnOn} />);
     fireEvent.click(off.getByRole("button", { name: "Buzz this device" }));
     expect(onTurnOn).toHaveBeenCalledTimes(1);
     off.unmount();
-    render(<PushToggle state="on" error={null} onTurnOn={onTurnOn} />).getByText("Buzzing this device");
-    render(<PushToggle state="blocked" error={null} onTurnOn={onTurnOn} />).getByText(
-      "Notifications blocked",
-    );
-    const none = render(<PushToggle state="unsupported" error={null} onTurnOn={onTurnOn} />);
-    expect(none.container.textContent).toBe("");
+    render(<PushToggle {...props} state="turning-on" />).getByText("Turning on…");
+    const on = render(<PushToggle {...props} state="on" onTurnOff={onTurnOff} />);
+    on.getByText(/Buzzing this device/);
+    fireEvent.click(on.getByRole("button", { name: "Stop" }));
+    expect(onTurnOff).toHaveBeenCalledTimes(1);
+  });
+
+  test.each([
+    [
+      "blocked",
+      "Notifications are blocked for this site. Allow them in the browser's site settings, then press again.",
+    ],
+    ["dismissed", "You dismissed the browser's question; press again to be asked once more."],
+    ["unsupported", "This browser cannot buzz. On iPhone, add Octotrack to the home screen first."],
+    ["no-key", "This tracker does not send notifications: it has no push key."],
+  ] as const)("when %s, says why and what to do", (state, words) => {
+    render(<PushToggle {...props} state={state} />).getByText(words);
   });
 });
 

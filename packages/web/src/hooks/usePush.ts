@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { callOp } from "../api/client.ts";
 
-export type PushState = "unsupported" | "off" | "on" | "blocked" | "turning-on";
+export type PushState = "unsupported" | "off" | "on" | "blocked" | "dismissed" | "no-key" | "turning-on";
 
 const KeyResponse = z.object({ publicKey: z.string().nullable() });
 
@@ -60,10 +60,13 @@ export function usePush() {
       setError(null);
       try {
         const key = KeyResponse.parse(await (await fetch("/api/push/key")).json()).publicKey;
-        if (key === null) throw new Error("This server does not send notifications");
+        if (key === null) {
+          setState("no-key");
+          return;
+        }
         const permission = await Notification.requestPermission();
         if (permission !== "granted") {
-          setState(permission === "denied" ? "blocked" : "off");
+          setState(permission === "denied" ? "blocked" : "dismissed");
           return;
         }
         const registration = await navigator.serviceWorker.register("/sw.js");
@@ -76,6 +79,21 @@ export function usePush() {
       } catch (failure) {
         setError(failure instanceof Error ? failure.message : String(failure));
         setState("off");
+      }
+    },
+    /** Stops buzzing this browser: its subscription is dropped here and on the server. */
+    async turnOff() {
+      setError(null);
+      try {
+        const registration = await navigator.serviceWorker.getRegistration("/sw.js");
+        const subscription = await registration?.pushManager.getSubscription();
+        if (subscription !== null && subscription !== undefined) {
+          await callOp(contracts.pushUnsubscribe, { endpoint: subscription.endpoint });
+          await subscription.unsubscribe();
+        }
+        setState("off");
+      } catch (failure) {
+        setError(failure instanceof Error ? failure.message : String(failure));
       }
     },
   };
