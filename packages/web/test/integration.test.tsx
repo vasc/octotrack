@@ -1032,7 +1032,8 @@ describe("lines of work", () => {
       const view = renderApp(<App />);
       const proposed = within(await view.findByRole("region", { name: "Proposed" }));
       proposalMove(proposed, "Fold", "Wall mount");
-      fireEvent.click(proposed.getByRole("button", { name: "Fold Wall mount into Sendspin enclosure" }));
+      const sheet = within(await view.findByRole("dialog", { name: "Fold Wall mount into…" }));
+      fireEvent.click(sheet.getByRole("button", { name: "Sendspin enclosure" }));
       await answerNow(view);
       await waitFor(() =>
         expect(server.tracker.call(c.lineShow, { ref: proposal.ref }, asDeveloper).line.state).toBe(

@@ -983,7 +983,11 @@ describe("lines of work", () => {
     proposalMove(view, "Fold", "Wall mount");
     // A button per line, never a select that folds as soon as an arrow key moves it.
     expect(view.queryByRole("combobox")).toBeNull();
-    fireEvent.click(view.getByRole("button", { name: "Fold Wall mount into Sendspin enclosure" }));
+    fireEvent.click(
+      within(view.getByRole("dialog", { name: "Fold Wall mount into…" })).getByRole("button", {
+        name: "Sendspin enclosure",
+      }),
+    );
     expect(handlers.onFold).toHaveBeenCalledWith("L-3", "L-1");
     view.unmount();
     const back = render(
@@ -1564,8 +1568,8 @@ describe("tabling and a line's own choices", () => {
     expect(onChoose).toHaveBeenCalledWith("done");
     expect(working.queryByText("Done is final.")).toBeNull();
     fireEvent.click(working.getByRole("button", { name: "More: drop this line, fold it into another" }));
-    // Nothing to fold into: the item stays, disabled.
-    expect(working.getByRole("menuitem", { name: "Fold into another" }).hasAttribute("disabled")).toBe(true);
+    // Nothing to fold into: Fold into is not offered at all.
+    expect(working.queryByRole("menuitem", { name: "Fold into another" })).toBeNull();
     fireEvent.click(working.getByRole("menuitem", { name: "Drop" }));
     expect(onChoose).toHaveBeenCalledWith("drop");
     working.unmount();
@@ -1580,7 +1584,11 @@ describe("tabling and a line's own choices", () => {
     );
     fireEvent.click(folding.getByRole("button", { name: "More: drop this line, fold it into another" }));
     fireEvent.click(folding.getByRole("menuitem", { name: "Fold into another" }));
-    fireEvent.click(folding.getByRole("button", { name: "Fold Sendspin enclosure into Mount" }));
+    fireEvent.click(
+      within(folding.getByRole("dialog", { name: "Fold Sendspin enclosure into…" })).getByRole("button", {
+        name: "Mount",
+      }),
+    );
     expect(onFoldWorking).toHaveBeenCalledWith("L-2");
     folding.unmount();
     const onFold = mock((_into: string) => {});
@@ -1594,7 +1602,11 @@ describe("tabling and a line's own choices", () => {
     );
     expect(names(proposed)).toEqual(["Start", "Up next", "Table", "Fold into", "Not a line"]);
     fireEvent.click(proposed.getByRole("button", { name: "Fold into" }));
-    fireEvent.click(proposed.getByRole("button", { name: "Fold Sendspin enclosure into Mount" }));
+    fireEvent.click(
+      within(proposed.getByRole("dialog", { name: "Fold Sendspin enclosure into…" })).getByRole("button", {
+        name: "Mount",
+      }),
+    );
     expect(onFold).toHaveBeenCalledWith("L-2");
     proposed.unmount();
     const done = render(<LineActions line={line({ state: "done" })} {...props} />);
@@ -2357,31 +2369,33 @@ describe("PullRequestBox", () => {
 describe("FoldPicker", () => {
   const targets = [line({ ref: "L-1", title: "Sendspin enclosure" }), line({ ref: "L-2", title: "Shelf" })];
 
-  test("offers each open line as a numbered button, the first taking the cursor, with Cancel", () => {
+  test("is a sheet that finds a line and offers each, numbered, with the find box taking the cursor", () => {
     const view = render(
       <FoldPicker title="Wall mount" targets={targets} onFold={() => {}} onCancel={() => {}} />,
     );
-    const first = view.getByRole("button", { name: "Fold Wall mount into Sendspin enclosure" });
-    const second = view.getByRole("button", { name: "Fold Wall mount into Shelf" });
-    expect(first.textContent).toBe("Sendspin enclosure");
-    expect(first.getAttribute("data-choice")).toBe("1");
-    expect(second.getAttribute("data-choice")).toBe("2");
-    expect(document.activeElement).toBe(first);
-    view.getByRole("button", { name: "Cancel" });
+    const sheet = within(view.getByRole("dialog", { name: "Fold Wall mount into…" }));
+    const find = sheet.getByLabelText("Find a line");
+    expect(document.activeElement).toBe(find);
+    expect(sheet.getByRole("button", { name: "Sendspin enclosure" }).getAttribute("data-choice")).toBe("1");
+    expect(sheet.getByRole("button", { name: "Shelf" }).getAttribute("data-choice")).toBe("2");
+    fireEvent.change(find, { target: { value: "shel" } });
+    expect(sheet.queryByRole("button", { name: "Sendspin enclosure" })).toBeNull();
+    sheet.getByRole("button", { name: "Cancel" });
   });
 
-  test("folds into the line pressed, by its ref, and Cancel cancels", () => {
+  test("folds into the line pressed or numbered, by its ref, and Cancel cancels", () => {
     const onFold = mock((_into: string) => {});
     const onCancel = mock(() => {});
     const view = render(
       <FoldPicker title="Wall mount" targets={targets} onFold={onFold} onCancel={onCancel} />,
     );
-    fireEvent.click(view.getByRole("button", { name: "Fold Wall mount into Shelf" }));
+    fireEvent.click(view.getByRole("button", { name: "Shelf" }));
     expect(onFold).toHaveBeenCalledWith("L-2");
-    expect(onCancel).not.toHaveBeenCalled();
+    view.getByRole("dialog").focus();
+    fireEvent.keyDown(window, { key: "1" });
+    expect(onFold).toHaveBeenCalledWith("L-1");
     fireEvent.click(view.getByRole("button", { name: "Cancel" }));
     expect(onCancel).toHaveBeenCalledTimes(1);
-    expect(onFold).toHaveBeenCalledTimes(1);
   });
 });
 

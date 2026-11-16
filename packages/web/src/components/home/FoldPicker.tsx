@@ -1,9 +1,14 @@
 import type { Line } from "@octotrack/core/schemas";
-import { Actions } from "../ui/Actions.tsx";
-import { Button } from "../ui/Button.tsx";
-import { Label } from "../ui/Note.tsx";
+import { useMemo, useState } from "react";
+import { type HotkeyMap, useHotkeys } from "../../hooks/useHotkeys.ts";
+import { Field } from "../ui/Field.tsx";
+import { Options } from "../ui/Options.tsx";
+import { Sheet } from "../ui/Sheet.tsx";
 
-/** Fold into: the open lines a proposal could join, one button each, numbered for the keys. */
+/**
+ * Fold into, in a sheet of its own: a box to find a line, then the open lines a proposal could join, numbered for the
+ * keys, one press each.
+ */
 export function FoldPicker({
   title,
   targets,
@@ -15,26 +20,24 @@ export function FoldPicker({
   onFold(into: string): void;
   onCancel(): void;
 }) {
+  // What is typed to find a line belongs to this sheet alone, so it is the component's own state.
+  const [find, setFind] = useState("");
+  const shown = useMemo(
+    () => targets.filter((target) => target.title.toLowerCase().includes(find.trim().toLowerCase())),
+    [targets, find],
+  );
+  const keys = useMemo(
+    (): HotkeyMap =>
+      Object.fromEntries(
+        shown.slice(0, 9).map((target, index) => [String(index + 1), () => onFold(target.ref)]),
+      ),
+    [shown, onFold],
+  );
+  useHotkeys(keys, { overSheets: true });
   return (
-    <>
-      <Label>Fold into</Label>
-      <Actions>
-        {targets.map((target, index) => (
-          <Button
-            key={target.ref}
-            // Opened to choose one, so the first choice takes the cursor.
-            autoFocus={index === 0}
-            aria-label={`Fold ${title} into ${target.title}`}
-            choice={index < 9 ? index + 1 : undefined}
-            onClick={() => onFold(target.ref)}
-          >
-            {target.title}
-          </Button>
-        ))}
-        <Button variant="quiet" onClick={onCancel}>
-          Cancel
-        </Button>
-      </Actions>
-    </>
+    <Sheet title={`Fold ${title} into…`} onClose={onCancel}>
+      <Field label="Find a line" value={find} onChange={setFind} autoFocus />
+      <Options options={shown.map((target) => ({ key: target.ref, label: target.title }))} onPick={onFold} />
+    </Sheet>
   );
 }

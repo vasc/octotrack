@@ -90,15 +90,16 @@ export function LineActions({
               >
                 Drop
               </MenuAction>
-              <MenuAction
-                disabled={!canFold}
-                onSelect={() => {
-                  close();
-                  setMode("fold");
-                }}
-              >
-                Fold into another
-              </MenuAction>
+              {canFold ? (
+                <MenuAction
+                  onSelect={() => {
+                    close();
+                    setMode("fold");
+                  }}
+                >
+                  Fold into another
+                </MenuAction>
+              ) : null}
             </>
           )}
         </Menu>

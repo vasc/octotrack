@@ -54,8 +54,8 @@ closed; the page behind does not react to keys. On a phone it rises from the bot
 ### components/home/FoldPicker.tsx
 
 - Designed in: Sheets.dc.html, state D
-- What it shows: a sheet "Fold Two streams per fetch into…" with Cancel, a "Find a line" box, then the lines numbered, the agent's pick first and marked "its agent's pick".
-- Changes from today: a sheet instead of an inline list; a box to find a line; the agent's pick is marked.
+- What it shows: a sheet "Fold Two streams per fetch into…" with Cancel, a "Find a line" box, then the lines numbered.
+- Changes from today: a sheet instead of an inline list; a box to find a line. The drawing marks "its agent's pick", but a proposal records only that it should fold, not into which line, so no pick can be marked.
 - Loading: never loads on its own: given the lines it can fold into.
 - Error: a fold waits with Undo; a request that fails follows the Primitives pattern: said in the sheet, with Try again.
 - Empty: with no line to fold into, Fold into is not offered at all. A find that matches nothing follows Log D: "Nothing matches".
