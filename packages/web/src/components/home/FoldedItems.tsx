@@ -24,5 +24,5 @@ export function foldedText(items: readonly ForYou[]): string {
 /** The rest of a line's items while I'm at a place, folded to one link that opens the first. */
 export function FoldedItems({ items, onOpen }: { items: readonly ForYou[]; onOpen(): void }) {
   if (items.length === 0) return null;
-  return <Row tone="none" title={foldedText(items)} onOpen={onOpen} />;
+  return <Row tone="none" title={`Also on this line: ${foldedText(items)}`} onOpen={onOpen} />;
 }

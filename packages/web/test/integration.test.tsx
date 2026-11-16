@@ -10,6 +10,7 @@ import {
   startTestServer,
   fakePush,
   type TestServer,
+  proposalMove,
   whole,
   wholeMatching,
 } from "./harness.tsx";
@@ -801,8 +802,8 @@ describe("lines of work", () => {
     expect(titles).toEqual(["Sendspin enclosure", "Weekly digest"]);
     const proposed = within(view.getByRole("region", { name: "Proposed" }));
     proposed.getByRole("button", { name: "Wall mount" });
-    proposed.getByText(/^panel-agent, /);
-    proposed.getByText(whole("Recommended: Up next · The base is final."));
+    proposed.getByText("proposed by panel-agent");
+    proposed.getByText(whole("Recommends Up next: The base is final."));
   });
 
   test("the developer places a proposal, reorders, tables with a reason and adds a line", async () => {
@@ -810,7 +811,7 @@ describe("lines of work", () => {
     navigate("/lines");
     const view = renderApp(<App />);
     const proposed = within(await view.findByRole("region", { name: "Proposed" }));
-    fireEvent.click(proposed.getByRole("button", { name: "Up next Wall mount" }));
+    proposalMove(proposed, "Up next", "Wall mount");
     // Every choice waits a few seconds with Undo; Now skips the wait.
     await within(await view.findByRole("status", { name: "" })).findByText(
       wholeMatching(/^Moving Wall mount to up next in \d seconds?$/),
@@ -870,7 +871,7 @@ describe("lines of work", () => {
     navigate("/lines");
     const view = renderApp(<App />);
     const working = within(await view.findByRole("region", { name: "Working on" }));
-    await working.findByText(/owner octo\.1, running/);
+    await working.findByText(/octo\.1, running/);
   });
 
   test("what waits on the developer opens in place on its line: the first fully, the rest one row away", async () => {
@@ -893,7 +894,7 @@ describe("lines of work", () => {
     const line = within(await view.findByRole("article", { name: "Sendspin enclosure" }));
     await line.findByRole("article", { name: "Which board?" });
     line.getByText(/waiting on you/);
-    fireEvent.click(line.getByRole("button", { name: "1 more: a task at the bench" }));
+    fireEvent.click(line.getByRole("button", { name: "1 more for you: a task at the bench" }));
     fireEvent.click(line.getByRole("button", { name: `Open ${task.ref}` }));
     const opened = within(await line.findByRole("article", { name: "Measure the grip" }));
     fireEvent.change(opened.getByLabelText("Five numbers"), { target: { value: "41, 38, 12" } });
@@ -987,7 +988,7 @@ describe("lines of work", () => {
         .getAllByRole("status")
         .find((element) => element.getAttribute("aria-live") === "polite");
       expect(live?.textContent).toBe("");
-      fireEvent.click(view.getByRole("button", { name: "Start Wall mount" }));
+      proposalMove(view, "Start", "Wall mount");
       await within(live ?? document.body).findByText(wholeMatching(/^Starting Wall mount in \d seconds?$/));
     });
 
@@ -996,7 +997,7 @@ describe("lines of work", () => {
       navigate("/");
       const view = renderApp(<App />);
       const proposed = within(await view.findByRole("region", { name: "Proposed" }));
-      fireEvent.click(proposed.getByRole("button", { name: "Start Wall mount" }));
+      proposalMove(proposed, "Start", "Wall mount");
       await view.findByRole("button", { name: "Undo" });
       // Meanwhile, from elsewhere, the proposal is turned down, so starting it can no longer work.
       server.tracker.call(c.lineReject, { ref: proposal.ref }, asDeveloper);
@@ -1012,7 +1013,7 @@ describe("lines of work", () => {
       navigate("/");
       const view = renderApp(<App />);
       const proposed = within(await view.findByRole("region", { name: "Proposed" }));
-      fireEvent.click(proposed.getByRole("button", { name: "Fold Wall mount" }));
+      proposalMove(proposed, "Fold", "Wall mount");
       fireEvent.click(proposed.getByRole("button", { name: "Fold Wall mount into Sendspin enclosure" }));
       await answerNow(view);
       await waitFor(() =>
@@ -1053,10 +1054,10 @@ describe("lines of work", () => {
     navigate("/lines");
     const view = renderApp(<App />);
     const proposed = within(await view.findByRole("region", { name: "Proposed" }));
-    fireEvent.click(proposed.getByRole("button", { name: "Start Wall mount" }));
+    proposalMove(proposed, "Start", "Wall mount");
     fireEvent.click(await view.findByRole("button", { name: "Undo" }));
     await gone(() => view.queryByRole("button", { name: "Undo" }));
-    fireEvent.click(proposed.getByRole("button", { name: "Not a line: Wall mount" }));
+    proposalMove(proposed, "Not a line:", "Wall mount");
     await view.findByRole("button", { name: "Undo" });
     fireEvent.keyDown(window, { key: "u" });
     await gone(() => view.queryByRole("button", { name: "Undo" }));
@@ -1198,10 +1199,11 @@ describe("lines of work", () => {
       const card = await view.findByRole("article", { name: "Wall mount" });
       fireEvent.focus(card);
       await waitFor(() => expect(focusOf(card)).toBe("true"));
-      fireEvent.keyDown(window, { key: "2" });
-      await view.findByRole("button", { name: "Undo" });
-      fireEvent.keyDown(window, { key: "2" });
+      // 1 presses the recommended move, the one button.
       fireEvent.keyDown(window, { key: "1" });
+      await view.findByRole("button", { name: "Undo" });
+      fireEvent.keyDown(window, { key: "1" });
+      fireEvent.keyDown(window, { key: "2" });
       await new Promise((resolve) => setTimeout(resolve, 50));
       expect(server.calls.filter((name) => name === "choice.make")).toHaveLength(1);
     });
@@ -1510,11 +1512,11 @@ describe("lines of work", () => {
       fireEvent.click(await view.findByRole("button", { name: "I'm at: All places" }));
       fireEvent.click(view.getByRole("menuitemradio", { name: "the bench" }));
       const at = within(await view.findByRole("article", { name: "At the bench" }));
-      at.getByText(/^ends in \d+h$/);
+      at.getByText(/^ends by itself in \d+h$/);
       const line = within(view.getByRole("article", { name: "Sendspin enclosure" }));
       await line.findByRole("article", { name: "Weigh it" });
       line.getByRole("article", { name: "Measure it" });
-      line.getByRole("button", { name: "1 question · 1 task at the Mac" });
+      line.getByRole("button", { name: "Also on this line: 1 question · 1 task at the Mac" });
       expect(line.getAllByRole("button", { name: "Done" })).toHaveLength(2);
       const upNext = within(view.getByRole("region", { name: "Here, from up next" }));
       upNext.getByRole("article", { name: "Check the wall" });
@@ -2337,13 +2339,13 @@ describe("lines of work", () => {
     server.act(c.planSet, { line: "L-1", steps: ["Model the opening", "Print"] }, "octo.1");
     navigate("/");
     const view = renderApp(<App />);
-    const calm = within(await view.findByRole("article", { name: "Nothing needs you" }));
+    const calm = within(await view.findByRole("region", { name: "Nothing needs you" }));
     calm.getByText("1 agent working");
-    calm.getByText("next ask likely on Enclosure, Model the opening");
+    calm.getByText(/the next ask likely comes from Enclosure, Model the opening/);
     // It comes first, before any line.
     const working = view.getByRole("region", { name: "Working on" });
     expect(
-      view.getByRole("article", { name: "Nothing needs you" }).compareDocumentPosition(working) &
+      view.getByRole("region", { name: "Nothing needs you" }).compareDocumentPosition(working) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
@@ -2365,7 +2367,7 @@ describe("lines of work", () => {
     );
     navigate("/");
     const view = renderApp(<App />);
-    fireEvent.click(await view.findByRole("button", { name: "Accept recommended placements" }));
+    fireEvent.click(await view.findByRole("button", { name: "Accept 1 recommendation" }));
     await answerNow(view);
     await within(await view.findByRole("region", { name: "Up next" })).findByText("Wall mount");
   });

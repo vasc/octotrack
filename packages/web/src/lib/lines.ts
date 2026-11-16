@@ -26,7 +26,7 @@ export const LINE_STATE_LABEL: Readonly<Record<Line["state"], string>> = {
 export function crewText(crew: LineCrew | undefined, stepIn = false): string[] {
   if (crew === undefined) return [];
   const words: string[] = [];
-  if (crew.owner !== null) words.push(`owner ${crew.owner.name}, ${crew.owner.state}`);
+  if (crew.owner !== null) words.push(`${crew.owner.name}, ${crew.owner.state}`);
   else if (crew.search !== null)
     words.push(stepIn ? "no owner: step in" : crew.search.step === 3 ? "no owner yet" : "finding an owner");
   if (crew.helpers.length > 0)

@@ -54,7 +54,7 @@ export function WorkingSection({
       {home.working.length === 0 ? (
         <EmptyState>Nothing is being worked on</EmptyState>
       ) : (
-        <List>
+        <List cards>
           {home.working.map((line, index) => {
             const details = home.lines[line.ref];
             const crew = home.crews[line.ref];

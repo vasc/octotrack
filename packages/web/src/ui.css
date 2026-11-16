@@ -322,6 +322,26 @@
   border-top: 1px solid var(--line);
 }
 
+/* Cards: each row its own sheet, a step apart, for rows that hold much under them. */
+.ui-list[data-cards="true"] {
+  gap: var(--space-6);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-none);
+  overflow: visible;
+}
+
+.ui-list[data-cards="true"] > * {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.ui-list[data-cards="true"] > * + * {
+  border-top: 1px solid var(--line);
+}
+
 /* A named list: its name over its rows, spaced as a field's label is over its box. */
 .ui-group {
   display: flex;
@@ -1515,6 +1535,46 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+}
+
+/* A sheet that says where things stand for the page: heading and words, the one thing to do at its end. */
+.ui-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8) var(--space-16);
+  padding: var(--space-10) var(--space-12);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+.ui-notice[data-tone="bad"] {
+  border-color: var(--bad);
+}
+
+.ui-notice-words {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  max-width: 70ch;
+}
+
+.ui-notice-title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+.ui-notice[data-tone="bad"] .ui-notice-title {
+  color: var(--bad);
+}
+
+.ui-notice-text {
+  color: var(--ink-2);
 }
 
 /* One fact on its own: a small grey label over its sentence. */

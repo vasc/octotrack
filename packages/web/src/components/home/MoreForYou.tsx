@@ -22,5 +22,5 @@ function described(items: readonly ForYou[]): string {
 
 /** The rest of what a line needs from the developer, one link away, saying what it is. */
 export function MoreForYou({ items, onShow }: { items: readonly ForYou[]; onShow(): void }) {
-  return <Row tone="none" title={`${items.length} more: ${described(items)}`} onOpen={onShow} />;
+  return <Row tone="none" title={`${items.length} more for you: ${described(items)}`} onOpen={onShow} />;
 }

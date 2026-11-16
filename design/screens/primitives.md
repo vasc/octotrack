@@ -306,6 +306,15 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 - Error: the failed form above.
 - Empty: nothing waiting: nothing shown.
 
+### components/ui/Notice.tsx
+
+- Designed in: Home-FirstRun.dc.html; Home-States.dc.html, states A, B, E
+- What it shows: "Nothing is placed yet" with its sentence and "Accept 51 recommendations"; "No lines yet" with `octo guide` and New line; "Nothing needs you"; "The tracker is not answering" in the bad tone.
+- Changes from today: new; these were rows in a one-row list.
+- Loading: never loads on its own.
+- Error: its bad form is itself the error (E).
+- Empty: never empty: it always has its heading.
+
 ### components/ui/Labelled.tsx
 
 - Designed in: Line.dc.html; Line-States.dc.html, states A, B

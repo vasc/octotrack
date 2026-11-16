@@ -1,12 +1,26 @@
 import { type ReactNode, useId } from "react";
 
 /**
- * Rows divided by hairlines. Named when its rows are choices: the name sits over them as a field's label does, and
- * the rows read as one group.
+ * Rows divided by hairlines; or, as cards, each row its own sheet, for rows that hold much under them, such as the
+ * lines being worked on. Named when its rows are choices: the name sits over them as a field's label does, and the
+ * rows read as one group.
  */
-export function List({ label, children }: { label?: string; children: ReactNode }) {
+export function List({
+  label,
+  cards = false,
+  children,
+}: {
+  label?: string;
+  cards?: boolean;
+  children: ReactNode;
+}) {
   const heading = useId();
-  if (label === undefined) return <div className="ui-list">{children}</div>;
+  if (label === undefined)
+    return (
+      <div className="ui-list" data-cards={cards ? "true" : undefined}>
+        {children}
+      </div>
+    );
   return (
     <div className="ui-group">
       <span className="ui-label" id={heading}>

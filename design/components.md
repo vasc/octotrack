@@ -35,6 +35,7 @@ gives an element a class or an inline style, and on a class in `ui.css` that is 
 | `Panel`        | An item opened by its ref: crumbs, title, Close, its sections. `Side` is where it is drawn: over the right of the page, the whole screen on a phone                                                                        |
 | `Toast`        | A choice waiting to take effect, or one that failed, with Undo or Dismiss; `Toasts` holds them over the foot of every page                                                                                                 |
 | `Pairs`        | Names and values in two columns; `Columns` two columns on a wide screen; `Stack` things one under another                                                                                                                  |
+| `Notice`       | A sheet that says where things stand for the page: a heading, a few words, a command, the one thing to do                                                                                                                  |
 | `Labelled`     | One fact on its own: a small grey label stacked over its sentence, such as Done when                                                                                                                                       |
 | `Callout`      | A few words set apart on a soft ground in a tone: what an agent recommends, why to step in                                                                                                                                 |
 | `Waiting`      | A choice made here waiting to take effect, said where it was made with its countdown, and Undo beside it                                                                                                                   |
@@ -68,51 +69,52 @@ properties and appear on the `/design` specimen; **structural** ones load data a
 
 ### Lines: `home/` and `lines/`
 
-| Component          | Kind       | What it is                                                                                                            |
-| ------------------ | ---------- | --------------------------------------------------------------------------------------------------------------------- |
-| `HomePage`         | Structural | Every line in the developer's order, with what each needs in place; the keys                                          |
-| `WorkingSection`   | Structural | Working on: a `Section` holding one `List` of lines                                                                   |
-| `WorkingLine`      | Pure       | A working line as one `Row`: its number (the handle), title, facts, headline, its answers, and under it what it needs |
-| `LineMeta`         | Pure       | A line's facts: who is on it, waiting on you, re-confirming, held, its step                                           |
-| `LineHandle`       | Pure       | A line's number as a `Menu`: drag it, or open it for Move to top, Up, Down, To up next                                |
-| `AnswerStatus`     | Pure       | An answer given lately and what became of it, with Change answer                                                      |
-| `LineForYou`       | Pure       | What a line needs: the first item and the rest one row away, or on a phone one row saying how many                    |
-| `LineForYouItem`   | Structural | One of those items, opened in place while it has focus                                                                |
-| `ForYouRow`        | Pure       | An item as a `Row` that opens it, or, with focus, the item itself in a `Focusable`                                    |
-| `ForYouItem`       | Pure       | The opened item: a question, a task, or a proposal about its line                                                     |
-| `MoreForYou`       | Pure       | The rest of a line's items, one row that shows them                                                                   |
-| `FoldedItems`      | Pure       | At a place, what is not for that place, one row that opens the first                                                  |
-| `AtPlaceItems`     | Pure       | At a place, that place's tasks opened on their line                                                                   |
-| `AtSection`        | Pure       | I'm at: where, when it ends, Leave                                                                                    |
-| `AtUpNext`         | Pure       | At a place, its tasks from lines up next                                                                              |
-| `TaskCard`         | Pure       | A task opened as an `Item`: what to send back, Done and Can't do it, numbered                                         |
-| `TaskItem`         | Structural | A task with what is typed kept as a draft                                                                             |
-| `OutcomeFields`    | Pure       | A task's named outcomes side by side, then a note                                                                     |
-| `TaskClosed`       | Pure       | A closed task: how and when, and what was sent back                                                                   |
-| `LineProposalCard` | Pure       | A case that the line is done, or a changed done when: Done or Not yet, Accept or Keep current                         |
-| `StepIn`           | Pure       | A line no agent took: why, and the action that fits, filled, with Table it and I'll own it                            |
-| `LineStepIn`       | Pure       | A working line's Step in, or at a place one row saying why                                                            |
-| `CheckoutForm`     | Pure       | Set its checkout: a path, Set, Cancel                                                                                 |
-| `SpreadThin`       | Pure       | Past six working lines, the cost in two facts                                                                         |
-| `QuestionList`     | Pure       | Urgent at the top, On no line at the bottom: rows that open in place; on a phone On no line folds                     |
-| `WaitingSections`  | Structural | Up next, Proposed, Tabled and Done lately; folds on a phone or at a place; the Start sheet                            |
-| `UpNextRow`        | Pure       | A line up next as a `Row`: its number, what it holds, how scoped, done when, Start                                    |
-| `QuietRow`         | Pure       | A tabled or finished line: why it waits, when to look again, Up next and Start                                        |
-| `ProposalCard`     | Pure       | A proposal as a `Row`: who proposed it, its repos, done when, the case, and its choices                               |
-| `ProposalCase`     | Pure       | Where its agent recommends it goes and why, or why it was tabled                                                      |
-| `ProposalChoices`  | Pure       | Start, Up next, Table, Fold into, Not a line or Drop: the recommended one filled, numbered                            |
-| `FoldPicker`       | Pure       | The lines a proposal could fold into, one button each, numbered                                                       |
-| `StartSheet`       | Structural | Loads what a waiting line holds and answers its questions in place; its number keys                                   |
-| `StartSheetView`   | Pure       | Start, as a `Sheet`: a changed done when, held questions, its tasks, then Start                                       |
-| `DoneWhenChanged`  | Pure       | A done when sharpened while the line waited: Accept or Keep current                                                   |
-| `HeldQuestion`     | Pure       | A held question answered in the Start sheet, its answers numbered in the sheet's one run                              |
-| `FirstRun`         | Pure       | Before anything is placed: the command, or Accept recommended placements                                              |
-| `NothingNeedsYou`  | Pure       | Nothing waits: who is working, and where the next ask likely is                                                       |
-| `KeyHelp`          | Pure       | The keys, as a `Sheet`                                                                                                |
-| `RecordAnswers`    | Structural | Record answers, behind r                                                                                              |
-| `PushToggle`       | Structural | Buzz this device, or how buzzing stands                                                                               |
-| `NewLineSheet`     | Pure       | New line, as a `Sheet`: what it is, done when, its repos or that it is yours; up next, start, or table                |
-| `TableForm`        | Pure       | Tabling, as a `Sheet`: why it waits, when to look again, what it holds and who winds down                             |
+| Component          | Kind       | What it is                                                                                                                                         |
+| ------------------ | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `HomePage`         | Structural | Every line in the developer's order, with what each needs in place; the keys                                                                       |
+| `WorkingSection`   | Structural | Working on: a `Section` holding one `List` of lines                                                                                                |
+| `WorkingLine`      | Pure       | A working line as one `Row`: its number (the handle), title, facts, headline, its answers, and under it what it needs                              |
+| `LineMeta`         | Pure       | A line's facts: who is on it, waiting on you, re-confirming, held, its step                                                                        |
+| `LineHandle`       | Pure       | A line's number as a `Menu`: drag it, or open it for Move to top, Up, Down, To up next                                                             |
+| `AnswerStatus`     | Pure       | An answer given lately and what became of it, with Change answer                                                                                   |
+| `LineForYou`       | Pure       | What a line needs: the first item and the rest one row away, or on a phone one row saying how many                                                 |
+| `LineForYouItem`   | Structural | One of those items, opened in place while it has focus                                                                                             |
+| `ForYouRow`        | Pure       | An item as a `Row` that opens it, or, with focus, the item itself in a `Focusable`                                                                 |
+| `ForYouItem`       | Pure       | The opened item: a question, a task, or a proposal about its line                                                                                  |
+| `MoreForYou`       | Pure       | The rest of a line's items, one row that shows them                                                                                                |
+| `FoldedItems`      | Pure       | At a place, what is not for that place, one row that opens the first                                                                               |
+| `AtPlaceItems`     | Pure       | At a place, that place's tasks opened on their line                                                                                                |
+| `AtSection`        | Pure       | I'm at: where, when it ends, Leave                                                                                                                 |
+| `AtUpNext`         | Pure       | At a place, its tasks from lines up next                                                                                                           |
+| `TaskCard`         | Pure       | A task opened as an `Item`: what to send back, Done and Can't do it, numbered                                                                      |
+| `TaskItem`         | Structural | A task with what is typed kept as a draft                                                                                                          |
+| `OutcomeFields`    | Pure       | A task's named outcomes side by side, then a note                                                                                                  |
+| `TaskClosed`       | Pure       | A closed task: how and when, and what was sent back                                                                                                |
+| `LineProposalCard` | Pure       | A case that the line is done, or a changed done when: Done or Not yet, Accept or Keep current                                                      |
+| `StepIn`           | Pure       | A line no agent took: why, and the action that fits, filled, with Table it and I'll own it                                                         |
+| `LineStepIn`       | Pure       | A working line's Step in, or at a place one row saying why                                                                                         |
+| `CheckoutForm`     | Pure       | Set its checkout: a path, Set, Cancel                                                                                                              |
+| `SpreadThin`       | Pure       | Past six working lines, the cost in two facts                                                                                                      |
+| `QuestionList`     | Pure       | Urgent at the top, On no line at the bottom: rows that open in place; on a phone On no line folds                                                  |
+| `WaitingSections`  | Structural | Up next, Proposed, Tabled and Done lately; folds on a phone or at a place; the Start sheet                                                         |
+| `UpNextRow`        | Pure       | A line up next as a `Row`: its number, what it holds, how scoped, done when, Start                                                                 |
+| `QuietRow`         | Pure       | A tabled or finished line: why it waits, when to look again, Up next and Start                                                                     |
+| `ProposalCard`     | Pure       | A proposal as a `Row`: its ref, repos and proposer, what is recommended and why, then that move and Other                                          |
+| `ProposalGroups`   | Pure       | Proposals before anything is placed, grouped by what their agents recommend: the first group open with a few, the rest folded to a sample and Show |
+| `ProposalCase`     | Pure       | Where its agent recommends it goes and why, or why it was tabled                                                                                   |
+| `ProposalChoices`  | Pure       | Start, Up next, Table, Fold into, Not a line or Drop: the recommended one filled, numbered                                                         |
+| `FoldPicker`       | Pure       | The lines a proposal could fold into, one button each, numbered                                                                                    |
+| `StartSheet`       | Structural | Loads what a waiting line holds and answers its questions in place; its number keys                                                                |
+| `StartSheetView`   | Pure       | Start, as a `Sheet`: a changed done when, held questions, its tasks, then Start                                                                    |
+| `DoneWhenChanged`  | Pure       | A done when sharpened while the line waited: Accept or Keep current                                                                                |
+| `HeldQuestion`     | Pure       | A held question answered in the Start sheet, its answers numbered in the sheet's one run                                                           |
+| `FirstRun`         | Pure       | Before anything is placed: the command, or Accept recommended placements                                                                           |
+| `NothingNeedsYou`  | Pure       | Nothing waits: who is working, and where the next ask likely is                                                                                    |
+| `KeyHelp`          | Pure       | The keys, as a `Sheet`                                                                                                                             |
+| `RecordAnswers`    | Structural | Record answers, behind r                                                                                                                           |
+| `PushToggle`       | Structural | Buzz this device, or how buzzing stands                                                                                                            |
+| `NewLineSheet`     | Pure       | New line, as a `Sheet`: what it is, done when, its repos or that it is yours; up next, start, or table                                             |
+| `TableForm`        | Pure       | Tabling, as a `Sheet`: why it waits, when to look again, what it holds and who winds down                                                          |
 
 ### Questions: `decisions/`
 

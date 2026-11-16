@@ -1,6 +1,5 @@
 import type { Line } from "@octotrack/core/schemas";
 import { useState } from "react";
-import { timeAgo } from "../../lib/format.ts";
 import { openEntity } from "../../lib/router.ts";
 import { TableForm } from "../lines/TableForm.tsx";
 import { FoldPicker } from "./FoldPicker.tsx";
@@ -8,15 +7,9 @@ import { ProposalCase } from "./ProposalCase.tsx";
 import { ProposalChoices } from "./ProposalChoices.tsx";
 import { URGENT_REASON } from "../../lib/lines.ts";
 import { Facts } from "../ui/Facts.tsx";
-import { Markdown } from "../ui/Markdown.tsx";
+import { Code } from "../ui/Note.tsx";
 import { TextLink } from "../ui/RefLink.tsx";
 import { Row } from "../ui/Row.tsx";
-
-/** How long ago, as a phrase: "just now", "2h ago". */
-function age(iso: string, now: number): string {
-  const ago = timeAgo(iso, now);
-  return ago === "now" ? "just now" : `${ago} ago`;
-}
 
 export interface ProposalCardProps {
   line: Line;
@@ -30,19 +23,15 @@ export interface ProposalCardProps {
   onReject(ref: string): void;
   /** For a tabled line back to look at: it was a line, so it is dropped, not rejected. */
   onDrop(ref: string): void;
-  /** Its repos, by their GitHub names. */
-  repos?: readonly string[];
-  /** The first step of the plan its agent wrote, if any. */
-  firstStep?: string | null;
+  /** Its repos, by their keys. */
+  repoKeys?: readonly string[];
   /** The last line up next, which an Up next recommendation would put it after. */
   lastUpNext?: string | null;
-  /** The time now, for how long ago it was proposed. */
-  now?: number;
 }
 
 /**
- * A proposed line: what it is and who proposed it, the agent's recommended placement and why, and the five choices a
- * proposal has, numbered, with the recommended one filled.
+ * A proposed line: its title; its ref, repos and who proposed it; the agent's recommended move and why; then that move
+ * as the one button with the others under Other.
  */
 export function ProposalCard({
   line,
@@ -54,10 +43,8 @@ export function ProposalCard({
   onFold,
   onReject,
   onDrop,
-  repos = [],
-  firstStep = null,
+  repoKeys = [],
   lastUpNext = null,
-  now = Date.now(),
 }: ProposalCardProps) {
   const [mode, setMode] = useState<"table" | "fold" | null>(null);
   const fromTable = line.tabledReason !== null;
@@ -72,21 +59,11 @@ export function ProposalCard({
       title={<TextLink onClick={() => openEntity(line.ref)}>{line.title}</TextLink>}
       facts={
         <Facts>
-          {line.proposedBy === null ? null : `${line.proposedBy}, ${age(line.createdAt, now)}`}
-          {repos.length === 0 ? null : repos.join(", ")}
-          {firstStep === null || firstStep === undefined ? null : `first step: ${firstStep}`}
-          {line.fromRef === null ? null : `from ${line.fromRef}`}
+          <Code>{line.ref}</Code>
+          {repoKeys.join(", ")}
+          {line.proposedBy === null ? null : `proposed by ${line.proposedBy}`}
         </Facts>
       }
-      {...(line.doneWhen === ""
-        ? {}
-        : {
-            note: (
-              <>
-                Done when <Markdown text={line.doneWhen} inline />
-              </>
-            ),
-          })}
     >
       <ProposalCase line={line} lastUpNext={lastUpNext} />
       {mode === "fold" ? (

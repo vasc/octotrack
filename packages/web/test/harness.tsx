@@ -2,7 +2,7 @@ import { contracts, type Contract } from "@octotrack/core/contracts";
 import { Hub, Tracker } from "@octotrack/core";
 import { createApp, openSqlite } from "@octotrack/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { type RenderResult, render } from "@testing-library/react";
+import { fireEvent, type RenderResult, render } from "@testing-library/react";
 import type { ReactNode } from "react";
 import type { z } from "zod";
 
@@ -107,6 +107,34 @@ export function whole(text: string) {
     element !== null &&
     element.textContent === text &&
     [...element.children].every((child) => child.textContent !== text);
+}
+
+const MENU_WORD: Readonly<Record<string, string>> = {
+  Start: "Start",
+  "Up next": "Up next",
+  Table: "Table",
+  Fold: "Fold into",
+  "Not a line:": "Not a line",
+  Drop: "Drop",
+};
+
+/**
+ * Makes a proposal's move, as the developer would: its one button when that move is the recommended one, else from
+ * its Other menu.
+ */
+interface ByRole {
+  queryByRole(role: string, options: { name: string }): HTMLElement | null;
+  getByRole(role: string, options: { name: string }): HTMLElement;
+}
+
+export function proposalMove(scope: ByRole, move: string, title: string): void {
+  const button = scope.queryByRole("button", { name: `${move} ${title}` });
+  if (button !== null) {
+    fireEvent.click(button);
+    return;
+  }
+  fireEvent.click(scope.getByRole("button", { name: `Other moves for ${title}` }));
+  fireEvent.click(scope.getByRole("menuitem", { name: MENU_WORD[move] ?? move }));
 }
 
 /** Like whole, for a sentence that varies, such as a countdown: the innermost element whose whole text matches. */

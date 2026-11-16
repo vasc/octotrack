@@ -1,4 +1,4 @@
-import type { HomeView } from "@octotrack/core/schemas";
+import type { HomeView, Line } from "@octotrack/core/schemas";
 import type { ReactNode } from "react";
 import type { DropTarget } from "../../hooks/useDragOrder.ts";
 import type { HomeActions } from "../../hooks/useHome.ts";
@@ -9,6 +9,7 @@ import { List } from "../ui/List.tsx";
 import { Section } from "../ui/Section.tsx";
 import { EmptyState } from "../ui/states.tsx";
 import { ProposalCard } from "./ProposalCard.tsx";
+import { ProposalGroups } from "./ProposalGroups.tsx";
 import { QuietRow } from "./QuietRow.tsx";
 import { StartSheet } from "./StartSheet.tsx";
 import { UpNextRow } from "./UpNextRow.tsx";
@@ -28,6 +29,7 @@ export function WaitingSections({
   drop,
   onStarting,
   sheetArmed = true,
+  firstRun = false,
 }: {
   home: HomeView;
   h: HomeActions;
@@ -51,6 +53,8 @@ export function WaitingSections({
   onStarting(ref: string | null): void;
   /** Whether an open Start sheet's number keys act: not while a panel is open over home. */
   sheetArmed?: boolean;
+  /** Nothing is placed yet: proposals are grouped by what their agents recommend. */
+  firstRun?: boolean;
 }) {
   const startingLine = [...home.upNext, ...home.tabled, ...home.proposed].find(
     (line) => line.ref === starting,
@@ -86,28 +90,24 @@ export function WaitingSections({
       })}
     </List>
   );
-  const proposals = (
-    <List>
-      {home.proposed.map((line) => (
-        <ProposalCard
-          key={line.ref}
-          line={line}
-          focused={focus === line.ref}
-          foldTargets={[...home.working, ...home.upNext]}
-          repos={line.repos.map(h.repoName)}
-          firstStep={home.lines[line.ref]?.step?.title ?? null}
-          lastUpNext={home.upNext.at(-1)?.title ?? null}
-          // A line back from tabled may hold questions and tasks, so it starts through its Start sheet.
-          onStart={line.tabledReason === null ? h.start : onStarting}
-          onQueue={h.queue}
-          onTable={h.table}
-          onFold={h.fold}
-          onReject={h.reject}
-          onDrop={h.drop}
-        />
-      ))}
-    </List>
+  const card = (line: Line) => (
+    <ProposalCard
+      key={line.ref}
+      line={line}
+      focused={focus === line.ref}
+      foldTargets={[...home.working, ...home.upNext]}
+      repoKeys={line.repos}
+      lastUpNext={home.upNext.at(-1)?.title ?? null}
+      // A line back from tabled may hold questions and tasks, so it starts through its Start sheet.
+      onStart={line.tabledReason === null ? h.start : onStarting}
+      onQueue={h.queue}
+      onTable={h.table}
+      onFold={h.fold}
+      onReject={h.reject}
+      onDrop={h.drop}
+    />
   );
+  const proposals = <List>{home.proposed.map(card)}</List>;
   const proposalsHeld = home.proposed.some((line) => line.ref === focus);
   const upNextHeld = home.upNext.some((line) => focus === lineFocusRef(line.ref));
   return (
@@ -137,10 +137,14 @@ export function WaitingSections({
         </>
       ) : (
         <>
-          <Section title="Up next" count={home.upNext.length}>
-            {home.upNext.length === 0 ? <EmptyState>Nothing is up next</EmptyState> : upNext}
-          </Section>
-          {home.proposed.length === 0 ? null : (
+          {firstRun ? null : (
+            <Section title="Up next" count={home.upNext.length}>
+              {home.upNext.length === 0 ? <EmptyState>Nothing is up next</EmptyState> : upNext}
+            </Section>
+          )}
+          {home.proposed.length === 0 ? null : firstRun ? (
+            <ProposalGroups proposals={home.proposed} card={card} />
+          ) : (
             <Section title="Proposed" count={home.proposed.length}>
               {proposals}
             </Section>

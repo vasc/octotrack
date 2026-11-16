@@ -40,7 +40,6 @@ export function WorkingLine({
   drop,
   fold = null,
 }: WorkingLineProps) {
-  const since = details?.sinceSummary ?? 0;
   const answers = fold !== null ? [] : (details?.answers ?? []);
   return (
     <Row
@@ -61,23 +60,7 @@ export function WorkingLine({
               />
             ),
           })}
-      {...(fold === "at" || line.headline === null
-        ? {}
-        : {
-            note: (
-              <>
-                <Markdown text={line.headline} inline />
-                {since === 0 ? null : (
-                  <>
-                    {" · "}
-                    <TextLink onClick={() => openEntity(line.ref)}>
-                      {since} change{since === 1 ? "" : "s"} since
-                    </TextLink>
-                  </>
-                )}
-              </>
-            ),
-          })}
+      {...(fold === "at" || line.headline === null ? {} : { note: <Markdown text={line.headline} inline /> })}
     >
       {answers.length === 0 ? null : (
         <List>

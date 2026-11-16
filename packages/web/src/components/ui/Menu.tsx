@@ -57,6 +57,7 @@ export function Menu({
         onBlur={menu.leave}
       >
         {icon === undefined ? null : <Icon name={icon} />}
+        {lead === undefined ? null : <Icon name="grip" />}
         {lead}
         {text}
         {text === undefined ? null : <Icon name="chevron" />}
@@ -119,12 +120,15 @@ export function MenuAction({
   onSelect,
   disabled = false,
   autoFocus = false,
+  choice,
   children,
 }: {
   onSelect(): void;
   disabled?: boolean;
   /** The first available action takes the cursor when the menu opens. */
   autoFocus?: boolean;
+  /** The number key that presses it while the menu is open. */
+  choice?: number;
   children: ReactNode;
 }) {
   return (
@@ -132,6 +136,7 @@ export function MenuAction({
       type="button"
       role="menuitem"
       className="ui-menu-item"
+      data-choice={choice === undefined ? undefined : String(choice)}
       disabled={disabled}
       // biome-ignore lint/a11y/noAutofocus: a menu opened takes the cursor on its first action
       autoFocus={autoFocus}

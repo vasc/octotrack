@@ -98,7 +98,7 @@ import {
   pendingChoice,
   pr,
 } from "../src/design/fixtures.ts";
-import { contracts, whole } from "./harness.tsx";
+import { contracts, proposalMove, whole } from "./harness.tsx";
 
 const form = decisionForm;
 
@@ -722,43 +722,11 @@ describe("lines of work", () => {
       </WorkingLine>,
     );
     const article = within(view.getByRole("article", { name: "Sendspin enclosure" }));
-    article.getByText(/owner panel, asleep/);
+    article.getByText(/panel, asleep/);
     article.getByText(/waiting on you/);
     article.getByText(/step 3 of 4, settle board and opening/);
     article.getByText("Printed; the short board fits.");
     article.getByText("child");
-  });
-
-  test("WorkingLine says how many changes came after its summary, as a link that opens the line", () => {
-    navigate("/");
-    const view = render(
-      <WorkingLine
-        line={line({ headline: "Down to the hotel pick." })}
-        details={details({ sinceSummary: 3 })}
-      >
-        {null}
-      </WorkingLine>,
-    );
-    fireEvent.click(view.getByRole("button", { name: "3 changes since" }));
-    expect(new URLSearchParams(window.location.search).get("ref")).toBe("L-1");
-    view.unmount();
-    const one = render(
-      <WorkingLine
-        line={line({ headline: "Down to the hotel pick." })}
-        details={details({ sinceSummary: 1 })}
-      >
-        {null}
-      </WorkingLine>,
-    );
-    one.getByRole("button", { name: "1 change since" });
-    one.unmount();
-    expect(
-      render(
-        <WorkingLine line={line({ headline: "Down to the hotel pick." })} details={details()}>
-          {null}
-        </WorkingLine>,
-      ).queryByRole("button", { name: /changes? since/ }),
-    ).toBeNull();
   });
 
   test("LineMeta says waiting on you only when all the line's work waits on you, else agents on it", () => {
@@ -920,7 +888,7 @@ describe("lines of work", () => {
     view.getByText("not scoped");
     // It holds something, so Start opens the Start sheet first.
     expect(view.getByRole("button", { name: "Start Wall mount" }).textContent).toBe("Start");
-    view.getByText(whole("Done when it hangs flush."));
+    expect(view.queryByText(/it hangs flush\./)).toBeNull();
     fireEvent.click(view.getByRole("button", { name: "Start Wall mount" }));
     expect(onStart).toHaveBeenCalledWith("L-1");
   });
@@ -962,28 +930,25 @@ describe("lines of work", () => {
       <ProposalCard
         line={proposal}
         foldTargets={[line()]}
-        repos={["vasc/homepanel"]}
-        firstStep="land the branch"
+        repoKeys={["PANEL"]}
         lastUpNext="Firmware without casts"
-        now={Date.parse(proposal.createdAt) + 2 * 3_600_000}
         {...handlers}
       />,
     );
-    view.getByText(/vasc\/homepanel/);
-    view.getByText(/first step: land the branch/);
-    view.getByText(/2h ago/);
-    view.getByText(whole("Recommended: Up next, after Firmware without casts · The base is final."));
+    view.getByText("PANEL");
+    view.getByText("proposed by panel-widgets");
+    view.getByText(whole("Recommends Up next, after Firmware without casts: The base is final."));
     view.getByText("The base is final.");
-    // The recommended choice is the filled one.
+    // The recommended choice is the one button, filled; the rest are under Other.
     expect(view.getByRole("button", { name: "Up next Wall mount" }).getAttribute("data-variant")).toBe(
       "primary",
     );
-    expect(view.getByRole("button", { name: "Start Wall mount" }).getAttribute("data-variant")).toBe("plain");
+    expect(view.queryByRole("button", { name: "Start Wall mount" })).toBeNull();
     fireEvent.click(view.getByRole("button", { name: "Up next Wall mount" }));
     expect(handlers.onQueue).toHaveBeenCalledWith("L-3");
-    fireEvent.click(view.getByRole("button", { name: "Not a line: Wall mount" }));
+    proposalMove(view, "Not a line:", "Wall mount");
     expect(handlers.onReject).toHaveBeenCalledWith("L-3");
-    fireEvent.click(view.getByRole("button", { name: "Fold Wall mount" }));
+    proposalMove(view, "Fold", "Wall mount");
     // A button per line, never a select that folds as soon as an arrow key moves it.
     expect(view.queryByRole("combobox")).toBeNull();
     fireEvent.click(view.getByRole("button", { name: "Fold Wall mount into Sendspin enclosure" }));
@@ -997,8 +962,9 @@ describe("lines of work", () => {
       />,
     );
     back.getByText(whole("Tabled: The disk is not tight · look again on 1 February 2027"));
-    expect(back.queryByRole("button", { name: "Not a line: Sendspin enclosure" })).toBeNull();
-    fireEvent.click(back.getByRole("button", { name: "Drop Sendspin enclosure" }));
+    fireEvent.click(back.getByRole("button", { name: "Other moves for Sendspin enclosure" }));
+    expect(back.queryByRole("menuitem", { name: "Not a line" })).toBeNull();
+    fireEvent.click(back.getByRole("menuitem", { name: "Drop" }));
     expect(handlers.onDrop).toHaveBeenCalledWith("L-1");
     expect(handlers.onReject).toHaveBeenCalledTimes(1);
   });
@@ -1434,25 +1400,26 @@ describe("agents and first run", () => {
           line({ ref: "L-3", state: "proposed", recommendation: "start" }),
         ]}
         onAccept={onAccept}
+        onNewLine={() => {}}
       />,
     );
-    const first = within(view.getByRole("article", { name: "First run" }));
-    first.getByText("Nothing placed yet");
+    const first = within(view.getByRole("region", { name: "Nothing is placed yet" }));
     // A fold needs a line to fold into, so it is not a placement to accept at once.
-    first.getByText("2 of 3 proposed carry a recommendation");
-    fireEvent.click(first.getByRole("button", { name: "Accept recommended placements" }));
+    first.getByText(/3 carry a recommendation: 1 to start, 1 for up next and 1 to fold\./);
+    fireEvent.click(first.getByRole("button", { name: "Accept 2 recommendations" }));
     expect(onAccept).toHaveBeenCalledWith(["L-1", "L-3"]);
     view.unmount();
     const old = render(
       <FirstRun
         proposals={[line({ ref: "L-1", state: "proposed", recommendation: null })]}
         onAccept={onAccept}
+        onNewLine={() => {}}
       />,
     );
-    old.getByText("0 of 1 proposed carry a recommendation");
+    old.getByText(/None carries a recommendation\. 1 has none\./);
     expect(old.queryByRole("button")).toBeNull();
     old.unmount();
-    const none = render(<FirstRun proposals={[]} onAccept={onAccept} />);
+    const none = render(<FirstRun proposals={[]} onAccept={onAccept} onNewLine={() => {}} />);
     none.getByText("No lines yet");
     none.getByText("octo guide");
   });
@@ -1766,7 +1733,7 @@ describe("I'm at a place", () => {
     );
     const place = within(view.getByRole("article", { name: "At the bench" }));
     place.getByText("At the bench");
-    place.getByText("ends in 4h");
+    place.getByText("ends by itself in 4h");
     fireEvent.click(place.getByRole("button", { name: "Leave" }));
     expect(onLeave).toHaveBeenCalledTimes(1);
   });
@@ -1841,10 +1808,10 @@ describe("NothingNeedsYou", () => {
     const view = render(
       <NothingNeedsYou working={3} next={{ title: "Sendspin enclosure", step: "model the opening" }} />,
     );
-    const calm = within(view.getByRole("article", { name: "Nothing needs you" }));
+    const calm = within(view.getByRole("region", { name: "Nothing needs you" }));
     calm.getByText("Nothing needs you");
     calm.getByText("3 agents working");
-    calm.getByText("next ask likely on Sendspin enclosure, model the opening");
+    calm.getByText(/the next ask likely comes from Sendspin enclosure, model the opening/);
   });
 
   test("says so plainly when no agent is working and no line has a next step", () => {
@@ -2405,11 +2372,11 @@ describe("MoreForYou", () => {
   test("says what one more item is, a task by its place", () => {
     const say = (items: ForYou[]) => render(<MoreForYou items={items} onShow={() => {}} />);
     say([forYouTask({ ref: "PANEL-2", place: "the Mac" })]).getByRole("button", {
-      name: "1 more: a task at the Mac",
+      name: "1 more for you: a task at the Mac",
     });
-    say([forYouTask({ ref: "PANEL-3" })]).getByRole("button", { name: "1 more: a task" });
-    say([forYouQuestion]).getByRole("button", { name: "1 more: a question" });
-    say([forYouDone]).getByRole("button", { name: "1 more: a proposal" });
+    say([forYouTask({ ref: "PANEL-3" })]).getByRole("button", { name: "1 more for you: a task" });
+    say([forYouQuestion]).getByRole("button", { name: "1 more for you: a question" });
+    say([forYouDone]).getByRole("button", { name: "1 more for you: a proposal" });
   });
 
   test("counts several by kind, and shows them when pressed", () => {
@@ -2425,7 +2392,9 @@ describe("MoreForYou", () => {
         onShow={onShow}
       />,
     );
-    fireEvent.click(view.getByRole("button", { name: "4 more: 1 question and 2 tasks and 1 proposal" }));
+    fireEvent.click(
+      view.getByRole("button", { name: "4 more for you: 1 question and 2 tasks and 1 proposal" }),
+    );
     expect(onShow).toHaveBeenCalledTimes(1);
   });
 });
@@ -2620,7 +2589,7 @@ describe("LineForYou", () => {
     const view = render(<LineForYou {...props} onShowMore={onShowMore} />);
     view.getByText("Drawn D-7");
     expect(view.queryByText("Drawn PANEL-2")).toBeNull();
-    fireEvent.click(view.getByRole("button", { name: "2 more: 2 tasks" }));
+    fireEvent.click(view.getByRole("button", { name: "2 more for you: 2 tasks" }));
     expect(onShowMore).toHaveBeenCalledTimes(1);
   });
 
@@ -2680,7 +2649,9 @@ describe("AtPlaceItems", () => {
     expect(task.closest("[data-focus-ref]")?.getAttribute("data-focus-ref")).toBe("PANEL-1");
     expect(task.closest("[data-focus-ref]")?.hasAttribute("aria-current")).toBe(false);
     expect(view.queryByText(/^Drawn /)).toBeNull();
-    fireEvent.click(view.getByRole("button", { name: "1 question · 1 task at the Mac · 1 proposal" }));
+    fireEvent.click(
+      view.getByRole("button", { name: "Also on this line: 1 question · 1 task at the Mac · 1 proposal" }),
+    );
     expect(onFocus).toHaveBeenCalledWith("D-7");
   });
 
@@ -2698,7 +2669,7 @@ describe("AtPlaceItems", () => {
     );
     view.getByText("Drawn D-7");
     view.getByRole("article", { name: "Measure the grip" });
-    fireEvent.click(view.getByRole("button", { name: "1 task at the Mac · 1 proposal" }));
+    fireEvent.click(view.getByRole("button", { name: "Also on this line: 1 task at the Mac · 1 proposal" }));
     expect(onFocus).toHaveBeenCalledWith("PANEL-2");
   });
 

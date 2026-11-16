@@ -6,19 +6,19 @@ import { crewText } from "../../lib/lines.ts";
 import { openEntity } from "../../lib/router.ts";
 import { Button } from "../ui/Button.tsx";
 import { Facts } from "../ui/Facts.tsx";
-import { Markdown } from "../ui/Markdown.tsx";
 import { TextLink } from "../ui/RefLink.tsx";
 import { Row } from "../ui/Row.tsx";
 
-function heldText(held: LineHome["held"]): string | null {
+/** What a waiting line holds, per kind present: "1 question held", "1 question, 2 tasks held". */
+function heldWords(held: LineHome["held"]): string | null {
   const parts = [
     held.questions === 0 ? null : `${held.questions} question${held.questions === 1 ? "" : "s"}`,
     held.tasks === 0 ? null : `${held.tasks} task${held.tasks === 1 ? "" : "s"}`,
   ].filter((part) => part !== null);
-  return parts.length === 0 ? null : `${parts.join(" and ")} held`;
+  return parts.length === 0 ? null : `${parts.join(", ")} held`;
 }
 
-/** A line up next, one row: its number, what it holds, how far scoping got, what finishes it, and Start. */
+/** A line up next, one row: its number, how far scoping got, what it holds, and Start. */
 export function UpNextRow({
   line,
   crew,
@@ -52,24 +52,15 @@ export function UpNextRow({
       title={<TextLink onClick={() => openEntity(line.ref)}>{line.title}</TextLink>}
       facts={
         <Facts>
-          {details === undefined ? null : heldText(details.held)}
+          {scoping}
+          {details === undefined ? null : heldWords(details.held)}
           {details === undefined || details.reconfirming === 0
             ? null
             : `${details.reconfirming} re-confirming`}
-          {scoping}
           {line.doneWhenProposal === null ? null : "done when changed"}
           {crewText(crew)}
         </Facts>
       }
-      {...(line.doneWhen === ""
-        ? {}
-        : {
-            note: (
-              <>
-                Done when <Markdown text={line.doneWhen} inline />
-              </>
-            ),
-          })}
       trailing={
         <Button aria-label={`Start ${line.title}`} onClick={() => onStart(line.ref)}>
           Start

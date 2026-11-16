@@ -7,7 +7,7 @@ import { useHomeKeys } from "../../hooks/useHomeKeys.ts";
 import { useHotkeys } from "../../hooks/useHotkeys.ts";
 import { useNarrow } from "../../hooks/useNarrow.ts";
 import { linesWaitingOnYou, linesWithNoOwner, nextAsk, runningAgents } from "../../lib/lines.ts";
-import { useRoute } from "../../lib/router.ts";
+import { setParams, useRoute } from "../../lib/router.ts";
 import { Page } from "../ui/Page.tsx";
 import { ErrorState, LoadingState } from "../ui/states.tsx";
 import { AtSection } from "./AtSection.tsx";
@@ -71,7 +71,11 @@ export function HomePage() {
       {home === undefined ? null : (
         <>
           {home.working.length === 0 && home.upNext.length === 0 ? (
-            <FirstRun proposals={home.proposed} onAccept={h.acceptRecommended} />
+            <FirstRun
+              proposals={home.proposed}
+              onAccept={h.acceptRecommended}
+              onNewLine={() => setParams({ new: "1" })}
+            />
           ) : Object.values(home.counts).every((count) => count === 0) ? (
             <NothingNeedsYou working={runningAgents(home)} next={nextAsk(home)} />
           ) : null}
@@ -116,6 +120,7 @@ export function HomePage() {
           )}
           <WaitingSections
             sheetArmed={params.get("ref") === null}
+            firstRun={home.working.length === 0 && home.upNext.length === 0}
             home={home}
             h={h}
             focus={focus}

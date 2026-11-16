@@ -17,7 +17,7 @@ export function AtSection({ at, now, onLeave }: { at: AtView; now: number; onLea
       <Row
         label={`At ${at.place}`}
         title={`At ${at.place}`}
-        facts={<Facts>{`ends in ${hours}h`}</Facts>}
+        facts={<Facts>{`ends by itself in ${hours}h`}</Facts>}
         trailing={<Button onClick={onLeave}>Leave</Button>}
       />
     </List>

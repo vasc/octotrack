@@ -207,6 +207,15 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 - Error: as ProposalCard.
 - Empty: never empty: a proposal can always be started.
 
+### components/home/ProposalGroups.tsx
+
+- Designed in: Home-FirstRun.dc.html
+- What it shows: on first run, "Recommended to start 10" open with four proposals and "Show 6 more", then "Recommended for up next 26", "Recommended to table 14", "Recommended to fold into another 1" and "No recommendation 16", each folded to "Includes {a title}, and N more." with Show.
+- Changes from today: new; first run listed every proposal in one section.
+- Loading: never loads on its own: given the proposals by WaitingSections.
+- Error: cannot fail on its own; each proposal's moves report their own failures.
+- Empty: a group with no proposals is left out.
+
 ### components/home/QuietRow.tsx
 
 - Designed in: More-States.dc.html, state D (the folds opened); Home.dc.html (closed)
