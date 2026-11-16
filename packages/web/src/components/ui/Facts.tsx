@@ -3,6 +3,7 @@ import { Children, type ReactNode } from "react";
 /** Small grey facts in a row, a dot between each; empty ones are left out. */
 export function Facts({ children }: { children: ReactNode }) {
   const facts = Children.toArray(children).filter((fact) => fact !== "");
+  if (facts.length === 0) return null;
   return (
     <span className="ui-facts">
       {facts.map((fact, index) => (

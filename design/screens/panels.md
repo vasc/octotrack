@@ -84,8 +84,8 @@ importance. Loading, a failed part and not found follow `Line-States.dc.html` st
 ### components/entity/EventList.tsx
 
 - Designed in: Panels.dc.html, state A
-- What it shows: "Activity 3", then one row each: the time in the lead ("Sun", "7 Nov"), then the sentence with who did it ("homepanel moved it onto L-57").
-- Changes from today: the time leads the row as in the Log; the actor is in the sentence, not a fact after it.
+- What it shows: "Activity 3", then one row each as the Log draws a change: the time in the lead ("14:20", "Sun 20:59", "7 Nov"), the sentence, then who did it.
+- Changes from today: the time leads the row as in the Log, and the row is the Log's own. Who did it stays after the sentence rather than in it: the tracker writes each event as a whole sentence ("OCT-2 created: Base"), so a name cannot be put in front of it.
 - Loading: never loads on its own: given the history by its panel.
 - Error: cannot fail on its own.
 - Empty: no events: the section is left out.

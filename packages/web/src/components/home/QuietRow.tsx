@@ -16,16 +16,21 @@ export function QuietRow({
   onStart?: (ref: string) => void;
   onQueue?: (ref: string) => void;
 }) {
+  const hasNote = line.tabledReason !== null || line.lookAgainAt !== null;
   return (
     <Row
       label={line.title}
       title={<TextLink onClick={() => openEntity(line.ref)}>{line.title}</TextLink>}
-      note={
-        <Facts>
-          {line.tabledReason}
-          {line.lookAgainAt === null ? null : `look again ${whenText(line.lookAgainAt)}`}
-        </Facts>
-      }
+      {...(hasNote
+        ? {
+            note: (
+              <Facts>
+                {line.tabledReason}
+                {line.lookAgainAt === null ? null : `look again ${whenText(line.lookAgainAt)}`}
+              </Facts>
+            ),
+          }
+        : {})}
       {...(onQueue === undefined && onStart === undefined
         ? {}
         : {

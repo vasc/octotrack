@@ -7,7 +7,7 @@ import { List } from "../ui/List.tsx";
 import { Note } from "../ui/Note.tsx";
 import { TextLink } from "../ui/RefLink.tsx";
 import { Section } from "../ui/Section.tsx";
-import { EventRow } from "./EventList.tsx";
+import { LogRow } from "../feed/LogRow.tsx";
 
 /**
  * Until its summary is rewritten, a line lists everything newer than the summary, one row each, with what the
@@ -57,14 +57,14 @@ export function SinceSummary({
       ) : (
         <List>
           {unseen.map((event) => (
-            <EventRow key={event.seq} event={event} />
+            <LogRow key={event.seq} event={event} />
           ))}
         </List>
       )}
       {seen.length === 0 ? null : showSeen ? (
         <List>
           {seen.map((event) => (
-            <EventRow key={event.seq} event={event} />
+            <LogRow key={event.seq} event={event} />
           ))}
         </List>
       ) : (

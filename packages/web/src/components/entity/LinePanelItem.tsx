@@ -70,6 +70,13 @@ export function LinePanelItem({
   const live = line.state !== "done" && line.state !== "dropped";
   const details = home?.lines[line.ref];
   const forYou = details?.forYou ?? [];
+  // Until Lines has loaded once, who owns the line and what it needs from the developer are not known: say so.
+  const homeStatus = (what: string) =>
+    home === undefined ? (
+      <Loaded loaded={false} error={h.home.error} what={what} onRetry={() => void h.home.refetch()}>
+        {null}
+      </Loaded>
+    ) : undefined;
   // Why nobody can take the line, when it needs the developer to step in.
   const stepIn = details?.stepIn === true ? details.stepInReason : null;
   return (
@@ -125,7 +132,7 @@ export function LinePanelItem({
           Could not mark {line.ref} seen. {failureText(unmarked).text}
         </Note>
       )}
-      <PanelForYou title={line.title} items={forYou} h={h} />
+      <PanelForYou title={line.title} items={forYou} h={h} status={homeStatus("what needs you")} />
       <SummaryBox line={line} />
       <OpenDrift drift={drift} />
       <Loaded
@@ -159,6 +166,7 @@ export function LinePanelItem({
         onStop={choices.stop}
         onOwn={() => choices.choose("own")}
         waitingOnYou={home?.lines[line.ref]?.waitingOnYou === true}
+        status={homeStatus("the owner")}
       />
       {!live ? null : line.ownedBy !== null ? (
         <OwnWorkBox

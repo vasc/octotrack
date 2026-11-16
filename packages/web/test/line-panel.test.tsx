@@ -3,6 +3,7 @@ import { fireEvent, render, within } from "@testing-library/react";
 import { LineActions } from "../src/components/entity/LineActions.tsx";
 import { LinePanelHead } from "../src/components/entity/LinePanelHead.tsx";
 import { OwnerBox } from "../src/components/entity/OwnerBox.tsx";
+import { PanelForYou } from "../src/components/entity/PanelForYou.tsx";
 import { OwnWorkBox } from "../src/components/entity/OwnWorkBox.tsx";
 import { PlanList } from "../src/components/entity/PlanList.tsx";
 import { SinceSummary } from "../src/components/entity/SinceSummary.tsx";
@@ -10,7 +11,7 @@ import { SummaryBox } from "../src/components/entity/SummaryBox.tsx";
 import { TellBox } from "../src/components/entity/TellBox.tsx";
 import { Panel } from "../src/components/ui/Panel.tsx";
 import { event, line } from "../src/design/fixtures.ts";
-import { whole } from "./harness.tsx";
+import { homeActions, whole } from "./harness.tsx";
 
 const NOW = Date.parse("2026-11-16T12:00:00Z");
 
@@ -273,5 +274,30 @@ describe("the panel on a phone", () => {
     const more = view.getByRole("button", { name: /^More/ });
     expect(more.querySelector("[data-icon='more']")).not.toBeNull();
     expect(more.textContent).toContain("More");
+  });
+});
+
+describe("while Lines loads", () => {
+  test("Owner says it is loading, never that the line has no owner", () => {
+    const view = render(
+      <OwnerBox
+        line={line({ state: "working" })}
+        crew={undefined}
+        repoNames={[]}
+        onStop={() => {}}
+        onOwn={() => {}}
+        status={<p>Loading the owner…</p>}
+      />,
+    );
+    within(view.getByRole("region", { name: "Owner" })).getByText("Loading the owner…");
+    expect(view.queryByText("no owner")).toBeNull();
+    expect(view.queryByRole("button", { name: "I'll own it" })).toBeNull();
+  });
+
+  test("For you is still drawn, saying it is loading, instead of being left out", () => {
+    const view = render(
+      <PanelForYou title="L-1" items={[]} h={homeActions()} status={<p>Loading what needs you…</p>} />,
+    );
+    within(view.getByRole("region", { name: /For you/ })).getByText("Loading what needs you…");
   });
 });

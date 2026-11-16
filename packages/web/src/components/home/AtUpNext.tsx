@@ -42,7 +42,7 @@ export function AtUpNext({
               focused={task.ref === focus}
             >
               <Note>
-                {line === undefined ? "" : `${firstNumber + at} ${line.title} · `}
+                {line === undefined ? "" : `${firstNumber + at} · ${line.title} · `}
                 {askedText(task)}
               </Note>
               {draw(task)}

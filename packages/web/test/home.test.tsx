@@ -11,6 +11,7 @@ import { NothingNeedsYou } from "../src/components/home/NothingNeedsYou.tsx";
 import { NotAnswering } from "../src/components/home/NotAnswering.tsx";
 import { ProposalCard } from "../src/components/home/ProposalCard.tsx";
 import { ProposalGroups } from "../src/components/home/ProposalGroups.tsx";
+import { QuietRow } from "../src/components/home/QuietRow.tsx";
 import { UpNextRow } from "../src/components/home/UpNextRow.tsx";
 import { WorkingLine } from "../src/components/home/WorkingLine.tsx";
 import { decisionCard, issue, line } from "../src/design/fixtures.ts";
@@ -265,5 +266,19 @@ describe("LineMeta, with nothing waiting on you", () => {
       />,
     );
     view.getByText("agents on it");
+  });
+});
+
+describe("QuietRow", () => {
+  test("a done line with neither reason nor date has no note line", () => {
+    const view = render(<QuietRow line={line({ state: "done", tabledReason: null, lookAgainAt: null })} />);
+    expect(view.container.querySelector(".ui-row-note")).toBeNull();
+  });
+
+  test("a tabled line says why it waits and when to look again", () => {
+    const view = render(
+      <QuietRow line={line({ state: "tabled", tabledReason: "the play-test first", lookAgainAt: null })} />,
+    );
+    view.getByText("the play-test first");
   });
 });

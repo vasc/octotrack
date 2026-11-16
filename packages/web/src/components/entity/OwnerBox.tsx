@@ -1,4 +1,5 @@
 import type { Line, LineCrew } from "@octotrack/core/schemas";
+import type { ReactNode } from "react";
 import { Actions } from "../ui/Actions.tsx";
 import { Button } from "../ui/Button.tsx";
 import { Facts } from "../ui/Facts.tsx";
@@ -18,6 +19,7 @@ export function OwnerBox({
   onStop,
   onOwn,
   waitingOnYou = false,
+  status,
 }: {
   line: Line;
   crew: LineCrew | undefined;
@@ -27,6 +29,8 @@ export function OwnerBox({
   onOwn(): void;
   /** All the line's open work waits on the developer. */
   waitingOnYou?: boolean;
+  /** Lines is loading or failed, so who owns it is not known yet: said in place of the owner and its moves. */
+  status?: ReactNode;
 }) {
   if (line.state === "done" || line.state === "dropped") return null;
   const owner = crew?.owner ?? null;
@@ -42,6 +46,7 @@ export function OwnerBox({
       </Section>
     );
   }
+  if (status !== undefined) return <Section title="Owner">{status}</Section>;
   return (
     <Section title="Owner">
       <List>

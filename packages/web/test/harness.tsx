@@ -1,10 +1,13 @@
+import { mock } from "bun:test";
 import { contracts, type Contract } from "@octotrack/core/contracts";
 import { Hub, Tracker } from "@octotrack/core";
 import { createApp, openSqlite } from "@octotrack/server";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, QueryObserver } from "@tanstack/react-query";
 import { fireEvent, type RenderResult, render } from "@testing-library/react";
 import type { ReactNode } from "react";
 import type { z } from "zod";
+import type { HomeView } from "@octotrack/core/schemas";
+import type { HomeActions } from "../src/hooks/useHome.ts";
 
 /** Stands in for the browser's EventSource, so that a test can push a change whenever it wants to. */
 export class FakeEventSource {
@@ -189,5 +192,41 @@ export function fakePush(options: {
       else Object.defineProperty(navigator, "serviceWorker", before.serviceWorker);
       Object.assign(window, { PushManager: before.PushManager, Notification: before.Notification });
     },
+  };
+}
+
+/** Home's actions with nothing loaded and every action a mock, for a component that is handed them. */
+export function homeActions(overrides: Partial<HomeActions> = {}): HomeActions {
+  return {
+    home: new QueryObserver<HomeView>(new QueryClient(), {
+      queryKey: [contracts.homeShow.name, {}],
+      enabled: false,
+    }).getCurrentResult(),
+    lineOf: () => null,
+    held: new Set<string>(),
+    notMoved: null,
+    places: [],
+    retry: mock(() => {}),
+    anyway: mock(() => {}),
+    setCheckout: mock(() => {}),
+    at: mock(() => {}),
+    repos: [],
+    repoName: (key: string) => key,
+    start: mock(() => {}),
+    queue: mock(() => {}),
+    reject: mock(() => {}),
+    drop: mock(() => {}),
+    table: mock(() => {}),
+    fold: mock(() => {}),
+    own: mock(() => {}),
+    lineDone: mock(() => {}),
+    notYet: mock(() => {}),
+    doneWhen: mock(() => {}),
+    acceptRecommended: mock(() => {}),
+    taskDone: mock(() => {}),
+    taskCant: mock(() => {}),
+    dropBefore: mock(() => {}),
+    reorder: mock(() => {}),
+    ...overrides,
   };
 }

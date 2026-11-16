@@ -11,7 +11,7 @@ import { describe, expect, mock, test } from "bun:test";
 import { useState } from "react";
 import { act, fireEvent, render, renderHook, waitFor, within } from "@testing-library/react";
 import { useReloadOnNewBuild } from "../src/hooks/useReloadOnNewBuild.ts";
-import { QueryClient, QueryClientProvider, QueryObserver } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BatchPanelView } from "../src/components/decisions/BatchPanelView.tsx";
 import { DecisionCardView } from "../src/components/decisions/DecisionCardView.tsx";
 import { QuestionStrip } from "../src/components/decisions/QuestionStrip.tsx";
@@ -76,7 +76,6 @@ import { refOf } from "../src/lib/focus.ts";
 import type {
   EntitySummary,
   ForYou,
-  HomeView,
   Issue,
   LineCrew,
   LineHome,
@@ -94,7 +93,7 @@ import {
   pendingChoice,
   pr,
 } from "../src/design/fixtures.ts";
-import { contracts, proposalMove, whole } from "./harness.tsx";
+import { homeActions, proposalMove, whole } from "./harness.tsx";
 
 const form = decisionForm;
 
@@ -1747,10 +1746,10 @@ describe("home's smaller pieces", () => {
   test("SpreadThin says nothing up to six working lines, then what spreading thin costs, in the header", () => {
     expect(render(<SpreadThin working={6} noOwner={3} waiting={2} />).container.textContent).toBe("");
     const view = render(<SpreadThin working={9} noOwner={3} waiting={2} />);
-    view.getByText("3 with no owner");
-    view.getByText("2 waiting on you");
-    expect(view.getByText("3 with no owner").getAttribute("data-tone")).toBe("stuck");
-    expect(view.getByText("2 waiting on you").getAttribute("data-tone")).toBeNull();
+    // Each carries Status's glyph, never colour alone: ▲ stuck, ● needs you.
+    const noOwner = view.getByText(whole("▲ 3 with no owner"));
+    expect(noOwner.getAttribute("data-tone")).toBe("stuck");
+    view.getByText(whole("● 2 waiting on you"));
   });
 
   test("StartSheetView settles a changed done when and a held question before Start, numbering every choice", () => {
@@ -2121,41 +2120,6 @@ describe("SinceSummary", () => {
 });
 
 /** Every choice home makes, as mocks a test can check; home itself is a query that never ran. */
-function homeActions(overrides: Partial<HomeActions> = {}): HomeActions {
-  return {
-    home: new QueryObserver<HomeView>(new QueryClient(), {
-      queryKey: [contracts.homeShow.name, {}],
-      enabled: false,
-    }).getCurrentResult(),
-    lineOf: () => null,
-    held: new Set<string>(),
-    notMoved: null,
-    places: [],
-    retry: mock(() => {}),
-    anyway: mock(() => {}),
-    setCheckout: mock(() => {}),
-    at: mock(() => {}),
-    repos: [],
-    repoName: (key: string) => key,
-    start: mock(() => {}),
-    queue: mock(() => {}),
-    reject: mock(() => {}),
-    drop: mock(() => {}),
-    table: mock(() => {}),
-    fold: mock(() => {}),
-    own: mock(() => {}),
-    lineDone: mock(() => {}),
-    notYet: mock(() => {}),
-    doneWhen: mock(() => {}),
-    acceptRecommended: mock(() => {}),
-    taskDone: mock(() => {}),
-    taskCant: mock(() => {}),
-    dropBefore: mock(() => {}),
-    reorder: mock(() => {}),
-    ...overrides,
-  };
-}
-
 /** How LineForYou and AtPlaceItems are told to draw an item: a line naming it, so a test can see which were drawn. */
 function drawn(forYou: ForYou) {
   return <p key={refOf(forYou)}>Drawn {refOf(forYou)}</p>;
@@ -2359,7 +2323,7 @@ describe("AtUpNext", () => {
     const section = view.getByRole("region", { name: "Here, from up next" });
     within(section).getByRole("heading", { name: "Here, from up next 2" });
     // Each task's up-next line by its number, then how long it has waited; a line not up next is left out.
-    within(section).getByText("4 Shelf · asked 2h ago");
+    within(section).getByText("4 · Shelf · asked 2h ago");
     within(section).getByText("asked 2h ago");
     const drill = within(section).getByRole("article", { name: "Find the drill" });
     const sweep = within(section).getByRole("article", { name: "Sweep the shed" });
@@ -2395,9 +2359,9 @@ describe("EventList", () => {
     activity.getByText(whole("OCT-1 created: Thing"));
     activity.getByText("dev");
     activity.getByText("agent-a");
-    expect([...view.container.querySelectorAll("time")].map((time) => time.getAttribute("datetime"))).toEqual(
-      ["2026-01-02T10:00:00.000Z", "2026-01-01T10:00:00.000Z"],
-    );
+    // The time leads each row, as in the Log.
+    activity.getByText("2 Jan");
+    activity.getByText("1 Jan");
     expect(activity.getAllByRole("button").map((button) => button.textContent)).toEqual(["OCT-2", "OCT-1"]);
   });
 });
