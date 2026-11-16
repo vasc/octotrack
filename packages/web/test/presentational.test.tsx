@@ -1766,7 +1766,7 @@ describe("KeyHelp and ForYouItem", () => {
     expect(keys).toContain("w");
     expect(keys).toContain("g p");
     const sheet = view.getByRole("dialog", { name: "Keys" });
-    fireEvent.click(within(sheet).getByRole("button", { name: "Cancel" }));
+    fireEvent.click(within(sheet).getByRole("button", { name: "Close" }));
     expect(onClose).toHaveBeenCalledTimes(1);
     fireEvent.keyDown(sheet, { key: "Escape" });
     expect(onClose).toHaveBeenCalledTimes(2);
@@ -2033,7 +2033,7 @@ describe("answers on their line", () => {
           at: new Date(Date.now() - 4 * 60_000).toISOString(),
         }),
       ),
-    ).toBe("picked up by panel-widgets, 4m");
+    ).toBe("picked up by panel-widgets, 4m ago");
     expect(sentence(answer({ status: "carried_out", note: "model set to the short board" }))).toBe(
       "✓ carried out: model set to the short board",
     );
@@ -2501,16 +2501,16 @@ describe("LineStepIn", () => {
     );
   });
 
-  test("says the server's reason, and offers what fits each kind beside Table it and I'll own it", () => {
+  test("says the server's reason, and offers what fits each kind before I'll own it and Table it", () => {
     const cases: readonly (readonly [StepInKind, readonly string[]])[] = [
-      ["no_start_command", ["Try now", "Table it", "I'll own it"]],
-      ["failing", ["Try now", "Table it", "I'll own it"]],
-      ["left", ["Try now", "Table it", "I'll own it"]],
-      ["never_took", ["Try now", "Table it", "I'll own it"]],
-      ["clone_failed", ["Set its checkout", "Table it", "I'll own it"]],
-      ["at_cap", ["Start one anyway", "Table it", "I'll own it"]],
-      ["watch_only", ["Table it", "I'll own it"]],
-      ["no_repo", ["Table it", "I'll own it"]],
+      ["no_start_command", ["Try now", "I'll own it", "Table it"]],
+      ["failing", ["Try now", "I'll own it", "Table it"]],
+      ["left", ["Try now", "I'll own it", "Table it"]],
+      ["never_took", ["Try now", "I'll own it", "Table it"]],
+      ["clone_failed", ["Set its checkout", "I'll own it", "Table it"]],
+      ["at_cap", ["Start one anyway", "I'll own it", "Table it"]],
+      ["watch_only", ["I'll own it", "Table it"]],
+      ["no_repo", ["I'll own it", "Table it"]],
     ];
     for (const [kind, offered] of cases) {
       const view = render(<LineStepIn {...stepIn({ h: homeActions(), kind })} />);

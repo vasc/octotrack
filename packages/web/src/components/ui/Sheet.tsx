@@ -10,6 +10,7 @@ import { Button } from "./Button.tsx";
 export function Sheet({
   title,
   onClose,
+  closeLabel = "Cancel",
   children,
   actions,
   numbered = false,
@@ -17,6 +18,8 @@ export function Sheet({
 }: {
   title: string;
   onClose(): void;
+  /** What the button at the top says: Cancel for a sheet that does something, Close for one that only shows. */
+  closeLabel?: "Cancel" | "Close";
   children: ReactNode;
   actions?: ReactNode;
   /** Its choices are numbered for the keys, so their numbers are drawn. */
@@ -44,7 +47,7 @@ export function Sheet({
         <header className="ui-sheet-head">
           <h2 id={heading}>{title}</h2>
           <Button variant="quiet" onClick={onClose}>
-            Cancel
+            {closeLabel}
           </Button>
         </header>
         <div className="ui-sheet-body">{children}</div>

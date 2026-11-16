@@ -1324,7 +1324,7 @@ describe("lines of work", () => {
       fireEvent.keyDown(window, { key: "?" });
       const help = within(await view.findByRole("dialog", { name: "Keys" }));
       help.getByText("g u");
-      fireEvent.click(help.getByRole("button", { name: "Cancel" }));
+      fireEvent.click(help.getByRole("button", { name: "Close" }));
       await gone(() => view.queryByRole("dialog", { name: "Keys" }));
       fireEvent.keyDown(window, { key: "r" });
       await view.findByRole("dialog", { name: "Record answers" });

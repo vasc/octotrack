@@ -30,6 +30,7 @@ export function CheckoutForm({
           value={path}
           onChange={setPath}
           autoFocus
+          note="A full path, starting with /"
         />
         <Actions>
           <Button type="submit" variant="primary" disabled={!valid}>

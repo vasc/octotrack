@@ -45,12 +45,12 @@ export function StepIn({
     checkoutRepo !== undefined && onCheckout !== undefined ? "checkout" : null,
     onRetry === undefined ? null : "retry",
     onAnyway === undefined ? null : "anyway",
-    "table",
     "own",
+    "table",
   ].filter((action) => action !== null);
   const number = (action: string) => offered.indexOf(action) + 1;
-  // The way forward is filled; Table and own are words beside it.
-  const forward = offered[0] === "table" ? null : offered[0];
+  // The way forward is filled; own and Table follow it.
+  const forward = offered[0] === "own" ? null : offered[0];
   return (
     <Focusable focusRef={stepInRef(line.ref)} label={`Step in on ${line.title}`} focused={focused}>
       <Callout
@@ -95,11 +95,11 @@ export function StepIn({
                   Start one anyway
                 </Button>
               )}
-              <Button choice={number("table")} onClick={() => setMode("table")}>
-                Table it
-              </Button>
               <Button choice={number("own")} onClick={() => onOwn(line.ref)}>
                 I'll own it
+              </Button>
+              <Button choice={number("table")} onClick={() => setMode("table")}>
+                Table it
               </Button>
             </Actions>
           )

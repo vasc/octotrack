@@ -1,29 +1,44 @@
 import { Pairs } from "../ui/Pairs.tsx";
+import { Section } from "../ui/Section.tsx";
 import { Sheet } from "../ui/Sheet.tsx";
 
-/** Every key, as one list behind ?. */
-export const HOME_KEYS: readonly (readonly [string, string])[] = [
+/** The keys that move around, as the Keys sheet lists them. */
+export const MOVING_KEYS: readonly (readonly [string, string])[] = [
   ["j k", "next, previous item"],
   ["J K", "next, previous line"],
-  ["1–9", "the focused item's numbered choice"],
-  ["w", "answer in my own words"],
+  ["o ↵", "open the line"],
+  ["g u", "urgent question"],
+  ["/", "search the log"],
+  ["esc", "close, go back"],
+];
+
+/** The keys that act on what has focus. */
+export const ACTING_KEYS: readonly (readonly [string, string])[] = [
+  ["1–9", "pick a numbered choice"],
+  ["w", "answer in your words"],
   ["l", "later"],
   ["u", "undo"],
-  ["o ↵", "open the line"],
-  ["t", "tell the line's owner"],
-  ["alt ↑ ↓", "move the line"],
+  ["t", "tell the owner"],
+  ["⌥ ↑ ↓", "move the line"],
   ["g p", "I'm at"],
-  ["esc", "close, leave I'm at"],
-  ["g u", "urgent question"],
-  ["/", "search"],
   ["r", "record answers"],
 ];
 
-/** The keys, in a sheet of their own. */
+/** Every key, as one list behind ?, in two groups: moving around, and acting on what has focus. */
+export const HOME_KEYS: readonly (readonly [string, string])[] = [...MOVING_KEYS, ...ACTING_KEYS];
+
+/** The keys, in a sheet of their own that only shows, so it closes with Close. */
 export function KeyHelp({ onClose }: { onClose(): void }) {
+  const pairs = (keys: readonly (readonly [string, string])[]) =>
+    keys.map(([key, what]) => [<kbd key={key}>{key}</kbd>, what] as const);
   return (
-    <Sheet title="Keys" onClose={onClose}>
-      <Pairs pairs={HOME_KEYS.map(([keys, what]) => [<kbd key={keys}>{keys}</kbd>, what] as const)} />
+    <Sheet title="Keys" onClose={onClose} closeLabel="Close">
+      <Section title="Moving">
+        <Pairs pairs={pairs(MOVING_KEYS)} />
+      </Section>
+      <Section title="Acting">
+        <Pairs pairs={pairs(ACTING_KEYS)} />
+      </Section>
     </Sheet>
   );
 }

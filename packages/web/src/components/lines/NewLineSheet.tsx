@@ -68,7 +68,7 @@ export function NewLineSheet({
         Start
       </Button>
       <Button disabled={!ready} onClick={() => setTabling(true)}>
-        Table
+        Table…
       </Button>
     </Actions>
   );
