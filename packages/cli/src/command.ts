@@ -2,6 +2,7 @@ import type { Drift, Notice } from "@octotrack/core";
 import type { Args, OptionSpecs } from "./args.ts";
 import type { OctoClient, OpSuccess } from "./client.ts";
 import { renderDriftNotice, renderNotices } from "./render.ts";
+import { print, printError } from "./write.ts";
 
 export interface Output {
   json: boolean;
@@ -21,28 +22,28 @@ export interface NoticeLedger {
 export function makeOutput(json: boolean, ledger: NoticeLedger = { shown: () => undefined }): Output {
   const printDrift = (drifts: readonly Drift[]) => {
     const notice = renderDriftNotice(drifts);
-    if (notice !== "") console.error(notice);
+    if (notice !== "") printError(notice);
   };
   return {
     json,
     result(outcome, text, ok = true) {
       ledger.shown(outcome.notices);
       if (json) {
-        console.log(JSON.stringify({ ok, ...outcome }));
+        print(JSON.stringify({ ok, ...outcome }));
         return;
       }
-      console.log(text());
+      print(text());
       printDrift(outcome.driftOpened);
       const notices = renderNotices(outcome.notices);
-      if (notices !== "") console.error(notices);
+      if (notices !== "") printError(notices);
     },
     data(value, text) {
-      if (json) console.log(JSON.stringify({ ok: true, data: value }));
-      else console.log(text());
+      if (json) print(JSON.stringify({ ok: true, data: value }));
+      else print(text());
     },
     line(value, text) {
-      if (json) console.log(JSON.stringify(value));
-      else console.log(text());
+      if (json) print(JSON.stringify(value));
+      else print(text());
     },
   };
 }
@@ -51,11 +52,11 @@ export function makeOutput(json: boolean, ledger: NoticeLedger = { shown: () => 
 export function printLeftoverNotices(notices: readonly Notice[], json: boolean): void {
   if (notices.length === 0) return;
   if (json) {
-    console.error(JSON.stringify({ notices }));
+    printError(JSON.stringify({ notices }));
     return;
   }
   const text = renderNotices(notices);
-  if (text !== "") console.error(text);
+  if (text !== "") printError(text);
 }
 
 export interface RunContext {

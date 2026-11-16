@@ -24,6 +24,18 @@
       }
     }
   },
+  "overrides": [
+    {
+      "includes": ["packages/cli/src/**"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": { "level": "error", "options": { "allow": [] } }
+          }
+        }
+      }
+    }
+  ],
   "assist": {
     "enabled": false
   },

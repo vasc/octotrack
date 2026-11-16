@@ -9,6 +9,7 @@ import { type Command, makeOutput, printLeftoverNotices } from "./command.ts";
 import { commandsUnder, COMMANDS, resolveCommand } from "./registry.ts";
 import { findCheckout } from "./checkout.ts";
 import { selfCommand } from "./self.ts";
+import { print, printError } from "./write.ts";
 
 const EXIT_ERROR = 1;
 const EXIT_USAGE = 2;
@@ -93,11 +94,11 @@ function pickFormat(argv: readonly string[]): boolean {
 
 function report(json: boolean, code: string, message: string, hint: string | null): void {
   if (json) {
-    console.log(JSON.stringify({ ok: false, error: { code, message, hint } }));
+    print(JSON.stringify({ ok: false, error: { code, message, hint } }));
     return;
   }
-  console.error(`error: ${message}`);
-  if (hint !== null) console.error(hint);
+  printError(`error: ${message}`);
+  if (hint !== null) printError(hint);
 }
 
 /** Moves leading global flags to the end, so that `octo --json issue list` means the same as `octo issue list --json`. */
@@ -160,14 +161,14 @@ export async function main(rawArgv: readonly string[]): Promise<number> {
   try {
     const first = words[0];
     if (first === undefined) {
-      console.log(topHelp());
+      print(topHelp());
       return argv.includes("--help") || argv.includes("-h") ? 0 : EXIT_USAGE;
     }
     const resolved = resolveCommand(words);
     if (resolved === null) {
       const group = commandsUnder(first);
       if (group.length > 0) {
-        console.log(groupHelp(first, group));
+        print(groupHelp(first, group));
         return argv.includes("--help") ? 0 : EXIT_USAGE;
       }
       throw new UsageError(`Unknown command "${first}". Run octo --help.`);
@@ -176,7 +177,7 @@ export async function main(rawArgv: readonly string[]): Promise<number> {
     const afterCommand = argv.slice(command.path.length);
     const args = parse(afterCommand, { ...GLOBAL_OPTIONS, ...(command.options ?? {}) });
     if (args.flag("help")) {
-      console.log(commandHelp(command));
+      print(commandHelp(command));
       return 0;
     }
     const { actor, identity } = whoIsCalling(args.str("agent"), args.flag("me"), args.str("said"));

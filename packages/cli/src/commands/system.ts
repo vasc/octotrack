@@ -11,6 +11,7 @@ import { loadWakeAdapters } from "@octotrack/server/wake-adapters";
 import * as r from "../render.ts";
 import { seedDemo } from "../seed.ts";
 import { compact } from "./shared.ts";
+import { print, printError } from "../write.ts";
 
 const STRING = { type: "string" } as const;
 const EXIT_UNREACHABLE = 3;
@@ -386,7 +387,7 @@ export const systemCommands: Command[] = [
       );
       if (!out.json) {
         const notice = r.renderDriftNotice(result.driftOpened);
-        if (notice !== "") console.error(notice);
+        if (notice !== "") printError(notice);
       }
       return result.ok ? 0 : 1;
     },
@@ -396,7 +397,7 @@ export const systemCommands: Command[] = [
     summary: "The agent playbook. Point agents at this, or paste it into their instructions",
     ops: [],
     async run() {
-      console.log(agentGuide(loadWakeAdapters(wakeAdaptersPath())));
+      print(agentGuide(loadWakeAdapters(wakeAdaptersPath())));
     },
   },
   {
@@ -407,7 +408,7 @@ export const systemCommands: Command[] = [
     async run(_ctx, args) {
       const port = args.int("port") ?? DEFAULT_PORT;
       const server = startServer(port);
-      console.log(`Octotrack on ${server.url}`);
+      print(`Octotrack on ${server.url}`);
       await new Promise(() => {});
     },
   },

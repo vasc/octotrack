@@ -16,6 +16,7 @@ import { withoutIdentity } from "@octotrack/server/env";
 import { serverLogPath, serverStoppedPath } from "@octotrack/server/paths";
 import { z } from "zod";
 import { skewWarning } from "./skew.ts";
+import { printError } from "./write.ts";
 
 /** A local server starts in well under a second, so this is about twice the worst case seen. */
 const SERVER_START_DEADLINE_MS = 5000;
@@ -87,7 +88,7 @@ export class OctoClient {
     const warning = skewWarning(BUILD_ID, response.headers.get("x-octo-build"));
     if (warning !== null && !this.warnedAboutSkew) {
       this.warnedAboutSkew = true;
-      console.error(warning);
+      printError(warning);
     }
     return response;
   }

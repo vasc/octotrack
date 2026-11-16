@@ -1,5 +1,4 @@
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { contracts } from "@octotrack/core";
 import { Args, parse, parseDuration, quoteValue, UsageError } from "../src/args.ts";
@@ -218,21 +217,6 @@ describe("argument helpers", () => {
       ],
     });
     expect(() => buildSpec(new Args([], {}))).toThrow("Say what to watch");
-  });
-});
-
-describe("output reaches a pipe whole", () => {
-  test("nothing in the CLI reads process.stdout, which in Bun makes console.log drop what a full pipe cannot take", () => {
-    const source = join(import.meta.dir, "../src");
-    const readers = [...new Bun.Glob("**/*.ts").scanSync(source)].filter((file) =>
-      /process\.stdout/.test(
-        readFileSync(join(source, file), "utf8")
-          .split("\n")
-          .filter((line) => !line.trim().startsWith("//"))
-          .join("\n"),
-      ),
-    );
-    expect(readers).toEqual([]);
   });
 });
 

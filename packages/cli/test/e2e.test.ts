@@ -151,6 +151,57 @@ describe("output", () => {
     expect(Shown.parse(parseJson(shown.stdout)).data.entity.body).toBe(body);
   });
 
+  test("a long answer reaches a slow reader whole with its errors in the same pipe, as octo show 2>&1 | jq is", async () => {
+    // Under 2>&1, file descriptors 1 and 2 are one pipe. Anything that reads process.stderr, as the push library's
+    // logger did on load, makes that pipe non-blocking for both, and console.log then dropped what it could not take.
+    const body = "detail ".repeat(30_000).trim();
+    const issue = await data(
+      WithRef,
+      ["issue", "create", "Long", "-p", "OCT", "--body-file", "-"],
+      "agent-a",
+      body,
+    );
+    const shown = await finish(
+      Bun.spawn(["sh", "-c", '"$0" "$1" show "$2" 2>&1 | { sleep 0.5; cat; }', "bun", MAIN, issue.ref], {
+        env: env("agent-a"),
+        stdin: "ignore",
+        stdout: "pipe",
+        stderr: "pipe",
+      }),
+    );
+    expect(shown.code).toBe(0);
+    expect(Shown.parse(parseJson(shown.stdout)).data.entity.body).toBe(body);
+  });
+
+  test("a long answer reaches a slow reader whole whatever else has touched the output streams", async () => {
+    // Stands in for any library, now or later, that reads process.stdout or process.stderr when it loads.
+    const touch = join(home, "touch-streams.ts");
+    writeFileSync(touch, "void process.stdout;\nvoid process.stderr;\n");
+    const body = "detail ".repeat(30_000).trim();
+    const issue = await data(
+      WithRef,
+      ["issue", "create", "Long", "-p", "OCT", "--body-file", "-"],
+      "agent-a",
+      body,
+    );
+    const shown = await finish(
+      Bun.spawn(
+        [
+          "sh",
+          "-c",
+          '"$0" --preload "$1" "$2" show "$3" 2>&1 | { sleep 0.5; cat; }',
+          "bun",
+          touch,
+          MAIN,
+          issue.ref,
+        ],
+        { env: env("agent-a"), stdin: "ignore", stdout: "pipe", stderr: "pipe" },
+      ),
+    );
+    expect(shown.code).toBe(0);
+    expect(Shown.parse(parseJson(shown.stdout)).data.entity.body).toBe(body);
+  });
+
   test("a long answer reaches a slow reader whole when typed at a terminal, as octo show --json | jq is", async () => {
     // Asking whether the developer is at a terminal read process.stdout too, so a pipe typed at a terminal lost output.
     const body = "detail ".repeat(30_000).trim();

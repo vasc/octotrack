@@ -27,8 +27,8 @@ import type {
   WatchResult,
 } from "@octotrack/core";
 
-// Asked of file descriptor 1, never of process.stdout: in Bun, touching process.stdout makes console.log drop whatever a
-// full pipe cannot take, so `octo show --json | jq` received only the first part of its output.
+// Asked of file descriptor 1, not of process.stdout, which in Bun would make the pipe non-blocking. What octo prints
+// arrives whole either way: see write.ts.
 const useColor = isatty(1) && process.env.NO_COLOR === undefined;
 
 function paint(code: number, text: string): string {
