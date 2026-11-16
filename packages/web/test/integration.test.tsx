@@ -784,11 +784,30 @@ describe("lines of work", () => {
   }
 
   test("with nothing being worked on, Working on says so and draws no empty sheet", async () => {
+    server.tracker.call(
+      c.lineAdd,
+      { title: "Wall mount", doneWhen: "It hangs.", where: "up_next" },
+      asDeveloper,
+    );
     navigate("/lines");
     const view = renderApp(<App />);
     const working = await view.findByRole("region", { name: "Working on" });
     await within(working).findByText("Nothing is being worked on");
     expect(within(working).queryByRole("article")).toBeNull();
+  });
+
+  test("with nothing placed yet, home leaves out the empty sections above the proposals", async () => {
+    server.act(
+      c.linePropose,
+      { title: "Wall mount", doneWhen: "It hangs.", recommendation: "up_next", why: "The base is final." },
+      "panel-agent",
+    );
+    navigate("/lines");
+    const view = renderApp(<App />);
+    await view.findByRole("region", { name: "Nothing is placed yet" });
+    await view.findByRole("region", { name: /Recommended for up next/ });
+    expect(view.queryByRole("region", { name: "Working on" })).toBeNull();
+    expect(view.queryByRole("region", { name: "Up next" })).toBeNull();
   });
 
   test("the Lines page shows each section in the developer's order, with what an agent recommends", async () => {

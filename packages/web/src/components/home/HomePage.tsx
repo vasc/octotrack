@@ -59,6 +59,8 @@ export function HomePage() {
   );
   const { handle, drop } = useLineHandles(h);
   const at = home?.at ?? null;
+  // Nothing placed yet: the proposals are all there is, grouped, with no empty sections above them.
+  const firstRun = home !== undefined && home.working.length === 0 && home.upNext.length === 0;
   // I'm at counts down in hours, so a minute's tick keeps it right without redrawing home every second.
   const now = useClock(at !== null, 60_000);
 
@@ -70,7 +72,7 @@ export function HomePage() {
       {h.home.error === null ? null : <ErrorState error={h.home.error} />}
       {home === undefined ? null : (
         <>
-          {home.working.length === 0 && home.upNext.length === 0 ? (
+          {firstRun ? (
             <FirstRun
               proposals={home.proposed}
               onAccept={h.acceptRecommended}
@@ -89,26 +91,28 @@ export function HomePage() {
             onOpen={choose}
             onPostponed={skip}
           />
-          <WorkingSection
-            home={home}
-            h={h}
-            focus={focus}
-            armed={armed}
-            // On a phone, lines past the second fold to one row each; at a place, everything but its tasks does.
-            foldFrom={narrow ? PHONE_OPEN_LINES : Number.POSITIVE_INFINITY}
-            at={at?.place ?? null}
-            handle={handle}
-            drop={drop}
-            actions={
-              <SpreadThin
-                working={home.working.length}
-                noOwner={linesWithNoOwner(home)}
-                waiting={linesWaitingOnYou(home)}
-              />
-            }
-            onFocus={choose}
-            onPostponed={skip}
-          />
+          {firstRun ? null : (
+            <WorkingSection
+              home={home}
+              h={h}
+              focus={focus}
+              armed={armed}
+              // On a phone, lines past the second fold to one row each; at a place, everything but its tasks does.
+              foldFrom={narrow ? PHONE_OPEN_LINES : Number.POSITIVE_INFINITY}
+              at={at?.place ?? null}
+              handle={handle}
+              drop={drop}
+              actions={
+                <SpreadThin
+                  working={home.working.length}
+                  noOwner={linesWithNoOwner(home)}
+                  waiting={linesWaitingOnYou(home)}
+                />
+              }
+              onFocus={choose}
+              onPostponed={skip}
+            />
+          )}
           {at === null ? null : (
             <AtUpNext
               tasks={at.tasks.filter((task) => home.upNext.some((line) => line.ref === task.line))}
@@ -120,7 +124,7 @@ export function HomePage() {
           )}
           <WaitingSections
             sheetArmed={params.get("ref") === null}
-            firstRun={home.working.length === 0 && home.upNext.length === 0}
+            firstRun={firstRun}
             home={home}
             h={h}
             focus={focus}

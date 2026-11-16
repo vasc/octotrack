@@ -64,16 +64,8 @@ export function ProposalCard({
           {line.proposedBy === null ? null : `proposed by ${line.proposedBy}`}
         </Facts>
       }
-    >
-      <ProposalCase line={line} lastUpNext={lastUpNext} />
-      {mode === "fold" ? (
-        <FoldPicker
-          title={line.title}
-          targets={foldTargets}
-          onFold={(into) => onFold(line.ref, into)}
-          onCancel={() => setMode(null)}
-        />
-      ) : (
+      note={<ProposalCase line={line} lastUpNext={lastUpNext} />}
+      trailing={
         <ProposalChoices
           title={line.title}
           recommended={fromTable ? null : line.recommendation}
@@ -86,7 +78,16 @@ export function ProposalCard({
           onReject={() => onReject(line.ref)}
           onDrop={() => onDrop(line.ref)}
         />
-      )}
+      }
+    >
+      {mode === "fold" ? (
+        <FoldPicker
+          title={line.title}
+          targets={foldTargets}
+          onFold={(into) => onFold(line.ref, into)}
+          onCancel={() => setMode(null)}
+        />
+      ) : null}
       {mode === "table" ? (
         <TableForm
           title={line.title}
