@@ -24,7 +24,13 @@ function OpenDecision({ decision, waitsFor }: { decision: Decision; waitsFor: re
   return (
     <Stack>
       {/* The decision being inspected is the one the keys answer. Home stands down while this is open. */}
-      <Loaded loaded={queue.data !== undefined} error={queue.error} label="Loading the question">
+      <Loaded
+        loaded={queue.data !== undefined}
+        error={queue.error}
+        what="the question"
+        onRetry={() => void queue.refetch()}
+        at={queue.dataUpdatedAt}
+      >
         {card === undefined ? (
           <HeldDecision decision={decision} waitsFor={waitsFor} />
         ) : (

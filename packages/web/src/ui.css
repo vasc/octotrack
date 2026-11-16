@@ -1043,6 +1043,32 @@
   color: var(--ink-3);
 }
 
+/* Rows drawn as outlines while their part loads, for the moment it takes. */
+.ui-loading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6) 0;
+}
+
+.ui-outline {
+  height: var(--space-6);
+  border-radius: var(--radius-sm);
+  background: var(--line-faint);
+}
+
+.ui-outline:nth-child(2) {
+  width: 70%;
+}
+
+.ui-outline:nth-child(3) {
+  width: 55%;
+}
+
+.ui-outline:nth-child(4) {
+  width: 62%;
+}
+
 .ui-state p {
   margin: 0;
 }

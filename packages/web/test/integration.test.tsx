@@ -680,7 +680,7 @@ describe("the inspector", () => {
     });
     try {
       await act(() => view.client.refetchQueries({ queryKey: [c.entityShow.name] }));
-      await panel.findByText(/Server restarting/);
+      await panel.findByText(/^As of \d\d:\d\d; could not refresh\.$/);
       panel.getByRole("heading", { name: "Thing to look at" });
     } finally {
       Object.assign(globalThis, { fetch: fetchNow });

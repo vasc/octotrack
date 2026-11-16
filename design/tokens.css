@@ -111,9 +111,10 @@
   --opacity-hover: 0.88;
   --z-popover: 10;
   --z-panel: 20;
-  --z-undo: 30;
   /* A sheet sits over everything, the bar included. */
   --z-sheet: 40;
+  /* Choices waiting with Undo, over everything, an open sheet included: one made in a sheet shows its Undo. */
+  --z-undo: 50;
 
   /* Layout */
   --page-width: 1180px;

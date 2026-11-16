@@ -39,7 +39,13 @@ export function AgentsPage() {
       }
     >
       {choices.failure === null ? null : <ErrorState error={choices.failure} />}
-      <Loaded loaded={agents.data !== undefined} error={agents.error} label="Loading agents">
+      <Loaded
+        loaded={agents.data !== undefined}
+        error={agents.error}
+        what="agents"
+        onRetry={() => void agents.refetch()}
+        at={agents.dataUpdatedAt}
+      >
         {roster.length === 0 ? (
           <EmptyState command="export OCTO_AGENT=feature-x">No agents yet</EmptyState>
         ) : (

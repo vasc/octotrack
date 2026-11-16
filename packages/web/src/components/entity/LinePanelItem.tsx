@@ -35,11 +35,14 @@ export function LinePanelItem({
   line,
   drift,
   stale = null,
+  staleAt,
 }: {
   line: Line;
   drift: readonly Drift[];
   /** Why the panel could not refresh, once it had loaded: what it shows may be out of date. */
   stale?: Error | null;
+  /** When what is shown was last loaded, for a stale panel to say. */
+  staleAt?: number;
 }) {
   const choices = useLineChoices(line);
   const { waiting: choicesWaiting } = useChoices();
@@ -99,7 +102,7 @@ export function LinePanelItem({
         )
       }
     >
-      {stale === null ? null : <StaleNote error={stale} />}
+      {stale === null ? null : <StaleNote at={staleAt} />}
       {unmarked === null ? null : (
         <Note error>
           Could not mark {line.ref} seen: {unmarked.message}
@@ -108,10 +111,22 @@ export function LinePanelItem({
       <PanelForYou title={line.title} items={forYou} h={h} />
       <SummaryBox line={line} />
       <OpenDrift drift={drift} />
-      <Loaded loaded={shown.data !== undefined} error={shown.error} label="Loading the plan">
+      <Loaded
+        loaded={shown.data !== undefined}
+        error={shown.error}
+        what="the plan"
+        onRetry={() => void shown.refetch()}
+        at={shown.dataUpdatedAt}
+      >
         <PlanList steps={shown.data?.steps ?? []} work={shown.data?.work ?? []} />
       </Loaded>
-      <Loaded loaded={since.data !== undefined} error={since.error} label="Loading what happened">
+      <Loaded
+        loaded={since.data !== undefined}
+        error={since.error}
+        what="what happened"
+        onRetry={() => void since.refetch()}
+        at={since.dataUpdatedAt}
+      >
         <SinceSummary
           line={line.ref}
           events={since.data?.events ?? []}

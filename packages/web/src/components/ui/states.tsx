@@ -2,12 +2,15 @@ import type { ReactNode } from "react";
 import { failureText } from "../../lib/failure.ts";
 import { Button } from "./Button.tsx";
 
-/** What is loading, in a few quiet words. */
+/** Rows drawn as outlines while their part loads; what loads is said to a screen reader, which cannot see them. */
 export function LoadingState({ label = "Loading" }: { label?: string }) {
   return (
-    <p className="ui-state" role="status">
-      {label}…
-    </p>
+    <div className="ui-loading" role="status">
+      <span className="ui-hidden">{label}…</span>
+      <span className="ui-outline" aria-hidden="true" />
+      <span className="ui-outline" aria-hidden="true" />
+      <span className="ui-outline" aria-hidden="true" />
+    </div>
   );
 }
 

@@ -2859,38 +2859,47 @@ describe("SinceSummary, past one page", () => {
 });
 
 describe("Loaded", () => {
-  test("says what is loading, or why it failed, until its part has loaded once", () => {
+  test("draws outlines while its part loads, naming it for a screen reader, until it has loaded once", () => {
     const loading = render(
-      <Loaded loaded={false} error={null} label="Loading the plan">
+      <Loaded loaded={false} error={null} what="the plan" onRetry={() => {}}>
         <p>Plan</p>
       </Loaded>,
     );
-    loading.getByText("Loading the plan…");
+    within(loading.getByRole("status")).getByText("Loading the plan…");
+    expect(loading.container.querySelectorAll(".ui-outline").length).toBeGreaterThan(0);
     expect(loading.queryByText("Plan")).toBeNull();
     loading.unmount();
-    const failed = render(
-      <Loaded loaded={false} error={new Error("Boom")} label="Loading the plan">
-        <p>Plan</p>
-      </Loaded>,
-    );
-    failed.getByRole("alert");
-    expect(failed.queryByText("Plan")).toBeNull();
-    failed.unmount();
     render(
-      <Loaded loaded error={null} label="Loading the plan">
+      <Loaded loaded error={null} what="the plan" onRetry={() => {}}>
         <p>Plan</p>
       </Loaded>,
     ).getByText("Plan");
   });
 
-  test("keeps what loaded when a refresh fails, and says it may be out of date", () => {
+  test("a first load that fails says what failed, with Try again", () => {
+    const onRetry = mock(() => {});
+    const failed = render(
+      <Loaded loaded={false} error={new TypeError("Failed to fetch")} what="the plan" onRetry={onRetry}>
+        <p>Plan</p>
+      </Loaded>,
+    );
+    failed.getByText("Could not load the plan.");
+    failed.getByText(/The tracker did not answer\./);
+    fireEvent.click(failed.getByRole("button", { name: "Try again" }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+    expect(failed.queryByText("Plan")).toBeNull();
+  });
+
+  test("keeps what loaded when a refresh fails, marked with the time it is from", () => {
+    const at = new Date(2026, 10, 16, 14, 20).getTime();
     const view = render(
-      <Loaded loaded error={new Error("Server restarting")} label="Loading the plan">
+      <Loaded loaded error={new Error("Server restarting")} what="the plan" onRetry={() => {}} at={at}>
         <p>Plan</p>
       </Loaded>,
     );
     view.getByText("Plan");
-    view.getByText("Out of date: Server restarting");
+    view.getByText("As of 14:20; could not refresh.");
+    expect(view.queryByText(/Server restarting/)).toBeNull();
   });
 });
 describe("TaskFrees", () => {

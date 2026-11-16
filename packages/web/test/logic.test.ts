@@ -21,7 +21,8 @@ import { issueLinks } from "../src/lib/links.ts";
 import { moreSinceSummary } from "../src/lib/log.ts";
 import { doneWhenSaid, LINE_SAID } from "../src/lib/said.ts";
 import { DEFAULT_APPEARANCE, PALETTES, readAppearance, tintBrowserBar } from "../src/lib/appearance.ts";
-import { decision, decisionCard, event, issue } from "../src/design/fixtures.ts";
+import { decision, decisionCard, event, issue, pendingChoice } from "../src/design/fixtures.ts";
+import { answerWaiting } from "../src/hooks/useDecisionForm.ts";
 import { closeEntity, navigate, openEntity, setParams } from "../src/lib/router.ts";
 
 describe("suggest", () => {
@@ -491,5 +492,16 @@ describe("newBuild", () => {
   test("is nothing when the served page is not a built one, such as an error page or a dev server's", () => {
     expect(newBuild(loaded, "<html>Bad gateway</html>")).toEqual([]);
     expect(newBuild([], '<script type="module" src="/src/main.tsx"></script>')).toEqual([]);
+  });
+});
+
+describe("answerWaiting", () => {
+  test("is the answer waiting on a question, never Later or Not urgent on it", () => {
+    const later = pendingChoice({ id: 1, op: "decision.postpone", ref: "D-1" });
+    const answer = pendingChoice({ id: 2, op: "decision.resolve", ref: "D-1" });
+    const other = pendingChoice({ id: 3, op: "decision.resolve", ref: "D-2" });
+    expect(answerWaiting([later], "D-1")).toBeUndefined();
+    expect(answerWaiting([later, answer, other], "D-1")?.id).toBe(2);
+    expect(answerWaiting([pendingChoice({ ...answer, state: "applied" })], "D-1")).toBeUndefined();
   });
 });

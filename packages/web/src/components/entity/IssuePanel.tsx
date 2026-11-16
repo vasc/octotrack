@@ -35,11 +35,14 @@ export function IssuePanel({
   issue,
   detail,
   stale = null,
+  staleAt,
 }: {
   issue: Issue;
   detail: EntityDetail;
   /** Why the panel could not refresh, once it had loaded: what it shows may be out of date. */
   stale?: Error | null;
+  /** When what is shown was last loaded, for a stale panel to say. */
+  staleAt?: number;
 }) {
   const h = useHome();
   const choices = useChoices();
@@ -73,7 +76,7 @@ export function IssuePanel({
       {...(task ? {} : { title: issue.title })}
       onClose={backEntity}
     >
-      {stale === null ? null : <StaleNote error={stale} />}
+      {stale === null ? null : <StaleNote at={staleAt} />}
       {task ? (
         open ? (
           <TaskItem task={issue} onDone={h.taskDone} onCant={h.taskCant} />

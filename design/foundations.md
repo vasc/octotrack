@@ -165,7 +165,7 @@ Only what floats over content gets a shadow. Everything else is separated by a l
 | `--opacity-hover`      | A filled button under the pointer                                                   |
 | `--z-popover`          | Above the page                                                                      |
 | `--z-panel`            | Above popovers                                                                      |
-| `--z-undo`             | Above an open panel: a choice made there shows its Undo                             |
+| `--z-undo`             | Above everything, an open sheet included: a choice made there shows its Undo        |
 | `--z-sheet`            | A sheet, over everything, the bar included                                          |
 
 ## Layout

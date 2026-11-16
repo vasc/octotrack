@@ -1,5 +1,5 @@
 import { contracts } from "@octotrack/core/contracts";
-import type { Decision } from "@octotrack/core/schemas";
+import type { Decision, PendingChoice } from "@octotrack/core/schemas";
 import { useState } from "react";
 import { useChoices } from "./useChoices.ts";
 import { useDraft } from "./useDraft.ts";
@@ -37,6 +37,14 @@ export interface DecisionForm {
   waiting: WaitingAnswer | null;
 }
 
+/** The answer to a question waiting with Undo: an answer only, never Later or Not urgent on the same question. */
+export function answerWaiting(pending: readonly PendingChoice[], ref: string): PendingChoice | undefined {
+  return pending.find(
+    (choice) =>
+      choice.state === "pending" && choice.ref === ref && choice.op === contracts.decisionResolve.name,
+  );
+}
+
 /** Answering one question: an option in one press, or the developer's own words; Later; Not urgent. */
 export function useDecisionForm(decision: Decision, onPostponed?: (ref: string) => void): DecisionForm {
   const key = `answer:${decision.ref}`;
@@ -50,7 +58,7 @@ export function useDecisionForm(decision: Decision, onPostponed?: (ref: string) 
   const line = useLinePlace(decision.line);
   const to = line?.title ?? decision.ref;
   const open = writing ?? draft.value !== "";
-  const pending = choices.pending.find((choice) => choice.state === "pending" && choice.ref === decision.ref);
+  const pending = answerWaiting(choices.pending, decision.ref);
   return {
     ownWords: open ? draft.value : null,
     sending: choices.waiting(key),
