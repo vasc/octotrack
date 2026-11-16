@@ -551,7 +551,7 @@ describe("decisions out of band", () => {
     act(() => box.focus());
     fireEvent.keyDown(box, { key: "Enter", metaKey: true });
 
-    await within(await sheet.findByRole("group", { name: "Results" })).findByText("recorded");
+    await within(await sheet.findByRole("group", { name: "Results" })).findByText("✓ recorded");
     view.getByText(/no option "nope"/);
     expect(server.act(c.decisionList, { query: `ref:${first.ref}` })[0]).toMatchObject({
       status: "decided",
@@ -559,7 +559,7 @@ describe("decisions out of band", () => {
       chosenOption: "sqs",
       resolutionNote: "On the call",
     });
-    // The recorded line is gone, even under the cursor; the one that failed stays, to fix and send again.
+    // The recorded row is gone, even under the cursor; the one that failed stays, to fix and send again.
     await waitFor(() => expect(box).toHaveProperty("value", `${second.ref} nope`));
     expect(document.activeElement).toBe(box);
   });
