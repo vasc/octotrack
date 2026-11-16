@@ -92,11 +92,22 @@ export function timeLabel(iso: string, now: number = Date.now()): string {
   if (at.toDateString() === today.toDateString()) {
     return `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
   }
-  if (now - at.getTime() < 6 * DAY) return WEEKDAYS[at.getDay()] ?? iso.slice(0, 10);
+  const clock = `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
+  if (now - at.getTime() < 6 * DAY) return `${WEEKDAYS[at.getDay()] ?? iso.slice(0, 10)} ${clock}`;
   const month = (MONTHS[at.getMonth()] ?? "").slice(0, 3);
   return at.getFullYear() === today.getFullYear()
     ? `${at.getDate()} ${month}`
     : `${month} ${at.getFullYear()}`;
+}
+
+const ROSTER_ORDER = ["running", "asleep", "quiet", "stopped", "gone"] as const;
+
+/** How the roster stands, as the Agents page says under its title: "1 running · 24 quiet". */
+export function rosterSummary(states: readonly string[]): string {
+  return ROSTER_ORDER.map((state) => [state, states.filter((other) => other === state).length] as const)
+    .filter(([, count]) => count > 0)
+    .map(([state, count]) => `${count} ${state}`)
+    .join(" · ");
 }
 
 /** A filter term that survives names with spaces or brackets in them. */

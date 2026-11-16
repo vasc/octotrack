@@ -9,9 +9,11 @@ export interface UndoLine {
   waitsOnYou: boolean;
 }
 
+/** How long until it takes effect, short; once the time is up and the tracker has not confirmed, that it is on its way. */
 function inSeconds(dueAt: string, now: number): string {
-  const seconds = Math.max(1, Math.ceil((Date.parse(dueAt) - now) / 1000));
-  return `in ${seconds} second${seconds === 1 ? "" : "s"}`;
+  const left = Date.parse(dueAt) - now;
+  if (left <= 0) return "Taking effect…";
+  return `in ${Math.ceil(left / 1000)} s`;
 }
 
 /** What a Stop does to the line its owner leaves. */

@@ -3,6 +3,7 @@ import { useChoices } from "../../hooks/useChoices.ts";
 import { useHome } from "../../hooks/useHome.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
 import { usePush } from "../../hooks/usePush.ts";
+import { rosterSummary } from "../../lib/format.ts";
 import { homeLines, lineFacts } from "../../lib/lines.ts";
 import { PushToggle } from "../home/PushToggle.tsx";
 import { List } from "../ui/List.tsx";
@@ -27,6 +28,7 @@ export function AgentsPage() {
   return (
     <Page
       title="Agents"
+      {...(roster.length === 0 ? {} : { subtitle: rosterSummary(roster.map((agent) => agent.state)) })}
       aside={<PushToggle state={push.state} error={push.error} onTurnOn={() => void push.turnOn()} />}
     >
       {choices.failure === null ? null : <ErrorState error={choices.failure} />}

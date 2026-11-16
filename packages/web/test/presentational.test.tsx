@@ -1174,8 +1174,8 @@ describe("UndoBar", () => {
         onUndo={onUndo}
       />,
     );
-    view.getByText(whole('Sending "26 mm" to Sendspin enclosure in 8 seconds'));
-    view.getByText(whole("Starting Wall mount in 1 second"));
+    view.getByText(whole('Sending "26 mm" to Sendspin enclosure in 8 s'));
+    view.getByText(whole("Starting Wall mount in 1 s"));
     // Newest first.
     expect(view.getByRole("status").textContent?.indexOf("26 mm")).toBeLessThan(
       view.getByRole("status").textContent?.indexOf("Starting Wall mount") ?? 0,
@@ -1203,7 +1203,7 @@ describe("UndoBar", () => {
         onPause={onPause}
       />,
     );
-    waits.getByText(whole("Stopping panel-widgets in 8 seconds. Sendspin enclosure waits on you."));
+    waits.getByText(whole("Stopping panel-widgets in 8 s. Sendspin enclosure waits on you."));
     fireEvent.click(waits.getByRole("button", { name: "Pause the line instead" }));
     expect(onPause).toHaveBeenCalledWith(3, "L-7");
     waits.unmount();
@@ -1214,7 +1214,7 @@ describe("UndoBar", () => {
         pending={[stop]}
         onUndo={() => {}}
       />,
-    ).getByText(whole("Stopping panel-widgets in 8 seconds. Sendspin enclosure looks for another owner."));
+    ).getByText(whole("Stopping panel-widgets in 8 s. Sendspin enclosure looks for another owner."));
   });
 
   test("a choice that failed says why until dismissed", () => {

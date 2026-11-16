@@ -158,10 +158,10 @@ describe("nextFocus", () => {
 });
 
 describe("timeLabel", () => {
-  test("the time today, the weekday this past week, else the date", () => {
+  test("the time today, the weekday and time this past week, else the date", () => {
     const now = new Date(2026, 10, 14, 18, 0).getTime();
     expect(timeLabel(new Date(2026, 10, 14, 9, 52).toISOString(), now)).toBe("09:52");
-    expect(timeLabel(new Date(2026, 10, 10, 9, 0).toISOString(), now)).toBe("Tue");
+    expect(timeLabel(new Date(2026, 10, 10, 9, 0).toISOString(), now)).toBe("Tue 09:00");
     // Older: the day and the month in few letters, so the log's time column stays narrow; another year says which.
     expect(timeLabel(new Date(2026, 9, 1, 9, 0).toISOString(), now)).toBe("1 Oct");
     expect(timeLabel(new Date(2025, 9, 1, 9, 0).toISOString(), now)).toBe("Oct 2025");

@@ -26,12 +26,13 @@ export function FeedPage() {
   return (
     <Page
       title="Log"
+      subtitle="What you have not seen, line by line"
       aside={
         <>
           <FilterBox
             filter={filter}
             inputRef={input}
-            placeholder="Search"
+            placeholder="Search: line:L-56 since:2d actor:ttube"
             autoFocus={params.get("find") === "1"}
           />
           <Button variant="quiet" onClick={seen.markAll}>

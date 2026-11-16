@@ -745,6 +745,18 @@
   letter-spacing: -0.01em;
 }
 
+.ui-page-name {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.ui-page-subtitle {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--ink-3);
+}
+
 .ui-page-aside {
   display: flex;
   flex: 1;
@@ -1258,6 +1270,13 @@
 .ui-bar-link:hover,
 .ui-bar-link[aria-current="page"] {
   color: var(--ink);
+}
+
+/* The page you are on: bold and underlined, so it reads without colour. */
+.ui-bar-link[aria-current="page"]:not([data-brand="true"]) {
+  font-weight: var(--weight-semibold);
+  text-decoration: underline;
+  text-underline-offset: 6px;
 }
 
 .ui-bar-link[data-brand="true"] {

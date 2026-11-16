@@ -455,7 +455,7 @@ describe("live updates, with nothing but the server's own notifications", () => 
     const main = within(view.getByRole("main"));
     await main.findByText("octo.2");
     server.tracker.call(c.agentStop, { name: "octo.2" }, { actor: "dev", channel: "dashboard" });
-    await main.findByText(/stopped/);
+    await main.findByText(/stopped by you/);
   });
 
   test("a change landing between the first load and the stream connecting is not lost", async () => {
@@ -833,7 +833,7 @@ describe("lines of work", () => {
     proposalMove(proposed, "Up next", "Wall mount");
     // Every choice waits a few seconds with Undo; Now skips the wait.
     await within(await view.findByRole("status", { name: "" })).findByText(
-      wholeMatching(/^Moving Wall mount to up next in \d seconds?$/),
+      wholeMatching(/^Moving Wall mount to up next in \d s$/),
     );
     await answerNow(view);
     const upNext = within(await view.findByRole("region", { name: "Up next" }));
@@ -1008,7 +1008,7 @@ describe("lines of work", () => {
         .find((element) => element.getAttribute("aria-live") === "polite");
       expect(live?.textContent).toBe("");
       proposalMove(view, "Start", "Wall mount");
-      await within(live ?? document.body).findByText(wholeMatching(/^Starting Wall mount in \d seconds?$/));
+      await within(live ?? document.body).findByText(wholeMatching(/^Starting Wall mount in \d s$/));
     });
 
     test("a choice that fails when it takes effect says why in the Undo bar, until dismissed", async () => {
@@ -2414,7 +2414,7 @@ describe("lines of work", () => {
     const view = renderApp(<App />);
     fireEvent.click(await view.findByRole("button", { name: "Stop octo.3" }));
     fireEvent.click(await view.findByRole("button", { name: "Pause the line instead" }));
-    await view.findByText(wholeMatching(/^Pausing Busy line: up next in \d seconds?$/));
+    await view.findByText(wholeMatching(/^Pausing Busy line: up next in \d s$/));
     await answerNow(view);
     await waitFor(() =>
       expect(server.tracker.call(c.lineShow, { ref: "L-1" }, asDeveloper).line.state).toBe("up_next"),
