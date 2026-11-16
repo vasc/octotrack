@@ -179,6 +179,7 @@ export function LinesGallery() {
             ]}
             onDoneWhen={NOOP}
             onAnswer={NOOP}
+            onOwn={() => {}}
             onStart={close}
             onCancel={close}
           />

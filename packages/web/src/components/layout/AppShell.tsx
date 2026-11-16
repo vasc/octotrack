@@ -88,7 +88,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             newVersion={build.waiting}
             onLoadNow={build.loadNow}
           />
-          {keysOpen ? <KeyHelp onClose={closeKeys} /> : null}
+          {keysOpen ? <KeyHelp onClose={closeKeys} onLines={path === "/" || path === "/lines"} /> : null}
           {bar.error === null ? null : <ErrorState error={bar.error} />}
           <PartBoundary>
             {isPending ? (

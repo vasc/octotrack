@@ -22,6 +22,7 @@ export function StartSheetView({
   questions,
   onDoneWhen,
   onAnswer,
+  onOwn,
   onStart,
   onCancel,
   sheetRef,
@@ -33,6 +34,8 @@ export function StartSheetView({
   questions: readonly Decision[];
   onDoneWhen(accept: boolean): void;
   onAnswer(ref: string, key: string, label: string): void;
+  /** A held question with no options, answered in the developer's own words. */
+  onOwn(ref: string, words: string): void;
   onStart(): void;
   onCancel(): void;
   /** The sheet, where the number keys find its choices. */
@@ -94,6 +97,7 @@ export function StartSheetView({
           question={question}
           firstChoice={firsts[index] ?? 1}
           onAnswer={onAnswer}
+          onOwn={onOwn}
         />
       ))}
       {status !== undefined || gone.length === 0 ? null : (

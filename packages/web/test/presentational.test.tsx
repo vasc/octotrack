@@ -1782,6 +1782,7 @@ describe("home's smaller pieces", () => {
         questions={[question]}
         onDoneWhen={onDoneWhen}
         onAnswer={onAnswer}
+        onOwn={() => {}}
         onStart={onStart}
         onCancel={() => {}}
       />,

@@ -2,12 +2,13 @@ import { describe, expect, mock, test } from "bun:test";
 import { fireEvent, render, within } from "@testing-library/react";
 import { AnswerStatus } from "../src/components/home/AnswerStatus.tsx";
 import { CheckoutForm } from "../src/components/home/CheckoutForm.tsx";
+import { HeldQuestion } from "../src/components/home/HeldQuestion.tsx";
 import { DoneWhenChanged } from "../src/components/home/DoneWhenChanged.tsx";
 import { KeyHelp } from "../src/components/home/KeyHelp.tsx";
 import { StepIn } from "../src/components/home/StepIn.tsx";
 import { StartSheetView } from "../src/components/home/StartSheetView.tsx";
 import { NewLineSheet } from "../src/components/lines/NewLineSheet.tsx";
-import { issue, line } from "../src/design/fixtures.ts";
+import { decision, issue, line } from "../src/design/fixtures.ts";
 import { whole } from "./harness.tsx";
 import { TaskCard } from "../src/components/home/TaskCard.tsx";
 
@@ -88,6 +89,16 @@ describe("KeyHelp", () => {
     sheet.getByText("search the log");
     sheet.getByRole("button", { name: "Close" });
   });
+
+  test("opened from another page, keys that act only on Lines say so", () => {
+    const sheet = within(
+      render(<KeyHelp onClose={noop} onLines={false} />).getByRole("dialog", { name: "Keys" }),
+    );
+    sheet.getByText("next, previous item on Lines");
+    sheet.getByText("tell the owner on Lines");
+    sheet.getByText("close, go back");
+    sheet.getByText("undo");
+  });
 });
 
 describe("NewLineSheet, as drawn", () => {
@@ -166,6 +177,7 @@ describe("StartSheetView, as drawn", () => {
         questions={[]}
         onDoneWhen={noop}
         onAnswer={noop}
+        onOwn={noop}
         onStart={noop}
         onCancel={noop}
         status={<p>loading</p>}
@@ -183,6 +195,7 @@ describe("StartSheetView, as drawn", () => {
         questions={[]}
         onDoneWhen={noop}
         onAnswer={noop}
+        onOwn={noop}
         onStart={noop}
         onCancel={noop}
       />,
@@ -232,5 +245,24 @@ describe("TaskCard, as drawn", () => {
     view.getByText("Your task");
     view.getByRole("button", { name: "Done" });
     view.getByRole("button", { name: "Can't" });
+  });
+});
+
+describe("HeldQuestion", () => {
+  test("with no options, its own-words box is open, and Send answers in those words", () => {
+    const onOwn = mock((_ref: string, _words: string) => {});
+    const view = render(
+      <HeldQuestion
+        question={decision({ ref: "D-42", title: "What should the walls be?", options: [] })}
+        firstChoice={1}
+        onAnswer={noop}
+        onOwn={onOwn}
+      />,
+    );
+    const send = view.getByRole("button", { name: "Send" });
+    expect(send.hasAttribute("disabled")).toBe(true);
+    fireEvent.change(view.getByLabelText("Your answer"), { target: { value: "Tiles" } });
+    fireEvent.click(view.getByRole("button", { name: "Send" }));
+    expect(onOwn).toHaveBeenCalledWith("D-42", "Tiles");
   });
 });

@@ -35,9 +35,7 @@ export function FeedPage() {
             placeholder="Search: line:L-56 since:2d actor:ttube"
             autoFocus={params.get("find") === "1"}
           />
-          <Button variant="quiet" onClick={seen.markAll}>
-            Mark all seen
-          </Button>
+          <Button onClick={seen.markAll}>Mark all seen</Button>
         </>
       }
     >

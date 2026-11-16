@@ -1152,6 +1152,8 @@ describe("lines of work", () => {
       await line.findByText("1 unseen");
       line.getByText(/plan/i);
       within(feed.getByRole("article", { name: "Weekly digest" })).getByText(/nothing new/);
+      // A plain button: it acts on the whole page, so it is not a word that steps back.
+      expect(view.getByRole("button", { name: "Mark all seen" }).getAttribute("data-variant")).toBe("plain");
       fireEvent.click(view.getByRole("button", { name: "Mark all seen" }));
       // It waits with Undo, like every choice.
       await view.findByText(/Marking everything seen/);

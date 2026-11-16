@@ -96,6 +96,14 @@ export function StartSheet({
           summary: `Sending "${label}" to ${place?.title ?? line.title}`,
         })
       }
+      onOwn={(ref, words) =>
+        resolve({
+          ref,
+          option: null,
+          note: words,
+          summary: `Sending "${words}" to ${place?.title ?? line.title}`,
+        })
+      }
       onStart={() => onStart(line.ref)}
       onCancel={onCancel}
     />

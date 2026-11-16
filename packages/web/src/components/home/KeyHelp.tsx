@@ -24,13 +24,33 @@ export const ACTING_KEYS: readonly (readonly [string, string])[] = [
   ["r", "record answers"],
 ];
 
+/** The keys that act only on Lines, where the items and their choices are. */
+const LINES_ONLY: ReadonlySet<string> = new Set([
+  "j k",
+  "J K",
+  "o ↵",
+  "g u",
+  "1–9",
+  "w",
+  "l",
+  "t",
+  "⌥ ↑ ↓",
+  "r",
+]);
+
 /** Every key, as one list behind ?, in two groups: moving around, and acting on what has focus. */
 export const HOME_KEYS: readonly (readonly [string, string])[] = [...MOVING_KEYS, ...ACTING_KEYS];
 
-/** The keys, in a sheet of their own that only shows, so it closes with Close. */
-export function KeyHelp({ onClose }: { onClose(): void }) {
+/**
+ * The keys, in a sheet of their own that only shows, so it closes with Close. Opened from the Log or Agents, the keys
+ * that act only on Lines say so.
+ */
+export function KeyHelp({ onClose, onLines = true }: { onClose(): void; onLines?: boolean }) {
   const pairs = (keys: readonly (readonly [string, string])[]) =>
-    keys.map(([key, what]) => [<kbd key={key}>{key}</kbd>, what] as const);
+    keys.map(
+      ([key, what]) =>
+        [<kbd key={key}>{key}</kbd>, onLines || !LINES_ONLY.has(key) ? what : `${what} on Lines`] as const,
+    );
   return (
     <Sheet title="Keys" onClose={onClose} closeLabel="Close">
       <Section title="Moving">
