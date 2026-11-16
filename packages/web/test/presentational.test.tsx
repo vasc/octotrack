@@ -328,15 +328,14 @@ describe("QuestionStrip", () => {
 });
 
 describe("FeedItem", () => {
-  test("shows the summary with clickable refs, and the project and actor add filters", () => {
+  test("shows the summary with clickable refs, and the actor adds a filter; the repo is not drawn", () => {
     const onFilter = mock(() => {});
     const view = render(<FeedItem onFilter={onFilter} event={event({ summary: "OCT-1 moved, see D-3" })} />);
     view.getByRole("button", { name: "OCT-1" });
     view.getByRole("button", { name: "D-3" });
     fireEvent.click(view.getByRole("button", { name: "agent-a" }));
     expect(onFilter).toHaveBeenCalledWith("actor:agent-a");
-    fireEvent.click(view.getByRole("button", { name: "OCT" }));
-    expect(onFilter).toHaveBeenCalledWith("project:OCT");
+    expect(view.queryByRole("button", { name: "OCT" })).toBeNull();
   });
 
   test("adds the ref when the summary does not mention it", () => {

@@ -1,5 +1,7 @@
 import type { FeedEvent } from "@octotrack/core/schemas";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
+import { Actions } from "../ui/Actions.tsx";
+import { Button } from "../ui/Button.tsx";
 import { isRoutine, routineSentence } from "../../lib/log.ts";
 import { Fact, Facts } from "../ui/Facts.tsx";
 import { List } from "../ui/List.tsx";
@@ -14,31 +16,34 @@ import { LogRow } from "./LogRow.tsx";
  */
 export function LogGroup({
   label,
-  lead,
   title,
   refText = null,
+  state = null,
   headline = null,
   events,
 }: {
   /** What the group is called to a screen reader. */
   label: string;
-  /** The line's number, or a dot for a group that is no line. */
-  lead: ReactNode;
   title: ReactNode;
   refText?: string | null;
+  /** How the line stands, after its ref. */
+  state?: string | null;
   headline?: string | null;
   events: readonly FeedEvent[];
 }) {
   const rows = events.filter((event) => !isRoutine(event));
+  const routine = events.filter(isRoutine);
   const sentence = routineSentence(events);
+  // Showing the routine changes is a choice on this screen alone, so it is the component's own state.
+  const [showRoutine, setShowRoutine] = useState(false);
   return (
     <Row
       label={label}
-      lead={lead}
       title={title}
       facts={
         <Facts>
           {refText}
+          {state}
           {events.length === 0 ? "nothing new" : null}
           {events.length > 0 && rows.length === 0 ? `${sentence}, all routine` : null}
           {rows.length === 0 ? null : <Fact tone="strong">{rows.length} unseen</Fact>}
@@ -53,7 +58,20 @@ export function LogGroup({
               <LogRow key={event.seq} event={event} />
             ))}
           </List>
-          {sentence === null ? null : <Note>Also routine: {sentence}.</Note>}
+          {sentence === null ? null : showRoutine ? (
+            <List>
+              {routine.map((event) => (
+                <LogRow key={event.seq} event={event} />
+              ))}
+            </List>
+          ) : (
+            <Actions>
+              <Note>Also routine: {sentence}.</Note>
+              <Button variant="quiet" onClick={() => setShowRoutine(true)}>
+                Show
+              </Button>
+            </Actions>
+          )}
         </>
       )}
     </Row>

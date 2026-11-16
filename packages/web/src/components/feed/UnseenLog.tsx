@@ -74,11 +74,10 @@ export function UnseenLog({
       )}
       {sheet ? (
         <List>
-          {shown.map((line, index) => (
+          {shown.map((line) => (
             <LineLog
               key={line.ref}
               line={line}
-              number={index + 1}
               events={events.filter((event) => event.line === line.ref && !REFUSED.has(event.type))}
             />
           ))}

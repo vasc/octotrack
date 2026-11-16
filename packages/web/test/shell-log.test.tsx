@@ -4,7 +4,11 @@ import { refusals } from "../src/lib/refused.ts";
 import { UndoBar } from "../src/components/layout/UndoBar.tsx";
 import { SyncFailures } from "../src/components/prs/SyncFailures.tsx";
 import { Page } from "../src/components/ui/Page.tsx";
-import { pendingChoice } from "../src/design/fixtures.ts";
+import { event, line, pendingChoice } from "../src/design/fixtures.ts";
+import { LogRow } from "../src/components/feed/LogRow.tsx";
+import { LineLog } from "../src/components/feed/LineLog.tsx";
+import { LooseSection } from "../src/components/feed/LooseSection.tsx";
+import { FeedItem } from "../src/components/feed/FeedItem.tsx";
 import { rosterSummary, timeLabel } from "../src/lib/format.ts";
 import { whole } from "./harness.tsx";
 
@@ -96,5 +100,49 @@ describe("refused requests", () => {
     expect(store.list().map((item) => item.summary)).toEqual(["Starting Wall mount", "Tabling Mount"]);
     store.dismiss(first);
     expect(store.list().map((item) => item.summary)).toEqual(["Tabling Mount"]);
+  });
+});
+
+describe("the Log's rows", () => {
+  test("a change leads with its time, then the sentence, then who", () => {
+    const view = render(
+      <LogRow event={event({ summary: "D-34 no longer affects PANEL-5", actor: "homepanel" })} />,
+    );
+    view.getByText("homepanel");
+  });
+
+  test("a line's group has no number, says its ref and how it stands", () => {
+    const view = render(<LineLog line={line({ ref: "L-56", state: "proposed" })} events={[event()]} />);
+    view.getByText("L-56");
+    view.getByText("proposed");
+    // The group's own head has no lead; its changes keep their times.
+    expect(view.container.querySelector(".ui-row-head")?.querySelector(":scope > .ui-row-lead")).toBeNull();
+  });
+
+  test("a group of what is on no line says what it holds", () => {
+    const view = render(<LooseSection title="On no line" events={[event()]} />);
+    view.getByText("changes to things that belong to no line");
+  });
+
+  test("routine changes can be shown", () => {
+    const routine = event({ seq: 9, type: "drift.resolved", summary: "DR-2 verified" });
+    const view = render(<LineLog line={line()} events={[event({ seq: 1 }), routine]} />);
+    expect(view.queryByText(/DR-2 verified/)).toBeNull();
+    fireEvent.click(view.getByRole("button", { name: "Show" }));
+    view.getByText(/verified/);
+  });
+
+  test("a search result says who and when by the clock, and no repo", () => {
+    const at = new Date(2026, 10, 16, 20, 58).toISOString();
+    const view = render(
+      <FeedItem
+        event={event({ summary: "D-75 took over", actor: "ttube", project: "TTUBE", ts: at })}
+        onFilter={() => {}}
+        now={new Date(2026, 10, 16, 22, 0).getTime()}
+      />,
+    );
+    view.getByText("20:58");
+    view.getByRole("button", { name: "ttube" });
+    expect(view.queryByRole("button", { name: "TTUBE" })).toBeNull();
   });
 });
