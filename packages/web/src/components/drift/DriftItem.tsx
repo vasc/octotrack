@@ -1,12 +1,11 @@
 import type { Drift } from "@octotrack/core/schemas";
-import { driftTitle } from "../../lib/format.ts";
+import { driftTitle, shortDate } from "../../lib/format.ts";
 import { DriftAnswer, type DriftMode } from "./DriftAnswer.tsx";
 import { StatusBadge } from "../ui/Badge.tsx";
 import { Facts } from "../ui/Facts.tsx";
 import { RefLink } from "../ui/RefLink.tsx";
 import { RefText } from "../ui/RefText.tsx";
 import { Row } from "../ui/Row.tsx";
-import { TimeAgo } from "../ui/TimeAgo.tsx";
 
 export type { DriftMode } from "./DriftAnswer.tsx";
 
@@ -26,10 +25,10 @@ export function DriftItem({ drift, busy = false, onAck }: DriftItemProps) {
       facts={
         <Facts>
           <RefLink value={drift.ref} />
-          {drift.status === "open" ? null : <StatusBadge value={drift.status} />}
+          {drift.status === "open" ? "out of date" : <StatusBadge value={drift.status} />}
           <On target={drift.target} />
           {drift.assignee === null ? null : `for ${drift.assignee}`}
-          <TimeAgo iso={drift.createdAt} />
+          {`since ${shortDate(drift.createdAt)}`}
         </Facts>
       }
       note={<RefText text={drift.message} />}

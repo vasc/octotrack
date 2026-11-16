@@ -32,7 +32,8 @@ describe("EntityCrumbs", () => {
         }}
       />,
     );
-    view.getByText("Pull request");
+    // A pull request is its ref and its repo, as drawn: no kind word.
+    expect(view.queryByText("pull request")).toBeNull();
     view.getByText("STACK");
     view.getByText("PR-1");
   });

@@ -145,12 +145,12 @@ export function TaskCard({
       answer={form}
       {...(own && !cant ? {} : { answerLabel: cant ? "Why not" : "What to send back" })}
     >
+      {task.body === "" ? null : <Markdown text={task.body} />}
       {frees === null ? null : (
         <Note>
           Frees <RefLink value={frees.ref} /> {frees.title}
         </Note>
       )}
-      {task.body === "" ? null : <Markdown text={task.body} />}
     </Item>
   );
 }

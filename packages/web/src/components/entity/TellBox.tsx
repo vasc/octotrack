@@ -14,17 +14,28 @@ export interface TellBoxProps {
   focus?: boolean;
   /** Its words are waiting with Undo: they are not sent again. */
   sending?: boolean;
+  /** Who owns the line is still loading: said, rather than naming nobody and changing. */
+  loading?: boolean;
 }
 
 /**
  * Tell: a free message to whoever owns the line, closing nothing, under a visible label naming who it reaches. Empty,
  * it is a nudge, and the box says so. Cmd+Enter sends it.
  */
-export function TellBox({ line, to, words, onWords, onSend, focus = false, sending = false }: TellBoxProps) {
+export function TellBox({
+  line,
+  to,
+  words,
+  onWords,
+  onSend,
+  focus = false,
+  sending = false,
+  loading = false,
+}: TellBoxProps) {
   const send = () => {
-    if (!sending) onSend(words.trim());
+    if (!sending && !loading) onSend(words.trim());
   };
-  const who = to ?? `whoever takes ${line}`;
+  const who = loading ? `${line}'s owner` : (to ?? `whoever takes ${line}`);
   return (
     <Stack>
       <Field
@@ -35,10 +46,11 @@ export function TellBox({ line, to, words, onWords, onSend, focus = false, sendi
         onSubmit={send}
         autoFocus={focus}
         multiline
+        {...(loading ? { note: `Loading who owns ${line}…` } : {})}
       />
       <Actions>
-        <Button variant="primary" disabled={sending} onClick={send}>
-          {sending ? "Sending…" : words.trim() === "" ? "Nudge" : "Tell"}
+        <Button variant="primary" disabled={loading} busy={sending ? "Sending…" : undefined} onClick={send}>
+          {words.trim() === "" ? "Nudge" : "Tell"}
         </Button>
       </Actions>
     </Stack>

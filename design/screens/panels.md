@@ -74,12 +74,12 @@ importance. Loading, a failed part and not found follow `Line-States.dc.html` st
 - What it shows: "Open · vasc/stack#4 ↗ · by vasc · 9 days · +33 −2"; then its facts, a conflict first among them ("Merge ▲ conflicts with main; feat/draft-prs needs a rebase", the warn glyph, no box and no red), then Checks, Review, Branch and Synced; then the body.
 - Changes from today:
   - State, link, author, age and size move into one facts line; the external link carries ↗.
-  - The thing that needs attention first is stated in a box above the pairs, in words.
-  - Checks and Review read "none run" and "none asked" (today "none"); Mergeable is said by the box instead of a pair; Synced reads "2 min ago".
+  - What needs attention comes first among its facts, in words: a conflict is the Merge fact with the warn glyph, no box and no red.
+  - Checks and Review read "none run" and "none asked" (today "none"); Mergeable is said by the Merge fact instead of its own pair; Synced reads "2 min ago".
   - The size uses the same minus as everywhere ("−").
 - Loading: never loads on its own: given the pull request by EntityBody.
 - Error: when sync has stopped for its repo, Synced says so in place: "stale since 14:20: gh is not logged in".
-- Empty: nothing needing attention: the box is left out; an empty body is left out.
+- Empty: nothing needing attention: the Merge fact is left out; an empty body is left out.
 
 ### components/entity/EventList.tsx
 

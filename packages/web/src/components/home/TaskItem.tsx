@@ -21,7 +21,9 @@ export function TaskItem({
   onCant(task: Issue, why: string): void;
 }) {
   const draft = useOutcomeDraft(task.ref);
-  const holdsUp = usePlanStep(task.line, task.step)?.title ?? null;
+  const step = usePlanStep(task.line, task.step);
+  // As the strip reads it: "holds up step 3, settle the enclosure".
+  const holdsUp = step === null || task.step === null ? null : `step ${task.step}, ${step.title}`;
   const why = useDraft(`task-why:${task.ref}`);
   const { waiting } = useChoices();
   return (

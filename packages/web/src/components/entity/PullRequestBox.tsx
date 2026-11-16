@@ -7,27 +7,37 @@ import { Row } from "../ui/Row.tsx";
 import { Section } from "../ui/Section.tsx";
 import { ErrorState, LoadingState } from "../ui/states.tsx";
 
-const CHECKS: Readonly<Record<PullRequest["checks"], string>> = {
-  none: "no checks",
+const CHECKS: Readonly<Record<Exclude<PullRequest["checks"], "none">, string>> = {
   pending: "checks running",
   passing: "✓ checks pass",
   failing: "✗ checks failing",
 };
 
-/** An issue's pull requests, one row each: its title, its number, which leaves for GitHub, its checks and its state. */
+/**
+ * An issue's pull requests, one row each: its title, then its number, which leaves for GitHub, its state and its checks:
+ * "#418 open · ✗ checks failing". Checks never run are not mentioned.
+ */
 export function PullRequestBox({
   prs,
   loading = false,
   error = null,
+  onRetry,
 }: {
   prs: readonly PullRequest[];
   loading?: boolean;
   error?: Error | null;
+  onRetry?: () => void;
 }) {
   return (
     <Section title="Pull requests" count={loading || error !== null ? undefined : prs.length}>
       {loading ? <LoadingState label="Loading pull requests" /> : null}
-      {error === null ? null : <ErrorState title="Could not load the pull requests." error={error} />}
+      {error === null ? null : (
+        <ErrorState
+          title="Could not load the pull requests."
+          error={error}
+          {...(onRetry === undefined ? {} : { onRetry })}
+        />
+      )}
       {prs.length === 0 && !loading && error === null ? <Note>None yet.</Note> : null}
       {prs.length === 0 ? null : (
         <List>
@@ -39,10 +49,16 @@ export function PullRequestBox({
                 <Facts>
                   {/* Out to GitHub, where the pull request lives. */}
                   <Link href={pr.url} external>
-                    {pr.repo}#{pr.number}
+                    #{pr.number}
                   </Link>
-                  {pr.checks === "failing" ? <Fact tone="stuck">{CHECKS.failing}</Fact> : CHECKS[pr.checks]}
                   {pr.state}
+                  {pr.checks === "none" ? (
+                    ""
+                  ) : pr.checks === "failing" ? (
+                    <Fact tone="stuck">{CHECKS.failing}</Fact>
+                  ) : (
+                    CHECKS[pr.checks]
+                  )}
                 </Facts>
               }
             />

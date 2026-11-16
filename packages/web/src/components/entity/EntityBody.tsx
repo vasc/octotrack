@@ -1,5 +1,5 @@
-import type { EntityDetail, Line } from "@octotrack/core/schemas";
-import { humanize } from "../../lib/format.ts";
+import type { EntityDetail, Line, SyncFailure } from "@octotrack/core/schemas";
+import { humanize, syncReason } from "../../lib/format.ts";
 import { Facts } from "../ui/Facts.tsx";
 import { List } from "../ui/List.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
@@ -21,11 +21,14 @@ export function EntityBody({
   entity,
   links,
   lines,
+  syncFailures = [],
 }: {
   entity: EntityDetail["entity"];
   links: EntityDetail["links"];
   /** Every line the page knows: a repo's own, and what an old idea or milestone became. */
   lines: readonly Line[];
+  /** Repos whose pull request status has stopped updating. */
+  syncFailures?: readonly SyncFailure[];
 }) {
   // A line has a panel of its own, which EntityPanel shows instead.
   if ("doneWhen" in entity) return null;
@@ -35,7 +38,17 @@ export function EntityBody({
       .map((link) => link.fromRef);
     return <DecisionPanel decision={entity} waitsFor={waitsFor} />;
   }
-  if ("number" in entity) return <PrPanel pr={entity} />;
+  if ("number" in entity) {
+    const failure = syncFailures.find((item) => item.repo === entity.repo);
+    return (
+      <PrPanel
+        pr={entity}
+        stale={
+          failure === undefined ? undefined : { since: failure.updatedAt, reason: syncReason(failure.error) }
+        }
+      />
+    );
+  }
   if ("priority" in entity) return null;
   if ("rule" in entity) return <DriftBody drift={entity} />;
   if ("level" in entity) return <Markdown text={entity.body} />;

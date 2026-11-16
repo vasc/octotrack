@@ -10,7 +10,7 @@ import { LineLog } from "../src/components/feed/LineLog.tsx";
 import { LooseSection } from "../src/components/feed/LooseSection.tsx";
 import { FeedItem } from "../src/components/feed/FeedItem.tsx";
 import { rosterSummary, timeLabel } from "../src/lib/format.ts";
-import { whole } from "./harness.tsx";
+import { whole, wholeMatching } from "./harness.tsx";
 
 describe("UndoBar", () => {
   test("counts down short, then says it is taking effect once the time is up", () => {
@@ -71,7 +71,17 @@ describe("SyncFailures", () => {
       />,
     );
     view.getByText("Pull request status is stale for vasc/stack");
-    view.getByText("gh: not logged in. It picks up again by itself once that is fixed.");
+    view.getByText(
+      wholeMatching(/gh is not logged in\. Run gh auth login; it picks up again within two minutes\.$/),
+    );
+  });
+
+  test("another reason is said as the sync gave it, with when it recovers", () => {
+    render(
+      <SyncFailures failures={[{ repo: "a/b", error: "API rate limit exceeded", updatedAt: "" }]} />,
+    ).getByText(
+      wholeMatching(/API rate limit exceeded\. It picks up again within two minutes of that being fixed\.$/),
+    );
   });
 });
 

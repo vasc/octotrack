@@ -4,8 +4,7 @@ import { Fragment } from "react";
 import { useHome } from "../../hooks/useHome.ts";
 import { useIssueTell } from "../../hooks/useIssueTell.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
-import { usePlanStep } from "../../hooks/usePlanStep.ts";
-import { humanize } from "../../lib/format.ts";
+import { capitalized, humanize } from "../../lib/format.ts";
 import { issueLinks } from "../../lib/links.ts";
 import { backEntity, closeEntity, openEntity, pageUnder, useRoute } from "../../lib/router.ts";
 import { howClosed, isTask } from "../../lib/tasks.ts";
@@ -15,7 +14,7 @@ import { Facts } from "../ui/Facts.tsx";
 import { StaleNote } from "../ui/Loaded.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
 import { NotKept } from "../ui/NotKept.tsx";
-import { Code } from "../ui/Note.tsx";
+import { Code, Note } from "../ui/Note.tsx";
 import { Stack } from "../ui/Pairs.tsx";
 import { Panel } from "../ui/Panel.tsx";
 import { RefLink, TextLink } from "../ui/RefLink.tsx";
@@ -55,7 +54,6 @@ export function IssuePanel({
   const task = isTask(issue);
   const open = issue.status !== "done" && issue.status !== "cancelled";
   const { frees, waitsOn } = issueLinks(issue.ref, detail.links);
-  const step = usePlanStep(issue.line, issue.step);
   // A Tell about an issue reaches whoever holds it, else the line's owner, as the server delivers it.
   const owner = issue.line === null ? null : (h.home.data?.crews[issue.line]?.owner?.name ?? null);
   const tellTo =
@@ -69,11 +67,20 @@ export function IssuePanel({
     <Panel
       crumbs={
         <nav aria-label="Where this is">
-          <Facts>
-            {line === null ? null : <TextLink onClick={() => openEntity(line.ref)}>{line.title}</TextLink>}
-            {issue.step === null ? null : `step ${issue.step}${step === null ? "" : ` of ${step.of}`}`}
-            <Code>{issue.ref}</Code>
-          </Facts>
+          {issue.line === null ? null : (
+            <>
+              <Code>{issue.line}</Code>{" "}
+              {line === null ? (
+                h.home.isPending ? (
+                  "…"
+                ) : null
+              ) : (
+                <TextLink onClick={() => openEntity(line.ref)}>{line.title}</TextLink>
+              )}
+              {" › "}
+            </>
+          )}
+          <Code>{issue.ref}</Code>
         </nav>
       }
       {...(task ? {} : { title: issue.title })}
@@ -84,21 +91,36 @@ export function IssuePanel({
       {stale === null ? null : <StaleNote at={staleAt} what={issue.ref} onRetry={onRetry} />}
       {task ? (
         open ? (
-          <TaskItem task={issue} onDone={h.taskDone} onCant={h.taskCant} />
+          <TaskItem
+            task={issue}
+            frees={freed[0] === undefined ? null : { ref: freed[0].ref, title: freed[0].title }}
+            onDone={h.taskDone}
+            onCant={h.taskCant}
+          />
         ) : (
           <TaskClosed task={issue} closed={howClosed(detail.history)} />
         )
       ) : (
         <Stack>
           <Facts>
-            Issue
-            {humanize(issue.status)}
+            {capitalized(humanize(issue.status))}
             {issue.assignee === null ? "nobody holds it" : `held by ${issue.assignee}`}
             <Code>{h.repoName(issue.project)}</Code>
             {waitsOn.length === 0 ? null : <RefList label="waiting on" refs={waitsOn} />}
             {frees.length === 0 ? null : <RefList label="holds up" refs={frees} />}
           </Facts>
           {issue.body === "" ? null : <Markdown text={issue.body} />}
+          {waitsOn.some((ref) => /^D-\d+$/.test(ref)) ? (
+            <Note>
+              It waits on you: answer{" "}
+              {waitsOn
+                .filter((ref) => /^D-\d+$/.test(ref))
+                .map((ref) => (
+                  <RefLink key={ref} value={ref} />
+                ))}{" "}
+              first.
+            </Note>
+          ) : null}
         </Stack>
       )}
       {task ? (
@@ -109,12 +131,14 @@ export function IssuePanel({
             prs={(prs.data ?? []).map((card) => card.pr)}
             loading={prs.isPending}
             error={prs.error}
+            onRetry={() => void prs.refetch()}
           />
           <EventList title="Activity" events={detail.history} />
           {issue.line === null ? null : (
             <TellBox
               line={issue.line}
               to={tellTo}
+              loading={h.home.isPending}
               words={tell.draft.value}
               sending={tell.sending}
               onWords={tell.draft.change}

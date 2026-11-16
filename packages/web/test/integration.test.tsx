@@ -412,7 +412,9 @@ describe("the log", () => {
     );
     const view = renderApp(<App />);
     await view.findByText("Pull request status is stale for acme/app");
-    view.getByText(/gh is not logged in\. It picks up again by itself/);
+    view.getByText(
+      wholeMatching(/gh is not logged in\. Run gh auth login; it picks up again within two minutes\./),
+    );
     server.tracker.call(c.prSync, { prs: [], repos: ["acme/app"] }, github);
     await gone(() => view.queryByText("Pull request status is stale for acme/app"));
   });
@@ -2653,9 +2655,10 @@ describe("lines of work", () => {
       section.getByRole("button", { name: "Sendspin enclosure" });
       const frees = within(section.getByRole("region", { name: "What it frees" }));
       frees.getByRole("button", { name: issue.ref });
-      frees.getByText("held by octo.1");
+      // Who holds the freed issue is not drawn.
+      expect(frees.queryByText("held by octo.1")).toBeNull();
       // Its facts are separate pieces: the step it holds up, and who filed it.
-      await section.findByText("holds up Settle the board");
+      await section.findByText("holds up step 1, Settle the board");
       section.getByText("filed by octo.1");
       section.getByRole("button", { name: "Can't do it" });
       fireEvent.change(section.getByLabelText("Five numbers"), { target: { value: "41, 38, 12" } });
@@ -2726,7 +2729,7 @@ describe("lines of work", () => {
       navigate("/");
       const view = renderApp(<App />);
       const opened = within(await view.findByRole("article", { name: "Measure the grip" }));
-      await opened.findByText("holds up Settle the board");
+      await opened.findByText("holds up step 1, Settle the board");
       opened.getByText(whole(`Frees ${issue.ref} Fit the board`));
     });
 
@@ -2784,7 +2787,10 @@ describe("lines of work", () => {
       const view = renderApp(<App />);
       const panel = within(await view.findByRole("complementary", { name: issue.ref }));
       const section = panel;
-      await within(section.getByRole("navigation", { name: "Where this is" })).findByText(/step 1 of 1/);
+      // The crumb: its line by ref and title, then › and its own ref.
+      await within(section.getByRole("navigation", { name: "Where this is" })).findByRole("button", {
+        name: "Sendspin enclosure",
+      });
       section.getByRole("heading", { name: "Fit the board" });
       section.getByText("held by octo.1");
       expect(section.getAllByRole("button", { name: task.ref }).length).toBeGreaterThan(0);

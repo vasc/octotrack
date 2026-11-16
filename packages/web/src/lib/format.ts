@@ -169,6 +169,34 @@ export function filterTerm(field: string, value: string): string {
   return /[\s(),"]/.test(value) ? `${field}:"${value.replaceAll('"', '\\"')}"` : `${field}:${value}`;
 }
 
+/** A clock time in the viewer's own time: "14:20". */
+export function clockTime(iso: string): string {
+  const at = new Date(iso);
+  return `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
+}
+
+/** An age in words, as a pull request's facts say it: "just now", "2 min", "3 hours", "9 days". */
+export function ageWords(iso: string, now: number = Date.now()): string {
+  const elapsed = now - Date.parse(iso);
+  if (elapsed < MINUTE) return "just now";
+  if (elapsed < HOUR) return `${Math.floor(elapsed / MINUTE)} min`;
+  const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
+  if (elapsed < DAY) return plural(Math.floor(elapsed / HOUR), "hour");
+  return plural(Math.floor(elapsed / DAY), "day");
+}
+
+/** Why a sync stopped, in the page's words: a login the CLI lacks, or the first line of what it said. */
+export function syncReason(error: string): string {
+  if (/not logged in|auth login|authenticat/i.test(error)) return "gh is not logged in";
+  const first = (error.split("\n")[0] ?? "").trim().replace(/[.:]$/, "");
+  return first === "" ? "the sync failed" : first;
+}
+
+/** A word or phrase with its first letter in capitals, as a state word starts a row of facts: "Blocked". */
+export function capitalized(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
 export function humanize(value: string): string {
   return value.replaceAll("_", " ");
 }

@@ -692,7 +692,7 @@ describe("small pieces", () => {
   test("sync failures name the repo and the reason", () => {
     const view = render(<SyncFailures failures={[{ repo: "a/b", error: "Boom", updatedAt: "" }]} />);
     view.getByText("Pull request status is stale for a/b");
-    view.getByText(/Boom\. It picks up again by itself/);
+    view.getByText(/Boom\. It picks up again within two minutes of that being fixed\./);
     expect(render(<SyncFailures failures={[]} />).container.firstChild).toBe(null);
   });
 
@@ -2175,10 +2175,10 @@ describe("PullRequestBox", () => {
     );
     const box = within(view.getByRole("region", { name: "Pull requests" }));
     within(box.getByRole("heading", { name: /^Pull requests/ })).getByText("2");
-    expect(box.getByRole("link", { name: "acme/app#12" }).getAttribute("href")).toBe(
+    expect(box.getByRole("link", { name: "#12" }).getAttribute("href")).toBe(
       "https://github.com/acme/app/pull/12",
     );
-    box.getByRole("link", { name: "acme/app#13" });
+    box.getByRole("link", { name: "#13" });
     box.getByText("Add retry");
     box.getByText("Drop the cache");
     box.getByText("✓ checks pass");
@@ -2188,9 +2188,10 @@ describe("PullRequestBox", () => {
     box.getByText("merged");
   });
 
-  test("says checks pending or absent in words", () => {
+  test("says checks running in words, and leaves out checks never run", () => {
     render(<PullRequestBox prs={[pr({ checks: "pending" })]} />).getByText("checks running");
-    render(<PullRequestBox prs={[pr({ ref: "PR-3", checks: "none" })]} />).getByText("no checks");
+    const none = render(<PullRequestBox prs={[pr({ ref: "PR-3", checks: "none" })]} />);
+    expect(within(none.container).queryByText(/checks/)).toBeNull();
   });
 
   test("with none yet says so", () => {
@@ -2780,17 +2781,13 @@ describe("TaskFrees", () => {
     ...overrides,
   });
 
-  test("names what Done frees, opens it, and says who holds it", () => {
+  test("names what Done frees and opens it, without who holds it", () => {
     navigate("/");
     const view = render(<TaskFrees freed={[freed()]} />);
     view.getByText("Test-print the current parts");
-    view.getByText("held by panel-widgets");
+    expect(view.queryByText("held by panel-widgets")).toBeNull();
     fireEvent.click(view.getByRole("button", { name: "PANEL-5" }));
     expect(new URLSearchParams(window.location.search).get("ref")).toBe("PANEL-5");
-  });
-
-  test("with nobody holding it, says so", () => {
-    render(<TaskFrees freed={[freed({ assignee: null })]} />).getByText("nobody holds it");
   });
 
   test("is nothing when the task frees nothing", () => {
