@@ -220,6 +220,7 @@ export function homeActions(overrides: Partial<HomeActions> = {}): HomeActions {
     table: mock(() => {}),
     fold: mock(() => {}),
     own: mock(() => {}),
+    bringBack: mock(() => {}),
     lineDone: mock(() => {}),
     notYet: mock(() => {}),
     doneWhen: mock(() => {}),

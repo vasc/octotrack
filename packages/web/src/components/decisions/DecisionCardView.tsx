@@ -5,6 +5,7 @@ import { Actions } from "../ui/Actions.tsx";
 import { Button } from "../ui/Button.tsx";
 import { Item } from "../ui/Item.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
+import { NotKept } from "../ui/NotKept.tsx";
 import { Note } from "../ui/Note.tsx";
 import { Waiting } from "../ui/Waiting.tsx";
 import { OwnWords } from "./OwnWords.tsx";
@@ -18,6 +19,8 @@ export interface DecisionCardViewProps {
   line?: LinePlace | null;
   /** The time now, in milliseconds, for an answer's countdown and the question's age. */
   now?: number;
+  /** Its title is drawn; not where a panel's head already carries it. */
+  titled?: boolean;
 }
 
 /**
@@ -25,7 +28,13 @@ export interface DecisionCardViewProps {
  * the recommended one with its reason inside it, under a hairline); then the other ways out. An answer waits in the
  * card with Undo. Pure: all state comes in through `form`.
  */
-export function DecisionCardView({ card, form, line = null, now = Date.now() }: DecisionCardViewProps) {
+export function DecisionCardView({
+  card,
+  form,
+  line = null,
+  now = Date.now(),
+  titled = true,
+}: DecisionCardViewProps) {
   const { decision } = card;
   const noOptions = decision.options.length === 0;
   const waiting = form.waiting;
@@ -56,7 +65,7 @@ export function DecisionCardView({ card, form, line = null, now = Date.now() }: 
       label={decision.title}
       kind={<QuestionStrip card={card} line={line} now={now} />}
       tone={decision.urgentReason === null ? "needs" : "stuck"}
-      title={decision.title}
+      {...(titled ? { title: decision.title } : {})}
       answer={
         <>
           {form.ownWords !== null || (noOptions && waiting === null) ? (
@@ -68,7 +77,7 @@ export function DecisionCardView({ card, form, line = null, now = Date.now() }: 
               chosen={waiting?.chosen ?? undefined}
             />
           )}
-          {form.error === null ? null : <Note error>{form.error}</Note>}
+          <NotKept unsaved={form.notSaved} />
         </>
       }
       {...(form.ownWords !== null || noOptions ? {} : { answerLabel })}

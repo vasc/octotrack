@@ -174,7 +174,7 @@ export function decisionForm(overrides: Partial<DecisionForm> = {}): DecisionFor
   return {
     ownWords: null,
     sending: false,
-    error: null,
+    notSaved: false,
     answer: () => {},
     openOwn: () => {},
     closeOwn: () => {},

@@ -8,8 +8,7 @@ import { List } from "../ui/List.tsx";
 import { Section } from "../ui/Section.tsx";
 
 /**
- * What the line needs from the developer, in the panel: the first opened and taking the keys, the rest one row each,
- * opened in its place on a click. While Lines loads, or if it failed, the section stays, saying so.
+ * What the line needs from the developer, in the panel: one row each, opened in its place on a press. While Lines loads, or if it failed, the section stays, saying so.
  */
 export function PanelForYou({
   title,
@@ -24,12 +23,8 @@ export function PanelForYou({
   status?: ReactNode;
 }) {
   const [open, setOpen] = useState<string | null>(null);
-  const [first] = items;
-  const focused = items.some((item) => refOf(item) === open)
-    ? open
-    : first === undefined
-      ? null
-      : refOf(first);
+  // Each starts as a row, as drawn; a press opens it in its place.
+  const focused = items.some((item) => refOf(item) === open) ? open : null;
   if (status !== undefined) return <Section title="For you">{status}</Section>;
   if (items.length === 0) return null;
   return (
@@ -45,6 +40,7 @@ export function PanelForYou({
               label={focusLabel(item, title)}
               focused={isOpen}
               onOpen={setOpen}
+              onBringBack={h.bringBack}
             >
               {isOpen ? (
                 <ForYouItem

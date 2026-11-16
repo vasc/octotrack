@@ -1,9 +1,11 @@
 import type { ForYou } from "@octotrack/core/schemas";
 import type { ReactNode } from "react";
 import { refOf } from "../../lib/focus.ts";
-import { URGENT_REASON } from "../../lib/lines.ts";
-import { Focusable } from "../ui/Focusable.tsx";
+import { sinceText } from "../../lib/format.ts";
 import { Markdown } from "../ui/Markdown.tsx";
+import { URGENT_REASON } from "../../lib/lines.ts";
+import { Button } from "../ui/Button.tsx";
+import { Focusable } from "../ui/Focusable.tsx";
 import { Row } from "../ui/Row.tsx";
 
 /**
@@ -16,11 +18,14 @@ export function ForYouRow({
   focused,
   onOpen,
   on,
+  onBringBack,
   children,
 }: {
   item: ForYou;
   /** The line an urgent question is on, by its number on the page and its title. */
   on?: { number: number; title: string } | undefined;
+  /** A question put off comes back to its place among the rest. */
+  onBringBack?: ((ref: string) => void) | undefined;
   /** What a screen reader says when focus reaches it. */
   label: string;
   focused: boolean;
@@ -36,8 +41,18 @@ export function ForYouRow({
       </Focusable>
     );
   const { kind, tone, title, note } = rowText(item, on);
+  const later = item.kind === "question" && item.card.decision.postponedAt !== null;
   return (
     <Row
+      {...(later && onBringBack !== undefined
+        ? {
+            trailing: (
+              <Button variant="quiet" aria-label={`Bring back ${ref}`} onClick={() => onBringBack(ref)}>
+                Bring back
+              </Button>
+            ),
+          }
+        : {})}
       focusRef={ref}
       label={label}
       openLabel={`Open ${ref}`}
@@ -55,7 +70,7 @@ function rowText(
   on: { number: number; title: string } | undefined,
 ): {
   kind: string;
-  tone: "needs" | "stuck";
+  tone: "needs" | "stuck" | "none";
   title: ReactNode;
   note: ReactNode;
 } {
@@ -65,23 +80,16 @@ function rowText(
       const recommended = decision.options.find((option) => option.key === decision.recommendation);
       return {
         kind:
-          decision.urgentReason === null
-            ? `Question · ${decision.ref}`
-            : `${URGENT_REASON[decision.urgentReason]} · ${on === undefined ? "" : `on ${on.number} · ${on.title} · `}${decision.ref}`,
-        tone: decision.urgentReason === null ? "needs" : "stuck",
+          decision.postponedAt !== null
+            ? `Later · ${decision.ref} · put off ${sinceText(decision.postponedAt)}`
+            : decision.urgentReason === null
+              ? `Question · ${decision.ref}`
+              : `${URGENT_REASON[decision.urgentReason]} · ${on === undefined ? "" : `on ${on.number} · ${on.title} · `}${decision.ref}`,
+        tone: decision.postponedAt !== null ? "none" : decision.urgentReason === null ? "needs" : "stuck",
         title: decision.title,
         note:
-          recommended === undefined ? null : (
-            <>
-              Recommended: {recommended.label}
-              {decision.recommendationWhy === null ? null : (
-                <>
-                  {" "}
-                  · <Markdown text={decision.recommendationWhy} inline />
-                </>
-              )}
-            </>
-          ),
+          // The recommendation alone: its why is read once the question is opened.
+          recommended === undefined ? null : `Recommended: ${recommended.label}`,
       };
     }
     case "task": {

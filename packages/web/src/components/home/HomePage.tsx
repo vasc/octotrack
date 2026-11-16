@@ -91,6 +91,7 @@ export function HomePage() {
             <NothingNeedsYou working={runningAgents(home)} next={nextAsk(home)} />
           ) : null}
           <QuestionList
+            onBringBack={h.bringBack}
             title="Urgent"
             lineOn={(ref) => {
               const placed = [...home.working, ...home.upNext];
@@ -150,6 +151,7 @@ export function HomePage() {
             onStarting={setStarting}
           />
           <QuestionList
+            onBringBack={h.bringBack}
             title="On no line"
             folded={narrow}
             cards={home.noLine}

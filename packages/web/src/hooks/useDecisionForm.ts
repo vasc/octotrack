@@ -3,7 +3,6 @@ import type { Decision, PendingChoice } from "@octotrack/core/schemas";
 import { useState } from "react";
 import { useChoices } from "./useChoices.ts";
 import { useDraft } from "./useDraft.ts";
-import { useLinePlace } from "./useLinePlace.ts";
 import { useResolveDecision } from "./useResolveDecision.ts";
 
 /** An answer made here, waiting with Undo before it is sent. */
@@ -21,7 +20,8 @@ export interface DecisionForm {
   ownWords: string | null;
   /** Words sent in the developer's own words are waiting with Undo: they are not sent again. */
   sending: boolean;
-  error: string | null;
+  /** Words typed as the answer are not kept on the tracker yet. */
+  notSaved: boolean;
   /** Picks an option, which answers: it waits a few seconds with Undo, like every choice. */
   answer(key: string): void;
   openOwn(): void;
@@ -55,18 +55,15 @@ export function useDecisionForm(decision: Decision, onPostponed?: (ref: string) 
   const [picked, setPicked] = useState<string | null>(null);
   const { resolve } = useResolveDecision();
   const choices = useChoices();
-  const line = useLinePlace(decision.line);
-  const to = line?.title ?? decision.ref;
+  // The answer goes to the agent that asked, which the Undo bar names as the card does.
+  const to = decision.requestedBy;
   const open = writing ?? draft.value !== "";
   const pending = answerWaiting(choices.pending, decision.ref);
   return {
     ownWords: open ? draft.value : null,
     sending: choices.waiting(key),
     // A send the tracker never took is said in the Undo bar, as every refused choice is.
-    error:
-      draft.error === null
-        ? null
-        : "Not saved: the tracker did not answer. Kept here; saves when it is back.",
+    notSaved: draft.error !== null,
     waiting:
       pending === undefined
         ? null

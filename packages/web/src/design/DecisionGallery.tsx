@@ -32,8 +32,8 @@ export function DecisionGallery() {
           })}
         />
       </Example>
-      <Example label="Refused by the server">
-        <DecisionCardView form={decisionForm({ error: 'D-1 has no option "sqs"' })} card={decisionCard()} />
+      <Example label="Words not saved yet">
+        <DecisionCardView form={decisionForm({ notSaved: true })} card={decisionCard()} />
       </Example>
       <SheetExample label="Record answers">
         {(close) => (

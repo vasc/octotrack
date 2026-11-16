@@ -17,8 +17,11 @@ export function DecisionCardItem({
   active = false,
   armed = active,
   onPostponed,
+  titled = true,
 }: {
   card: DecisionCard;
+  /** Its title is drawn; not where a panel's head already carries it. */
+  titled?: boolean;
   active?: boolean;
   armed?: boolean;
   onPostponed?: (ref: string) => void;
@@ -36,5 +39,5 @@ export function DecisionCardItem({
   useHotkeys(keys);
   const line = useLinePlace(card.decision.line);
   const now = useClock(form.waiting !== null);
-  return <DecisionCardView card={card} form={form} line={line} now={now} />;
+  return <DecisionCardView card={card} form={form} line={line} now={now} titled={titled} />;
 }

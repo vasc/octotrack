@@ -1,5 +1,4 @@
 import { navigate } from "../src/lib/router.ts";
-import { HeldDecision } from "../src/components/decisions/HeldDecision.tsx";
 import { OutcomeFields } from "../src/components/home/OutcomeFields.tsx";
 import { LineBox } from "../src/components/ui/LineBox.tsx";
 import { Loaded } from "../src/components/ui/Loaded.tsx";
@@ -201,9 +200,11 @@ describe("DecisionCardView", () => {
     view.getByText("Recommendation: Do it");
   });
 
-  test("shows an error from the server", () => {
-    const view = render(<DecisionCardView form={form({ error: "Already decided" })} card={decisionCard()} />);
-    expect(view.getByRole("alert").textContent).toBe("Already decided");
+  test("says in the warm tone when words typed are not saved yet", () => {
+    const view = render(<DecisionCardView form={form({ notSaved: true })} card={decisionCard()} />);
+    const note = view.getByRole("alert");
+    expect(note.textContent).toBe("Not saved: the tracker did not answer. Kept here; saves when it is back.");
+    expect(note.getAttribute("data-tone")).toBe("warn");
   });
 
   test("the options sit under a Your answer label, which says so when nothing is recommended", () => {
@@ -818,7 +819,7 @@ describe("lines of work", () => {
     ).getByText(/garden is scoping it/);
   });
 
-  test("ForYouRow shows a question's recommendation and why, or a task's place, and opens it", () => {
+  test("ForYouRow shows a question's recommendation, or a task's place, and opens it", () => {
     const onOpen = mock(() => {});
     const question = render(
       <ForYouRow
@@ -832,7 +833,7 @@ describe("lines of work", () => {
       />,
     );
     question.getByText(whole("Question · D-1"));
-    question.getByText(whole("Recommended: SQS · It is managed."));
+    question.getByText(whole("Recommended: SQS"));
     fireEvent.click(question.getByRole("button", { name: "Open D-1" }));
     expect(onOpen).toHaveBeenCalledWith("D-1");
     question.unmount();
@@ -2660,21 +2661,6 @@ describe("LinkList", () => {
     const view = render(<LinkList entityRef="OCT-1" links={links} linked={linked} />);
     fireEvent.click(view.getByRole("button", { name: "D-3" }));
     expect(new URLSearchParams(window.location.search).get("ref")).toBe("D-3");
-  });
-});
-
-describe("HeldDecision", () => {
-  test("says a question waits for its line to start, and shows it read only", () => {
-    const view = render(
-      <HeldDecision
-        decision={decision({ line: "L-3", heldAt: "2026-11-01T00:00:00.000Z", recommendationWhy: "Proven." })}
-        waitsFor={[]}
-      />,
-    );
-    view.getByText("held until its line starts");
-    view.getByText(/Why: Proven./);
-    // Nothing to answer with: the only button is its ref.
-    expect(view.getAllByRole("button").map((button) => button.textContent)).toEqual(["D-1"]);
   });
 });
 

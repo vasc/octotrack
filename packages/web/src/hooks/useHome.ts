@@ -115,6 +115,9 @@ export function useHome() {
     fold: (ref: string, into: string) =>
       choices.make(contracts.lineFold.name, { ref, into }, `Folding ${titleOf(ref)} into ${titleOf(into)}`),
     own: (ref: string) => choices.make(contracts.lineOwn.name, { ref }, LINE_SAID.own(titleOf(ref))),
+    /** A question put off comes back to its place among the rest. */
+    bringBack: (ref: string) =>
+      choices.make(contracts.decisionPostpone.name, { ref, undo: true }, `Bringing ${ref} back`),
     lineDone: (ref: string) => choices.make(contracts.lineDone.name, { ref }, LINE_SAID.done(titleOf(ref))),
     notYet: (ref: string, why: string) =>
       choices.make(

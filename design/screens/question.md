@@ -81,15 +81,14 @@ ways out. A hairline separates reading from deciding.
 - Error: follows Line-States H: "Could not load the question. The tracker did not answer." with Try again, in the body. A failed Withdraw or Change answer follows the Primitives pattern: said under its button, with Try again.
 - Empty: never empty: a question always has a title; with no options the closed view shows only "Answer" in the developer's own words.
 
-### components/entity/DecisionOptions.tsx
+### components/decisions/AnsweredDecision.tsx
 
-- Designed in: More-States.dc.html, state F
-- What it shows: a question's options read only, the chosen one marked ✓ and the others stepped back.
-- Changes from today: no separate "Options" section with a count; the chosen option is marked with ✓ instead of a "chosen" fact. The answered-and-closed view (J) draws only the answer, so this list appears only where options are shown read only.
-- Loading: never loads on its own: given the options by its parent.
-- Error: cannot fail on its own.
-- Empty: no options renders nothing.
-
+- Designed in: Question-States.dc.html, state J
+- What it shows: "Answered · D-20 · by you on the dashboard · 7 Nov", "Answer" (the option chosen, or the developer's own words, with any note), "Then" ("Picked up by funnel-session; not reported as carried out yet", "✓ Carried out: …", or "Not picked up yet"), then Change answer.
+- Changes from today: new; replaces the Outcome, Note, Decided by, When, How and Source pairs and the read-only options list. What it was superseded by and where it was decided stay, as quiet notes.
+- Loading: never loads on its own: given the question by DecisionPanel.
+- Error: a failed Change answer is said by the Undo bar.
+- Empty: never empty: a closed question always has a state; with no answer recorded only "Then" shows.
 ### components/home/ForYouRow.tsx
 
 - Designed in: Question-States.dc.html, states A, F; Home.dc.html (Urgent, line 2); Home-States.dc.html, state C

@@ -21,6 +21,7 @@ export function QuestionList({
   onPostponed,
   folded = false,
   lineOn,
+  onBringBack,
 }: {
   title: string;
   folded?: boolean;
@@ -33,6 +34,8 @@ export function QuestionList({
   onPostponed(ref: string): void;
   /** The line a question is on, by its number on the page and its title, when the page shows it. */
   lineOn?: (line: string | null) => { number: number; title: string } | undefined;
+  /** A question put off comes back to its place among the rest. */
+  onBringBack?: (ref: string) => void;
 }) {
   if (cards.length === 0) return null;
   const rows = (
@@ -56,6 +59,7 @@ export function QuestionList({
             focused={false}
             onOpen={onOpen}
             on={lineOn?.(card.decision.line)}
+            onBringBack={onBringBack}
           />
         ),
       )}

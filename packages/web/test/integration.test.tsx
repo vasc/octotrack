@@ -660,7 +660,8 @@ describe("the inspector", () => {
     const panel = within(await view.findByRole("complementary", { name: decision.ref }));
     fireEvent.click(await panel.findByRole("button", { name: /SQS/ }));
     await answerNow(view);
-    await panel.findByText("Decided by");
+    await panel.findByText("Answer");
+    panel.getByText("Then");
     panel.getByRole("button", { name: "Change answer" });
     expect(server.act(c.decisionList, { query: `ref:${decision.ref}` })[0]?.chosenOption).toBe("sqs");
   });
@@ -2667,7 +2668,7 @@ describe("lines of work", () => {
       expect(heard.map((notice) => notice.body).join(" ")).toContain("41, 38, 12");
     });
 
-    test("a question held behind a task opens with its situation, its options and what it waits for", async () => {
+    test("a question held behind a task opens with what it waits for and its situation, not its options", async () => {
       const { task } = withIssue();
       const asked = server.act(
         c.decisionAsk,
@@ -2687,11 +2688,11 @@ describe("lines of work", () => {
       navigate(`/?ref=${asked.ref}`);
       const view = renderApp(<App />);
       const panel = within(await view.findByRole("complementary", { name: asked.ref }));
-      await panel.findByText(whole(`held: waits for ${task.ref}`));
+      await panel.findByText(whole(`Held until ${task.ref} is done: its outcome may settle this.`));
       panel.getByText("The base fits either board.");
-      panel.getByText("The short board");
-      panel.getByText("Fits as printed");
-      panel.getByText(/It fits already./);
+      // It cannot be answered here, so its options are not drawn.
+      expect(panel.queryByText("The short board")).toBeNull();
+      panel.getByRole("button", { name: "Withdraw" });
     });
 
     test("an issue's drift shows on it, and answering it waits with Undo", async () => {

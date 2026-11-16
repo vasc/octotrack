@@ -164,31 +164,31 @@ properties and appear on the `/design` specimen; **structural** ones load data a
 
 ### An opened ref: `entity/` and `drift/`
 
-| Component         | Kind       | What it is                                                                                              |
-| ----------------- | ---------- | ------------------------------------------------------------------------------------------------------- |
-| `EntityPanel`     | Structural | Any item by ref, in a `Panel`: a line, an issue or task, or anything else                               |
-| `EntityCrumbs`    | Pure       | Where an item sits: its ref, its kind, its state                                                        |
-| `EntityBody`      | Pure       | What an item says, by its kind: `Pairs` and its body                                                    |
-| `LinePanelItem`   | Structural | A line opened: its head and choices, summary, what it needs, drift, plan, what is new, owner, Tell      |
-| `LinePanelHead`   | Pure       | The line's `Panel`: where it is, its title, done when, its choices                                      |
-| `LineActions`     | Pure       | A line's choices by its state, and More for Drop and Fold                                               |
-| `SummaryBox`      | Pure       | Its headline and summary, and when it was written                                                       |
-| `PanelForYou`     | Structural | What the line needs, the first open                                                                     |
-| `PlanList`        | Pure       | Its steps, done, now and next, with the work under each                                                 |
-| `SinceSummary`    | Pure       | What came after the summary, and the line in the Log                                                    |
-| `OwnerBox`        | Pure       | Who owns it and how they are, with Stop, I'll own it or Hand to an agent                                |
-| `OwnWorkBox`      | Pure       | On a line the developer owns: add a task or a note                                                      |
-| `TellBox`         | Pure       | A message to whoever owns it                                                                            |
-| `IssuePanel`      | Structural | An issue or task opened: where it sits, the task or issue, what it frees, pull requests, activity, Tell |
-| `TaskFrees`       | Pure       | What a task frees, and who holds it                                                                     |
-| `PullRequestBox`  | Pure       | An issue's pull requests and their checks                                                               |
-| `DecisionPanel`   | Structural | A question opened: in the queue, held, or answered, with Withdraw, Change answer or Reopen              |
-| `DecisionOptions` | Pure       | A question's options as rows, the chosen or recommended one marked                                      |
-| `PrPanel`         | Pure       | A pull request: its checks, review, branch and size                                                     |
-| `LinkList`        | Pure       | What an item connects to                                                                                |
-| `UpdatesSection`  | Structural | Notes posted on an item, and a box to post one                                                          |
-| `EventList`       | Pure       | What happened to an item, quiet rows, newest first                                                      |
-| `OpenDrift`       | Structural | What is out of date about an item                                                                       |
-| `DriftItem`       | Pure       | One thing out of date: its rule, what is wrong, the suggestion, Updated or Nothing to update            |
-| `DriftAnswer`     | Pure       | How it is cleared: what to check, the required note, Updated or Nothing to update                       |
-| `DriftBody`       | Structural | Drift opened by its own ref: what changed, answered in place                                            |
+| Component          | Kind       | What it is                                                                                              |
+| ------------------ | ---------- | ------------------------------------------------------------------------------------------------------- |
+| `EntityPanel`      | Structural | Any item by ref, in a `Panel`: a line, an issue or task, or anything else                               |
+| `EntityCrumbs`     | Pure       | Where an item sits: its ref, its kind, its state                                                        |
+| `EntityBody`       | Pure       | What an item says, by its kind: `Pairs` and its body                                                    |
+| `LinePanelItem`    | Structural | A line opened: its head and choices, summary, what it needs, drift, plan, what is new, owner, Tell      |
+| `LinePanelHead`    | Pure       | The line's `Panel`: where it is, its title, done when, its choices                                      |
+| `LineActions`      | Pure       | A line's choices by its state, and More for Drop and Fold                                               |
+| `SummaryBox`       | Pure       | Its headline and summary, and when it was written                                                       |
+| `PanelForYou`      | Structural | What the line needs, the first open                                                                     |
+| `PlanList`         | Pure       | Its steps, done, now and next, with the work under each                                                 |
+| `SinceSummary`     | Pure       | What came after the summary, and the line in the Log                                                    |
+| `OwnerBox`         | Pure       | Who owns it and how they are, with Stop, I'll own it or Hand to an agent                                |
+| `OwnWorkBox`       | Pure       | On a line the developer owns: add a task or a note                                                      |
+| `TellBox`          | Pure       | A message to whoever owns it                                                                            |
+| `IssuePanel`       | Structural | An issue or task opened: where it sits, the task or issue, what it frees, pull requests, activity, Tell |
+| `TaskFrees`        | Pure       | What a task frees, and who holds it                                                                     |
+| `PullRequestBox`   | Pure       | An issue's pull requests and their checks                                                               |
+| `DecisionPanel`    | Structural | A question opened: in the queue, held, or answered, with Withdraw, Change answer or Reopen              |
+| `AnsweredDecision` | Pure       | A closed question: who answered and how, Answer, Then, and Change answer                                |
+| `PrPanel`          | Pure       | A pull request: its checks, review, branch and size                                                     |
+| `LinkList`         | Pure       | What an item connects to                                                                                |
+| `UpdatesSection`   | Structural | Notes posted on an item, and a box to post one                                                          |
+| `EventList`        | Pure       | What happened to an item, quiet rows, newest first                                                      |
+| `OpenDrift`        | Structural | What is out of date about an item                                                                       |
+| `DriftItem`        | Pure       | One thing out of date: its rule, what is wrong, the suggestion, Updated or Nothing to update            |
+| `DriftAnswer`      | Pure       | How it is cleared: what to check, the required note, Updated or Nothing to update                       |
+| `DriftBody`        | Structural | Drift opened by its own ref: what changed, answered in place                                            |

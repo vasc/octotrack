@@ -25,7 +25,13 @@ export function LineForYouItem({
 }) {
   const focused = refOf(item) === focus;
   return (
-    <ForYouRow item={item} label={focusLabel(item, title)} focused={focused} onOpen={onFocus}>
+    <ForYouRow
+      item={item}
+      label={focusLabel(item, title)}
+      focused={focused}
+      onOpen={onFocus}
+      onBringBack={h.bringBack}
+    >
       {focused ? (
         <ForYouItem
           item={item}
