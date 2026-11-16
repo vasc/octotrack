@@ -5,10 +5,8 @@ import { REFUSED } from "../lib/refused.ts";
 import { useOpMutation, useOpQuery } from "./useOp.ts";
 
 /** An Undo the tracker refused because the choice already took effect, said as such. */
-function tooLate(error: Error): string | null {
-  return error instanceof ApiError && error.code === "conflict"
-    ? "Too late to undo: it already took effect."
-    : null;
+function tooLate(error: Error): boolean {
+  return error instanceof ApiError && error.code === "conflict";
 }
 
 /** The developer's choices that wait a few seconds with Undo, held by the server so closing the page loses nothing. */
@@ -33,7 +31,12 @@ export function useChoices() {
     undo: (id: number) =>
       undo.mutate(
         { id },
-        { onError: (error) => REFUSED.add("Undo", tooLate(error) ?? failureText(error).text) },
+        {
+          onError: (error) =>
+            tooLate(error)
+              ? REFUSED.add("Too late to undo", "it already took effect.", false)
+              : REFUSED.add("Undo", failureText(error).text),
+        },
       ),
     now: (id: number) =>
       now.mutate({ id }, { onError: (error) => REFUSED.add("Taking it now", failureText(error).text) }),

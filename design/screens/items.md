@@ -57,7 +57,7 @@ what it is, what you do, other ways out.
 ### components/home/LineProposalCard.tsx
 
 - Designed in: Items.dc.html, states E, F
-- What it shows: is it done (E): "Proposed as done · by infra", the line's title, "Done when" and its text, "Its case" and the case, then Done and "Not yet…". Done when changed (F): "Done when changed · by chores, while it waited", "Was" and "Proposed" side by side, "Why: …", then Accept and Keep current.
+- What it shows: is it done (E): "Proposed as done · by infra", the line's title, "Done when" and its text, "Its case" and the case, then Done and "Not yet". Done when changed (F): "Done when changed · by chores, while it waited", "Was" and "Proposed" side by side, "Why: …", then Accept and Keep current.
 - Changes from today: the title is the line's title (today it is the done when or the new text); Done when and the case are labelled; Not yet opens a box "What it still needs", then Send (today "Not yet" submits); the old and new done when sit side by side.
 - Loading: never loads on its own: given the proposal by ForYouItem.
 - Error: a request that fails follows the Primitives pattern: said under the buttons, with Try again; the "What it still needs" words are kept.

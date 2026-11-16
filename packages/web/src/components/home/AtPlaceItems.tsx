@@ -28,6 +28,8 @@ export function AtPlaceItems({
 }) {
   const here = (other: ForYou) => other.kind === "task" && other.task.place === at;
   const folded = forYou.filter((other) => !here(other) && refOf(other) !== focus);
+  // With nothing for this place and nothing folded, there is no box to draw.
+  if (forYou.length === 0) return null;
   return (
     <List>
       {forYou.map((other) => {

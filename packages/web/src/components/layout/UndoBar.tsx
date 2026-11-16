@@ -19,7 +19,9 @@ function inSeconds(dueAt: string, now: number): string {
 
 /** What a Stop does to the line its owner leaves. */
 function afterStop(line: UndoLine): string {
-  return line.waitsOnYou ? `${line.title} waits on you.` : `${line.title} looks for another owner.`;
+  return line.waitsOnYou
+    ? `The ${line.title} line waits on you.`
+    : `The ${line.title} line looks for another owner.`;
 }
 
 /**
@@ -51,14 +53,14 @@ export function UndoBar({
       {refused.map((refusal) => (
         <Toast
           key={`refused-${refusal.id}`}
-          failed
+          failed={refusal.failed}
           actions={
             <Button variant="quiet" onClick={() => onDismiss?.(refusal.id)}>
               Dismiss
             </Button>
           }
         >
-          {refusal.summary}. {refusal.reason}
+          {refusal.failed ? `${refusal.summary}. ${refusal.reason}` : `${refusal.summary}: ${refusal.reason}`}
         </Toast>
       ))}
       {[...pending].reverse().map((choice) => {
@@ -73,7 +75,7 @@ export function UndoBar({
                 </Button>
               }
             >
-              {choice.summary}. {choice.error ?? "No reason was given."}
+              {choice.summary}. {choice.error ?? "No reason was given."} Look again.
             </Toast>
           );
         }

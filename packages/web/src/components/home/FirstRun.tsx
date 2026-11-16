@@ -70,6 +70,9 @@ export function FirstRun({
         ? "None carries a recommendation."
         : `${advised.length} ${plural(advised.length, "carries", "carry")} a recommendation: ${listed(counts)}.`}
       {none === 0 ? "" : ` ${none} ${plural(none, "has", "have")} none.`}
+      {advised.length === placeable.length
+        ? ""
+        : ` The ${advised.length - placeable.length} to fold ${plural(advised.length - placeable.length, "waits", "wait")} for you to pick the line ${plural(advised.length - placeable.length, "it goes", "they go")} into.`}
     </Notice>
   );
 }

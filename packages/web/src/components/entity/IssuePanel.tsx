@@ -121,7 +121,7 @@ export function IssuePanel({
         </>
       )}
       <OpenDrift drift={detail.drift} />
-      <NotKept error={tell.draft.error} />
+      <NotKept unsaved={tell.draft.error !== null} />
     </Panel>
   );
 }

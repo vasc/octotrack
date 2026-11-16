@@ -13,6 +13,7 @@ import { NewLineSheet } from "../lines/NewLineSheet.tsx";
 import { Side } from "../ui/Panel.tsx";
 import { EntityPanel } from "../entity/EntityPanel.tsx";
 import { KeyHelp } from "../home/KeyHelp.tsx";
+import { NotAnswering } from "../home/NotAnswering.tsx";
 import { ErrorState, LoadingState } from "../ui/states.tsx";
 import { AppStrips } from "./AppStrips.tsx";
 import { PartBoundary } from "./PartBoundary.tsx";
@@ -25,7 +26,7 @@ import { TopBar } from "./TopBar.tsx";
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const { path, params } = useRoute();
-  const { data, error, isPending } = useBootstrap();
+  const { data, error, isPending, refetch } = useBootstrap();
   // A tab left open, as on a phone, picks up a deploy when it comes back into view.
   const build = useReloadOnNewBuild();
   const bar = useTopBar();
@@ -94,7 +95,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             {isPending ? (
               <LoadingState label="Loading the page" />
             ) : error !== null && data === undefined ? (
-              <ErrorState error={error} />
+              <NotAnswering host={window.location.host} onRetry={() => void refetch()} />
             ) : (
               children
             )}

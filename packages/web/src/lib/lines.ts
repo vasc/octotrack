@@ -37,9 +37,9 @@ export function crewText(crew: LineCrew | undefined, stepIn = false): string[] {
 
 /** Why something is urgent, in the words the boards use: one of a fixed set. */
 export const URGENT_REASON: Readonly<Record<UrgentReason, string>> = {
-  broken: "something broken",
-  time_boxed: "time-boxed",
-  costs_money: "costs money",
+  broken: "Something broken",
+  time_boxed: "Time-boxed",
+  costs_money: "Costs money",
 };
 
 /** Agents running on lines now, each counted once. */

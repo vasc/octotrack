@@ -299,7 +299,7 @@ describe("ErrorState", () => {
 
 describe("NotKept", () => {
   test("says the words are kept here and will save, in place of the raw error", () => {
-    const view = render(<NotKept error="fetch failed" />);
+    const view = render(<NotKept unsaved />);
     view.getByText("Not saved: the tracker did not answer. Kept here; saves when it is back.");
   });
 });

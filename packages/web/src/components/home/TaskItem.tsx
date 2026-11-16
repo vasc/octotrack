@@ -41,7 +41,7 @@ export function TaskItem({
         onDone={(outcome) => void draft.flush().then(() => onDone(task, outcome))}
         onCant={(reason) => void why.flush().then(() => onCant(task, reason))}
       />
-      <NotKept error={draft.error ?? why.error} />
+      <NotKept unsaved={(draft.error ?? why.error) !== null} />
     </>
   );
 }

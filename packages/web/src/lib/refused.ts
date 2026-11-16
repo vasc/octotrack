@@ -3,6 +3,8 @@ export interface Refusal {
   id: number;
   summary: string;
   reason: string;
+  /** A choice that did not happen; else only something said, such as an Undo that came too late. */
+  failed: boolean;
 }
 
 /**
@@ -18,10 +20,10 @@ export function refusals() {
   };
   return {
     list: (): readonly Refusal[] => items,
-    add(summary: string, reason: string): number {
+    add(summary: string, reason: string, failed = true): number {
       const id = next;
       next += 1;
-      items = [...items, { id, summary, reason }];
+      items = [...items, { id, summary, reason, failed }];
       changed();
       return id;
     },

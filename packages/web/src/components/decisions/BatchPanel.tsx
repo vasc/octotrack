@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useDraft } from "../../hooks/useDraft.ts";
 import { useOpMutation } from "../../hooks/useOp.ts";
 import { failureText } from "../../lib/failure.ts";
-import { BatchPanelView, type BatchResultLine } from "./BatchPanelView.tsx";
+import { BatchPanelView, type BatchResultRow } from "./BatchPanelView.tsx";
 
 function parseLines(text: string): { parsed: DecisionLine[]; error: string | null } {
   try {
@@ -14,13 +14,13 @@ function parseLines(text: string): { parsed: DecisionLine[]; error: string | nul
   }
 }
 
-/** Record answers' lines, kept on the server as they are typed, so they follow the developer between devices. */
+/** Record answers' rows, kept on the server as they are typed, so they follow the developer between devices. */
 const DRAFT = "record-answers";
 
 export function BatchPanel({ autoFocus = false, onClose }: { autoFocus?: boolean; onClose(): void }) {
   const draft = useDraft(DRAFT);
   const text = draft.value;
-  const [results, setResults] = useState<BatchResultLine[] | null>(null);
+  const [results, setResults] = useState<BatchResultRow[] | null>(null);
   const [recorded, setRecorded] = useState(0);
   const record = useOpMutation(contracts.decisionResolveBatch);
   const { parsed, error } = useMemo(() => parseLines(text), [text]);
@@ -29,8 +29,10 @@ export function BatchPanel({ autoFocus = false, onClose }: { autoFocus?: boolean
     <BatchPanelView
       text={text}
       parsed={parsed}
-      parseError={error ?? (record.error === null ? undefined : failureText(record.error).text) ?? null}
-      hint={error === null && record.error !== null ? failureText(record.error).hint : null}
+      parseError={error}
+      recordError={record.error === null ? null : failureText(record.error).text}
+      hint={record.error === null ? null : failureText(record.error).hint}
+      notSaved={draft.error !== null}
       results={results}
       submitting={record.isPending}
       autoFocus={autoFocus}
@@ -40,6 +42,8 @@ export function BatchPanel({ autoFocus = false, onClose }: { autoFocus?: boolean
         if (next === "") draft.clear();
         else draft.change(next);
         setResults(null);
+        // A failed Record clears once the rows change.
+        record.reset();
       }}
       onSubmit={() =>
         record.mutate(
@@ -47,11 +51,11 @@ export function BatchPanel({ autoFocus = false, onClose }: { autoFocus?: boolean
           {
             onSuccess: (data) => {
               setResults(data.results.map(({ ref, ok, error: failure }) => ({ ref, ok, error: failure })));
-              // Keep the lines that failed, so that they can be fixed and sent again.
+              // Keep the rows that failed, so that they can be fixed and sent again.
               const failed = new Set(data.results.filter((item) => !item.ok).map((item) => item.ref));
               const left = text
                 .split("\n")
-                .filter((line) => failed.has(line.trim().split(/\s+/)[0]?.toUpperCase() ?? ""))
+                .filter((row) => failed.has(row.trim().split(/\s+/)[0]?.toUpperCase() ?? ""))
                 .join("\n");
               if (left === "") draft.clear();
               else draft.change(left);

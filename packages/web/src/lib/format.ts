@@ -193,9 +193,13 @@ const TONES: Readonly<Record<string, Tone>> = {
   failing: "bad",
   conflicting: "warn",
   changes_requested: "bad",
-  blocked: "bad",
-  blocker: "bad",
-  urgent: "bad",
+  blocked: "warn",
+  blocker: "warn",
+  urgent: "warn",
+  stuck: "warn",
+  refused: "bad",
+  running: "info",
+  progress: "info",
   warning: "warn",
   pending: "warn",
   requested: "warn",
@@ -207,7 +211,7 @@ export function toneOf(value: string): Tone {
 }
 
 /** States that have ended without being done: drawn with a dash. */
-const ENDED = new Set(["dropped", "closed", "withdrawn", "rejected", "folded", "superseded"]);
+const ENDED = new Set(["dropped", "closed", "withdrawn", "rejected", "folded", "superseded", "cancelled"]);
 
 const GLYPHS: Readonly<Record<Tone, string>> = {
   good: "✓",

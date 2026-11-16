@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test } from "bun:test";
 import type { QueryClient } from "@tanstack/react-query";
 import { act, fireEvent, type RenderResult, waitFor, within } from "@testing-library/react";
 import { App } from "../src/App.tsx";
-import { navigate } from "../src/lib/router.ts";
+import { navigate, setParams } from "../src/lib/router.ts";
 import {
   contracts as c,
   FakeEventSource,
@@ -84,6 +84,19 @@ beforeEach(() => {
 
 describe("questions on home", () => {
   beforeEach(() => navigate("/"));
+
+  test("the Undo bar stays usable above an open sheet: it is drawn outside the page the sheet makes inert", async () => {
+    seedDecision();
+    const view = renderApp(<App />);
+    await view.findByRole("heading", { name: "Which queue?" });
+    fireEvent.click(view.getByRole("button", { name: /Redis/ }));
+    const undo = await view.findByRole("button", { name: "Undo" });
+    act(() => setParams({ new: "1" }));
+    await view.findByRole("dialog", { name: "New line" });
+    expect(view.container.contains(undo)).toBe(false);
+    fireEvent.click(view.getByRole("button", { name: "Undo" }));
+    await waitFor(() => expect(server.calls).toContain("choice.undo"));
+  });
 
   test("answering in place takes one press, waits with Undo, then records it and flows to drift", async () => {
     const decision = seedDecision();
@@ -1151,7 +1164,8 @@ describe("lines of work", () => {
       const line = within(await feed.findByRole("article", { name: "Sendspin enclosure" }));
       await line.findByText("1 unseen");
       line.getByText(/plan/i);
-      within(feed.getByRole("article", { name: "Weekly digest" })).getByText(/nothing new/);
+      // A line with nothing unseen is left out.
+      expect(feed.queryByRole("article", { name: "Weekly digest" })).toBeNull();
       // A plain button: it acts on the whole page, so it is not a word that steps back.
       expect(view.getByRole("button", { name: "Mark all seen" }).getAttribute("data-variant")).toBe("plain");
       fireEvent.click(view.getByRole("button", { name: "Mark all seen" }));
@@ -1159,7 +1173,7 @@ describe("lines of work", () => {
       await view.findByText(/Marking everything seen/);
       line.getByText("1 unseen");
       await answerNow(view);
-      await line.findByText(/nothing new/);
+      await feed.findByRole("heading", { name: "Nothing new" });
     });
   });
 
@@ -1477,7 +1491,7 @@ describe("lines of work", () => {
       const cards = proposed.getAllByRole("article");
       expect(cards[0]?.getAttribute("aria-label")).toBe("Restore the feed");
       const urgent = within(cards[0] ?? document.body);
-      urgent.getByText(whole("Urgent · something broken"));
+      urgent.getByText(whole("Something broken"));
       // Start is its first choice, and filled, as recommended.
       const start = urgent.getByRole("button", { name: "Start Restore the feed" });
       expect(start.getAttribute("data-choice")).toBe("1");
@@ -1898,7 +1912,7 @@ describe("lines of work", () => {
       navigate("/");
       const view = renderApp(<App />);
       const card = within(await view.findByRole("article", { name: "Sendspin enclosure is done?" }));
-      fireEvent.click(card.getByRole("button", { name: "Not yet…" }));
+      fireEvent.click(card.getByRole("button", { name: "Not yet" }));
       fireEvent.change(card.getByLabelText("What it still needs"), { target: { value: "The lid rattles" } });
       fireEvent.click(card.getByRole("button", { name: "Send" }));
       await answerNow(view);
@@ -2137,7 +2151,7 @@ describe("lines of work", () => {
       );
       // The urgent question arrives as a row, in the warm tone, and focus stays on what was being read.
       const row = await view.findByRole("button", { name: "Open D-2" });
-      expect(within(row).getByText("Urgent").getAttribute("data-tone")).toBe("stuck");
+      expect(within(row).getByText("Time-boxed").getAttribute("data-tone")).toBe("stuck");
       expect(selected(view, "Which board?")).toBe("true");
     });
 

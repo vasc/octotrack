@@ -52,7 +52,7 @@ export function UpdatesSection({ target, updates }: { target: string; updates: r
           Post
         </Button>
       </Actions>
-      <NotKept error={draft.error} />
+      <NotKept unsaved={draft.error !== null} />
       {updates.length === 0 ? null : (
         <List>
           {updates.map((update) => (

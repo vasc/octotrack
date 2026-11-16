@@ -55,7 +55,7 @@ export function ProposalCard({
       current={focused}
       {...(line.urgentReason === null
         ? {}
-        : { kind: `Urgent · ${URGENT_REASON[line.urgentReason]}`, tone: "stuck" as const })}
+        : { kind: URGENT_REASON[line.urgentReason], tone: "stuck" as const })}
       title={<TextLink onClick={() => openEntity(line.ref)}>{line.title}</TextLink>}
       facts={
         <Facts>

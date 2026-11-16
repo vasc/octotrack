@@ -167,6 +167,7 @@ export function LinePanelItem({
         onOwn={() => choices.choose("own")}
         waitingOnYou={home?.lines[line.ref]?.waitingOnYou === true}
         status={homeStatus("the owner")}
+        ownInHead={stepIn !== null}
       />
       {!live ? null : line.ownedBy !== null ? (
         <OwnWorkBox
@@ -191,7 +192,7 @@ export function LinePanelItem({
           onSend={(words) => void tell.flush().then(() => choices.tell(words))}
         />
       ) : null}
-      <NotKept error={tell.error ?? own.error} />
+      <NotKept unsaved={(tell.error ?? own.error) !== null} />
     </LinePanelHead>
   );
 }

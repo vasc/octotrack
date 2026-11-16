@@ -24,7 +24,7 @@ export function QuestionStrip({
   return (
     <Facts>
       {decision.urgentReason !== null ? (
-        <Kind tone="stuck">Urgent · {URGENT_REASON[decision.urgentReason]}</Kind>
+        <Kind tone="stuck">{URGENT_REASON[decision.urgentReason]}</Kind>
       ) : decision.postponedAt !== null ? (
         <Kind tone="none">Later</Kind>
       ) : (

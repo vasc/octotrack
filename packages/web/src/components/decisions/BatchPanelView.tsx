@@ -3,12 +3,13 @@ import { Actions } from "../ui/Actions.tsx";
 import { Button } from "../ui/Button.tsx";
 import { Field } from "../ui/Field.tsx";
 import { List } from "../ui/List.tsx";
+import { NotKept } from "../ui/NotKept.tsx";
 import { Note } from "../ui/Note.tsx";
 import { RefLink } from "../ui/RefLink.tsx";
 import { Row } from "../ui/Row.tsx";
 import { Sheet } from "../ui/Sheet.tsx";
 
-export interface BatchResultLine {
+export interface BatchResultRow {
   ref: string;
   ok: boolean;
   error: string | null;
@@ -20,15 +21,19 @@ export interface BatchPanelViewProps {
   parseError: string | null;
   /** What the tracker says to do about a failed record, when it said. */
   hint?: string | null;
-  results: readonly BatchResultLine[] | null;
+  results: readonly BatchResultRow[] | null;
   submitting: boolean;
   onChange(text: string): void;
   onSubmit(): void;
   onClose(): void;
   /** Opened with a key: the box takes the cursor. */
   autoFocus?: boolean;
-  /** How many times recording replaced the lines with those that failed, which the box shows even with focus. */
+  /** How many times recording replaced the rows with those that failed, which the box shows even with focus. */
   recorded?: number;
+  /** Why the last Record failed, with Record still there to try again. */
+  recordError?: string | null;
+  /** The rows typed are not kept on the tracker yet. */
+  notSaved?: boolean;
 }
 
 /** Answers given elsewhere, one per row, typed as fast as they come back to mind: ref, option, an optional note. */
@@ -45,6 +50,8 @@ export function BatchPanelView(props: BatchPanelViewProps) {
     onClose,
     autoFocus = false,
     recorded = 0,
+    recordError = null,
+    notSaved = false,
   } = props;
   const ready = parsed.length > 0 && parseError === null && !submitting;
   // Which row stops it, as the parser names it, said beside the disabled Record.
@@ -79,9 +86,11 @@ export function BatchPanelView(props: BatchPanelViewProps) {
           if (ready) onSubmit();
         }}
       />
-      {parseError === null ? null : (
+      <NotKept unsaved={notSaved} />
+      {parseError === null ? null : <Note error>{parseError}</Note>}
+      {recordError === null ? null : (
         <Note error hint={hint}>
-          {parseError}
+          {recordError}
         </Note>
       )}
       {results === null ? null : (

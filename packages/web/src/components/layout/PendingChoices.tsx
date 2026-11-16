@@ -1,5 +1,6 @@
 import { contracts } from "@octotrack/core/contracts";
 import { useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useChoices } from "../../hooks/useChoices.ts";
 import { useClock } from "../../hooks/useClock.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
@@ -10,7 +11,10 @@ import { UndoBar, type UndoLine } from "./UndoBar.tsx";
 
 const NO_KEYS: HotkeyMap = {};
 
-/** The Undo bar on every page, with u undoing the newest choice. */
+/**
+ * The Undo bar on every page, with u undoing the newest choice. It is drawn outside the page, as a sheet is, so a sheet
+ * that makes the page behind it inert leaves the bar usable above it, and u works there too.
+ */
 export function PendingChoices() {
   const choices = useChoices();
   const refused = useRefused();
@@ -26,9 +30,9 @@ export function PendingChoices() {
     (): HotkeyMap => (newest === undefined ? NO_KEYS : { u: () => undo(newest.id) }),
     [newest, undo],
   );
-  useHotkeys(keys);
+  useHotkeys(keys, { overSheets: true });
   // The live region stays mounted while empty, so the first choice made is announced too.
-  return (
+  return createPortal(
     <UndoBar
       pending={choices.pending}
       refused={refused.items}
@@ -44,6 +48,7 @@ export function PendingChoices() {
           `Pausing ${lines[line]?.title ?? line}: up next`,
         );
       }}
-    />
+    />,
+    document.body,
   );
 }

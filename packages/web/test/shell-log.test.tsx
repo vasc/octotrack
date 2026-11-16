@@ -83,7 +83,9 @@ describe("refused requests", () => {
         now={0}
         lines={{}}
         pending={[]}
-        refused={[{ id: 7, summary: "Starting Wall mount", reason: "The tracker did not answer." }]}
+        refused={[
+          { id: 7, summary: "Starting Wall mount", reason: "The tracker did not answer.", failed: true },
+        ]}
         onUndo={() => {}}
         onDismiss={onDismiss}
       />,

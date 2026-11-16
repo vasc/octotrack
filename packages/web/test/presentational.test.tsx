@@ -316,7 +316,7 @@ describe("QuestionStrip", () => {
         now={Date.parse("2026-11-16T12:00:00Z")}
       />,
     );
-    view.getByText(/^Urgent/);
+    view.getByText("Something broken");
     view.getByText("asked by ttube");
     view.getByText("3h");
   });
@@ -1251,7 +1251,7 @@ describe("UndoBar", () => {
         onPause={onPause}
       />,
     );
-    waits.getByText(whole("Stopping panel-widgets in 8 s. Sendspin enclosure waits on you."));
+    waits.getByText(whole("Stopping panel-widgets in 8 s. The Sendspin enclosure line waits on you."));
     fireEvent.click(waits.getByRole("button", { name: "Pause the line instead" }));
     expect(onPause).toHaveBeenCalledWith(3, "L-7");
     waits.unmount();
@@ -1262,7 +1262,7 @@ describe("UndoBar", () => {
         pending={[stop]}
         onUndo={() => {}}
       />,
-    ).getByText(whole("Stopping panel-widgets in 8 s. Sendspin enclosure looks for another owner."));
+    ).getByText(whole("Stopping panel-widgets in 8 s. The Sendspin enclosure line looks for another owner."));
   });
 
   test("a choice that failed says why until dismissed", () => {
@@ -1277,7 +1277,9 @@ describe("UndoBar", () => {
         onUndo={onUndo}
       />,
     );
-    expect(view.getByRole("alert").textContent).toBe("Did not happen: Starting Wall mount. It is done.");
+    expect(view.getByRole("alert").textContent).toBe(
+      "Did not happen: Starting Wall mount. It is done. Look again.",
+    );
     fireEvent.click(view.getByRole("button", { name: "Dismiss" }));
     expect(onUndo).toHaveBeenCalledWith(4);
   });
@@ -1476,7 +1478,7 @@ describe("tabling and a line's own choices", () => {
 });
 
 describe("LineProposalCard", () => {
-  test("a case for done is titled by its line, labels its done when and its case, then Done or Not yet…", () => {
+  test("a case for done is titled by its line, labels its done when and its case, then Done or Not yet", () => {
     const onAccept = mock(() => {});
     const onDecline = mock((_why: string) => {});
     const view = render(
@@ -1500,7 +1502,7 @@ describe("LineProposalCard", () => {
     item.getByText("an answer reaches whoever owns its line");
     item.getByText("Its case");
     item.getByText("The owner was woken from the inbox and reported it carried out.");
-    fireEvent.click(view.getByRole("button", { name: "Not yet…" }));
+    fireEvent.click(view.getByRole("button", { name: "Not yet" }));
     fireEvent.change(view.getByLabelText("What it still needs"), { target: { value: "One real wake" } });
     fireEvent.click(view.getByRole("button", { name: "Send" }));
     expect(onDecline).toHaveBeenCalledWith("One real wake");
@@ -1550,7 +1552,7 @@ describe("a question's own choices", () => {
     );
     const strip = view.getByRole("article").textContent ?? "";
     expect(strip).not.toContain("Focused");
-    expect(strip).toContain("Urgent · something broken");
+    expect(strip).toContain("Something broken");
     expect(strip).toContain("3 · Quiet household trial");
     expect(strip).toContain("D-60");
   });
@@ -1568,7 +1570,7 @@ describe("a question's own choices", () => {
       />,
     );
     const row = view.getByRole("button", { name: "Open D-60" });
-    expect(row.textContent).toContain("Urgent · time-boxed · D-60");
+    expect(row.textContent).toContain("Time-boxed · D-60");
   });
 
   test("Later moves it to the bottom of its line; Not urgent shows only on an urgent question", () => {
@@ -2009,7 +2011,7 @@ describe("UnseenLog", () => {
     at(1, { line: "L-2", type: "write.refused", summary: "panel was refused a write on L-2" }),
   ];
 
-  test("a proposal or a finished line with nothing new is left out; a working line says nothing new", () => {
+  test("a line with nothing unseen is left out, whatever its state, and the log says there is nothing new", () => {
     const view = render(
       <UnseenLog
         events={[]}
@@ -2022,7 +2024,8 @@ describe("UnseenLog", () => {
         onShowWaiting={() => {}}
       />,
     );
-    within(view.getByRole("article", { name: "Enclosure" })).getByText(/nothing new/);
+    expect(view.queryByRole("article", { name: "Enclosure" })).toBeNull();
+    view.getByRole("heading", { name: "Nothing new" });
     expect(view.queryByRole("article", { name: "Wall mount" })).toBeNull();
     expect(view.queryByRole("article", { name: "Seerr" })).toBeNull();
   });
@@ -2585,11 +2588,11 @@ describe("AtPlaceItems", () => {
 
 describe("NotKept", () => {
   test("is nothing while drafts are kept", () => {
-    expect(render(<NotKept error={null} />).container.textContent).toBe("");
+    expect(render(<NotKept unsaved={false} />).container.textContent).toBe("");
   });
 
   test("says the draft was not saved, and that it is kept here until the tracker answers", () => {
-    const view = render(<NotKept error="the server is not answering" />);
+    const view = render(<NotKept unsaved />);
     expect(view.getByRole("alert").textContent).toBe(
       "Not saved: the tracker did not answer. Kept here; saves when it is back.",
     );

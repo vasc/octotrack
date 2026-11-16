@@ -15,9 +15,12 @@ export function ForYouRow({
   label,
   focused,
   onOpen,
+  on,
   children,
 }: {
   item: ForYou;
+  /** The line an urgent question is on, by its number on the page and its title. */
+  on?: { number: number; title: string } | undefined;
   /** What a screen reader says when focus reaches it. */
   label: string;
   focused: boolean;
@@ -32,7 +35,7 @@ export function ForYouRow({
         {children}
       </Focusable>
     );
-  const { kind, tone, title, note } = rowText(item);
+  const { kind, tone, title, note } = rowText(item, on);
   return (
     <Row
       focusRef={ref}
@@ -47,7 +50,10 @@ export function ForYouRow({
   );
 }
 
-function rowText(item: ForYou): {
+function rowText(
+  item: ForYou,
+  on: { number: number; title: string } | undefined,
+): {
   kind: string;
   tone: "needs" | "stuck";
   title: ReactNode;
@@ -61,7 +67,7 @@ function rowText(item: ForYou): {
         kind:
           decision.urgentReason === null
             ? `Question · ${decision.ref}`
-            : `Urgent · ${URGENT_REASON[decision.urgentReason]} · ${decision.ref}`,
+            : `${URGENT_REASON[decision.urgentReason]} · ${on === undefined ? "" : `on ${on.number} · ${on.title} · `}${decision.ref}`,
         tone: decision.urgentReason === null ? "needs" : "stuck",
         title: decision.title,
         note:

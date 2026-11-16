@@ -20,6 +20,7 @@ export function OwnerBox({
   onOwn,
   waitingOnYou = false,
   status,
+  ownInHead = false,
 }: {
   line: Line;
   crew: LineCrew | undefined;
@@ -31,6 +32,8 @@ export function OwnerBox({
   waitingOnYou?: boolean;
   /** Lines is loading or failed, so who owns it is not known yet: said in place of the owner and its moves. */
   status?: ReactNode;
+  /** Nobody can take the line, so the head offers stepping in, I'll own it among it: it is not offered twice. */
+  ownInHead?: boolean;
 }) {
   if (line.state === "done" || line.state === "dropped") return null;
   const owner = crew?.owner ?? null;
@@ -67,10 +70,10 @@ export function OwnerBox({
           />
         )}
       </List>
-      {line.ownedBy !== null ? null : (
+      {line.ownedBy !== null || (owner === null && ownInHead) ? null : (
         <Actions>
           {owner === null ? null : <Button onClick={() => onStop(owner.name)}>Stop {owner.name}</Button>}
-          <Button onClick={onOwn}>I'll own it</Button>
+          {ownInHead ? null : <Button onClick={onOwn}>I'll own it</Button>}
         </Actions>
       )}
     </Section>

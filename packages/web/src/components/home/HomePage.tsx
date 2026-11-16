@@ -61,7 +61,12 @@ export function HomePage() {
   const { handle, drop } = useLineHandles(h);
   const at = home?.at ?? null;
   // Nothing placed yet: the proposals are all there is, grouped, with no empty sections above them.
-  const firstRun = home !== undefined && home.working.length === 0 && home.upNext.length === 0;
+  const firstRun =
+    home !== undefined &&
+    home.working.length === 0 &&
+    home.upNext.length === 0 &&
+    home.tabled.length === 0 &&
+    home.doneLately.length === 0;
   // I'm at counts down in hours, so a minute's tick keeps it right without redrawing home every second.
   const now = useClock(at !== null, 60_000);
 
@@ -87,6 +92,12 @@ export function HomePage() {
           ) : null}
           <QuestionList
             title="Urgent"
+            lineOn={(ref) => {
+              const placed = [...home.working, ...home.upNext];
+              const at = placed.findIndex((line) => line.ref === ref);
+              const line = placed[at];
+              return line === undefined ? undefined : { number: at + 1, title: line.title };
+            }}
             cards={home.urgent}
             focus={focus}
             inspecting={inspecting}
