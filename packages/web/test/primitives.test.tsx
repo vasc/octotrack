@@ -191,7 +191,8 @@ describe("Section and Fold", () => {
       </Fold>,
     );
     view.getByText("the rows, one opened");
-    expect(view.getByRole("button", { name: /On no line/ }).hasAttribute("disabled")).toBe(true);
+    // Held, it can still be reached by the keyboard, so its reason is read; it only says it will not fold.
+    expect(view.getByRole("button", { name: /On no line/ }).getAttribute("aria-disabled")).toBe("true");
     // It says why it will not fold.
     view.getByText("stays open while you are in it");
   });
@@ -369,5 +370,20 @@ describe("Table", () => {
     ).toEqual(["Agent", "Repo", "Actions"]);
     within(table).getByRole("rowheader", { name: "panel" });
     view.getByText("3 more");
+  });
+});
+
+describe("Options, unavailable", () => {
+  test("cannot be picked, and says why inside it", () => {
+    const onPick = mock((_key: string) => {});
+    const view = render(
+      <Options
+        options={[{ key: "a", label: "Uninstall it", unavailable: "Only on the MacBook Air" }]}
+        onPick={onPick}
+      />,
+    );
+    const option = view.getByRole("button", { name: "Uninstall it" });
+    expect(option.hasAttribute("disabled")).toBe(true);
+    expect(option.getAttribute("aria-describedby")).toBe(view.getByText("Only on the MacBook Air").id);
   });
 });

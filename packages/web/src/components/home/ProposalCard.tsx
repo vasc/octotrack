@@ -11,7 +11,7 @@ import { Code } from "../ui/Note.tsx";
 import { TextLink } from "../ui/RefLink.tsx";
 import { Row } from "../ui/Row.tsx";
 
-export interface ProposalCardProps {
+interface ProposalCardProps {
   line: Line;
   focused?: boolean;
   /** Lines it could fold into: those still open. */

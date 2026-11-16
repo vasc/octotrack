@@ -1,6 +1,6 @@
 import { Field } from "./Field.tsx";
 
-export interface TextBoxProps {
+interface TextBoxProps {
   label: string;
   value: string;
   onChange(value: string): void;

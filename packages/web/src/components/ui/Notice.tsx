@@ -31,7 +31,7 @@ export function Notice({
         {children === undefined ? null : <div className="ui-notice-text">{children}</div>}
         {command === undefined ? null : <pre className="ui-command">{command}</pre>}
       </div>
-      {action === undefined ? null : <div className="ui-notice-action">{action}</div>}
+      {action === undefined ? null : <div>{action}</div>}
     </section>
   );
 }

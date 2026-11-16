@@ -70,7 +70,7 @@ export function Row(props: RowProps) {
           <KindText kind={kind} {...(tone === undefined ? {} : { tone })} />
         </span>
       )}
-      <span className="ui-row-line">
+      <span>
         <span className="ui-row-title">{title}</span>
         {facts === undefined ? null : <span className="ui-row-facts">{facts}</span>}
       </span>

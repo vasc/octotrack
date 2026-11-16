@@ -472,17 +472,36 @@
 }
 
 /* The word that says what an item is: the attention colour for what needs you, warm for what is stuck or urgent. */
+/* The kind word reads the shared tone: what needs you in the attention colour, what is stuck in the warm one. */
 .ui-kind {
+  --tone: var(--attention);
   font-weight: var(--weight-semibold);
-  color: var(--attention);
+  color: var(--tone);
 }
 
 .ui-kind[data-tone="stuck"] {
-  color: var(--warn);
+  --tone: var(--warn);
 }
 
 .ui-kind[data-tone="none"] {
-  color: var(--ink-2);
+  --tone: var(--ink-2);
+}
+
+/* A ref or a link inside running words is underlined in the light rule, so it reads as one without a pointer. */
+:is(.ui-prose, .ui-prose-inline, .ui-note, .ui-row-title, .ui-row-note) .ui-ref {
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 3px;
+}
+
+/* A field that cannot be typed in says so in its label too. */
+.ui-field:has(:disabled) > .ui-label {
+  color: var(--ink-3);
+}
+
+/* What a fold holds, after its count, set off by a dot as facts are. */
+.ui-fold-summary::before {
+  content: "· ";
 }
 
 .ui-row-title {
@@ -902,11 +921,11 @@
   cursor: pointer;
 }
 
-.ui-fold-head:hover:not(:disabled) {
+.ui-fold-head:hover:not([aria-disabled="true"]) {
   background: var(--surface-2);
 }
 
-.ui-fold-head:disabled {
+.ui-fold-head[aria-disabled="true"] {
   cursor: default;
 }
 
@@ -976,9 +995,17 @@
   cursor: pointer;
 }
 
-.ui-option:hover {
+.ui-option:hover:not(:disabled) {
   background: var(--surface-2);
   border-color: var(--line-strong);
+}
+
+/* Unavailable: the one disabled look, its reason inside it. */
+.ui-option:disabled {
+  background: var(--surface-2);
+  border-color: var(--line-faint);
+  color: var(--ink-3);
+  cursor: default;
 }
 
 .ui-option:active {
@@ -1120,7 +1147,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  padding: var(--space-6) 0;
+  padding: var(--space-6) var(--row-inset);
 }
 
 .ui-outline {
@@ -1129,24 +1156,17 @@
   background: var(--line-faint);
 }
 
-.ui-outline:nth-child(2) {
+/* The first outline is a full row; the next two shorter, as rows of words are. */
+.ui-loading > .ui-outline ~ .ui-outline {
   width: 70%;
 }
 
-.ui-outline:nth-child(3) {
+.ui-loading > .ui-outline ~ .ui-outline ~ .ui-outline {
   width: 55%;
-}
-
-.ui-outline:nth-child(4) {
-  width: 62%;
 }
 
 .ui-state p {
   margin: 0;
-}
-
-.ui-state[data-error="true"] {
-  color: var(--bad);
 }
 
 /* A failure said where it happened: what failed and why on a soft ground, Try again at its end. */
@@ -1650,12 +1670,22 @@
     position: relative;
   }
 
+  /* A finger's height exactly, centred on the words, and a little past their sides. */
   .ui-link::after,
   .ui-ref::after,
   .ui-lead::after {
     content: "";
     position: absolute;
-    inset: calc(-1 * var(--space-5));
+    top: 50%;
+    right: calc(-1 * var(--space-3));
+    left: calc(-1 * var(--space-3));
+    height: var(--touch-target);
+    transform: translateY(-50%);
+  }
+
+  .ui-chip,
+  .ui-fold-head {
+    min-height: var(--touch-target);
   }
 
   .ui-button[data-variant="icon"] {
@@ -1686,9 +1716,10 @@
     font-size: var(--text-input-touch);
   }
 
-  /* On a touch screen a menu opens with focus on its current item; its tint shows that, and a ring would shout it. */
+  /* On a touch screen a menu opens with focus on its current item: a tint shows that, where an edge would shout it. */
   .ui-menu-item:focus-visible {
-    outline: none;
+    background: var(--surface-2);
+    box-shadow: none;
   }
 }
 
@@ -1716,6 +1747,15 @@
 
   .ui-actions > .ui-button[data-variant="primary"] {
     flex-grow: 2;
+  }
+
+  /* A menu among them stretches as a button does, unless it is an icon alone. */
+  .ui-actions > .ui-menu:not(:has(.ui-button-words)) {
+    flex: 1 1 auto;
+  }
+
+  .ui-actions > .ui-menu:not(:has(.ui-button-words)) > .ui-button {
+    width: 100%;
   }
 }
 
@@ -1798,8 +1838,9 @@
   border-radius: var(--radius-lg);
 }
 
+/* A failure's edge stays pale, as every sheet's does: its heading carries the tone. */
 .ui-notice[data-tone="bad"] {
-  border-color: var(--bad);
+  background: var(--bad-soft);
 }
 
 .ui-notice-words {
@@ -1845,6 +1886,11 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
+}
+
+/* "+ N more" among the chips is quiet grey words, not a chip. */
+.ui-chips-row > .ui-link {
+  color: var(--ink-3);
 }
 
 .ui-chip {

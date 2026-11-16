@@ -12,6 +12,7 @@ import { LineForYou } from "./LineForYou.tsx";
 import { LineForYouItem } from "./LineForYouItem.tsx";
 import { LineStepIn } from "./LineStepIn.tsx";
 import { WorkingLine } from "./WorkingLine.tsx";
+import type { LineSection } from "../../hooks/useLineHandles.tsx";
 
 /**
  * Working on: each line with Step in first when it needs one, then the first thing waiting on the developer and the
@@ -40,8 +41,8 @@ export function WorkingSection({
   /** I'm at this place: its tasks open on their lines and everything else folds. */
   at: string | null;
   /** A line's handle, which drags it or opens its moves. */
-  handle(title: string, ref: string, index: number, count: number, section: "working" | "up_next"): ReactNode;
-  drop(ref: string, section: "working" | "up_next"): DropTarget;
+  handle(title: string, ref: string, index: number, count: number, section: LineSection): ReactNode;
+  drop(ref: string, section: LineSection): DropTarget;
   /** What sits in the section header: how thin the developer is spread. */
   actions: ReactNode;
   onFocus(ref: string): void;

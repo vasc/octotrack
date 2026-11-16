@@ -1,6 +1,5 @@
 import { navigate } from "../src/lib/router.ts";
 import { OutcomeFields } from "../src/components/home/OutcomeFields.tsx";
-import { LineBox } from "../src/components/ui/LineBox.tsx";
 import { Loaded } from "../src/components/ui/Loaded.tsx";
 import { TaskFrees } from "../src/components/entity/TaskFrees.tsx";
 import { TaskClosed } from "../src/components/home/TaskClosed.tsx";
@@ -2686,20 +2685,6 @@ describe("one-line boxes", () => {
     );
     expect(view.getByLabelText("Length").tagName).toBe("INPUT");
     expect(view.getByLabelText("Note").tagName).toBe("TEXTAREA");
-  });
-
-  test("LineBox keeps what it shows while it has focus, and shows a new value once it has none", () => {
-    const onChange = mock((_value: string) => {});
-    const view = render(<LineBox label="Length" value="41" onChange={onChange} />);
-    const box = view.getByLabelText("Length");
-    fireEvent.focus(box);
-    view.rerender(<LineBox label="Length" value="from another device" onChange={onChange} />);
-    expect(box).toHaveProperty("value", "41");
-    fireEvent.change(box, { target: { value: "42" } });
-    expect(onChange).toHaveBeenCalledWith("42");
-    fireEvent.blur(box);
-    view.rerender(<LineBox label="Length" value="43" onChange={onChange} />);
-    expect(box).toHaveProperty("value", "43");
   });
 
   test("TextBox sizes itself when a draft arrives without typing", () => {

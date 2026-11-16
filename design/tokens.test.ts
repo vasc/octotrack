@@ -224,7 +224,6 @@ describe("the dashboard uses the language instead of going around it", () => {
       [
         ".ui-field :is(input, textarea):focus",
         ".ui-menu-item:focus-visible",
-        ".ui-menu-item:focus-visible",
         ".ui-row:focus,\n.ui-focusable:focus",
         ".ui-search-input:focus",
         ".ui-side:focus",
@@ -309,9 +308,10 @@ describe("a finger can use it", () => {
   });
 
   test.each([".ui-link::after", ".ui-ref::after", ".ui-lead::after"])(
-    "%s, inside a line of words, reaches past its edges to a finger's size",
+    "%s, inside running words, reaches a finger's height, centred on its words",
     (selector) => {
-      expect(rulesFor(selector)).toContain("inset: calc(-1 * var(--space-5))");
+      expect(rulesFor(selector)).toContain("height: var(--touch-target)");
+      expect(rulesFor(selector)).toContain("transform: translateY(-50%)");
     },
   );
 

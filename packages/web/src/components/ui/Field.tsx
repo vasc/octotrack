@@ -1,7 +1,7 @@
 import { type ChangeEvent, type KeyboardEvent, type ReactNode, useId, useLayoutEffect, useRef } from "react";
 import { useHeldValue } from "../../hooks/useHeldValue.ts";
 
-export interface FieldProps {
+interface FieldProps {
   label: string;
   value: string;
   onChange(value: string): void;

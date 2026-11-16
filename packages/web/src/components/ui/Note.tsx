@@ -22,11 +22,6 @@ export function Note({
   );
 }
 
-/** A heading inside an item, in small grey words: Plan, Summary, Owner. */
-export function Label({ children }: { children: ReactNode }) {
-  return <h3 className="ui-label">{children}</h3>;
-}
-
 /** Words in a monospace face: a path, a command, a ref. */
 export function Code({ children }: { children: ReactNode }) {
   return <code className="ui-code">{children}</code>;

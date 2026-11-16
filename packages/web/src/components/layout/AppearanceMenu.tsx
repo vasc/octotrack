@@ -12,7 +12,7 @@ export function AppearanceMenu({ appearance, onPalette, onMode }: AppearanceProp
   const theme = PALETTES.find((palette) => palette.id === appearance.palette)?.name ?? "Paper";
   const mode = MODES.find((candidate) => candidate.id === appearance.mode)?.name ?? "As the system";
   return (
-    <Menu label={`Appearance: ${theme}, ${mode.toLowerCase()}`} icon="palette" menuLabel="Appearance">
+    <Menu label={`Appearance: ${theme}, ${mode.toLowerCase()}`} icon="appearance" menuLabel="Appearance">
       {(close) => (
         <AppearanceChoices appearance={appearance} onPalette={onPalette} onMode={onMode} close={close} />
       )}

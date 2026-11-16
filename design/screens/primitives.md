@@ -108,15 +108,6 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 - Error: cannot fail on its own: its owner says failures inside it.
 - Empty: never empty: it always has a kind and a title.
 
-### components/ui/LineBox.tsx
-
-- Designed in: Primitives.dc.html, Field (one line, label hidden)
-- What it shows: a one-line Field whose label is for a screen reader only.
-- Changes from today: as Field. Nothing uses it today.
-- Loading: as Field.
-- Error: as Field.
-- Empty: as Field.
-
 ### components/ui/Link.tsx
 
 - Designed in: Primitives.dc.html, Refs, links, keys, counts

@@ -11,7 +11,7 @@ import { Row } from "../ui/Row.tsx";
 import { AnswerStatus } from "./AnswerStatus.tsx";
 import { LineMeta } from "./LineMeta.tsx";
 
-export interface WorkingLineProps {
+interface WorkingLineProps {
   line: Line;
   crew?: LineCrew;
   details?: LineHome;

@@ -1,12 +1,13 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-/** What a line of text may hold: emphasis, code and links, never blocks such as headings or lists. */
+/** What a sentence may hold: emphasis, code and links, never blocks such as headings or lists. */
 const INLINE = ["p", "strong", "em", "del", "code", "a"];
 
 /**
  * Markdown as React elements: no HTML in the text is ever rendered as HTML, so whatever an agent writes cannot inject
- * anything. Links open outside the dashboard, and say so with ↗. Inline text keeps only what fits in a sentence, inside its own line;
+ * anything. Links leaving the dashboard open in a new tab and say so with ↗; those to a page here say →. Inline text keeps only
+ * what fits in a sentence;
  * without links, for text inside something that is itself clicked, such as an option.
  */
 export default function MarkdownView({
@@ -24,12 +25,16 @@ export default function MarkdownView({
       remarkPlugins={[remarkGfm]}
       {...(inline ? { allowedElements: allowed, unwrapDisallowed: true } : {})}
       components={{
-        a: ({ href, children }) => (
-          <a className="ui-link" href={href} target="_blank" rel="noreferrer">
-            {children}
-            <span aria-hidden="true"> ↗</span>
-          </a>
-        ),
+        a: ({ href, children }) => {
+          // A link to a page here stays in this tab, with →; anywhere else opens a new one, with ↗.
+          const inside = href !== undefined && (href.startsWith("/") || href.startsWith("#"));
+          return (
+            <a className="ui-link" href={href} {...(inside ? {} : { target: "_blank", rel: "noreferrer" })}>
+              {children}
+              <span aria-hidden="true">{inside ? " →" : " ↗"}</span>
+            </a>
+          );
+        },
         ...(inline ? { p: ({ children }) => <>{children}</> } : {}),
       }}
     >

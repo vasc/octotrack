@@ -26,8 +26,11 @@ export function Fold({
         type="button"
         className="ui-fold-head"
         aria-expanded={shown}
-        disabled={held}
-        onClick={() => setOpen(!open)}
+        // Held, it stays reachable by the keyboard, so its reason can be read; pressing it does nothing.
+        aria-disabled={held ? true : undefined}
+        onClick={() => {
+          if (!held) setOpen(!open);
+        }}
       >
         <span className="ui-fold-title">{title}</span>
         <span className="ui-section-count">{count}</span>

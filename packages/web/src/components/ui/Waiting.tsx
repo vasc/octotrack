@@ -26,7 +26,7 @@ export function Waiting({
   return (
     // Not a live region: the Undo bar already announces the choice, and the seconds tick too often to read out.
     <div className="ui-waiting">
-      <span className="ui-waiting-text">
+      <span>
         {what} <span aria-hidden="true">in {seconds(dueAt, now)} s</span>
       </span>
       <Button variant="primary" onClick={onUndo} aria-label={undoLabel}>

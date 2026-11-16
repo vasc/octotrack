@@ -2,7 +2,7 @@ import type { Line } from "@octotrack/core/schemas";
 import { whenText } from "../../lib/format.ts";
 import { Markdown } from "../ui/Markdown.tsx";
 
-export const MOVE_WORD: Readonly<Record<NonNullable<Line["recommendation"]>, string>> = {
+const MOVE_WORD: Readonly<Record<NonNullable<Line["recommendation"]>, string>> = {
   start: "Start",
   up_next: "Up next",
   table: "Table",

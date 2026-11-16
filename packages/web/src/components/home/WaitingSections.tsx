@@ -13,6 +13,7 @@ import { ProposalGroups } from "./ProposalGroups.tsx";
 import { QuietRow } from "./QuietRow.tsx";
 import { StartSheet } from "./StartSheet.tsx";
 import { UpNextRow } from "./UpNextRow.tsx";
+import type { LineSection } from "../../hooks/useLineHandles.tsx";
 
 /**
  * The lines not being worked on: up next in order, proposals, tabled and done lately. Starting one that waited opens
@@ -43,10 +44,10 @@ export function WaitingSections({
     ref: string,
     index: number,
     count: number,
-    section: "working" | "up_next",
+    section: LineSection,
     number?: number,
   ): ReactNode;
-  drop(ref: string, section: "working" | "up_next"): DropTarget;
+  drop(ref: string, section: LineSection): DropTarget;
   onStarting(ref: string | null): void;
   /** Whether an open Start sheet's number keys act: not while a panel is open over home. */
   sheetArmed?: boolean;

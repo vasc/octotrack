@@ -4,7 +4,7 @@ import { Fact, Facts } from "../ui/Facts.tsx";
 import { TextLink } from "../ui/RefLink.tsx";
 
 /** Past this many working lines, the header says what spreading thin costs: a nudge to table, never a cap. */
-export const SPREAD_THIN_AFTER = 6;
+const SPREAD_THIN_AFTER = 6;
 
 /**
  * What working on many lines at once costs, in Working on's header: "▲ 3 with no owner", "● 2 waiting on you", each

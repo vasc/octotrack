@@ -8,6 +8,8 @@ export interface Option {
   recommended?: boolean;
   /** Why it is recommended, said inside it. */
   why?: ReactNode;
+  /** It cannot be picked now, and why, said inside it. */
+  unavailable?: string;
 }
 
 /**
@@ -36,7 +38,12 @@ export function Options({
         const described = `${id}-${index}-what`;
         const why = `${id}-${index}-why`;
         const hasWhy = option.recommended === true && option.why !== undefined;
-        const describedBy = [option.description === undefined ? null : described, hasWhy ? why : null]
+        const off = `${id}-${index}-off`;
+        const describedBy = [
+          option.description === undefined ? null : described,
+          hasWhy ? why : null,
+          option.unavailable === undefined ? null : off,
+        ]
           .filter((part) => part !== null)
           .join(" ");
         return (
@@ -51,6 +58,7 @@ export function Options({
               data-recommended={option.recommended === true ? "true" : undefined}
               data-chosen={isChosen ? "true" : undefined}
               data-stepped={chosen !== undefined && !isChosen ? "true" : undefined}
+              disabled={option.unavailable !== undefined}
               onClick={() => onPick(option.key)}
             >
               <span className="ui-option-key" aria-hidden="true">
@@ -73,6 +81,11 @@ export function Options({
                     <b>Why:</b> {option.why}
                   </span>
                 ) : null}
+                {option.unavailable === undefined ? null : (
+                  <span className="ui-option-description" id={off}>
+                    {option.unavailable}
+                  </span>
+                )}
               </span>
             </button>
           </li>
