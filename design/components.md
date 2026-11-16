@@ -185,5 +185,7 @@ properties and appear on the `/design` specimen; **structural** ones load data a
 | `LinkList`        | Pure       | What an item connects to                                                                                |
 | `UpdatesSection`  | Structural | Notes posted on an item, and a box to post one                                                          |
 | `EventList`       | Pure       | What happened to an item, quiet rows, newest first                                                      |
-| `OpenDrift`       | Pure       | What is out of date about an item                                                                       |
+| `OpenDrift`       | Structural | What is out of date about an item                                                                       |
 | `DriftItem`       | Pure       | One thing out of date: its rule, what is wrong, the suggestion, Updated or Nothing to update            |
+| `DriftAnswer`     | Pure       | How it is cleared: what to check, the required note, Updated or Nothing to update                       |
+| `DriftBody`       | Structural | Drift opened by its own ref: what changed, answered in place                                            |

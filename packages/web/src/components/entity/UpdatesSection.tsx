@@ -8,6 +8,7 @@ import { Button } from "../ui/Button.tsx";
 import { Facts } from "../ui/Facts.tsx";
 import { List } from "../ui/List.tsx";
 import { NotKept } from "../ui/NotKept.tsx";
+import { Note } from "../ui/Note.tsx";
 import { RefText } from "../ui/RefText.tsx";
 import { Row } from "../ui/Row.tsx";
 import { Section } from "../ui/Section.tsx";
@@ -37,7 +38,8 @@ export function UpdatesSection({ target, updates }: { target: string; updates: r
       );
   };
   return (
-    <Section title="Updates" count={updates.length}>
+    <Section title="Updates" {...(updates.length === 0 ? {} : { count: updates.length })}>
+      {updates.length === 0 ? <Note>No updates yet.</Note> : null}
       <TextBox
         label={`Post an update on ${target}`}
         placeholder="Post an update"
@@ -46,8 +48,8 @@ export function UpdatesSection({ target, updates }: { target: string; updates: r
         onSubmit={post}
       />
       <Actions>
-        <Button disabled={body.trim() === "" || sending} onClick={post}>
-          {sending ? "Posting" : "Post"}
+        <Button disabled={body.trim() === ""} busy={sending ? "Posting…" : undefined} onClick={post}>
+          Post
         </Button>
       </Actions>
       <NotKept error={draft.error} />

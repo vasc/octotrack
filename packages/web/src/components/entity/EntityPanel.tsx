@@ -13,11 +13,14 @@ import { LinePanelItem } from "./LinePanelItem.tsx";
 import { LinkList } from "./LinkList.tsx";
 import { OpenDrift } from "./OpenDrift.tsx";
 import { UpdatesSection } from "./UpdatesSection.tsx";
+import { useHome } from "../../hooks/useHome.ts";
+import { homeLines } from "../../lib/lines.ts";
 
 /** Any item, by ref: what it is, what it connects to, what is out of date about it, and how it got here. */
 export function EntityPanel({ entityRef }: { entityRef: string }) {
   const detail = useOpQuery(contracts.entityShow, { ref: entityRef });
   const under = pageUnder(useRoute().path);
+  const lines = homeLines(useHome().home.data);
   if (detail.data === undefined) {
     return (
       <Panel onClose={closeEntity} under={under}>
@@ -53,7 +56,7 @@ export function EntityPanel({ entityRef }: { entityRef: string }) {
       under={under}
     >
       {stale === null ? null : <StaleNote at={detail.dataUpdatedAt} />}
-      <EntityBody entity={entity} links={links} />
+      <EntityBody entity={entity} links={links} lines={lines} />
       <OpenDrift drift={openDrift} />
       <LinkList entityRef={summary.ref} links={links} linked={linked} />
       <UpdatesSection target={summary.ref} updates={updates} />

@@ -652,12 +652,15 @@ describe("the inspector", () => {
     navigate(`/?ref=${decision.ref}`);
     const view = renderApp(<App />);
     const panel = within(await view.findByRole("complementary", { name: decision.ref }));
+    // With none yet, it says so in a sentence rather than counting none.
+    await panel.findByText("No updates yet.");
+    expect(panel.queryByRole("heading", { name: "Updates 0" })).toBeNull();
     fireEvent.change(await panel.findByLabelText(`Post an update on ${decision.ref}`), {
       target: { value: "Asked the vendor" },
     });
     fireEvent.click(panel.getByRole("button", { name: "Post" }));
     await view.findByText(/Posting a note on D-1: Asked the vendor/);
-    await panel.findByRole("button", { name: "Posting" });
+    await panel.findByRole("button", { name: "Posting…" });
     await answerNow(view);
     await panel.findByText("Asked the vendor");
   });

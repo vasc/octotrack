@@ -125,3 +125,21 @@ importance. Loading, a failed part and not found follow `Line-States.dc.html` st
 - Loading: the buttons show their busy word while sending (Primitives Button).
 - Error: a failed answer is said under the buttons, note kept, with Try again; a refusal at effect time goes to the Undo bar.
 - Empty: Updated and Nothing to update are disabled until the note has words, both in the one disabled look every button shares.
+
+### components/drift/DriftAnswer.tsx
+
+- Designed in: Panels.dc.html, state C
+- What it shows: what to check, "Note · required: what changed, or why nothing had to", then Updated (primary, only where updating can be true) and Nothing to update; once cleared, the note it was cleared with and who cleared it.
+- Changes from today: new; split from DriftItem so that drift opened by its own ref answers with the same controls.
+- Loading: the buttons stay off while an answer waits with Undo.
+- Error: a failed answer is said by the Undo bar; the note is kept.
+- Empty: both answers are off until the note has words, in the one disabled look.
+
+### components/entity/DriftBody.tsx
+
+- Designed in: Panels.dc.html, state C
+- What it shows: drift opened by its own ref: what changed ("D-20 was answered “Uninstall it” on …"), then DriftAnswer.
+- Changes from today: new; drift opened by its own ref showed its rule and fields with no way to answer.
+- Loading: never loads on its own: given the drift by EntityPanel.
+- Error: as DriftAnswer.
+- Empty: never empty: it exists only for a drift.

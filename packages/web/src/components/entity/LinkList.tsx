@@ -44,7 +44,7 @@ export function LinkList({ entityRef, links, linked }: LinkListProps) {
               facts={
                 <Facts>
                   {label}
-                  {summary === undefined ? null : <RefLink value={other} />}
+                  {summary === undefined ? "no longer exists" : <RefLink value={other} />}
                   {summary === undefined ? null : <StatusBadge value={summary.status} />}
                 </Facts>
               }

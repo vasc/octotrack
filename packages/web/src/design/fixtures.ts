@@ -5,9 +5,11 @@ import type {
   DecisionCard,
   Drift,
   FeedEvent,
+  Idea,
   Issue,
   Line,
   PendingChoice,
+  Project,
   PullRequest,
 } from "@octotrack/core/schemas";
 
@@ -258,6 +260,42 @@ export function agentView(overrides: Partial<AgentView> = {}): AgentView {
     role: "owner",
     lastLine: null,
     start: null,
+    ...overrides,
+  };
+}
+
+export function project(overrides: Partial<Project> = {}): Project {
+  return {
+    ref: "PANEL",
+    name: "Home panel",
+    description: "",
+    status: "active",
+    repo: "vasc/homepanel",
+    checkout: null,
+    horizon: "now",
+    targetDate: null,
+    version: 1,
+    createdAt: AT,
+    updatedAt: AT,
+    createdBy: "dev",
+    ...overrides,
+  };
+}
+
+export function idea(overrides: Partial<Idea> = {}): Idea {
+  return {
+    ref: "I-7",
+    project: null,
+    title: "Family devices",
+    body: "",
+    status: "captured",
+    horizon: "later",
+    labels: [],
+    promotedTo: null,
+    version: 1,
+    createdAt: AT,
+    updatedAt: AT,
+    createdBy: "dev",
     ...overrides,
   };
 }
