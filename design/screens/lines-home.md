@@ -111,8 +111,8 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 ### components/home/LineHandle.tsx
 
 - Designed in: Home.dc.html; Home-States.dc.html, state H; Primitives.dc.html, Row
-- What it shows: the line's number as a button ("Move The home worker fetches new videos again"), which opens Move to top, Up, Down, To up next, and drags.
-- Changes from today: none in words; a failed move is said beside the line (H).
+- What it shows: a six-dot grip in quiet grey beside the line's number, the two one button ("Move The home worker fetches new videos again") on every Working on and Up next row; it drags, and pressed it opens Move to top, Up, Down, To up next.
+- Changes from today: the grip is always drawn, so reordering can be found without hovering or knowing a key (today only a bare number with a grab cursor); a failed move is said beside the line (H).
 - Loading: never loads on its own.
 - Error: "Not moved. The tracker did not answer; it is back where it was." under the line that moved (H).
 - Empty: never empty: every placed line has a number.

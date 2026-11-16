@@ -77,6 +77,8 @@ are design decisions taken there, open to change:
   developer found the red box "way too strong for a merge conflict".
 - **A button that needs input stays live** and asks for it where it is missing, rather than greying out: the developer
   could not tell what state the greyed Updated was in.
+- **Reordering shows itself.** Every row that can move carries a six-dot grip beside its number, always drawn: the
+  developer found "there is no discoverability on reordeing" once only the number and a grab cursor were left.
 - **Loading is drawn, not said.** Outlines of the rows show something loads; the words are for screen readers only.
 
 These answer the open question "States not on the specimen": hover, focus, pressed, disabled and busy are drawn side by
