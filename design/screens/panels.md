@@ -124,4 +124,4 @@ importance. Loading, a failed part and not found follow `Line-States.dc.html` st
 - Changes from today: a sentence title saying what to check (today the rule's name, "issue closed pr open"); the note field is labelled as required and what to write; while an answer waits with Undo, the pressed button shows its busy word until it takes effect, as Agents A does for Stop (today both stay live and can send twice).
 - Loading: the buttons show their busy word while sending (Primitives Button).
 - Error: a failed answer is said under the buttons, note kept, with Try again; a refusal at effect time goes to the Undo bar.
-- Empty: Updated and Nothing to update are always live; pressed with no note, the box is marked and says "Write what changed, or why nothing had to", and nothing is sent.
+- Empty: Updated and Nothing to update are disabled until the note has words, both in the one disabled look every button shares.

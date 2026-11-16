@@ -56,8 +56,8 @@ are design decisions taken there, open to change:
   alone inside a row; on the dark primary button the edge sits 2 px off it. The developer found the first drawing's
   2 px ink ring "too strong", so it was softened; the edge still has 4.5:1 contrast on white, so it passes for
   keyboard users. A chosen answer is a quiet grey edge, a faint fill and its ✓, not a heavy border. One selected
-  treatment: the accent-soft fill. Pressed darkens a step. Disabled is a flat grey fill with grey text, never only
-  faded. Nothing gets a coloured side bar.
+  treatment: the accent-soft fill. Pressed darkens a step. Disabled is one pale grey look for every kind of
+  button, never only faded. Nothing gets a coloured side bar.
 - **A failure is said where it happened,** with what to do and Try again, and the tracker's own hint when it sends one.
   Raw error text never reaches the page. Data that could not refresh stays, marked with the time it is from.
 - **Illustrative content is labelled.** Where no real data exists for a state, the drawing says so on the board.
@@ -75,8 +75,10 @@ are design decisions taken there, open to change:
   proposal's advice reads "Recommends Start:" in ink.
 - **Red is for what broke.** A merge conflict is ordinary work: it is a fact row with the warn glyph, after the
   developer found the red box "way too strong for a merge conflict".
-- **A button that needs input stays live** and asks for it where it is missing, rather than greying out: the developer
-  could not tell what state the greyed Updated was in.
+- **Disabled is one look for every kind of button.** The developer: "I think disabled buttons are good, they just
+  should look disabled", and "a main button and a secondary button do not need separate disabled states". A disabled
+  primary had been drawn darker than a disabled plain one, so it read as another design; now primary, plain, quiet and
+  icon all disable to the same pale fill, faint edge and grey text.
 - **Reordering shows itself.** Every row that can move carries a six-dot grip beside its number, always drawn: the
   developer found "there is no discoverability on reordeing" once only the number and a grab cursor were left.
 - **Loading is drawn, not said.** Outlines of the rows show something loads; the words are for screen readers only.

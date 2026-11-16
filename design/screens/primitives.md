@@ -5,7 +5,7 @@ Field; Choice; Row; Fold; Status; Messages in place; Refs, links, keys, counts; 
 `Shell.dc.html`, sheets on `Sheets.dc.html` and panels on `Panels.dc.html` and `Line-States.dc.html`, in the canvas at
 https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU. The rules that hold for all of them: one focus treatment, a 2 px ink
 ring outside the element, keyboard only; one selected treatment, the accent-soft fill; pressed darkens one step;
-disabled is a flat grey fill with grey text, never just faded, and says why next to it when the reason is not obvious;
+disabled is one pale grey look for every kind of button, never just faded, and says why next to it when the reason is not obvious;
 every control is at least 32 px tall on a pointer, 44 px on touch. Primitives hold no data of their own, so most never
 load and cannot fail on their own; where they draw a state for their owner, it is said below.
 
@@ -42,7 +42,7 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 - What it shows: primary, plain, quiet and icon buttons in default, hover, focus, pressed, disabled and busy.
 - Changes from today:
   - Pressed darkens one step (today not drawn).
-  - Disabled is a flat grey fill with grey text, not 50% opacity, and says why next to it when not obvious.
+  - Disabled is one look for every kind (primary, plain, quiet, icon): a pale grey fill, a faint edge and grey text, not 50% opacity; it says why next to it when not obvious.
   - Busy keeps the width and swaps the verb for its -ing form ("Starting…", "Tabling…"); the icon button's fourth state is open, while its menu shows.
   - No button carries a key hint; keys are listed in the Keys sheet, and a choice's number is its key.
 - Loading: the busy state above.
