@@ -5,7 +5,7 @@ import { Actions } from "../ui/Actions.tsx";
 import { Button } from "../ui/Button.tsx";
 import { Facts } from "../ui/Facts.tsx";
 import { Field } from "../ui/Field.tsx";
-import { Item } from "../ui/Item.tsx";
+import { Item, Kind } from "../ui/Item.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
 import { Note } from "../ui/Note.tsx";
 import { Stack } from "../ui/Pairs.tsx";
@@ -57,12 +57,73 @@ export function TaskCard({
   const named = task.fields.length > 0;
   const outcome = taskOutcome(task, values, words);
   const ready = outcome !== null && !sending;
+  const form = (
+    <form
+      aria-label={cant ? "Say why it cannot be done" : "Report the outcome"}
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (cant) {
+          if (why.trim() !== "" && !sending) onCant(why.trim());
+          return;
+        }
+        // The words stay a draft until the task closes, which deletes it: an Undo must not lose them.
+        if (outcome !== null && !sending) onDone(outcome);
+      }}
+    >
+      <Stack>
+        {own && !cant ? null : named && !cant ? (
+          <>
+            {task.outcome === null ? null : <Markdown text={task.outcome} />}
+            <OutcomeFields
+              fields={task.fields}
+              values={values}
+              onValue={onValue}
+              note={words}
+              onNote={onWords}
+            />
+          </>
+        ) : (
+          <Field
+            label={cant ? `Why ${task.ref} cannot be done` : (task.outcome ?? "What you found")}
+            placeholder={cant ? "Why not" : undefined}
+            value={cant ? why : words}
+            onChange={cant ? onWhy : onWords}
+            multiline
+          />
+        )}
+        {cant ? (
+          <Actions>
+            <Button type="submit" variant="primary" disabled={why.trim() === "" || sending}>
+              Close it
+            </Button>
+            <Button onClick={() => setCant(false)}>Back</Button>
+          </Actions>
+        ) : (
+          <Actions>
+            <Button type="submit" variant="primary" choice={1} disabled={!ready}>
+              Done
+            </Button>
+            <Button choice={2} onClick={() => setCant(true)}>
+              {own ? "Can't" : "Can't do it"}
+            </Button>
+            {own ? null : (
+              <Note>
+                {named
+                  ? `${filledCount(task, values)} of ${task.fields.length} filled · saved as you type`
+                  : "Saved as you type"}
+              </Note>
+            )}
+          </Actions>
+        )}
+      </Stack>
+    </form>
+  );
   return (
     <Item
       label={task.title}
       kind={
         <Facts>
-          Task for you
+          <Kind>{own ? "Your task" : "Task for you"}</Kind>
           <RefLink value={task.ref} />
           {task.place === null ? null : `at ${task.place}`}
           {holdsUp === undefined ? null : `holds up ${holdsUp}`}
@@ -70,74 +131,15 @@ export function TaskCard({
         </Facts>
       }
       title={task.title}
+      answer={form}
+      {...(own && !cant ? {} : { answerLabel: cant ? "Why not" : "What to send back" })}
     >
       {frees === null ? null : (
         <Note>
-          Frees {frees.ref}: {frees.title}
+          Frees <RefLink value={frees.ref} /> {frees.title}
         </Note>
       )}
       {task.body === "" ? null : <Markdown text={task.body} />}
-      <form
-        aria-label={cant ? "Say why it cannot be done" : "Report the outcome"}
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (cant) {
-            if (why.trim() !== "" && !sending) onCant(why.trim());
-            return;
-          }
-          // The words stay a draft until the task closes, which deletes it: an Undo must not lose them.
-          if (outcome !== null && !sending) onDone(outcome);
-        }}
-      >
-        <Stack>
-          {own && !cant ? null : named && !cant ? (
-            <>
-              {task.outcome === null ? null : <Markdown text={task.outcome} />}
-              <OutcomeFields
-                fields={task.fields}
-                values={values}
-                onValue={onValue}
-                note={words}
-                onNote={onWords}
-              />
-            </>
-          ) : (
-            <Field
-              label={cant ? `Why ${task.ref} cannot be done` : (task.outcome ?? "What you found")}
-              placeholder={cant ? "Why not" : undefined}
-              value={cant ? why : words}
-              onChange={cant ? onWhy : onWords}
-              multiline
-            />
-          )}
-          {cant ? (
-            <Actions>
-              <Button type="submit" variant="primary" disabled={why.trim() === "" || sending}>
-                Close it
-              </Button>
-              <Button variant="quiet" onClick={() => setCant(false)}>
-                Cancel
-              </Button>
-            </Actions>
-          ) : (
-            <Actions>
-              <Button type="submit" variant="primary" choice={1} disabled={!ready}>
-                Done
-              </Button>
-              <Button choice={2} onClick={() => setCant(true)}>
-                Can't do it
-              </Button>
-              {own ? null : (
-                <Note>
-                  {named
-                    ? `${filledCount(task, values)} of ${task.fields.length} filled · saved as you type`
-                    : "Saved as you type"}
-                </Note>
-              )}
-            </Actions>
-          )}
-        </Stack>
-      </form>
     </Item>
   );
 }

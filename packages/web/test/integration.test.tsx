@@ -2653,7 +2653,7 @@ describe("lines of work", () => {
       const view = renderApp(<App />);
       const opened = within(await view.findByRole("article", { name: "Measure the grip" }));
       await opened.findByText("holds up Settle the board");
-      opened.getByText(whole(`Frees ${issue.ref}: Fit the board`));
+      opened.getByText(whole(`Frees ${issue.ref} Fit the board`));
     });
 
     test("a Tell about an issue nobody holds names the line's owner, whom it reaches", async () => {

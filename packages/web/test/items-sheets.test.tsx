@@ -6,7 +6,8 @@ import { KeyHelp } from "../src/components/home/KeyHelp.tsx";
 import { StepIn } from "../src/components/home/StepIn.tsx";
 import { StartSheetView } from "../src/components/home/StartSheetView.tsx";
 import { NewLineSheet } from "../src/components/lines/NewLineSheet.tsx";
-import { line } from "../src/design/fixtures.ts";
+import { issue, line } from "../src/design/fixtures.ts";
+import { TaskCard } from "../src/components/home/TaskCard.tsx";
 
 const noop = () => {};
 
@@ -145,5 +146,47 @@ describe("StartSheetView, as drawn", () => {
     loaded.getByText("1 question and 1 task waited for it.");
     // A held question no longer open to answer here still shows, by its title.
     loaded.getByText("Which engine?");
+  });
+});
+
+describe("TaskCard, as drawn", () => {
+  const props = {
+    words: "",
+    onWords: noop,
+    values: {},
+    onValue: noop,
+    why: "",
+    onWhy: noop,
+    onDone: noop,
+    onCant: noop,
+  };
+
+  test("what to send back sits under a heading, and what it frees opens", () => {
+    const view = render(
+      <TaskCard
+        {...props}
+        task={issue({ ref: "PANEL-6", outcome: "In mm", fields: ["Length"], createdBy: "panel-widgets" })}
+        frees={{ ref: "PANEL-4", title: "Print the wall mount" }}
+      />,
+    );
+    view.getByText("What to send back");
+    view.getByRole("button", { name: "PANEL-4" });
+  });
+
+  test("Can't do it asks why, with Close it and Back", () => {
+    const view = render(<TaskCard {...props} task={issue({ ref: "PANEL-6", outcome: "In mm" })} />);
+    fireEvent.click(view.getByRole("button", { name: "Can't do it" }));
+    view.getByLabelText("Why PANEL-6 cannot be done");
+    view.getByRole("button", { name: "Close it" });
+    view.getByRole("button", { name: "Back" });
+  });
+
+  test("a task of the developer's own is theirs: Done and Can't", () => {
+    const view = render(
+      <TaskCard {...props} task={issue({ ref: "LIFE-1", outcome: "", createdBy: "dev" })} />,
+    );
+    view.getByText("Your task");
+    view.getByRole("button", { name: "Done" });
+    view.getByRole("button", { name: "Can't" });
   });
 });
