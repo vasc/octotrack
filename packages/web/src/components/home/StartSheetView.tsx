@@ -83,6 +83,7 @@ export function StartSheetView({
           was={line.doneWhen}
           proposal={line.doneWhenProposal}
           why={line.doneWhenWhy}
+          by={line.doneWhenProposedBy}
           numbers={["1", "2"]}
           onAnswer={onDoneWhen}
         />

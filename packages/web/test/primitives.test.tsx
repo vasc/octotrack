@@ -10,6 +10,7 @@ import { Focusable } from "../src/components/ui/Focusable.tsx";
 import { Fold } from "../src/components/ui/Fold.tsx";
 import { Section } from "../src/components/ui/Section.tsx";
 import { List } from "../src/components/ui/List.tsx";
+import { Cell, Table } from "../src/components/ui/Table.tsx";
 import { Row } from "../src/components/ui/Row.tsx";
 import { Sheet } from "../src/components/ui/Sheet.tsx";
 import { useHotkeys } from "../src/hooks/useHotkeys.ts";
@@ -344,5 +345,27 @@ describe("a sheet holds the keys", () => {
     fireEvent.keyDown(window, { key: "j" });
     expect(onJ).toHaveBeenCalledTimes(1);
     after.unmount();
+  });
+});
+
+describe("Table", () => {
+  test("is one sheet with its column headings over hairline rows, and what follows the rows inside it", () => {
+    const view = render(
+      <Table label="Agents" columns={["Agent", "Repo", ""]} foot={<p>3 more</p>}>
+        <tr>
+          <Cell place="lead">panel</Cell>
+          <Cell place="fact">PANEL</Cell>
+          <Cell place="trailing">Stop</Cell>
+        </tr>
+      </Table>,
+    );
+    const table = view.getByRole("table", { name: "Agents" });
+    expect(
+      within(table)
+        .getAllByRole("columnheader")
+        .map((cell) => cell.textContent),
+    ).toEqual(["Agent", "Repo", ""]);
+    within(table).getByRole("cell", { name: "panel" });
+    view.getByText("3 more");
   });
 });

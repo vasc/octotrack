@@ -106,15 +106,9 @@ export function homeLines(home: HomeView | undefined): readonly Line[] {
 /** What a line's facts need: whether all its open work waits on the developer, as the server decides (D14). */
 type WaitingFacts = Readonly<Record<string, Pick<LineHome, "waitingOnYou">>>;
 
-/** A line's title and whether all of it waits on the developer, for the roster; nothing for a line home does not list. */
-export function lineFacts(
-  lines: readonly Pick<Line, "ref" | "title">[],
-  facts: WaitingFacts,
-  ref: string | null,
-): { lineTitle?: string; waitsOnYou?: boolean } {
-  const line = lines.find((candidate) => candidate.ref === ref);
-  if (line === undefined) return {};
-  return { lineTitle: line.title, waitsOnYou: facts[line.ref]?.waitingOnYou === true };
+/** Whether all of a line waits on the developer, for the roster: no for no line, or one home does not list. */
+export function lineWaitsOnYou(facts: WaitingFacts, ref: string | null): boolean {
+  return ref !== null && facts[ref]?.waitingOnYou === true;
 }
 
 /** The lines a choice in the Undo bar can name, each with its title and whether all of it waits on the developer. */

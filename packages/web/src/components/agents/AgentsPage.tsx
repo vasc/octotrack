@@ -1,14 +1,14 @@
 import { contracts } from "@octotrack/core/contracts";
 import { useChoices } from "../../hooks/useChoices.ts";
-import { useHome } from "../../hooks/useHome.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
+import { useHome } from "../../hooks/useHome.ts";
 import { usePush } from "../../hooks/usePush.ts";
 import { rosterSummary } from "../../lib/format.ts";
-import { homeLines, lineFacts } from "../../lib/lines.ts";
+import { lineWaitsOnYou } from "../../lib/lines.ts";
 import { PushToggle } from "../home/PushToggle.tsx";
 import { Loaded } from "../ui/Loaded.tsx";
 import { Page } from "../ui/Page.tsx";
-import { EmptyState } from "../ui/states.tsx";
+import { Notice } from "../ui/Notice.tsx";
 import { AgentRoster } from "./AgentRoster.tsx";
 import { AgentRosterRow } from "./AgentRosterRow.tsx";
 
@@ -21,9 +21,7 @@ export function AgentsPage() {
   const push = usePush();
   const choices = useChoices();
   const h = useHome();
-  const home = h.home.data;
-  const lines = homeLines(home);
-  const facts = (ref: string | null) => lineFacts(lines, home?.lines ?? {}, ref);
+  const facts = h.home.data?.lines ?? {};
   const roster = agents.data ?? [];
   return (
     <Page
@@ -46,7 +44,9 @@ export function AgentsPage() {
         at={agents.dataUpdatedAt}
       >
         {roster.length === 0 ? (
-          <EmptyState command="export OCTO_AGENT=feature-x">No agents yet</EmptyState>
+          <Notice title="No agent has checked in yet" command="export OCTO_AGENT=feature-x">
+            An agent appears here the first time it runs an octo command with its name.
+          </Notice>
         ) : (
           <AgentRoster
             agents={roster}
@@ -55,8 +55,7 @@ export function AgentsPage() {
                 key={agent.name}
                 busy={choices.waiting(`agent:${agent.name}`)}
                 agent={agent}
-                {...(agent.repo === null ? {} : { repo: h.repoName(agent.repo) })}
-                {...facts(agent.line ?? agent.start?.line ?? agent.lastLine)}
+                waitsOnYou={lineWaitsOnYou(facts, agent.line)}
                 onStop={(name) => choices.make(contracts.agentStop.name, { name }, `Stopping ${name}`)}
                 onLift={(name) => choices.make(contracts.agentLift.name, { name }, `Lifting ${name}'s stop`)}
                 onRelease={(name) =>

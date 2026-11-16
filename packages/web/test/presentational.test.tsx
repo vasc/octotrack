@@ -1,5 +1,3 @@
-import { whenText } from "../src/lib/format.ts";
-import { AUTO_STOP_REASON } from "@octotrack/core/schemas";
 import { navigate } from "../src/lib/router.ts";
 import { HeldDecision } from "../src/components/decisions/HeldDecision.tsx";
 import { OutcomeFields } from "../src/components/home/OutcomeFields.tsx";
@@ -18,7 +16,6 @@ import { BatchPanelView } from "../src/components/decisions/BatchPanelView.tsx";
 import { DecisionCardView } from "../src/components/decisions/DecisionCardView.tsx";
 import { QuestionStrip } from "../src/components/decisions/QuestionStrip.tsx";
 import { DriftItem } from "../src/components/drift/DriftItem.tsx";
-import { AgentRosterRow } from "../src/components/agents/AgentRosterRow.tsx";
 import { LinePanelHead } from "../src/components/entity/LinePanelHead.tsx";
 import { OwnerBox } from "../src/components/entity/OwnerBox.tsx";
 import { PlanList } from "../src/components/entity/PlanList.tsx";
@@ -77,7 +74,6 @@ import { ApiError } from "../src/api/client.ts";
 import type { HomeActions } from "../src/hooks/useHome.ts";
 import { refOf } from "../src/lib/focus.ts";
 import type {
-  AgentView,
   EntitySummary,
   ForYou,
   HomeView,
@@ -1279,160 +1275,6 @@ describe("UndoBar", () => {
 });
 
 describe("agents and first run", () => {
-  const agent = (overrides: Partial<AgentView> = {}): AgentView => ({
-    name: "panel",
-    note: null,
-    firstSeenAt: "2026-11-14T09:00:00.000Z",
-    lastSeenAt: "2026-11-14T09:00:00.000Z",
-    checkout: "/src/panel",
-    repo: "PANEL",
-    wakeAddress: "screen:abc",
-    startedBy: null,
-    stoppedAt: null,
-    stoppedReason: null,
-    goneAt: null,
-    wokenAt: null,
-    wakeError: null,
-    state: "asleep",
-    line: "L-2",
-    role: "owner",
-    lastLine: null,
-    start: null,
-    ...overrides,
-  });
-
-  test("AgentRosterRow shows a session started for a line that never ran a command, as E-Agents does", () => {
-    const now = Date.parse("2026-11-14T12:00:00.000Z");
-    const view = render(
-      <AgentRosterRow
-        agent={agent({
-          name: "trips.2",
-          line: null,
-          role: null,
-          wakeAddress: null,
-          startedBy: "octotrack",
-          state: "gone",
-          start: {
-            line: "L-9",
-            state: "failed",
-            attempts: 3,
-            since: "2026-11-10T09:00:00.000Z",
-            exitCode: 1,
-          },
-        })}
-        lineTitle="South Tyrol trip"
-        now={now}
-        onStop={() => {}}
-        onLift={() => {}}
-        onRelease={() => {}}
-      />,
-    );
-    const row = within(view.getByRole("article", { name: "trips.2" }));
-    row.getByRole("button", { name: "L-9" });
-    row.getByText(/South Tyrol trip/);
-    row.getByText(/, started for it/);
-    row.getByText("never");
-    row.getByText("retried since Tuesday, each exits at once (exit 1)");
-  });
-
-  test("AgentRosterRow tells the developer's Stop from Octotrack's, as E-Agents does", () => {
-    const row = (overrides: Partial<AgentView>) =>
-      render(
-        <AgentRosterRow
-          agent={agent({ state: "stopped", ...overrides })}
-          onStop={() => {}}
-          onLift={() => {}}
-          onRelease={() => {}}
-        />,
-      );
-    const stoppedAt = new Date(2026, 10, 14, 10, 2).toISOString();
-    const mine = row({ stoppedAt, stoppedReason: null });
-    mine.getByText(`stopped by you ${whenText(stoppedAt)}`);
-    mine.unmount();
-    const theirs = row({ stoppedAt, stoppedReason: AUTO_STOP_REASON });
-    theirs.getByText(`stopped by Octotrack ${whenText(stoppedAt)}, after 3 writes a line's state forbids`);
-  });
-
-  test("AgentRosterRow names the line a gone agent last owned", () => {
-    const view = render(
-      <AgentRosterRow
-        agent={agent({ name: "roadtrip", line: null, role: null, state: "gone", lastLine: "L-9" })}
-        lineTitle="South Tyrol trip"
-        onStop={() => {}}
-        onLift={() => {}}
-        onRelease={() => {}}
-      />,
-    );
-    const row = within(view.getByRole("article", { name: "roadtrip" }));
-    row.getByRole("button", { name: "L-9" });
-    row.getByText(/, last owner/);
-    expect(row.queryByRole("button", { name: /^(Stop|Lift|Release)/ })).toBeNull();
-  });
-
-  test("AgentRosterRow says where an agent is and how to reach it, and offers Stop or Lift", () => {
-    const onStop = mock((_name: string) => {});
-    const onLift = mock((_name: string) => {});
-    const view = render(
-      <AgentRosterRow
-        agent={agent()}
-        repo="vasc/homepanel"
-        onStop={onStop}
-        onLift={onLift}
-        onRelease={() => {}}
-      />,
-    );
-    view.getByText("vasc/homepanel");
-    view.getByText("screen");
-    view.getByText(", owner");
-    view.getByText("asleep, on its line");
-    expect(view.queryByRole("button", { name: "Release panel" })).toBeNull();
-    fireEvent.click(view.getByRole("button", { name: "Stop panel" }));
-    expect(onStop).toHaveBeenCalledWith("panel");
-    view.unmount();
-    const stopped = render(
-      <AgentRosterRow
-        agent={agent({ state: "stopped", stoppedReason: "Wrong repo", line: null, role: null })}
-        onStop={onStop}
-        onLift={onLift}
-        onRelease={() => {}}
-      />,
-    );
-    stopped.getByText("stopped by you: Wrong repo");
-    fireEvent.click(stopped.getByRole("button", { name: "Lift panel" }));
-    expect(onLift).toHaveBeenCalledWith("panel");
-  });
-
-  test("AgentRosterRow names the line, says when it waits on the developer, and shows the agent's own note", () => {
-    const view = render(
-      <AgentRosterRow
-        agent={agent({ state: "running", note: "Printing the base" })}
-        lineTitle="Sendspin enclosure"
-        waitsOnYou
-        onStop={() => {}}
-        onLift={() => {}}
-        onRelease={() => {}}
-      />,
-    );
-    view.getByText(/Sendspin enclosure, owner/);
-    view.getByText("running; its line waits on you");
-    view.getByText("Printing the base");
-  });
-
-  test("AgentRosterRow offers Release on a quiet agent that still holds a line", () => {
-    const onRelease = mock((_name: string) => {});
-    const view = render(
-      <AgentRosterRow
-        agent={agent({ state: "quiet" })}
-        onStop={() => {}}
-        onLift={() => {}}
-        onRelease={onRelease}
-      />,
-    );
-    fireEvent.click(view.getByRole("button", { name: "Release panel from L-2" }));
-    expect(view.queryByRole("button", { name: "Stop panel" })).toBeNull();
-    expect(onRelease).toHaveBeenCalledWith("panel");
-  });
-
   test("FirstRun accepts every recommended placement it can, says when there is none to accept, and how to start", () => {
     const onAccept = mock((_refs: string[]) => {});
     const view = render(
@@ -1937,9 +1779,10 @@ describe("home's smaller pieces", () => {
     );
     view.getByRole("dialog", { name: "Start Firmware without casts" });
     view.getByRole("heading", { name: "Start Firmware without casts" });
-    // The sharpened done when is the title, the old one and why under it.
-    view.getByRole("heading", { name: "…on, and CI fails on a new cast" });
-    view.getByText(whole("Was: it builds with the no-casts rule on · without CI, casts creep back."));
+    // The old done when and the sharpened one side by side, with why.
+    view.getByText("it builds with the no-casts rule on");
+    view.getByText("…on, and CI fails on a new cast");
+    view.getByText(whole("Why: without CI, casts creep back."));
     const numbers = view.getAllByRole("button").flatMap((button) => {
       const number = button.getAttribute("data-choice");
       return number === null ? [] : [[number, button.getAttribute("aria-label") ?? button.textContent]];

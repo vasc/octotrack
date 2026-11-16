@@ -745,6 +745,16 @@ describe("other pages", () => {
     roster.getByText("idle: nothing to take or scope in its repo");
   });
 
+  test("with no agent yet, Agents says how one appears and the command that names it", async () => {
+    // The shared setup acts as an agent; this tracker has heard from none.
+    server = startTestServer();
+    navigate("/agents");
+    const view = renderApp(<App />);
+    const empty = within(await view.findByRole("region", { name: "No agent has checked in yet" }));
+    empty.getByText("An agent appears here the first time it runs an octo command with its name.");
+    empty.getByText("export OCTO_AGENT=feature-x");
+  });
+
   test("an unknown path says so", async () => {
     navigate("/nowhere");
     const view = renderApp(<App />);

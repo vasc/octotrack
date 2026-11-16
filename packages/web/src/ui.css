@@ -1395,6 +1395,70 @@
   outline: none;
 }
 
+/* ---------- Table ---------- */
+
+.ui-table-sheet {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.ui-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ui-table th {
+  padding: var(--space-4) var(--space-8) var(--space-4) var(--row-inset);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--ink-3);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.ui-table tbody tr + tr {
+  border-top: 1px solid var(--line);
+}
+
+.ui-cell {
+  padding: var(--space-5) var(--space-8) var(--space-5) var(--row-inset);
+  vertical-align: baseline;
+  color: var(--ink-2);
+}
+
+.ui-cell[data-place="lead"] {
+  font-weight: var(--weight-semibold);
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.ui-cell[data-place="main"] {
+  width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.ui-cell[data-place="fact"] {
+  font-size: var(--text-sm);
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.ui-cell[data-place="trailing"] {
+  padding-right: var(--row-inset);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.ui-table-foot {
+  padding: var(--space-5) var(--row-inset);
+  border-top: 1px solid var(--line);
+  font-size: var(--text-sm);
+}
+
 /* ---------- Phone ---------- */
 
 @media (max-width: 720px) {
@@ -1452,6 +1516,49 @@
 
   .ui-fold-summary {
     display: none;
+  }
+
+  /* On a phone a table's headings step away and each row wraps: its lead and what acts on it, its main cell, its facts. */
+  .ui-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .ui-table tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: var(--space-6);
+    padding: var(--space-5) var(--row-inset);
+  }
+
+  .ui-cell {
+    padding: 0;
+  }
+
+  .ui-cell:empty {
+    display: none;
+  }
+
+  .ui-cell[data-place="lead"] {
+    flex: 1;
+  }
+
+  .ui-cell[data-place="trailing"] {
+    order: 1;
+    padding: 0;
+  }
+
+  .ui-cell[data-place="main"] {
+    order: 2;
+    flex-basis: 100%;
+  }
+
+  .ui-cell[data-place="fact"] {
+    order: 3;
   }
 }
 

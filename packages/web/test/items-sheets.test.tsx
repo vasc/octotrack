@@ -2,11 +2,13 @@ import { describe, expect, mock, test } from "bun:test";
 import { fireEvent, render, within } from "@testing-library/react";
 import { AnswerStatus } from "../src/components/home/AnswerStatus.tsx";
 import { CheckoutForm } from "../src/components/home/CheckoutForm.tsx";
+import { DoneWhenChanged } from "../src/components/home/DoneWhenChanged.tsx";
 import { KeyHelp } from "../src/components/home/KeyHelp.tsx";
 import { StepIn } from "../src/components/home/StepIn.tsx";
 import { StartSheetView } from "../src/components/home/StartSheetView.tsx";
 import { NewLineSheet } from "../src/components/lines/NewLineSheet.tsx";
 import { issue, line } from "../src/design/fixtures.ts";
+import { whole } from "./harness.tsx";
 import { TaskCard } from "../src/components/home/TaskCard.tsx";
 
 const noop = () => {};
@@ -107,6 +109,40 @@ describe("NewLineSheet, as drawn", () => {
     const view = render(<NewLineSheet {...props} onDraft={onDraft} />);
     fireEvent.change(view.getByLabelText("What it is"), { target: { value: "Backups" } });
     expect(onDraft).toHaveBeenCalledWith({ title: "Backups", doneWhen: "" });
+  });
+});
+
+describe("DoneWhenChanged, as drawn", () => {
+  test("says who changed it while it waited, Was and Proposed side by side, why, and Accept first", () => {
+    const onAnswer = mock((_accept: boolean) => {});
+    const view = render(
+      <DoneWhenChanged
+        was="The Mac mini has enough free disk."
+        proposal="After a deploy the data volume has at least 40 GB free."
+        why="enough could not be checked."
+        by="chores"
+        numbers={["1", "2"]}
+        onAnswer={onAnswer}
+      />,
+    );
+    view.getByText(whole("Done when changed · by chores, while it waited"));
+    expect(view.getByText("Was").textContent).toBe("Was");
+    view.getByText("The Mac mini has enough free disk.");
+    expect(view.getByText("Proposed").textContent).toBe("Proposed");
+    view.getByText("After a deploy the data volume has at least 40 GB free.");
+    view.getByText(whole("Why: enough could not be checked."));
+    const accept = view.getByRole("button", { name: "Accept" });
+    expect(accept.getAttribute("data-variant")).toBe("primary");
+    fireEvent.click(view.getByRole("button", { name: "Keep current" }));
+    expect(onAnswer).toHaveBeenCalledWith(false);
+  });
+
+  test("with no proposer named, says only that it changed", () => {
+    const view = render(
+      <DoneWhenChanged was="a" proposal="b" why={null} by={null} numbers={["1", "2"]} onAnswer={noop} />,
+    );
+    view.getByText(whole("Done when changed"));
+    expect(view.queryByText(/Why:/)).toBeNull();
   });
 });
 

@@ -342,6 +342,15 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 - Error: cannot fail on its own.
 - Empty: never empty: it always has its lead.
 
+### components/ui/Table.tsx
+
+- Designed in: Agents.dc.html, the board
+- What it shows: one sheet with its column headings ("Agent", "Repo", "Now", "Last seen") on the soft ground over hairline rows; each cell by its part: the lead in ink and heavier, the main cell taking the width, facts small and grey, what acts at the right; what follows the rows ("21 more quiet: …") inside the sheet under them. On a phone the headings step away and each row wraps: its lead and what acts on it, then its main cell, then its facts.
+- Changes from today: new; the roster was rows of facts with no headings.
+- Loading: never loads on its own.
+- Error: cannot fail on its own.
+- Empty: its owner draws something else in its place, as Agents draws its notice.
+
 ### components/ui/Waiting.tsx
 
 - Designed in: Question-States.dc.html, state C

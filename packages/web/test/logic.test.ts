@@ -15,7 +15,14 @@ import {
   toneOf,
 } from "../src/lib/format.ts";
 import { focusLabel, nextFocus } from "../src/lib/focus.ts";
-import { forYouCounts, heldOnTabled, lineFacts, heldText, tellSummary, undoLines } from "../src/lib/lines.ts";
+import {
+  forYouCounts,
+  heldOnTabled,
+  lineWaitsOnYou,
+  heldText,
+  tellSummary,
+  undoLines,
+} from "../src/lib/lines.ts";
 import { askedText, cantSummary, doneSummary, howClosed, isTask, taskOutcome } from "../src/lib/tasks.ts";
 import { issueLinks } from "../src/lib/links.ts";
 import { moreSinceSummary } from "../src/lib/log.ts";
@@ -228,14 +235,13 @@ describe("whether a line waits on the developer", () => {
   // L-1 has a question for the developer and work its agents can do; all of L-2's work waits on the developer.
   const enclosure = { ref: "L-1", title: "Enclosure" };
   const mount = { ref: "L-2", title: "Mount" };
-  const lines = [enclosure, mount];
   const facts = { "L-1": { waitingOnYou: false }, "L-2": { waitingOnYou: true } };
 
-  test("the roster says so only when all of a line's work waits, and says nothing of a line it does not know", () => {
-    expect(lineFacts(lines, facts, "L-1")).toEqual({ lineTitle: "Enclosure", waitsOnYou: false });
-    expect(lineFacts(lines, facts, "L-2")).toEqual({ lineTitle: "Mount", waitsOnYou: true });
-    expect(lineFacts(lines, facts, "L-9")).toEqual({});
-    expect(lineFacts(lines, facts, null)).toEqual({});
+  test("the roster says so only when all of a line's work waits, and not of a line it does not know", () => {
+    expect(lineWaitsOnYou(facts, "L-1")).toBe(false);
+    expect(lineWaitsOnYou(facts, "L-2")).toBe(true);
+    expect(lineWaitsOnYou(facts, "L-9")).toBe(false);
+    expect(lineWaitsOnYou(facts, null)).toBe(false);
   });
 
   test("so does the Undo bar", () => {
