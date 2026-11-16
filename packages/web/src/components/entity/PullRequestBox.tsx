@@ -39,7 +39,7 @@ export function PullRequestBox({
                 <Facts>
                   {/* Out to GitHub, where the pull request lives. */}
                   <Link href={pr.url} external>
-                    {pr.repo}#{pr.number} ↗
+                    {pr.repo}#{pr.number}
                   </Link>
                   {pr.checks === "failing" ? <Fact tone="stuck">{CHECKS.failing}</Fact> : CHECKS[pr.checks]}
                   {pr.state}

@@ -70,6 +70,7 @@ export function SearchField({
         aria-invalid={error !== null}
         aria-expanded={open}
         aria-controls={open ? `${id}-list` : undefined}
+        aria-activedescendant={open ? `${id}-option-${highlighted}` : undefined}
         role="combobox"
         aria-autocomplete="list"
         // biome-ignore lint/a11y/noAutofocus: reached with /, so the cursor goes straight into the search
@@ -107,6 +108,7 @@ export function SearchField({
           {completions.map((completion, index) => (
             <button
               key={completion.term}
+              id={`${id}-option-${index}`}
               type="button"
               role="option"
               aria-selected={index === highlighted}

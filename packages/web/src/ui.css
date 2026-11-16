@@ -29,6 +29,10 @@
   color: var(--ink-3);
 }
 
+.ui-field-note[data-invalid="true"] {
+  color: var(--bad);
+}
+
 .ui-note {
   margin: 0;
   font-size: var(--text-sm);
@@ -37,6 +41,12 @@
 
 .ui-note[data-error="true"] {
   color: var(--bad);
+}
+
+/* What the tracker says to do about a failure, the line under it in ink's quieter shade. */
+.ui-note-hint {
+  display: block;
+  color: var(--ink-3);
 }
 
 .ui-note[data-tone="warn"] {
@@ -186,12 +196,6 @@
   color: var(--ink-3);
 }
 
-.ui-prose a,
-.ui-prose-inline a {
-  color: inherit;
-  text-decoration-color: var(--line-strong);
-  text-underline-offset: 3px;
-}
 
 .ui-prose strong,
 .ui-prose-inline strong {
@@ -1088,7 +1092,7 @@
   flex-direction: column;
   gap: var(--space-5);
   margin: 0;
-  padding: var(--space-6) 0;
+  padding: var(--space-6) var(--row-inset);
   font-size: var(--text-sm);
   color: var(--ink-3);
 }

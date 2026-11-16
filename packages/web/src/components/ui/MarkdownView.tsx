@@ -6,7 +6,7 @@ const INLINE = ["p", "strong", "em", "del", "code", "a"];
 
 /**
  * Markdown as React elements: no HTML in the text is ever rendered as HTML, so whatever an agent writes cannot inject
- * anything. Links open outside the dashboard. Inline text keeps only what fits in a sentence, inside its own line;
+ * anything. Links open outside the dashboard, and say so with ↗. Inline text keeps only what fits in a sentence, inside its own line;
  * without links, for text inside something that is itself clicked, such as an option.
  */
 export default function MarkdownView({
@@ -25,8 +25,9 @@ export default function MarkdownView({
       {...(inline ? { allowedElements: allowed, unwrapDisallowed: true } : {})}
       components={{
         a: ({ href, children }) => (
-          <a href={href} target="_blank" rel="noreferrer">
+          <a className="ui-link" href={href} target="_blank" rel="noreferrer">
             {children}
+            <span aria-hidden="true"> ↗</span>
           </a>
         ),
         ...(inline ? { p: ({ children }) => <>{children}</> } : {}),

@@ -30,6 +30,7 @@ export function BatchPanel({ autoFocus = false, onClose }: { autoFocus?: boolean
       text={text}
       parsed={parsed}
       parseError={error ?? (record.error === null ? undefined : failureText(record.error).text) ?? null}
+      hint={error === null && record.error !== null ? failureText(record.error).hint : null}
       results={results}
       submitting={record.isPending}
       autoFocus={autoFocus}

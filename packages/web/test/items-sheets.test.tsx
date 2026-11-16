@@ -52,6 +52,14 @@ describe("CheckoutForm", () => {
     fireEvent.change(view.getByLabelText("Checkout of hydra"), { target: { value: "/src/hydra" } });
     expect(view.getByRole("button", { name: "Set" }).hasAttribute("disabled")).toBe(false);
   });
+
+  test("a path that does not start with / marks the box, and only once something is typed", () => {
+    const view = render(<CheckoutForm repo="hydra" onSet={noop} onCancel={noop} />);
+    const box = view.getByLabelText("Checkout of hydra");
+    expect(box.getAttribute("aria-invalid")).toBeNull();
+    fireEvent.change(box, { target: { value: "src/hydra" } });
+    expect(box.getAttribute("aria-invalid")).toBe("true");
+  });
 });
 
 describe("NewLineSheet", () => {

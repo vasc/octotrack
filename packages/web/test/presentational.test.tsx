@@ -2206,10 +2206,10 @@ describe("PullRequestBox", () => {
     );
     const box = within(view.getByRole("region", { name: "Pull requests" }));
     within(box.getByRole("heading", { name: /^Pull requests/ })).getByText("2");
-    expect(box.getByRole("link", { name: "acme/app#12 ↗" }).getAttribute("href")).toBe(
+    expect(box.getByRole("link", { name: "acme/app#12" }).getAttribute("href")).toBe(
       "https://github.com/acme/app/pull/12",
     );
-    box.getByRole("link", { name: "acme/app#13 ↗" });
+    box.getByRole("link", { name: "acme/app#13" });
     box.getByText("Add retry");
     box.getByText("Drop the cache");
     box.getByText("✓ checks pass");
@@ -2759,7 +2759,7 @@ describe("SinceSummary, past one page", () => {
       />,
     );
     view.getByText("newest only");
-    expect(view.getByRole("link", { name: "This line in the log →" }).getAttribute("href")).toBe(
+    expect(view.getByRole("link", { name: "This line in the log" }).getAttribute("href")).toBe(
       `/log?q=${encodeURIComponent("line:L-1")}`,
     );
   });

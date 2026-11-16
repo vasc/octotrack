@@ -1,4 +1,4 @@
-import { type ReactNode, useId } from "react";
+import { Children, type ReactNode, useId } from "react";
 
 /**
  * Rows divided by hairlines; or, as cards, each row its own sheet, for rows that hold much under them, such as the
@@ -15,6 +15,8 @@ export function List({
   children: ReactNode;
 }) {
   const heading = useId();
+  // An empty list is no box: its owner says why it is empty instead.
+  if (Children.toArray(children).length === 0) return null;
   if (label === undefined)
     return (
       <div className="ui-list" data-cards={cards ? "true" : undefined}>

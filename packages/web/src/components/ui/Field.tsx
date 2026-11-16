@@ -17,8 +17,12 @@ export interface FieldProps {
   autoFocus?: boolean;
   /** Counts replacements made on purpose here, which show even while the box holds what was typed. */
   replaced?: number;
-  /** A quiet line under the box, such as "Saved as you type, on every device". */
+  /** A quiet line under the box, such as "Saved as you type, on every device"; read with the box. */
   note?: ReactNode;
+  /** What is typed cannot be used: the box is marked, and its note says why. */
+  invalid?: boolean;
+  /** It cannot be typed in until something else is done. */
+  disabled?: boolean;
 }
 
 /**
@@ -38,6 +42,8 @@ export function Field({
   autoFocus = false,
   replaced = 0,
   note,
+  invalid = false,
+  disabled = false,
 }: FieldProps) {
   const id = useId();
   const held = useHeldValue(value, replaced);
@@ -61,8 +67,12 @@ export function Field({
       onSubmit();
     }
   };
+  const noteId = `${id}-note`;
   const shared = {
     id,
+    disabled,
+    "aria-invalid": invalid ? true : undefined,
+    "aria-describedby": note === undefined ? undefined : noteId,
     value: held.shown,
     placeholder,
     autoFocus,
@@ -77,7 +87,11 @@ export function Field({
         {label}
       </label>
       {multiline ? <textarea ref={area} rows={1} {...shared} /> : <input type={type} {...shared} />}
-      {note === undefined ? null : <span className="ui-field-note">{note}</span>}
+      {note === undefined ? null : (
+        <span className="ui-field-note" id={noteId} data-invalid={invalid ? "true" : undefined}>
+          {note}
+        </span>
+      )}
     </div>
   );
 }

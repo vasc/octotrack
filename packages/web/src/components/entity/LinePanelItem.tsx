@@ -119,7 +119,7 @@ export function LinePanelItem({
     >
       {stale === null ? null : <StaleNote at={staleAt} />}
       {unmarked === null ? null : (
-        <Note error>
+        <Note error hint={failureText(unmarked).hint}>
           Could not mark {line.ref} seen. {failureText(unmarked).text}
         </Note>
       )}

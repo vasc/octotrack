@@ -18,6 +18,8 @@ export interface BatchPanelViewProps {
   text: string;
   parsed: readonly DecisionLine[];
   parseError: string | null;
+  /** What the tracker says to do about a failed record, when it said. */
+  hint?: string | null;
   results: readonly BatchResultLine[] | null;
   submitting: boolean;
   onChange(text: string): void;
@@ -35,6 +37,7 @@ export function BatchPanelView(props: BatchPanelViewProps) {
     text,
     parsed,
     parseError,
+    hint = null,
     results,
     submitting,
     onChange,
@@ -76,7 +79,11 @@ export function BatchPanelView(props: BatchPanelViewProps) {
           if (ready) onSubmit();
         }}
       />
-      {parseError === null ? null : <Note error>{parseError}</Note>}
+      {parseError === null ? null : (
+        <Note error hint={hint}>
+          {parseError}
+        </Note>
+      )}
       {results === null ? null : (
         <List label="Results">
           {results.map((result) => (

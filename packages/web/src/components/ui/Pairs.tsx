@@ -2,17 +2,17 @@ import type { ReactNode } from "react";
 
 /** Names and what they hold, two columns: a key and what it does, a field and its value. Empty values are left out. */
 export function Pairs({ pairs }: { pairs: readonly (readonly [ReactNode, ReactNode | null | undefined])[] }) {
+  const shown = pairs.filter(([, value]) => value !== null && value !== undefined && value !== "");
+  if (shown.length === 0) return null;
   return (
     <dl className="ui-pairs">
-      {pairs
-        .filter(([, value]) => value !== null && value !== undefined && value !== "")
-        .map(([name, value], index) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: pairs keep their order
-          <div key={index} className="ui-pair">
-            <dt>{name}</dt>
-            <dd>{value}</dd>
-          </div>
-        ))}
+      {shown.map(([name, value], index) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: pairs keep their order
+        <div key={index} className="ui-pair">
+          <dt>{name}</dt>
+          <dd>{value}</dd>
+        </div>
+      ))}
     </dl>
   );
 }

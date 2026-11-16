@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 
 /**
  * A link that goes somewhere, in the words around it: to GitHub in a new tab, or to a page here that can be opened in
- * another with Cmd. Underlined only under the pointer.
+ * another with Cmd. Underlined in a light rule that darkens under the pointer; → after it stays in the app, ↗ leaves
+ * it, drawn for the eye only.
  */
 export function Link({
   href,
@@ -29,6 +30,7 @@ export function Link({
       }}
     >
       {children}
+      <span aria-hidden="true">{external ? " ↗" : " →"}</span>
     </a>
   );
 }

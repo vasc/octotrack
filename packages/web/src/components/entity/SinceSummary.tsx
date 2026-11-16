@@ -43,7 +43,7 @@ export function SinceSummary({
         <Facts>
           {more ? "newest only" : null}
           <Link href={log} onGo={navigate}>
-            This line in the log →
+            This line in the log
           </Link>
         </Facts>
       }

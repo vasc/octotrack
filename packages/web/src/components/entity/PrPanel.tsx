@@ -18,7 +18,7 @@ export function PrPanel({ pr, now = Date.now() }: { pr: PullRequest; now?: numbe
       <Facts>
         <Kind tone="none">{state}</Kind>
         <Link href={pr.url} external>
-          {pr.repo}#{pr.number} ↗
+          {pr.repo}#{pr.number}
         </Link>
         {`by ${pr.author} · ${timeAgo(pr.createdAt, now)}`}
         {`+${pr.additions} −${pr.deletions}`}
