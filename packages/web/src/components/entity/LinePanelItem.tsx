@@ -8,6 +8,7 @@ import { useHome } from "../../hooks/useHome.ts";
 import { useLineChoices } from "../../hooks/useLineChoices.ts";
 import { useMarkSeen } from "../../hooks/useMarkSeen.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
+import { failureText } from "../../lib/failure.ts";
 import { forYouCounts } from "../../lib/lines.ts";
 import { moreSinceSummary } from "../../lib/log.ts";
 import { backEntity, useRoute } from "../../lib/router.ts";
@@ -105,7 +106,7 @@ export function LinePanelItem({
       {stale === null ? null : <StaleNote at={staleAt} />}
       {unmarked === null ? null : (
         <Note error>
-          Could not mark {line.ref} seen: {unmarked.message}
+          Could not mark {line.ref} seen. {failureText(unmarked).text}
         </Note>
       )}
       <PanelForYou title={line.title} items={forYou} h={h} />

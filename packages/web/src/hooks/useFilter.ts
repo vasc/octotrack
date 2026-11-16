@@ -18,7 +18,9 @@ export function validateQuery(text: string): string | null {
     parseQuery(text);
     return null;
   } catch (error) {
-    return error instanceof Error ? error.message : String(error);
+    // The box already shows the query, so where it went wrong is left to the words.
+    const message = error instanceof Error ? error.message : String(error);
+    return message.replace(/ at position \d+ in: [\s\S]*$/, ".");
   }
 }
 

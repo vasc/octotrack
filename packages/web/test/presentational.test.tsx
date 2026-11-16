@@ -644,9 +644,8 @@ describe("TopBar", () => {
 describe("small pieces", () => {
   test("sync failures name the repo and the reason", () => {
     const view = render(<SyncFailures failures={[{ repo: "a/b", error: "Boom", updatedAt: "" }]} />);
-    const stale = within(view.getByRole("region", { name: "PR status is stale" }));
-    stale.getByText("a/b");
-    stale.getByText("Boom");
+    view.getByText("Pull request status is stale for a/b");
+    view.getByText(/Boom\. It picks up again by itself/);
     expect(render(<SyncFailures failures={[]} />).container.firstChild).toBe(null);
   });
 

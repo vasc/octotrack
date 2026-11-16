@@ -3,6 +3,7 @@ import { PushSubscription } from "@octotrack/core/schemas";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { callOp } from "../api/client.ts";
+import { failureText } from "../lib/failure.ts";
 
 export type PushState = "unsupported" | "off" | "on" | "blocked" | "dismissed" | "no-key" | "turning-on";
 
@@ -29,6 +30,16 @@ function initialState(): PushState {
   return Notification.permission === "denied" ? "blocked" : "off";
 }
 
+/** Why buzzing could not be set up, in words for the page: the browser's own refusals are not the tracker's. */
+function pushFailure(failure: unknown): string {
+  if (typeof DOMException !== "undefined" && failure instanceof DOMException) {
+    return "The browser would not set up notifications here.";
+  }
+  return failure instanceof Error
+    ? failureText(failure).text
+    : "The browser would not set up notifications here.";
+}
+
 /** Whether this browser buzzes for urgent questions and the top lines, and how to turn that on. */
 export function usePush() {
   const [state, setState] = useState<PushState>(initialState);
@@ -46,7 +57,7 @@ export function usePush() {
       if (live) setState("on");
     };
     check().catch((failure: unknown) => {
-      if (live) setError(failure instanceof Error ? failure.message : String(failure));
+      if (live) setError(pushFailure(failure));
     });
     return () => {
       live = false;
@@ -77,7 +88,7 @@ export function usePush() {
         await callOp(contracts.pushSubscribe, PushSubscription.parse(subscription.toJSON()));
         setState("on");
       } catch (failure) {
-        setError(failure instanceof Error ? failure.message : String(failure));
+        setError(pushFailure(failure));
         setState("off");
       }
     },
@@ -93,7 +104,7 @@ export function usePush() {
         }
         setState("off");
       } catch (failure) {
-        setError(failure instanceof Error ? failure.message : String(failure));
+        setError(pushFailure(failure));
       }
     },
   };

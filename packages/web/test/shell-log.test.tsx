@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { render } from "@testing-library/react";
 import { UndoBar } from "../src/components/layout/UndoBar.tsx";
+import { SyncFailures } from "../src/components/prs/SyncFailures.tsx";
 import { Page } from "../src/components/ui/Page.tsx";
 import { pendingChoice } from "../src/design/fixtures.ts";
 import { rosterSummary, timeLabel } from "../src/lib/format.ts";
@@ -54,5 +55,17 @@ describe("timeLabel", () => {
   test("an earlier day this week shows the day and the time", () => {
     const now = new Date(2026, 10, 16, 12, 0).getTime();
     expect(timeLabel(new Date(2026, 10, 15, 20, 59).toISOString(), now)).toBe("Sun 20:59");
+  });
+});
+
+describe("SyncFailures", () => {
+  test("names each repo whose pull request status is stale, says why, and that it recovers by itself", () => {
+    const view = render(
+      <SyncFailures
+        failures={[{ repo: "vasc/stack", error: "gh: not logged in\nrun gh auth login", updatedAt: "" }]}
+      />,
+    );
+    view.getByText("Pull request status is stale for vasc/stack");
+    view.getByText("gh: not logged in. It picks up again by itself once that is fixed.");
   });
 });

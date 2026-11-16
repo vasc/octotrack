@@ -3,6 +3,7 @@ import { type DecisionLine, parseDecisionLines } from "@octotrack/core/decision-
 import { useMemo, useState } from "react";
 import { useDraft } from "../../hooks/useDraft.ts";
 import { useOpMutation } from "../../hooks/useOp.ts";
+import { failureText } from "../../lib/failure.ts";
 import { BatchPanelView, type BatchResultLine } from "./BatchPanelView.tsx";
 
 function parseLines(text: string): { parsed: DecisionLine[]; error: string | null } {
@@ -28,7 +29,7 @@ export function BatchPanel({ autoFocus = false, onClose }: { autoFocus?: boolean
     <BatchPanelView
       text={text}
       parsed={parsed}
-      parseError={error ?? record.error?.message ?? null}
+      parseError={error ?? (record.error === null ? undefined : failureText(record.error).text) ?? null}
       results={results}
       submitting={record.isPending}
       autoFocus={autoFocus}

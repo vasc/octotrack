@@ -388,11 +388,10 @@ describe("the log", () => {
       github,
     );
     const view = renderApp(<App />);
-    const stale = within(await view.findByRole("region", { name: "PR status is stale" }));
-    stale.getByText("acme/app");
-    stale.getByText("gh is not logged in");
+    await view.findByText("Pull request status is stale for acme/app");
+    view.getByText(/gh is not logged in\. It picks up again by itself/);
     server.tracker.call(c.prSync, { prs: [], repos: ["acme/app"] }, github);
-    await gone(() => view.queryByRole("region", { name: "PR status is stale" }));
+    await gone(() => view.queryByText("Pull request status is stale for acme/app"));
   });
 });
 
@@ -2719,7 +2718,7 @@ describe("lines of work", () => {
     const fetchNow = globalThis.fetch;
     Object.assign(globalThis, {
       fetch: async (input: string | URL | Request, init?: RequestInit) => {
-        if (String(input).endsWith("/api/ops/seen")) throw new Error("The server went away");
+        if (String(input).endsWith("/api/ops/seen")) throw new TypeError("Failed to fetch");
         return fetchNow(input, init);
       },
     });
@@ -2727,7 +2726,7 @@ describe("lines of work", () => {
       navigate("/?ref=L-1");
       const view = renderApp(<App />);
       const panel = within(await view.findByRole("complementary", { name: "L-1" }));
-      await panel.findByText(/Could not mark L-1 seen: The server went away/);
+      await panel.findByText("Could not mark L-1 seen. The tracker did not answer.");
     } finally {
       Object.assign(globalThis, { fetch: fetchNow });
     }

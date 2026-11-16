@@ -57,6 +57,10 @@ describe("validateQuery", () => {
     expect(validateQuery("")).toBeNull();
     expect(validateQuery("nope:1")).toContain("Unknown field");
   });
+
+  test("says what is wrong without where, since the box shows the query", () => {
+    expect(validateQuery("nope:1")).not.toMatch(/position|in: /);
+  });
 });
 
 describe("format", () => {
