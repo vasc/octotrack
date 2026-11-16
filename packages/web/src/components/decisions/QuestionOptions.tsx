@@ -4,10 +4,19 @@ import { Note } from "../ui/Note.tsx";
 import { Options } from "../ui/Options.tsx";
 
 /**
- * A question's answers, each saying what happens, the recommended one marked, and the reason for it directly under
- * them. One press answers.
+ * A question's answers, each saying what happens, the recommended one marked with its reason inside it. One press
+ * answers.
  */
-export function QuestionOptions({ decision, onAnswer }: { decision: Decision; onAnswer(key: string): void }) {
+export function QuestionOptions({
+  decision,
+  onAnswer,
+  chosen,
+}: {
+  decision: Decision;
+  onAnswer(key: string): void;
+  /** The answer picked, while it waits with Undo. */
+  chosen?: string | undefined;
+}) {
   const recommendedAt = decision.options.findIndex((option) => option.key === decision.recommendation);
   return (
     <>
@@ -20,16 +29,19 @@ export function QuestionOptions({ decision, onAnswer }: { decision: Decision; on
             ...(option.description === ""
               ? {}
               : { description: <Markdown text={option.description} inline links={false} /> }),
+            ...(option.key === decision.recommendation && decision.recommendationWhy !== null
+              ? { why: <Markdown text={decision.recommendationWhy} inline /> }
+              : {}),
           }))}
           onPick={onAnswer}
+          chosen={chosen}
         />
       )}
-      {decision.recommendationWhy === null ? null : (
+      {decision.recommendationWhy !== null && recommendedAt === -1 ? (
         <Note>
-          Why{recommendedAt === -1 ? "" : ` ${recommendedAt + 1}`}:{" "}
-          <Markdown text={decision.recommendationWhy} inline />
+          Why: <Markdown text={decision.recommendationWhy} inline />
         </Note>
-      )}
+      ) : null}
       {decision.recommendation !== null && recommendedAt === -1 ? (
         <Note>Recommendation: {decision.recommendation}</Note>
       ) : null}

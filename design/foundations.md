@@ -148,24 +148,25 @@ The names are multiples of the unit: `--space-4` is four units.
 
 Only what floats over content gets a shadow. Everything else is separated by a line.
 
-| Token                | Use for                                                                             |
-| -------------------- | ----------------------------------------------------------------------------------- |
-| `--shadow-popover`   | The filter's suggestions, the Undo bar                                              |
-| `--shadow-panel`     | A line, task or issue opened over the right of the page                             |
-| `--shadow-sheet`     | A sheet lifted over the page and its bar                                            |
-| `--scrim`            | What dims the page and its bar behind a sheet                                       |
-| `--border-focus`     | Edges for focus: the focus ring and the focused item's border                       |
-| `--dot-size`         | A small round mark: urgent in the bar, an item's kind                               |
-| `--row-inset`        | How far a sheet's rows sit from its edges: their text and focus tint line up on it  |
-| `--lead-width`       | A row's first column, its number in an order: every title in a list starts after it |
-| `--lead-width-wide`  | The first column when it holds a time or a date, as the Log's rows do               |
-| `--opacity-hint`     | How far a choice's key number steps back from the words beside it                   |
-| `--opacity-disabled` | A control that cannot act now                                                       |
-| `--opacity-hover`    | A filled button under the pointer                                                   |
-| `--z-popover`        | Above the page                                                                      |
-| `--z-panel`          | Above popovers                                                                      |
-| `--z-undo`           | Above an open panel: a choice made there shows its Undo                             |
-| `--z-sheet`          | A sheet, over everything, the bar included                                          |
+| Token                  | Use for                                                                             |
+| ---------------------- | ----------------------------------------------------------------------------------- |
+| `--shadow-popover`     | The filter's suggestions, the Undo bar                                              |
+| `--shadow-panel`       | A line, task or issue opened over the right of the page                             |
+| `--shadow-sheet`       | A sheet lifted over the page and its bar                                            |
+| `--scrim`              | What dims the page and its bar behind a sheet                                       |
+| `--shadow-focus`       | The halo round a focused control                                                    |
+| `--shadow-focus-inset` | The grey edge drawn inside a focused row, item or menu item                         |
+| `--shadow-pressed`     | A filled button held down: a step darker                                            |
+| `--focus-halo`         | The soft halo round a focused control, outside its grey edge                        |
+| `--dot-size`           | A small round mark: urgent in the bar, an item's kind                               |
+| `--row-inset`          | How far a sheet's rows sit from its edges: their text and focus tint line up on it  |
+| `--lead-width`         | A row's first column, its number in an order: every title in a list starts after it |
+| `--lead-width-wide`    | The first column when it holds a time or a date, as the Log's rows do               |
+| `--opacity-hover`      | A filled button under the pointer                                                   |
+| `--z-popover`          | Above the page                                                                      |
+| `--z-panel`            | Above popovers                                                                      |
+| `--z-undo`             | Above an open panel: a choice made there shows its Undo                             |
+| `--z-sheet`            | A sheet, over everything, the bar included                                          |
 
 ## Layout
 
@@ -202,7 +203,8 @@ There is none, and so there are no tokens for it. Things appear. See
 
 ## Focus
 
-`:focus-visible` draws a 2px ring in `--accent` everywhere. This product is meant to be driven by keyboard, so focus
-must always be visible. Inputs also shift their edge to `--accent` on focus. The one focus on home is the exception: its
-item takes a `--border-focus` edge in `--accent` instead of the ring, and, with a mouse or trackpad and room in the
+`:focus-visible` draws a 1px edge in `--ink-3` with a `--focus-halo` of `--accent-soft` round it, everywhere: quiet,
+but always visible, since this product is meant to be driven by keyboard. Inputs take the same edge and halo. A dark
+primary button takes the edge set 2px off it, where a halo would vanish. The one focus on home is the exception: its
+item takes the `--accent-soft` fill and a 1px `--ink-3` edge drawn inside it instead of the halo, and, with a mouse or trackpad and room in the
 margin, a quiet "k ↑ j ↓" beside it in `--ink-3`, which a screen reader is not told.

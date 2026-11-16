@@ -52,7 +52,6 @@ export function PanelForYou({
                   onLineDone={h.lineDone}
                   onNotYet={h.notYet}
                   onDoneWhen={h.doneWhen}
-                  background
                 />
               ) : undefined}
             </ForYouRow>

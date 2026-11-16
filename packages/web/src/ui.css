@@ -18,8 +18,14 @@
 
 .ui-label {
   margin: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--ink);
+}
+
+/* A quiet line under a box: that it saves as typed, why it is not valid, that it was not saved. */
+.ui-field-note {
   font-size: var(--text-xs);
-  font-weight: var(--weight-regular);
   color: var(--ink-3);
 }
 
@@ -31,6 +37,10 @@
 
 .ui-note[data-error="true"] {
   color: var(--bad);
+}
+
+.ui-note[data-tone="warn"] {
+  color: var(--warn);
 }
 
 .ui-code,
@@ -69,11 +79,15 @@
 }
 
 .ui-ref:hover,
-.ui-link:hover {
-  color: var(--ink);
+.ui-link {
   text-decoration: underline;
   text-decoration-color: var(--line-strong);
   text-underline-offset: 3px;
+}
+
+.ui-link:hover {
+  color: var(--ink);
+  text-decoration-color: var(--ink-3);
 }
 
 .ui-time {
@@ -208,22 +222,58 @@
   cursor: pointer;
 }
 
-.ui-button:hover:not(:disabled) {
+/* Plain: a word that acts, on the surface inside a hairline. */
+.ui-button[data-variant="plain"],
+.ui-button[data-variant="icon"] {
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.ui-button:is([data-variant="plain"], [data-variant="icon"]):hover:not(:disabled) {
   background: var(--surface-2);
+  border-color: var(--line-strong);
+}
+
+.ui-button:is([data-variant="plain"], [data-variant="icon"]):active:not(:disabled),
+.ui-button[data-variant="icon"][aria-expanded="true"] {
+  background: var(--accent-soft);
+  border-color: var(--line-strong);
 }
 
 .ui-button[data-variant="primary"] {
   background: var(--accent);
+  border: 1px solid var(--accent);
   color: var(--on-accent);
+  font-weight: var(--weight-semibold);
 }
 
 .ui-button[data-variant="primary"]:hover:not(:disabled) {
-  background: var(--accent);
   opacity: var(--opacity-hover);
 }
 
+/* Pressed darkens a step: the scrim laid over its own colour. */
+.ui-button[data-variant="primary"]:active:not(:disabled) {
+  opacity: 1;
+  box-shadow: var(--shadow-pressed);
+}
+
+/* Its edge set off it, since a halo would vanish against a dark fill. */
+.ui-button[data-variant="primary"]:focus-visible {
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+/* Quiet: a word that steps back, with no edge until the pointer is on it. */
 .ui-button[data-variant="quiet"] {
-  color: var(--ink-3);
+  color: var(--ink-2);
+}
+
+.ui-button[data-variant="quiet"]:hover:not(:disabled) {
+  background: var(--line-faint);
+}
+
+.ui-button[data-variant="quiet"]:active:not(:disabled) {
+  background: var(--line);
 }
 
 .ui-button[data-variant="icon"] {
@@ -238,8 +288,12 @@
   flex: none;
 }
 
+/* Disabled is one look for every kind of button: a pale fill, a faint edge, grey words. */
 .ui-button:disabled {
-  opacity: var(--opacity-disabled);
+  background: var(--surface-2);
+  border: 1px solid var(--line-faint);
+  color: var(--ink-3);
+  font-weight: var(--weight-medium);
   cursor: default;
 }
 
@@ -251,20 +305,6 @@
   gap: var(--space-2);
 }
 
-.ui-actions > .ui-button:first-child:not([data-variant="primary"]) {
-  margin-left: calc(-1 * var(--space-5));
-}
-
-/* The number a key presses, drawn only on the item the keys act on, and only where there are keys. */
-@media (pointer: fine) {
-  [data-current="true"] [data-choice]::before {
-    content: attr(data-choice);
-    font-family: var(--mono);
-    font-size: var(--text-xs);
-    font-weight: var(--weight-regular);
-    opacity: var(--opacity-hint);
-  }
-}
 
 /* ---------- List and Row ---------- */
 
@@ -302,6 +342,7 @@
 .ui-row[data-current="true"],
 .ui-focusable[data-current="true"] {
   background: var(--accent-soft);
+  box-shadow: var(--shadow-focus-inset);
 }
 
 .ui-row:focus,
@@ -384,21 +425,18 @@
   color: var(--ink-3);
 }
 
-.ui-row-kind::before {
-  content: "";
-  flex: none;
-  width: var(--dot-size);
-  height: var(--dot-size);
-  border-radius: var(--radius-pill);
-  background: var(--attention);
+/* The word that says what an item is: the attention colour for what needs you, warm for what is stuck or urgent. */
+.ui-kind {
+  font-weight: var(--weight-semibold);
+  color: var(--attention);
 }
 
-.ui-row-kind[data-tone="stuck"]::before {
-  background: var(--warn);
+.ui-kind[data-tone="stuck"] {
+  color: var(--warn);
 }
 
-.ui-row-kind[data-tone="none"]::before {
-  background: var(--line-strong);
+.ui-kind[data-tone="none"] {
+  color: var(--ink-2);
 }
 
 .ui-row-title {
@@ -448,8 +486,7 @@
 }
 
 .ui-row-head:has(.ui-row-input:focus-visible) {
-  outline: var(--border-focus) solid var(--accent);
-  outline-offset: calc(-1 * var(--border-focus));
+  box-shadow: var(--shadow-focus-inset);
 }
 
 /* What a row holds: under it, in line with its title. */
@@ -517,6 +554,7 @@
 .ui-row[data-current="true"] .ui-focusable[data-current="true"],
 .ui-panel .ui-focusable[data-current="true"] {
   background: none;
+  box-shadow: none;
 }
 
 /* ---------- Field ---------- */
@@ -553,7 +591,18 @@
 
 .ui-field :is(input, textarea):focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--ink-3);
+  box-shadow: var(--shadow-focus);
+}
+
+.ui-field :is(input, textarea)[aria-invalid="true"] {
+  border-color: var(--bad);
+}
+
+.ui-field :is(input, textarea):disabled {
+  background: var(--surface-2);
+  border-color: var(--line-faint);
+  color: var(--ink-3);
 }
 
 /* ---------- Menu ---------- */
@@ -630,9 +679,13 @@
   cursor: pointer;
 }
 
-.ui-menu-item:is(:hover, :focus-visible):not(:disabled) {
+.ui-menu-item:hover:not(:disabled) {
   background: var(--surface-2);
+}
+
+.ui-menu-item:focus-visible {
   outline: none;
+  box-shadow: var(--shadow-focus-inset);
 }
 
 .ui-menu-item:disabled {
@@ -784,20 +837,31 @@
 
 /* ---------- Answers ---------- */
 
+/* A question's answers: each a real control in its own hairline, its number on the label's baseline at its size. */
 .ui-options {
   display: flex;
   flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ui-option-item {
+  display: flex;
 }
 
 .ui-option {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  column-gap: var(--space-4);
-  padding: var(--space-4) var(--space-5);
-  margin: 0 calc(-1 * var(--space-5));
-  border: 0;
+  flex: 1;
+  grid-template-columns: var(--space-10) minmax(0, 1fr);
+  column-gap: var(--space-6);
+  align-items: baseline;
+  min-height: var(--control-height);
+  padding: var(--space-5) var(--space-7);
+  border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  background: none;
+  background: var(--surface);
   font: inherit;
   color: inherit;
   text-align: left;
@@ -806,35 +870,92 @@
 
 .ui-option:hover {
   background: var(--surface-2);
+  border-color: var(--line-strong);
 }
 
-.ui-option::before {
-  grid-row: span 2;
+.ui-option:active {
+  background: var(--accent-soft);
 }
 
-.ui-option-label,
-.ui-option-description {
-  grid-column: 2;
+.ui-option:focus-visible {
+  outline-offset: -1px;
+}
+
+.ui-option[data-recommended="true"] {
+  background: var(--attention-soft);
+  border-color: var(--attention-line);
+}
+
+.ui-option-key {
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-option[data-recommended="true"] .ui-option-key {
+  color: var(--attention);
+}
+
+/* Chosen: a quiet edge, a faint fill and the tick; the rest step back while it waits with Undo. */
+.ui-option[data-chosen="true"] {
+  background: var(--surface-2);
+  border-color: var(--line-strong);
+}
+
+.ui-option[data-chosen="true"] .ui-option-key {
+  font-weight: var(--weight-semibold);
+  color: var(--ink);
+}
+
+.ui-option[data-stepped="true"] {
+  background: var(--surface);
+  border-color: var(--line-faint);
+}
+
+.ui-option[data-stepped="true"] :is(.ui-option-key, .ui-option-label, .ui-option-description) {
+  color: var(--ink-3);
+}
+
+.ui-option-words {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
 }
 
 .ui-option-label {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: var(--space-4);
+  gap: var(--space-1) var(--space-4);
   font-size: var(--text-md);
-  font-weight: var(--weight-medium);
+  font-weight: var(--weight-semibold);
   color: var(--ink);
 }
 
 .ui-option-recommended {
   font-size: var(--text-xs);
-  font-weight: var(--weight-regular);
+  font-weight: var(--weight-semibold);
   color: var(--attention);
 }
 
 .ui-option-description {
   font-size: var(--text-sm);
-  color: var(--ink-3);
+  color: var(--ink-2);
+}
+
+.ui-option-why {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--attention-line);
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+}
+
+.ui-option-why b {
+  font-weight: var(--weight-semibold);
+  color: var(--ink);
 }
 
 /* ---------- Pairs, columns, stacks ---------- */
@@ -892,6 +1013,37 @@
 
 .ui-state[data-error="true"] {
   color: var(--bad);
+}
+
+/* A failure said where it happened: what failed and why on a soft ground, Try again at its end. */
+.ui-failure {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4) var(--space-8);
+  padding: var(--space-4) var(--space-4) var(--space-4) var(--space-7);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--bad-soft);
+  font-size: var(--text-sm);
+  color: var(--ink);
+}
+
+.ui-failure-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.ui-failure-text b {
+  font-weight: var(--weight-semibold);
+  color: var(--bad);
+}
+
+.ui-failure-hint {
+  color: var(--ink-2);
 }
 
 /* ---------- Sheet ---------- */
@@ -1255,6 +1407,16 @@
     width: var(--touch-target);
   }
 
+  /* No keys on a touch screen, so no key numbers: an answer is a full-width target, its tick kept once chosen. */
+  .ui-option {
+    grid-template-columns: auto minmax(0, 1fr);
+    min-height: var(--touch-target);
+  }
+
+  .ui-option:not([data-chosen]) .ui-option-key {
+    display: none;
+  }
+
   .ui-field input,
   .ui-field textarea,
   .ui-search-input {
@@ -1293,15 +1455,28 @@
 
 /* ---------- Item: something opened in place ---------- */
 
+/* Three zones: what it is, what you do under a hairline, then other ways out. */
 .ui-item {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-10);
   min-width: 0;
 }
 
-.ui-item > .ui-row-kind {
-  margin-bottom: calc(-1 * var(--space-3));
+.ui-item-read {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.ui-item-read > .ui-row-kind {
+  margin-bottom: calc(-1 * var(--space-1));
+}
+
+.ui-item-read .ui-prose {
+  max-width: 66ch;
+  color: var(--ink-2);
 }
 
 .ui-item-title {
@@ -1310,6 +1485,41 @@
   font-weight: var(--weight-semibold);
   line-height: var(--leading-tight);
   color: var(--ink);
+}
+
+.ui-item-answer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding-top: var(--space-10);
+  border-top: 1px solid var(--line-faint);
+}
+
+.ui-item-answer-label {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--ink-3);
+}
+
+.ui-item-ways {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* A choice made here waiting to take effect, said where it was made, with Undo beside it. */
+.ui-waiting {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4) var(--space-8);
+  padding: var(--space-4) var(--space-4) var(--space-4) var(--space-7);
+  border: 1px solid var(--line-faint);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  font-size: var(--text-sm);
+  color: var(--ink-2);
 }
 
 .ui-field-row {
@@ -1348,7 +1558,12 @@
 
 .ui-search-input:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--ink-3);
+  box-shadow: var(--shadow-focus);
+}
+
+.ui-search-input[aria-invalid="true"] {
+  border-color: var(--bad);
 }
 
 .ui-search-list {
@@ -1383,9 +1598,13 @@
   cursor: pointer;
 }
 
-.ui-search-option:hover,
-.ui-search-option[aria-selected="true"] {
+.ui-search-option:hover {
   background: var(--surface-2);
+}
+
+.ui-search-option[aria-selected="true"] {
+  background: var(--accent-soft);
+  box-shadow: var(--shadow-focus-inset);
 }
 
 .ui-search-hint {

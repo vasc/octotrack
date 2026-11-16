@@ -3,8 +3,8 @@
 The parts every screen is built from, in every interaction state. Designed on `Primitives.dc.html` (sections: Button;
 Field; Choice; Row; Fold; Status; Messages in place; Refs, links, keys, counts; Dark), with the bar, menus and Undo on
 `Shell.dc.html`, sheets on `Sheets.dc.html` and panels on `Panels.dc.html` and `Line-States.dc.html`, in the canvas at
-https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU. The rules that hold for all of them: one focus treatment, a 2 px ink
-ring outside the element, keyboard only; one selected treatment, the accent-soft fill; pressed darkens one step;
+https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU. The rules that hold for all of them: one focus treatment, a grey
+edge with a soft halo outside the element, keyboard only; one selected treatment, the accent-soft fill; pressed darkens one step;
 disabled is one pale grey look for every kind of button, never just faded, and says why next to it when the reason is not obvious;
 every control is at least 32 px tall on a pointer, 44 px on touch. Primitives hold no data of their own, so most never
 load and cannot fail on their own; where they draw a state for their owner, it is said below.
@@ -220,7 +220,7 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 
 - Designed in: Line.dc.html; Line-States.dc.html, states G, H, I, J; Panels.dc.html, state F
 - What it shows: the crumb, Close, the title, then the sections; opened from another panel, "‹ Back to L-57" beside Close; on a phone the whole screen with "‹ Lines".
-- Changes from today: Back is its own button; Close always shuts the panel; Close shows its key.
+- Changes from today: Back is its own button; Close always shuts the panel; Close carries no key hint.
 - Loading: drawn at once with what is known; sections say what they load (Line-States G).
 - Error: not found (Line-States I) and a failed part (H) are drawn inside it by its owner.
 - Empty: never empty: it always has its head.
@@ -305,6 +305,15 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 - Loading: "Taking effect…" once the time is up and the tracker has not confirmed.
 - Error: the failed form above.
 - Empty: nothing waiting: nothing shown.
+
+### components/ui/Waiting.tsx
+
+- Designed in: Question-States.dc.html, state C
+- What it shows: "Sending to roadtrip in 4 s" with Undo beside it, inside the item where the choice was made.
+- Changes from today: new; the Undo bar still shows the same choice, so its Undo is named for a screen reader ("Undo the answer to D-65").
+- Loading: never loads on its own.
+- Error: cannot fail on its own: a choice that fails is said by the Undo bar.
+- Empty: nothing waiting: its owner leaves it out.
 
 ### components/ui/states.tsx
 

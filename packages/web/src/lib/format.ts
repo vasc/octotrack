@@ -126,7 +126,7 @@ const TONES: Readonly<Record<string, Tone>> = {
   now: "info",
   open: "attention",
   failing: "bad",
-  conflicting: "bad",
+  conflicting: "warn",
   changes_requested: "bad",
   blocked: "bad",
   blocker: "bad",
@@ -139,6 +139,23 @@ const TONES: Readonly<Record<string, Tone>> = {
 
 export function toneOf(value: string): Tone {
   return TONES[value] ?? "neutral";
+}
+
+/** States that have ended without being done: drawn with a dash. */
+const ENDED = new Set(["dropped", "closed", "withdrawn", "rejected", "folded", "superseded"]);
+
+const GLYPHS: Readonly<Record<Tone, string>> = {
+  good: "✓",
+  bad: "✗",
+  warn: "▲",
+  attention: "●",
+  info: "◐",
+  neutral: "○",
+};
+
+/** The glyph a state carries beside its word, so that it never rests on colour alone. */
+export function glyphOf(value: string): string {
+  return ENDED.has(value) ? "–" : GLYPHS[toneOf(value)];
 }
 
 /** Splits text around refs such as D-3 or OCT-12, so that they can be made clickable. */

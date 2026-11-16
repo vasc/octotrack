@@ -203,17 +203,19 @@ describe("questions on home", () => {
   });
 
   test("an answer half typed in your own words survives moving between questions", async () => {
-    const first = seedDecision({ title: "First", priority: "urgent" });
+    seedDecision({ title: "First", priority: "urgent" });
     seedDecision({ title: "Second", priority: "low" });
     const view = renderApp(<App />);
     await view.findByRole("heading", { name: "First" });
     fireEvent.click(view.getByRole("button", { name: "In my own words" }));
-    fireEvent.change(view.getByLabelText(`Your answer to ${first.ref}`), { target: { value: "Half typed" } });
+    fireEvent.change(view.getByLabelText("Your answer, in your own words"), {
+      target: { value: "Half typed" },
+    });
     fireEvent.keyDown(window, { key: "j" });
     await view.findByRole("heading", { name: "Second" });
     fireEvent.keyDown(window, { key: "k" });
     await view.findByRole("heading", { name: "First" });
-    expect(view.getByLabelText(`Your answer to ${first.ref}`).textContent).toBe("Half typed");
+    expect(view.getByLabelText("Your answer, in your own words").textContent).toBe("Half typed");
   });
 
   test("with a question open in the panel, the keys answer that one and not the queue's", async () => {
@@ -238,7 +240,7 @@ describe("questions on home", () => {
     fireEvent.click(view.getByRole("button", { name: "In my own words" }));
     const send = view.getByRole("button", { name: "Send" });
     expect(send.hasAttribute("disabled")).toBe(true);
-    fireEvent.change(view.getByLabelText(`Your answer to ${decision.ref}`), {
+    fireEvent.change(view.getByLabelText("Your answer, in your own words"), {
       target: { value: "Neither, use Kafka" },
     });
     fireEvent.click(view.getByRole("button", { name: "Send" }));
@@ -326,13 +328,13 @@ describe("the log", () => {
     const fetchNow = globalThis.fetch;
     Object.assign(globalThis, {
       fetch: async (input: string | URL | Request, init?: RequestInit) => {
-        if (String(input).includes("feed.list")) throw new Error("The server went away");
+        if (String(input).includes("feed.list")) throw new TypeError("Failed to fetch");
         return fetchNow(input, init);
       },
     });
     try {
       fireEvent.click(view.getByRole("button", { name: "Older" }));
-      await view.findByText(/The server went away/);
+      await view.findByText(/The tracker did not answer\./);
       feed.getByText(/Noise 79/);
     } finally {
       Object.assign(globalThis, { fetch: fetchNow });
@@ -1000,7 +1002,7 @@ describe("lines of work", () => {
       server.tracker.call(c.lineReject, { ref: proposal.ref }, asDeveloper);
       await answerNow(view);
       const alert = await view.findByRole("alert");
-      expect(alert.textContent).toContain("Starting Wall mount did not happen:");
+      expect(alert.textContent).toContain("Did not happen: Starting Wall mount.");
       fireEvent.click(view.getByRole("button", { name: "Dismiss" }));
       await gone(() => view.queryByRole("alert"));
     });
@@ -1229,7 +1231,7 @@ describe("lines of work", () => {
       const view = renderApp(<App />);
       await view.findByRole("article", { name: "Which board?" });
       fireEvent.keyDown(window, { key: "w" });
-      const box = await view.findByLabelText(/^Your answer to D-/);
+      const box = await view.findByLabelText("Your answer, in your own words");
       expect(document.activeElement).toBe(box);
     });
 
@@ -1630,7 +1632,7 @@ describe("lines of work", () => {
       });
     });
 
-    test("a question in the panel opens on its own with Background, and Esc goes back to the line", async () => {
+    test("a question in the panel opens on its own from its ref, and Esc goes back to the line", async () => {
       owned();
       const options = [{ key: "a", label: "Yes", description: "Go ahead." }];
       const asked = server.act(
@@ -1641,7 +1643,7 @@ describe("lines of work", () => {
       navigate("/?ref=L-1");
       const view = renderApp(<App />);
       const panel = within(await view.findByRole("complementary", { name: "L-1" }));
-      fireEvent.click(await panel.findByRole("button", { name: "Background" }));
+      fireEvent.click(await panel.findByRole("button", { name: asked.ref }));
       await view.findByRole("complementary", { name: asked.ref });
       fireEvent.keyDown(window, { key: "Escape" });
       await view.findByRole("complementary", { name: "L-1" });

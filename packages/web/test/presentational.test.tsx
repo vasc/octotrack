@@ -16,6 +16,7 @@ import { useReloadOnNewBuild } from "../src/hooks/useReloadOnNewBuild.ts";
 import { QueryClient, QueryClientProvider, QueryObserver } from "@tanstack/react-query";
 import { BatchPanelView } from "../src/components/decisions/BatchPanelView.tsx";
 import { DecisionCardView } from "../src/components/decisions/DecisionCardView.tsx";
+import { QuestionStrip } from "../src/components/decisions/QuestionStrip.tsx";
 import { DriftItem } from "../src/components/drift/DriftItem.tsx";
 import { AgentRosterRow } from "../src/components/agents/AgentRosterRow.tsx";
 import { LinePanelHead } from "../src/components/entity/LinePanelHead.tsx";
@@ -72,6 +73,7 @@ import { LineForYou } from "../src/components/home/LineForYou.tsx";
 import { LineStepIn } from "../src/components/home/LineStepIn.tsx";
 import { MoreForYou } from "../src/components/home/MoreForYou.tsx";
 import { NotKept } from "../src/components/ui/NotKept.tsx";
+import { ApiError } from "../src/api/client.ts";
 import type { HomeActions } from "../src/hooks/useHome.ts";
 import { refOf } from "../src/lib/focus.ts";
 import type {
@@ -101,7 +103,7 @@ import { contracts, whole } from "./harness.tsx";
 const form = decisionForm;
 
 describe("DecisionCardView", () => {
-  test("puts the reason for the recommendation directly under the options", () => {
+  test("puts the reason for the recommendation inside the recommended option", () => {
     const view = render(
       <DecisionCardView
         form={form()}
@@ -110,7 +112,9 @@ describe("DecisionCardView", () => {
         })}
       />,
     );
-    view.getByText(whole("Why 2: It is already deployed."));
+    const redis = view.getByRole("button", { name: /Redis/ });
+    within(redis).getByText("Why:");
+    within(redis).getByText(/It is already deployed\./);
   });
 
   test("shows what is needed to decide: question, context, options, recommendation, reasons, blocked work", () => {
@@ -153,7 +157,7 @@ describe("DecisionCardView", () => {
     expect(view.getByRole("button", { name: "SQS" }).getAttribute("data-choice")).toBe("1");
     view.getByText("Managed");
     const redis = view.getByRole("button", { name: /Redis/ });
-    within(redis).getByText("recommended");
+    within(redis).getByText("Recommended");
     expect(redis.getAttribute("data-recommended")).toBe("true");
     expect(view.getByRole("button", { name: "SQS" }).getAttribute("data-recommended")).toBeNull();
     view.getByRole("button", { name: "OCT-4" });
@@ -179,7 +183,7 @@ describe("DecisionCardView", () => {
     const sendOwn = mock(() => {});
     const empty = render(<DecisionCardView form={form({ ownWords: "", setOwn })} card={decisionCard()} />);
     expect(empty.getByRole("button", { name: "Send" }).hasAttribute("disabled")).toBe(true);
-    fireEvent.change(empty.getByLabelText("Your answer to D-1"), {
+    fireEvent.change(empty.getByLabelText("Your answer, in your own words"), {
       target: { value: "Redis behind a flag" },
     });
     expect(setOwn).toHaveBeenCalledWith("Redis behind a flag");
@@ -198,13 +202,98 @@ describe("DecisionCardView", () => {
         card={decisionCard({ decision: decision({ options: [], recommendation: "Do it" }) })}
       />,
     );
-    view.getByRole("button", { name: "In my own words" });
+    view.getByLabelText("Your answer");
     view.getByText("Recommendation: Do it");
   });
 
   test("shows an error from the server", () => {
     const view = render(<DecisionCardView form={form({ error: "Already decided" })} card={decisionCard()} />);
     expect(view.getByRole("alert").textContent).toBe("Already decided");
+  });
+
+  test("the options sit under a Your answer label, which says so when nothing is recommended", () => {
+    const view = render(<DecisionCardView form={form()} card={decisionCard()} />);
+    view.getByText("Your answer");
+    view.unmount();
+    const none = render(
+      <DecisionCardView
+        form={form()}
+        card={decisionCard({ decision: decision({ recommendation: null, requestedBy: "roadtrip" }) })}
+      />,
+    );
+    none.getByText(whole("Your answer · roadtrip makes no recommendation"));
+  });
+
+  test("offers no Background: the question's ref in its strip opens it on its own", () => {
+    const view = render(<DecisionCardView form={form()} card={decisionCard()} />);
+    expect(view.queryByRole("button", { name: "Background" })).toBeNull();
+    view.getByRole("button", { name: "D-1" });
+  });
+
+  test("an answer waiting with Undo is marked in the card, the rest step back, and Undo is right there", () => {
+    const undo = mock(() => {});
+    const view = render(
+      <DecisionCardView
+        form={form({
+          waiting: { chosen: "redis", to: "New Year trip", dueAt: "2026-11-16T12:00:04Z", undo },
+        })}
+        card={decisionCard()}
+        now={Date.parse("2026-11-16T12:00:00Z")}
+      />,
+    );
+    const redis = view.getByRole("button", { name: /Redis/ });
+    expect(redis.getAttribute("aria-pressed")).toBe("true");
+    within(redis).getByText("✓");
+    expect(view.getByRole("button", { name: "SQS" }).getAttribute("data-stepped")).toBe("true");
+    view.getByText(whole("Sending to New Year trip in 4 s"));
+    fireEvent.click(view.getByRole("button", { name: "Undo the answer to D-1" }));
+    expect(undo).toHaveBeenCalledTimes(1);
+    expect(view.queryByRole("button", { name: "In my own words" })).toBeNull();
+  });
+
+  test("with no options the box for an answer in the developer's own words is already open", () => {
+    const view = render(
+      <DecisionCardView
+        form={form({ ownWords: "" })}
+        card={decisionCard({ decision: decision({ options: [], recommendation: null }) })}
+      />,
+    );
+    expect(view.getByLabelText("Your answer").getAttribute("placeholder")).toBe("Write your answer");
+    view.getByRole("button", { name: "Send" });
+    view.getByRole("button", { name: "Later" });
+    expect(view.queryByRole("button", { name: "Back to the options" })).toBeNull();
+  });
+
+  test("an answer in the developer's own words is labelled, says it saves as typed, and goes back keeping it", () => {
+    const closeOwn = mock(() => {});
+    const view = render(
+      <DecisionCardView form={form({ ownWords: "Call Jasmin first", closeOwn })} card={decisionCard()} />,
+    );
+    view.getByLabelText("Your answer, in your own words");
+    view.getByText("Saved as you type, on every device");
+    fireEvent.click(view.getByRole("button", { name: "Back to the options" }));
+    expect(closeOwn).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("QuestionStrip", () => {
+  test("names the kind, its ref, who asked and how long ago, urgent ones too", () => {
+    const view = render(
+      <QuestionStrip
+        card={decisionCard({
+          decision: decision({
+            urgentReason: "broken",
+            requestedBy: "ttube",
+            createdAt: "2026-11-16T09:00:00Z",
+          }),
+        })}
+        line={null}
+        now={Date.parse("2026-11-16T12:00:00Z")}
+      />,
+    );
+    view.getByText(/^Urgent/);
+    view.getByText("asked by ttube");
+    view.getByText("3h");
   });
 });
 
@@ -1161,7 +1250,7 @@ describe("UndoBar", () => {
         onUndo={onUndo}
       />,
     );
-    expect(view.getByRole("alert").textContent).toBe("Starting Wall mount did not happen: It is done.");
+    expect(view.getByRole("alert").textContent).toBe("Did not happen: Starting Wall mount. It is done.");
     fireEvent.click(view.getByRole("button", { name: "Dismiss" }));
     expect(onUndo).toHaveBeenCalledWith(4);
   });
@@ -1803,9 +1892,10 @@ describe("home's smaller pieces", () => {
       ["3", "Checked conversions"],
       ["4", "Typed helpers"],
     ]);
-    within(view.getByRole("button", { name: "Checked conversions" })).getByText("recommended");
+    const recommended = view.getByRole("button", { name: "Checked conversions" });
+    within(recommended).getByText("Recommended");
+    within(recommended).getByText(/a bad value should fail loudly\./);
     expect(view.getByRole("button", { name: "Typed helpers" }).getAttribute("data-recommended")).toBeNull();
-    view.getByText(whole("Why 3: a bad value should fail loudly."));
     view.getByText("Measure the studs");
     fireEvent.click(view.getByRole("button", { name: "Keep current" }));
     expect(onDoneWhen).toHaveBeenCalledWith(false);
@@ -2183,9 +2273,14 @@ describe("PullRequestBox", () => {
     loading.getByRole("status");
     expect(loading.queryByText("None yet")).toBeNull();
     loading.unmount();
-    const failed = render(<PullRequestBox prs={[]} error={new Error("gh is down")} />);
+    const failed = render(
+      <PullRequestBox
+        prs={[]}
+        error={new ApiError({ code: "sync_failed", message: "gh is down", hint: null })}
+      />,
+    );
     failed.getByRole("alert");
-    failed.getByText("gh is down");
+    failed.getByText(/gh is down/);
     expect(failed.queryByText("None yet")).toBeNull();
   });
 
@@ -2608,9 +2703,11 @@ describe("NotKept", () => {
     expect(render(<NotKept error={null} />).container.textContent).toBe("");
   });
 
-  test("says the draft was not saved, and why", () => {
+  test("says the draft was not saved, and that it is kept here until the tracker answers", () => {
     const view = render(<NotKept error="the server is not answering" />);
-    expect(view.getByRole("alert").textContent).toBe("Not saved: the server is not answering");
+    expect(view.getByRole("alert").textContent).toBe(
+      "Not saved: the tracker did not answer. Kept here; saves when it is back.",
+    );
   });
 });
 

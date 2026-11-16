@@ -22,6 +22,7 @@ export function Toast({
   return (
     <div className="ui-toast" data-failed={failed ? "true" : undefined}>
       <span className="ui-toast-text" role={failed ? "alert" : undefined}>
+        {failed ? <b>Did not happen: </b> : null}
         {children}
       </span>
       <span className="ui-toast-actions">{actions}</span>

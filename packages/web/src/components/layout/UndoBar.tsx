@@ -52,7 +52,7 @@ export function UndoBar({
                 </Button>
               }
             >
-              {choice.summary} did not happen: {choice.error ?? "no reason was given"}
+              {choice.summary}. {choice.error ?? "No reason was given."}
             </Toast>
           );
         }

@@ -10,6 +10,13 @@ import { Section } from "../src/components/ui/Section.tsx";
 import { List } from "../src/components/ui/List.tsx";
 import { Row } from "../src/components/ui/Row.tsx";
 import { Sheet } from "../src/components/ui/Sheet.tsx";
+import { Options } from "../src/components/ui/Options.tsx";
+import { Badge, StatusBadge } from "../src/components/ui/Badge.tsx";
+import { Facts } from "../src/components/ui/Facts.tsx";
+import { ErrorState } from "../src/components/ui/states.tsx";
+import { NotKept } from "../src/components/ui/NotKept.tsx";
+import { Toast } from "../src/components/ui/Toast.tsx";
+import { ApiError } from "../src/api/client.ts";
 
 describe("Button", () => {
   test("is a button of one of three kinds, and a screen cannot restyle it", () => {
@@ -198,5 +205,100 @@ describe("Focusable", () => {
     expect(other.getByRole("group", { name: "Question D-7, Which?" }).hasAttribute("aria-current")).toBe(
       false,
     );
+  });
+});
+
+describe("Options", () => {
+  const options = [
+    { key: "a", label: "Raise the cap" },
+    { key: "b", label: "Keep the cap in Merano", recommended: true, why: "it keeps the budget" },
+    { key: "c", label: "Villa Groff" },
+  ];
+
+  test("each option shows its number, and the recommended one says so with its why inside it", () => {
+    const view = render(<Options options={options} onPick={() => {}} />);
+    const recommended = view.getByRole("button", { name: /Keep the cap in Merano/ });
+    within(recommended).getByText("2");
+    within(recommended).getByText("Recommended");
+    within(recommended).getByText(/it keeps the budget/);
+    within(view.getByRole("button", { name: /Raise the cap/ })).getByText("1");
+  });
+
+  test("a chosen option shows a tick in place of its number, and the rest step back", () => {
+    const view = render(<Options options={options} onPick={() => {}} chosen="b" />);
+    const chosen = view.getByRole("button", { name: /Keep the cap in Merano/ });
+    within(chosen).getByText("✓");
+    expect(within(chosen).queryByText("2")).toBeNull();
+    expect(chosen.getAttribute("aria-pressed")).toBe("true");
+    expect(view.getByRole("button", { name: /Raise the cap/ }).getAttribute("data-stepped")).toBe("true");
+  });
+});
+
+describe("Badge", () => {
+  test.each([
+    ["failing", "✗"],
+    ["merged", "✓"],
+    ["pending", "▲"],
+    ["in_progress", "◐"],
+    ["dropped", "–"],
+    ["backlog", "○"],
+  ])("%s carries the glyph %s as well as its word", (value, glyph) => {
+    const view = render(<StatusBadge value={value} />);
+    view.getByText(glyph);
+  });
+
+  test("no state renders nothing", () => {
+    const view = render(<Badge>{""}</Badge>);
+    expect(view.container.innerHTML).toBe("");
+  });
+});
+
+describe("Facts", () => {
+  test("an empty fact is left out, so no stray dot is drawn", () => {
+    const view = render(<Facts>{["L-3", "", "hydra"]}</Facts>);
+    expect(view.container.querySelectorAll(".ui-fact")).toHaveLength(2);
+  });
+});
+
+describe("ErrorState", () => {
+  test("says what failed and offers Try again, with the tracker's own hint under it", () => {
+    const onRetry = mock(() => {});
+    const error = new ApiError({ code: "nope", message: "No line L-9.", hint: "Check the ref" });
+    const view = render(<ErrorState title="Could not load the plan." error={error} onRetry={onRetry} />);
+    view.getByText("Could not load the plan.");
+    view.getByText(/No line L-9\./);
+    view.getByText("Check the ref");
+    fireEvent.click(view.getByRole("button", { name: "Try again" }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  test("a network failure reads as the tracker not answering", () => {
+    const view = render(<ErrorState error={new TypeError("Failed to fetch")} />);
+    view.getByText(/The tracker did not answer\./);
+    expect(view.queryByText(/Failed to fetch/)).toBeNull();
+  });
+
+  test("raw error text never reaches the page", () => {
+    const view = render(<ErrorState error={new SyntaxError("Unexpected token < in JSON at position 0")} />);
+    view.getByText(/The tracker sent something this page does not understand\. Reload\./);
+    expect(view.queryByText(/Unexpected token/)).toBeNull();
+  });
+});
+
+describe("NotKept", () => {
+  test("says the words are kept here and will save, in place of the raw error", () => {
+    const view = render(<NotKept error="fetch failed" />);
+    view.getByText("Not saved: the tracker did not answer. Kept here; saves when it is back.");
+  });
+});
+
+describe("Toast", () => {
+  test("a choice that did not happen leads with saying so", () => {
+    const view = render(
+      <Toast failed actions={null}>
+        Table L-3
+      </Toast>,
+    );
+    view.getByText(/Did not happen:/);
   });
 });

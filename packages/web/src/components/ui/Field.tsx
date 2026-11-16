@@ -17,6 +17,8 @@ export interface FieldProps {
   autoFocus?: boolean;
   /** Counts replacements made on purpose here, which show even while the box holds what was typed. */
   replaced?: number;
+  /** A quiet line under the box, such as "Saved as you type, on every device". */
+  note?: ReactNode;
 }
 
 /**
@@ -35,6 +37,7 @@ export function Field({
   onSubmit,
   autoFocus = false,
   replaced = 0,
+  note,
 }: FieldProps) {
   const id = useId();
   const held = useHeldValue(value, replaced);
@@ -74,6 +77,7 @@ export function Field({
         {label}
       </label>
       {multiline ? <textarea ref={area} rows={1} {...shared} /> : <input type={type} {...shared} />}
+      {note === undefined ? null : <span className="ui-field-note">{note}</span>}
     </div>
   );
 }

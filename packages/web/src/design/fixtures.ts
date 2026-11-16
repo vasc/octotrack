@@ -179,6 +179,7 @@ export function decisionForm(overrides: Partial<DecisionForm> = {}): DecisionFor
     sendOwn: () => {},
     postpone: () => {},
     notUrgent: () => {},
+    waiting: null,
     ...overrides,
   };
 }

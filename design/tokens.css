@@ -93,20 +93,21 @@
   --shadow-sheet: 0 16px 48px rgb(0 0 0 / 0.18);
   /* What dims the page and its bar behind a sheet. */
   --scrim: rgb(0 0 0 / 0.32);
-  /* Edges thicker than a hairline: the keyboard's focus ring on a control. */
-  --border-focus: 2px;
+  /* Focus: a soft halo outside a control; the grey edge drawn inside an item the keys act on; pressed, a step darker. */
+  --shadow-focus: 0 0 0 var(--focus-halo) var(--accent-soft);
+  --shadow-focus-inset: inset 0 0 0 1px var(--ink-3);
+  --shadow-pressed: inset 0 0 0 100vmax var(--scrim);
+  /* The soft halo round a focused control, outside its grey edge. */
+  --focus-halo: 3px;
   /* A small round mark: urgent in the bar, and the kind of an item that needs you. */
   --dot-size: 6px;
   /* How far a sheet's rows sit in from its edges: their text, and the tint that shows focus, line up on it. */
   --row-inset: var(--space-8);
   /* A row's narrow first column: its number in an order, or its handle. */
   --lead-width: var(--space-12);
-  /* How much a hint, such as a choice's key number, steps back from the words beside it. */
-  --opacity-hint: 0.6;
   /* A wider first column, for a time or a date. */
   --lead-width-wide: calc(var(--space-12) * 2);
-  /* A control that cannot act now, and a filled button under the pointer. */
-  --opacity-disabled: 0.5;
+  /* A filled button under the pointer. */
   --opacity-hover: 0.88;
   --z-popover: 10;
   --z-panel: 20;

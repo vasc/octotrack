@@ -6,6 +6,16 @@ import { useDraft } from "./useDraft.ts";
 import { useLinePlace } from "./useLinePlace.ts";
 import { useResolveDecision } from "./useResolveDecision.ts";
 
+/** An answer made here, waiting with Undo before it is sent. */
+export interface WaitingAnswer {
+  /** The option picked, or null for words. */
+  chosen: string | null;
+  /** Where it goes: the line's title, or the question's ref. */
+  to: string;
+  dueAt: string;
+  undo(): void;
+}
+
 export interface DecisionForm {
   /** What is typed as an answer in the developer's own words, or null while that box is closed. */
   ownWords: string | null;
@@ -23,6 +33,8 @@ export interface DecisionForm {
   postpone(): void;
   /** Sends an urgent question back to its place in the line order. */
   notUrgent(): void;
+  /** An answer waiting with Undo, shown in the card itself. */
+  waiting: WaitingAnswer | null;
 }
 
 /** Answering one question: an option in one press, or the developer's own words; Later; Not urgent. */
@@ -30,17 +42,30 @@ export function useDecisionForm(decision: Decision, onPostponed?: (ref: string) 
   const key = `answer:${decision.ref}`;
   // Words typed as an answer are a draft on the server, like a Tell: they follow the developer between devices.
   const draft = useDraft(key);
-  const [writing, setWriting] = useState(false);
+  // Null until the box is opened or closed by hand: then words already typed open it, and closing keeps them.
+  const [writing, setWriting] = useState<boolean | null>(null);
+  const [picked, setPicked] = useState<string | null>(null);
   const { resolve, error } = useResolveDecision();
   const choices = useChoices();
   const line = useLinePlace(decision.line);
   const to = line?.title ?? decision.ref;
-  const open = writing || draft.value !== "";
+  const open = writing ?? draft.value !== "";
+  const pending = choices.pending.find((choice) => choice.state === "pending" && choice.ref === decision.ref);
   return {
     ownWords: open ? draft.value : null,
     sending: choices.waiting(key),
     error: error?.message ?? (draft.error === null ? null : `Not saved: ${draft.error}`),
+    waiting:
+      pending === undefined
+        ? null
+        : {
+            chosen: pending.draft === null ? picked : null,
+            to,
+            dueAt: pending.dueAt,
+            undo: () => choices.undo(pending.id),
+          },
     answer: (key) => {
+      setPicked(key);
       const label = decision.options.find((option) => option.key === key)?.label ?? key;
       resolve({
         ref: decision.ref,
@@ -50,10 +75,7 @@ export function useDecisionForm(decision: Decision, onPostponed?: (ref: string) 
       });
     },
     openOwn: () => setWriting(true),
-    closeOwn: () => {
-      setWriting(false);
-      draft.clear();
-    },
+    closeOwn: () => setWriting(false),
     setOwn: draft.change,
     sendOwn: () => {
       const words = draft.value.trim();

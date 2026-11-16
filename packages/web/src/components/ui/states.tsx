@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { failureText } from "../../lib/failure.ts";
+import { Button } from "./Button.tsx";
 
 /** What is loading, in a few quiet words. */
 export function LoadingState({ label = "Loading" }: { label?: string }) {
@@ -9,12 +11,29 @@ export function LoadingState({ label = "Loading" }: { label?: string }) {
   );
 }
 
-/** What went wrong, in its own words. */
-export function ErrorState({ error }: { error: Error }) {
+/**
+ * What went wrong, where it happened: what failed, why in words the page can stand behind, the tracker's hint under
+ * it, and Try again when it can be tried again.
+ */
+export function ErrorState({
+  error,
+  title,
+  onRetry,
+}: {
+  error: Error;
+  /** What failed, such as "Could not load the plan.". */
+  title?: string;
+  onRetry?: () => void;
+}) {
+  const { text, hint } = failureText(error);
   return (
-    <p className="ui-state" data-error="true" role="alert">
-      {error.message}
-    </p>
+    <div className="ui-failure" role="alert">
+      <p className="ui-failure-text">
+        {title === undefined ? null : <b>{title}</b>} {text}
+        {hint === null ? null : <span className="ui-failure-hint">{hint}</span>}
+      </p>
+      {onRetry === undefined ? null : <Button onClick={onRetry}>Try again</Button>}
+    </div>
   );
 }
 

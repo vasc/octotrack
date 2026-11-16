@@ -224,7 +224,7 @@ describe("the dashboard uses the language instead of going around it", () => {
       [
         ".ui-field :is(input, textarea):focus",
         ".ui-menu-item:focus-visible",
-        ".ui-menu-item:is(:hover, :focus-visible):not(:disabled)",
+        ".ui-menu-item:focus-visible",
         ".ui-row:focus,\n.ui-focusable:focus",
         ".ui-search-input:focus",
         ".ui-side:focus",
@@ -315,10 +315,9 @@ describe("a finger can use it", () => {
     },
   );
 
-  test("a choice's key number is drawn only where there are keys", () => {
-    const outside = css.replace(/@media \(pointer: fine\) \{[\s\S]*?\n\}/g, "");
-    expect(outside).not.toContain("[data-choice]::before");
-    expect(css).toContain("[data-choice]::before");
+  test("a choice's key number is drawn only where there are keys, and no button carries one", () => {
+    expect(css).not.toContain("[data-choice]::before");
+    expect(rulesFor(".ui-option:not([data-chosen]) .ui-option-key")).toContain("display: none");
   });
 
   test("reading text grows on touch screens", () => {
