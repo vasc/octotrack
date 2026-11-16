@@ -1625,7 +1625,7 @@ describe("tabling and a line's own choices", () => {
 });
 
 describe("LineProposalCard", () => {
-  test("a case for done says which done when it meets and why, then Done or Not yet with what is missing", () => {
+  test("a case for done is titled by its line, labels its done when and its case, then Done or Not yet…", () => {
     const onAccept = mock(() => {});
     const onDecline = mock((_why: string) => {});
     const view = render(
@@ -1643,19 +1643,21 @@ describe("LineProposalCard", () => {
       />,
     );
     const item = within(view.getByRole("article", { name: "Answer delivery is done?" }));
-    item.getByText(whole("Proposed as done · octotrack-builder"));
-    // The done when it meets is its title.
-    item.getByRole("heading", { name: "an answer reaches whoever owns its line" });
-    view.getByText("The owner was woken from the inbox and reported it carried out.");
-    fireEvent.click(view.getByRole("button", { name: "Not yet" }));
-    fireEvent.change(view.getByLabelText("What L-12 still needs"), { target: { value: "One real wake" } });
-    fireEvent.click(view.getByRole("button", { name: "Not yet" }));
+    item.getByText(whole("Proposed as done · by octotrack-builder"));
+    item.getByRole("heading", { name: "Answer delivery" });
+    item.getByText("Done when");
+    item.getByText("an answer reaches whoever owns its line");
+    item.getByText("Its case");
+    item.getByText("The owner was woken from the inbox and reported it carried out.");
+    fireEvent.click(view.getByRole("button", { name: "Not yet…" }));
+    fireEvent.change(view.getByLabelText("What it still needs"), { target: { value: "One real wake" } });
+    fireEvent.click(view.getByRole("button", { name: "Send" }));
     expect(onDecline).toHaveBeenCalledWith("One real wake");
     fireEvent.click(view.getByRole("button", { name: "Done" }));
     expect(onAccept).toHaveBeenCalledTimes(1);
   });
 
-  test("a changed done when quotes the old and the new, with why; Keep current keeps the old at once", () => {
+  test("a changed done when puts the old and the new side by side, with why; Keep current keeps the old at once", () => {
     const onDecline = mock((_why: string) => {});
     const view = render(
       <LineProposalCard
@@ -1673,12 +1675,13 @@ describe("LineProposalCard", () => {
       />,
     );
     const item = within(view.getByRole("article", { name: "New done when for Firmware without casts" }));
-    item.getByText(whole("Done when changed · firmware"));
-    // The new done when is its title; the old one and why are under it.
-    item.getByRole("heading", { name: "…on, and CI fails on a new cast" });
-    item.getByText(
-      whole("Was: the panel firmware builds with the no-casts rule on · without CI, casts creep back."),
-    );
+    item.getByText(whole("Done when changed · by firmware"));
+    item.getByRole("heading", { name: "Firmware without casts" });
+    item.getByText("Was");
+    item.getByText("the panel firmware builds with the no-casts rule on");
+    item.getByText("Proposed");
+    item.getByText("…on, and CI fails on a new cast");
+    item.getByText(/without CI, casts creep back\./);
     expect(view.getByRole("button", { name: "Accept" }).getAttribute("data-choice")).toBe("1");
     fireEvent.click(view.getByRole("button", { name: "Keep current" }));
     expect(onDecline).toHaveBeenCalledWith("");
@@ -3023,14 +3026,15 @@ describe("useHeldValue, through TextBox", () => {
 describe("TaskClosed", () => {
   const closedAt = new Date(Date.now() - 2 * 3_600_000).toISOString();
 
-  test("done, with what was sent back", () => {
+  test("how it ended leads, with who and when, then what was sent back", () => {
     const view = render(
       <TaskClosed
         task={issue({ status: "done", outcome: "In mm", result: "41 mm", closedAt })}
         closed={{ how: "done", by: "dev" }}
       />,
     );
-    view.getByText("Done 2h ago");
+    view.getByText("Done");
+    view.getByText("by you, 2h ago");
     view.getByText("41 mm");
   });
 
@@ -3041,18 +3045,17 @@ describe("TaskClosed", () => {
         closed={{ how: "done", by: "dev" }}
       />,
     );
-    expect(view.getAllByText(/Done/)).toHaveLength(1);
+    expect(view.getAllByText(/^Done$/)).toHaveLength(1);
   });
 
-  test("could not be done, with why", () => {
+  test("could not be done, with why in the same breath", () => {
     const view = render(
       <TaskClosed
-        task={issue({ status: "cancelled", result: "No calipers", closedAt })}
+        task={issue({ status: "cancelled", result: "the enclosure is at the office", closedAt })}
         closed={{ how: "cant", by: "dev" }}
       />,
     );
-    view.getByText("Could not be done 2h ago");
-    view.getByText("No calipers");
+    view.getByText("Could not be done: the enclosure is at the office");
   });
 
   test("withdrawn by an agent, said as such, never as the developer turning it down", () => {
@@ -3062,7 +3065,7 @@ describe("TaskClosed", () => {
         closed={{ how: "withdrawn", by: "octo.1" }}
       />,
     );
-    view.getByText("Withdrawn by octo.1 2h ago");
+    view.getByText("Withdrawn by octo.1");
     expect(view.queryByText(/Could not be done/)).toBeNull();
   });
 });

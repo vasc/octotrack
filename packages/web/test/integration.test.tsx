@@ -1865,9 +1865,9 @@ describe("lines of work", () => {
       navigate("/");
       const view = renderApp(<App />);
       const card = within(await view.findByRole("article", { name: "Sendspin enclosure is done?" }));
-      fireEvent.click(card.getByRole("button", { name: "Not yet" }));
-      fireEvent.change(card.getByLabelText("What L-1 still needs"), { target: { value: "The lid rattles" } });
-      fireEvent.click(card.getByRole("button", { name: "Not yet" }));
+      fireEvent.click(card.getByRole("button", { name: "Not yet…" }));
+      fireEvent.change(card.getByLabelText("What it still needs"), { target: { value: "The lid rattles" } });
+      fireEvent.click(card.getByRole("button", { name: "Send" }));
       await answerNow(view);
       await waitFor(() =>
         expect(server.tracker.call(c.lineShow, { ref: "L-1" }, asDeveloper).line.doneProposal).toBeNull(),
@@ -2675,8 +2675,8 @@ describe("lines of work", () => {
       navigate(`/?ref=${task.ref}`);
       const view = renderApp(<App />);
       const panel = within(await view.findByRole("complementary", { name: task.ref }));
-      const closed = within(await panel.findByRole("region", { name: "How it closed" }));
-      closed.getByText(/Done/);
+      const closed = within(await panel.findByRole("article", { name: task.title }));
+      closed.getByText("Done");
       closed.getByText("41, 38 and 12 mm");
       expect(panel.queryByRole("button", { name: "Done" })).toBeNull();
       expect(panel.queryByRole("button", { name: "Can't do it" })).toBeNull();
@@ -2688,9 +2688,8 @@ describe("lines of work", () => {
       navigate(`/?ref=${task.ref}`);
       const view = renderApp(<App />);
       const panel = within(await view.findByRole("complementary", { name: task.ref }));
-      const closed = within(await panel.findByRole("region", { name: "How it closed" }));
-      closed.getByText(/Could not be done/);
-      closed.getByText("The calipers are lost");
+      const closed = within(await panel.findByRole("article", { name: task.title }));
+      closed.getByText("Could not be done: The calipers are lost");
     });
 
     test("an issue shows its line and step, who holds it, its pull requests' checks, and Tell reaches its holder", async () => {
