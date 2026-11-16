@@ -1,6 +1,7 @@
 import type { AgentView } from "@octotrack/core/schemas";
 import { AUTO_STOP_REASON } from "@octotrack/core/schemas";
-import { dayWord, whenText } from "../../lib/format.ts";
+import { dayWord, type Tone, whenText } from "../../lib/format.ts";
+import { Glyph } from "../ui/Badge.tsx";
 import { Button } from "../ui/Button.tsx";
 import { Facts } from "../ui/Facts.tsx";
 import { Note } from "../ui/Note.tsx";
@@ -51,6 +52,15 @@ function startText(start: NonNullable<AgentView["start"]>, now: number): string 
       return `exited${exit}`;
   }
 }
+
+/** Each state's glyph and tone, so that it never rests on colour alone. */
+const STATE_GLYPH: Readonly<Record<AgentView["state"], readonly [string, Tone]>> = {
+  running: ["●", "good"],
+  asleep: ["◐", "neutral"],
+  quiet: ["○", "neutral"],
+  stopped: ["■", "bad"],
+  gone: ["✕", "neutral"],
+};
 
 /** The kind of session a wake address reaches, if it has one. */
 function wakeScheme(agent: AgentView): string | null {
@@ -150,7 +160,12 @@ export function AgentRosterRow({
           {wakeScheme(agent)}
         </Facts>
       }
-      note={agent.start === null ? nowText(agent, waitsOnYou) : startText(agent.start, now)}
+      note={
+        <>
+          <Glyph tone={STATE_GLYPH[agent.state][1]}>{STATE_GLYPH[agent.state][0]}</Glyph>{" "}
+          {agent.start === null ? nowText(agent, waitsOnYou) : startText(agent.start, now)}
+        </>
+      }
       {...(agent.state === "gone" ? {} : { trailing: action })}
     >
       {agent.note === null ? null : <Note>{agent.note}</Note>}

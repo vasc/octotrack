@@ -31,3 +31,12 @@ export function StatusBadge({ value }: { value: string }) {
     </Badge>
   );
 }
+
+/** A state's glyph alone, in its tone, before words that say the same: "●" before "running, on its line". */
+export function Glyph({ tone = "neutral", children }: { tone?: Tone; children: string }) {
+  return (
+    <span className="ui-glyph" data-tone={tone} aria-hidden="true">
+      {children}
+    </span>
+  );
+}

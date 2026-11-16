@@ -111,6 +111,10 @@
   color: var(--ink-2);
 }
 
+.ui-glyph {
+  color: var(--tone, var(--ink-3));
+}
+
 .ui-facts {
   font-size: var(--text-sm);
   font-weight: var(--weight-regular);

@@ -149,10 +149,11 @@ properties and appear on the `/design` specimen; **structural** ones load data a
 
 ### Agents: `agents/`
 
-| Component        | Kind       | What it is                                                                                                   |
-| ---------------- | ---------- | ------------------------------------------------------------------------------------------------------------ |
-| `AgentsPage`     | Structural | Agents: a `Page` with Buzz this device, one `List` of agents                                                 |
-| `AgentRosterRow` | Pure       | An agent as a `Row`: its repo, its line, its last command, its wake; what it is doing; Stop, Lift or Release |
+| Component        | Kind       | What it is                                                                                                                 |
+| ---------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `AgentsPage`     | Structural | Agents: a `Page` with Buzz this device, one `List` of agents                                                               |
+| `AgentRoster`    | Pure       | The roster: running, asleep, stopped and gone agents always, quiet ones folded after the first few to one line naming them |
+| `AgentRosterRow` | Pure       | An agent as a `Row`: its repo, its line, its last command, its wake; what it is doing; Stop, Lift or Release               |
 
 ### An opened ref: `entity/` and `drift/`
 

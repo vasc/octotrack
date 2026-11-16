@@ -6,10 +6,10 @@ import { usePush } from "../../hooks/usePush.ts";
 import { rosterSummary } from "../../lib/format.ts";
 import { homeLines, lineFacts } from "../../lib/lines.ts";
 import { PushToggle } from "../home/PushToggle.tsx";
-import { List } from "../ui/List.tsx";
 import { Loaded } from "../ui/Loaded.tsx";
 import { Page } from "../ui/Page.tsx";
 import { EmptyState, ErrorState } from "../ui/states.tsx";
+import { AgentRoster } from "./AgentRoster.tsx";
 import { AgentRosterRow } from "./AgentRosterRow.tsx";
 
 /**
@@ -36,8 +36,9 @@ export function AgentsPage() {
         {roster.length === 0 ? (
           <EmptyState command="export OCTO_AGENT=feature-x">No agents yet</EmptyState>
         ) : (
-          <List>
-            {roster.map((agent) => (
+          <AgentRoster
+            agents={roster}
+            row={(agent) => (
               <AgentRosterRow
                 key={agent.name}
                 agent={agent}
@@ -49,8 +50,8 @@ export function AgentsPage() {
                   choices.make(contracts.agentRelease.name, { name }, `Releasing ${name} from its line`)
                 }
               />
-            ))}
-          </List>
+            )}
+          />
         )}
       </Loaded>
     </Page>

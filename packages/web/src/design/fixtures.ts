@@ -1,5 +1,6 @@
 import type { DecisionForm } from "../hooks/useDecisionForm.ts";
 import type {
+  AgentView,
   Decision,
   DecisionCard,
   Drift,
@@ -233,6 +234,30 @@ export function pendingChoice(overrides: Partial<PendingChoice> = {}): PendingCh
     state: "pending",
     error: null,
     createdAt: "",
+    ...overrides,
+  };
+}
+
+export function agentView(overrides: Partial<AgentView> = {}): AgentView {
+  return {
+    name: "panel",
+    note: null,
+    firstSeenAt: "2026-11-14T09:00:00.000Z",
+    lastSeenAt: "2026-11-14T09:00:00.000Z",
+    checkout: "/src/panel",
+    repo: "PANEL",
+    wakeAddress: "screen:abc",
+    startedBy: null,
+    stoppedAt: null,
+    stoppedReason: null,
+    goneAt: null,
+    wokenAt: null,
+    wakeError: null,
+    state: "asleep",
+    line: "L-2",
+    role: "owner",
+    lastLine: null,
+    start: null,
     ...overrides,
   };
 }

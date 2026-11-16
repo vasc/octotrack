@@ -13,6 +13,15 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 - Error: "Could not load agents. The tracker did not answer." with Try again (today the raw message). A refresh that fails keeps the roster, marked "As of 14:20; could not refresh." (Primitives). A failed Stop, Lift or Release is said in its row (see AgentRosterRow).
 - Empty: "No agent has checked in yet / An agent appears here the first time it runs an octo command with its name." with `export OCTO_AGENT=feature-x`.
 
+### components/agents/AgentRoster.tsx
+
+- Designed in: Agents.dc.html
+- What it shows: every agent that may need the developer, then the first three quiet ones, then "21 more quiet: mediarr, stack, roadtrip and 18 more", which shows the rest.
+- Changes from today: new; every quiet agent was a row.
+- Loading: never loads on its own: given the roster by AgentsPage.
+- Error: cannot fail on its own.
+- Empty: no agents: AgentsPage says so instead.
+
 ### components/agents/AgentRosterRow.tsx
 
 - Designed in: Agents.dc.html, the board and state A
