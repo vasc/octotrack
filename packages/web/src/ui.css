@@ -1620,12 +1620,19 @@
 
 /* A few words set apart: the lead in its tone, the rest in ink, on the tone's tint. */
 .ui-callout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
   padding: var(--space-5) var(--space-7);
   border: 1px solid var(--attention-line);
   border-radius: var(--radius-md);
   background: var(--attention-soft);
   font-size: var(--text-sm);
   color: var(--ink);
+}
+
+.ui-callout-text {
+  margin: 0;
 }
 
 .ui-callout b {
