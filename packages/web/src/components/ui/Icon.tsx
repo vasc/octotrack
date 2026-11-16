@@ -32,6 +32,13 @@ const PATHS = {
     </>
   ),
   chevron: <path d="m6 9 6 6 6-6" />,
+  pages: (
+    <>
+      <path d="M4 6h16" />
+      <path d="M4 12h16" />
+      <path d="M4 18h16" />
+    </>
+  ),
   more: (
     <>
       <circle cx="5" cy="12" r="1" />
@@ -65,6 +72,7 @@ export function Icon({ name }: { name: IconName }) {
       strokeLinejoin="round"
       aria-hidden="true"
       focusable="false"
+      data-icon={name}
     >
       {PATHS[name]}
     </svg>

@@ -595,7 +595,15 @@ describe("TopBar", () => {
 
   test("on a phone, the pages wait behind one quiet menu instead of a bar of equal tabs", () => {
     const go = mock((_to: string) => {});
-    const view = render(<PagesMenu path="/" onGo={go} />);
+    const view = render(
+      <PagesMenu
+        path="/"
+        onGo={go}
+        appearance={{ palette: "paper", mode: "system" }}
+        onPalette={() => {}}
+        onMode={() => {}}
+      />,
+    );
     fireEvent.click(view.getByRole("button", { name: "Pages: Lines" }));
     const menu = within(view.getByRole("menu", { name: "Pages" }));
     // The check before the page you are on is drawn for the eye only; the items name themselves.
@@ -633,6 +641,8 @@ describe("TopBar", () => {
     ).toEqual(["/?focus=D-60", "/?focus=D-56", "/?focus=L-6", "/?focus=stepin%3AL-9"]);
     const urgent = within(status).getByRole("link", { name: "1 urgent" });
     expect(urgent.getAttribute("data-urgent")).toBe("true");
+    // Its mark is Status's for urgent, ▲, never colour alone.
+    within(urgent).getByText("▲");
     // The number is its own piece, in ink, before the quieter words.
     expect(urgent.querySelector("b")?.textContent).toBe("1");
     expect(within(status).getByRole("link", { name: "4 to answer" }).getAttribute("data-urgent")).toBeNull();

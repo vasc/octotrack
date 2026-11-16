@@ -158,7 +158,6 @@ Only what floats over content gets a shadow. Everything else is separated by a l
 | `--shadow-focus-inset` | The grey edge drawn inside a focused row, item or menu item                         |
 | `--shadow-pressed`     | A filled button held down: a step darker                                            |
 | `--focus-halo`         | The soft halo round a focused control, outside its grey edge                        |
-| `--dot-size`           | A small round mark: urgent in the bar, an item's kind                               |
 | `--row-inset`          | How far a sheet's rows sit from its edges: their text and focus tint line up on it  |
 | `--lead-width`         | A row's first column, its number in an order: every title in a list starts after it |
 | `--lead-width-wide`    | The first column when it holds a time or a date, as the Log's rows do               |
@@ -182,6 +181,7 @@ E · One list boards draw it.
 | `--sheet-width`       | A sheet's width on a wide screen                                                             |
 | `--control-height`    | Every control on a desktop: buttons, selects, the bar's pills; one height, so a row lines up |
 | `--icon-size`         | The few icons, beside words or alone in a control that names itself                          |
+| `--swatch-width`      | A theme's swatch in a menu, its ground and accent side by side; menu words start past it     |
 | `--tile-width`        | A tile's width before it grows to fill its row: folded sections' tiles, and swatches at half |
 | `--field-narrow`      | A box for one short value, such as a measurement, side by side with others                   |
 | `--text-input-touch`  | Text fields on a touch screen. Below 16px, iOS zooms the page on focus                       |

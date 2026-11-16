@@ -5,7 +5,7 @@
 - Paths are relative to `packages/web/src`. Line numbers are `file:line`.
 - Every value comes from `design/tokens.css`. Each token is given with its pixel value.
   - Space (unit 2px): s1=2, s2=4, s3=6, s4=8, s5=10, s6=12, s7=14, s8=16, s10=20, s12=24, s14=28, s16=32, s32=64.
-  - Fixed sizes: `--row-inset`=16, `--lead-width`=24, `--lead-width-wide`=48, `--control-height`=32, `--touch-target`=44, `--icon-size`=16, `--dot-size`=6, `--sheet-width`=480, `--panel-width`=820, `--page-width`=1180, `--page-width-narrow`=900, `--field-narrow`=128, `--text-input-touch`=16.
+  - Fixed sizes: `--row-inset`=16, `--lead-width`=24, `--lead-width-wide`=48, `--control-height`=32, `--touch-target`=44, `--icon-size`=16, `--sheet-width`=480, `--panel-width`=820, `--page-width`=1180, `--page-width-narrow`=900, `--field-narrow`=128, `--text-input-touch`=16.
   - Radius: sm=4, md=6, lg=8, xl=8 (xl is the same as lg), pill=999.
   - Type: xs=12, sm=13, md=14 (15 on `pointer: coarse`), lg=15, heading=20. Weights are 400, 500 and 600. Leading is tight 1.3 and body 1.5.
   - Opacity: hint 0.6, disabled 0.5, hover 0.88.

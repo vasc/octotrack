@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Glyph } from "./Badge.tsx";
 
 /** The one bar over every page: the name and the pages, then what waits, then the actions at its end. */
 export function AppBar({ nav, status, actions }: { nav: ReactNode; status?: ReactNode; actions: ReactNode }) {
@@ -80,6 +81,11 @@ export function Count({
         onGo(href);
       }}
     >
+      {urgent ? (
+        <>
+          <Glyph tone="warn">▲</Glyph>{" "}
+        </>
+      ) : null}
       <b>{n}</b>
       {label}
     </a>

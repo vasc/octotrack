@@ -232,10 +232,15 @@
   border-color: var(--line-strong);
 }
 
-.ui-button:is([data-variant="plain"], [data-variant="icon"]):active:not(:disabled),
-.ui-button[data-variant="icon"][aria-expanded="true"] {
+/* A button whose menu is open shows it. */
+.ui-button:is([data-variant="plain"], [data-variant="icon"])[aria-expanded="true"] {
   background: var(--accent-soft);
   border-color: var(--line-strong);
+}
+
+/* Pressed darkens a step, as the primary does: the scrim laid over its own ground. */
+.ui-button:is([data-variant="plain"], [data-variant="icon"]):active:not(:disabled) {
+  box-shadow: var(--shadow-pressed);
 }
 
 .ui-button[data-variant="primary"] {
@@ -675,8 +680,41 @@
   text-underline-offset: 3px;
 }
 
+/* Where an item's words start, so that labels, notes and every item's words line up: past the tick, and past the
+   swatch in a menu that has them. */
+.ui-menu-list {
+  --menu-text: var(--space-3);
+}
+
+.ui-menu-list:has(.ui-menu-check) {
+  --menu-text: calc(var(--space-3) + var(--icon-size) + var(--space-4));
+}
+
+.ui-menu-list:has(.ui-swatch) {
+  --menu-text: calc(var(--space-3) + var(--icon-size) + var(--space-4) + var(--swatch-width) + var(--space-4));
+}
+
 .ui-menu-group {
-  padding: var(--space-4) var(--space-5) var(--space-2);
+  display: flex;
+  flex-direction: column;
+}
+
+.ui-menu-group + .ui-menu-group {
+  margin-top: var(--space-2);
+  border-top: 1px solid var(--line-faint);
+}
+
+.ui-menu-group-label {
+  padding: var(--space-4) var(--space-5) var(--space-2) var(--menu-text);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--ink-3);
+}
+
+.ui-menu-note {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-4) var(--space-5) var(--space-2) var(--menu-text);
+  border-top: 1px solid var(--line-faint);
   font-size: var(--text-xs);
   color: var(--ink-3);
 }
@@ -713,9 +751,19 @@
 }
 
 .ui-menu-check {
+  flex: none;
   width: var(--icon-size);
   color: var(--ink-2);
   text-align: center;
+}
+
+/* An action among ticked choices, and a choice with no swatch among those with one, start their words at the same x. */
+.ui-menu-list:has(.ui-menu-check) .ui-menu-item:not(:has(.ui-menu-check)) {
+  padding-left: var(--menu-text);
+}
+
+.ui-menu-list:has(.ui-swatch) .ui-menu-item:not(:has(.ui-swatch)) > .ui-menu-check {
+  margin-right: calc(var(--swatch-width) + var(--space-4));
 }
 
 /* ---------- Page, Section, Fold ---------- */
@@ -846,6 +894,13 @@
   color: var(--ink);
 }
 
+/* Why a fold held open will not close: one quiet phrase at the head's end, where its chevron was. */
+.ui-fold-held {
+  margin-left: auto;
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+}
+
 .ui-fold-summary {
   flex: 1;
   min-width: 0;
@@ -905,7 +960,7 @@
 }
 
 .ui-option:active {
-  background: var(--accent-soft);
+  box-shadow: var(--shadow-pressed);
 }
 
 .ui-option:focus-visible {
@@ -1343,21 +1398,13 @@
   color: var(--ink);
 }
 
-.ui-count[data-urgent="true"]::before {
-  content: "";
-  display: inline-block;
-  width: var(--dot-size);
-  height: var(--dot-size);
-  margin-right: var(--space-3);
-  border-radius: var(--radius-pill);
-  background: var(--warn);
-  transform: translateY(-1px);
-}
 
 /* A theme naming itself in its own colours: its ground and its colour for what needs you. */
 .ui-swatch {
   display: inline-flex;
+  flex: none;
   gap: var(--space-1);
+  width: var(--swatch-width);
 }
 
 .ui-swatch::before,
@@ -1586,6 +1633,14 @@
 
   .ui-button[data-variant="icon"] {
     width: var(--touch-target);
+  }
+
+  /* The bar's pages and counts are a finger's height, centred on their words. */
+  .ui-bar-link,
+  .ui-count {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--touch-target);
   }
 
   /* No keys on a touch screen, so no key numbers: an answer is a full-width target, its tick kept once chosen. */

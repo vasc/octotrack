@@ -78,13 +78,25 @@ export function Menu({
   );
 }
 
-/** A group's name in a menu, such as Theme and Mode: words for the eye; the items name themselves. */
-export function MenuGroup({ label }: { label: string }) {
+/**
+ * A group of a menu's items under its name, such as Theme and Mode, its label lined up with the items' words. It is a
+ * group to a screen reader, named by its label.
+ */
+export function MenuGroup({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <span className="ui-menu-group" aria-hidden="true">
-      {label}
-    </span>
+    // biome-ignore lint/a11y/useSemanticElements: a fieldset groups a form's fields; a menu's items are grouped by role
+    <div className="ui-menu-group" role="group" aria-label={label}>
+      <span className="ui-menu-group-label" aria-hidden="true">
+        {label}
+      </span>
+      {children}
+    </div>
   );
+}
+
+/** A quiet line closing a menu, such as how to add to it, lined up with the items' words. */
+export function MenuNote({ children }: { children: ReactNode }) {
+  return <p className="ui-menu-note">{children}</p>;
 }
 
 /** One choice in a menu; the one in force is checked and takes the cursor when the menu opens. */

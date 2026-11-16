@@ -98,12 +98,18 @@ export function TopBar({
           <Button variant="primary" icon="plus" onClick={onNewLine}>
             New line
           </Button>
-          <AppearanceMenu appearance={appearance} onPalette={onPalette} onMode={onMode} />
           <Only on="wide">
+            <AppearanceMenu appearance={appearance} onPalette={onPalette} onMode={onMode} />
             <IconButton icon="keyboard" label="Keyboard shortcuts" onClick={onKeys} />
           </Only>
           <Only on="phone">
-            <PagesMenu path={path} onGo={navigate} />
+            <PagesMenu
+              path={path}
+              onGo={navigate}
+              appearance={appearance}
+              onPalette={onPalette}
+              onMode={onMode}
+            />
           </Only>
         </>
       }

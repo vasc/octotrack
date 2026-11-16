@@ -100,8 +100,6 @@
   --shadow-pressed: inset 0 0 0 100vmax var(--scrim);
   /* The soft halo round a focused control, outside its grey edge. */
   --focus-halo: 3px;
-  /* A small round mark: urgent in the bar, and the kind of an item that needs you. */
-  --dot-size: 6px;
   /* How far a sheet's rows sit in from its edges: their text, and the tint that shows focus, line up on it. */
   --row-inset: var(--space-8);
   /* A row's narrow first column: its number in an order, or its handle. */
@@ -126,6 +124,8 @@
   --sheet-width: 480px;
   --control-height: 32px;
   --icon-size: 16px;
+  /* A theme's swatch in a menu: its ground and its accent, side by side. */
+  --swatch-width: calc(var(--space-5) * 2 + var(--space-1));
   /* A tile's width before it grows to fill its row: tiles of folded sections, swatches at half. */
   --tile-width: 300px;
   /* A box for one short value, such as a measurement, side by side with others. */

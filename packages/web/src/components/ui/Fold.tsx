@@ -32,7 +32,9 @@ export function Fold({
         <span className="ui-fold-title">{title}</span>
         <span className="ui-section-count">{count}</span>
         {summary === undefined ? null : <span className="ui-fold-summary">{summary}</span>}
-        {held ? null : (
+        {held ? (
+          <span className="ui-fold-held">stays open while you are in it</span>
+        ) : (
           <span className="ui-row-chevron" aria-hidden="true" data-open={shown ? "true" : undefined}>
             ›
           </span>

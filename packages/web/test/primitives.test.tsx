@@ -192,6 +192,8 @@ describe("Section and Fold", () => {
     );
     view.getByText("the rows, one opened");
     expect(view.getByRole("button", { name: /On no line/ }).hasAttribute("disabled")).toBe(true);
+    // It says why it will not fold.
+    view.getByText("stays open while you are in it");
   });
 });
 
