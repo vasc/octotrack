@@ -1,6 +1,7 @@
 import { contracts } from "@octotrack/core/contracts";
 import { useOpQuery } from "../../hooks/useOp.ts";
 import { closeEntity } from "../../lib/router.ts";
+import { StatusBadge } from "../ui/Badge.tsx";
 import { StaleNote } from "../ui/Loaded.tsx";
 import { Panel } from "../ui/Panel.tsx";
 import { ErrorState, LoadingState } from "../ui/states.tsx";
@@ -34,7 +35,12 @@ export function EntityPanel({ entityRef }: { entityRef: string }) {
   // Drift opened by its own ref is the item itself, answered from its body; the rest is what is out of date about it.
   const openDrift = drift.filter((item) => item.ref !== summary.ref);
   return (
-    <Panel crumbs={<EntityCrumbs summary={summary} />} title={summary.title} onClose={closeEntity}>
+    <Panel
+      crumbs={<EntityCrumbs summary={summary} />}
+      title={summary.title}
+      head={<StatusBadge value={summary.status} />}
+      onClose={closeEntity}
+    >
       {stale === null ? null : <StaleNote error={stale} />}
       <EntityBody entity={entity} links={links} />
       <OpenDrift drift={openDrift} />

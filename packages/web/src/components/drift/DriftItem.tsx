@@ -1,6 +1,6 @@
 import type { Drift } from "@octotrack/core/schemas";
 import { useState } from "react";
-import { humanize } from "../../lib/format.ts";
+import { driftTitle } from "../../lib/format.ts";
 import { Actions } from "../ui/Actions.tsx";
 import { StatusBadge } from "../ui/Badge.tsx";
 import { Button } from "../ui/Button.tsx";
@@ -28,7 +28,7 @@ export function DriftItem({ drift, error = null, onAck }: DriftItemProps) {
   return (
     <Row
       label={drift.ref}
-      title={humanize(drift.rule.replaceAll("-", " "))}
+      title={driftTitle(drift.rule, drift.target)}
       facts={
         <Facts>
           <RefLink value={drift.ref} />
@@ -44,11 +44,10 @@ export function DriftItem({ drift, error = null, onAck }: DriftItemProps) {
         <>
           <Markdown text={drift.suggestion} />
           <Field
-            label={`Note for ${drift.ref}`}
-            hideLabel
-            placeholder="Note"
+            label="Note · required: what changed, or why nothing had to"
             value={note}
             onChange={setNote}
+            multiline
           />
           <Actions>
             {/* Drift about state clears by itself once the state is right, so "updated" could only be a false claim. */}

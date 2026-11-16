@@ -478,7 +478,9 @@ describe("DriftItem", () => {
     const nothing = view.getByRole("button", { name: "Nothing to update" });
     expect(updated.hasAttribute("disabled")).toBe(true);
     expect(nothing.hasAttribute("disabled")).toBe(true);
-    fireEvent.change(view.getByLabelText("Note for DR-1"), { target: { value: "  Kept open on purpose " } });
+    fireEvent.change(view.getByLabelText(/Note · required/), {
+      target: { value: "  Kept open on purpose " },
+    });
     fireEvent.click(nothing);
     expect(onAck).toHaveBeenCalledWith("DR-1", "verified", "Kept open on purpose");
     fireEvent.click(updated);

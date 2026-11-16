@@ -110,6 +110,47 @@ export function rosterSummary(states: readonly string[]): string {
     .join(" · ");
 }
 
+/** What each drift asks the developer to check, as a sentence about what it is on. */
+const DRIFT_TITLE: Readonly<Record<string, (target: string) => string>> = {
+  "issue-closed-pr-open": (target) => `${target} is closed but its pull request is open`,
+  "pr-merged-issue-open": (target) => `${target}'s pull request merged; is it done?`,
+  "pr-closed-issue-in-review": (target) => `${target} waits in review on a closed pull request`,
+  "blocked-issue-unblocked": (target) => `${target} is no longer blocked`,
+  "working-while-blocked": (target) => `${target} is in progress while blocked`,
+  "closed-with-open-blocker": (target) => `${target} closed with a blocker still open`,
+  "in-review-without-pr": (target) => `${target} is in review with no pull request`,
+  "stale-in-progress": (target) => `${target} has not moved in a while`,
+  "decision-outcome": (target) => `Say what became of the answer to ${target}`,
+  "pr-checks-failing": (target) => `${target}'s checks are failing`,
+  "pr-changes-requested": (target) => `Changes were asked for on ${target}`,
+  "decision-project-sync": (target) => `Check ${target} still describes reality`,
+  "pr-conflicting": (target) => `${target} conflicts with its base`,
+  "pr-without-issue": (target) => `${target} has no issue`,
+  "dependency-changed": (target) => `Something ${target} depends on changed`,
+  "project-work-complete": (target) => `${target}'s work is all done`,
+  "project-closed-open-work": (target) => `${target} is closed with work still open`,
+  "unplaced-work": (target) => `${target} has work on no line`,
+  "summary-due": (target) => `${target}'s summary is due`,
+};
+
+/** A drift's title: what to check, as a sentence; a rule this page does not know falls back to its name. */
+export function driftTitle(rule: string, target: string): string {
+  return DRIFT_TITLE[rule]?.(target) ?? humanize(rule.replaceAll("-", " "));
+}
+
+/** What kind of item a ref opens, in words for its crumbs. */
+export const KIND_WORD: Readonly<Record<string, string>> = {
+  line: "Line",
+  project: "Repo",
+  issue: "Issue",
+  decision: "Question",
+  pr: "Pull request",
+  milestone: "Milestone, from before lines",
+  idea: "Idea, from before lines",
+  update: "Update, from before lines",
+  drift: "Out of date",
+};
+
 /** A filter term that survives names with spaces or brackets in them. */
 export function filterTerm(field: string, value: string): string {
   return /[\s(),"]/.test(value) ? `${field}:"${value.replaceAll('"', '\\"')}"` : `${field}:${value}`;

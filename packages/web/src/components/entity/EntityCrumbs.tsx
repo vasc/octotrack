@@ -1,15 +1,16 @@
 import type { EntitySummary } from "@octotrack/core/schemas";
-import { Badge, StatusBadge } from "../ui/Badge.tsx";
+import { KIND_WORD } from "../../lib/format.ts";
 import { Facts } from "../ui/Facts.tsx";
+import { Kind } from "../ui/Item.tsx";
 import { Code } from "../ui/Note.tsx";
 
-/** Where an item opened by its ref sits: its ref, what kind of item it is, and its state. */
+/** Where an item opened by its ref sits: what kind of item it is in words, its ref, and its repo. */
 export function EntityCrumbs({ summary }: { summary: EntitySummary }) {
   return (
     <Facts>
+      <Kind tone="none">{KIND_WORD[summary.kind] ?? summary.kind}</Kind>
       <Code>{summary.ref}</Code>
-      <Badge>{summary.kind}</Badge>
-      <StatusBadge value={summary.status} />
+      {summary.project === null ? null : <Code>{summary.project}</Code>}
     </Facts>
   );
 }

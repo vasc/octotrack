@@ -702,18 +702,18 @@ describe("drift", () => {
     navigate(`/?ref=${decision.ref}`);
     const view = renderApp(<App />);
     const panel = within(await view.findByRole("complementary", { name: decision.ref }));
-    const note = await panel.findByLabelText("Note for DR-1");
+    const note = await panel.findByLabelText(/Note · required/);
 
     fireEvent.change(note, { target: { value: "It is done" } });
     fireEvent.click(panel.getByRole("button", { name: "Updated" }));
     await answerNow(view);
     // Refused, as any choice is: the Undo bar says why, and the drift stays.
     await view.findByText(/has not changed/);
-    panel.getByLabelText("Note for DR-1");
+    panel.getByLabelText(/Note · required/);
 
     fireEvent.click(panel.getByRole("button", { name: "Nothing to update" }));
     await answerNow(view);
-    await gone(() => panel.queryByLabelText("Note for DR-1"));
+    await gone(() => panel.queryByLabelText(/Note · required/));
     expect(server.act(c.driftList, { query: "status:verified" })[0]?.note).toBe("It is done");
   });
 });
@@ -2597,7 +2597,7 @@ describe("lines of work", () => {
       const panel = within(await view.findByRole("complementary", { name: issue.ref }));
       const out = within(await panel.findByRole("region", { name: "Out of date" }));
       const item = within(out.getByRole("article", { name: drift.ref }));
-      fireEvent.change(item.getByLabelText(`Note for ${drift.ref}`), {
+      fireEvent.change(item.getByLabelText(/Note · required/), {
         target: { value: "The PR is on its way" },
       });
       fireEvent.click(item.getByRole("button", { name: "Nothing to update" }));
