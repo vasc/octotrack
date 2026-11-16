@@ -32,6 +32,7 @@ export function UnseenLog({
   events,
   lines,
   linesLoading = false,
+  linesFailed = false,
   includeWaiting,
   onShowWaiting,
 }: {
@@ -40,6 +41,8 @@ export function UnseenLog({
   lines: readonly Line[];
   /** The lines are still loading: until they do, every change is filed under Elsewhere, which is said. */
   linesLoading?: boolean;
+  /** The lines could not load: every change is filed under Elsewhere, which is said. */
+  linesFailed?: boolean;
   includeWaiting: boolean;
   onShowWaiting(): void;
 }) {
@@ -65,6 +68,7 @@ export function UnseenLog({
   return (
     <>
       {linesLoading ? <Note>Loading your lines…</Note> : null}
+      {linesFailed ? <Note>Could not load your lines, so every change is under Elsewhere.</Note> : null}
       {refused.length === 0 ? null : (
         <Section title="Rule breaks">
           <List>

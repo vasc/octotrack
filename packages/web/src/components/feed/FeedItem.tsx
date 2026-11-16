@@ -11,14 +11,18 @@ export interface FeedItemProps {
   now?: number;
 }
 
-/** One event a search found: what it says, its ref if it does not say it, who to narrow by, and when by the clock. */
+/**
+ * One event a search found: what it says, its ref if it does not say it, who did it, and when by the clock. Every ref
+ * and name in it narrows the search.
+ */
 export function FeedItem({ event, onFilter, now = Date.now() }: FeedItemProps) {
+  const narrow = (ref: string) => onFilter(filterTerm("ref", ref));
   return (
     <Row
-      title={<RefText text={event.summary} />}
+      title={<RefText text={event.summary} onRef={narrow} />}
       facts={
         <Facts>
-          {event.summary.includes(event.ref) ? null : <RefLink value={event.ref} />}
+          {event.summary.includes(event.ref) ? null : <RefLink value={event.ref} onPick={narrow} />}
           <TextLink onClick={() => onFilter(filterTerm("actor", event.actor))}>{event.actor}</TextLink>
           <time dateTime={event.ts}>{timeLabel(event.ts, now)}</time>
         </Facts>

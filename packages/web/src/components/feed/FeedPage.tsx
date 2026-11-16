@@ -26,7 +26,7 @@ export function FeedPage() {
   return (
     <Page
       title="Log"
-      subtitle="What you have not seen, line by line"
+      subtitle="what you have not seen, line by line"
       aside={
         <>
           <FilterBox

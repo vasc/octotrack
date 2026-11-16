@@ -21,6 +21,7 @@ function claim(agent: AgentView, line: string): ReactNode {
 
 /** What an agent is doing now, in a few words, as the Agents drawing writes it. */
 function nowWords(agent: AgentView, waitsOnYou: boolean): ReactNode {
+  // How it is woken matters only while it sleeps.
   const wakes = wakeScheme(agent);
   const reach = wakes === null ? "" : ` · wakes by ${wakes}`;
   switch (agent.state) {
@@ -57,7 +58,7 @@ function nowWords(agent: AgentView, waitsOnYou: boolean): ReactNode {
       return (
         <>
           {agent.state}, {claim(agent, agent.line)}
-          {waitsOnYou ? "; its line waits on you" : reach}
+          {waitsOnYou ? "; its line waits on you" : agent.state === "asleep" ? reach : ""}
         </>
       );
   }

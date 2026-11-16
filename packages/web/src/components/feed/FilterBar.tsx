@@ -33,10 +33,10 @@ export function FilterBar({
 }: FilterBarProps) {
   return (
     <SearchField
-      label="Filter"
+      label="Search the log"
       value={value}
       onChange={onChange}
-      placeholder={placeholder ?? "Filter: kind:decision project:OCT -actor:github since:1d"}
+      placeholder={placeholder ?? "Search: line:L-56 since:2d actor:ttube"}
       error={error}
       completions={suggestions}
       onTake={(completion) => onChange(complete(value, completion.term))}

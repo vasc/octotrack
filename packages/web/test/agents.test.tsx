@@ -46,11 +46,18 @@ describe("AgentRosterRow", () => {
 
   test("its cells are its name, its repo's key, what it is doing now and when it was last seen", () => {
     const view = row({ state: "running", line: "L-59", role: "owner" });
-    const cells = within(view.getByRole("row", { name: "panel" })).getAllByRole("cell");
-    expect(cells[0]?.textContent).toBe("panel");
-    expect(cells[1]?.textContent).toBe("PANEL");
-    within(cells[2] ?? document.body).getByText(whole("running, owner of L-59 · wakes by screen"));
-    expect(cells[3]?.textContent).toBe("3h");
+    const its = within(view.getByRole("row", { name: "panel" }));
+    // Its name heads its row.
+    expect(its.getByRole("rowheader").textContent).toBe("panel");
+    const cells = its.getAllByRole("cell");
+    expect(cells[0]?.textContent).toBe("PANEL");
+    // How it is woken is said only while it sleeps.
+    within(cells[1] ?? document.body).getByText(whole("running, owner of L-59"));
+    expect(cells[2]?.textContent).toBe("3h");
+    view.unmount();
+    row({ state: "asleep", line: "L-59", role: "owner" }).getByText(
+      whole("asleep, owner of L-59 · wakes by screen"),
+    );
   });
 
   test("says its role on its line and when that line waits on the developer", () => {
@@ -169,7 +176,7 @@ describe("AgentRoster", () => {
       within(table)
         .getAllByRole("columnheader")
         .map((cell) => cell.textContent),
-    ).toEqual(["Agent", "Repo", "Now", "Last seen", ""]);
+    ).toEqual(["Agent", "Repo", "Now", "Last seen", "Actions"]);
   });
 
   test("running, stopped and gone agents always show; quiet ones fold after the first few", () => {

@@ -68,6 +68,7 @@ export function SearchField({
         autoComplete="off"
         spellCheck={false}
         aria-invalid={error !== null}
+        aria-describedby={error === null ? undefined : `${id}-error`}
         aria-expanded={open}
         aria-controls={open ? `${id}-list` : undefined}
         aria-activedescendant={open ? `${id}-option-${highlighted}` : undefined}
@@ -99,7 +100,7 @@ export function SearchField({
         }}
       />
       {error === null ? null : (
-        <span className="ui-note" data-error="true" role="alert">
+        <span className="ui-note" data-error="true" role="alert" id={`${id}-error`}>
           {error}
         </span>
       )}

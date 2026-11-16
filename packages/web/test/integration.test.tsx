@@ -370,7 +370,7 @@ describe("the log", () => {
     seedDecision();
     const view = renderApp(<App />);
     await view.findByRole("heading", { name: "Log" });
-    fireEvent.change(view.getByLabelText("Filter"), { target: { value: "kind:issue" } });
+    fireEvent.change(view.getByLabelText("Search the log"), { target: { value: "kind:issue" } });
     const feed = within(await view.findByRole("main"));
     await feed.findByText(/created: A task/);
     expect(feed.queryByText(/needs a decision/)).toBeNull();
@@ -380,7 +380,7 @@ describe("the log", () => {
   test("a half-typed search shows the error", async () => {
     const view = renderApp(<App />);
     await view.findByRole("heading", { name: "Log" });
-    fireEvent.change(view.getByLabelText("Filter"), { target: { value: "nope:" } });
+    fireEvent.change(view.getByLabelText("Search the log"), { target: { value: "nope:" } });
     await view.findByText(/no value|Unknown field/);
   });
 
@@ -393,7 +393,7 @@ describe("the log", () => {
     fireEvent.click(view.getAllByRole("button", { name: "my.agent" })[0] ?? document.body);
     await gone(() => view.queryByText(/created: By another/));
     view.getByText(/created: By a spaced name/);
-    expect(view.getByLabelText("Filter").getAttribute("value") ?? "").toContain("actor:my.agent");
+    expect(view.getByLabelText("Search the log").getAttribute("value") ?? "").toContain("actor:my.agent");
   });
 
   test("PR sync problems show at the top of the log, then go away once it works again", async () => {
@@ -1335,7 +1335,7 @@ describe("lines of work", () => {
       await view.findByRole("article", { name: "Which board?" });
       fireEvent.keyDown(window, { key: "/" });
       await view.findByRole("heading", { name: "Log" });
-      await waitFor(() => expect(document.activeElement).toBe(view.getByLabelText("Filter")));
+      await waitFor(() => expect(document.activeElement).toBe(view.getByLabelText("Search the log")));
     });
 
     test("alt and the arrows move the focused item's line", async () => {

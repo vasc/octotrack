@@ -55,6 +55,7 @@ export function FeedSection({
           events={feed.events}
           lines={lines}
           linesLoading={home.data === undefined && home.error === null}
+          linesFailed={home.data === undefined && home.error !== null}
           includeWaiting={includeWaiting}
           onShowWaiting={onShowWaiting}
         />

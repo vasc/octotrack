@@ -366,8 +366,8 @@ describe("Table", () => {
       within(table)
         .getAllByRole("columnheader")
         .map((cell) => cell.textContent),
-    ).toEqual(["Agent", "Repo", ""]);
-    within(table).getByRole("cell", { name: "panel" });
+    ).toEqual(["Agent", "Repo", "Actions"]);
+    within(table).getByRole("rowheader", { name: "panel" });
     view.getByText("3 more");
   });
 });

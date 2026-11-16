@@ -27,7 +27,7 @@ export function Table({
               // A heading's place is its key: an empty heading has no words to key on.
               // biome-ignore lint/suspicious/noArrayIndexKey: the columns are fixed for the table's life
               <th key={index} scope="col">
-                {column}
+                {column === "" ? <span className="ui-hidden">Actions</span> : column}
               </th>
             ))}
           </tr>
@@ -50,7 +50,12 @@ export function Cell({
   place: "lead" | "main" | "fact" | "trailing";
   children?: ReactNode;
 }) {
-  return (
+  // The lead names its row, so it is the row's header.
+  return place === "lead" ? (
+    <th className="ui-cell" data-place={place} scope="row">
+      {children}
+    </th>
+  ) : (
     <td className="ui-cell" data-place={place}>
       {children}
     </td>

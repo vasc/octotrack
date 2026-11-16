@@ -1487,7 +1487,7 @@
   border-collapse: collapse;
 }
 
-.ui-table th {
+.ui-table thead th {
   padding: var(--space-4) var(--space-8) var(--space-4) var(--row-inset);
   background: var(--surface-2);
   border-bottom: 1px solid var(--line);

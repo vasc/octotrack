@@ -332,6 +332,9 @@ describe("FeedItem", () => {
     fireEvent.click(view.getByRole("button", { name: "agent-a" }));
     expect(onFilter).toHaveBeenCalledWith("actor:agent-a");
     expect(view.queryByRole("button", { name: "OCT" })).toBeNull();
+    // A ref narrows the search to it, as a name does.
+    fireEvent.click(view.getByRole("button", { name: "D-3" }));
+    expect(onFilter).toHaveBeenCalledWith("ref:D-3");
   });
 
   test("adds the ref when the summary does not mention it", () => {
@@ -383,7 +386,7 @@ describe("FilterBar", () => {
       <FilterBar value="status:open kind:" error={null} suggestions={suggestions} onChange={onChange} />,
     );
     expect(view.queryByText("kind:issue")).toBeNull();
-    fireEvent.focus(view.getByLabelText("Filter"));
+    fireEvent.focus(view.getByLabelText("Search the log"));
     fireEvent.click(view.getByText("kind:issue"));
     expect(onChange).toHaveBeenCalledWith("status:open kind:issue ");
   });
@@ -393,7 +396,7 @@ describe("FilterBar", () => {
     const view = render(
       <FilterBar value="kind:" error={null} suggestions={suggestions} onChange={onChange} />,
     );
-    const input = view.getByLabelText("Filter");
+    const input = view.getByLabelText("Search the log");
     fireEvent.focus(input);
     const issue = view.getByText("kind:issue");
     fireEvent.pointerDown(issue);
@@ -409,7 +412,7 @@ describe("FilterBar", () => {
         <button type="button">Elsewhere</button>
       </div>,
     );
-    const input = view.getByLabelText("Filter");
+    const input = view.getByLabelText("Search the log");
     const elsewhere = view.getByRole("button", { name: "Elsewhere" });
     fireEvent.focus(input);
     fireEvent.pointerDown(elsewhere);
@@ -425,7 +428,7 @@ describe("FilterBar", () => {
   test("arrow keys and Tab pick a suggestion", () => {
     const onChange = mock(() => {});
     const view = render(<FilterBar value="ki" error={null} suggestions={suggestions} onChange={onChange} />);
-    const input = view.getByLabelText("Filter");
+    const input = view.getByLabelText("Search the log");
     fireEvent.focus(input);
     fireEvent.keyDown(input, { key: "ArrowDown" });
     fireEvent.keyDown(input, { key: "Tab" });
@@ -434,7 +437,7 @@ describe("FilterBar", () => {
 
   test("a suggestion taken shows in the box, which keeps the cursor", async () => {
     const view = render(<TypedFilterBar text="ki" suggestions={suggestions} />);
-    const input = view.getByLabelText("Filter");
+    const input = view.getByLabelText("Search the log");
     act(() => input.focus());
     fireEvent.keyDown(input, { key: "Enter" });
     await waitFor(() => expect(document.activeElement).toBe(input));
@@ -451,7 +454,7 @@ describe("FilterBar", () => {
         onChange={onChange}
       />,
     );
-    fireEvent.focus(view.getByLabelText("Filter"));
+    fireEvent.focus(view.getByLabelText("Search the log"));
     fireEvent.click(view.getByText("status:"));
     expect(onChange).toHaveBeenCalledWith("status:");
   });
