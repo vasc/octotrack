@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The bar, menus, Undo and app-wide states</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1f2328;text-decoration:none}a:hover{text-decoration:underline}
+</style>
+</helmet>
+<div style="width: 1760px; min-height: 2200px; box-sizing: border-box; padding: 32px; background: #f5f6f8; color: #1f2328; font-family: Inter, -apple-system, system-ui, sans-serif; font-size: 14px; line-height: 20px; columns: 2; column-gap: 48px">
+
+<section style="display: flex; flex-direction: column; gap: 10px; break-inside: avoid; margin: 0 0 44px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">A · The bar: name and pages, what waits on you, then your controls</h2>
+<header style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 0 16px; min-height: 52px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px">
+<a href="#" style="font-weight: 600; font-size: 15px">Octotrack</a><a href="#" style="font-size: 13px; color: #424a53">Log</a><a href="#" style="font-size: 13px; color: #424a53">Agents</a>
+<span style="display: flex; gap: 4px"><a href="#" style="font-size: 13px; padding: 2px 10px; border-radius: 999px; background: #fff8c5"><b style="color: #9a6700">1</b> urgent</a><a href="#" style="font-size: 13px; padding: 2px 10px; border-radius: 999px; background: #fbefff"><b style="color: #8250df">2</b> to answer</a></span>
+<span style="margin-left: auto; display: flex; gap: 6px"><button type="button" style="font: inherit; font-size: 13px; height: 32px; padding: 0 10px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">All places ▾</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 12px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">+ New line</button><button type="button" aria-label="Appearance" style="font: inherit; width: 32px; height: 32px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">◐</button><button type="button" aria-label="Keys" style="font: inherit; width: 32px; height: 32px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">?</button></span>
+</header>
+<p style="margin: 0; font-size: 12px; color: #59636e">Counts appear only above zero, urgent first; each opens Lines on its first item. The current page is bold and underlined. With no places, I'm at is not shown. While home is loading the counts area is empty; if it failed to load, the strip of state F on Lines covers it.</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px; break-inside: avoid; margin: 0 0 44px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">B · I'm at</h2>
+<div role="menu" aria-label="I'm at" style="width: 240px; background: #ffffff; border: 1px solid #d8dde3; border-radius: 6px; box-shadow: 0 6px 20px rgb(0 0 0 / 0.14); padding: 4px; font-size: 13px">
+<div role="menuitemradio" aria-checked="true" style="display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 8px; padding: 6px 8px; border-radius: 4px; background: #eaeef2"><span>✓</span><span>All places</span></div>
+<div role="menuitemradio" aria-checked="false" style="display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 8px; padding: 6px 8px"><span></span><span>Home</span></div>
+<div role="menuitemradio" aria-checked="false" style="display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 8px; padding: 6px 8px"><span></span><span>The bench</span></div>
+<div style="border-top: 1px solid #eef1f4; margin: 4px 0; padding: 6px 8px 2px; font-size: 12px; color: #59636e">Places are added with octo place add</div>
+</div>
+<p style="margin: 0; font-size: 12px; color: #59636e">Illustrative places: none exist in your tracker yet. If setting it fails: “Not changed: …” under the button, until the next try.</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px; break-inside: avoid; margin: 0 0 44px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">C · Appearance: theme and mode, each group labelled, the choice in force ticked</h2>
+<div role="menu" aria-label="Appearance" style="width: 240px; background: #ffffff; border: 1px solid #d8dde3; border-radius: 6px; box-shadow: 0 6px 20px rgb(0 0 0 / 0.14); padding: 4px; font-size: 13px">
+<div style="padding: 6px 8px 2px 54px; font-size: 12px; font-weight: 600; color: #59636e">Theme</div>
+<div style="display: grid; grid-template-columns: 16px 14px minmax(0, 1fr); gap: 8px; align-items: center; padding: 6px 8px; border-radius: 4px; background: #eaeef2"><span>✓</span><span style="width: 14px; height: 14px; border-radius: 3px; background: #f5f6f8; border: 1px solid #c3cad3"></span><span>Paper</span></div>
+<div style="display: grid; grid-template-columns: 16px 14px minmax(0, 1fr); gap: 8px; align-items: center; padding: 6px 8px"><span></span><span style="width: 14px; height: 14px; border-radius: 3px; background: #fdf6e3; border: 1px solid #c3cad3"></span><span>Solarized</span></div>
+<div style="display: grid; grid-template-columns: 16px 14px minmax(0, 1fr); gap: 8px; align-items: center; padding: 6px 8px"><span></span><span style="width: 14px; height: 14px; border-radius: 3px; background: #282828; border: 1px solid #c3cad3"></span><span>Gruvbox</span></div>
+<div style="padding: 2px 8px 6px 54px; font-size: 12px; color: #59636e">and 5 more</div>
+<div style="padding: 6px 8px 2px 54px; font-size: 12px; font-weight: 600; color: #59636e; border-top: 1px solid #eef1f4">Mode</div>
+<div style="display: grid; grid-template-columns: 16px 14px minmax(0, 1fr); gap: 8px; padding: 6px 8px"><span>✓</span><span></span><span>As the system</span></div>
+<div style="display: grid; grid-template-columns: 16px 14px minmax(0, 1fr); gap: 8px; padding: 6px 8px"><span></span><span></span><span>Light</span></div>
+<div style="display: grid; grid-template-columns: 16px 14px minmax(0, 1fr); gap: 8px; padding: 6px 8px"><span></span><span></span><span>Dark</span></div>
+</div>
+<p style="margin: 0; font-size: 12px; color: #59636e">Ticks, swatches and item text each start at one x position, and group labels line up with the item text, in every menu.</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px; break-inside: avoid; margin: 0 0 44px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">D · Undo: a choice waits five seconds, at the bottom, above everything, sheets included</h2>
+<div role="status" style="width: 480px; display: flex; flex-direction: column; gap: 6px">
+<div style="background: #1f2328; color: #ffffff; border-radius: 8px; padding: 8px 8px 8px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; box-shadow: 0 6px 20px rgb(0 0 0 / 0.14)"><span>Sending “Keep the cap in Merano” to roadtrip in 4 s</span><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 12px; border: 1px solid #ffffff; border-radius: 6px; background: transparent; color: #ffffff">Undo</button></div>
+<div style="background: #1f2328; color: #ffffff; border-radius: 8px; padding: 8px 8px 8px 14px; display: flex; flex-direction: column; gap: 8px; font-size: 13px"><span>Stopping ttube in 3 s. The home worker line looks for another owner.</span><span style="display: flex; gap: 6px; justify-content: flex-end"><button type="button" style="font: inherit; font-size: 13px; height: 32px; padding: 0 12px; border: 1px solid #59636e; border-radius: 6px; background: transparent; color: #ffffff">Pause the line instead</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 12px; border: 1px solid #ffffff; border-radius: 6px; background: transparent; color: #ffffff">Undo</button></span></div>
+<div style="background: #1f2328; color: #ffffff; border-radius: 8px; padding: 8px 8px 8px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px"><span>Taking effect…</span></div>
+<div role="alert" style="background: #ffffff; border: 1px solid #ffcecb; border-radius: 8px; padding: 8px 8px 8px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px"><span><b style="color: #cf222e">Did not happen:</b> moving L-24 to up next. It changed meanwhile; look again.</span><button type="button" style="font: inherit; font-size: 13px; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Dismiss</button></div>
+</div>
+<p style="margin: 0; font-size: 12px; color: #59636e">Taking effect replaces “in 1 s” once the time is up and the tracker has not confirmed yet. An Undo that comes too late says so in the same place: “Too late to undo: it already took effect.”</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px; break-inside: avoid; margin: 0 0 44px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">E · Phone: Pages menu</h2>
+<div role="menu" aria-label="Pages" style="width: 220px; background: #ffffff; border: 1px solid #d8dde3; border-radius: 6px; box-shadow: 0 6px 20px rgb(0 0 0 / 0.14); padding: 4px; font-size: 15px">
+<div style="display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 8px; align-items: center; min-height: 44px; padding: 0 10px; border-radius: 4px"><span>✓</span><span>Lines</span></div>
+<div style="display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 8px; align-items: center; min-height: 44px; padding: 0 10px"><span></span><span>Log</span></div>
+<div style="display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 8px; align-items: center; min-height: 44px; padding: 0 10px"><span></span><span>Agents</span></div>
+<div style="display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 8px; align-items: center; min-height: 44px; padding: 0 10px; border-top: 1px solid #eef1f4"><span></span><span>Appearance</span></div>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px; break-inside: avoid; margin: 0 0 44px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">F · An address that leads nowhere</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 24px 28px; display: flex; flex-direction: column; gap: 8px"><span style="font-size: 16px; font-weight: 600">Nothing lives at /roadmap</span><span style="font-size: 13px; color: #424a53">The dashboard has three pages: Lines, the Log and Agents. Anything you open by its ref, like L-24, opens over the page you are on.</span><div><a href="#" style="display: inline-flex; align-items: center; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Go to Lines</a></div></div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px; break-inside: avoid; margin: 0 0 44px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">G · Something broke in the page itself</h2>
+<div role="alert" style="background: #ffffff; border: 1px solid #ffcecb; border-radius: 8px; padding: 24px 28px; display: flex; flex-direction: column; gap: 10px"><span style="font-size: 16px; font-weight: 600">This part of the page failed</span><span style="font-size: 13px; color: #424a53">A bug in the dashboard, not your data. Your drafts are kept on the tracker. Reloading usually clears it; if not, the error below is what to report.</span><pre style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 12px; background: #f9fafb; border: 1px solid #eef1f4; border-radius: 6px; padding: 8px 10px; white-space: pre-wrap">TypeError: Cannot read properties of undefined (reading 'forYou') in LinePanelItem</pre><div><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Reload</button></div></div>
+<p style="margin: 0; font-size: 12px; color: #59636e">Caught per area: a broken panel leaves Lines working, and the reverse. Illustrative error text.</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px; break-inside: avoid; margin: 0 0 44px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">H · The server's own pages: not built, no such endpoint</h2>
+<pre style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 12px; background: #ffffff; border: 1px solid #d8dde3; border-radius: 6px; padding: 12px 14px; white-space: pre-wrap">The dashboard is not built into this octo.
+Run: bun run build, then build/octo install</pre>
+<p style="margin: 0; font-size: 12px; color: #59636e">Plain text on purpose: they appear only when the dashboard itself cannot load.</p>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1760,"height":2200}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Log</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1f2328;text-decoration:none}a:hover{text-decoration:underline}
+</style>
+</helmet>
+<div style="width: 1760px; min-height: 2400px; box-sizing: border-box; padding: 32px; background: #f5f6f8; color: #1f2328; font-family: Inter, -apple-system, system-ui, sans-serif; font-size: 14px; line-height: 20px; display: flex; gap: 48px; align-items: flex-start">
+
+<div style="flex: 0 0 1000px; background: #f5f6f8; border: 1px solid #d8dde3; border-radius: 8px; overflow: hidden">
+<header style="background: #ffffff; border-bottom: 1px solid #d8dde3; padding: 0 28px; min-height: 52px; display: flex; align-items: center; gap: 20px"><span style="font-weight: 600; font-size: 15px">Octotrack</span><a href="#" style="font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 6px">Log</a><a href="#" style="font-size: 13px; color: #424a53">Agents</a></header>
+<main style="padding: 24px 28px 40px; display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px">
+<h1 style="margin: 0; font-size: 20px; font-weight: 600">Log</h1>
+<span style="font-size: 13px; color: #59636e">what you have not seen, line by line</span>
+<div style="margin-left: auto; display: flex; gap: 8px"><label style="position: relative"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search the log</span><input type="search" placeholder="Search: line:L-56 since:2d actor:ttube" style="font: inherit; font-size: 13px; width: 300px; height: 32px; box-sizing: border-box; border: 1px solid #d8dde3; border-radius: 6px; padding: 0 10px"></label><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Mark all seen</button></div>
+</div>
+
+<section style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; overflow: hidden">
+<div style="padding: 12px 20px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: baseline; border-bottom: 1px solid #eef1f4"><span><a href="#" style="font-weight: 600">Sendspin enclosure printed and assembled</a> <span style="font-size: 12px; color: #59636e">· L-56 · proposed</span></span><span style="font-size: 12px; font-weight: 600">2 unseen</span></div>
+<ul style="margin: 0; padding: 4px 0; list-style: none; font-size: 13px">
+<li style="display: grid; grid-template-columns: 64px minmax(0, 1fr); column-gap: 12px; padding: 6px 20px"><span style="color: #59636e">Sun 20:59</span><span><a href="#" style="font-family: 'JetBrains Mono', monospace; font-size: 12px">D-34</a> no longer affects <a href="#" style="font-family: 'JetBrains Mono', monospace; font-size: 12px">PANEL-5</a> <span style="color: #59636e">· homepanel</span></span></li>
+<li style="display: grid; grid-template-columns: 64px minmax(0, 1fr); column-gap: 12px; padding: 6px 20px"><span style="color: #59636e">Sun 20:59</span><span><a href="#" style="font-family: 'JetBrains Mono', monospace; font-size: 12px">D-31</a> no longer affects <a href="#" style="font-family: 'JetBrains Mono', monospace; font-size: 12px">PANEL-5</a> <span style="color: #59636e">· homepanel</span></span></li>
+</ul>
+<div style="padding: 8px 20px 12px; font-size: 12px; color: #59636e; border-top: 1px solid #eef1f4">Also routine: 5 drift confirmations. <button type="button" style="font: inherit; font-size: 12px; background: transparent; border: 0; padding: 0; text-decoration: underline; color: #424a53">Show</button></div>
+</section>
+
+<section style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 12px 20px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: baseline">
+<span><a href="#" style="font-weight: 600">The home worker fetches new videos again</a> <span style="font-size: 12px; color: #59636e">· L-59 · proposed</span></span>
+<span style="font-size: 12px; color: #59636e">2 drift confirmations, all routine</span>
+</section>
+
+<section style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 12px 20px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: baseline">
+<span><span style="font-weight: 600">On no line</span> <span style="font-size: 12px; color: #59636e">· changes to things that belong to no line</span></span>
+<span style="font-size: 12px; color: #59636e">38 drift confirmations, all routine</span>
+</section>
+
+<section style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 12px 20px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: baseline">
+<span><span style="font-weight: 600">Elsewhere</span> <span style="font-size: 12px; color: #59636e">· on lines not listed above</span></span>
+<span style="font-size: 12px; color: #59636e">3 drift confirmations, all routine</span>
+</section>
+
+<p style="margin: 0; font-size: 12px; color: #59636e">Event texts are real; how many fall in each group is illustrative.</p>
+<p style="margin: 0; font-size: 13px; color: #59636e">Up next and tabled lines are left out. <button type="button" style="font: inherit; font-size: 13px; background: transparent; border: 0; padding: 0; text-decoration: underline; color: #424a53">Include them</button></p>
+</main>
+</div>
+
+<div style="flex: 1; display: flex; flex-direction: column; gap: 40px">
+
+<section style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">A · Searching: results by day, one line each, every ref and name narrows the search</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; overflow: hidden; font-size: 13px">
+<div style="padding: 8px 16px; background: #f9fafb; border-bottom: 1px solid #eef1f4; font-size: 12px; font-weight: 600; color: #424a53">Yesterday</div>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 8px 16px; border-bottom: 1px solid #eef1f4"><span><a href="#" style="font-family: 'JetBrains Mono', monospace; font-size: 12px">D-75</a> took over from D-24: How should pacing work</span><span style="color: #59636e"><a href="#" style="text-decoration: underline; text-decoration-color: #c3cad3">ttube</a> · 20:58</span></div>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 8px 16px"><span>Verified, nothing to update: TTUBE is a live family service</span><span style="color: #59636e"><a href="#" style="text-decoration: underline; text-decoration-color: #c3cad3">ttube</a> · 20:58</span></div>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">B · A search that is not understood: said under the box, last results kept</h2>
+<div style="display: flex; flex-direction: column; gap: 4px"><input type="search" value="since:yesterday" aria-invalid="true" style="font: inherit; font-size: 13px; height: 32px; box-sizing: border-box; border: 1px solid #cf222e; border-radius: 6px; padding: 0 10px"><span role="alert" style="font-size: 12px; color: #cf222e">“yesterday” is not a time. Use 2h, 7d or a date like 2026-11-15.</span></div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">C · Completions while typing a field</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 6px; box-shadow: 0 6px 20px rgb(0 0 0 / 0.14); padding: 4px; font-size: 13px; width: 360px">
+<div style="display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 8px; padding: 6px 8px; border-radius: 4px; background: #eaeef2"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px">actor:</span><span style="color: #59636e">who did it</span></div>
+<div style="display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 8px; padding: 6px 8px"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px">assignee:</span><span style="color: #59636e">who holds it</span></div>
+<div style="display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 8px; padding: 6px 8px"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px">since:</span><span style="color: #59636e">on or after a time: 2h, 7d</span></div>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">D · Nothing to show</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 16px 20px; display: flex; flex-direction: column; gap: 4px"><span style="font-weight: 600">Nothing new</span><span style="font-size: 13px; color: #59636e">You have seen everything on your lines. Search to look further back.</span></div>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 16px 20px; display: flex; flex-direction: column; gap: 4px"><span style="font-weight: 600">Nothing matches this search</span><span style="font-size: 13px; color: #59636e">Searched the whole log. Try fewer words, or a longer since:.</span></div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">E · Loading, searching further back, failed</h2>
+<p role="status" style="margin: 0; font-size: 13px; color: #59636e">Loading the log…</p>
+<p role="status" style="margin: 0; font-size: 13px; color: #59636e">Nothing in the last 500 events yet; searching older ones…</p>
+<div role="alert" style="border: 1px solid #ffcecb; background: #ffebe9; border-radius: 6px; padding: 8px 8px 8px 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px"><span><b style="color: #cf222e">Could not load the log.</b> The tracker did not answer.</span><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Try again</button></div>
+<div style="display: flex; justify-content: center"><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 16px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Older</button></div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">F · Pull request status has stopped updating</h2>
+<div style="border: 1px solid #f2cc60; background: #fff8c5; border-radius: 6px; padding: 10px 14px; font-size: 13px; display: flex; flex-direction: column; gap: 4px"><b style="color: #9a6700">Pull request status is stale for vasc/stack</b><span>gh is not logged in. Run <code style="font-family: 'JetBrains Mono', monospace; font-size: 12px">gh auth login</code>; it picks up again within two minutes.</span></div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">G · Rule breaks: always first, never folded</h2>
+<div style="background: #ffffff; border: 1px solid #ffcecb; border-radius: 8px; padding: 12px 16px; font-size: 13px; display: flex; flex-direction: column; gap: 6px"><b style="color: #cf222e">Rule breaks 1</b><span><span style="color: #59636e">14:02</span> ttube wrote to L-41, which is tabled; refused, its third this hour</span></div>
+<p style="margin: 0; font-size: 12px; color: #59636e">Illustrative: no rule break exists in your tracker.</p>
+</section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1760,"height":2400}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

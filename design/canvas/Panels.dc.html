@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Issue, pull request, drift and the rest, opened</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1f2328;text-decoration:none}a:hover{text-decoration:underline}
+</style>
+</helmet>
+<div style="width: 1760px; min-height: 2400px; box-sizing: border-box; padding: 32px; background: #f5f6f8; color: #1f2328; font-family: Inter, -apple-system, system-ui, sans-serif; font-size: 14px; line-height: 20px; columns: 2; column-gap: 48px">
+
+<p style="column-span: all; margin: 0 0 32px; padding: 10px 14px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff; font-size: 13px; color: #424a53">Every panel has the line panel's head: a crumb that says where it sits, the title, its facts, its moves, then sections in order of importance. Loading, a failed part and not found follow the line panel's states G, H and I. All content here is real, from your tracker.</p>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">A · An issue: what it is, who holds it, what it waits on, its pull requests, Tell</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; overflow: hidden">
+<header style="padding: 20px 28px 20px; border-bottom: 1px solid #eef1f4; display: flex; flex-direction: column; gap: 10px">
+<nav aria-label="Where this is" style="font-size: 12px; color: #59636e; display: flex; flex-wrap: wrap; gap: 4px 8px"><a href="#" style="color: #424a53; font-weight: 500">L-57 Wall mount for the 4-inch square</a><span>›</span><span style="font-family: 'JetBrains Mono', monospace">PANEL-4</span></nav>
+<h1 style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 600">Wall mount: confirm the 18.3 mm frame on the wall</h1>
+<div style="display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px"><span style="font-weight: 600; color: #9a6700">Blocked</span><span style="color: #59636e">nobody holds it</span><span style="color: #59636e">vasc/homepanel</span></div>
+</header>
+<div style="padding: 20px 28px 28px; display: flex; flex-direction: column; gap: 24px">
+<p style="margin: 0; color: #424a53; line-height: 22px; max-width: 66ch">Waiting on the developer's print-and-fit feedback. Last change is 245b4d0 (18.3 mm deep, from their measurement); 22236aa gave the hooks 1.3 mm so the frame reaches the wall. No report on either yet, so neither fix is confirmed.</p>
+<section style="display: flex; flex-direction: column; gap: 6px"><h2 style="margin: 0; font-size: 13px; font-weight: 600">Pull requests</h2><p style="margin: 0; font-size: 13px; color: #59636e">None yet.</p></section>
+<section style="display: flex; flex-direction: column; gap: 6px"><h2 style="margin: 0; font-size: 13px; font-weight: 600">Activity <span style="font-weight: 400; color: #59636e">3</span></h2>
+<ul style="margin: 0; padding: 0; list-style: none; font-size: 13px"><li style="display: grid; grid-template-columns: 56px minmax(0, 1fr); padding: 6px 0; border-bottom: 1px solid #eef1f4"><span style="color: #59636e">Sun</span><span>homepanel moved it onto L-57</span></li><li style="display: grid; grid-template-columns: 56px minmax(0, 1fr); padding: 6px 0; border-bottom: 1px solid #eef1f4"><span style="color: #59636e">7 Nov</span><span>cyd-display updated its body</span></li><li style="display: grid; grid-template-columns: 56px minmax(0, 1fr); padding: 6px 0"><span style="color: #59636e">7 Nov</span><span>cyd-display created it</span></li></ul></section>
+<section style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #eef1f4; padding-top: 20px"><label for="t-issue" style="font-size: 13px; font-weight: 600">Tell whoever takes L-57</label><textarea id="t-issue" rows="2" placeholder="Leave it empty to nudge" style="font: inherit; border: 1px solid #d8dde3; border-radius: 6px; padding: 8px 10px"></textarea><div><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Nudge</button></div></section>
+</div>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">B · A pull request: its state in one line, what needs attention first</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; overflow: hidden">
+<header style="padding: 20px 28px; border-bottom: 1px solid #eef1f4; display: flex; flex-direction: column; gap: 10px">
+<nav style="font-size: 12px; color: #59636e"><span style="font-family: 'JetBrains Mono', monospace">PR-1</span> · STACK</nav>
+<h1 style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 600">Feat: Draft prs</h1>
+<div style="display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px"><span style="font-weight: 600">Open</span><a href="#" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; text-decoration: underline; text-decoration-color: #c3cad3">vasc/stack#4 ↗</a><span style="color: #59636e">by vasc · 9 days</span><span style="color: #59636e">+33 −2</span></div>
+</header>
+<div style="padding: 20px 28px 28px; display: flex; flex-direction: column; gap: 16px">
+<div role="status" style="border: 1px solid #ffcecb; background: #ffebe9; border-radius: 6px; padding: 10px 14px; font-size: 13px"><b style="color: #cf222e">✗ Merge conflict</b> with main. It cannot merge until feat/draft-prs is rebased.</div>
+<dl style="margin: 0; display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 8px 16px; font-size: 13px"><dt style="color: #59636e">Checks</dt><dd style="margin: 0">none run</dd><dt style="color: #59636e">Review</dt><dd style="margin: 0">none asked</dd><dt style="color: #59636e">Branch</dt><dd style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 12px">feat/draft-prs → main</dd><dt style="color: #59636e">Synced</dt><dd style="margin: 0">2 min ago</dd></dl>
+</div>
+</div>
+<p style="margin: 0; font-size: 12px; color: #59636e">When sync has stopped for its repo, Synced says so in place: “stale since 14:20: gh is not logged in”.</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">C · Something out of date: what changed, what to check, cleared only with a note</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; overflow: hidden">
+<header style="padding: 20px 28px; border-bottom: 1px solid #eef1f4; display: flex; flex-direction: column; gap: 10px">
+<nav style="font-size: 12px; color: #59636e"><span style="font-family: 'JetBrains Mono', monospace">DR-55</span> · out of date · on <a href="#" style="font-family: 'JetBrains Mono', monospace">INFRA</a> · since 7 Nov</nav>
+<h1 style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 600">Check INFRA still describes reality</h1>
+</header>
+<div style="padding: 20px 28px 28px; display: flex; flex-direction: column; gap: 14px">
+<p style="margin: 0; font-size: 13px; color: #424a53"><a href="#" style="font-family: 'JetBrains Mono', monospace; font-size: 12px">D-20</a> was answered “Uninstall it” on “Uninstall the Homebrew tailscale CLI on the MacBook Air?”. Does INFRA's description still hold?</p>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 500">Note <span style="font-weight: 400; color: #59636e">· required: what changed, or why nothing had to</span><textarea rows="2" style="font: inherit; font-weight: 400; border: 1px solid #d8dde3; border-radius: 6px; padding: 8px 10px"></textarea></label>
+<div style="display: flex; gap: 8px"><button type="button" disabled style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #c3cad3; border-radius: 6px; background: #eef1f4; color: #59636e">Updated</button><button type="button" disabled style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #f9fafb; color: #59636e">Nothing to update</button></div>
+</div>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">D · A repo: its key, GitHub name, checkout here, and its lines</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 20px 28px; display: flex; flex-direction: column; gap: 12px">
+<nav style="font-size: 12px; color: #59636e"><span style="font-family: 'JetBrains Mono', monospace">PANEL</span> · repo</nav>
+<h1 style="margin: 0; font-size: 20px; font-weight: 600">Home panel</h1>
+<dl style="margin: 0; display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 8px 16px; font-size: 13px"><dt style="color: #59636e">GitHub</dt><dd style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 12px">vasc/homepanel</dd><dt style="color: #59636e">Checkout</dt><dd style="margin: 0">none on this machine</dd><dt style="color: #59636e">Lines</dt><dd style="margin: 0">L-56, L-57, L-60 and the rest of its lines, each with its state</dd></dl>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">E · From before lines: an old idea, milestone or update, read only, says what it became</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 20px 28px; display: flex; flex-direction: column; gap: 10px">
+<nav style="font-size: 12px; color: #59636e"><span style="font-family: 'JetBrains Mono', monospace">I-7</span> · idea, from before lines</nav>
+<p style="margin: 0; font-size: 13px; color: #424a53">Became <a href="#" style="font-weight: 600">L-6 iOS family devices via TestFlight</a>. Opening I-7 opens L-6.</p>
+</div>
+<p style="margin: 0; font-size: 12px; color: #59636e">An old ref always opens what it became; only one that became nothing shows its old fields, plainly labelled “from before lines”.</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">F · Opened from another panel: one step back, not closed</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 16px 28px; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">‹ Back to L-57</button>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Close</button>
+</div>
+<p style="margin: 0; font-size: 12px; color: #59636e">Esc and Back both go one step back; Close shuts the panel. The same in every panel kind.</p>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1760,"height":2400}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

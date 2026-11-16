@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Agents</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1f2328;text-decoration:none}a:hover{text-decoration:underline}
+</style>
+</helmet>
+<div style="width: 1760px; min-height: 1800px; box-sizing: border-box; padding: 32px; background: #f5f6f8; color: #1f2328; font-family: Inter, -apple-system, system-ui, sans-serif; font-size: 14px; line-height: 20px; display: flex; gap: 48px; align-items: flex-start">
+
+<div style="flex: 0 0 1000px; border: 1px solid #d8dde3; border-radius: 8px; overflow: hidden">
+<header style="background: #ffffff; border-bottom: 1px solid #d8dde3; padding: 0 28px; min-height: 52px; display: flex; align-items: center; gap: 20px"><span style="font-weight: 600; font-size: 15px">Octotrack</span><a href="#" style="font-size: 13px; color: #424a53">Log</a><a href="#" style="font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 6px">Agents</a></header>
+<main style="padding: 24px 28px 40px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px">
+<h1 style="margin: 0; font-size: 20px; font-weight: 600">Agents</h1>
+<span style="font-size: 13px; color: #59636e">1 running · 24 quiet</span>
+<button type="button" style="margin-left: auto; font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Buzz this device</button>
+</div>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; overflow: hidden">
+<div style="display: grid; grid-template-columns: 180px 96px minmax(0, 1fr) 96px 88px; column-gap: 16px; padding: 8px 20px; background: #f9fafb; border-bottom: 1px solid #eef1f4; font-size: 12px; font-weight: 600; color: #59636e"><span>Agent</span><span>Repo</span><span>Now</span><span>Last seen</span><span></span></div>
+<div style="display: grid; grid-template-columns: 180px 96px minmax(0, 1fr) 96px 88px; column-gap: 16px; align-items: center; padding: 10px 20px; border-bottom: 1px solid #eef1f4"><span style="font-weight: 600">octotrack-builder</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #424a53">OCT</span><span><span style="color: #1a7f37">●</span> running, on no line</span><span style="font-size: 13px; color: #59636e">1h ago</span><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 28px; padding: 0 10px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Stop</button></div>
+<div style="display: grid; grid-template-columns: 180px 96px minmax(0, 1fr) 96px 88px; column-gap: 16px; align-items: center; padding: 10px 20px; border-bottom: 1px solid #eef1f4"><span style="font-weight: 600">homepanel</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #424a53">PANEL</span><span style="color: #59636e">○ quiet</span><span style="font-size: 13px; color: #59636e">yesterday</span><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 28px; padding: 0 10px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Stop</button></div>
+<div style="display: grid; grid-template-columns: 180px 96px minmax(0, 1fr) 96px 88px; column-gap: 16px; align-items: center; padding: 10px 20px; border-bottom: 1px solid #eef1f4"><span style="font-weight: 600">ttube</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #424a53">TTUBE</span><span style="color: #59636e">○ quiet</span><span style="font-size: 13px; color: #59636e">yesterday</span><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 28px; padding: 0 10px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Stop</button></div>
+<div style="display: grid; grid-template-columns: 180px 96px minmax(0, 1fr) 96px 88px; column-gap: 16px; align-items: center; padding: 10px 20px; border-bottom: 1px solid #eef1f4"><span style="font-weight: 600">meals</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #424a53">MEALS</span><span style="color: #59636e">○ quiet</span><span style="font-size: 13px; color: #59636e">yesterday</span><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 28px; padding: 0 10px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Stop</button></div>
+<div style="padding: 10px 20px; font-size: 13px; color: #424a53"><button type="button" style="font: inherit; font-size: 13px; background: transparent; border: 0; padding: 0; text-decoration: underline">21 more quiet: mediarr, stack, roadtrip, chores and 17 more</button></div>
+</div>
+<p style="margin: 0; font-size: 12px; color: #59636e">Real roster. Quiet agents fold after the first few; running, stopped and failed ones always show.</p>
+</main>
+</div>
+
+<div style="flex: 1; display: flex; flex-direction: column; gap: 36px">
+
+<section style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">A · Every state an agent can be in, in the Now column</h2>
+<ul style="margin: 0; padding: 0; list-style: none; background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; overflow: hidden; font-size: 13px">
+<li style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 8px 16px; border-bottom: 1px solid #eef1f4"><span><span style="color: #1a7f37">●</span> running, owner of <a href="#" style="font-weight: 600">L-59</a>; its line waits on you</span><span style="color: #59636e">Stop</span></li>
+<li style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 8px 16px; border-bottom: 1px solid #eef1f4"><span><span style="color: #59636e">◐</span> asleep, on its line · wakes by tmux</span><span style="color: #59636e">Stop</span></li>
+<li style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 8px 16px; border-bottom: 1px solid #eef1f4"><span><span style="color: #59636e">○</span> quiet, still holding <a href="#" style="font-weight: 600">L-24</a></span><span style="color: #59636e">Release</span></li>
+<li style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 8px 16px; border-bottom: 1px solid #eef1f4"><span><span style="color: #1a7f37">●</span> idle: nothing to take or scope in its repo</span><span style="color: #59636e">Stop</span></li>
+<li style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 8px 16px; border-bottom: 1px solid #eef1f4"><span><span style="color: #cf222e">■</span> stopped by you at 14:02: “wrong repo”</span><span style="color: #59636e">Lift</span></li>
+<li style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 8px 16px; border-bottom: 1px solid #eef1f4"><span><span style="color: #cf222e">■</span> stopped by Octotrack after 3 writes a line's state forbids</span><span style="color: #59636e">Lift</span></li>
+<li style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 8px 16px; border-bottom: 1px solid #eef1f4"><span><span style="color: #9a6700">▲</span> started for <a href="#" style="font-weight: 600">L-46</a>; exits at once (exit 127), retried since today</span><span></span></li>
+<li style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 8px 16px; border-bottom: 1px solid #eef1f4"><span><span style="color: #9a6700">▲</span> ran but never took its line</span><span></span></li>
+<li style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 8px 16px"><span><span style="color: #59636e">✕</span> gone: its wake failed (tmux: no session “ttube”)</span><span></span></li>
+</ul>
+<p style="margin: 0; font-size: 12px; color: #59636e">Illustrative examples of each state; every one has a glyph and words, never only colour. After Stop, Lift or Release the button reads “Stopping…” with Undo below until it takes effect.</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">B · No agents yet</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 16px 20px; display: flex; flex-direction: column; gap: 8px"><span style="font-weight: 600">No agent has checked in yet</span><span style="font-size: 13px; color: #424a53">An agent appears here the first time it runs an octo command with its name.</span><pre style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 12px; background: #f9fafb; border: 1px solid #eef1f4; border-radius: 6px; padding: 8px 10px">export OCTO_AGENT=feature-x</pre></div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">C · Loading and failed</h2>
+<p role="status" style="margin: 0; font-size: 13px; color: #59636e">Loading agents…</p>
+<div role="alert" style="border: 1px solid #ffcecb; background: #ffebe9; border-radius: 6px; padding: 8px 8px 8px 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px"><span><b style="color: #cf222e">Could not load agents.</b> The tracker did not answer.</span><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Try again</button></div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">D · Buzz this device, every state</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px">
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Buzz this device</button>
+<span style="color: #59636e">Turning on…</span>
+<span><span style="color: #1a7f37">✓</span> Buzzing this device · <button type="button" style="font: inherit; font-size: 13px; background: transparent; border: 0; padding: 0; text-decoration: underline">Stop</button></span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px; font-size: 13px">
+<span style="color: #9a6700">Notifications are blocked for this site. Allow them in the browser's site settings, then press again.</span>
+<span style="color: #9a6700">You dismissed the browser's question; press again to be asked once more.</span>
+<span style="color: #424a53">This browser cannot buzz. On iPhone, add Octotrack to the home screen first.</span>
+<span style="color: #cf222e">This tracker does not send notifications: it has no push key.</span>
+</div>
+</section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1760,"height":1800}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

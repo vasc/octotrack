@@ -12,6 +12,17 @@ dashboard: `tokens.css` is imported by it, so a change here is a change in the p
 | [patterns.md](patterns.md)       | How components combine into home, answering, the Log, the panel            |
 | [voice.md](voice.md)             | How the product words things, in the dashboard and the CLI                 |
 | [log.md](log.md)                 | Decisions made so far, and the questions still open                        |
+| [canvas/](canvas/)               | Every screen, sheet and state, drawn: the design the dashboard is built to |
+| [screens/](screens/)             | Per component: which drawing designs it, and its loading, error and empty  |
+| [inventory/](inventory/)         | What every component did before this design, state by state, and its gaps  |
+
+## The design every screen is built to
+
+Every screen, sheet, widget and state is drawn on the canvas
+[Octotrack: every screen](https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU), and its sources are kept in
+[canvas/](canvas/). A screen is designed there, and agreed, before it is built; the code then matches the drawing.
+`bun test design` fails when a component has no section in [screens/](screens/), or a section that leaves out its
+loading, error or empty state.
 
 ## See it
 

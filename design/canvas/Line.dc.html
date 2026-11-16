@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A line, opened</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1f2328;text-decoration:none}a:hover{text-decoration:underline}
+</style>
+</helmet>
+<div style="width: 820px; min-height: 1240px; box-sizing: border-box; background: #ffffff; color: #1f2328; font-family: Inter, -apple-system, system-ui, sans-serif; font-size: 14px; line-height: 20px; border-left: 1px solid #d8dde3; display: flex; flex-direction: column">
+
+<header style="padding: 20px 32px 24px; border-bottom: 1px solid #eef1f4; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 12px; line-height: 16px; color: #59636e">
+<span style="font-weight: 600; color: #424a53">Up next, 3rd of 10</span>
+<span style="font-family: 'JetBrains Mono', ui-monospace, monospace">L-3</span>
+<span style="font-family: 'JetBrains Mono', ui-monospace, monospace">LimbicAI/hydra</span>
+</div>
+<button type="button" aria-label="Close" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff; display: inline-flex; align-items: center; gap: 8px">Close <kbd style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #59636e">esc</kbd></button>
+</div>
+<h1 style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 600; letter-spacing: -0.01em">Kore on ECS</h1>
+<div style="display: grid; grid-template-columns: 88px minmax(0, 1fr); column-gap: 16px; font-size: 13px; line-height: 20px">
+<span style="color: #59636e; font-weight: 500">Done when</span>
+<span style="color: #1f2328">Kore runs on ECS in every deploy, and Elastic Beanstalk is retired.</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 4px">
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 16px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Start</button>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Table</button>
+<button type="button" aria-label="More: drop this line, fold it into another" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">More ▾</button>
+<span style="margin-left: auto; font-size: 12px; color: #59636e">Up next lines are scoped by idle agents, not built</span>
+</div>
+</header>
+
+<main style="padding: 24px 32px 40px; display: flex; flex-direction: column; gap: 32px">
+
+<section aria-labelledby="s-summary" style="display: flex; flex-direction: column; gap: 8px">
+<h2 id="s-summary" style="margin: 0; font-size: 13px; line-height: 18px; font-weight: 600">Summary</h2>
+<p style="margin: 0; font-size: 13px; color: #59636e">No summary yet. Its owner writes one once the line starts.</p>
+</section>
+
+<section aria-labelledby="s-plan" style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px">
+<h2 id="s-plan" style="margin: 0; font-size: 13px; line-height: 18px; font-weight: 600">Plan</h2>
+<span style="font-size: 12px; color: #59636e">not scoped yet · 4 issues already on it</span>
+</div>
+<div style="border: 1px solid #d8dde3; border-radius: 8px; overflow: hidden">
+<div style="padding: 10px 16px; background: #f9fafb; border-bottom: 1px solid #eef1f4; font-size: 12px; line-height: 16px; color: #59636e"><span style="font-weight: 600; color: #424a53">Not on a step yet</span> · these join a step when the plan is set</div>
+<ul style="margin: 0; padding: 0; list-style: none">
+
+<li style="display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; column-gap: 16px; align-items: baseline; padding: 12px 16px; border-bottom: 1px solid #eef1f4">
+<a href="#" style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; color: #59636e">KECS-1</a>
+<span style="font-weight: 500">Build kore's ECS image in the pull request</span>
+<span style="font-size: 12px; color: #59636e">to do</span>
+</li>
+
+<li style="display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; column-gap: 16px; align-items: baseline; padding: 12px 16px; border-bottom: 1px solid #eef1f4">
+<a href="#" style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; color: #59636e">KECS-2</a>
+<span style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+<span style="font-weight: 500">Move production UK onto ECS, steps 1–3</span>
+<span style="display: flex; flex-wrap: wrap; gap: 6px">
+<a href="#" style="white-space: nowrap; font-size: 12px; line-height: 20px; padding: 0 8px; border: 1px solid #eef1f4; border-radius: 4px; background: #f9fafb; color: #424a53"><span style="font-family: 'JetBrains Mono', monospace">#405</span> merged · <span style="color: #1a7f37">✓</span></a>
+<a href="#" style="white-space: nowrap; font-size: 12px; line-height: 20px; padding: 0 8px; border: 1px solid #eef1f4; border-radius: 4px; background: #f9fafb; color: #424a53"><span style="font-family: 'JetBrains Mono', monospace">#406</span> merged · <span style="color: #1a7f37">✓</span></a>
+<a href="#" style="white-space: nowrap; font-size: 12px; line-height: 20px; padding: 0 8px; border: 1px solid #eef1f4; border-radius: 4px; background: #f9fafb; color: #424a53"><span style="font-family: 'JetBrains Mono', monospace">#409</span> merged · <span style="color: #1a7f37">✓</span></a>
+<a href="#" style="white-space: nowrap; font-size: 12px; line-height: 20px; padding: 0 8px; border: 1px solid #eef1f4; border-radius: 4px; background: #f9fafb; color: #424a53"><span style="font-family: 'JetBrains Mono', monospace">#413</span> merged · <span style="color: #1a7f37">✓</span></a>
+</span>
+</span>
+<span style="font-size: 12px; color: #59636e">to do</span>
+</li>
+
+<li style="display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; column-gap: 16px; align-items: baseline; padding: 12px 16px; border-bottom: 1px solid #eef1f4">
+<a href="#" style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; color: #59636e">KECS-3</a>
+<span style="font-weight: 500">Delete the 4 old ECS staging IAM roles</span>
+<span style="font-size: 12px; color: #59636e">backlog</span>
+</li>
+
+<li style="display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; column-gap: 16px; align-items: baseline; padding: 12px 16px">
+<a href="#" style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; color: #59636e">HYD-28</a>
+<span style="font-weight: 500">ECS: apply every Doppler change at the next restart, without Pulumi</span>
+<span style="font-size: 12px; color: #1f2328; font-weight: 500">in progress</span>
+</li>
+</ul>
+</div>
+</section>
+
+<section aria-labelledby="s-new" style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px">
+<h2 id="s-new" style="margin: 0; font-size: 13px; line-height: 18px; font-weight: 600">What happened <span style="font-weight: 400; color: #59636e">7</span></h2>
+<a href="#" style="font-size: 12px; color: #424a53">This line in the log →</a>
+</div>
+<p style="margin: 0; font-size: 13px; color: #59636e">Nothing you have not seen. <a href="#" style="color: #424a53; text-decoration: underline; text-decoration-color: #c3cad3">Show the 7 you have seen</a></p>
+</section>
+
+<section aria-labelledby="s-owner" style="display: flex; flex-direction: column; gap: 8px">
+<h2 id="s-owner" style="margin: 0; font-size: 13px; line-height: 18px; font-weight: 600">Owner</h2>
+<p style="margin: 0; font-size: 13px; color: #59636e">None until it starts. An idle agent in LimbicAI/hydra may scope it meanwhile.</p>
+</section>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":820,"height":1240}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

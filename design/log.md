@@ -35,11 +35,32 @@ Keys drive home: items, lines, choices, Undo, I'm at and the urgent question. El
 `?` and `Esc`. There is no way to move through log rows or the roster, open one, or go to another page from the
 keyboard.
 
-### States not on the specimen
-
-Hover and focus can only be seen by hovering and tabbing. The specimen does not show them side by side.
-
 ## Decisions
+
+### Taken when every screen was drawn
+
+The developer asked to "design every screen and every widget, every error state and every empty state", and to
+"Always view the canvas rendering". Every component's states were first inventoried from the code
+([inventory/](inventory/)), then each screen was drawn on the canvas ([canvas/](canvas/)) and looked at rendered. These
+are design decisions taken there, open to change:
+
+- **Draw first, build after.** A screen is drawn and agreed on the canvas before its code changes, and the code then
+  matches the drawing. The earlier screens were composed in code, which is how cards inside cards and then a page with no
+  separation between text and controls each shipped.
+- **Every opened item has three zones, in this order:** what it is (read), what you do (act), other ways out. A hairline
+  and space separate reading from acting. A choice's number sits on its label's baseline, at the label's size, and the
+  reason for a recommendation lives inside the recommended option.
+- **One column in panels.** A panel reads top to bottom in order of importance; a section with nothing in it says why in
+  one line instead of a bare heading or an empty column.
+- **One focus treatment:** a 2 px ink ring, outside a control and inside a row. One selected treatment: the accent-soft
+  fill. Pressed darkens a step. Disabled is a flat grey fill with grey text, never only faded. Nothing gets a coloured
+  side bar.
+- **A failure is said where it happened,** with what to do and Try again, and the tracker's own hint when it sends one.
+  Raw error text never reaches the page. Data that could not refresh stays, marked with the time it is from.
+- **Illustrative content is labelled.** Where no real data exists for a state, the drawing says so on the board.
+
+These answer the open question "States not on the specimen": hover, focus, pressed, disabled and busy are drawn side by
+side on the Primitives board.
 
 ### Taken with lines of work
 

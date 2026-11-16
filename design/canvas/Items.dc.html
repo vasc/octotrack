@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tasks, proposals, step in</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1f2328;text-decoration:none}a:hover{text-decoration:underline}
+</style>
+</helmet>
+<div style="width: 1760px; min-height: 2800px; box-sizing: border-box; padding: 32px; background: #f5f6f8; color: #1f2328; font-family: Inter, -apple-system, system-ui, sans-serif; font-size: 14px; line-height: 20px; columns: 2; column-gap: 48px">
+
+<p style="column-span: all; margin: 0 0 32px; padding: 10px 14px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff; font-size: 13px; color: #424a53">Every item opened has the same three zones as a question: what it is (read), what you do (act), other ways out. The contents are illustrative: no task is filed in your tracker yet because no places exist, and no line is working, so no done proposal or picked-up answer exists either. Refs, titles and agent names are real.</p>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">A · Task, opened: what to send back, saved as you type</h2>
+<article style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; box-shadow: 0 0 0 2px #1f2328; padding: 20px 24px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; line-height: 16px; color: #59636e"><span style="color: #8250df; font-weight: 600">Task for you</span><span style="font-family: 'JetBrains Mono', monospace">PANEL-6</span><span>at the bench</span><span>holds up step 3, settle the enclosure</span><span>filed by panel-widgets</span></div>
+<h3 style="margin: 0; font-size: 16px; line-height: 22px; font-weight: 600">Measure the Sendspin enclosure's inner depth</h3>
+<p style="margin: 0; color: #424a53; max-width: 66ch; line-height: 22px">The wall mount is drawn for a 26 mm cavity. A real measurement decides whether the bracket prints as drawn.</p>
+<span style="font-size: 13px; color: #424a53">Frees <a href="#" style="font-family: 'JetBrains Mono', monospace; font-size: 12px">PANEL-4</a> Print the wall mount</span>
+</div>
+<div style="border-top: 1px solid #eef1f4; padding-top: 20px; display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 12px; font-weight: 600; color: #59636e">What to send back</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 500">Inner depth (mm)<input type="text" value="26.5" style="font: inherit; font-weight: 400; height: 32px; box-sizing: border-box; border: 1px solid #d8dde3; border-radius: 6px; padding: 0 10px"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 500">Measured at<input type="text" placeholder="where you measured" style="font: inherit; font-weight: 400; height: 32px; box-sizing: border-box; border: 1px solid #d8dde3; border-radius: 6px; padding: 0 10px"></label>
+</div>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 500">Note<textarea rows="2" style="font: inherit; font-weight: 400; border: 1px solid #d8dde3; border-radius: 6px; padding: 8px 10px"></textarea></label>
+<span style="font-size: 12px; color: #59636e">1 of 2 filled · saved as you type</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px"><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Done</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Can't do it</button></div>
+</article>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">B · Task, can't do it: says why, closes it</h2>
+<article style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 20px 24px; display: flex; flex-direction: column; gap: 14px">
+<h3 style="margin: 0; font-size: 16px; font-weight: 600">Measure the Sendspin enclosure's inner depth</h3>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 500">Why PANEL-6 cannot be done<textarea rows="2" style="font: inherit; font-weight: 400; border: 1px solid #1f2328; border-radius: 6px; padding: 8px 10px">The enclosure is at the office until Friday.</textarea></label>
+<div style="display: flex; gap: 8px"><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Close it</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Back</button></div>
+</article>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">C · A task of your own: nothing to report, just Done</h2>
+<article style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 16px 20px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center">
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; color: #59636e"><span style="color: #8250df; font-weight: 600">Your task</span> · LIFE-1 · at home</span><span style="font-weight: 600">Add the Keychain item on the Mac mini</span></span>
+<span style="display: flex; gap: 8px"><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Done</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Can't</button></span>
+</article>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">D · Task closed: how it ended, read only</h2>
+<article style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 16px 20px; display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 12px; color: #59636e"><span style="color: #1a7f37; font-weight: 600">Done</span> · PANEL-6 · by you, 2h ago</span>
+<span style="font-weight: 600">Measure the Sendspin enclosure's inner depth</span>
+<span style="font-size: 13px; color: #424a53">Inner depth 26.5 mm, measured at the back wall.</span>
+</article>
+<p style="margin: 0; font-size: 12px; color: #59636e">Also: “Could not be done: the enclosure is at the office” and “Withdrawn by panel-widgets”.</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">E · Is it done? The owner's case, then Done or Not yet</h2>
+<article style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; box-shadow: 0 0 0 2px #1f2328; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; color: #59636e"><span style="color: #8250df; font-weight: 600">Proposed as done</span> · by infra</span>
+<h3 style="margin: 0; font-size: 16px; font-weight: 600">Tailscale Funnel off for good</h3>
+<dl style="margin: 0; display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 6px 16px; font-size: 13px"><dt style="color: #59636e; font-weight: 500">Done when</dt><dd style="margin: 0">The admin console shows no Funnel badge on this machine.</dd><dt style="color: #59636e; font-weight: 500">Its case</dt><dd style="margin: 0">The machine reports no serve config; only the console check is left, and you made it.</dd></dl>
+</div>
+<div style="border-top: 1px solid #eef1f4; padding-top: 16px; display: flex; gap: 8px"><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Done</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Not yet…</button></div>
+</article>
+<p style="margin: 0; font-size: 12px; color: #59636e">Not yet opens a box: “What it still needs”, then Send.</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">F · Done when changed: the old and new side by side</h2>
+<article style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px">
+<span style="font-size: 12px; color: #59636e"><span style="color: #8250df; font-weight: 600">Done when changed</span> · by chores, while it waited</span>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; font-size: 13px">
+<div style="border: 1px solid #eef1f4; border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12px; font-weight: 600; color: #59636e">Was</span><span style="color: #59636e">The Mac mini has enough free disk.</span></div>
+<div style="border: 1px solid #c297ff; background: #fbefff; border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12px; font-weight: 600; color: #8250df">Proposed</span><span>After a deploy the data volume has at least 40 GB free.</span></div>
+</div>
+<span style="font-size: 13px; color: #424a53"><b>Why:</b> “enough” could not be checked; 40 GB is two deploys of headroom.</span>
+<div style="display: flex; gap: 8px"><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Accept</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Keep current</button></div>
+</article>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">G · Step in, every kind: one sentence of what went wrong, the action that fits</h2>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="border: 1px solid #f2cc60; background: #fff8c5; border-radius: 6px; padding: 10px 14px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px"><span style="font-size: 13px"><b style="color: #9a6700">Nothing can start a session.</b> No start command is set for TTUBE.</span><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 12px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Try now</button></div>
+<div style="border: 1px solid #f2cc60; background: #fff8c5; border-radius: 6px; padding: 10px 14px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px"><span style="font-size: 13px"><b style="color: #9a6700">A start keeps failing.</b> Three tries, each exits at once (exit 127).</span><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 12px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Try now</button></div>
+<div style="border: 1px solid #f2cc60; background: #fff8c5; border-radius: 6px; padding: 10px 14px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px"><span style="font-size: 13px"><b style="color: #9a6700">Every session is busy.</b> 1 of 1 allowed is running.</span><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 12px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Start one anyway</button></div>
+<div style="border: 1px solid #f2cc60; background: #fff8c5; border-radius: 6px; padding: 10px 14px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px"><span style="font-size: 13px"><b style="color: #9a6700">Its checkout could not be made.</b> gh repo clone failed: not logged in.</span><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 12px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Set its checkout</button></div>
+<div style="border: 1px solid #f2cc60; background: #fff8c5; border-radius: 6px; padding: 10px 14px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px"><span style="font-size: 13px"><b style="color: #9a6700">It names no repo.</b> No agent can take it; own it or give it a repo.</span><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 12px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">I'll own it</button></div>
+<div style="border: 1px solid #f2cc60; background: #fff8c5; border-radius: 6px; padding: 10px 14px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px"><span style="font-size: 13px"><b style="color: #9a6700">The runner is only watching.</b> It logs what it would start; turn it on in agent-setup.json.</span><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">I'll own it</button></div>
+</div>
+<p style="margin: 0; font-size: 12px; color: #59636e">Every kind also offers I'll own it and Table it, after its own action. Set its checkout opens a path field: “Checkout of hydra”, and Set stays off until the path starts with /, which it says under the field.</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">H · An answer you gave, and what became of it</h2>
+<ul style="margin: 0; padding: 0; list-style: none; background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; overflow: hidden; font-size: 13px">
+<li style="display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; column-gap: 12px; align-items: baseline; padding: 10px 16px; border-bottom: 1px solid #eef1f4"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #59636e">D-20</span><span><b>Uninstall it</b> · <span style="color: #59636e">picked up by funnel-session, 9d ago</span></span><button type="button" style="font: inherit; font-size: 12px; background: transparent; border: 0; text-decoration: underline">Change</button></li>
+<li style="display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; column-gap: 12px; align-items: baseline; padding: 10px 16px; border-bottom: 1px solid #eef1f4"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #59636e">D-65</span><span><b>Keep the cap in Merano</b> · <span style="color: #59636e">not picked up yet</span></span><button type="button" style="font: inherit; font-size: 12px; background: transparent; border: 0; text-decoration: underline">Change</button></li>
+<li style="display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; column-gap: 12px; align-items: baseline; padding: 10px 16px"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #59636e">D-75</span><span><b>Fast start, then paced</b> · <span style="color: #9a6700">ttube could not be woken; finding an owner</span></span><button type="button" style="font: inherit; font-size: 12px; background: transparent; border: 0; text-decoration: underline">Change</button></li>
+</ul>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1760,"height":2800}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

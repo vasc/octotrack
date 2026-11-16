@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A line, every state</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1f2328;text-decoration:none}a:hover{text-decoration:underline}
+</style>
+</helmet>
+<div style="width: 1760px; min-height: 3300px; box-sizing: border-box; padding: 32px; background: #f5f6f8; color: #1f2328; font-family: Inter, -apple-system, system-ui, sans-serif; font-size: 14px; line-height: 20px; columns: 2; column-gap: 48px">
+
+<p style="column-span: all; margin: 0 0 32px; padding: 10px 14px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff; font-size: 13px; color: #424a53">No line in your tracker is working, tabled, yours or done yet, so the content of those states is illustrative: line titles are real, while their summaries, questions, pull requests, owners and dates are made up to show the layout. Proposed (B) and the L-3 plan are real.</p>
+
+<!-- A · Working, needs you -->
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">A · Working on, with an owner, something for you, a failing check</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; overflow: hidden">
+<header style="padding: 20px 28px 22px; border-bottom: 1px solid #eef1f4; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; line-height: 16px; color: #59636e"><span style="font-weight: 600; color: #424a53">Working on, 1st of 4</span><span style="font-family: 'JetBrains Mono', monospace">L-3</span><span style="font-family: 'JetBrains Mono', monospace">LimbicAI/hydra</span></div>
+<h1 style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 600">Kore on ECS</h1>
+<div style="display: grid; grid-template-columns: 88px minmax(0, 1fr); column-gap: 16px; font-size: 13px"><span style="color: #59636e; font-weight: 500">Done when</span><span>Kore runs on ECS in every deploy, and Elastic Beanstalk is retired.</span></div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px"><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Done</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Move to up next</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Table</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">More ▾</button></div>
+</header>
+<div style="padding: 24px 28px 32px; display: flex; flex-direction: column; gap: 28px">
+<section style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600"><span style="color: #8250df">For you</span> <span style="font-weight: 400; color: #59636e">1</span></h2>
+<div style="border: 1px solid #c297ff; background: #fbefff; border-radius: 8px; padding: 12px 16px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center"><span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; color: #59636e"><span style="color: #8250df; font-weight: 600">Question</span> · D-91</span><span style="font-weight: 600">Cut production UK over this week or wait for the IAM clean-up?</span></span><span style="color: #59636e">›</span></div>
+</section>
+<section style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; justify-content: space-between; gap: 16px; align-items: baseline"><h2 style="margin: 0; font-size: 13px; font-weight: 600">Summary</h2><span style="font-size: 12px; color: #59636e">by kore-ecs · 2h ago</span></div>
+<p style="margin: 0; font-weight: 600">Production UK runs on ECS; staging and the image build are left.</p>
+<p style="margin: 0; color: #424a53; line-height: 22px; max-width: 66ch">Steps 1–3 of the UK move merged in #405–#413 and the service has been on ECS since Friday. The image still builds outside the pull request, which is why step 2 is open.</p>
+</section>
+<section style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; justify-content: space-between; gap: 16px; align-items: baseline"><h2 style="margin: 0; font-size: 13px; font-weight: 600">Plan</h2><span style="font-size: 12px; color: #59636e">step 2 of 3</span></div>
+<ol style="margin: 0; padding: 0; list-style: none; border: 1px solid #d8dde3; border-radius: 8px; overflow: hidden">
+<li style="display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; column-gap: 12px; align-items: baseline; padding: 12px 16px; border-bottom: 1px solid #eef1f4; color: #59636e"><span>✓</span><span>Move production UK onto ECS</span><span style="font-size: 12px">done</span></li>
+<li style="padding: 12px 16px; border-bottom: 1px solid #eef1f4; display: flex; flex-direction: column; gap: 8px; background: #f9fafb">
+<div style="display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; column-gap: 12px; align-items: baseline"><span style="font-weight: 600">→</span><span style="font-weight: 600">Build the image in the pull request</span><span style="font-size: 12px; font-weight: 600">now</span></div>
+<div style="margin-left: 32px; display: grid; grid-template-columns: 64px minmax(0, 1fr); column-gap: 12px; align-items: baseline; font-size: 13px"><a href="#" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #59636e">KECS-1</a><span style="display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline">Build kore's ECS image in the pull request <a href="#" style="white-space: nowrap; font-size: 12px; line-height: 20px; padding: 0 8px; border: 1px solid #ffcecb; border-radius: 4px; background: #ffebe9"><span style="font-family: 'JetBrains Mono', monospace">#418</span> open · <span style="color: #cf222e; font-weight: 600">✗ checks failing</span></a></span></div>
+</li>
+<li style="display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; column-gap: 12px; align-items: baseline; padding: 12px 16px"><span style="color: #59636e">○</span><span>Retire Elastic Beanstalk</span><span style="font-size: 12px; color: #59636e">next</span></li>
+</ol>
+</section>
+<section style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; justify-content: space-between; gap: 16px; align-items: baseline"><h2 style="margin: 0; font-size: 13px; font-weight: 600">New since the summary <span style="font-weight: 400; color: #59636e">2</span></h2><a href="#" style="font-size: 12px; color: #424a53">This line in the log →</a></div>
+<ul style="margin: 0; padding: 0; list-style: none; font-size: 13px">
+<li style="display: grid; grid-template-columns: 48px minmax(0, 1fr); column-gap: 12px; padding: 6px 0; border-bottom: 1px solid #eef1f4"><span style="color: #59636e">14:20</span><span>#418 checks failing: image push denied</span></li>
+<li style="display: grid; grid-template-columns: 48px minmax(0, 1fr); column-gap: 12px; padding: 6px 0"><span style="color: #59636e">13:05</span><span>kore-ecs asked D-91</span></li>
+</ul>
+<span style="font-size: 12px; color: #59636e">5 you have seen</span>
+</section>
+<section style="display: flex; flex-direction: column; gap: 8px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600">Owner</h2>
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px"><span><span style="font-weight: 600">kore-ecs</span> <span style="font-size: 13px; color: #59636e">· asleep · waits on you</span></span><span style="display: flex; gap: 8px"><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Stop kore-ecs</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">I'll own it</button></span></div>
+</section>
+<section style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #eef1f4; padding-top: 24px">
+<label for="tell" style="font-size: 13px; font-weight: 600">Tell kore-ecs</label>
+<textarea id="tell" rows="2" placeholder="Leave it empty to nudge" style="font: inherit; color: inherit; border: 1px solid #d8dde3; border-radius: 6px; padding: 10px 12px"></textarea>
+<div><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Nudge</button></div>
+</section>
+</div>
+</div>
+</section>
+
+<!-- B · Proposed -->
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">B · Proposed: who proposed it, what they recommend and why, your choices</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 20px 28px; display: flex; flex-direction: column; gap: 14px">
+<div style="font-size: 12px; color: #59636e"><span style="font-weight: 600; color: #424a53">Proposed</span> by ttube, 2d ago · <span style="font-family: 'JetBrains Mono', monospace">L-59</span> · <span style="font-family: 'JetBrains Mono', monospace">TTUBE</span></div>
+<h1 style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 600">The home worker fetches new videos again without YouTube refusing it</h1>
+<div style="display: grid; grid-template-columns: 88px minmax(0, 1fr); column-gap: 16px; font-size: 13px"><span style="color: #59636e; font-weight: 500">Done when</span><span>The home worker has fetched every play for fourteen days in a row with no refusal from YouTube.</span></div>
+<div style="border: 1px solid #c297ff; background: #fbefff; border-radius: 6px; padding: 10px 14px; font-size: 13px"><span style="font-weight: 600; color: #8250df">Recommended: start it.</span> YouTube has refused the home worker since 14 Nov; nothing new plays until this is fixed.</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px"><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 16px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Start</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Up next</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Table</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Fold into…</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 0; background: transparent; color: #424a53">Not a line</button></div>
+</div>
+</section>
+
+<!-- C · Tabled -->
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">C · Tabled: why it waits and when to look again, at the top</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 20px 28px; display: flex; flex-direction: column; gap: 14px">
+<div style="font-size: 12px; color: #59636e"><span style="font-weight: 600; color: #424a53">Tabled</span> · <span style="font-family: 'JetBrains Mono', monospace">L-41</span></div>
+<h1 style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 600">Labyrinth level editor</h1>
+<dl style="margin: 0; display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 6px 16px; font-size: 13px"><dt style="color: #59636e; font-weight: 500">Waits for</dt><dd style="margin: 0">the play-test of v1.3 first</dd><dt style="color: #59636e; font-weight: 500">Look again</dt><dd style="margin: 0">Mon 1 Dec</dd><dt style="color: #59636e; font-weight: 500">Held</dt><dd style="margin: 0">1 question, 2 tasks, released when it starts</dd></dl>
+<div style="display: flex; gap: 8px"><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 16px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Start</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Up next</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">More ▾</button></div>
+</div>
+</section>
+
+<!-- D · No owner, step in -->
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">D · Working with no owner: what went wrong and the one thing to do</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 20px 28px; display: flex; flex-direction: column; gap: 14px">
+<h1 style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 600">Sendspin enclosure</h1>
+<div style="border: 1px solid #f2cc60; background: #fff8c5; border-radius: 6px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 13px"><span style="font-weight: 600; color: #9a6700">Step in.</span> A session started for it three times and exited at once each time (exit 127): its start command is not found.</span>
+<div style="display: flex; flex-wrap: wrap; gap: 8px"><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Try now</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">I'll own it</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Table it</button></div>
+</div>
+</div>
+</section>
+
+<!-- E · Owned by you -->
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">E · Yours: no agent owns it, you add tasks and notes yourself</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 20px 28px; display: flex; flex-direction: column; gap: 14px">
+<div style="font-size: 12px; color: #59636e"><span style="font-weight: 600; color: #424a53">Working on, 4th of 4</span> · yours · <span style="font-family: 'JetBrains Mono', monospace">L-33</span></div>
+<h1 style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 600">Fix the Dinis reminder</h1>
+<label for="own-add" style="font-size: 13px; font-weight: 600">Add a task or a note</label>
+<textarea id="own-add" rows="2" placeholder="Add the Keychain item on the Mac mini" style="font: inherit; color: inherit; border: 1px solid #d8dde3; border-radius: 6px; padding: 10px 12px"></textarea>
+<div style="display: flex; gap: 8px"><button type="button" disabled style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #c3cad3; border-radius: 6px; background: #eef1f4; color: #59636e">Add as a task</button><button type="button" disabled style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #f9fafb; color: #59636e">Add as a note</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 0; background: transparent; color: #424a53; margin-left: auto">Hand to an agent</button></div>
+</div>
+</section>
+
+<!-- F · Done -->
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">F · Done or dropped: read only, says when and by whom</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 20px 28px; display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 12px; color: #59636e"><span style="font-weight: 600; color: #1a7f37">Done</span> · closed by you, Tue 14:02 · <span style="font-family: 'JetBrains Mono', monospace">L-19</span></div>
+<h1 style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 600">The Tailscale Funnel badge is gone</h1>
+<p style="margin: 0; font-size: 13px; color: #424a53">Plan, summary and history stay below, as they were when it closed.</p>
+</div>
+</section>
+
+<!-- G · Loading -->
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">G · Loading: the head comes from Lines at once; only slow parts wait, and say what</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 20px 28px; display: flex; flex-direction: column; gap: 20px">
+<h1 style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 600">Kore on ECS</h1>
+<section style="display: flex; flex-direction: column; gap: 8px"><h2 style="margin: 0; font-size: 13px; font-weight: 600">Plan</h2><div style="display: flex; flex-direction: column; gap: 8px"><span style="height: 12px; width: 70%; background: #eef1f4; border-radius: 4px"></span><span style="height: 12px; width: 55%; background: #eef1f4; border-radius: 4px"></span><span style="height: 12px; width: 62%; background: #eef1f4; border-radius: 4px"></span></div><span role="status" style="font-size: 12px; color: #59636e">Loading the plan…</span></section>
+</div>
+</section>
+
+<!-- H · Part failed -->
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">H · One part failed: said in that part, the rest still works</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 20px 28px; display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600">Plan</h2>
+<div role="alert" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; border: 1px solid #ffcecb; background: #ffebe9; border-radius: 6px; padding: 8px 8px 8px 14px"><span style="font-size: 13px"><span style="font-weight: 600; color: #cf222e">Could not load the plan.</span> The tracker did not answer.</span><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Try again</button></div>
+<span style="font-size: 12px; color: #59636e">Shown 2 min ago is kept below when there was one, marked “as of 14:20”.</span>
+</div>
+</section>
+
+<!-- I · Not found -->
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">I · Nothing at that ref</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 20px 28px; display: flex; flex-direction: column; gap: 10px">
+<h1 style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 600">No line L-312</h1>
+<p style="margin: 0; font-size: 13px; color: #424a53">It may have been folded into another line or never existed. Search the log for it to see what happened.</p>
+<div style="display: flex; gap: 8px"><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Search the log for L-312</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Close</button></div>
+</div>
+</section>
+
+<!-- J · Phone -->
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">J · Phone: the panel is the whole screen, Back instead of Close, actions full width</h2>
+<div style="width: 390px; box-sizing: border-box; background: #ffffff; border: 1px solid #d8dde3; border-radius: 12px; overflow: hidden">
+<header style="padding: 12px 16px 16px; border-bottom: 1px solid #eef1f4; display: flex; flex-direction: column; gap: 10px">
+<button type="button" style="align-self: flex-start; font: inherit; font-size: 15px; font-weight: 500; min-height: 44px; padding: 0 4px; border: 0; background: transparent">‹ Lines</button>
+<div style="font-size: 12px; color: #59636e"><span style="font-weight: 600; color: #424a53">Up next, 3rd of 10</span> · L-3 · hydra</div>
+<h1 style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 600">Kore on ECS</h1>
+<p style="margin: 0; font-size: 14px; color: #424a53">Done when Kore runs on ECS in every deploy, and Elastic Beanstalk is retired.</p>
+<div style="display: grid; grid-template-columns: 2fr 1fr 44px; gap: 8px"><button type="button" style="font: inherit; font-weight: 600; min-height: 44px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Start</button><button type="button" style="font: inherit; font-weight: 500; min-height: 44px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Table</button><button type="button" aria-label="More" style="font: inherit; min-height: 44px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">⋯</button></div>
+</header>
+<div style="padding: 16px; display: flex; flex-direction: column; gap: 8px"><h2 style="margin: 0; font-size: 13px; font-weight: 600">Plan</h2><div style="border: 1px solid #d8dde3; border-radius: 8px"><div style="padding: 12px 14px; border-bottom: 1px solid #eef1f4; display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 500">Build kore's ECS image in the pull request</span><span style="font-size: 12px; color: #59636e">KECS-1 · to do</span></div><div style="padding: 12px 14px; display: flex; flex-direction: column; gap: 6px"><span style="font-weight: 500">Move production UK onto ECS, steps 1–3</span><span style="font-size: 12px; color: #59636e">KECS-2 · to do · 4 pull requests merged ✓</span></div></div></div>
+</div>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1760,"height":3300}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

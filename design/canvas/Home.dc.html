@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lines, in use</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1f2328;text-decoration:none}a:hover{text-decoration:underline}
+</style>
+</helmet>
+<div style="min-height: 2100px; background: #f5f6f8; color: #1f2328; font-family: Inter, -apple-system, system-ui, sans-serif; font-size: 14px; line-height: 20px">
+
+<header style="background: #ffffff; border-bottom: 1px solid #d8dde3">
+<div style="max-width: 1180px; margin: 0 auto; padding: 0 32px; min-height: 52px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px">
+<nav aria-label="Main" style="display: flex; align-items: center; gap: 20px">
+<a href="#" aria-current="page" style="font-weight: 600; font-size: 15px">Octotrack</a>
+<a href="#" style="font-size: 13px; color: #424a53">Log</a>
+<a href="#" style="font-size: 13px; color: #424a53">Agents</a>
+</nav>
+<nav aria-label="Waiting on you" style="display: flex; flex-wrap: wrap; gap: 4px">
+<a href="#" style="font-size: 13px; padding: 2px 10px; border-radius: 999px; background: #fff8c5"><b style="color: #9a6700">1</b> urgent</a>
+<a href="#" style="font-size: 13px; padding: 2px 10px; border-radius: 999px; background: #fbefff"><b style="color: #8250df">2</b> to answer</a>
+<a href="#" style="font-size: 13px; padding: 2px 10px; border-radius: 999px; background: #fbefff"><b style="color: #8250df">1</b> to do</a>
+<a href="#" style="font-size: 13px; padding: 2px 10px; border-radius: 999px; background: #fbefff"><b style="color: #8250df">2</b> to accept</a>
+</nav>
+<div style="margin-left: auto; display: flex; align-items: center; gap: 8px">
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">All places ▾</button>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 12px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">+ New line</button>
+<button type="button" aria-label="Appearance" style="font: inherit; height: 32px; width: 32px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff; color: #424a53">◐</button>
+<button type="button" aria-label="Keyboard shortcuts" style="font: inherit; font-family: 'JetBrains Mono', monospace; font-size: 12px; height: 32px; width: 32px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff; color: #424a53">?</button>
+</div>
+</div>
+</header>
+
+<main style="max-width: 1180px; margin: 0 auto; padding: 24px 32px 64px; display: flex; flex-direction: column; gap: 36px">
+<p style="margin: 0; font-size: 12px; color: #59636e">Illustrative: no line in your tracker is working yet, so which lines are working, their owners, steps and the task are made up. Titles and D-65 are real.</p>
+
+<section aria-labelledby="h-urgent" style="display: flex; flex-direction: column; gap: 10px">
+<h2 id="h-urgent" style="margin: 0; font-size: 15px; font-weight: 600"><span style="color: #9a6700">Urgent</span> <span style="font-weight: 400; color: #59636e">1</span></h2>
+<button type="button" style="font: inherit; color: inherit; text-align: left; background: #ffffff; border: 1px solid #f2cc60; border-radius: 8px; padding: 12px 16px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; cursor: pointer">
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; color: #59636e"><span style="color: #9a6700; font-weight: 600">Something broken</span> · on 1 · The home worker fetches new videos again · D-75</span><span style="font-weight: 600">How should the home worker pace its fetches before it asks YouTube again?</span><span style="font-size: 13px; color: #424a53">Recommended: Fast start, then paced, with skipping</span></span>
+<span style="color: #59636e">›</span>
+</button>
+</section>
+
+<section aria-labelledby="h-working" style="display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px">
+<h2 id="h-working" style="margin: 0; font-size: 15px; font-weight: 600">Working on <span style="font-weight: 400; color: #59636e">3</span></h2>
+<span style="font-size: 12px; color: #59636e">Your order: what reaches you first, and what agents take on</span>
+</div>
+<ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px">
+
+<li style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 14px 20px 16px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: grid; grid-template-columns: 24px minmax(0, 1fr); column-gap: 12px; align-items: baseline">
+<button type="button" aria-label="Move The home worker fetches new videos again" style="font: inherit; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #59636e; background: transparent; border: 0; padding: 0; text-align: right; cursor: grab">1</button>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<a href="#" style="font-size: 15px; font-weight: 600">The home worker fetches new videos again without YouTube refusing it</a>
+<span style="font-size: 13px; color: #59636e">ttube, running · waiting on you · step 1 of 3, pace the fetches</span>
+</div>
+</div>
+<p style="margin: 0 0 0 36px; font-size: 13px; color: #424a53">Your answer on pacing is the one thing holding step 1; see Urgent above.</p>
+</li>
+
+<li style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 14px 20px 16px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: grid; grid-template-columns: 24px minmax(0, 1fr); column-gap: 12px; align-items: baseline">
+<button type="button" aria-label="Move New Year trip" style="font: inherit; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #59636e; background: transparent; border: 0; padding: 0; text-align: right; cursor: grab">2</button>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<a href="#" style="font-size: 15px; font-weight: 600">New Year trip: pick the South Tyrol base and book everything</a>
+<span style="font-size: 13px; color: #59636e">roadtrip, asleep · waiting on you · step 1 of 3, choose the base</span>
+</div>
+</div>
+<button type="button" style="margin-left: 36px; font: inherit; color: inherit; text-align: left; background: #fbefff; border: 1px solid #c297ff; border-radius: 6px; padding: 10px 14px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; cursor: pointer">
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; color: #59636e"><span style="color: #8250df; font-weight: 600">Question</span> · D-65</span><span style="font-weight: 600">Which South Tyrol base for the four New Year nights?</span><span style="font-size: 13px; color: #424a53">Recommended: Keep the cap in Merano: Hotel Jasmin</span></span>
+<span style="color: #59636e">›</span>
+</button>
+<button type="button" style="margin-left: 36px; align-self: flex-start; font: inherit; font-size: 13px; color: #424a53; background: transparent; border: 0; padding: 2px 0; cursor: pointer; text-decoration: underline; text-decoration-color: #c3cad3">1 more for you: a task at home</button>
+</li>
+
+<li style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 14px 20px 16px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: grid; grid-template-columns: 24px minmax(0, 1fr); column-gap: 12px; align-items: baseline">
+<button type="button" aria-label="Move Mac mini keeps enough free disk" style="font: inherit; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #59636e; background: transparent; border: 0; padding: 0; text-align: right; cursor: grab">3</button>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<a href="#" style="font-size: 15px; font-weight: 600">Mac mini keeps enough free disk for deploys</a>
+<span style="font-size: 13px; color: #59636e">chores, running · agents on it · step 2 of 2, prune on deploy</span>
+</div>
+</div>
+<p style="margin: 0 0 0 36px; font-size: 13px; color: #424a53">Docker disk capped at 60 GB; 41 GB free after the last deploy.</p>
+</li>
+</ol>
+</section>
+
+<section aria-labelledby="h-next" style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px">
+<h2 id="h-next" style="margin: 0; font-size: 15px; font-weight: 600">Up next <span style="font-weight: 400; color: #59636e">3</span></h2>
+<span style="font-size: 12px; color: #59636e">Scoped by idle agents, not built, until you start them</span>
+</div>
+<ol style="margin: 0; padding: 0; list-style: none; background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; overflow: hidden">
+<li style="display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; column-gap: 12px; align-items: center; padding: 12px 20px; border-bottom: 1px solid #eef1f4"><span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #59636e; text-align: right">4</span><span style="display: flex; flex-direction: column; gap: 2px; min-width: 0"><a href="#" style="font-weight: 600">Finish removing the office H1 switch from Home Assistant</a><span style="font-size: 13px; color: #59636e">2 steps scoped · 1 question held</span></span><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Start</button></li>
+<li style="display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; column-gap: 12px; align-items: center; padding: 12px 20px; border-bottom: 1px solid #eef1f4"><span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #59636e; text-align: right">5</span><span style="display: flex; flex-direction: column; gap: 2px; min-width: 0"><a href="#" style="font-weight: 600">Put the Telegram CLI on a safe footing: committed, tokens rotated</a><span style="font-size: 13px; color: #59636e">not scoped</span></span><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Start</button></li>
+<li style="display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; column-gap: 12px; align-items: center; padding: 12px 20px"><span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #59636e; text-align: right">6</span><span style="display: flex; flex-direction: column; gap: 2px; min-width: 0"><a href="#" style="font-weight: 600">Tailscale Funnel off for good</a><span style="font-size: 13px; color: #59636e">1 step scoped · done when changed</span></span><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Start</button></li>
+</ol>
+</section>
+
+<section aria-labelledby="h-proposed" style="display: flex; flex-direction: column; gap: 10px">
+<h2 id="h-proposed" style="margin: 0; font-size: 15px; font-weight: 600"><span style="color: #8250df">Proposed</span> <span style="font-weight: 400; color: #59636e">2</span></h2>
+<ul style="margin: 0; padding: 0; list-style: none; background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; overflow: hidden">
+<li style="padding: 14px 20px; border-bottom: 1px solid #eef1f4; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 24px; align-items: start"><div style="display: flex; flex-direction: column; gap: 4px"><a href="#" style="font-weight: 600">Play-test v1.3.0 in Minecraft</a><span style="font-size: 12px; color: #59636e">L-20 · MOBS · proposed by mobs</span><p style="margin: 2px 0 0; font-size: 13px; color: #424a53"><b style="color: #8250df; font-weight: 600">Start:</b> the release is built and waits only on a play-test.</p></div><div style="display: flex; gap: 6px"><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Start</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 10px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Other ▾</button></div></li>
+<li style="padding: 14px 20px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 24px; align-items: start"><div style="display: flex; flex-direction: column; gap: 4px"><a href="#" style="font-weight: 600">Buzz speed follow-ups</a><span style="font-size: 12px; color: #59636e">L-18 · BUZZ · proposed by buzz</span><p style="margin: 2px 0 0; font-size: 13px; color: #424a53"><b style="color: #8250df; font-weight: 600">Table:</b> two checks only you can make and three small fixes; nothing else waits on it.</p></div><div style="display: flex; gap: 6px"><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Table</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 10px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Other ▾</button></div></li>
+</ul>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 8px">
+<button type="button" style="font: inherit; color: inherit; text-align: left; background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 12px 20px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; cursor: pointer"><span><span style="font-weight: 600">Tabled</span> <span style="color: #59636e">4</span> <span style="font-size: 13px; color: #59636e">· Labyrinth level editor, Matter binding backend and 2 more · 1 question held</span></span><span style="color: #59636e">›</span></button>
+<button type="button" style="font: inherit; color: inherit; text-align: left; background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 12px 20px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; cursor: pointer"><span><span style="font-weight: 600">Done lately</span> <span style="color: #59636e">1</span> <span style="font-size: 13px; color: #59636e">· Fix the Dinis reminder</span></span><span style="color: #59636e">›</span></button>
+</section>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":2100}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
