@@ -8,6 +8,7 @@ import { LineHandle } from "../src/components/home/LineHandle.tsx";
 import { LineMeta } from "../src/components/home/LineMeta.tsx";
 import { MoreForYou } from "../src/components/home/MoreForYou.tsx";
 import { NothingNeedsYou } from "../src/components/home/NothingNeedsYou.tsx";
+import { NotAnswering } from "../src/components/home/NotAnswering.tsx";
 import { ProposalCard } from "../src/components/home/ProposalCard.tsx";
 import { ProposalGroups } from "../src/components/home/ProposalGroups.tsx";
 import { UpNextRow } from "../src/components/home/UpNextRow.tsx";
@@ -240,5 +241,29 @@ describe("a move that failed", () => {
   test("is said under the line that moved", () => {
     const view = render(<WorkingLine line={line()} notMoved />);
     view.getByText("Not moved. The tracker did not answer; it is back where it was.");
+  });
+});
+
+describe("NotAnswering", () => {
+  test("says the tracker is not answering, where, what starts it, and Try now", () => {
+    const onRetry = mock(() => {});
+    const view = render(<NotAnswering host="127.0.0.1:4747" onRetry={onRetry} />);
+    view.getByRole("heading", { name: "The tracker is not answering" });
+    view.getByText(/Nothing answered at 127\.0\.0\.1:4747\. Any octo command starts it again\./);
+    view.getByText("octo server status");
+    fireEvent.click(view.getByRole("button", { name: "Try now" }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("LineMeta, with nothing waiting on you", () => {
+  test("says agents are on it when the line has an owner", () => {
+    const view = render(
+      <LineMeta
+        crew={{ owner: { name: "chores", state: "running" }, helpers: [], scoper: null, search: null }}
+        details={details()}
+      />,
+    );
+    view.getByText("agents on it");
   });
 });

@@ -9,10 +9,11 @@ import { useNarrow } from "../../hooks/useNarrow.ts";
 import { linesWaitingOnYou, linesWithNoOwner, nextAsk, runningAgents } from "../../lib/lines.ts";
 import { setParams, useRoute } from "../../lib/router.ts";
 import { Page } from "../ui/Page.tsx";
-import { ErrorState, LoadingState } from "../ui/states.tsx";
+import { LoadingState } from "../ui/states.tsx";
 import { AtSection } from "./AtSection.tsx";
 import { AtUpNext } from "./AtUpNext.tsx";
 import { FirstRun } from "./FirstRun.tsx";
+import { NotAnswering } from "./NotAnswering.tsx";
 import { NothingNeedsYou } from "./NothingNeedsYou.tsx";
 import { QuestionList } from "./QuestionList.tsx";
 import { RecordAnswers } from "./RecordAnswers.tsx";
@@ -67,10 +68,14 @@ export function HomePage() {
   return (
     <Page title="Lines" hideTitle ref={page}>
       {recording ? <RecordAnswers onClose={() => setRecording(false)} /> : null}
-      {h.home.isPending ? <LoadingState /> : null}
-      {h.home.error === null ? null : <ErrorState error={h.home.error} />}
+      {h.home.isPending && h.home.error === null ? <LoadingState label="Loading your lines" /> : null}
+      {/* Once loaded, a refresh that fails is the bar's Not live strip; before, the page says why it is empty. */}
+      {h.home.error === null || home !== undefined ? null : (
+        <NotAnswering host={window.location.host} onRetry={() => void h.home.refetch()} />
+      )}
       {home === undefined ? null : (
         <>
+          {at === null ? null : <AtSection at={at} now={now} onLeave={() => h.at(null)} />}
           {firstRun ? (
             <FirstRun
               proposals={home.proposed}
@@ -80,7 +85,6 @@ export function HomePage() {
           ) : Object.values(home.counts).every((count) => count === 0) ? (
             <NothingNeedsYou working={runningAgents(home)} next={nextAsk(home)} />
           ) : null}
-          {at === null ? null : <AtSection at={at} now={now} onLeave={() => h.at(null)} />}
           <QuestionList
             title="Urgent"
             cards={home.urgent}

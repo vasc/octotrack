@@ -36,6 +36,15 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 - Error: cannot fail on its own.
 - Empty: it is itself the empty state for "nothing waiting"; with no line working the second fact is left out.
 
+### components/home/NotAnswering.tsx
+
+- Designed in: Home-States.dc.html, state E
+- What it shows: "The tracker is not answering", "Nothing answered at 127.0.0.1:4747. Any octo command starts it again.", the command `octo server status`, and Try now.
+- Changes from today: new; a first load that failed showed the raw error.
+- Loading: never loads on its own: Try now asks again.
+- Error: it is itself the error.
+- Empty: never empty.
+
 ### components/home/AtSection.tsx
 
 - Designed in: Home-States.dc.html, state C

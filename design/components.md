@@ -111,6 +111,7 @@ properties and appear on the `/design` specimen; **structural** ones load data a
 | `HeldQuestion`     | Pure       | A held question answered in the Start sheet, its answers numbered in the sheet's one run                                                           |
 | `FirstRun`         | Pure       | Before anything is placed: the command, or Accept recommended placements                                                                           |
 | `NothingNeedsYou`  | Pure       | Nothing waits: who is working, and where the next ask likely is                                                                                    |
+| `NotAnswering`     | Pure       | Lines on first load with the tracker not answering: where, the command to check it, and Try now                                                    |
 | `KeyHelp`          | Pure       | The keys, as a `Sheet`                                                                                                                             |
 | `RecordAnswers`    | Structural | Record answers, behind r                                                                                                                           |
 | `PushToggle`       | Structural | Buzz this device, or how buzzing stands                                                                                                            |

@@ -22,9 +22,13 @@ export function LineMeta({
     ...crewText(crew, details?.stepIn === true),
     // Waiting on you only when nothing else can move meanwhile; with something for you and work for the agents too,
     // they are on it.
-    ...(details === undefined || details.forYou.length === 0
+    ...(details === undefined
       ? []
-      : [details.waitingOnYou ? "waiting on you" : "agents on it"]),
+      : details.forYou.length === 0
+        ? crew?.owner === null || crew?.owner === undefined
+          ? []
+          : ["agents on it"]
+        : [details.waitingOnYou ? "waiting on you" : "agents on it"]),
     // Held work from before the line started, waiting for its agent to re-confirm or withdraw it.
     ...(details === undefined || details.reconfirming === 0 ? [] : [`${details.reconfirming} re-confirming`]),
     ...(heldForAgent === 0 ? [] : [`${heldForAgent} held for an agent`]),
