@@ -8,14 +8,14 @@ export function timeAgo(iso: string, now: number = Date.now()): string {
   if (elapsed < HOUR) return `${Math.floor(elapsed / MINUTE)}m`;
   if (elapsed < DAY) return `${Math.floor(elapsed / HOUR)}h`;
   if (elapsed < 30 * DAY) return `${Math.floor(elapsed / DAY)}d`;
-  return iso.slice(0, 10);
+  return shortDate(iso, now);
 }
 
 /** How long ago, as words that stand after a verb: "just now", "5m ago", "2d ago", or "on 2026-10-01". */
 export function sinceText(iso: string, now: number = Date.now()): string {
   const ago = timeAgo(iso, now);
   if (ago === "now") return "just now";
-  return ago === iso.slice(0, 10) ? `on ${ago}` : `${ago} ago`;
+  return /^\d+[mhd]$/.test(ago) ? `${ago} ago` : `on ${ago}`;
 }
 
 const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -81,6 +81,19 @@ export function whenText(iso: string, now: number = Date.now()): string {
 }
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/** A date in few letters: "1 Oct", and the year when it is not this one. */
+export function shortDate(iso: string, now: number = Date.now()): string {
+  const at = parseWhen(iso);
+  const month = (MONTHS[at.getMonth()] ?? "").slice(0, 3);
+  const year = at.getFullYear() === new Date(now).getFullYear() ? "" : ` ${at.getFullYear()}`;
+  return `${at.getDate()} ${month}${year}`;
+}
+
+/** A day to come or gone, with its weekday: "Tue 1 Dec". */
+export function dayDate(iso: string, now: number = Date.now()): string {
+  return `${WEEKDAYS[parseWhen(iso).getDay()] ?? ""} ${shortDate(iso, now)}`;
+}
 
 /**
  * When something happened, as the boards write it beside a row: the time today, the weekday this past week, else the

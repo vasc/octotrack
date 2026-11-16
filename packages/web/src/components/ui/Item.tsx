@@ -32,8 +32,8 @@ export function Item({
   return (
     <article className="ui-item" aria-label={label}>
       <div className="ui-item-read">
-        <span className="ui-row-kind" data-tone={tone}>
-          {kind}
+        <span className="ui-row-kind">
+          <KindText kind={kind} tone={tone} />
         </span>
         {title === undefined ? null : <h3 className="ui-item-title">{title}</h3>}
         {children}
@@ -55,5 +55,21 @@ export function Kind({ tone = "needs", children }: { tone?: Tone; children: Reac
     <span className="ui-kind" data-tone={tone}>
       {children}
     </span>
+  );
+}
+
+/**
+ * What an item is, on its small line: given as words ("Task for you · PANEL-1 · at the bench"), its first part is the
+ * kind word in its tone and the rest are grey facts; given as anything else, it is drawn as given.
+ */
+export function KindText({ kind, tone = "needs" }: { kind: ReactNode; tone?: Tone }) {
+  if (typeof kind !== "string") return <>{kind}</>;
+  const at = kind.indexOf(" · ");
+  const word = at === -1 ? kind : kind.slice(0, at);
+  return (
+    <>
+      <Kind tone={tone}>{word}</Kind>
+      {at === -1 ? null : kind.slice(at)}
+    </>
   );
 }

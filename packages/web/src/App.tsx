@@ -3,8 +3,9 @@ import { AgentsPage } from "./components/agents/AgentsPage.tsx";
 import { FeedPage } from "./components/feed/FeedPage.tsx";
 import { AppShell } from "./components/layout/AppShell.tsx";
 import { HomePage } from "./components/home/HomePage.tsx";
-import { EmptyState, LoadingState } from "./components/ui/states.tsx";
+import { LoadingState } from "./components/ui/states.tsx";
 import { useRoute } from "./lib/router.ts";
+import { NotFoundPage } from "./components/layout/NotFoundPage.tsx";
 
 /** Loaded on its own, so that the dashboard's bundle does not carry the specimen. */
 const DesignPage = lazy(() =>
@@ -21,11 +22,7 @@ function Page({ path }: { path: string }) {
     case "/agents":
       return <AgentsPage />;
     default:
-      return (
-        <div className="page">
-          <EmptyState>Nothing lives at {path}.</EmptyState>
-        </div>
-      );
+      return <NotFoundPage path={path} />;
   }
 }
 

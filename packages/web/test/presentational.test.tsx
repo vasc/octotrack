@@ -785,7 +785,7 @@ describe("lines of work", () => {
         onOpen={onOpen}
       />,
     );
-    question.getByText("Question · D-1");
+    question.getByText(whole("Question · D-1"));
     question.getByText(whole("Recommended: SQS · It is managed."));
     fireEvent.click(question.getByRole("button", { name: "Open D-1" }));
     expect(onOpen).toHaveBeenCalledWith("D-1");
@@ -802,7 +802,7 @@ describe("lines of work", () => {
         onOpen={onOpen}
       />,
     );
-    task.getByText("Task · OCT-7 · at the Mac");
+    task.getByText(whole("Task · OCT-7 · at the Mac"));
     // What it frees, not what to report, which the task says once opened.
     task.getByText(whole("Frees OCT-41: the real wake test"));
     expect(task.queryByText(/Report:/)).toBeNull();
@@ -1593,7 +1593,7 @@ describe("LineProposalCard", () => {
       />,
     );
     const item = within(view.getByRole("article", { name: "Answer delivery is done?" }));
-    item.getByText("Proposed as done · octotrack-builder");
+    item.getByText(whole("Proposed as done · octotrack-builder"));
     // The done when it meets is its title.
     item.getByRole("heading", { name: "an answer reaches whoever owns its line" });
     view.getByText("The owner was woken from the inbox and reported it carried out.");
@@ -1623,7 +1623,7 @@ describe("LineProposalCard", () => {
       />,
     );
     const item = within(view.getByRole("article", { name: "New done when for Firmware without casts" }));
-    item.getByText("Done when changed · firmware");
+    item.getByText(whole("Done when changed · firmware"));
     // The new done when is its title; the old one and why are under it.
     item.getByRole("heading", { name: "…on, and CI fails on a new cast" });
     item.getByText(
@@ -1894,10 +1894,10 @@ describe("home's smaller pieces", () => {
     expect(numbers).toEqual([
       ["1", "Accept"],
       ["2", "Keep current"],
-      ["3", "Checked conversions"],
+      ["3", "Checked conversions, recommended"],
       ["4", "Typed helpers"],
     ]);
-    const recommended = view.getByRole("button", { name: "Checked conversions" });
+    const recommended = view.getByRole("button", { name: "Checked conversions, recommended" });
     within(recommended).getByText("Recommended");
     within(recommended).getByText(/a bad value should fail loudly\./);
     expect(view.getByRole("button", { name: "Typed helpers" }).getAttribute("data-recommended")).toBeNull();

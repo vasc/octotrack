@@ -26,9 +26,15 @@ export function ProposalCase({ line, lastUpNext = null }: { line: Line; lastUpNe
     <>
       <b>
         Recommends {MOVE_WORD[line.recommendation]}
-        {line.recommendation === "up_next" && lastUpNext !== null ? `, after ${lastUpNext}` : ""}:
-      </b>{" "}
-      {line.recommendationWhy === null ? null : <Markdown text={line.recommendationWhy} inline />}
+        {line.recommendation === "up_next" && lastUpNext !== null ? `, after ${lastUpNext}` : ""}
+        {line.recommendationWhy === null ? "." : ":"}
+      </b>
+      {line.recommendationWhy === null ? null : (
+        <>
+          {" "}
+          <Markdown text={line.recommendationWhy} inline />
+        </>
+      )}
     </>
   );
 }

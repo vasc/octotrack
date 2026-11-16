@@ -1441,7 +1441,7 @@ describe("lines of work", () => {
       const cards = proposed.getAllByRole("article");
       expect(cards[0]?.getAttribute("aria-label")).toBe("Restore the feed");
       const urgent = within(cards[0] ?? document.body);
-      urgent.getByText("Urgent · something broken");
+      urgent.getByText(whole("Urgent · something broken"));
       // Start is its first choice, and filled, as recommended.
       const start = urgent.getByRole("button", { name: "Start Restore the feed" });
       expect(start.getAttribute("data-choice")).toBe("1");
@@ -2101,11 +2101,7 @@ describe("lines of work", () => {
       );
       // The urgent question arrives as a row, in the warm tone, and focus stays on what was being read.
       const row = await view.findByRole("button", { name: "Open D-2" });
-      expect(
-        within(row)
-          .getByText(/^Urgent · time-boxed/)
-          .getAttribute("data-tone"),
-      ).toBe("stuck");
+      expect(within(row).getByText("Urgent").getAttribute("data-tone")).toBe("stuck");
       expect(selected(view, "Which board?")).toBe("true");
     });
 

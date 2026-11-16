@@ -1,6 +1,7 @@
 import { type DragEvent, type ReactNode, useId } from "react";
+import { KindText } from "./Item.tsx";
 
-/** The dot before what a row is: what needs you, what is stuck, or nothing in particular. */
+/** The tone of the word that says what a row is: what needs you, what is stuck, or nothing in particular. */
 export type Tone = "needs" | "stuck" | "none";
 
 type RowProps = {
@@ -65,8 +66,8 @@ export function Row(props: RowProps) {
   const text = (
     <span className="ui-row-text" id={textId}>
       {kind === undefined ? null : (
-        <span className="ui-row-kind" data-tone={tone}>
-          {kind}
+        <span className="ui-row-kind">
+          <KindText kind={kind} {...(tone === undefined ? {} : { tone })} />
         </span>
       )}
       <span className="ui-row-line">

@@ -229,7 +229,7 @@ describe("ProposalGroups", () => {
     const upNext = view.getByRole("region", { name: /Recommended for up next/ });
     within(upNext).getByText("Includes Put the Telegram CLI on a safe footing, and 1 more.");
     expect(within(upNext).queryByText("Another for up next")).toBeNull();
-    fireEvent.click(within(upNext).getByRole("button", { name: "Show" }));
+    fireEvent.click(within(upNext).getByRole("button", { name: "Show Recommended for up next" }));
     within(upNext).getByText("Another for up next");
     view.getByRole("region", { name: /No recommendation/ });
     expect(view.queryByRole("region", { name: /Recommended to table/ })).toBeNull();

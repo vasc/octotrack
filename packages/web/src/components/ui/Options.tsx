@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useId } from "react";
 
 export interface Option {
   key: string;
@@ -28,16 +28,24 @@ export function Options({
   /** The answer picked, while it waits to take effect. */
   chosen?: string | undefined;
 }) {
+  const id = useId();
   return (
     <ol className="ui-options">
       {options.map((option, index) => {
         const isChosen = chosen === option.key;
+        const described = `${id}-${index}-what`;
+        const why = `${id}-${index}-why`;
+        const hasWhy = option.recommended === true && option.why !== undefined;
+        const describedBy = [option.description === undefined ? null : described, hasWhy ? why : null]
+          .filter((part) => part !== null)
+          .join(" ");
         return (
           <li key={option.key} className="ui-option-item">
             <button
               type="button"
               className="ui-option"
-              aria-label={option.label}
+              aria-label={option.recommended === true ? `${option.label}, recommended` : option.label}
+              aria-describedby={describedBy === "" ? undefined : describedBy}
               aria-pressed={chosen === undefined ? undefined : isChosen}
               data-choice={String(firstChoice + index)}
               data-recommended={option.recommended === true ? "true" : undefined}
@@ -56,10 +64,12 @@ export function Options({
                   ) : null}
                 </span>
                 {option.description === undefined ? null : (
-                  <span className="ui-option-description">{option.description}</span>
+                  <span className="ui-option-description" id={described}>
+                    {option.description}
+                  </span>
                 )}
-                {option.recommended === true && option.why !== undefined ? (
-                  <span className="ui-option-why">
+                {hasWhy ? (
+                  <span className="ui-option-why" id={why}>
                     <b>Why:</b> {option.why}
                   </span>
                 ) : null}

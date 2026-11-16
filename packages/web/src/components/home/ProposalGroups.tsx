@@ -65,7 +65,15 @@ function ProposalGroup({
     <Section
       title={title}
       count={lines.length}
-      {...(shown === 0 ? { aside: <Button onClick={() => setShown(lines.length)}>Show</Button> } : {})}
+      {...(shown === 0
+        ? {
+            aside: (
+              <Button aria-label={`Show ${title}`} onClick={() => setShown(lines.length)}>
+                Show
+              </Button>
+            ),
+          }
+        : {})}
     >
       {shown === 0 ? (
         <Note>

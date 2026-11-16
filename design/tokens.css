@@ -6,7 +6,8 @@
  * What each token means, and when to use it, is in foundations.md.
  */
 
-:root {
+/* Paper is the page's own theme, and also a palette an element can set, as its swatch in the menu does. */
+[data-palette="paper"], :root {
   color-scheme: light dark;
 
   /* Ground: the page and what sits on it, from furthest back to nearest. */

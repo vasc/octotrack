@@ -1,3 +1,4 @@
+import { whole } from "./harness.tsx";
 import { describe, expect, mock, test } from "bun:test";
 import { fireEvent, render, within } from "@testing-library/react";
 import { NewLineSheet } from "../src/components/lines/NewLineSheet.tsx";
@@ -56,7 +57,7 @@ describe("List and Row", () => {
       </List>,
     );
     const open = view.getByRole("button", { name: /How should pacing work\?/ });
-    within(open).getByText("Question · D-24");
+    within(open).getByText(whole("Question · D-24"));
     within(open).getByText("Recommended: Fast start");
     fireEvent.click(open);
     expect(onOpen).toHaveBeenCalledTimes(1);

@@ -55,6 +55,15 @@ the canvas at https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 - Error: cannot fail on its own.
 - Empty: never empty: the pages are fixed.
 
+### components/layout/NotFoundPage.tsx
+
+- Designed in: Shell.dc.html, state F
+- What it shows: "Nothing lives at {path}", that the dashboard has three pages and that refs open over the page you are on, and Go to Lines.
+- Changes from today: new; the address that led nowhere was one line with no way back.
+- Loading: never loads on its own.
+- Error: cannot fail on its own.
+- Empty: never empty: it always names the address.
+
 ### components/layout/PendingChoices.tsx
 
 - Designed in: Shell.dc.html, state D

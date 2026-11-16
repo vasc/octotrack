@@ -71,7 +71,7 @@ describe("format", () => {
     expect(timeAgo("2026-11-07T11:30:00.000Z", now)).toBe("30m");
     expect(timeAgo("2026-11-07T09:00:00.000Z", now)).toBe("3h");
     expect(timeAgo("2026-11-05T12:00:00.000Z", now)).toBe("2d");
-    expect(timeAgo("2026-01-01T12:00:00.000Z", now)).toBe("2026-01-01");
+    expect(timeAgo("2026-01-01T12:00:00.000Z", now)).toBe("1 Jan");
   });
 
   test("dayLabel decides the day in local time, as the times beside it are", () => {
@@ -252,7 +252,7 @@ describe("sinceText", () => {
     expect(sinceText("2026-11-14T11:59:40.000Z", now)).toBe("just now");
     expect(sinceText("2026-11-14T11:55:00.000Z", now)).toBe("5m ago");
     expect(sinceText("2026-11-12T12:00:00.000Z", now)).toBe("2d ago");
-    expect(sinceText("2026-10-01T12:00:00.000Z", now)).toBe("on 2026-10-01");
+    expect(sinceText("2026-10-01T12:00:00.000Z", now)).toBe("on 1 Oct");
   });
 });
 

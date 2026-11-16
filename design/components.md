@@ -65,6 +65,7 @@ properties and appear on the `/design` specimen; **structural** ones load data a
 | `AppearanceMenu` | Pure       | The theme and mode, a `Menu` of eight themes in their own colours and three modes                                          |
 | `PagesMenu`      | Pure       | Lines, Log and Agents behind one icon, on a phone                                                                          |
 | `UndoBar`        | Pure       | `Toasts`: each choice waiting, with Undo and, for a line's owner, Pause the line instead; failed ones with Dismiss         |
+| `NotFoundPage`   | Pure       | An address that leads nowhere: what lives here instead, and Go to Lines                                                    |
 | `PendingChoices` | Structural | The Undo bar on every page, with u undoing the newest                                                                      |
 
 ### Lines: `home/` and `lines/`

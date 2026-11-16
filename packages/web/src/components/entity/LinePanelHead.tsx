@@ -1,6 +1,6 @@
 import type { Line } from "@octotrack/core/schemas";
 import type { ReactNode } from "react";
-import { sinceText } from "../../lib/format.ts";
+import { dayDate, sinceText } from "../../lib/format.ts";
 import { heldText, LINE_STATE_LABEL, RECOMMENDED_MOVE } from "../../lib/lines.ts";
 import { closeEntity } from "../../lib/router.ts";
 import { Callout } from "../ui/Callout.tsx";
@@ -71,7 +71,7 @@ export function LinePanelHead({
             <Pairs
               pairs={[
                 ["Waits for", line.tabledReason],
-                ["Look again", line.lookAgainAt],
+                ["Look again", line.lookAgainAt === null ? null : dayDate(line.lookAgainAt, now)],
                 ["Held", heldWords],
               ]}
             />
