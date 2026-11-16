@@ -36,3 +36,8 @@ export function moreSinceSummary(
   if (nextBefore === null) return false;
   return summaryAt === null || events.every((event) => event.ts > summaryAt);
 }
+
+/** What a search that has matched nothing yet says while it looks further back. */
+export function scanningText(scanned: number): string {
+  return `Nothing in the last ${scanned.toLocaleString("en")} events yet; searching older ones…`;
+}

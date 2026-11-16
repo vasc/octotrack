@@ -3,10 +3,14 @@ import { DEFAULT_VIEW, useFeed } from "../../hooks/useFeed.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
 import { Actions } from "../ui/Actions.tsx";
 import { Button } from "../ui/Button.tsx";
-import { EmptyState, ErrorState, LoadingState } from "../ui/states.tsx";
+import { StaleNote } from "../ui/Loaded.tsx";
+import { Note } from "../ui/Note.tsx";
+import { Notice } from "../ui/Notice.tsx";
+import { ErrorState, LoadingState } from "../ui/states.tsx";
 import { FeedList } from "./FeedList.tsx";
 import { UnseenLog } from "./UnseenLog.tsx";
 import { logLines } from "../../lib/lines.ts";
+import { scanningText } from "../../lib/log.ts";
 
 export interface FeedSectionProps {
   view?: string;
@@ -30,13 +34,21 @@ export function FeedSection({
 }: FeedSectionProps) {
   const feed = useFeed(view, query, unseen);
   const home = useOpQuery(contracts.homeShow, {});
-  if (feed.error !== null && feed.events.length === 0) return <ErrorState error={feed.error} />;
+  if (feed.error !== null && feed.events.length === 0) {
+    return (
+      <ErrorState title="Could not load the log." error={feed.error} onRetry={() => void feed.refetch()} />
+    );
+  }
   if (feed.isPending) return <LoadingState label="Loading the log" />;
-  if (feed.stillSearching) return <LoadingState label="Searching older events" />;
+  if (feed.stillSearching) return <Note>{scanningText(feed.scanned)}</Note>;
+  // Shown once and could not refresh since: what is shown stays, marked with when it is from.
+  const stale =
+    feed.error !== null && !feed.isFetchNextPageError ? <StaleNote at={feed.dataUpdatedAt} /> : null;
   if (unseen) {
     const lines = logLines(home.data);
     return (
       <>
+        {stale}
         <UnseenLog
           events={feed.events}
           lines={lines}
@@ -47,9 +59,16 @@ export function FeedSection({
       </>
     );
   }
-  if (feed.events.length === 0) return <EmptyState>Nothing matches this search.</EmptyState>;
+  if (feed.events.length === 0) {
+    return (
+      <Notice title="Nothing matches this search">
+        Searched the whole log. Try fewer words, or a longer since:.
+      </Notice>
+    );
+  }
   return (
     <>
+      {stale}
       <FeedList events={feed.events} onFilter={onFilter} />
       <Older feed={feed} />
     </>
@@ -58,17 +77,26 @@ export function FeedSection({
 
 /** More of the log than one page: what is not seen pages like a search does, so nothing past the first page is lost. */
 function Older({ feed }: { feed: ReturnType<typeof useFeed> }) {
-  // A page that failed after the first says why under what was already shown, which stays.
-  const failed = feed.error === null ? null : <ErrorState error={feed.error} />;
-  if (!feed.hasNextPage) return failed;
+  // A page that failed after the first says why under what was already shown, which stays, with Try again in place
+  // of Older.
+  if (feed.error !== null && feed.isFetchNextPageError) {
+    return (
+      <ErrorState
+        title="Could not load older events."
+        error={feed.error}
+        onRetry={() => void feed.fetchNextPage()}
+      />
+    );
+  }
+  if (!feed.hasNextPage) return null;
   return (
-    <>
-      {failed}
-      <Actions>
-        <Button disabled={feed.isFetchingNextPage} onClick={() => void feed.fetchNextPage()}>
-          {feed.isFetchingNextPage ? "Loading" : "Older"}
-        </Button>
-      </Actions>
-    </>
+    <Actions>
+      <Button
+        busy={feed.isFetchingNextPage ? "Loading…" : undefined}
+        onClick={() => void feed.fetchNextPage()}
+      >
+        Older
+      </Button>
+    </Actions>
   );
 }

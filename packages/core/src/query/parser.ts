@@ -122,7 +122,7 @@ function readBareValue(input: string, start: number): { value: string; next: num
 
 function assertKnownValue(input: string, pos: number, field: string, value: string): void {
   if ((field === "since" || field === "before") && !isValidTime(value)) {
-    throw queryError(input, pos, `"${value}" is not a time for ${field}. Use 2h, 7d or a date`);
+    throw queryError(input, pos, `“${value}” is not a time. Use 2h, 7d or a date like 2026-11-15`);
   }
   const known = QUERY_VALUES[field];
   if (known === undefined || value.toLowerCase() === "none") return;

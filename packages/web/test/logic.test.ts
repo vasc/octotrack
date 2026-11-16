@@ -26,7 +26,7 @@ import {
 } from "../src/lib/lines.ts";
 import { askedText, cantSummary, doneSummary, howClosed, isTask, taskOutcome } from "../src/lib/tasks.ts";
 import { issueLinks } from "../src/lib/links.ts";
-import { moreSinceSummary } from "../src/lib/log.ts";
+import { moreSinceSummary, scanningText } from "../src/lib/log.ts";
 import { doneWhenSaid, LINE_SAID } from "../src/lib/said.ts";
 import { DEFAULT_APPEARANCE, PALETTES, readAppearance, tintBrowserBar } from "../src/lib/appearance.ts";
 import { decision, decisionCard, event, issue, pendingChoice } from "../src/design/fixtures.ts";
@@ -39,6 +39,12 @@ describe("suggest", () => {
   test("completes field names", () => {
     expect(suggest("sta", {}).map((item) => item.term)).toEqual(["status:", "state:"]);
     expect(suggest("kind:decision pri", {}).map((item) => item.term)).toEqual(["priority:"]);
+  });
+
+  test("each field's hint is a few words", () => {
+    expect(suggest("act", {})).toEqual([{ term: "actor:", hint: "who did it" }]);
+    expect(suggest("assig", {})).toEqual([{ term: "assignee:", hint: "who holds it" }]);
+    expect(suggest("sinc", {})).toEqual([{ term: "since:", hint: "on or after a time: 2h, 7d" }]);
   });
 
   test("offers known values, static and from the data", () => {
@@ -68,6 +74,12 @@ describe("validateQuery", () => {
 
   test("says what is wrong without where, since the box shows the query", () => {
     expect(validateQuery("nope:1")).not.toMatch(/position|in: /);
+  });
+
+  test("a word that is not a time says so in plain words, with what to type", () => {
+    expect(validateQuery("since:yesterday")).toBe(
+      "“yesterday” is not a time. Use 2h, 7d or a date like 2026-11-15.",
+    );
   });
 });
 
@@ -523,5 +535,12 @@ describe("pageUnder", () => {
     expect(pageUnder("/log")).toBe("Log");
     expect(pageUnder("/agents")).toBe("Agents");
     expect(pageUnder("/nowhere")).toBe("Lines");
+  });
+});
+
+describe("scanningText", () => {
+  test("says how far back a search with nothing yet has looked", () => {
+    expect(scanningText(500)).toBe("Nothing in the last 500 events yet; searching older ones…");
+    expect(scanningText(10000)).toBe("Nothing in the last 10,000 events yet; searching older ones…");
   });
 });

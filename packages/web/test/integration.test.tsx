@@ -309,7 +309,14 @@ describe("the log", () => {
     navigate("/log?q=event%3Aproject.created");
     const view = renderApp(<App />);
     await within(await view.findByRole("main")).findByText(/Project OCT created/);
-    expect(view.queryByText("Nothing matches this search.") === null).toBe(true);
+    expect(view.queryByRole("region", { name: "Nothing matches this search" })).toBeNull();
+  });
+
+  test("a search that matches nothing says it searched the whole log, and how to widen it", async () => {
+    navigate("/log?q=actor%3Anobody");
+    const view = renderApp(<App />);
+    const none = within(await view.findByRole("region", { name: "Nothing matches this search" }));
+    none.getByText("Searched the whole log. Try fewer words, or a longer since:.");
   });
 
   test("an older page that fails to load says why, and keeps what was already shown", async () => {
@@ -337,6 +344,9 @@ describe("the log", () => {
       fireEvent.click(view.getByRole("button", { name: "Older" }));
       await view.findByText(/The tracker did not answer\./);
       feed.getByText(/Noise 79/);
+      // Try again stands in place of Older.
+      feed.getByRole("button", { name: "Try again" });
+      expect(feed.queryByRole("button", { name: "Older" })).toBeNull();
     } finally {
       Object.assign(globalThis, { fetch: fetchNow });
     }

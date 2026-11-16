@@ -377,6 +377,13 @@ describe("feed", () => {
     expect(h.call(c.feedList, { query: "project:API" }).events).toEqual([]);
   });
 
+  test("says how many events a page looked at, so a search still scanning can say how far it got", () => {
+    for (const title of ["one", "two", "three"]) h.call(c.issueCreate, { project: "OCT", title });
+    const page = h.call(c.feedList, { query: "kind:decision" });
+    expect(page.events).toEqual([]);
+    expect(page.scanned).toBe(h.call(c.feedList, {}).events.length);
+  });
+
   test("events keep the attributes they had at the time", () => {
     const issue = h.call(c.issueCreate, { project: "OCT", title: "a" });
     h.call(c.issueUpdate, { refs: [issue.ref], status: "in_progress" });

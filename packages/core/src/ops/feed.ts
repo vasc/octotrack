@@ -102,5 +102,5 @@ export function listFeed(ctx: Ctx, input: FeedInput): FeedPage {
     if (exhausted) break;
   }
 
-  return { events: matched, nextBefore: exhausted ? null : before, cursor: currentCursor(ctx) };
+  return { events: matched, nextBefore: exhausted ? null : before, cursor: currentCursor(ctx), scanned };
 }

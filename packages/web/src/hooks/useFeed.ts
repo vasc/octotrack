@@ -36,5 +36,6 @@ export function useFeed(view: string, query: string, unseen = false) {
   useEffect(() => {
     if (needsMore) void fetchNextPage();
   }, [needsMore, fetchNextPage]);
-  return { ...result, events, stillSearching: events.length === 0 && hasNextPage };
+  const scanned = result.data?.pages.reduce((sum, page) => sum + page.scanned, 0) ?? 0;
+  return { ...result, events, scanned, stillSearching: events.length === 0 && hasNextPage };
 }

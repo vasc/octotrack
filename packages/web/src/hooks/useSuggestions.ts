@@ -18,6 +18,42 @@ const STATIC_VALUES: Readonly<Record<string, readonly string[]>> = {
   since: ["1h", "1d", "7d"],
 };
 
+/**
+ * What each field means, in a few words for the dropdown, where a sentence would crowd it; the tracker's own longer
+ * descriptions stay for agents and the CLI.
+ */
+const HINTS: Readonly<Record<string, string>> = {
+  kind: "what kind of item",
+  ref: "a ref, as D-3",
+  project: "a repo, by its key",
+  status: "its status",
+  priority: "how urgent",
+  assignee: "who holds it",
+  actor: "who did it",
+  event: "what happened, as decision.*",
+  changed: "a field that changed",
+  from: "what it changed from",
+  to: "what it changed to",
+  label: "a label",
+  type: "a question's type",
+  channel: "where it was answered",
+  repo: "a repo, by key or GitHub name",
+  checks: "a pull request's checks",
+  review: "a pull request's review",
+  state: "a pull request's state",
+  level: "an update's level",
+  rule: "what kind of drift",
+  target: "what a drift or update is about",
+  horizon: "now, next or later",
+  milestone: "a milestone, from before lines",
+  line: "a line, as L-3",
+  blocked: "has open blockers",
+  ready: "free to take",
+  linked: "linked to a ref",
+  since: "on or after a time: 2h, 7d",
+  before: "before a time: 1d, a date",
+};
+
 export interface Suggestion {
   /** The completed last word of the input. */
   term: string;
@@ -40,7 +76,7 @@ export function suggest(
     if (bare === "") return [];
     return QUERY_FIELDS.filter((field) => field.name.startsWith(bare.toLowerCase()))
       .slice(0, MAX_SUGGESTIONS)
-      .map((field) => ({ term: `${prefix}${field.name}:`, hint: field.description }));
+      .map((field) => ({ term: `${prefix}${field.name}:`, hint: HINTS[field.name] ?? field.description }));
   }
   const field = bare.slice(0, colon);
   const typed = bare.slice(colon + 1);

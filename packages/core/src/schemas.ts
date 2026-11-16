@@ -674,6 +674,8 @@ export const FeedPage = z.object({
   /** Pass as `before` to fetch older events, null when exhausted. */
   nextBefore: z.number().int().nullable(),
   cursor: z.number().int(),
+  /** How many events this page looked at, matched or not: how far back a search has got. */
+  scanned: z.number().int(),
 });
 export type FeedPage = z.infer<typeof FeedPage>;
 
