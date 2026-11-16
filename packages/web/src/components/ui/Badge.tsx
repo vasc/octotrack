@@ -17,7 +17,11 @@ export function Badge({
   if (children === "" || children === null || children === undefined) return null;
   return (
     <span className="ui-tag" data-tone={tone}>
-      {glyph === undefined ? null : <span aria-hidden="true">{glyph} </span>}
+      {glyph === undefined ? null : (
+        <>
+          <Glyph tone={tone}>{glyph}</Glyph>{" "}
+        </>
+      )}
       {children}
     </span>
   );

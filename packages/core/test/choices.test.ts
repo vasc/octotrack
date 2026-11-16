@@ -176,6 +176,26 @@ describe("what a waiting choice is about", () => {
     );
     expect([start.ref, retry.ref, tell.ref]).toEqual([w.line.ref, w.line.ref, null]);
   });
+
+  test("a Stop, Lift or Release names the agent, so its button can say it is on its way", () => {
+    const w = world();
+    const stop = w.tracker.call(
+      c.choiceMake,
+      { op: "agent.stop", input: { name: "octo.1" }, summary: "Stopping octo.1" },
+      w.dev,
+    );
+    expect(stop.ref).toBe("agent:octo.1");
+  });
+
+  test("an answer to one drift names it, so its buttons cannot send twice", () => {
+    const w = world();
+    const ack = w.tracker.call(
+      c.choiceMake,
+      { op: "drift.ack", input: { refs: ["DR-9"], mode: "verified", note: "Fine" }, summary: "Marking DR-9" },
+      w.dev,
+    );
+    expect(ack.ref).toBe("DR-9");
+  });
 });
 
 describe("drafts follow the developer between devices", () => {

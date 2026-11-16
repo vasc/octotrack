@@ -103,13 +103,7 @@
   white-space: nowrap;
 }
 
-.ui-tag:is([data-tone="bad"], [data-tone="warn"]) {
-  color: var(--warn);
-}
-
-.ui-tag[data-tone="good"] {
-  color: var(--ink-2);
-}
+/* Only the glyph carries the tone: ✓ in the good colour, ✗ in the bad, ▲ in the warm; the words stay grey. */
 
 .ui-glyph {
   color: var(--tone, var(--ink-3));

@@ -39,3 +39,21 @@ describe("AgentRoster", () => {
     view.getByText("e");
   });
 });
+
+describe("an agent's action while its choice waits", () => {
+  test("says it is on its way and cannot be pressed again", () => {
+    const view = render(
+      <AgentRosterRow
+        agent={agentView({ state: "running" })}
+        busy
+        onStop={noop}
+        onLift={noop}
+        onRelease={noop}
+      />,
+    );
+    const stop = view.getByRole("button", { name: "Stop panel" });
+    expect(stop.textContent).toBe("Stopping…");
+    expect(stop.hasAttribute("disabled")).toBe(true);
+    expect(stop.getAttribute("aria-busy")).toBe("true");
+  });
+});

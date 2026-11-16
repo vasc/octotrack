@@ -71,11 +71,14 @@ function wakeScheme(agent: AgentView): string | null {
 /** The one thing the developer can do to an agent: Release a quiet one holding a line, Lift a stop, or Stop it. */
 function AgentAction({
   agent,
+  busy,
   onStop,
   onLift,
   onRelease,
 }: {
   agent: AgentView;
+  /** Its choice waits with Undo: the button says it is on its way. */
+  busy: boolean;
   onStop(name: string): void;
   onLift(name: string): void;
   onRelease(name: string): void;
@@ -83,20 +86,32 @@ function AgentAction({
   if (agent.state === "gone") return null;
   if (agent.state === "quiet" && agent.line !== null) {
     return (
-      <Button aria-label={`Release ${agent.name} from ${agent.line}`} onClick={() => onRelease(agent.name)}>
+      <Button
+        aria-label={`Release ${agent.name} from ${agent.line}`}
+        busy={busy ? "Releasing…" : undefined}
+        onClick={() => onRelease(agent.name)}
+      >
         Release
       </Button>
     );
   }
   if (agent.state === "stopped") {
     return (
-      <Button aria-label={`Lift ${agent.name}`} onClick={() => onLift(agent.name)}>
+      <Button
+        aria-label={`Lift ${agent.name}`}
+        busy={busy ? "Lifting…" : undefined}
+        onClick={() => onLift(agent.name)}
+      >
         Lift
       </Button>
     );
   }
   return (
-    <Button aria-label={`Stop ${agent.name}`} onClick={() => onStop(agent.name)}>
+    <Button
+      aria-label={`Stop ${agent.name}`}
+      busy={busy ? "Stopping…" : undefined}
+      onClick={() => onStop(agent.name)}
+    >
       Stop
     </Button>
   );
@@ -111,6 +126,7 @@ export function AgentRosterRow({
   repo,
   lineTitle,
   waitsOnYou = false,
+  busy = false,
   now = Date.now(),
   onStop,
   onLift,
@@ -123,6 +139,8 @@ export function AgentRosterRow({
   lineTitle?: string;
   /** Its line has questions or tasks waiting on the developer. */
   waitsOnYou?: boolean;
+  /** A Stop, Lift or Release of it waits with Undo. */
+  busy?: boolean;
   now?: number;
   onStop(name: string): void;
   onLift(name: string): void;
@@ -139,7 +157,9 @@ export function AgentRosterRow({
         ? ", started for it"
         : ", last owner";
   const shownRepo = repo ?? agent.repo;
-  const action = <AgentAction agent={agent} onStop={onStop} onLift={onLift} onRelease={onRelease} />;
+  const action = (
+    <AgentAction agent={agent} busy={busy} onStop={onStop} onLift={onLift} onRelease={onRelease} />
+  );
   return (
     <Row
       label={agent.name}

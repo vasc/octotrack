@@ -20,6 +20,7 @@ export function OpenDrift({ drift }: { drift: readonly Drift[] }) {
           <DriftItem
             key={item.ref}
             drift={item}
+            busy={choices.waiting(item.ref)}
             onAck={(ref, mode, note) =>
               choices.make(
                 contracts.driftAck.name,

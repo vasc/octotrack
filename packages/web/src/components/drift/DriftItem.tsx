@@ -17,12 +17,13 @@ export type DriftMode = "updated" | "verified";
 
 export interface DriftItemProps {
   drift: Drift;
-  error?: string | null;
+  /** An answer to it waits with Undo: neither button can send another. */
+  busy?: boolean;
   onAck(ref: string, mode: DriftMode, note: string): void;
 }
 
 /** Something out of date. It only goes away with an explanation, whichever way it is cleared. */
-export function DriftItem({ drift, error = null, onAck }: DriftItemProps) {
+export function DriftItem({ drift, busy = false, onAck }: DriftItemProps) {
   const [note, setNote] = useState("");
   const trimmed = note.trim();
   return (
@@ -52,15 +53,18 @@ export function DriftItem({ drift, error = null, onAck }: DriftItemProps) {
           <Actions>
             {/* Drift about state clears by itself once the state is right, so "updated" could only be a false claim. */}
             {drift.edge ? (
-              <Button disabled={trimmed === ""} onClick={() => onAck(drift.ref, "updated", trimmed)}>
+              <Button
+                variant="primary"
+                disabled={trimmed === "" || busy}
+                onClick={() => onAck(drift.ref, "updated", trimmed)}
+              >
                 Updated
               </Button>
             ) : null}
-            <Button disabled={trimmed === ""} onClick={() => onAck(drift.ref, "verified", trimmed)}>
+            <Button disabled={trimmed === "" || busy} onClick={() => onAck(drift.ref, "verified", trimmed)}>
               Nothing to update
             </Button>
           </Actions>
-          {error === null ? null : <Note error>{error}</Note>}
         </>
       ) : drift.note === null ? null : (
         <Note>{drift.resolvedBy === null ? drift.note : `${drift.resolvedBy}: ${drift.note}`}</Note>

@@ -506,9 +506,11 @@ describe("DriftItem", () => {
     expect(view.queryByRole("textbox")).toBeNull();
   });
 
-  test("shows why a clear was refused", () => {
-    const view = render(<DriftItem drift={drift()} error="has not changed" onAck={() => {}} />);
-    expect(view.getByRole("alert").textContent).toBe("has not changed");
+  test("while its answer waits with Undo, neither answer can be sent again", () => {
+    const view = render(<DriftItem drift={drift({ edge: true })} busy onAck={() => {}} />);
+    fireEvent.change(view.getByLabelText(/Note · required/), { target: { value: "Fine" } });
+    expect(view.getByRole("button", { name: "Updated" }).hasAttribute("disabled")).toBe(true);
+    expect(view.getByRole("button", { name: "Nothing to update" }).hasAttribute("disabled")).toBe(true);
   });
 });
 

@@ -32,14 +32,31 @@ const WRITES: ReadonlySet<string> = new Set(
 const Target = z.object({ ref: z.string() });
 const Retried = z.object({ line: z.string() });
 const CheckedOut = z.object({ retry: z.string() });
+const Stopping = z.object({ name: z.string() });
+const OneOf = z.object({ refs: z.tuple([z.string()]) });
+
+/** The ops that act on an agent by its name. */
+const AGENT_OPS: ReadonlySet<string> = new Set([
+  contracts.agentStop.name,
+  contracts.agentLift.name,
+  contracts.agentRelease.name,
+]);
 
 /**
- * What a choice is about, so home can hold that item still while it waits: the ref it names, or for a Try now, Start
- * one anyway or Set its checkout, the line that Step in is on.
+ * What a choice is about, so home can hold that item still while it waits: the ref it names, or the one ref of a list
+ * of one; for a Try now, Start
+ * one anyway or Set its checkout, the line that Step in is on; for a Stop, Lift or Release, the agent, as agent:<name>.
  */
 function targetOf(op: string, input: unknown): string | null {
   const target = Target.safeParse(input);
   if (target.success) return target.data.ref;
+  // An answer to one drift, as the panel sends it, is about that drift.
+  const one = OneOf.safeParse(input);
+  if (one.success) return one.data.refs[0];
+  if (AGENT_OPS.has(op)) {
+    const agent = Stopping.safeParse(input);
+    return agent.success ? `agent:${agent.data.name}` : null;
+  }
   if (op === contracts.runnerRetry.name) {
     const retried = Retried.safeParse(input);
     return retried.success ? retried.data.line : null;
@@ -50,7 +67,6 @@ function targetOf(op: string, input: unknown): string | null {
   }
   return null;
 }
-const Stopping = z.object({ name: z.string() });
 
 /** The working line a Stop would leave without its owner. */
 function lineLeft(ctx: Ctx, row: ChoiceRow): string | null {

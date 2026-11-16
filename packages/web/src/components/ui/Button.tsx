@@ -14,6 +14,7 @@ export function Button({
   type = "button",
   choice,
   icon,
+  busy,
   children,
   ...rest
 }: {
@@ -23,6 +24,8 @@ export function Button({
   choice?: number | string | undefined;
   /** An icon before its words; on a phone, where the bar has no room, the icon alone, still named by its words. */
   icon?: IconName;
+  /** On its way: the verb's -ing form in its place ("Stopping…"), and it cannot be pressed again meanwhile. */
+  busy?: string | undefined;
   children: ReactNode;
 } & Native) {
   return (
@@ -33,9 +36,10 @@ export function Button({
       data-choice={choice === undefined ? undefined : String(choice)}
       aria-label={icon !== undefined && typeof children === "string" ? children : undefined}
       {...rest}
+      {...(busy === undefined ? {} : { disabled: true, "aria-busy": true })}
     >
       {icon === undefined ? null : <Icon name={icon} />}
-      {icon === undefined ? children : <span className="ui-button-words">{children}</span>}
+      {busy ?? (icon === undefined ? children : <span className="ui-button-words">{children}</span>)}
     </button>
   );
 }

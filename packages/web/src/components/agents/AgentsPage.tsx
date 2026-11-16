@@ -53,6 +53,7 @@ export function AgentsPage() {
             row={(agent) => (
               <AgentRosterRow
                 key={agent.name}
+                busy={choices.waiting(`agent:${agent.name}`)}
                 agent={agent}
                 {...(agent.repo === null ? {} : { repo: h.repoName(agent.repo) })}
                 {...facts(agent.line ?? agent.start?.line ?? agent.lastLine)}
