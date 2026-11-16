@@ -93,14 +93,25 @@ export function TaskCard({
         )}
         {cant ? (
           <Actions>
-            <Button type="submit" variant="primary" disabled={why.trim() === "" || sending}>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={why.trim() === ""}
+              busy={sending ? "Closing…" : undefined}
+            >
               Close it
             </Button>
             <Button onClick={() => setCant(false)}>Back</Button>
           </Actions>
         ) : (
           <Actions>
-            <Button type="submit" variant="primary" choice={1} disabled={!ready}>
+            <Button
+              type="submit"
+              variant="primary"
+              choice={1}
+              disabled={!ready}
+              busy={sending ? "Sending…" : undefined}
+            >
               Done
             </Button>
             <Button choice={2} onClick={() => setCant(true)}>

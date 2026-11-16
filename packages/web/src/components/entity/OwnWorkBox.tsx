@@ -39,17 +39,34 @@ export function OwnWorkBox({
 }: OwnWorkBoxProps) {
   // Picking repos to hand over with is a step on this screen alone, so it is the component's own state.
   const [handing, setHanding] = useState<readonly string[] | null>(null);
+  // Which add was pressed, so that it says it is on its way while it waits.
+  const [pressed, setPressed] = useState<"task" | "note" | null>(null);
   const text = words.trim();
   const off = text === "" || sending;
+  const busy = (which: "task" | "note") => (sending && pressed === which ? "Adding…" : undefined);
   return (
     <Section title="Add a task or a note">
       <TextBox label={`Add to ${line}`} placeholder="A task, or a note" value={words} onChange={onWords} />
       {handing === null ? (
         <Actions>
-          <Button disabled={off} onClick={() => onTask(text)}>
+          <Button
+            disabled={off}
+            busy={busy("task")}
+            onClick={() => {
+              setPressed("task");
+              onTask(text);
+            }}
+          >
             Add as a task
           </Button>
-          <Button disabled={off} onClick={() => onNote(text)}>
+          <Button
+            disabled={off}
+            busy={busy("note")}
+            onClick={() => {
+              setPressed("note");
+              onNote(text);
+            }}
+          >
             Add as a note
           </Button>
           <Button variant="quiet" onClick={() => (repos.length > 0 ? onHand([]) : setHanding([]))}>

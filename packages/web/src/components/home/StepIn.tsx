@@ -23,6 +23,8 @@ export interface StepInProps {
   onCheckout?: (ref: string, repo: string, path: string) => void;
   onOwn(ref: string): void;
   onTable(ref: string, reason: string, lookAgainAt: string | null): void;
+  /** What was pressed waits with Undo: it says it is on its way, and nothing else is pressed meanwhile. */
+  busy?: boolean;
 }
 
 /**
@@ -39,8 +41,17 @@ export function StepIn({
   onCheckout,
   onOwn,
   onTable,
+  busy = false,
 }: StepInProps) {
   const [mode, setMode] = useState<"table" | "checkout" | null>(null);
+  // Which action was pressed, so that it says it is on its way while it waits.
+  const [pressed, setPressed] = useState<"retry" | "anyway" | "own" | null>(null);
+  const press = (action: "retry" | "anyway" | "own", act: () => void) => () => {
+    setPressed(action);
+    act();
+  };
+  const word = (action: "retry" | "anyway" | "own", busyWord: string) =>
+    busy && pressed === action ? busyWord : undefined;
   const offered = [
     checkoutRepo !== undefined && onCheckout !== undefined ? "checkout" : null,
     onRetry === undefined ? null : "retry",
@@ -55,15 +66,15 @@ export function StepIn({
     <Focusable focusRef={stepInRef(line.ref)} label={`Step in on ${line.title}`} focused={focused}>
       <Callout
         tone="warn"
+        glyph="▲"
         lead="Step in."
         actions={
           mode === "checkout" && checkoutRepo !== undefined && onCheckout !== undefined ? (
+            // The form stays while the path is being set, so a path that fails is still there to fix.
             <CheckoutForm
               repo={checkoutRepo}
-              onSet={(path) => {
-                onCheckout(line.ref, checkoutRepo, path);
-                setMode(null);
-              }}
+              busy={busy}
+              onSet={(path) => onCheckout(line.ref, checkoutRepo, path)}
               onCancel={() => setMode(null)}
             />
           ) : (
@@ -81,7 +92,9 @@ export function StepIn({
                 <Button
                   variant={forward === "retry" ? "primary" : "plain"}
                   choice={number("retry")}
-                  onClick={() => onRetry(line.ref)}
+                  disabled={busy}
+                  busy={word("retry", "Trying…")}
+                  onClick={press("retry", () => onRetry(line.ref))}
                 >
                   Try now
                 </Button>
@@ -90,15 +103,22 @@ export function StepIn({
                 <Button
                   variant={forward === "anyway" ? "primary" : "plain"}
                   choice={number("anyway")}
-                  onClick={() => onAnyway(line.ref)}
+                  disabled={busy}
+                  busy={word("anyway", "Starting…")}
+                  onClick={press("anyway", () => onAnyway(line.ref))}
                 >
                   Start one anyway
                 </Button>
               )}
-              <Button choice={number("own")} onClick={() => onOwn(line.ref)}>
+              <Button
+                choice={number("own")}
+                disabled={busy}
+                busy={word("own", "Owning…")}
+                onClick={press("own", () => onOwn(line.ref))}
+              >
                 I'll own it
               </Button>
-              <Button choice={number("table")} onClick={() => setMode("table")}>
+              <Button choice={number("table")} disabled={busy} onClick={() => setMode("table")}>
                 Table it
               </Button>
             </Actions>

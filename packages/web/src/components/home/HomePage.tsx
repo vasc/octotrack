@@ -80,7 +80,7 @@ export function HomePage() {
       )}
       {home === undefined ? null : (
         <>
-          {at === null ? null : <AtSection at={at} now={now} onLeave={() => h.at(null)} />}
+          {at === null ? null : <AtSection at={at} now={now} onLeave={() => h.at(null)} busy={h.atBusy} />}
           {firstRun ? (
             <FirstRun
               proposals={home.proposed}

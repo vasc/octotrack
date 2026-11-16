@@ -37,6 +37,8 @@ export function useTopBar() {
     at: data?.at?.place ?? null,
     /** Why saying where the developer is did not work. */
     error: at.error,
+    /** A change of place is on its way. */
+    atBusy: at.isPending,
     setAt: (place: string | null) => at.mutate(place === null ? {} : { place }),
   };
 }

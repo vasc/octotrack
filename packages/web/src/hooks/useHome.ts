@@ -93,6 +93,8 @@ export function useHome() {
         { repo, path, retry: line },
         `Setting ${repoNames.get(repo) ?? repo}'s checkout to ${path}, then trying ${titleOf(line)} again`,
       ),
+    /** A change of place is on its way. */
+    atBusy: at.isPending,
     at: (place: string | null) =>
       at.mutate(place === null ? {} : { place }, {
         onError: (error) =>

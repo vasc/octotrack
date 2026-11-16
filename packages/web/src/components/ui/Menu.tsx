@@ -16,6 +16,8 @@ export function Menu({
   drag,
   align = "end",
   iconOnPhone = false,
+  disabled = false,
+  busy,
   children,
 }: {
   /** The button's name for a screen reader, which says what is chosen now. */
@@ -34,6 +36,10 @@ export function Menu({
   align?: "start" | "end";
   /** Its icon shows only on a phone, in place of its words, which still name it: More as "⋯". */
   iconOnPhone?: boolean;
+  /** It cannot be opened until something else is done, such as a move of what it acts on taking effect. */
+  disabled?: boolean;
+  /** A choice from it is on its way: its words give way to this, as a busy button's do. */
+  busy?: string | undefined;
   /** Its items, each given a way to close the menu once picked. */
   children(close: () => void): ReactNode;
 }) {
@@ -54,6 +60,8 @@ export function Menu({
         draggable={drag === undefined ? undefined : true}
         onDragStart={drag?.onDragStart}
         onDragEnd={drag?.onDragEnd}
+        disabled={disabled || busy !== undefined}
+        aria-busy={busy === undefined ? undefined : true}
         aria-haspopup="menu"
         aria-expanded={menu.open}
         onClick={menu.toggle}
@@ -68,7 +76,9 @@ export function Menu({
         )}
         {lead === undefined ? null : <Icon name="grip" />}
         {lead}
-        {iconOnPhone ? (
+        {busy !== undefined ? (
+          busy
+        ) : iconOnPhone ? (
           <span className="ui-button-words">
             {text}
             <Icon name="chevron" />

@@ -34,12 +34,24 @@ export function Button({
       className="ui-button"
       data-variant={variant}
       data-choice={choice === undefined ? undefined : String(choice)}
-      aria-label={icon !== undefined && typeof children === "string" ? children : undefined}
+      aria-label={icon !== undefined && typeof children === "string" ? (busy ?? children) : undefined}
       {...rest}
       {...(busy === undefined ? {} : { disabled: true, "aria-busy": true })}
     >
       {icon === undefined ? null : <Icon name={icon} />}
-      {busy ?? (icon === undefined ? children : <span className="ui-button-words">{children}</span>)}
+      {busy === undefined ? (
+        icon === undefined ? (
+          children
+        ) : (
+          <span className="ui-button-words">{children}</span>
+        )
+      ) : (
+        // The idle words stay in the same place, hidden, so the button keeps their room while it is busy.
+        <span className={icon === undefined ? "ui-button-busy" : "ui-button-busy ui-button-words"}>
+          <span aria-hidden="true">{children}</span>
+          <span>{busy}</span>
+        </span>
+      )}
     </button>
   );
 }

@@ -148,8 +148,8 @@ describe("AgentRosterRow", () => {
   });
 
   test("Stop says it is on its way while its choice waits, and cannot be pressed again", () => {
-    const stop = row({ state: "running" }, { busy: true }).getByRole("button", { name: "Stop panel" });
-    expect(stop.textContent).toBe("Stopping…");
+    const stop = row({ state: "running" }, { busy: true }).getByRole("button", { name: "Stopping panel" });
+    expect(stop.textContent).toContain("Stopping…");
     expect(stop.hasAttribute("disabled")).toBe(true);
     expect(stop.getAttribute("aria-busy")).toBe("true");
   });

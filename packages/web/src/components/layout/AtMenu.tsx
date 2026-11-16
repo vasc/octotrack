@@ -8,11 +8,14 @@ export function AtMenu({
   at,
   onAt,
   buttonRef,
+  busy = false,
 }: {
   places: readonly string[];
   at: string | null;
   onAt(place: string | null): void;
   buttonRef?: RefObject<HTMLButtonElement | null>;
+  /** The change is being sent. */
+  busy?: boolean;
 }) {
   const shown = at ?? "All places";
   return (
@@ -21,6 +24,7 @@ export function AtMenu({
       icon="pin"
       text={shown}
       menuLabel="I'm at"
+      busy={busy ? "Changing…" : undefined}
       {...(buttonRef === undefined ? {} : { buttonRef })}
     >
       {(close) => (

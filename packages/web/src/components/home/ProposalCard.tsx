@@ -27,6 +27,8 @@ export interface ProposalCardProps {
   repoKeys?: readonly string[];
   /** The last line up next, which an Up next recommendation would put it after. */
   lastUpNext?: string | null;
+  /** A move of it waits with Undo. */
+  busy?: boolean;
 }
 
 /**
@@ -45,6 +47,7 @@ export function ProposalCard({
   onDrop,
   repoKeys = [],
   lastUpNext = null,
+  busy = false,
 }: ProposalCardProps) {
   const [mode, setMode] = useState<"table" | "fold" | null>(null);
   const fromTable = line.tabledReason !== null;
@@ -77,6 +80,7 @@ export function ProposalCard({
           onFold={() => setMode("fold")}
           onReject={() => onReject(line.ref)}
           onDrop={() => onDrop(line.ref)}
+          busy={busy}
         />
       }
     >

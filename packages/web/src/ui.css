@@ -295,13 +295,31 @@
   flex: none;
 }
 
-/* Disabled is one look for every kind of button: a pale fill, a faint edge, grey words. */
-.ui-button:disabled {
+/* Disabled is one look for every kind of button: a pale fill, a faint edge, grey words. A busy button is not that:
+   it is on its way, so it keeps its own look. */
+.ui-button:disabled:not([aria-busy="true"]) {
   background: var(--surface-2);
   border: 1px solid var(--line-faint);
   color: var(--ink-3);
   font-weight: var(--weight-medium);
   cursor: default;
+}
+
+.ui-button[aria-busy="true"] {
+  cursor: progress;
+}
+
+/* Busy: the idle words and the busy word share one cell, the idle ones hidden, so the button never shrinks. */
+.ui-button-busy {
+  display: inline-grid;
+}
+
+.ui-button-busy > * {
+  grid-area: 1 / 1;
+}
+
+.ui-button-busy > [aria-hidden="true"] {
+  visibility: hidden;
 }
 
 /* Actions: one row of buttons that wraps; a word that acts starts in line with the text above it. */

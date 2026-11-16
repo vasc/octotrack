@@ -10,7 +10,18 @@ function hoursLeft(until: string, now: number): number {
 }
 
 /** I'm at a place: where, how long until it ends by itself, and Leave. */
-export function AtSection({ at, now, onLeave }: { at: AtView; now: number; onLeave(): void }) {
+export function AtSection({
+  at,
+  now,
+  onLeave,
+  busy = false,
+}: {
+  at: AtView;
+  now: number;
+  onLeave(): void;
+  /** Leave is on its way. */
+  busy?: boolean;
+}) {
   const hours = hoursLeft(at.until, now);
   return (
     <List>
@@ -18,7 +29,11 @@ export function AtSection({ at, now, onLeave }: { at: AtView; now: number; onLea
         label={`At ${at.place}`}
         title={`At ${at.place}`}
         facts={<Facts>{`ends by itself in ${hours}h`}</Facts>}
-        trailing={<Button onClick={onLeave}>Leave</Button>}
+        trailing={
+          <Button busy={busy ? "Leaving…" : undefined} onClick={onLeave}>
+            Leave
+          </Button>
+        }
       />
     </List>
   );

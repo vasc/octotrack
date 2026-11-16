@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Line } from "@octotrack/core/schemas";
 import { Actions } from "../ui/Actions.tsx";
 import { Button } from "../ui/Button.tsx";
@@ -24,6 +25,16 @@ const WORD: Readonly<Record<Move, string>> = {
   drop: "Drop",
 };
 
+/** What each move says while it waits with Undo. */
+const BUSY: Readonly<Record<Move, string>> = {
+  start: "Starting…",
+  up_next: "Moving…",
+  table: "Tabling…",
+  fold: "Folding…",
+  reject: "Turning it down…",
+  drop: "Dropping…",
+};
+
 /**
  * The choices a proposal has: the recommended move as the one button, the rest under Other: Start, Up next, Table,
  * Fold into when there is a line to fold into, and Not a line; or Drop for a line back from tabled, since it was a
@@ -40,6 +51,7 @@ export function ProposalChoices({
   onFold,
   onReject,
   onDrop,
+  busy = false,
 }: {
   title: string;
   recommended: Line["recommendation"];
@@ -51,14 +63,22 @@ export function ProposalChoices({
   onFold(): void;
   onReject(): void;
   onDrop(): void;
+  /** A move of it waits with Undo: the button says which is on its way. */
+  busy?: boolean;
 }) {
-  const act: Readonly<Record<Move, () => void>> = {
+  // Which move was pressed, so that the button says it is on its way while it waits.
+  const [pressed, setPressed] = useState<Move | null>(null);
+  const moves: Readonly<Record<Move, () => void>> = {
     start: onStart,
     up_next: onQueue,
     table: onTable,
     fold: onFold,
     reject: onReject,
     drop: onDrop,
+  };
+  const act = (move: Move) => {
+    setPressed(move);
+    moves[move]();
   };
   const all: readonly Move[] = [
     "start",
@@ -73,14 +93,16 @@ export function ProposalChoices({
   return (
     <Actions>
       <Button
-        aria-label={`${NAMED[main]} ${title}`}
+        aria-label={busy ? BUSY[pressed ?? main] : `${NAMED[main]} ${title}`}
         choice={1}
         variant={recommended === null ? "plain" : "primary"}
-        onClick={act[main]}
+        busy={busy ? BUSY[pressed ?? main] : undefined}
+        onClick={() => act(main)}
       >
         {WORD[main]}
       </Button>
       <Menu
+        disabled={busy}
         label={`Other moves for ${title}`}
         text="Other"
         menuLabel={`Other moves for ${title}`}
@@ -94,7 +116,7 @@ export function ProposalChoices({
               autoFocus={index === 0}
               onSelect={() => {
                 close();
-                act[move]();
+                act(move);
               }}
             >
               {WORD[move]}

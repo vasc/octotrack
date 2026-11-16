@@ -91,6 +91,7 @@ export function WaitingSections({
   const card = (line: Line) => (
     <ProposalCard
       key={line.ref}
+      busy={h.held.has(line.ref)}
       line={line}
       focused={focus === line.ref}
       foldTargets={[...home.working, ...home.upNext]}

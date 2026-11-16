@@ -77,6 +77,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         onNewLine={() => setParams({ new: "1" })}
         onKeys={openKeys}
         atRef={atPicker}
+        atBusy={bar.atBusy}
         appearance={look.appearance}
         onPalette={look.setPalette}
         onMode={look.setMode}

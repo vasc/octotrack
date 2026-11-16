@@ -52,6 +52,7 @@ export function LineStepIn({
         : {})}
       onOwn={h.own}
       onTable={h.table}
+      busy={h.held.has(line.ref)}
     />
   );
 }

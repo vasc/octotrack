@@ -28,6 +28,8 @@ export interface TopBarProps {
   onKeys(): void;
   /** The I'm at button, which g p focuses. */
   atRef?: RefObject<HTMLButtonElement | null>;
+  /** A change of place is on its way. */
+  atBusy?: boolean;
   appearance: Appearance;
   onPalette(palette: Palette): void;
   onMode(mode: Mode): void;
@@ -46,6 +48,7 @@ export function TopBar({
   onNewLine,
   onKeys,
   atRef,
+  atBusy = false,
   appearance,
   onPalette,
   onMode,
@@ -92,6 +95,7 @@ export function TopBar({
               places={places}
               at={at}
               onAt={onAt}
+              busy={atBusy}
               {...(atRef === undefined ? {} : { buttonRef: atRef })}
             />
           )}

@@ -210,6 +210,7 @@ export function homeActions(overrides: Partial<HomeActions> = {}): HomeActions {
     anyway: mock(() => {}),
     setCheckout: mock(() => {}),
     at: mock(() => {}),
+    atBusy: false,
     repos: [],
     repoName: (key: string) => key,
     start: mock(() => {}),

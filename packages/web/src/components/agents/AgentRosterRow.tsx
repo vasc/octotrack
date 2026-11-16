@@ -127,7 +127,7 @@ function AgentAction({
   if (agent.state === "quiet" && agent.line !== null) {
     return (
       <Button
-        aria-label={`Release ${agent.name} from ${agent.line}`}
+        aria-label={busy ? `Releasing ${agent.name}` : `Release ${agent.name} from ${agent.line}`}
         busy={busy ? "Releasing…" : undefined}
         onClick={() => onRelease(agent.name)}
       >
@@ -138,7 +138,7 @@ function AgentAction({
   if (agent.state === "stopped") {
     return (
       <Button
-        aria-label={`Lift ${agent.name}`}
+        aria-label={busy ? `Lifting ${agent.name}` : `Lift ${agent.name}`}
         busy={busy ? "Lifting…" : undefined}
         onClick={() => onLift(agent.name)}
       >
@@ -148,7 +148,7 @@ function AgentAction({
   }
   return (
     <Button
-      aria-label={`Stop ${agent.name}`}
+      aria-label={busy ? `Stopping ${agent.name}` : `Stop ${agent.name}`}
       busy={busy ? "Stopping…" : undefined}
       onClick={() => onStop(agent.name)}
     >

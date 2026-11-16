@@ -22,7 +22,14 @@ export interface DriftAnswerProps {
 export function DriftAnswer({ drift, busy = false, onAck }: DriftAnswerProps) {
   // The note is typed here alone, so it is the component's own state.
   const [note, setNote] = useState("");
+  // Which answer was pressed, so that it says it is on its way while it waits.
+  const [pressed, setPressed] = useState<DriftMode | null>(null);
   const trimmed = note.trim();
+  const send = (mode: DriftMode) => {
+    setPressed(mode);
+    onAck(drift.ref, mode, trimmed);
+  };
+  const word = (mode: DriftMode) => (busy && pressed === mode ? "Marking…" : undefined);
   if (drift.status !== "open") {
     return drift.note === null ? null : (
       <Note>{drift.resolvedBy === null ? drift.note : `${drift.resolvedBy}: ${drift.note}`}</Note>
@@ -43,12 +50,13 @@ export function DriftAnswer({ drift, busy = false, onAck }: DriftAnswerProps) {
           <Button
             variant="primary"
             disabled={trimmed === "" || busy}
-            onClick={() => onAck(drift.ref, "updated", trimmed)}
+            busy={word("updated")}
+            onClick={() => send("updated")}
           >
             Updated
           </Button>
         ) : null}
-        <Button disabled={trimmed === "" || busy} onClick={() => onAck(drift.ref, "verified", trimmed)}>
+        <Button disabled={trimmed === "" || busy} busy={word("verified")} onClick={() => send("verified")}>
           Nothing to update
         </Button>
       </Actions>

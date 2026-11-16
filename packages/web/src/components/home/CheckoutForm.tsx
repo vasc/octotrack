@@ -9,8 +9,11 @@ export function CheckoutForm({
   repo,
   onSet,
   onCancel,
+  busy = false,
 }: {
   repo: string;
+  /** The path is being set: Set says so. */
+  busy?: boolean;
   onSet(path: string): void;
   onCancel(): void;
 }) {
@@ -20,7 +23,7 @@ export function CheckoutForm({
     <form
       onSubmit={(event) => {
         event.preventDefault();
-        if (valid) onSet(path);
+        if (valid && !busy) onSet(path);
       }}
     >
       <Stack>
@@ -34,7 +37,7 @@ export function CheckoutForm({
           invalid={path !== "" && !valid}
         />
         <Actions>
-          <Button type="submit" variant="primary" disabled={!valid}>
+          <Button type="submit" variant="primary" disabled={!valid} busy={busy ? "Setting…" : undefined}>
             Set
           </Button>
           <Button variant="quiet" onClick={onCancel}>

@@ -1,14 +1,20 @@
 import { describe, expect, mock, test } from "bun:test";
 import { fireEvent, render, within } from "@testing-library/react";
 import { BatchPanelView } from "../src/components/decisions/BatchPanelView.tsx";
+import { DriftAnswer } from "../src/components/drift/DriftAnswer.tsx";
 import { AtPlaceItems } from "../src/components/home/AtPlaceItems.tsx";
+import { AtSection } from "../src/components/home/AtSection.tsx";
+import { CheckoutForm } from "../src/components/home/CheckoutForm.tsx";
+import { ProposalChoices } from "../src/components/home/ProposalChoices.tsx";
+import { StepIn } from "../src/components/home/StepIn.tsx";
 import { FirstRun } from "../src/components/home/FirstRun.tsx";
 import { ForYouRow } from "../src/components/home/ForYouRow.tsx";
 import { LineProposalCard } from "../src/components/home/LineProposalCard.tsx";
 import { OwnerBox } from "../src/components/entity/OwnerBox.tsx";
 import { UndoBar } from "../src/components/layout/UndoBar.tsx";
+import { Button } from "../src/components/ui/Button.tsx";
 import { Waiting } from "../src/components/ui/Waiting.tsx";
-import { decision, decisionCard, line, pendingChoice } from "../src/design/fixtures.ts";
+import { decision, decisionCard, drift, line, pendingChoice } from "../src/design/fixtures.ts";
 import { glyphOf } from "../src/lib/format.ts";
 import { whole } from "./harness.tsx";
 
@@ -218,5 +224,82 @@ describe("Record answers", () => {
       />,
     );
     view.getByText(/^Not saved:/);
+  });
+});
+
+describe("a busy button", () => {
+  test("says its busy word, named by it, and keeps the idle words' room so it never shrinks", () => {
+    const view = render(
+      <Button variant="primary" icon="plus" busy="Adding…">
+        New line
+      </Button>,
+    );
+    const button = view.getByRole("button", { name: "Adding…" });
+    expect(button.getAttribute("aria-busy")).toBe("true");
+    expect(button.hasAttribute("disabled")).toBe(true);
+    // The idle words stay, hidden, holding the width.
+    const ghost = within(button).getByText("New line");
+    expect(ghost.getAttribute("aria-hidden")).toBe("true");
+  });
+});
+
+describe("busy words where a choice waits", () => {
+  test("Step in carries ▲, and the pressed action says it is on its way, the rest held", () => {
+    const props = {
+      line: line({ title: "Mount" }),
+      reason: "It exits at once.",
+      onRetry: noop,
+      onOwn: noop,
+      onTable: noop,
+    };
+    const view = render(<StepIn {...props} />);
+    view.getByText("▲");
+    fireEvent.click(view.getByRole("button", { name: "I'll own it" }));
+    view.rerender(<StepIn {...props} busy />);
+    view.getByRole("button", { name: "Owning…" });
+    expect(view.getByRole("button", { name: "Table it" }).hasAttribute("disabled")).toBe(true);
+  });
+
+  test("a proposal's pressed move says it is on its way", () => {
+    const view = render(
+      <ProposalChoices
+        title="Mount"
+        recommended="start"
+        canFold={false}
+        fromTable={false}
+        onStart={noop}
+        onQueue={noop}
+        onTable={noop}
+        onFold={noop}
+        onReject={noop}
+        onDrop={noop}
+        busy
+      />,
+    );
+    view.getByRole("button", { name: "Starting…" });
+    expect(view.getByRole("button", { name: /Other/ }).hasAttribute("disabled")).toBe(true);
+  });
+
+  test("Leave says Leaving…, Set says Setting…, Done says Sending…", () => {
+    render(
+      <AtSection
+        at={{ place: "home", until: "2026-11-16T15:00:00Z", tasks: [] }}
+        now={0}
+        onLeave={noop}
+        busy
+      />,
+    ).getByRole("button", { name: "Leaving…" });
+    render(<CheckoutForm repo="hydra" onSet={noop} onCancel={noop} busy />).getByRole("button", {
+      name: "Setting…",
+    });
+  });
+
+  test("a drift answer pressed says Marking…", () => {
+    const view = render(<DriftAnswer drift={drift({ edge: true })} onAck={noop} busy />);
+    fireEvent.change(view.getByLabelText("Note · required: what changed, or why nothing had to"), {
+      target: { value: "Fine" },
+    });
+    // Busy before any press: the buttons are held, and neither claims to be the one on its way.
+    expect(view.getByRole("button", { name: "Updated" }).hasAttribute("disabled")).toBe(true);
   });
 });

@@ -6,11 +6,14 @@ import type { ReactNode } from "react";
  */
 export function Callout({
   tone = "attention",
+  glyph,
   lead,
   actions,
   children,
 }: {
   tone?: "attention" | "warn";
+  /** Status's mark before the lead, so the tone never rests on colour alone: ▲ for stepping in. */
+  glyph?: string;
   lead: string;
   /** What to do about it, under the words. */
   actions?: ReactNode;
@@ -19,6 +22,11 @@ export function Callout({
   return (
     <div className="ui-callout" data-tone={tone}>
       <p className="ui-callout-text">
+        {glyph === undefined ? null : (
+          <>
+            <span aria-hidden="true">{glyph}</span>{" "}
+          </>
+        )}
         <b>{lead}</b> {children}
       </p>
       {actions}
