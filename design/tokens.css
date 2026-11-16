@@ -107,7 +107,7 @@
   /* A row's narrow first column: its number in an order, or its handle. */
   --lead-width: var(--space-12);
   /* A wider first column, for a time or a date. */
-  --lead-width-wide: calc(var(--space-12) * 2);
+  --lead-width-wide: var(--space-32);
   /* A filled button under the pointer. */
   --opacity-hover: 0.88;
   --z-popover: 10;

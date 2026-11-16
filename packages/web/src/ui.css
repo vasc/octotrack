@@ -379,6 +379,7 @@
 .ui-row-lead {
   flex: none;
   width: var(--lead);
+  white-space: nowrap;
   font-family: var(--mono);
   font-size: var(--text-xs);
   color: var(--ink-3);
