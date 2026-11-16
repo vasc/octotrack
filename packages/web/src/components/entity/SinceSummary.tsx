@@ -38,7 +38,7 @@ export function SinceSummary({
   return (
     <Section
       title={summaryAt === null ? "What happened" : "New since the summary"}
-      count={newer.length}
+      count={unseen.length}
       aside={
         <Facts>
           {more ? "newest only" : null}

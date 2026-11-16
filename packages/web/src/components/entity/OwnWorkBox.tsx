@@ -5,6 +5,7 @@ import { List } from "../ui/List.tsx";
 import { Row } from "../ui/Row.tsx";
 import { Section } from "../ui/Section.tsx";
 import { TextBox } from "../ui/TextBox.tsx";
+import { Note } from "../ui/Note.tsx";
 
 export interface OwnWorkBoxProps {
   line: string;
@@ -101,6 +102,7 @@ export function OwnWorkBox({
               Hand over
             </Button>
             <Button onClick={() => setHanding(null)}>Cancel</Button>
+            {handing.length === 0 ? <Note>Pick a repo for its agents first</Note> : null}
           </Actions>
         </>
       )}

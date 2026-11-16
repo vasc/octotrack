@@ -156,7 +156,7 @@ describe("PlanList", () => {
     render(<PlanList steps={[]} work={[]} state="done" />).getByText("No plan was written.");
   });
 
-  test("an issue reads its ref and state in words, its pull requests by number with their checks", () => {
+  test("an issue reads its ref and state in words, its pull requests by number with their checks; on a phone merged ones fold", () => {
     const pr = (number: number, state: "open" | "merged", checks: "failing" | "passing") => ({
       ref: `PR-${number}`,
       repo: "LimbicAI/kore",
@@ -166,6 +166,7 @@ describe("PlanList", () => {
     });
     const view = render(
       <PlanList
+        foldMerged
         steps={[{ position: 1, title: "Build the image", status: "doing", line: "L-1" }]}
         work={[
           { ...work("KECS-1"), step: 1, prs: [pr(418, "open", "failing")] },

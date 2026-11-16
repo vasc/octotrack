@@ -1164,6 +1164,11 @@
   color: var(--ink);
 }
 
+/* A part that could not refresh: what it shows stays, so the warm tone, not the bad one. */
+.ui-failure[data-tone="warn"] {
+  background: var(--warn-soft);
+}
+
 .ui-failure-text {
   display: flex;
   flex-direction: column;

@@ -34,6 +34,7 @@ export function IssuePanel({
   detail,
   stale = null,
   staleAt,
+  onRetry,
 }: {
   issue: Issue;
   detail: EntityDetail;
@@ -41,6 +42,8 @@ export function IssuePanel({
   stale?: Error | null;
   /** When what is shown was last loaded, for a stale panel to say. */
   staleAt?: number;
+  /** Loads it again, after a refresh that failed. */
+  onRetry?: () => void;
 }) {
   const h = useHome();
   // Opened from another panel: Back returns there, and Close shuts the panel.
@@ -78,7 +81,7 @@ export function IssuePanel({
       under={pageUnder(route.path)}
       back={from === null ? undefined : { label: from, onBack: backEntity }}
     >
-      {stale === null ? null : <StaleNote at={staleAt} />}
+      {stale === null ? null : <StaleNote at={staleAt} what={issue.ref} onRetry={onRetry} />}
       {task ? (
         open ? (
           <TaskItem task={issue} onDone={h.taskDone} onCant={h.taskCant} />

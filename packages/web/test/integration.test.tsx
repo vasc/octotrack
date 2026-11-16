@@ -716,18 +716,20 @@ describe("the inspector", () => {
     });
     try {
       await act(() => view.client.refetchQueries({ queryKey: [c.entityShow.name] }));
-      await panel.findByText(/^As of \d\d:\d\d; could not refresh\.$/);
+      await panel.findByText(/^Could not refresh .+; as of \d\d:\d\d\.$/);
       panel.getByRole("heading", { name: "Thing to look at" });
     } finally {
       Object.assign(globalThis, { fetch: fetchNow });
     }
   });
 
-  test("says when a ref does not exist", async () => {
-    navigate("/?ref=OCT-404");
+  test("says when a ref does not exist, why it may be gone, and offers a search of the log", async () => {
+    navigate("/?ref=L-312");
     const view = renderApp(<App />);
-    await view.findByRole("alert");
-    view.getByText(/Nothing found for OCT-404/);
+    await view.findByRole("heading", { name: "No line L-312" });
+    view.getByText(/No line was ever made with that ref/);
+    view.getByRole("link", { name: "Search the log for L-312" });
+    expect(view.queryByRole("alert")).toBeNull();
   });
 });
 

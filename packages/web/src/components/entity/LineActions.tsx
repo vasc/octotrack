@@ -77,10 +77,14 @@ export function LineActions({
       {line.state === "proposed" && canFold ? (
         <Button onClick={() => setMode("fold")}>Fold into</Button>
       ) : null}
-      {line.state === "proposed" ? <Button onClick={() => onChoose("reject")}>Not a line</Button> : null}
+      {line.state === "proposed" ? (
+        <Button variant="quiet" onClick={() => onChoose("reject")}>
+          Not a line
+        </Button>
+      ) : null}
       {line.state === "proposed" ? null : (
         <Menu
-          label="More: drop this line, fold it into another"
+          label={canFold ? "More: drop this line, fold it into another" : "More: drop this line"}
           text="More"
           icon="more"
           iconOnPhone

@@ -143,3 +143,12 @@ importance. Loading, a failed part and not found follow `Line-States.dc.html` st
 - Loading: never loads on its own: given the drift by EntityPanel.
 - Error: as DriftAnswer.
 - Empty: never empty: it exists only for a drift.
+
+### components/entity/RefNotFound.tsx
+
+- Designed in: Line-States.dc.html, state I
+- What it shows: in a panel titled "No line L-312": "No line was ever made with that ref; check it for a typo. Lines that were done, dropped or folded still open at their ref." and "Search the log for L-312 →"; other kinds say "No question D-9" and the same in their own word.
+- Changes from today: new; a ref nothing answered to was "Could not load L-312" with Try again.
+- Loading: never loads on its own: EntityPanel draws it once the tracker says the ref names nothing.
+- Error: it is the not-found state.
+- Empty: never empty: it always names the ref.

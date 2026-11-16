@@ -1,6 +1,6 @@
 import type { Line } from "@octotrack/core/schemas";
 import type { ReactNode } from "react";
-import { dayDate, sinceText } from "../../lib/format.ts";
+import { dayDate, sinceText, timeLabel } from "../../lib/format.ts";
 import { heldText, LINE_STATE_LABEL, RECOMMENDED_MOVE } from "../../lib/lines.ts";
 import { closeEntity } from "../../lib/router.ts";
 import { Callout } from "../ui/Callout.tsx";
@@ -53,7 +53,9 @@ export function LinePanelHead({
             </>
           ) : closed ? (
             <>
-              <Kind tone="none">{LINE_STATE_LABEL[line.state]}</Kind> {sinceText(line.updatedAt, now)}
+              {/* When it closed is when it last changed: a closed line takes no more changes. */}
+              <Kind tone="none">{LINE_STATE_LABEL[line.state]}</Kind> · closed{" "}
+              {timeLabel(line.updatedAt, now)}
             </>
           ) : (
             <Kind tone="none">{LINE_STATE_LABEL[line.state]}</Kind>

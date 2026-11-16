@@ -192,3 +192,4 @@ properties and appear on the `/design` specimen; **structural** ones load data a
 | `DriftItem`        | Pure       | One thing out of date: its rule, what is wrong, the suggestion, Updated or Nothing to update            |
 | `DriftAnswer`      | Pure       | How it is cleared: what to check, the required note, Updated or Nothing to update                       |
 | `DriftBody`        | Structural | Drift opened by its own ref: what changed, answered in place                                            |
+| `RefNotFound`      | Pure       | A ref nothing answers to: why it may be gone, and a search of the log for it                            |

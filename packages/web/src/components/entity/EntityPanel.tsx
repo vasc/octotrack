@@ -15,13 +15,30 @@ import { OpenDrift } from "./OpenDrift.tsx";
 import { UpdatesSection } from "./UpdatesSection.tsx";
 import { useHome } from "../../hooks/useHome.ts";
 import { homeLines } from "../../lib/lines.ts";
+import { ApiError } from "../../api/client.ts";
+import { notFoundTitle, RefNotFound } from "./RefNotFound.tsx";
 
 /** Any item, by ref: what it is, what it connects to, what is out of date about it, and how it got here. */
 export function EntityPanel({ entityRef }: { entityRef: string }) {
   const detail = useOpQuery(contracts.entityShow, { ref: entityRef });
   const under = pageUnder(useRoute().path);
-  const lines = homeLines(useHome().home.data);
+  const h = useHome();
+  const lines = homeLines(h.home.data);
+  const retry = () => void detail.refetch();
   if (detail.data === undefined) {
+    // A ref nothing answers to: said as such, not as a failure to load.
+    if (detail.error instanceof ApiError && detail.error.code === "not_found") {
+      return (
+        <Panel onClose={closeEntity} under={under} title={notFoundTitle(entityRef)}>
+          <RefNotFound refName={entityRef} />
+        </Panel>
+      );
+    }
+    // A line home already knows draws its head at once, while the rest of it loads.
+    const known = h.lineOf(entityRef);
+    if (known !== null && detail.error === null) {
+      return <LinePanelItem line={known} drift={[]} stale={null} />;
+    }
     return (
       <Panel onClose={closeEntity} under={under}>
         {detail.error === null ? (
@@ -41,10 +58,26 @@ export function EntityPanel({ entityRef }: { entityRef: string }) {
   const { summary, entity, links, linked, drift, updates, history } = detail.data;
   // A line has its own panel, as E-Line draws it.
   if ("doneWhen" in entity)
-    return <LinePanelItem line={entity} drift={drift} stale={stale} staleAt={detail.dataUpdatedAt} />;
+    return (
+      <LinePanelItem
+        line={entity}
+        drift={drift}
+        stale={stale}
+        staleAt={detail.dataUpdatedAt}
+        onRetry={retry}
+      />
+    );
   // So does an issue or task, as E-Issue draws it.
   if ("priority" in entity && "outcome" in entity)
-    return <IssuePanel issue={entity} detail={detail.data} stale={stale} staleAt={detail.dataUpdatedAt} />;
+    return (
+      <IssuePanel
+        issue={entity}
+        detail={detail.data}
+        stale={stale}
+        staleAt={detail.dataUpdatedAt}
+        onRetry={retry}
+      />
+    );
   // Drift opened by its own ref is the item itself, answered from its body; the rest is what is out of date about it.
   const openDrift = drift.filter((item) => item.ref !== summary.ref);
   return (
@@ -55,7 +88,7 @@ export function EntityPanel({ entityRef }: { entityRef: string }) {
       onClose={closeEntity}
       under={under}
     >
-      {stale === null ? null : <StaleNote at={detail.dataUpdatedAt} />}
+      {stale === null ? null : <StaleNote at={detail.dataUpdatedAt} what={summary.ref} onRetry={retry} />}
       <EntityBody entity={entity} links={links} lines={lines} />
       <OpenDrift drift={openDrift} />
       <LinkList entityRef={summary.ref} links={links} linked={linked} />

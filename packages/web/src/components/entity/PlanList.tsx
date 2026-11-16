@@ -42,11 +42,14 @@ export function PlanList({
   steps,
   work,
   state = "working",
+  foldMerged = false,
 }: {
   steps: readonly PlanStep[];
   work: readonly LineWork[];
   /** How the line stands, which says who writes its plan and when. */
   state?: Line["state"];
+  /** On a phone, several merged pull requests fold to one fact so the open work stands out. */
+  foldMerged?: boolean;
 }) {
   const current = steps.find((step) => step.status !== "done")?.position ?? null;
   const unplaced = work.filter((item) => item.step === null);
@@ -81,13 +84,13 @@ export function PlanList({
                 title={step.title}
                 facts={now ? <Fact tone="strong">now</Fact> : done ? "done" : "next"}
               >
-                {under.length === 0 ? null : <WorkList items={under} />}
+                {under.length === 0 ? null : <WorkList items={under} foldMerged={foldMerged} />}
               </Row>
             );
           })}
           {unplaced.length === 0 ? null : (
             <Row title="Not on a step yet">
-              <WorkList items={unplaced} />
+              <WorkList items={unplaced} foldMerged={foldMerged} />
             </Row>
           )}
         </List>
@@ -97,15 +100,15 @@ export function PlanList({
 }
 
 /**
- * The issues under a step, one row each: its ref and state, then its pull requests; several merged ones fold to one fact,
- * "4 pull requests merged ✓", so the open work stands out.
+ * The issues under a step, one row each: its ref and state, then its pull requests; on a phone several merged ones fold
+ * to one fact, "4 pull requests merged ✓", so the open work stands out.
  */
-function WorkList({ items }: { items: readonly LineWork[] }) {
+function WorkList({ items, foldMerged }: { items: readonly LineWork[]; foldMerged: boolean }) {
   return (
     <List>
       {items.map((item) => {
         const merged = item.prs.filter((pr) => pr.state === "merged");
-        const folded = merged.length > 1;
+        const folded = foldMerged && merged.length > 1;
         const shown = folded ? item.prs.filter((pr) => pr.state !== "merged") : item.prs;
         return (
           <Row

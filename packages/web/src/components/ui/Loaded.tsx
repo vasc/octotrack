@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Button } from "./Button.tsx";
 import { ErrorState, LoadingState } from "./states.tsx";
 
 /** A clock time, as a stale part says when it is from. */
@@ -7,14 +8,30 @@ function clock(at: number): string {
   return `${String(time.getHours()).padStart(2, "0")}:${String(time.getMinutes()).padStart(2, "0")}`;
 }
 
-/** A part of the page that loaded once and could not refresh: what it shows stays, marked with the time it is from. */
-export function StaleNote({ at }: { at?: number | undefined }) {
+/**
+ * A part of the page that loaded once and could not refresh: what it shows stays, marked with what could not refresh
+ * and the time it is from, with Try again.
+ */
+export function StaleNote({
+  at,
+  what,
+  onRetry,
+}: {
+  at?: number | undefined;
+  /** What could not refresh, such as "the plan". */
+  what?: string;
+  onRetry?: () => void;
+}) {
+  const subject = what === undefined ? "" : ` ${what}`;
   return (
-    <p className="ui-note" data-tone="warn" role="status">
-      {at === undefined || at === 0
-        ? "Could not refresh; this may be out of date."
-        : `As of ${clock(at)}; could not refresh.`}
-    </p>
+    <div className="ui-failure" data-tone="warn" role="status">
+      <p className="ui-failure-text">
+        {at === undefined || at === 0
+          ? `Could not refresh${subject}; this may be out of date.`
+          : `Could not refresh${subject}; as of ${clock(at)}.`}
+      </p>
+      {onRetry === undefined ? null : <Button onClick={onRetry}>Try again</Button>}
+    </div>
   );
 }
 
@@ -48,7 +65,7 @@ export function Loaded({
   }
   return (
     <>
-      {error === null ? null : <StaleNote at={at} />}
+      {error === null ? null : <StaleNote at={at} what={what} onRetry={onRetry} />}
       {children}
     </>
   );

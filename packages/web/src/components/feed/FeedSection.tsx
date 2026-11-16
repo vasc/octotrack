@@ -43,7 +43,9 @@ export function FeedSection({
   if (feed.stillSearching) return <Note>{scanningText(feed.scanned)}</Note>;
   // Shown once and could not refresh since: what is shown stays, marked with when it is from.
   const stale =
-    feed.error !== null && !feed.isFetchNextPageError ? <StaleNote at={feed.dataUpdatedAt} /> : null;
+    feed.error !== null && !feed.isFetchNextPageError ? (
+      <StaleNote at={feed.dataUpdatedAt} what="the log" onRetry={() => void feed.refetch()} />
+    ) : null;
   if (unseen) {
     const lines = logLines(home.data);
     return (

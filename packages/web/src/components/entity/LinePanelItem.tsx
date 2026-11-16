@@ -27,6 +27,7 @@ import { PlanList } from "./PlanList.tsx";
 import { SinceSummary } from "./SinceSummary.tsx";
 import { SummaryBox } from "./SummaryBox.tsx";
 import { TellBox } from "./TellBox.tsx";
+import { useNarrow } from "../../hooks/useNarrow.ts";
 
 /**
  * A line opened, in one column read top to bottom: where it stands and how to move it, what it needs from you, its
@@ -37,6 +38,7 @@ export function LinePanelItem({
   drift,
   stale = null,
   staleAt,
+  onRetry,
 }: {
   line: Line;
   drift: readonly Drift[];
@@ -44,6 +46,8 @@ export function LinePanelItem({
   stale?: Error | null;
   /** When what is shown was last loaded, for a stale panel to say. */
   staleAt?: number;
+  /** Loads it again, after a refresh that failed. */
+  onRetry?: () => void;
 }) {
   const choices = useLineChoices(line);
   const { waiting: choicesWaiting } = useChoices();
@@ -58,6 +62,7 @@ export function LinePanelItem({
   const [seenAt] = useState(line.seenAt);
   const [starting, setStarting] = useState(false);
   const route = useRoute();
+  const narrow = useNarrow();
   const params = route.params;
   // Opened with t from home: straight to Tell.
   const telling = params.get("act") === "tell";
@@ -126,7 +131,7 @@ export function LinePanelItem({
         )
       }
     >
-      {stale === null ? null : <StaleNote at={staleAt} />}
+      {stale === null ? null : <StaleNote at={staleAt} what={line.ref} onRetry={onRetry} />}
       {unmarked === null ? null : (
         <Note error hint={failureText(unmarked).hint}>
           Could not mark {line.ref} seen. {failureText(unmarked).text}
@@ -142,7 +147,12 @@ export function LinePanelItem({
         onRetry={() => void shown.refetch()}
         at={shown.dataUpdatedAt}
       >
-        <PlanList steps={shown.data?.steps ?? []} work={shown.data?.work ?? []} state={line.state} />
+        <PlanList
+          steps={shown.data?.steps ?? []}
+          work={shown.data?.work ?? []}
+          state={line.state}
+          foldMerged={narrow}
+        />
       </Loaded>
       <Loaded
         loaded={since.data !== undefined}

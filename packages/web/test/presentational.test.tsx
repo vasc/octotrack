@@ -1431,8 +1431,8 @@ describe("tabling and a line's own choices", () => {
     fireEvent.click(working.getByRole("button", { name: "Done" }));
     expect(onChoose).toHaveBeenCalledWith("done");
     expect(working.queryByText("Done is final.")).toBeNull();
-    fireEvent.click(working.getByRole("button", { name: "More: drop this line, fold it into another" }));
-    // Nothing to fold into: Fold into is not offered at all.
+    // Nothing to fold into: Fold into is not offered at all, and More's name does not promise it.
+    fireEvent.click(working.getByRole("button", { name: "More: drop this line" }));
     expect(working.queryByRole("menuitem", { name: "Fold into another" })).toBeNull();
     fireEvent.click(working.getByRole("menuitem", { name: "Drop" }));
     expect(onChoose).toHaveBeenCalledWith("drop");
@@ -2762,7 +2762,7 @@ describe("Loaded", () => {
       </Loaded>,
     );
     view.getByText("Plan");
-    view.getByText("As of 14:20; could not refresh.");
+    view.getByText("Could not refresh the plan; as of 14:20.");
     expect(view.queryByText(/Server restarting/)).toBeNull();
   });
 });
