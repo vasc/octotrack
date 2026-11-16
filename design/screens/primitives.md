@@ -102,7 +102,7 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 ### components/ui/Item.tsx
 
 - Designed in: Main.dc.html; Items.dc.html, states A–F
-- What it shows: something opened in place: its kind and facts on one small line, its title, then what it holds in three zones: what it is, what you do, other ways out, a hairline between reading and deciding.
+- What it shows: something opened in place: its kind and facts in one small row, its title, then what it holds in three zones: what it is, what you do, other ways out, a hairline between reading and deciding.
 - Changes from today: a hairline and space separate reading from deciding; the kind word ("Question", "Task for you") is in the attention colour instead of following a dot.
 - Loading: never loads on its own.
 - Error: cannot fail on its own: its owner says failures inside it.
@@ -130,7 +130,7 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 
 - Designed in: Primitives.dc.html, Row; Home.dc.html
 - What it shows: rows divided by hairlines.
-- Changes from today: an empty list is not drawn as an empty box; its owner says why it is empty in one line.
+- Changes from today: an empty list is not drawn as an empty box; its owner says why it is empty in one sentence.
 - Loading: never loads on its own.
 - Error: cannot fail on its own.
 - Empty: renders nothing; the owner's sentence stands in its place.
@@ -265,10 +265,10 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 
 - Designed in: Line.dc.html; Line-States.dc.html; Home.dc.html
 - What it shows: a small title with its count, an aside, then its content.
-- Changes from today: an empty section says why in one line instead of a bare heading or a "0" count.
+- Changes from today: an empty section says why in one sentence instead of a bare heading or a "0" count.
 - Loading: never loads on its own: its owner draws "Loading …" inside it.
 - Error: cannot fail on its own: a failed part is drawn inside it (Line-States H).
-- Empty: the owner's one-line reason, or the section is left out.
+- Empty: the owner's one-sentence reason, or the section is left out.
 
 ### components/ui/Sheet.tsx
 

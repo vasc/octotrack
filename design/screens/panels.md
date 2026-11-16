@@ -16,7 +16,7 @@ importance. Loading, a failed part and not found follow `Line-States.dc.html` st
   - The status moves from the crumb to the facts line under the title (B: "Open").
 - Loading: follows Line-States G: the crumb and Close at once, then "Loading…" naming what loads, never a bare panel.
 - Error: follows Line-States H: "Could not load {ref}. The tracker did not answer." with Try again; a refresh that fails keeps what was shown, marked "as of 14:20" (today "Out of date: {message}"). Not found follows Line-States I: "No {kind} {ref}" with why it may be gone, "Search the log for {ref}" and Close (today "Nothing found for {ref}").
-- Empty: never empty: every item has a title; empty sections are left out or say why in one line.
+- Empty: never empty: every item has a title; empty sections are left out or say why in one sentence.
 
 ### components/entity/EntityCrumbs.tsx
 
@@ -52,9 +52,9 @@ importance. Loading, a failed part and not found follow `Line-States.dc.html` st
 
 ### components/entity/TaskFrees.tsx
 
-- Designed in: More-States.dc.html, state I; Items.dc.html, state A (the one line on the task)
+- Designed in: More-States.dc.html, state I; Items.dc.html, state A (the one row on the task)
 - What it shows: what the task frees, in the task: "Frees PANEL-4 Print the wall mount".
-- Changes from today: a "What it frees" section in the task's panel (More-States I), and one line in the task card (Items A); who holds the freed issue is not drawn.
+- Changes from today: a "What it frees" section in the task's panel (More-States I), and one row in the task card (Items A); who holds the freed issue is not drawn.
 - Loading: never loads on its own: given the linked issues by IssuePanel.
 - Error: cannot fail on its own.
 - Empty: frees nothing: renders nothing.
@@ -63,7 +63,7 @@ importance. Loading, a failed part and not found follow `Line-States.dc.html` st
 
 - Designed in: Panels.dc.html, state A; Line-States.dc.html, state A (a pull request under its issue)
 - What it shows: "Pull requests", then each: its number, state and checks ("#418 open · ✗ checks failing").
-- Changes from today: each pull request is one line of number, state and checks; size and age are not drawn.
+- Changes from today: each pull request is one row of number, state and checks; size and age are not drawn.
 - Loading: "Loading pull requests…" under the heading.
 - Error: follows Line-States H: "Could not load the pull requests. The tracker did not answer." with Try again; earlier ones kept, marked "as of 14:20".
 - Empty: "None yet."
@@ -103,10 +103,10 @@ importance. Loading, a failed part and not found follow `Line-States.dc.html` st
 
 - Designed in: More-States.dc.html, state H
 - What it shows: "Updates" with its count, a box "Post an update", Post, then the updates with level, who and when.
-- Changes from today: none drawn. Following the panel rule that an empty section says why in one line, an empty list says so instead of "Updates 0".
+- Changes from today: none drawn. Following the panel rule that an empty section says why in one sentence, an empty list says so instead of "Updates 0".
 - Loading: the draft loads from the tracker; the box stays usable.
 - Error: a draft not saved: "Not saved: the tracker did not answer. Kept here; saves when it is back." A post that fails follows the Primitives pattern: said under Post, words kept, with Try again (today not shown).
-- Empty: one line saying there are no updates yet, with the box under it.
+- Empty: one sentence saying there are no updates yet, with the box under it.
 
 ### components/entity/OpenDrift.tsx
 

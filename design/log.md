@@ -51,7 +51,7 @@ are design decisions taken there, open to change:
   and space separate reading from acting. A choice's number sits on its label's baseline, at the label's size, and the
   reason for a recommendation lives inside the recommended option.
 - **One column in panels.** A panel reads top to bottom in order of importance; a section with nothing in it says why in
-  one line instead of a bare heading or an empty column.
+  one sentence instead of a bare heading or an empty column.
 - **One focus treatment:** a 1 px mid-grey edge (`#6e7781`) with a 3 px soft halo, outside a control, and the edge
   alone inside a row; on the dark primary button the edge sits 2 px off it. The developer found the first drawing's
   2 px ink ring "too strong", so it was softened; the edge still has 4.5:1 contrast on white, so it passes for

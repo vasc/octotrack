@@ -4,12 +4,12 @@ import { foldedNames } from "../../lib/lines.ts";
 import { List } from "../ui/List.tsx";
 import { TextLink } from "../ui/RefLink.tsx";
 
-/** How many quiet agents show before the rest fold to one line. */
+/** How many quiet agents show before the rest fold to one row. */
 const QUIET_SHOWN = 3;
 
 /**
  * The roster: running, asleep, stopped and gone agents always show, since each may need the developer; quiet ones
- * after the first few fold to one line naming them, which shows the rest.
+ * after the first few fold to one row naming them, which shows the rest.
  */
 export function AgentRoster({
   agents,

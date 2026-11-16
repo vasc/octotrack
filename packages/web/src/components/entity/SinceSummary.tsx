@@ -11,7 +11,7 @@ import { EventRow } from "./EventList.tsx";
 
 /**
  * Until its summary is rewritten, a line lists everything newer than the summary, one row each, with what the
- * developer has already seen folded to one line, so reading the line never means reading its history.
+ * developer has already seen folded to one row, so reading the line never means reading its history.
  */
 export function SinceSummary({
   line,

@@ -57,7 +57,7 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 ### components/home/AtPlaceItems.tsx
 
 - Designed in: Home-States.dc.html, state C
-- What it shows: under each line at a place, that place's tasks open ("Task · TRIP-2 · at home / Call Hotel Jasmin about a third bed"), then the rest folded to one line.
+- What it shows: under each line at a place, that place's tasks open ("Task · TRIP-2 · at home / Call Hotel Jasmin about a third bed"), then the rest folded to one row.
 - Changes from today: none beyond FoldedItems' words.
 - Loading: never loads on its own: given its items by WorkingSection.
 - Error: cannot fail on its own; each task's failures are its own.
@@ -97,7 +97,7 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 - Changes from today: the aside explains the order; on a phone lines from the third on fold to one row each ("3 · Mac mini keeps enough free disk · agents on it").
 - Loading: on first load the rows are outlines under "Working on" (D).
 - Error: cannot fail on its own; a failed move is said beside the line (H).
-- Empty: follows the Primitives pattern: one line saying nothing is being worked on.
+- Empty: follows the Primitives pattern: one sentence saying nothing is being worked on.
 
 ### components/home/SpreadThin.tsx
 
@@ -178,7 +178,7 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 - Changes from today: Up next gains its explaining aside; the Tabled summary ends with what it holds ("· 1 question held", today "· N questions and N tasks held"); at a place Up next, Proposed and Tabled fold shut.
 - Loading: never loads on its own: given the lines by HomePage.
 - Error: cannot fail on its own.
-- Empty: follows the Primitives pattern: an empty Up next says so in one line under its heading, on a phone too (today the phone shows nothing); empty Proposed, Tabled and Done lately are left out.
+- Empty: follows the Primitives pattern: an empty Up next says so in one sentence under its heading, on a phone too (today the phone shows nothing); empty Proposed, Tabled and Done lately are left out.
 
 ### components/home/UpNextRow.tsx
 

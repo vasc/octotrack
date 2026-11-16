@@ -175,7 +175,7 @@ describe("SinceSummary", () => {
     view.getByText(/Seen already/);
   });
 
-  test("with nothing unseen, says so in one line", () => {
+  test("with nothing unseen, says so in one sentence", () => {
     const events = [event({ seq: 1, ts: "2026-11-15T11:00:00Z" })];
     const view = render(
       <SinceSummary line="L-1" events={events} summaryAt={null} seenAt="2026-11-16T00:00:00Z" more={false} />,

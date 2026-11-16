@@ -4,7 +4,7 @@ One line of work, opened in the side panel. Designed on `Line.dc.html` (an up-ne
 `Line-States.dc.html` (states A to J: working with an owner, proposed, tabled, working with no owner, yours, done,
 loading, one part failed, not found, phone), in the canvas at https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU. One
 column, read top to bottom in order of importance: the head, what needs you, the summary, the plan, what happened, the
-owner, then Tell. A section with nothing in it says why in one line instead of showing a bare heading.
+owner, then Tell. A section with nothing in it says why in one sentence instead of showing a bare heading.
 
 ### components/entity/LinePanelItem.tsx
 
@@ -18,7 +18,7 @@ owner, then Tell. A section with nothing in it says why in one line instead of s
   - Phone (J): the panel is the whole screen, "‹ Lines" replaces Close, actions full width.
 - Loading: the head comes from Lines at once; only the slow parts wait, drawn as outlines of their rows (G); "Loading the plan…" is said to screen readers only. While Lines itself is still loading, Owner and For you follow the Primitives pattern ("Loading…" in that section) instead of showing "no owner".
 - Error: one part failed (H): said in that part, "Could not load the plan. The tracker did not answer." with Try again; the rest still works. The plan last loaded stays drawn below it under "As it was at 14:20". Not found (I): "No line L-312 / No line was ever made with that ref; check it for a typo. Lines that were done, dropped or folded still open at their ref." with Close (a folded or dropped line keeps its ref, so only a ref never made lands here). Failed moves, tells and adds are said where they were made (see LineActions, TellBox, OwnWorkBox).
-- Empty: never empty: a line always has a head; each empty section says why in one line.
+- Empty: never empty: a line always has a head; each empty section says why in one sentence.
 
 ### components/entity/LinePanelHead.tsx
 
@@ -78,7 +78,7 @@ owner, then Tell. A section with nothing in it says why in one line instead of s
   - Phone (J): an issue reads "Build kore's ECS image in the pull request / KECS-1 · to do"; several merged PRs fold to "4 pull requests merged ✓".
 - Loading: outlines of the rows in place of the list, under its heading (G); "Loading the plan…" for screen readers only.
 - Error: "Could not load the plan. The tracker did not answer." with Try again (H); the plan last loaded stays drawn below it under "As it was at 14:20".
-- Empty: with no steps and no issues, follows the Primitives pattern: "No plan yet" in one line saying who writes it (the design's empty sections say why, as Summary does).
+- Empty: with no steps and no issues, follows the Primitives pattern: "No plan yet" in one sentence saying who writes it (the design's empty sections say why, as Summary does).
 
 ### components/entity/SinceSummary.tsx
 
@@ -87,7 +87,7 @@ owner, then Tell. A section with nothing in it says why in one line instead of s
 - Changes from today: the heading "So far" becomes "What happened"; each event has its time in the lead ("14:20"); the seen ones are a pressable "Show the 7 you have seen".
 - Loading: follows Line-States G: "Loading what happened…".
 - Error: follows Line-States H: "Could not load what happened. The tracker did not answer." with Try again; earlier events kept, marked "as of 14:20".
-- Empty: "Nothing you have not seen. Show the 7 you have seen"; with no events at all, follows the Primitives pattern: one line saying nothing has happened yet.
+- Empty: "Nothing you have not seen. Show the 7 you have seen"; with no events at all, follows the Primitives pattern: one sentence saying nothing has happened yet.
 
 ### components/entity/OwnerBox.tsx
 

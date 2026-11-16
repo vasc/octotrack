@@ -91,7 +91,7 @@ request status stale, rule breaks), in the canvas at https://claude.ai/artifact/
 ### components/feed/FeedList.tsx
 
 - Designed in: Log.dc.html, state A
-- What it shows: results by day ("Yesterday"), one line each.
+- What it shows: results by day ("Yesterday"), one row each.
 - Changes from today: none in its own words.
 - Loading: never loads on its own: given results by FeedSection.
 - Error: cannot fail on its own.

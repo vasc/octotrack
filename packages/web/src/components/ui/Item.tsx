@@ -3,7 +3,7 @@ import type { Tone } from "./Row.tsx";
 
 /**
  * Something opened in place, such as a question or a task, in three zones always in this order: what it is (its kind
- * and facts on one small line, its title, what it holds), what you do (under a hairline, headed by its label), then
+ * and facts in one small row, its title, what it holds), what you do (under a hairline, headed by its label), then
  * other ways out. It has no box; the row it opens in is its sheet.
  */
 export function Item({
@@ -59,7 +59,7 @@ export function Kind({ tone = "needs", children }: { tone?: Tone; children: Reac
 }
 
 /**
- * What an item is, on its small line: given as words ("Task for you · PANEL-1 · at the bench"), its first part is the
+ * What an item is, in its small row: given as words ("Task for you · PANEL-1 · at the bench"), its first part is the
  * kind word in its tone and the rest are grey facts; given as anything else, it is drawn as given.
  */
 export function KindText({ kind, tone = "needs" }: { kind: ReactNode; tone?: Tone }) {

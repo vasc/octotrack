@@ -2305,7 +2305,7 @@ describe("PullRequestBox", () => {
   test("says it is loading, or why it could not load, instead of None yet", () => {
     const loading = render(<PullRequestBox prs={[]} loading />);
     loading.getByRole("status");
-    expect(loading.queryByText("None yet")).toBeNull();
+    expect(loading.queryByText("None yet.")).toBeNull();
     loading.unmount();
     const failed = render(
       <PullRequestBox
@@ -2315,10 +2315,10 @@ describe("PullRequestBox", () => {
     );
     failed.getByRole("alert");
     failed.getByText(/gh is down/);
-    expect(failed.queryByText("None yet")).toBeNull();
+    expect(failed.queryByText("None yet.")).toBeNull();
   });
 
-  test("shows each pull request with its link, checks, size, opened date and state", () => {
+  test("shows each pull request in one row: its number, state and checks, without size or age", () => {
     const view = render(
       <PullRequestBox
         prs={[
@@ -2329,16 +2329,16 @@ describe("PullRequestBox", () => {
     );
     const box = within(view.getByRole("region", { name: "Pull requests" }));
     within(box.getByRole("heading", { name: /^Pull requests/ })).getByText("2");
-    expect(box.getByRole("link", { name: "acme/app#12" }).getAttribute("href")).toBe(
+    expect(box.getByRole("link", { name: "acme/app#12 ↗" }).getAttribute("href")).toBe(
       "https://github.com/acme/app/pull/12",
     );
-    box.getByRole("link", { name: "acme/app#13" });
+    box.getByRole("link", { name: "acme/app#13 ↗" });
     box.getByText("Add retry");
     box.getByText("Drop the cache");
     box.getByText("✓ checks pass");
     box.getByText("✗ checks failing");
-    expect(box.getAllByText("+10 −2")).toHaveLength(2);
-    expect(box.getAllByText(`opened ${whenText(pr().createdAt)}`)).toHaveLength(2);
+    expect(box.queryByText("+10 −2")).toBeNull();
+    expect(box.queryByText(/^opened /)).toBeNull();
     box.getByText("merged");
   });
 
@@ -2350,7 +2350,7 @@ describe("PullRequestBox", () => {
   test("with none yet says so", () => {
     const view = render(<PullRequestBox prs={[]} />);
     view.getByRole("heading", { name: /^Pull requests/ });
-    view.getByText("None yet");
+    view.getByText("None yet.");
     expect(view.queryByRole("link")).toBeNull();
   });
 });

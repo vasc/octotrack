@@ -9,7 +9,7 @@ import { Pairs, Stack } from "../ui/Pairs.tsx";
 
 /**
  * A pull request opened by its ref: its state, where it lives, who opened it and how long ago, and its size, in one
- * line; then its facts, a conflict first among them; then what its author wrote.
+ * row of facts; then its facts, a conflict first among them; then what its author wrote.
  */
 export function PrPanel({ pr, now = Date.now() }: { pr: PullRequest; now?: number }) {
   const state = pr.state.charAt(0).toUpperCase() + pr.state.slice(1);

@@ -176,7 +176,7 @@
       "y": 3160,
       "w": 880,
       "fill": "gray",
-      "text": "One column, read top to bottom in order of importance: the head (where it stands, done when, its moves), what needs you, the summary, the plan with its issues and pull requests, what happened, the owner, then Tell. Nothing sits in an empty right column. A section with nothing in it says why in one line instead of showing a bare heading."
+      "text": "One column, read top to bottom in order of importance: the head (where it stands, done when, its moves), what needs you, the summary, the plan with its issues and pull requests, what happened, the owner, then Tell. Nothing sits in an empty right column. A section with nothing in it says why in one sentence instead of showing a bare heading."
     },
     "t-question": {
       "x": 0,

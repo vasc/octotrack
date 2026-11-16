@@ -39,7 +39,7 @@ describe("EntityCrumbs", () => {
 });
 
 describe("PrPanel", () => {
-  test("says its state, where it lives, who opened it and its size in one line, then a conflict first among its facts", () => {
+  test("says its state, where it lives, who opened it and its size in one row of facts, then a conflict first among them", () => {
     const view = render(
       <PrPanel
         pr={pr({

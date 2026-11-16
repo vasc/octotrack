@@ -608,7 +608,7 @@ The title shown in the generic panel:
 - Kind: widget (section)
 - Shown when: the line panel's right column, after the feed loads.
 - Used by: LinePanelItem
-- Purpose: everything newer than the summary, with what was already seen folded to one line.
+- Purpose: everything newer than the summary, with what was already seen folded to one row.
 - Data shown: Section titled `"So far"` (no summaryAt) or `"New since the summary"`. Count = number of newer events. Aside:
   - `"newest only"` when there may be more
   - link `"This line in the log"` → `/log?q=line:L-n` (in-app; Cmd-click opens a new tab)
