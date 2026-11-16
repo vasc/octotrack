@@ -2172,8 +2172,8 @@ describe("UnseenLog", () => {
     within(groups[0] ?? document.body).getByText(/created: Base/);
     within(groups[0] ?? document.body).getByText("1 unseen");
     expect(view.queryByText("Plan set")).toBeNull();
-    view.getByRole("button", { name: "Show" });
-    view.getByText("Up next and tabled: 1 more");
+    view.getByRole("button", { name: "Include them" });
+    view.getByText("Up next and tabled lines are left out.");
   });
 
   test("with nothing to show, says nothing is new", () => {

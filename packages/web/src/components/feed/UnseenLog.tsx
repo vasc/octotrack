@@ -88,11 +88,11 @@ export function UnseenLog({
       ) : refused.length === 0 ? (
         <EmptyState>Nothing new</EmptyState>
       ) : null}
-      {includeWaiting || waiting.length === 0 ? null : (
+      {includeWaiting || leftOut === 0 ? null : (
         <Actions>
-          <Note>Up next and tabled: {leftOut} more</Note>
+          <Note>Up next and tabled lines are left out.</Note>
           <Button variant="quiet" onClick={onShowWaiting}>
-            Show
+            Include them
           </Button>
         </Actions>
       )}
