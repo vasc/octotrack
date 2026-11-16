@@ -61,7 +61,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       ...(closeTop === null ? {} : { Escape: closeTop }),
     };
   }, [entity, keysOpen, openKeys, closeKeys, at, setAt, path]);
-  useHotkeys(keys);
+  // The key list is a sheet the shell opens, so while it is open the keys that close it act over it; every other
+  // shell key stands down under a sheet, as the page's do.
+  useHotkeys(keys, { overSheets: keysOpen });
   return (
     <>
       <TopBar

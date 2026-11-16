@@ -59,7 +59,8 @@ export function StartSheet({
           ),
     [armed, waiting],
   );
-  useHotkeys(keys);
+  // Its number keys answer inside the sheet it opens.
+  useHotkeys(keys, { overSheets: true });
   const failure = held.error ?? questions.error;
   // One sheet throughout: while what the line holds loads, or if it failed to, the sheet says so in its place.
   const loading = held.isPending || questions.isPending || failure !== null;

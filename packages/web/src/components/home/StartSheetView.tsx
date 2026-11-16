@@ -55,7 +55,6 @@ export function StartSheetView({
     <Sheet
       title={`Start ${line.title}`}
       onClose={onCancel}
-      numbered
       {...(sheetRef === undefined ? {} : { ref: sheetRef })}
       actions={
         <Actions>

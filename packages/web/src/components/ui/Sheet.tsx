@@ -1,4 +1,5 @@
-import { type ReactNode, type Ref, useId } from "react";
+import { type ReactNode, type Ref, useEffect, useId, useRef } from "react";
+import { holdKeysForSheet, InSheetProvider } from "../../hooks/useHotkeys.ts";
 import { createPortal } from "react-dom";
 import { Button } from "./Button.tsx";
 
@@ -13,7 +14,6 @@ export function Sheet({
   closeLabel = "Cancel",
   children,
   actions,
-  numbered = false,
   ref,
 }: {
   title: string;
@@ -22,11 +22,24 @@ export function Sheet({
   closeLabel?: "Cancel" | "Close";
   children: ReactNode;
   actions?: ReactNode;
-  /** Its choices are numbered for the keys, so their numbers are drawn. */
-  numbered?: boolean;
   ref?: Ref<HTMLDivElement>;
 }) {
   const heading = useId();
+  const dialog = useRef<HTMLDivElement | null>(null);
+  // The keys of the page behind stand down while it is open; its own, inside it, act.
+  useEffect(() => holdKeysForSheet(), []);
+  // The page behind is outside React's reach from here, and a sheet keeps the focus until it closes: on opening it
+  // takes the focus unless a box inside already has it, and the page behind it can be neither focused nor clicked.
+  useEffect(() => {
+    const element = dialog.current;
+    if (element !== null && !element.contains(document.activeElement)) element.focus();
+    const page = document.getElementById("root");
+    if (page === null || page.inert) return;
+    page.inert = true;
+    return () => {
+      page.inert = false;
+    };
+  }, []);
   return createPortal(
     <div className="ui-sheet-layer">
       {/* A tap outside closes it, as Esc does for the keyboard. */}
@@ -36,8 +49,12 @@ export function Sheet({
         aria-modal="true"
         aria-labelledby={heading}
         className="ui-sheet"
-        ref={ref}
-        data-current={numbered ? "true" : undefined}
+        tabIndex={-1}
+        ref={(element) => {
+          dialog.current = element;
+          if (typeof ref === "function") ref(element);
+          else if (ref !== undefined && ref !== null) ref.current = element;
+        }}
         onKeyDown={(event) => {
           if (event.key !== "Escape") return;
           event.stopPropagation();
@@ -50,8 +67,10 @@ export function Sheet({
             {closeLabel}
           </Button>
         </header>
-        <div className="ui-sheet-body">{children}</div>
-        {actions === undefined ? null : <footer className="ui-sheet-foot">{actions}</footer>}
+        <InSheetProvider value>
+          <div className="ui-sheet-body">{children}</div>
+          {actions === undefined ? null : <footer className="ui-sheet-foot">{actions}</footer>}
+        </InSheetProvider>
       </div>
     </div>,
     document.body,

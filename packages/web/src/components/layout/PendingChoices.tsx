@@ -29,23 +29,21 @@ export function PendingChoices() {
   useHotkeys(keys);
   // The live region stays mounted while empty, so the first choice made is announced too.
   return (
-    <>
-      <UndoBar
-        pending={choices.pending}
-        refused={refused.items}
-        onDismiss={refused.dismiss}
-        now={now}
-        lines={lines}
-        onUndo={choices.undo}
-        onPause={(id, line) => {
-          choices.undo(id);
-          choices.make(
-            contracts.lineQueue.name,
-            { ref: line },
-            `Pausing ${lines[line]?.title ?? line}: up next`,
-          );
-        }}
-      />
-    </>
+    <UndoBar
+      pending={choices.pending}
+      refused={refused.items}
+      onDismiss={refused.dismiss}
+      now={now}
+      lines={lines}
+      onUndo={choices.undo}
+      onPause={(id, line) => {
+        choices.undo(id);
+        choices.make(
+          contracts.lineQueue.name,
+          { ref: line },
+          `Pausing ${lines[line]?.title ?? line}: up next`,
+        );
+      }}
+    />
   );
 }

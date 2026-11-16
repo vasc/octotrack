@@ -10,6 +10,7 @@ import { Section } from "../src/components/ui/Section.tsx";
 import { List } from "../src/components/ui/List.tsx";
 import { Row } from "../src/components/ui/Row.tsx";
 import { Sheet } from "../src/components/ui/Sheet.tsx";
+import { useHotkeys } from "../src/hooks/useHotkeys.ts";
 import { Options } from "../src/components/ui/Options.tsx";
 import { Badge, StatusBadge } from "../src/components/ui/Badge.tsx";
 import { Facts } from "../src/components/ui/Facts.tsx";
@@ -300,5 +301,40 @@ describe("Toast", () => {
       </Toast>,
     );
     view.getByText(/Did not happen:/);
+  });
+});
+
+function PageKeys({ onJ }: { onJ(): void }) {
+  useHotkeys({ j: onJ });
+  return null;
+}
+
+function SheetKeys({ onOne }: { onOne(): void }) {
+  useHotkeys({ "1": onOne });
+  return <p>inside</p>;
+}
+
+describe("a sheet holds the keys", () => {
+  test("keys behind an open sheet stand down, its own keys act, and it takes the focus", () => {
+    const onJ = mock(() => {});
+    const onOne = mock(() => {});
+    const view = render(
+      <>
+        <PageKeys onJ={onJ} />
+        <Sheet title="New line" onClose={() => {}}>
+          <SheetKeys onOne={onOne} />
+        </Sheet>
+      </>,
+    );
+    fireEvent.keyDown(window, { key: "j" });
+    expect(onJ).not.toHaveBeenCalled();
+    fireEvent.keyDown(window, { key: "1" });
+    expect(onOne).toHaveBeenCalledTimes(1);
+    expect(view.getByRole("dialog", { name: "New line" }).contains(document.activeElement)).toBe(true);
+    view.unmount();
+    const after = render(<PageKeys onJ={onJ} />);
+    fireEvent.keyDown(window, { key: "j" });
+    expect(onJ).toHaveBeenCalledTimes(1);
+    after.unmount();
   });
 });
