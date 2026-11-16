@@ -22,9 +22,9 @@ ways out. A hairline separates reading from deciding.
 - Changes from today:
   - A visible "Your answer" label heads the options; with no recommendation it reads "Your answer · roadtrip makes no recommendation" (G).
   - Answered (C): the pick is marked ✓, the other options step back, and "Sending to roadtrip in 4 s" with Undo shows in the card, not only in the Undo bar.
-  - Phone (K): no key numbers, every target 44 px, options full width with short labels, buttons "Own words" and "Later".
+  - Phone (K): no key numbers, every target 44 px, options full width; the buttons keep their wide-screen words, so each has one name for a screen reader.
 - Loading: never loads on its own: given its question by DecisionCardItem.
-- Error: could not send (E): the pick stays marked, and under it "Not sent. The tracker did not answer. Your pick is kept." with Send again. A draft that cannot be saved follows the Primitives pattern: "Not saved: the tracker did not answer. Kept here; saves when it is back." Later, Bring back and Not urgent failures follow the Primitives pattern: said under the actions, with Try again.
+- Error: could not send (E): said in the Undo bar, as every choice the tracker never took is: "Did not happen: Sending … The tracker did not answer." with Dismiss (design log, "A choice the tracker never took"). A draft that cannot be saved follows the Primitives pattern: "Not saved: the tracker did not answer. Kept here; saves when it is back." Later, Bring back and Not urgent failures follow the Primitives pattern: said under the actions, with Try again.
 - Empty: no options (H): the own-words box is already open with placeholder "Write your answer", and Send and Later under it. No context: the context paragraph is left out.
 
 ### components/decisions/QuestionStrip.tsx

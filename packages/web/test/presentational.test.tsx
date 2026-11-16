@@ -117,7 +117,7 @@ describe("DecisionCardView", () => {
     within(redis).getByText(/It is already deployed\./);
   });
 
-  test("shows what is needed to decide: question, context, options, recommendation, reasons, blocked work", () => {
+  test("shows what is needed to decide: question, context, options and the recommendation, not its ranking", () => {
     const view = render(
       <DecisionCardView
         form={form()}
@@ -152,7 +152,8 @@ describe("DecisionCardView", () => {
     );
     view.getByRole("heading", { name: "Which queue?" });
     view.getByText("We need at-least-once delivery.");
-    view.getByText("2 agents waiting");
+    // The strip says who asked; what the question holds up and why it ranks are not drawn.
+    expect(view.queryByText("2 agents waiting")).toBeNull();
     // Numbered for its key: the number is drawn by the button itself, so a touch screen can leave it out.
     expect(view.getByRole("button", { name: "SQS" }).getAttribute("data-choice")).toBe("1");
     view.getByText("Managed");
@@ -160,8 +161,7 @@ describe("DecisionCardView", () => {
     within(redis).getByText("Recommended");
     expect(redis.getAttribute("data-recommended")).toBe("true");
     expect(view.getByRole("button", { name: "SQS" }).getAttribute("data-recommended")).toBeNull();
-    view.getByRole("button", { name: "OCT-4" });
-    expect(view.queryByRole("button", { name: "OCT-5" })).toBeNull();
+    expect(view.queryByRole("button", { name: "OCT-4" })).toBeNull();
   });
 
   test("one press on an option answers it", () => {
@@ -273,6 +273,36 @@ describe("DecisionCardView", () => {
     view.getByText("Saved as you type, on every device");
     fireEvent.click(view.getByRole("button", { name: "Back to the options" }));
     expect(closeOwn).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("QuestionStrip, as drawn", () => {
+  test("is the kind, the ref, who asked and how long ago, and nothing more", () => {
+    const view = render(
+      <QuestionStrip
+        card={decisionCard({
+          reasons: ["2 agents waiting"],
+          decision: decision({ requestedBy: "roadtrip", createdAt: "2026-11-14T12:00:00Z" }),
+        })}
+        line={null}
+        now={Date.parse("2026-11-16T12:00:00Z")}
+      />,
+    );
+    view.getByText("asked by roadtrip");
+    view.getByText("2d");
+    expect(view.queryByText("2 agents waiting")).toBeNull();
+  });
+
+  test("a question put off says when", () => {
+    const view = render(
+      <QuestionStrip
+        card={decisionCard({ decision: decision({ postponedAt: "2026-11-16T11:00:00Z" }) })}
+        line={null}
+        now={Date.parse("2026-11-16T12:00:00Z")}
+      />,
+    );
+    view.getByText("Later");
+    view.getByText("put off 1h ago");
   });
 });
 

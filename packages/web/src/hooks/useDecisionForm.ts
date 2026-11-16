@@ -10,7 +10,7 @@ import { useResolveDecision } from "./useResolveDecision.ts";
 export interface WaitingAnswer {
   /** The option picked, or null for words. */
   chosen: string | null;
-  /** Where it goes: the line's title, or the question's ref. */
+  /** Who it goes to: the agent that asked. */
   to: string;
   dueAt: string;
   undo(): void;
@@ -72,7 +72,8 @@ export function useDecisionForm(decision: Decision, onPostponed?: (ref: string) 
         ? null
         : {
             chosen: pending.draft === null ? picked : null,
-            to,
+            // Who it goes to: the agent that asked.
+            to: decision.requestedBy,
             dueAt: pending.dueAt,
             undo: () => choices.undo(pending.id),
           },
