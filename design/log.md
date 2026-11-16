@@ -61,6 +61,13 @@ are design decisions taken there, open to change:
 - **A failure is said where it happened,** with what to do and Try again, and the tracker's own hint when it sends one.
   Raw error text never reaches the page. Data that could not refresh stays, marked with the time it is from.
 - **Illustrative content is labelled.** Where no real data exists for a state, the drawing says so on the board.
+- **No button carries a key hint.** "Close esc", "Undo u" and "Later l" were drawn on some buttons and not others,
+  and the developer found "Close esc" "a strange way of specifying the short cut, no other buttons have it". Keys are
+  listed once, in the Keys sheet (`?`), and a choice's number is its own key.
+- **A lone fact is a label over its sentence.** "Done when" was a one-row two-column table whose gutter the developer
+  called "weird"; a single fact is a small grey label stacked over its sentence, and only several facts together
+  (Waits for, Look again, Held) form a table.
+- **Loading is drawn, not said.** Outlines of the rows show something loads; the words are for screen readers only.
 
 These answer the open question "States not on the specimen": hover, focus, pressed, disabled and busy are drawn side by
 side on the Primitives board.

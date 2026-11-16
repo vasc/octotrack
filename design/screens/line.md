@@ -16,22 +16,22 @@ owner, then Tell. A section with nothing in it says why in one line instead of s
   - Done or dropped (F): read only, with "Plan, summary and history stay below, as they were when it closed."
   - Working with no owner (D): the step-in sentence and its actions sit at the head, not in the owner's note.
   - Phone (J): the panel is the whole screen, "‹ Lines" replaces Close, actions full width.
-- Loading: the head comes from Lines at once; only the slow parts wait and say what: "Loading the plan…", and the same for what happened (G). While Lines itself is still loading, Owner and For you follow the Primitives pattern ("Loading…" in that section) instead of showing "no owner".
-- Error: one part failed (H): said in that part, "Could not load the plan. The tracker did not answer." with Try again; the rest still works. What was shown before is kept below it, marked "as of 14:20". Not found (I): "No line L-312 / It may have been folded into another line or never existed. Search the log for it to see what happened." with "Search the log for L-312" and Close. Failed moves, tells and adds are said where they were made (see LineActions, TellBox, OwnWorkBox).
+- Loading: the head comes from Lines at once; only the slow parts wait, drawn as outlines of their rows (G); "Loading the plan…" is said to screen readers only. While Lines itself is still loading, Owner and For you follow the Primitives pattern ("Loading…" in that section) instead of showing "no owner".
+- Error: one part failed (H): said in that part, "Could not load the plan. The tracker did not answer." with Try again; the rest still works. The plan last loaded stays drawn below it under "As it was at 14:20". Not found (I): "No line L-312 / No line was ever made with that ref; check it for a typo. Lines that were done, dropped or folded still open at their ref." with Close (a folded or dropped line keeps its ref, so only a ref never made lands here). Failed moves, tells and adds are said where they were made (see LineActions, TellBox, OwnWorkBox).
 - Empty: never empty: a line always has a head; each empty section says why in one line.
 
 ### components/entity/LinePanelHead.tsx
 
 - Designed in: Line.dc.html; Line-States.dc.html, states A–F, J
-- What it shows: crumbs (state and place in order, ref, repo), Close with its key, the title, "Done when …", then the line's moves.
+- What it shows: crumbs (state and place in order, ref, repo), Close, the title, "Done when" over its sentence, then the line's moves.
 - Changes from today:
-  - Crumbs read "Up next, 3rd of 10 · L-3 · LimbicAI/hydra" (today "Up next · Line 3 of 10 · L-3 · hydra"); owned lines add "yours" (E); the repo is its GitHub name.
-  - Close shows its key: "Close esc"; on a phone it is "‹ Lines" (J).
+  - Crumbs read "Up next · 3rd of your 10 up-next lines · L-3 · LimbicAI/hydra" (working lines: "Working on · 1st of the 4 lines you are working on") (today "Up next · Line 3 of 10 · L-3 · hydra"); owned lines add "yours" (E); the repo is its GitHub name.
+  - Close carries no key hint (Esc is in the Keys sheet); on a phone it is "‹ Lines" (J).
   - Opened from another panel (Panels F): "‹ Back to L-57" beside Close; Esc and Back go one step back, Close shuts the panel (today Close goes back).
   - Proposed (B): "Proposed by ttube, 2d ago · L-59 · TTUBE", then "Recommended: start it." with its reason, above the moves.
   - Tabled (C): "Waits for", "Look again" and "Held: 1 question, 2 tasks, released when it starts" at the top.
   - Done (F): "Done · closed by you, Tue 14:02 · L-19".
-  - "Done when" is a labelled pair, not a sentence.
+  - "Done when" is a small grey label stacked over its sentence at body size, not a one-row two-column table.
 - Loading: never loads on its own: the head comes from Lines at once (G).
 - Error: cannot fail on its own: it only draws what it is given.
 - Empty: no done when: the pair is left out.
@@ -76,8 +76,8 @@ owner, then Tell. A section with nothing in it says why in one line instead of s
   - Not scoped: the aside reads "not scoped yet · 4 issues already on it", and the unplaced work sits under "Not on a step yet · these join a step when the plan is set".
   - Pull requests are listed with their check: "#405 merged · ✓".
   - Phone (J): an issue reads "Build kore's ECS image in the pull request / KECS-1 · to do"; several merged PRs fold to "4 pull requests merged ✓".
-- Loading: "Loading the plan…" in place of the list, under its heading (G).
-- Error: "Could not load the plan. The tracker did not answer." with Try again (H); the plan shown before stays below, marked "as of 14:20".
+- Loading: outlines of the rows in place of the list, under its heading (G); "Loading the plan…" for screen readers only.
+- Error: "Could not load the plan. The tracker did not answer." with Try again (H); the plan last loaded stays drawn below it under "As it was at 14:20".
 - Empty: with no steps and no issues, follows the Primitives pattern: "No plan yet" in one line saying who writes it (the design's empty sections say why, as Summary does).
 
 ### components/entity/SinceSummary.tsx
@@ -102,7 +102,7 @@ owner, then Tell. A section with nothing in it says why in one line instead of s
 
 - Designed in: Line-States.dc.html, state E
 - What it shows: "Add a task or a note", one box, then "Add as a task", "Add as a note" and "Hand to an agent".
-- Changes from today: "Hand to an agent" sits here, beside the add buttons; while sending, the button shows its busy word (Primitives Button).
+- Changes from today: "Hand to an agent" sits here, beside the add buttons, and gives the line back to the agents: one with a checkout of its repo takes it as for any started line, and with no repo named it first asks which; tasks and notes stay; while sending, the button shows its busy word (Primitives Button).
 - Loading: the draft loads from the tracker; follows the Primitives pattern: the box stays usable and is not cleared when the draft arrives.
 - Error: draft not saved: "Not saved: the tracker did not answer. Kept here; saves when it is back." under the box. A failed add follows the Primitives pattern: said under the buttons, words kept, with Try again.
 - Empty: both add buttons are off while the box is empty.

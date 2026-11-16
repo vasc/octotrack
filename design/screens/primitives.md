@@ -44,7 +44,7 @@ load and cannot fail on their own; where they draw a state for their owner, it i
   - Pressed darkens one step (today not drawn).
   - Disabled is a flat grey fill with grey text, not 50% opacity, and says why next to it when not obvious.
   - Busy keeps the width and swaps the verb for its -ing form ("Starting…", "Tabling…"); the icon button's fourth state is open, while its menu shows.
-  - Key hints sit inside the button ("Undo u", "Close esc").
+  - No button carries a key hint; keys are listed in the Keys sheet, and a choice's number is its key.
 - Loading: the busy state above.
 - Error: cannot fail on its own: what it started reports in place.
 - Empty: never empty: a button always has a verb or an icon with a name.
@@ -219,7 +219,7 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 ### components/ui/Panel.tsx
 
 - Designed in: Line.dc.html; Line-States.dc.html, states G, H, I, J; Panels.dc.html, state F
-- What it shows: the crumb, Close with its key ("Close esc"), the title, then the sections; opened from another panel, "‹ Back to L-57" beside Close; on a phone the whole screen with "‹ Lines".
+- What it shows: the crumb, Close, the title, then the sections; opened from another panel, "‹ Back to L-57" beside Close; on a phone the whole screen with "‹ Lines".
 - Changes from today: Back is its own button; Close always shuts the panel; Close shows its key.
 - Loading: drawn at once with what is known; sections say what they load (Line-States G).
 - Error: not found (Line-States I) and a failed part (H) are drawn inside it by its owner.
@@ -309,7 +309,7 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 ### components/ui/states.tsx
 
 - Designed in: Primitives.dc.html, Messages in place; Home-States.dc.html, states A, D, E
-- What it shows: LoadingState ("Loading the plan…"), ErrorState ("Could not load the plan. The tracker did not answer." with Try again, the tracker's hint as the line under it), EmptyState (why it is empty and how to fill it, with the command: "No lines yet … octo guide").
+- What it shows: LoadingState (outlines of the rows; "Loading the plan…" for screen readers only), ErrorState ("Could not load the plan. The tracker did not answer." with Try again, the tracker's hint as the line under it), EmptyState (why it is empty and how to fill it, with the command: "No lines yet … octo guide").
 - Changes from today: ErrorState has Try again and shows the tracker's hint; raw error text (a parse error, a schema mismatch) never shows, it becomes "The tracker sent something this page does not understand. Reload."; the states sit at the row inset, not flush with the edge.
 - Loading: LoadingState itself.
 - Error: ErrorState itself.

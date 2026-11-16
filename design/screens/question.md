@@ -10,7 +10,7 @@ ways out. A hairline separates reading from deciding.
 
 - Designed in: Main.dc.html; Question-States.dc.html, states B, C, D, E, G, H, K
 - What it shows: DecisionCardView wired to the question's form and keys: `1`–`9` pick, `w` own words, `l` later, `u` undo while it waits.
-- Changes from today: the key hints are drawn on the controls themselves (`In my own words w`, `Later l`, `Undo u`); while an answer waits, Undo sits inside the card (C), so `u` and the button act on the same thing. "Background" is not drawn on any state.
+- Changes from today: no button carries a key hint (the keys are in the Keys sheet; an option's number is its key); while an answer waits, Undo sits inside the card (C), so `u` and the button act on the same thing. "Background" is not drawn on any state.
 - Loading: never loads on its own: it is given the question by QuestionList, ForYouItem or DecisionPanel.
 - Error: as DecisionCardView: "Not sent. The tracker did not answer. Your pick is kept." with Send again, in the card (E).
 - Empty: never empty: it exists only for an open question; a question with no options is DecisionCardView's state H.
