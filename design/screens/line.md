@@ -83,7 +83,7 @@ owner, then Tell. A section with nothing in it says why in one sentence instead 
 
 ### components/entity/StepStatusMenu.tsx
 
-- Designed in: Line.dc.html, the plan
+- Designed in: Line-States.dc.html, state A, the plan
 - What it shows: a plain menu button at the end of a step's row naming its status, "To do", "Under way" or "Done", with the caret; opened, the three choices with [check] beside the one in force. Its name says the step: "Step 2, Print and test-fit: to do".
 - Picking: a different status is sent at once (no Undo, as picking the old one again puts it back); the button reads "Changing…" while it is on its way.
 - Loading: none of its own; it is drawn with its plan, which has loaded.
