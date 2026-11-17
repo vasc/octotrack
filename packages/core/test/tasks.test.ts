@@ -71,7 +71,7 @@ function world() {
   };
 }
 
-describe("tasks: what only the developer can do", () => {
+describe("tasks: what the developer is asked to do", () => {
   test("a task has a place from the developer's list, an outcome to report, and frees the issue its filer holds", () => {
     const w = world();
     const task = w.as(w.owner, c.taskFile, {
@@ -109,12 +109,12 @@ describe("tasks: what only the developer can do", () => {
     expect(w.as(w.dev, c.issueList, { query: `ref:${other.ref}` })[0]?.issue.status).toBe("cancelled");
   });
 
-  test("places are the developer's own list", () => {
+  test("places are one list, kept by the developer or by an agent they asked", () => {
     const w = world();
     expect(w.as(w.dev, c.placeList, {}).map((place) => place.name)).toEqual(["the bench", "the Mac"]);
-    expect(w.refusal(() => w.as(w.owner, c.placeAdd, { name: "the garage" })).code).toBe("forbidden");
+    w.as(w.owner, c.placeAdd, { name: "the garage" });
     w.as(w.dev, c.placeRemove, { name: "the Mac" });
-    expect(w.as(w.dev, c.placeList, {}).map((place) => place.name)).toEqual(["the bench"]);
+    expect(w.as(w.dev, c.placeList, {}).map((place) => place.name)).toEqual(["the bench", "the garage"]);
   });
 
   test("a question a task would settle waits behind it, and comes back if the task does not settle it", () => {

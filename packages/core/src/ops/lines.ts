@@ -24,7 +24,7 @@ import { addToInbox } from "../store/inbox.ts";
 import { bind } from "./bind.ts";
 import { LOG_SEEN_KEY } from "./feed.ts";
 import { buildHome } from "./home.ts";
-import { requireDeveloper, requireDeveloperInPerson } from "./developer.ts";
+import { requireDeveloperInPerson } from "./developer.ts";
 import { branchOfLine, loadPlan } from "./plan.ts";
 
 /** Below this gap two ranks are too close to split again, so the section is renumbered. */
@@ -163,7 +163,6 @@ function move(
   extra: { tabledReason?: string; lookAgainAt?: string | null } = {},
 ): Line {
   const rule = MOVES[name];
-  requireDeveloper(ctx, `${name} a line`);
   const current = requireLine(ctx, rawRef);
   if (current.state === rule.to && name !== "table") return current;
   const allowed: readonly LineState[] = rule.from;
@@ -254,7 +253,6 @@ function targetRank(
 
 export const lineOps = [
   bind(contracts.lineAdd, (ctx, input) => {
-    requireDeveloper(ctx, "add a line");
     if (input.where === "tabled" && input.reason === undefined) {
       throw new OctoError("invalid_input", "A tabled line needs a reason", 'Pass --reason "<why not now>".');
     }
@@ -275,7 +273,6 @@ export const lineOps = [
   }),
 
   bind(contracts.linePropose, (ctx, input) => {
-    if (input.place !== undefined) requireDeveloper(ctx, `${input.place} a line`);
     const line = insertLine(ctx, {
       title: input.title,
       doneWhen: input.doneWhen,
@@ -309,7 +306,6 @@ export const lineOps = [
   bind(contracts.lineDone, (ctx, input) => move(ctx, input.ref, "done")),
   bind(contracts.lineDrop, (ctx, input) => move(ctx, input.ref, "drop")),
   bind(contracts.lineReject, (ctx, input) => {
-    requireDeveloper(ctx, "say a proposal is not a line");
     const line = requireLine(ctx, input.ref);
     if (line.state === "proposed") {
       // Not a line ends the work made for it, and returns older work to no line, where drift asks for a home for it.
@@ -363,7 +359,6 @@ export const lineOps = [
   }),
 
   bind(contracts.lineFold, (ctx, input) => {
-    requireDeveloper(ctx, "fold a line");
     const current = requireLine(ctx, input.ref);
     const into = requireLine(ctx, input.into);
     if (current.ref === into.ref) throw new OctoError("invalid_input", "A line cannot fold into itself");
@@ -404,7 +399,6 @@ export const lineOps = [
   }),
 
   bind(contracts.lineOrder, (ctx, input) => {
-    requireDeveloper(ctx, "reorder lines");
     const current = requireLine(ctx, input.ref);
     if (ENDED.has(current.state))
       throw new OctoError("conflict", `${current.ref} already ended, so it has no place`);
@@ -530,7 +524,6 @@ export const lineOps = [
   }),
 
   bind(contracts.lineDoneWhenAnswer, (ctx, input) => {
-    requireDeveloper(ctx, "answer a proposed done when");
     const line = requireLine(ctx, input.ref);
     if (line.doneWhenProposal === null)
       throw new OctoError("conflict", `${line.ref} has no proposed done when`);
@@ -579,7 +572,6 @@ export const lineOps = [
   }),
 
   bind(contracts.lineNotYet, (ctx, input) => {
-    requireDeveloper(ctx, "say a line is not done");
     const line = requireLine(ctx, input.ref);
     if (line.doneProposal === null) throw new OctoError("conflict", `Nobody proposed ${line.ref} is done`);
     const changes = applyPatch(ctx, "lines", line.ref, line, { doneProposal: null, doneProposedBy: null });
@@ -604,7 +596,6 @@ export const lineOps = [
   }),
 
   bind(contracts.lineOwn, (ctx, input) => {
-    requireDeveloper(ctx, "own a line");
     const line = requireLine(ctx, input.ref);
     if (line.state !== "working") {
       throw new OctoError("conflict", `${line.ref} is not being worked on`, "Start it first, then own it.");
@@ -624,7 +615,6 @@ export const lineOps = [
   }),
 
   bind(contracts.lineHand, (ctx, input) => {
-    requireDeveloper(ctx, "hand a line to the agents");
     const line = requireLine(ctx, input.ref);
     if (line.ownedBy === null) throw new OctoError("conflict", `${line.ref} is not the developer's own`);
     if (input.repos !== undefined) setRepos(ctx, line.ref, checkRepos(ctx, input.repos));
@@ -649,7 +639,6 @@ export const lineOps = [
   }),
 
   bind(contracts.lineAcceptRecommended, (ctx, input) => {
-    requireDeveloper(ctx, "place proposals");
     return input.refs.flatMap((ref): Line[] => {
       const line = requireLine(ctx, ref);
       if (line.state !== "proposed") return [];

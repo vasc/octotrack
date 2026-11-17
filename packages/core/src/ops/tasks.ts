@@ -14,7 +14,7 @@ import { allLines, findEntity, requireIssue, requireLine } from "../store/entiti
 import { addToInbox } from "../store/inbox.ts";
 import { DecisionRow, IssueRow } from "../store/rows.ts";
 import { bind } from "./bind.ts";
-import { requireDeveloper, requireDeveloperInPerson } from "./developer.ts";
+import { requireDeveloperInPerson } from "./developer.ts";
 import { withdrawQuestion } from "./decisions.ts";
 import { createIssue } from "./issues.ts";
 import { addLink } from "./links.ts";
@@ -419,21 +419,18 @@ export const taskOps = [
   }),
 
   bind(contracts.taskDone, (ctx, input) => {
-    requireDeveloper(ctx, "finish a task");
     const task = requireTask(ctx, input.ref);
     const outcome = outcomeOf(task, input.values ?? {}, input.result ?? null);
     return closeTask(ctx, task, "done", outcome.result, outcome.said);
   }),
 
   bind(contracts.taskCant, (ctx, input) => {
-    requireDeveloper(ctx, "say a task cannot be done");
     return closeTask(ctx, requireTask(ctx, input.ref), "cant", input.why);
   }),
 
   bind(contracts.placeList, (ctx) => places(ctx)),
 
   bind(contracts.placeAdd, (ctx, input) => {
-    requireDeveloper(ctx, "add a place");
     const exists = places(ctx).some((place) => place.name.toLowerCase() === input.name.toLowerCase());
     if (!exists) {
       ctx.sql.run(
@@ -446,7 +443,6 @@ export const taskOps = [
   }),
 
   bind(contracts.placeRemove, (ctx, input) => {
-    requireDeveloper(ctx, "remove a place");
     const { changes } = ctx.sql.run("DELETE FROM places WHERE lower(name) = lower(?)", [input.name]);
     if (changes > 0) emitPlace(ctx, "place.removed", input.name, `${input.name} removed from the places`);
     return places(ctx);
@@ -496,7 +492,6 @@ export const taskOps = [
   }),
 
   bind(contracts.taskAdd, (ctx, input) => {
-    requireDeveloper(ctx, "add a task of their own");
     const line = requireLine(ctx, input.line);
     if (line.ownedBy !== DEVELOPER) {
       throw new OctoError(

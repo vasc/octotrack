@@ -67,7 +67,7 @@ export const lineCommands: Command[] = [
   {
     path: ["line", "add"],
     usage: "<title>",
-    summary: "Add a line of work where it belongs (the developer)",
+    summary: "Add a line of work where it belongs",
     options: {
       ...lineFields,
       where: { ...STRING, description: "working, up_next (default) or tabled" },
@@ -243,8 +243,7 @@ export const lineCommands: Command[] = [
   {
     path: ["line", "tell"],
     usage: "<LINE> [words]",
-    summary:
-      "Tell a line's owner something, or whoever holds --issue; with no words it is a nudge (the developer)",
+    summary: "Tell a line's owner something, or whoever holds --issue; with no words it is a nudge",
     options: { issue: { ...STRING, description: "The issue it is about: it goes to whoever holds it" } },
     examples: ['octo line tell L-2 "Use the white filament" --me', "octo line tell L-2 --issue PANEL-6 --me"],
     ops: [c.lineTell.name],
@@ -313,7 +312,7 @@ export const lineCommands: Command[] = [
   {
     path: ["line", "done-when-answer"],
     usage: "<REF>",
-    summary: "Accept a proposed done when, or keep the one there is (the developer)",
+    summary: "Accept a proposed done when, or keep the one there is",
     options: {
       accept: { type: "boolean", description: "Take the proposal" },
       keep: { type: "boolean", description: "Keep the done when there is" },
@@ -328,8 +327,8 @@ export const lineCommands: Command[] = [
       out.result(outcome, () => `${r.bold(outcome.data.ref)} is done when: ${outcome.data.doneWhen}`);
     },
   },
-  doneWhenAnswer("accept", true, "Accept the proposed done when (the developer)"),
-  doneWhenAnswer("reject", false, "Keep the done when there is, turning the proposal down (the developer)"),
+  doneWhenAnswer("accept", true, "Accept the proposed done when"),
+  doneWhenAnswer("reject", false, "Keep the done when there is, turning the proposal down"),
   {
     path: ["line", "propose-done"],
     usage: "<REF> <why>",
@@ -346,7 +345,7 @@ export const lineCommands: Command[] = [
   {
     path: ["line", "not-yet"],
     usage: "<REF> [what is missing]",
-    summary: "Turn down a proposal that a line is done; its owner hears what is missing (the developer)",
+    summary: "Turn down a proposal that a line is done; its owner hears what is missing",
     ops: [c.lineNotYet.name],
     async run({ client, out }, args) {
       const why = args.positionals.slice(1).join(" ");
@@ -372,7 +371,7 @@ export const lineCommands: Command[] = [
   {
     path: ["line", "own"],
     usage: "<REF>",
-    summary: "I'll own it: the line becomes yours and its agents wind down (the developer)",
+    summary: "I'll own it: the line becomes yours and its agents wind down",
     ops: [c.lineOwn.name],
     async run({ client, out }, args) {
       const outcome = await client.call(c.lineOwn, { ref: args.requirePositional(0, "REF") });
@@ -382,7 +381,7 @@ export const lineCommands: Command[] = [
   {
     path: ["line", "hand"],
     usage: "<REF>",
-    summary: "Hand a line you own back to the agents (the developer)",
+    summary: "Hand a line you own back to the agents",
     options: { repo: { ...MANY, short: "r", description: "Its repos, when it names none" } },
     ops: [c.lineHand.name],
     async run({ client, out }, args) {
@@ -396,7 +395,7 @@ export const lineCommands: Command[] = [
   {
     path: ["line", "accept-recommended"],
     usage: "<REF...>",
-    summary: "Place proposals where their agents recommend; folds are left for you (the developer)",
+    summary: "Place proposals where their agents recommend; folds are left for you",
     ops: [c.lineAcceptRecommended.name],
     async run({ client, out }, args) {
       const outcome = await client.call(c.lineAcceptRecommended, { refs: args.requirePositionals("REF") });

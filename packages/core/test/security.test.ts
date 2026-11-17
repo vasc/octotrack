@@ -154,14 +154,12 @@ describe("what an agent may say about itself and its repos", () => {
     );
   });
 
-  test("an agent names its repo once, and only the developer changes a repo's GitHub name, which must be owner/name", () => {
+  test("an agent names its repo once, and anyone may change a repo's GitHub name, which must be owner/name", () => {
     const w = world();
     w.as(w.dev, c.projectCreate, { key: "OCT", name: "Octotrack" });
     expect(w.refused(() => w.as(w.agent("panel"), c.agentRegister, { repo: "OCT" })).code).toBe("forbidden");
     expect(w.as(w.agent("panel"), c.agentRegister, { repo: "PANEL" }).repo).toBe("PANEL");
-    expect(
-      w.refused(() => w.as(w.agent("panel"), c.projectUpdate, { ref: "OCT", repo: "evil/repo" })).code,
-    ).toBe("forbidden");
+    expect(w.as(w.agent("panel"), c.projectUpdate, { ref: "OCT", repo: "vasc/oct" }).repo).toBe("vasc/oct");
     expect(w.refused(() => w.as(w.dev, c.projectUpdate, { ref: "OCT", repo: "not a slug" })).code).toBe(
       "invalid_input",
     );

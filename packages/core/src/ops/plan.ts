@@ -17,7 +17,6 @@ import {
   PlanStepRow as PlanStepRowSchema,
 } from "../store/rows.ts";
 import { bind } from "./bind.ts";
-import { requireDeveloper } from "./developer.ts";
 import { emitLine, insertLine } from "./lines.ts";
 
 const ENDED: ReadonlySet<LineState> = new Set(["done", "dropped"]);
@@ -472,20 +471,21 @@ export const planOps = [
       throw new OctoError("conflict", `${branch.address} already became ${branch.became.ref}`);
     }
     const where = input.where ?? "up_next";
-    if (ctx.developer && where === "tabled" && input.reason === undefined) {
+    // Placed where it is said to go: by the developer always, by an agent when it says where; else a proposal.
+    const placing = ctx.developer || input.where !== undefined;
+    if (placing && where === "tabled" && input.reason === undefined) {
       throw new OctoError("invalid_input", "A tabled line needs a reason", 'Pass --reason "<why not now>".');
     }
-    if (!ctx.developer && input.where !== undefined) requireDeveloper(ctx, "place a line");
     const created = insertLine(ctx, {
       title: input.title ?? branch.title,
       doneWhen: input.doneWhen,
       repos: line.repos,
-      state: ctx.developer ? where : "proposed",
-      tabledReason: ctx.developer && where === "tabled" ? (input.reason ?? null) : null,
+      state: placing ? where : "proposed",
+      tabledReason: placing && where === "tabled" ? (input.reason ?? null) : null,
       lookAgainAt: null,
-      proposedBy: ctx.developer ? null : ctx.actor,
-      recommendation: ctx.developer ? null : (input.recommendation ?? "up_next"),
-      recommendationWhy: ctx.developer
+      proposedBy: placing ? null : ctx.actor,
+      recommendation: placing ? null : (input.recommendation ?? "up_next"),
+      recommendationWhy: placing
         ? null
         : (input.why ?? `It grew out of branch ${branch.address} of ${line.ref}, ${line.title}.`),
     });
@@ -515,9 +515,9 @@ export const planOps = [
     const placed = requireLine(ctx, created.ref);
     emitLine(
       ctx,
-      ctx.developer ? "line.added" : "line.proposed",
+      placed.state === "proposed" ? "line.proposed" : "line.added",
       placed,
-      ctx.developer
+      placed.state !== "proposed"
         ? `${placed.ref} added, ${placed.state.replace("_", " ")}: ${placed.title}, from branch ${branch.address} of ${line.ref}`
         : `${placed.ref} proposed by ${ctx.actor}: ${placed.title}, from branch ${branch.address} of ${line.ref}`,
     );

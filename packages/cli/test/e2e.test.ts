@@ -1098,7 +1098,7 @@ describe("lines of work from the CLI", () => {
   const Line = z.object({ ref: z.string(), state: z.string(), title: z.string() });
   const Home = z.object({ working: z.array(Line), upNext: z.array(Line), proposed: z.array(Line) });
 
-  test("the developer adds and orders lines with --me; an agent proposes and relays with --said", async () => {
+  test("the developer adds and orders lines with --me; an agent proposes, and places lines itself", async () => {
     const first = await data(
       Line,
       [
@@ -1144,12 +1144,8 @@ describe("lines of work from the CLI", () => {
     );
     expect(proposal.state).toBe("proposed");
 
-    const refused = await octo(["line", "start", proposal.ref, "--json"], "panel-agent");
-    expect(refused.code).toBe(1);
-    expect(refused.stdout).toContain('"forbidden"');
-    expect(refused.stdout).toContain("--said");
-    expect(refused.stdout).not.toContain("--me");
-
+    const queued = await data(Line, ["line", "queue", proposal.ref], "panel-agent");
+    expect(queued.state).toBe("up_next");
     const started = await data(
       Line,
       ["line", "start", proposal.ref, "--said", "yes, start the wall mount"],

@@ -64,7 +64,7 @@ describe("lines of work", () => {
     expect(tabled.lookAgainAt).toBe("2027-02-01");
   });
 
-  test("an agent proposes; only the developer places, unless the agent quotes what the developer said", () => {
+  test("an agent proposes, or places a line itself; the developer's words, when quoted, stay with the event", () => {
     const h = withRepos();
     const proposal = h.call(
       c.linePropose,
@@ -80,9 +80,7 @@ describe("lines of work", () => {
     expect(proposal.state).toBe("proposed");
     expect(proposal.proposedBy).toBe("panel-widgets");
 
-    const refused = refusal(() => h.call(c.lineStart, { ref: proposal.ref }, "panel-widgets"));
-    expect(refused.code).toBe("forbidden");
-    expect(refused.hint).toContain("--said");
+    expect(h.call(c.lineQueue, { ref: proposal.ref }, "panel-widgets").state).toBe("up_next");
 
     const started = h.tracker.call(
       c.lineStart,

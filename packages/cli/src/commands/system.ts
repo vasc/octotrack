@@ -270,7 +270,7 @@ export const systemCommands: Command[] = [
   {
     path: ["agent", "stop"],
     usage: "<name>",
-    summary: "Stop an agent: its claims end and its writes are refused until lifted (the developer)",
+    summary: "Stop an agent: its claims end and its writes are refused until lifted",
     options: { reason: { ...STRING, description: "Why, which the agent is told" } },
     ops: [c.agentStop.name],
     async run({ client, out }, args) {
@@ -284,7 +284,7 @@ export const systemCommands: Command[] = [
   {
     path: ["agent", "release"],
     usage: "<name>",
-    summary: "End an agent's claim on its line, such as one that went quiet (the developer)",
+    summary: "End an agent's claim on its line, such as one that went quiet",
     ops: [c.agentRelease.name],
     async run({ client, out }, args) {
       const outcome = await client.call(c.agentRelease, { name: args.requirePositional(0, "name") });
@@ -294,7 +294,7 @@ export const systemCommands: Command[] = [
   {
     path: ["agent", "lift"],
     usage: "<name>",
-    summary: "Lift an agent's stop (the developer)",
+    summary: "Lift an agent's stop",
     ops: [c.agentLift.name],
     async run({ client, out }, args) {
       const outcome = await client.call(c.agentLift, { name: args.requirePositional(0, "name") });

@@ -50,8 +50,9 @@ ${wakeSection(adapters)}
 Your repo is read from your checkout's remote. Names shaped like a ref (GARDEN-2) are refused, and so are dev, octotrack
 and github. You are never the developer. When the developer answers one of your questions in conversation, or tells
 you a decision, record it yourself: \`octo question resolve D-3 b\`, \`octo question record "<title>" --chosen "<what>"\`.
-When they tell you to do one of their other operations (start a line, stop an agent), relay their words with
-\`--said "<exactly what they said>"\`. Either is recorded with your name.
+Nothing in the tracker is out of your reach: when they tell you to start a line, table one, stop an agent or anything
+else, do it, and pass their words with \`--said "<exactly what they said>"\` so the log shows why. Either way it is
+recorded with your name.
 
 ## Taking a line
 
@@ -119,7 +120,7 @@ It belongs to your line and the issue you hold; its answer comes back to whoever
 their next command, and wakes them if they are asleep. Urgent is for working lines and three reasons only:
 --urgent time_boxed, costs_money or broken. The developer can send it back as not urgent.
 
-## Things only the developer can do
+## Things the developer does with their hands
 
 A measurement, a login, a play-test: file a task, at one of the developer's places.
 
@@ -130,8 +131,8 @@ A measurement, a login, a play-test: file a task, at one of the developer's plac
 
 The task frees the issue you hold. Name each thing to send back with --field, a short label on one line with no = or
 :, such as Length: the developer gets a one-line box for each, and Done needs them all. Its outcome comes back to you
-like an answer, one "Name: value" per field. The task is the developer's from then on: only they finish it, or say it
-cannot be done. If they tell you the outcome in conversation, relay it with their words:
+like an answer, one "Name: value" per field. When they tell you the outcome in conversation, record it yourself, with
+their words:
 
   octo task done PANEL-9 --value "Length=41 mm" --said "<exactly what they said>"
 
@@ -143,8 +144,9 @@ a new task.
   octo line propose "Wall mount" --done-when "It hangs flush, cable hidden" -r PANEL \\
     --recommend up_next --why "The enclosure's final print moves the mounting points"
 
-Only the developer places lines. When they ask you in conversation to start or queue a new one, propose it with
---place start or --place queue and --said, and it is placed at once. Work on no line in your repo shows as
+Propose a line when it is your idea, so the developer decides where it goes. When they ask you in conversation to
+start or queue one, place it yourself: propose it with --place start or --place queue and --said, or move a line that
+exists with octo line start, queue or table. Work on no line in your repo shows as
 unplaced-work drift: put each issue on its line, or propose a line for it, and re-propose or reject the proposals that
 came from before. An issue that waits on the developer is a task: file it, and close the issue.
 

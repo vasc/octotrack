@@ -30,7 +30,7 @@ export const runnerCommands: Command[] = [
   {
     path: ["runner", "retry"],
     usage: "<LINE>",
-    summary: "Try now: start a session for a line again without waiting (the developer)",
+    summary: "Try now: start a session for a line again without waiting",
     options: {
       same: { type: "boolean", description: "Also every other line whose start stopped the same way" },
       anyway: { type: "boolean", description: "Start one anyway, past the cap, once" },
@@ -61,7 +61,7 @@ export const runnerCommands: Command[] = [
   {
     path: ["repo", "checkout"],
     usage: "<REPO> <path> [--retry L-n]",
-    summary: "Set a repo's main checkout on this machine, where new worktrees are made (the developer)",
+    summary: "Set a repo's main checkout on this machine, where new worktrees are made",
     ops: [c.repoCheckout.name],
     options: {
       retry: {

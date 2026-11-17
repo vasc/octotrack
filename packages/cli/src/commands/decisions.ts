@@ -213,7 +213,7 @@ export const decisionCommands: Command[] = [
   {
     path: ["question", "change"],
     usage: "<REF> [option]",
-    summary: "Change answer: answer a question again, sent as replacing the earlier answer (the developer)",
+    summary: "Change answer: answer a question again, sent as replacing the earlier answer",
     options: {
       option: { ...STRING, short: "o", description: "The chosen option key" },
       note: { ...STRING, short: "n", description: "Why, or the answer when no option applies" },
@@ -404,7 +404,7 @@ export const decisionCommands: Command[] = [
   {
     path: ["decision", "not-urgent"],
     usage: "<REF>",
-    summary: "Send an urgent question back to its place in the line order (the developer)",
+    summary: "Send an urgent question back to its place in the line order",
     ops: [c.decisionNotUrgent.name],
     async run({ client, out }, args) {
       const outcome = await client.call(c.decisionNotUrgent, { ref: args.requirePositional(0, "REF") });

@@ -11,7 +11,7 @@ import { requireIssue, requireLine } from "../store/entities.ts";
 import { addToInbox, inboxFor, recipientOf } from "../store/inbox.ts";
 import { WakeRow } from "../store/rows.ts";
 import { bind } from "./bind.ts";
-import { requireDeveloper, requireServer } from "./developer.ts";
+import { requireServer } from "./developer.ts";
 
 const CountRow = z.object({ n: z.number() });
 
@@ -34,7 +34,6 @@ function wakeable(agent: WakeRow, now: string): boolean {
 
 export const inboxOps = [
   bind(contracts.lineTell, (ctx, input) => {
-    requireDeveloper(ctx, "tell a line");
     const line = requireLine(ctx, input.line);
     const issue = input.issue === undefined ? null : requireIssue(ctx, input.issue);
     if (issue !== null && issue.line !== line.ref) {

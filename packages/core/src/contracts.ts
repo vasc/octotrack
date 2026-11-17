@@ -263,7 +263,7 @@ export const contracts = {
   ),
   runnerRetry: write(
     "runner.retry",
-    "Try now: start a session for a line again without waiting; with same, every line stopped the same way; with anyway, past the cap, once (the developer)",
+    "Try now: start a session for a line again without waiting; with same, every line stopped the same way; with anyway, past the cap, once",
     z.strictObject({ line: z.string(), same: z.boolean().optional(), anyway: z.boolean().optional() }),
     z.object({ lines: z.array(z.string()) }),
   ),
@@ -330,7 +330,7 @@ export const contracts = {
   ),
   repoCheckout: write(
     "repo.checkout",
-    "Set a repo's main checkout on this machine, where new worktrees are made; with retry, then Try now on that line (the developer)",
+    "Set a repo's main checkout on this machine, where new worktrees are made; with retry, then Try now on that line",
     z.strictObject({
       repo: z.string(),
       path: z.string().refine((path) => path.startsWith("/"), "An absolute path"),
@@ -395,7 +395,7 @@ export const contracts = {
   ),
   lineAdd: write(
     "line.add",
-    "Add a line of work where it belongs (the developer)",
+    "Add a line of work where it belongs",
     z.strictObject({
       title: Text,
       doneWhen: Text,
@@ -655,7 +655,7 @@ export const contracts = {
   ),
   taskDone: write(
     "task.done",
-    "Done: report the task's outcome, which goes to whoever holds the issue it frees (the developer)",
+    "Done: report the task's outcome, which goes to whoever holds the issue it frees",
     z.strictObject({
       ref: z.string(),
       /** The outcome, or for a task with named outcomes, a note beside them. */
@@ -667,18 +667,13 @@ export const contracts = {
   ),
   taskCant: write(
     "task.cant",
-    "Can't do it: say why, which closes the task as not done (the developer)",
+    "Can't do it: say why, which closes the task as not done",
     z.strictObject({ ref: z.string(), why: Text }),
     Issue,
   ),
   placeList: read("place.list", "The places the developer does tasks, in their order", Empty, z.array(Place)),
-  placeAdd: write("place.add", "Add a place (the developer)", z.strictObject({ name: Text }), z.array(Place)),
-  placeRemove: write(
-    "place.remove",
-    "Remove a place (the developer)",
-    z.strictObject({ name: z.string() }),
-    z.array(Place),
-  ),
+  placeAdd: write("place.add", "Add a place", z.strictObject({ name: Text }), z.array(Place)),
+  placeRemove: write("place.remove", "Remove a place", z.strictObject({ name: z.string() }), z.array(Place)),
   heldList: read(
     "held.list",
     "Questions and tasks held on a line, each saying whether it is still current",
@@ -699,7 +694,7 @@ export const contracts = {
   ),
   taskAdd: write(
     "task.add",
-    "Add a task of your own to a line you own, at a place or none (the developer)",
+    "Add a task of your own to a line you own, at a place or none",
     z.strictObject({
       line: z.string(),
       title: Text,
@@ -710,7 +705,7 @@ export const contracts = {
   ),
   noteAdd: write(
     "note.add",
-    "Add a note to a line you own (the developer)",
+    "Add a note to a line you own",
     z.strictObject({ line: z.string(), body: Text }),
     z.object({ line: z.string() }),
   ),
@@ -740,7 +735,7 @@ export const contracts = {
   ),
   lineDoneWhenAnswer: write(
     "line.done_when_answer",
-    "Accept a proposed done when, or keep the one there is (the developer)",
+    "Accept a proposed done when, or keep the one there is",
     z.strictObject({ ref: z.string(), accept: z.boolean() }),
     Line,
   ),
@@ -752,37 +747,37 @@ export const contracts = {
   ),
   lineNotYet: write(
     "line.not_yet",
-    "Turn down a proposal that a line is done, saying what is missing; the owner hears it (the developer)",
+    "Turn down a proposal that a line is done, saying what is missing; the owner hears it",
     z.strictObject({ ref: z.string(), why: Text.optional() }),
     Line,
   ),
   lineAcceptRecommended: write(
     "line.accept_recommended",
-    "Place proposals where their agents recommend, all at once; folds are left for the developer (the developer)",
+    "Place proposals where their agents recommend, all at once; folds are left for the developer",
     z.strictObject({ refs: z.array(z.string()).min(1) }),
     z.array(Line),
   ),
   lineOwn: write(
     "line.own",
-    "I'll own it: the line becomes the developer's, and its agents wind down (the developer)",
+    "I'll own it: the line becomes the developer's, and its agents wind down",
     z.strictObject({ ref: z.string() }),
     Line,
   ),
   lineHand: write(
     "line.hand",
-    "Hand a line the developer owns back to the agents, naming its repos if it has none (the developer)",
+    "Hand a line the developer owns back to the agents, naming its repos if it has none",
     z.strictObject({ ref: z.string(), repos: z.array(z.string()).optional() }),
     Line,
   ),
   decisionNotUrgent: write(
     "decision.not_urgent",
-    "Send an urgent question back to its place in the line order (the developer)",
+    "Send an urgent question back to its place in the line order",
     z.strictObject({ ref: z.string() }),
     Decision,
   ),
   lineTell: write(
     "line.tell",
-    "Tell a line's owner something, or whoever holds an issue on it; with no words it is a nudge (the developer)",
+    "Tell a line's owner something, or whoever holds an issue on it; with no words it is a nudge",
     z.strictObject({ line: z.string(), body: z.string(), issue: z.string().optional() }),
     z.object({ line: z.string(), to: z.string().nullable() }),
   ),
@@ -1098,22 +1093,17 @@ export const contracts = {
   ),
   agentStop: write(
     "agent.stop",
-    "Stop an agent: its claims end and every write under its name is refused until lifted (the developer)",
+    "Stop an agent: its claims end and every write under its name is refused until lifted",
     z.strictObject({ name: z.string(), reason: Text.optional() }),
     AgentView,
   ),
   agentRelease: write(
     "agent.release",
-    "End an agent's claim on its line, such as one that went quiet; it may take a line again (the developer)",
+    "End an agent's claim on its line, such as one that went quiet; it may take a line again",
     z.strictObject({ name: z.string() }),
     AgentView,
   ),
-  agentLift: write(
-    "agent.lift",
-    "Lift an agent's stop (the developer)",
-    z.strictObject({ name: z.string() }),
-    AgentView,
-  ),
+  agentLift: write("agent.lift", "Lift an agent's stop", z.strictObject({ name: z.string() }), AgentView),
   lineTake: write(
     "line.take",
     "Take a line: by ref, or with none the line you should be on. Says what to do next",

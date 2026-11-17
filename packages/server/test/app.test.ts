@@ -285,7 +285,7 @@ describe("knowing which build answers", () => {
     expect(failed.headers.get("x-octo-build")).toBe("abc123");
   });
 
-  test("an agent's developer operation is refused with 403, and --said lets it through", async () => {
+  test("an agent moves a line itself; only what belongs to the developer's own screen is refused with 403", async () => {
     await op("project.create", { key: "OCT", name: "Octotrack" });
     const added = await post(
       "/api/ops/line.propose",
@@ -293,19 +293,17 @@ describe("knowing which build answers", () => {
       { "x-octo-actor": "panel" },
     );
     expect(added.status).toBe(200);
-    const refused = await post("/api/ops/line.start", { input: { ref: "L-1" } }, { "x-octo-actor": "panel" });
-    expect(refused.status).toBe(403);
+    const started = await post("/api/ops/line.start", { input: { ref: "L-1" } }, { "x-octo-actor": "panel" });
+    expect(started.status).toBe(200);
     const relayed = await post(
-      "/api/ops/line.start",
+      "/api/ops/line.queue",
       { input: { ref: "L-1" } },
-      { "x-octo-actor": "panel", "x-octo-said": encodeURIComponent("yes, start it") },
+      { "x-octo-actor": "panel", "x-octo-said": encodeURIComponent("put it up next") },
     );
     expect(relayed.status).toBe(200);
-    const developer = await post(
-      "/api/ops/line.done",
-      { input: { ref: "L-1" } },
-      { "x-octo-developer": "1" },
-    );
+    const seen = await post("/api/ops/seen", { input: {} }, { "x-octo-actor": "panel" });
+    expect(seen.status).toBe(403);
+    const developer = await post("/api/ops/seen", { input: {} }, { "x-octo-developer": "1" });
     expect(developer.status).toBe(200);
   });
 });
@@ -333,27 +331,18 @@ describe("who is calling", () => {
 
 describe("a call that names an agent is never the developer", () => {
   test("whatever developer or dashboard headers it carries", async () => {
-    await post(
-      "/api/ops/project.create",
-      { input: { key: "OCT", name: "Octotrack" } },
-      { "x-octo-developer": "1" },
-    );
-    await post(
-      "/api/ops/line.add",
-      { input: { title: "Enclosure", doneWhen: "Done.", repos: ["OCT"], where: "up_next" } },
-      { "x-octo-developer": "1" },
-    );
     const claims: Record<string, string>[] = [
       { "x-octo-actor": "mallory", "x-octo-developer": "1" },
       { "x-octo-actor": "mallory", "x-octo-channel": "dashboard" },
     ];
+    // Marking things seen is the developer's own: a call naming an agent never passes as them.
     for (const headers of claims) {
-      const response = await post("/api/ops/line.start", { input: { ref: "L-1" } }, headers);
+      const response = await post("/api/ops/seen", { input: {} }, headers);
       expect(response.status).toBe(403);
     }
     const asDeveloper = await post(
-      "/api/ops/line.start",
-      { input: { ref: "L-1" } },
+      "/api/ops/seen",
+      { input: {} },
       { "x-octo-actor": "dev", "x-octo-developer": "1" },
     );
     expect(asDeveloper.status).toBe(200);

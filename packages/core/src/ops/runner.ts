@@ -20,7 +20,6 @@ import { one, placeholders, rows } from "../store/context.ts";
 import { allLines, requireLine, requireProject } from "../store/entities.ts";
 import { AgentRow, WakeRow } from "../store/rows.ts";
 import { bind } from "./bind.ts";
-import { requireDeveloper } from "./developer.ts";
 
 const MINUTE_MS = 60_000;
 /** A start that fails at once is tried again after these waits, then every six hours. */
@@ -788,7 +787,6 @@ export const runnerOps = [
   }),
 
   bind(contracts.runnerRetry, (ctx, input) => {
-    requireDeveloper(ctx, "start a session again");
     const line = requireLine(ctx, input.line);
     const last = latestOn(ctx, line.ref, "owner");
     // Try now on one stopped line retries every line stopped the same way: one fix, such as logging in, fixes all.
@@ -1036,7 +1034,6 @@ export const runnerOps = [
   }),
 
   bind(contracts.repoCheckout, (ctx, input) => {
-    requireDeveloper(ctx, "set a repo's checkout");
     const project = requireProject(ctx, input.repo);
     ctx.sql.run("UPDATE projects SET checkout = ? WHERE ref = ?", [input.path, project.ref]);
     emit(ctx, {

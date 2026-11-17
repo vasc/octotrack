@@ -55,7 +55,7 @@ export const taskCommands: Command[] = [
   {
     path: ["task", "done"],
     usage: "<REF> [outcome]",
-    summary: "Report a task's outcome; it goes to whoever holds the issue it frees (the developer)",
+    summary: "Report a task's outcome; it goes to whoever holds the issue it frees",
     options: {
       value: {
         ...MANY,
@@ -91,7 +91,7 @@ export const taskCommands: Command[] = [
   {
     path: ["task", "cant"],
     usage: "<REF> <why>",
-    summary: "Say a task cannot be done, and why (the developer)",
+    summary: "Say a task cannot be done, and why",
     ops: [c.taskCant.name],
     async run({ client, out }, args) {
       const outcome = await client.call(c.taskCant, {
@@ -117,7 +117,7 @@ export const taskCommands: Command[] = [
   {
     path: ["place", "add"],
     usage: "<name>",
-    summary: "Add a place (the developer)",
+    summary: "Add a place",
     ops: [c.placeAdd.name],
     async run({ client, out }, args) {
       const outcome = await client.call(c.placeAdd, { name: args.positionals.join(" ") });
@@ -127,7 +127,7 @@ export const taskCommands: Command[] = [
   {
     path: ["place", "remove"],
     usage: "<name>",
-    summary: "Remove a place (the developer)",
+    summary: "Remove a place",
     ops: [c.placeRemove.name],
     async run({ client, out }, args) {
       const outcome = await client.call(c.placeRemove, { name: args.positionals.join(" ") });
@@ -188,7 +188,7 @@ export const taskCommands: Command[] = [
   {
     path: ["task", "add"],
     usage: "<LINE> <title>",
-    summary: "Add a task of your own to a line you own (the developer)",
+    summary: "Add a task of your own to a line you own",
     options: { place: { ...STRING, description: "One of your places, if it is done at one" } },
     ops: [c.taskAdd.name],
     async run({ client, out }, args) {
@@ -206,7 +206,7 @@ export const taskCommands: Command[] = [
   {
     path: ["note", "add"],
     usage: "<LINE> <text>",
-    summary: "Add a note to a line you own (the developer)",
+    summary: "Add a note to a line you own",
     ops: [c.noteAdd.name],
     async run({ client, out }, args) {
       const outcome = await client.call(c.noteAdd, {

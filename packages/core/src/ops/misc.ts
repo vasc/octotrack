@@ -38,7 +38,6 @@ import {
 } from "../store/rows.ts";
 import { cancelWatch, checkWatch, createWatch, listWatches } from "../watch/engine.ts";
 import { bind } from "./bind.ts";
-import { requireDeveloper } from "./developer.ts";
 import { buildIssueCard, buildPrCard, buildProjectCard, comparePrCards } from "./cards.ts";
 import { buildQueue } from "./decisions.ts";
 import { listFeed } from "./feed.ts";
@@ -191,7 +190,6 @@ export const miscOps = [
   bind(contracts.updatePost, (ctx, input) => postUpdate(ctx, input)),
 
   bind(contracts.noteAdd, (ctx, input) => {
-    requireDeveloper(ctx, "add a note to a line of theirs");
     const line = requireLine(ctx, input.line);
     if (line.ownedBy !== DEVELOPER) {
       throw new OctoError(

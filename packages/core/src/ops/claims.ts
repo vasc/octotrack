@@ -21,7 +21,6 @@ import { waitsOn } from "../plan.ts";
 import { loadPlan } from "./plan.ts";
 import { bind } from "./bind.ts";
 import { staleHeldOn } from "./tasks.ts";
-import { requireDeveloper } from "./developer.ts";
 
 const CountRow = z.object({ n: z.number() });
 
@@ -36,6 +35,11 @@ function requireSelf(ctx: Ctx): Agent {
   const agent = getAgent(ctx, ctx.actor);
   if (agent === null) throw new OctoError("internal", `Agent ${ctx.actor} is not registered`);
   return agent;
+}
+
+/** Who made a change, as a notice names them: the developer, or the agent by its name. */
+function whoDid(ctx: Ctx): string {
+  return ctx.developer ? "The developer" : ctx.actor;
 }
 
 function requireAgent(ctx: Ctx, name: string): Agent {
@@ -286,7 +290,6 @@ export const claimOps = [
   }),
 
   bind(contracts.agentStop, (ctx, input) => {
-    requireDeveloper(ctx, "stop an agent");
     const agent = requireAgent(ctx, input.name);
     const reason = input.reason ?? null;
     ctx.sql.run("UPDATE agents SET stoppedAt = ?, stoppedReason = ? WHERE name = ?", [
@@ -300,7 +303,7 @@ export const claimOps = [
       agent.name,
       "stop",
       claim?.line ?? null,
-      `The developer stopped you${reason === null ? "" : `: ${reason}`}. Every write under your name is refused until they lift it.`,
+      `${whoDid(ctx)} stopped you${reason === null ? "" : `: ${reason}`}. Every write under your name is refused until it is lifted.`,
       false,
     );
     emit(ctx, {
@@ -316,7 +319,6 @@ export const claimOps = [
   }),
 
   bind(contracts.agentRelease, (ctx, input) => {
-    requireDeveloper(ctx, "release an agent's line");
     const agent = requireAgent(ctx, input.name);
     const claim = endClaim(ctx, agent.name, "released");
     if (claim !== null) {
@@ -325,7 +327,7 @@ export const claimOps = [
         agent.name,
         "released",
         claim.line,
-        `The developer released you from ${claim.line}; its issues went back to the line. Run octo line take for what to do next.`,
+        `${whoDid(ctx)} released you from ${claim.line}; its issues went back to the line. Run octo line take for what to do next.`,
         true,
       );
     }
@@ -333,7 +335,6 @@ export const claimOps = [
   }),
 
   bind(contracts.agentLift, (ctx, input) => {
-    requireDeveloper(ctx, "lift a stop");
     const agent = requireAgent(ctx, input.name);
     ctx.sql.run("UPDATE agents SET stoppedAt = NULL, stoppedReason = NULL, stopRanAt = NULL WHERE name = ?", [
       agent.name,

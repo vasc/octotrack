@@ -232,7 +232,10 @@ describe("the developer's own line", () => {
     expect(w.as(w.dev, c.homeShow, {}).lines[mine.ref]?.forYou.map((item) => item.kind)).toEqual(["task"]);
     const theirs = w.line("Enclosure");
     expect(() => w.as(w.dev, c.taskAdd, { line: theirs.ref, title: "Not mine" })).toThrow();
-    expect(() => w.as(w.agent("panel"), c.noteAdd, { line: mine.ref, body: "x" })).toThrow();
+    // An agent the developer asked may add a note there too.
+    expect(w.as(w.agent("panel"), c.noteAdd, { line: mine.ref, body: "Box 2 is in the shed." }).line).toBe(
+      mine.ref,
+    );
   });
 });
 
@@ -356,12 +359,14 @@ describe("the developer's stop command", () => {
 });
 
 describe("a repo's checkout", () => {
-  test("is set by the developer only, and kept on the repo", () => {
+  test("is set by the developer or an agent, must be an absolute path, and is kept on the repo", () => {
     const w = world();
     expect(w.as(w.dev, c.repoCheckout, { repo: "PANEL", path: "/src/homepanel" }).checkout).toBe(
       "/src/homepanel",
     );
-    expect(() => w.as(w.agent("panel"), c.repoCheckout, { repo: "PANEL", path: "/tmp/evil" })).toThrow();
+    expect(w.as(w.agent("panel"), c.repoCheckout, { repo: "PANEL", path: "/src/panel" }).checkout).toBe(
+      "/src/panel",
+    );
     expect(() => w.as(w.dev, c.repoCheckout, { repo: "PANEL", path: "relative/path" })).toThrow();
   });
 

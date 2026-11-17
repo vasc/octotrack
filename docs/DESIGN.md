@@ -345,20 +345,23 @@ Decisions made from that:
   started keeps its line until the developer releases it from Agents, where its last command shows how long it has been.
 - **Old names keep working for at least a phase** (`decision.*`, `project:`, M-, I- and U- refs), and the riskiest
   automation, the automatic Stop and the runner, first runs in a mode that only records what it would have done.
-- **Who may do what, as built after the audit.** Only the server records wakes, starts, exits and closes. Answering,
-  Later, reopening, replacing and recording a question are open to agents with no permission asked: the developer
-  answers in conversation, and the agent records it; the log shows who recorded it, and the developer's words when the
-  agent passes `--said`. _Why:_ the developer, on finding agents refused: "I don't want idiotic permissions", "This is
-  about tracking agent work", "An agent must track and answer I wrote to them". Withdrawing one is for the developer,
+- **No permissions over the work.** Octotrack tracks agents' work; it does not hold permissions over it. Every operation
+  on the work is open to agents as to the developer: answering, Later, reopening, replacing and recording questions;
+  adding, placing, ordering, moving, folding, rejecting, owning and handing over lines; done whens, Not yet, tasks'
+  outcomes and Can't do it, places, notes, Tell; stopping, lifting and releasing agents; repos' GitHub names and
+  checkouts; Try now. The log shows who did each, and quotes the developer's words when the agent passes `--said`
+  (channel `out_of_band`). _Why:_ the developer, on finding agents refused: "I don't want idiotic permissions", "This
+  is about tracking agent work", "No one asked for permissions", "An agent must track and answer I wrote to them", and
+  then "Do everything". An agent's own proposals still wait for a placement unless it says where (`--place`), since a
+  proposal is how it asks. Only the server records wakes, starts, exits and closes. What stays the developer's in
+  person is their own screen and phone, not the work: Undo and waiting choices, drafts, turning notifications on and
+  off, `seen`, the app being opened (`push.seen`) and I'm at, since one made by an agent would mark things read for
+  the developer or silence the phone. A call that names an agent is never the developer on the server, and no agent
+  may be called `dev`, `octotrack` or `github`, the names the log uses for the developer, Octotrack and pull request
+  sync. A wake address is the narrow form, an agent names its repo only once, a repo's GitHub name must be owner/name,
+  and a clone already in place is used only if its origin is that repo. Withdrawing a question is for the developer,
   its asker or an agent on its line. A decision recorded after the fact is placed like a question (the line named, the
-  line of the issue named, or the recording agent's line). Undo, drafts, turning on notifications, `seen`, the app being opened (`push.seen`) and
-  I'm at are the developer's in person, never relayed: they record what the developer has looked at and where they are,
-  which no agent witnesses, and one made on an agent's word would hide things from the developer or silence the phone.
-  A call that names an agent is never the developer on the server either, and no agent may be called `dev`,
-  `octotrack` or `github`, the names the log uses for the developer, Octotrack and pull request sync. A wake address is
-  the narrow form, an agent names its repo only once, a repo's GitHub name is the developer's to set and must be
-  owner/name, and a clone already in place is used only if its origin is that repo. Every operation's event quotes
-  `--said` when there is one, places added and removed included.
+  line of the issue named, or the recording agent's line).
 - **Agents write only to the line they are on, as built after the second audit.** On top of what the line's state
   allows, an agent changes something on a line only from that line (or, on a proposal, as its proposer): claiming,
   progressing, finishing or reassigning an issue (through `issue update` and `issue create` as well as `issue claim`),
@@ -882,13 +885,9 @@ Everything below is a design decision made from that, with its reasoning.
   honoured only on an interactive terminal, which agent tools' shells never are; channel `cli`. A call that carries an
   agent name is never the developer. A call with no name from a checkout one agent that is not gone uses is that agent;
   from a checkout two such agents use it is refused with "two agents use this checkout; pass your name"; and any other
-  is refused with "set your agent name", which never mentions `--me`. Only the developer may make the developer's
-  operations, so no agent can start a line, accept its own proposal or lift its own stop on its own account. What the
-  developer says to an agent in conversation, the agent relays: every developer operation, answering and proposing a
-  line to start or queue included, accepts `--said "<the developer's words>"` from an agent and then takes effect
-  (channel `out_of_band`); the log shows it, never folded, naming the agent and quoting the words, and the opposite
-  command or Change answer undoes it. Without `--said`, an agent's developer operation is refused with that hint and
-  never counted toward the automatic stop. Agent operations need a registered name, and Octotrack numbers the sessions
+  is refused with "set your agent name", which never mentions `--me`. Since "No permissions over the
+  work" above, an agent makes what were the developer's operations itself; passing `--said "<the developer's words>"`
+  records why (channel `out_of_band`), and the log shows it, never folded, naming the agent and quoting the words. Agent operations need a registered name, and Octotrack numbers the sessions
   it starts upward from the repo's name (octotrack.3), never reusing one. Who holds a line is one table of claims (line,
   agent, and a role of owner, helper or scoper); an agent is on one line at a time and claims issues only there: an owner
   in any repo its line names that has a checkout here, a helper only in its own repo. Work is an open issue on a line, in a repo, not blocked, not the developer's and not claimed. A line is scoped
