@@ -289,10 +289,12 @@
   color: var(--ink-2);
 }
 
+/* Beside words that flow inline, an icon centres on their small letters rather than standing on their baseline. */
 .ui-icon {
   width: var(--icon-size);
   height: var(--icon-size);
   flex: none;
+  vertical-align: middle;
 }
 
 /* Disabled is one look for every kind of button: a pale fill, a faint edge, grey words. A busy button is not that:
