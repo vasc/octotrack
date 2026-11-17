@@ -1,0 +1,255 @@
+import { describe, expect, test } from "bun:test";
+import { contracts as c } from "../src/contracts.ts";
+import { OctoError } from "../src/errors.ts";
+import { planTree } from "../src/plan.ts";
+import { harness } from "./helpers.ts";
+
+function refusal(run: () => unknown): OctoError {
+  try {
+    run();
+  } catch (error) {
+    if (error instanceof OctoError) return error;
+    throw error;
+  }
+  throw new Error("expected a refusal");
+}
+
+/** A working line with a plan of four steps on the critical path, and an agent that owns it. */
+function enclosure() {
+  const h = harness();
+  h.developer(c.projectCreate, { key: "PANEL", name: "Home panel", repo: "vasc/homepanel" });
+  const line = h.developer(c.lineAdd, {
+    title: "Sendspin enclosure",
+    doneWhen: "A printed case holds the board.",
+    repos: ["PANEL"],
+    where: "working",
+  });
+  h.call(c.agentRegister, { repo: "PANEL" });
+  h.call(c.lineTake, { ref: line.ref });
+  h.call(c.planSet, {
+    line: line.ref,
+    steps: ["Model the base", "Print and test-fit", "Final print", "Hang it in the hallway"],
+  });
+  return { h, line: line.ref };
+}
+
+const addresses = (h: ReturnType<typeof harness>, line: string) =>
+  h.developer(c.lineShow, { ref: line }).steps.map((step) => `${step.address} ${step.title}`);
+
+describe("a plan as a tree", () => {
+  test("a branch forks from a step, holds up a later one, and its steps read 2a.1, 2a.2 in tree order", () => {
+    const { h, line } = enclosure();
+    const branch = h.call(c.planBranch, {
+      line,
+      from: "2",
+      holdsUp: "3",
+      title: "Order the USB-C breakout",
+      steps: ["Pick a board", "Order it and wait for delivery"],
+    });
+    expect(branch.map((b) => [b.address, b.title, b.holdsUp])).toEqual([
+      ["2a", "Order the USB-C breakout", "3"],
+    ]);
+    h.call(c.planBranch, { line, from: "4", title: "Photos for the README", steps: ["Take the photos"] });
+    expect(addresses(h, line)).toEqual([
+      "1 Model the base",
+      "2 Print and test-fit",
+      "2a.1 Pick a board",
+      "2a.2 Order it and wait for delivery",
+      "3 Final print",
+      "4 Hang it in the hallway",
+      "4a.1 Take the photos",
+    ]);
+    const shown = h.developer(c.lineShow, { ref: line });
+    const tree = planTree(shown.steps, shown.branches);
+    expect(tree.map((node) => [node.step.address, node.branches.map((b) => b.branch.address)])).toEqual([
+      ["1", []],
+      ["2", ["2a"]],
+      ["3", []],
+      ["4", ["4a"]],
+    ]);
+    expect(tree[2]?.waitsOn).toEqual(["2a"]);
+    expect(tree[3]?.waitsOn).toEqual([]);
+  });
+
+  test("branches fork from branch steps too, and a branch holds up a later step of the sequence it forks from", () => {
+    const { h, line } = enclosure();
+    h.call(c.planBranch, { line, from: "2", holdsUp: "3", title: "Breakout", steps: ["Pick", "Order"] });
+    h.call(c.planBranch, { line, from: "2a.1", holdsUp: "2a.2", title: "Datasheets", steps: ["Read them"] });
+    expect(addresses(h, line)).toContain("2a.1a.1 Read them");
+    expect(
+      refusal(() => h.call(c.planBranch, { line, from: "3", holdsUp: "2", title: "Back", steps: ["x"] }))
+        .message,
+    ).toContain("later step");
+    expect(
+      refusal(() => h.call(c.planBranch, { line, from: "2a.1", holdsUp: "3", title: "Far", steps: ["x"] }))
+        .message,
+    ).toContain("later step");
+  });
+
+  test("a step that waits on an open branch refuses Done, naming it, until the branch is done or holds nothing up", () => {
+    const { h, line } = enclosure();
+    h.call(c.planBranch, {
+      line,
+      from: "2",
+      holdsUp: "3",
+      title: "Order the breakout",
+      steps: ["Pick", "Order"],
+    });
+    const refused = refusal(() => h.call(c.planStep, { line, step: "3", status: "done" }));
+    expect(refused.code).toBe("conflict");
+    expect(refused.message).toContain("2a");
+    expect(refused.message).toContain("Order the breakout");
+    h.call(c.planStep, { line, step: "2a.1", status: "done" });
+    h.call(c.planStep, { line, step: "2a.2", status: "done" });
+    expect(
+      h.call(c.planStep, { line, step: "3", status: "done" }).find((s) => s.address === "3")?.status,
+    ).toBe("done");
+
+    h.call(c.planBranch, { line, from: "3", holdsUp: "4", title: "Bracket", steps: ["Draw it"] });
+    h.call(c.planBranchUpdate, { line, branch: "3a", holdsUp: null });
+    h.call(c.planStep, { line, step: "4", status: "done" });
+  });
+
+  test("an issue sits on any step by its address, and stays on it when the plan is rewritten around it", () => {
+    const { h, line } = enclosure();
+    h.call(c.planBranch, { line, from: "2", holdsUp: "3", title: "Breakout", steps: ["Pick", "Order"] });
+    const onBranch = h.call(c.issueCreate, { project: "PANEL", title: "Solder", line, step: "2a.2" });
+    const onPath = h.call(c.issueCreate, { project: "PANEL", title: "Print", line, step: 3 });
+    const shown = () => h.developer(c.lineShow, { ref: line });
+    const addressOf = (ref: string) => {
+      const detail = shown();
+      const step = detail.work.find((item) => item.ref === ref)?.step;
+      return detail.steps.find((candidate) => candidate.id === step)?.address;
+    };
+    expect([addressOf(onBranch.ref), addressOf(onPath.ref)]).toEqual(["2a.2", "3"]);
+
+    // A step goes in before step 2: the branch and both issues move with their steps, not their numbers.
+    h.call(c.planSet, {
+      line,
+      steps: [
+        "Model the base",
+        "Test the board",
+        "Print and test-fit",
+        "Final print",
+        "Hang it in the hallway",
+      ],
+    });
+    expect([addressOf(onBranch.ref), addressOf(onPath.ref)]).toEqual(["3a.2", "4"]);
+    expect(shown().branches.map((b) => [b.address, b.holdsUp])).toEqual([["3a", "4"]]);
+
+    // Steps that leave the plan take nothing with them: their issues are on no step, their branches move up a step.
+    h.call(c.planSet, { line, steps: ["Model the base", "Final print"] });
+    expect(addressOf(onPath.ref)).toBe("2");
+    expect(shown().branches.map((b) => [b.address, b.holdsUp])).toEqual([["1a", "2"]]);
+    expect(
+      refusal(() => h.call(c.issueCreate, { project: "PANEL", title: "x", line, step: "9z.1" })).code,
+    ).toBe("invalid_input");
+  });
+
+  test("removing a branch puts its issues back on the step it forked from", () => {
+    const { h, line } = enclosure();
+    h.call(c.planBranch, { line, from: "2", title: "Breakout", steps: ["Pick"] });
+    const issue = h.call(c.issueCreate, { project: "PANEL", title: "Solder", line, step: "2a.1" });
+    h.call(c.planBranchUpdate, { line, branch: "2a", title: "USB-C breakout", steps: ["Pick", "Order"] });
+    expect(addresses(h, line)).toContain("2a.2 Order");
+    h.call(c.planBranchRemove, { line, branch: "2a" });
+    const detail = h.developer(c.lineShow, { ref: line });
+    expect(detail.branches).toEqual([]);
+    const step = detail.work.find((item) => item.ref === issue.ref)?.step;
+    expect(detail.steps.find((candidate) => candidate.id === step)?.address).toBe("2");
+  });
+
+  test("the developer makes a branch its own line: its steps and issues move, and the old step waits on that line", () => {
+    const { h, line } = enclosure();
+    h.call(c.planBranch, {
+      line,
+      from: "3",
+      holdsUp: "4",
+      title: "Wall bracket",
+      steps: ["Draw it", "Print it", "Screw it up"],
+    });
+    const issue = h.call(c.issueCreate, { project: "PANEL", title: "Measure the wall", line, step: "3a.1" });
+    const bracket = h.developer(c.planPromote, {
+      line,
+      branch: "3a",
+      doneWhen: "A bracket on the hallway wall holds the case level.",
+      where: "up_next",
+    });
+    expect([bracket.title, bracket.state, bracket.repos]).toEqual(["Wall bracket", "up_next", ["PANEL"]]);
+
+    const child = h.developer(c.lineShow, { ref: bracket.ref });
+    expect(child.steps.map((s) => `${s.address} ${s.title}`)).toEqual([
+      "1 Draw it",
+      "2 Print it",
+      "3 Screw it up",
+    ]);
+    expect(child.work.map((item) => item.ref)).toEqual([issue.ref]);
+    expect(child.branchOf).toEqual({
+      line,
+      title: "Sendspin enclosure",
+      address: "3a",
+      holdsUp: { address: "4", title: "Hang it in the hallway" },
+    });
+
+    const parent = h.developer(c.lineShow, { ref: line });
+    expect(parent.branches.map((b) => [b.address, b.became?.ref, b.state])).toEqual([
+      ["3a", bracket.ref, "open"],
+    ]);
+    expect(parent.steps.map((s) => s.address)).toEqual(["1", "2", "3", "4"]);
+    expect(refusal(() => h.call(c.planStep, { line, step: "4", status: "done" })).message).toContain(
+      bracket.ref,
+    );
+
+    h.developer(c.lineStart, { ref: bracket.ref });
+    h.developer(c.lineDone, { ref: bracket.ref });
+    expect(h.developer(c.lineShow, { ref: line }).branches[0]?.state).toBe("done");
+    h.call(c.planStep, { line, step: "4", status: "done" });
+  });
+
+  test("a line made from a branch that is dropped stops holding its step up", () => {
+    const { h, line } = enclosure();
+    h.call(c.planBranch, { line, from: "3", holdsUp: "4", title: "Bracket", steps: ["Draw it"] });
+    const bracket = h.developer(c.planPromote, {
+      line,
+      branch: "3a",
+      doneWhen: "It holds.",
+      where: "up_next",
+    });
+    h.developer(c.lineDrop, { ref: bracket.ref });
+    expect(h.developer(c.lineShow, { ref: line }).branches[0]?.state).toBe("ended");
+    h.call(c.planStep, { line, step: "4", status: "done" });
+  });
+
+  test("an owner's promotion is a proposal with a recommendation", () => {
+    const { h, line } = enclosure();
+    h.call(c.planBranch, { line, from: "3", holdsUp: "4", title: "Bracket", steps: ["Draw it"] });
+    const proposed = h.call(c.planPromote, { line, branch: "3a", doneWhen: "It holds." });
+    expect([proposed.state, proposed.proposedBy, proposed.recommendation]).toEqual([
+      "proposed",
+      "agent-a",
+      "up_next",
+    ]);
+    expect(proposed.recommendationWhy).toContain(line);
+    expect(refusal(() => h.call(c.planPromote, { line, branch: "3a", doneWhen: "Again." })).code).toBe(
+      "conflict",
+    );
+  });
+
+  test("home says how many branches are open and what the current step waits on", () => {
+    const { h, line } = enclosure();
+    h.call(c.planStep, { line, step: "1", status: "done" });
+    h.call(c.planStep, { line, step: "2", status: "done" });
+    h.call(c.planBranch, { line, from: "2", holdsUp: "3", title: "Breakout", steps: ["Pick"] });
+    h.call(c.planBranch, { line, from: "4", title: "Photos", steps: ["Take them"] });
+    const details = h.developer(c.homeShow, {}).lines[line];
+    expect(details?.step).toEqual({ position: 3, of: 4, title: "Final print", waitsOn: ["2a"] });
+    expect(details?.branchesOpen).toBe(2);
+  });
+
+  test("an agent on another line may not change this one's plan", () => {
+    const { h, line } = enclosure();
+    expect(
+      refusal(() => h.call(c.planBranch, { line, from: "2", title: "Mine", steps: ["x"] }, "stranger")).code,
+    ).not.toBe("not_found");
+  });
+});

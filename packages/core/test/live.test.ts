@@ -158,6 +158,11 @@ const EVERY_WRITE: readonly (readonly [string, unknown])[] = [
   // From the line it took: an agent writes only to the line it is on.
   ["plan.set", { line: "L-1", steps: ["One"] }],
   ["plan.step", { line: "L-1", step: 1, status: "done" }],
+  ["plan.branch", { line: "L-1", from: "1", title: "Side", steps: ["A"] }],
+  ["plan.branch.update", { line: "L-1", branch: "1a", title: "Side work" }],
+  ["plan.branch", { line: "L-1", from: "1", title: "Other", steps: ["B"] }],
+  ["plan.branch.remove", { line: "L-1", branch: "1b" }],
+  ["plan.promote", { line: "L-1", branch: "1a", doneWhen: "Done." }],
   ["line.tell", { line: "L-1", body: "Hello" }],
   ["decision.not_urgent", { ref: "D-4" }],
   ["place.add", { name: "the shed" }],

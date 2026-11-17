@@ -108,6 +108,14 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 - Error: cannot fail on its own.
 - Empty: never empty: it always names a key.
 
+### components/ui/Rail.tsx
+
+- Designed in: Plan-Tree.dc.html, A
+- What it shows: a branch's rows hanging on a rail of the line colour, under the row they fork from and in line with its title; a group named for the branch ("Branch 2a, Order the USB-C breakout").
+- Loading: never loads on its own.
+- Error: cannot fail on its own.
+- Empty: never empty: a branch has at least one step, or is the one row of the line it became.
+
 ### components/ui/Item.tsx
 
 - Designed in: Main.dc.html; Items.dc.html, states A–F

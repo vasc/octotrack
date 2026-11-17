@@ -126,6 +126,7 @@
   --icon-size: 16px;
   --icon-inline-size: 1em;
   --keys-column: 72px;
+  --rail-width: 2px;
   /* A theme's swatch in a menu: its ground and its accent, side by side. */
   --swatch-width: calc(var(--space-5) * 2 + var(--space-1));
   /* A tile's width before it grows to fill its row: tiles of folded sections, swatches at half. */

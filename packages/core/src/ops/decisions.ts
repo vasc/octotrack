@@ -308,6 +308,7 @@ function transition(
 }
 
 const Waiting = z.object({ id: z.number() });
+const StepOrdRow = z.object({ ref: z.string(), ord: z.number().int() });
 
 /**
  * Only an open question is refined, and an agent refines one on a line only from that line, or as its asker, while the
@@ -399,12 +400,14 @@ export function buildQueue(ctx: Ctx, query: string | undefined) {
     .filter((decision) => decision.line === null || order.has(decision.line))
     .filter((decision) => !behindTasks.has(decision.ref))
     .map((value) => ({ kind: "decision" as const, value }));
+  // A question follows the plan step its issue serves, in the tree's order.
   const stepOf = new Map(
     rows(
       ctx,
-      IssueRow,
-      "SELECT * FROM issues WHERE ref IN (SELECT issue FROM decisions WHERE status = 'open')",
-    ).map((issue) => [issue.ref, issue.step]),
+      StepOrdRow,
+      `SELECT i.ref AS ref, s.ord AS ord FROM issues i JOIN plan_steps s ON s.id = i.step
+       WHERE i.ref IN (SELECT issue FROM decisions WHERE status = 'open')`,
+    ).map((row) => [row.ref, row.ord]),
   );
   const step = (decision: Decision) =>
     decision.issue === null ? null : (stepOf.get(decision.issue) ?? null);

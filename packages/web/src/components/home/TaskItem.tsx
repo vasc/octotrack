@@ -23,7 +23,7 @@ export function TaskItem({
   const draft = useOutcomeDraft(task.ref);
   const step = usePlanStep(task.line, task.step);
   // As the strip reads it: "holds up step 3, settle the enclosure".
-  const holdsUp = step === null || task.step === null ? null : `step ${task.step}, ${step.title}`;
+  const holdsUp = step === null ? null : `step ${step.address}, ${step.title}`;
   const why = useDraft(`task-why:${task.ref}`);
   const { waiting } = useChoices();
   return (

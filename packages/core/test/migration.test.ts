@@ -49,6 +49,60 @@ describe("migrations", () => {
     expect(driver.all("SELECT name FROM things")).toEqual([{ name: "made by code" }]);
   });
 
+  test("plan steps gain ids, and an issue on step 2 stays on step 2 by its id (version 26)", () => {
+    const driver = memoryDriver();
+    migrate(driver, 25);
+    const at = "2026-11-17T12:00:00.000Z";
+    driver.run(
+      `INSERT INTO lines (ref, title, doneWhen, state, rank, source, version, createdAt, updatedAt, createdBy)
+       VALUES ('L-1', 'Enclosure', 'It fits.', 'working', 1, 'developer', 1, ?, ?, 'dev')`,
+      [at, at],
+    );
+    for (const [position, title] of [
+      [1, "Model"],
+      [2, "Print"],
+      [3, "Fit"],
+    ] as const) {
+      driver.run("INSERT INTO plan_steps (line, position, title, status) VALUES ('L-1', ?, ?, 'todo')", [
+        position,
+        title,
+      ]);
+    }
+    driver.run(
+      `INSERT INTO projects (ref, name, description, status, horizon, version, createdAt, updatedAt, createdBy)
+       VALUES ('OCT', 'Octotrack', '', 'active', 'now', 1, ?, ?, 'dev')`,
+      [at, at],
+    );
+    driver.run(
+      `INSERT INTO issues (ref, project, title, body, status, priority, labels, line, step, version, createdAt,
+         updatedAt, createdBy)
+       VALUES ('OCT-1', 'OCT', 'Print it', '', 'todo', 'none', '[]', 'L-1', 2, 1, ?, ?, 'dev')`,
+      [at, at],
+    );
+    migrate(driver, 26);
+    const steps = z
+      .array(
+        z.object({
+          id: z.number(),
+          position: z.number(),
+          title: z.string(),
+          branch: z.null(),
+          ord: z.number(),
+        }),
+      )
+      .parse(driver.all("SELECT id, position, title, branch, ord FROM plan_steps ORDER BY position"));
+    expect(steps.map((step) => [step.position, step.title, step.ord])).toEqual([
+      [1, "Model", 1],
+      [2, "Print", 2],
+      [3, "Fit", 3],
+    ]);
+    const issue = z
+      .object({ step: z.number() })
+      .parse(driver.all("SELECT step FROM issues WHERE ref = 'OCT-1'")[0]);
+    expect(issue.step).toBe(steps[1]?.id ?? -1);
+    expect(tableNames(driver)).toContain("plan_branches");
+  });
+
   test("a failing step leaves the database at the version before it", () => {
     const driver = memoryDriver();
     const steps: readonly Migration[] = [

@@ -1,4 +1,4 @@
-import type { Line } from "@octotrack/core/schemas";
+import type { Line, LineDetail } from "@octotrack/core/schemas";
 import type { ReactNode } from "react";
 import { dayDate, sinceText, timeLabel } from "../../lib/format.ts";
 import { heldText, LINE_STATE_LABEL, RECOMMENDED_MOVE } from "../../lib/lines.ts";
@@ -8,7 +8,9 @@ import { Facts } from "../ui/Facts.tsx";
 import { Kind } from "../ui/Item.tsx";
 import { Labelled } from "../ui/Labelled.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
+import { Icon } from "../ui/Icon.tsx";
 import { Code, Note } from "../ui/Note.tsx";
+import { RefLink } from "../ui/RefLink.tsx";
 import { Pairs, Stack } from "../ui/Pairs.tsx";
 import { Panel } from "../ui/Panel.tsx";
 
@@ -25,6 +27,7 @@ export function LinePanelHead({
   back,
   under,
   actions,
+  branchOf = null,
   children,
 }: {
   line: Line;
@@ -39,6 +42,8 @@ export function LinePanelHead({
   under?: string;
   /** Its moves, under what finishes it. */
   actions?: ReactNode;
+  /** The plan branch it grew out of, and the step there that waits for it. */
+  branchOf?: LineDetail["branchOf"];
   children?: ReactNode;
 }) {
   const closed = line.state === "done" || line.state === "dropped";
@@ -82,6 +87,15 @@ export function LinePanelHead({
               ]}
             />
           ) : null}
+          {branchOf === null ? null : (
+            <Note>
+              <Icon name="branch" /> Branch {branchOf.address} of <RefLink value={branchOf.line} />{" "}
+              {branchOf.title}
+              {branchOf.holdsUp === null
+                ? "."
+                : `; holds up its step ${branchOf.holdsUp.address}, ${branchOf.holdsUp.title}.`}
+            </Note>
+          )}
           {line.doneWhen === "" ? null : (
             <Labelled label="Done when">
               <Markdown text={line.doneWhen} inline />

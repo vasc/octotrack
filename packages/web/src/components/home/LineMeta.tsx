@@ -1,6 +1,6 @@
 import { Fact, Facts } from "../ui/Facts.tsx";
 import type { LineCrew, LineHome } from "@octotrack/core/schemas";
-import { crewText } from "../../lib/lines.ts";
+import { branchOfText, crewText } from "../../lib/lines.ts";
 
 /**
  * The facts beside a line's title, each after a dot: who is on it, whether it waits on you, held work being
@@ -17,6 +17,7 @@ export function LineMeta({
   owned?: boolean;
 }) {
   const heldForAgent = details === undefined || !owned ? 0 : details.held.questions + details.held.tasks;
+  const origin = branchOfText(details);
   const facts = [
     ...(owned ? ["yours"] : []),
     ...crewText(crew, details?.stepIn === true),
@@ -35,6 +36,13 @@ export function LineMeta({
     ...(details === undefined || details.step === null
       ? []
       : [`step ${details.step.position} of ${details.step.of}, ${details.step.title}`]),
+    ...(details === undefined || details.branchesOpen === 0
+      ? []
+      : [`${details.branchesOpen} branch${details.branchesOpen === 1 ? "" : "es"} open`]),
+    ...(details === undefined || details.step === null || details.step.waitsOn.length === 0
+      ? []
+      : [`waits on ${details.step.waitsOn.join(" and ")}`]),
+    ...(origin === null ? [] : [origin]),
   ];
   if (facts.length === 0) return null;
   return (

@@ -2,16 +2,19 @@ import { contracts } from "@octotrack/core/contracts";
 import { useOpQuery } from "./useOp.ts";
 
 /**
- * A line's plan step by its position: its title, such as "the final print", and how many steps the plan has, once
- * the plan has loaded; null with no line or step.
+ * A line's plan step by its id: its address and title, such as 3 and "the final print", once the plan has loaded; null
+ * with no line or step.
  */
-export function usePlanStep(line: string | null, step: number | null): { title: string; of: number } | null {
+export function usePlanStep(
+  line: string | null,
+  step: number | null,
+): { address: string; title: string } | null {
   const shown = useOpQuery(
     contracts.lineShow,
     { ref: line ?? "" },
     { enabled: line !== null && step !== null },
   );
   const steps = shown.data?.steps ?? [];
-  const found = steps.find((candidate) => candidate.position === step);
-  return found === undefined ? null : { title: found.title, of: steps.length };
+  const found = steps.find((candidate) => candidate.id === step);
+  return found === undefined ? null : { address: found.address, title: found.title };
 }

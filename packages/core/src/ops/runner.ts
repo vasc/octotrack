@@ -326,7 +326,7 @@ function helpersWanted(
     z.object({ project: z.string() }),
     `SELECT i.project AS project FROM issues i WHERE i.line = ? AND i.status IN ('todo', 'backlog')
        AND i.assignee IS NULL AND i.project IN (${placeholders(line.repos)}) AND ${NOT_BLOCKED}
-     ORDER BY i.step IS NULL, i.step, i.createdAt`,
+     ORDER BY i.step IS NULL, (SELECT s.ord FROM plan_steps s WHERE s.id = i.step), i.createdAt`,
     [line.ref, ...line.repos],
   );
   if (work.length === 0) return null;

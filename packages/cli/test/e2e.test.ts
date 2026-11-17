@@ -1198,7 +1198,7 @@ describe("lines of work from the CLI", () => {
     );
     expect([issue.line, issue.step]).toEqual([line.ref, 1]);
     const shown = await octo(["line", "show", line.ref, "--text"]);
-    expect(shown.stdout).toContain("1. Wire the probe");
+    expect(shown.stdout).toMatch(/1\s+todo\s+Wire the probe/);
     expect(shown.stdout).toContain(issue.ref);
 
     const marked = await data(
@@ -1208,10 +1208,81 @@ describe("lines of work from the CLI", () => {
     );
     expect(marked.map((step) => step.status)).toEqual(["done", "todo"]);
     const text = await octo(["plan", "step", line.ref, "2", "doing", "--me", "--text"], "");
-    expect(text.stdout).toContain("2. Calibrate doing");
+    expect(text.stdout).toMatch(/2\s+doing\s+Calibrate/);
     const wrong = await octo(["plan", "step", line.ref, "2", "finished", "--me"], "");
     expect(wrong.code).not.toBe(0);
     expect(wrong.stdout).toContain("todo, doing or done");
+  });
+
+  test("a plan's branches: add one, put an issue on it, change it, show the tree, and make one its own line", async () => {
+    const line = await data(
+      Line,
+      ["line", "add", "Enclosure", "--done-when", "It fits.", "--repo", "OCT", "--where", "working", "--me"],
+      "",
+    );
+    await octo(["plan", "set", line.ref, "Model", "Print", "Hang it", "--me"], "");
+    const branches = await data(
+      z.array(z.object({ address: z.string(), holdsUp: z.string().nullable() })),
+      [
+        "plan",
+        "branch",
+        line.ref,
+        "--from",
+        "2",
+        "--holds-up",
+        "3",
+        "Breakout",
+        "Pick a board",
+        "Order it",
+        "--me",
+      ],
+      "",
+    );
+    expect(branches).toEqual([{ address: "2a", holdsUp: "3" }]);
+    await data(
+      z.object({ ref: z.string() }),
+      ["issue", "create", "Solder", "-p", "OCT", "--line", line.ref, "--step", "2a.2", "--me"],
+      "",
+    );
+    await octo(["plan", "branch", line.ref, "--from", "3", "Photos", "Take them", "--me"], "");
+    await octo(["plan", "edit-branch", line.ref, "3a", "--title", "README photos", "--me"], "");
+
+    const shown = await octo(["plan", "show", line.ref, "--text", "--me"], "");
+    expect(shown.code).toBe(0);
+    expect(shown.stdout).toContain(`${line.ref} Enclosure · step 1 of 3 · 2 branches open`);
+    expect(shown.stdout).toMatch(/2a\s+Breakout\s+holds up 3/);
+    expect(shown.stdout).toMatch(/2a\.2\s+todo\s+Order it\s+OCT-\d+/);
+    expect(shown.stdout).toMatch(/3\s+todo\s+Hang it\s+waits on 2a/);
+    expect(shown.stdout).toMatch(/3a\s+README photos\s+holds nothing up/);
+
+    const refused = await octo(["plan", "step", line.ref, "3", "done", "--me"], "");
+    expect(refused.code).not.toBe(0);
+    expect(refused.stdout).toContain("waits on 2a");
+
+    const bracket = await data(
+      Line,
+      [
+        "plan",
+        "promote",
+        line.ref,
+        "2a",
+        "--done-when",
+        "A board is soldered in.",
+        "--where",
+        "up_next",
+        "--me",
+      ],
+      "",
+    );
+    expect(bracket.title).toBe("Breakout");
+    const after = await octo(["plan", "show", line.ref, "--text", "--me"], "");
+    expect(after.stdout).toMatch(new RegExp(`2a\\s+Breakout\\s+${bracket.ref} up next, holds up 3`));
+    expect(after.stdout).toMatch(new RegExp(`3\\s+todo\\s+Hang it\\s+waits on ${bracket.ref}`));
+
+    await octo(["plan", "remove-branch", line.ref, "3a", "--me"], "");
+    expect((await octo(["plan", "show", line.ref, "--text", "--me"], "")).stdout).not.toContain(
+      "README photos",
+    );
   });
 });
 

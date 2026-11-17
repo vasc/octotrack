@@ -23,7 +23,7 @@ import { List } from "../components/ui/List.tsx";
 import { Markdown } from "../components/ui/Markdown.tsx";
 import { TextBox } from "../components/ui/TextBox.tsx";
 import { DesignSection, Example, SheetExample } from "./Example.tsx";
-import { decision, decisionCard, issue, line, pendingChoice } from "./fixtures.ts";
+import { decision, decisionCard, issue, line, pendingChoice, planBranch, planStep } from "./fixtures.ts";
 
 const NOOP = () => {};
 const QUESTION = decisionCard({
@@ -90,7 +90,9 @@ export function LinesGallery() {
             }}
             details={{
               start: null,
-              step: { position: 3, of: 4, title: "settle board and opening" },
+              step: { position: 3, of: 4, title: "settle board and opening", waitsOn: [] },
+              branchesOpen: 0,
+              branchOf: null,
               forYou: [{ kind: "question", card: QUESTION }],
               stepIn: false,
               stepInReason: null,
@@ -268,6 +270,8 @@ export function LinesGallery() {
             details={{
               start: null,
               step: null,
+              branchesOpen: 0,
+              branchOf: null,
               forYou: [],
               stepIn: false,
               stepInReason: null,
@@ -352,12 +356,62 @@ export function LinesGallery() {
           })}
         />
       </Example>
+      <Example label="A line's plan as a tree: a branch holding up step 3, and one that became a line">
+        <PlanList
+          steps={[
+            planStep({ position: 1, title: "Model the base", status: "done" }),
+            planStep({ position: 2, title: "Print and test-fit", status: "doing" }),
+            planStep({
+              id: 21,
+              branch: 100,
+              position: 1,
+              address: "2a.1",
+              title: "Pick a board",
+              status: "done",
+            }),
+            planStep({
+              id: 22,
+              branch: 100,
+              position: 2,
+              address: "2a.2",
+              title: "Order it and wait for delivery",
+            }),
+            planStep({ position: 3, title: "Final print" }),
+            planStep({ position: 4, title: "Hang it in the hallway" }),
+          ]}
+          branches={[
+            planBranch({
+              id: 100,
+              fromStep: 2,
+              address: "2a",
+              title: "Order the USB-C breakout",
+              holdsUp: "3",
+            }),
+            planBranch({
+              id: 101,
+              fromStep: 3,
+              address: "3a",
+              title: "Wall bracket",
+              holdsUp: "4",
+              became: { ref: "L-12", title: "Wall bracket", state: "up_next" },
+            }),
+          ]}
+          work={[]}
+          actions={{
+            onStatus: NOOP,
+            onHoldsUp: NOOP,
+            onEdit: NOOP,
+            onPromote: NOOP,
+            onRemove: NOOP,
+          }}
+        />
+      </Example>
       <Example label="A line's plan, and its owner">
         <PlanList
           steps={[
-            { line: "L-7", position: 1, title: "Model the base for both boards", status: "done" },
-            { line: "L-7", position: 2, title: "Settle board and opening", status: "doing" },
-            { line: "L-7", position: 3, title: "Final print and photograph", status: "todo" },
+            planStep({ position: 1, title: "Model the base for both boards", status: "done" }),
+            planStep({ position: 2, title: "Settle board and opening", status: "doing" }),
+            planStep({ position: 3, title: "Final print and photograph" }),
           ]}
           work={[
             {

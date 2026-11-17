@@ -14,27 +14,13 @@ import { ProposalGroups } from "../src/components/home/ProposalGroups.tsx";
 import { QuietRow } from "../src/components/home/QuietRow.tsx";
 import { UpNextRow } from "../src/components/home/UpNextRow.tsx";
 import { WorkingLine } from "../src/components/home/WorkingLine.tsx";
-import { decisionCard, issue, line } from "../src/design/fixtures.ts";
+import { decisionCard, issue, line, lineHome } from "../src/design/fixtures.ts";
 import { iconsIn, whole } from "./harness.tsx";
 
 const NOW = Date.parse("2026-11-16T12:00:00Z");
 
 function details(overrides: Partial<LineHome> = {}): LineHome {
-  return {
-    start: null,
-    step: null,
-    forYou: [],
-    stepIn: false,
-    stepInReason: null,
-    stepInKind: null,
-    waitingOnYou: false,
-    held: { questions: 0, tasks: 0 },
-    reconfirming: 0,
-    sinceSummary: 0,
-    scopedSteps: 0,
-    answers: [],
-    ...overrides,
-  };
+  return lineHome(overrides);
 }
 
 const task = (place: string | null): ForYou => ({ kind: "task", task: issue({ place }), frees: null });
@@ -142,6 +128,25 @@ describe("UpNextRow", () => {
     view.getByText("2 steps scoped");
     view.getByText("1 question held");
     expect(view.queryByText(/It works\./)).toBeNull();
+  });
+
+  test("a line made from a plan branch says whose branch it is and what waits for it, as a working line does", () => {
+    const branchOf = { line: "L-1", address: "2a", holdsUp: "3" };
+    const next = render(
+      <UpNextRow line={line({ state: "up_next" })} details={details({ branchOf })} onStart={() => {}} />,
+    );
+    next.getByText("branch of L-1, holds up its step 3");
+    next.unmount();
+    const working = render(
+      <WorkingLine
+        line={line()}
+        details={details({ branchOf: { ...branchOf, holdsUp: null }, branchesOpen: 2 })}
+      >
+        {null}
+      </WorkingLine>,
+    );
+    working.getByText("branch of L-1");
+    working.getByText("2 branches open");
   });
 });
 

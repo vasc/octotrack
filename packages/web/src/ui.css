@@ -123,6 +123,7 @@
 
 /* Icons inside running words are as tall as the words: a mark, a link's arrow, a key, a crumb, a branch. */
 .ui-mark .ui-icon,
+.ui-row-facts .ui-icon,
 .ui-link .ui-icon,
 .ui-keys .ui-icon,
 .ui-panel-crumbs .ui-icon,
@@ -577,6 +578,14 @@
 
 .ui-row-head:has(.ui-row-input:focus-visible) {
   box-shadow: var(--shadow-focus-inset);
+}
+
+/* A branch of a plan: its rows hang on a rail under the step they fork from, in line with that step's title. */
+.ui-rail {
+  display: flex;
+  flex-direction: column;
+  border-left: var(--rail-width) solid var(--line);
+  padding-left: var(--space-6);
 }
 
 /* What a row holds: under it, in line with its title. */

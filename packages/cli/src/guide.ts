@@ -71,9 +71,17 @@ will be woken.
   octo issue update PANEL-4 --status in_review
   octo plan set L-7 "Model the base" "Print and test-fit" "Final print"
   octo plan step L-7 1 done                   a step under way: doing; finished: done
+  octo plan branch L-7 --from 2 --holds-up 3 "Order parts" "Pick" "Order"
+  octo plan show L-7                          the tree: critical path, branches, what waits
+  octo plan promote L-7 2a --done-when "..."  a branch grown into its own line
   octo issue create "Measure the grip" --repo PANEL --line L-7 --step 2
   octo line summarize L-7 --headline "<one sentence that stands alone>" --summary-file -
   octo line propose-done L-7 How done when was met
+
+A plan is a tree: the numbered steps are the critical path, what done when needs in order. Work that runs beside it is a
+branch off the step it starts from, holding up the later step that needs it, or nothing. When a branch needs its own
+owner, its own repo, or would run beside the critical path for long, promote it: it becomes a proposed line and still
+holds up its step here.
 
 The owner speaks for the line: its summary, its plan, its case for done. A summary falls due an hour after real work
 (a step changed, an issue closed, a question asked or answered), as drift for the owner. If the developer says not yet,

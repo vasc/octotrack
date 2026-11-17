@@ -1144,6 +1144,42 @@ describe("lines of work", () => {
       await panel.findByText("step 2 of 2");
       await panel.findByRole("button", { name: "Step 1, Model the base: done" });
     });
+
+    test("a branch is shown under its step, set to hold nothing up, and made its own line with Undo's window", async () => {
+      seedLines();
+      server.tracker.call(c.planSet, { line: "L-1", steps: ["Model", "Print", "Hang it"] }, asDeveloper);
+      server.tracker.call(
+        c.planBranch,
+        { line: "L-1", from: "2", holdsUp: "3", title: "Breakout", steps: ["Pick a board", "Order it"] },
+        asDeveloper,
+      );
+      navigate("/?ref=L-1");
+      const view = renderApp(<App />);
+      const panel = within(await view.findByRole("complementary", { name: "L-1" }));
+      await panel.findByText("step 1 of 3 · 1 branch open");
+      const rail = within(await panel.findByRole("group", { name: "Branch 2a, Breakout" }));
+      rail.getByText("holds up step 3");
+
+      fireEvent.click(rail.getByRole("button", { name: "More: branch 2a, Breakout" }));
+      fireEvent.click(panel.getByRole("menuitemradio", { name: "Nothing" }));
+      await waitFor(() =>
+        expect(server.tracker.call(c.lineShow, { ref: "L-1" }, asDeveloper).branches[0]?.holdsUp).toBeNull(),
+      );
+      await panel.findByText("holds nothing up");
+
+      fireEvent.click(panel.getByRole("button", { name: "More: branch 2a, Breakout" }));
+      fireEvent.click(panel.getByRole("menuitem", { name: "Make it its own line…" }));
+      const sheet = within(await view.findByRole("dialog", { name: "Make 2a its own line" }));
+      fireEvent.change(sheet.getByLabelText("Done when"), { target: { value: "A board is soldered in." } });
+      fireEvent.click(sheet.getByRole("button", { name: "Make it a line, up next" }));
+      await answerNow(view);
+      await waitFor(() =>
+        expect(server.tracker.call(c.lineShow, { ref: "L-1" }, asDeveloper).branches[0]?.became?.title).toBe(
+          "Breakout",
+        ),
+      );
+      await panel.findByText(/its own line now: L-\d+/);
+    });
   });
 
   test("a choice waits with Undo, and Undo or the u key means it never happened", async () => {

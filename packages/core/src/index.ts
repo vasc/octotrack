@@ -9,5 +9,6 @@ export { Hub, type StreamMessage } from "./hub.ts";
 export type { BoundOp } from "./ops/bind.ts";
 export * from "./query/index.ts";
 export { extractIssueRefs, kindOfRef, normalizeRef, parseRepoPrRef } from "./refs.ts";
+export * from "./plan.ts";
 export * from "./schemas.ts";
 export { type Caller, type ChangeListener, type OpOutcome, toErrorBody, Tracker } from "./tracker.ts";

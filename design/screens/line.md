@@ -70,21 +70,55 @@ owner, then Tell. A section with nothing in it says why in one sentence instead 
 
 ### components/entity/PlanList.tsx
 
-- Designed in: Line.dc.html; Line-States.dc.html, states A, G, H, J
-- What it shows: "Plan" with "step 2 of 3", then each step with [check] done, [arrow] now, [ring] next, and under it its issues with their state and pull requests ("#418 open · [cross] checks failing").
+- Designed in: Line.dc.html; Line-States.dc.html, states A, G, H, J; Plan-Tree.dc.html, A
+- What it shows: "Plan" with "step 2 of 4 · 2 branches open", then the critical path as PlanStepItems, each branch under the step it forks from (D15), and the work on no step under "Not on a step yet".
 - Changes from today:
   - Not scoped: the aside reads "not scoped yet · 4 issues already on it", and the unplaced work sits under "Not on a step yet".
   - Pull requests are listed with their check: "#405 merged · [check]".
   - Phone (J): an issue reads "Build kore's ECS image in the pull request / KECS-1 · to do"; several merged PRs fold to "4 pull requests merged [check]".
+  - Branches: the count of open ones joins the aside; an issue whose step is gone shows under "Not on a step yet".
 - Loading: outlines of the rows in place of the list, under its heading (G); "Loading the plan…" for screen readers only.
 - Error: "Could not load the plan. The tracker did not answer." with Try again (H); the plan last loaded stays drawn below it under "As it was at 14:20".
 - Empty: with no steps and no issues, follows the Primitives pattern: "No plan yet" in one sentence saying who writes it (the design's empty sections say why, as Summary does).
-- Setting a step: on a line that has not ended, each step ends in its StepStatusMenu, and only "now" is said beside the current step's title; the current step is the one under way, else the first not done. On a done or dropped line each step says done, now or next and has no menu.
+- Setting a step: on a line that has not ended, each step ends in its StepStatusMenu and each branch in its BranchMenu, and only "now" is said beside the current step's title; the current step of each sequence is the one under way, else the first not done. On a done or dropped line nothing has a menu, and each step says done, now or next.
+
+### components/entity/PlanStepItem.tsx
+
+- Designed in: Plan-Tree.dc.html, A and D
+- What it shows: the step's mark ([check] done, [arrow] now, [ring] next), its address in small figures and its title ("2a.1 Pick a board"), "now", and what it waits on after [joins] ("waits on 2a"; "waits on L-12, tabled" in the warm tone when the line it waits on is tabled); its StepStatusMenu; the issues on it; then each branch forking from it.
+- Loading: never loads on its own: drawn from the plan PlanList has.
+- Error: a status refused is said under its menu ("Not changed: Step 3 waits on 2a, Order the breakout"), until the next try.
+- Empty: a step with no issues and no branches is its row alone.
+
+### components/entity/PlanBranchItem.tsx
+
+- Designed in: Plan-Tree.dc.html, A, B and F
+- What it shows: on a Rail, the branch's row: [branch], "2a Order the USB-C breakout", "holds up step 3" or "holds nothing up" (or "done"), "1 of 2 done", its BranchMenu; then its own steps, each a PlanStepItem with the branch's own now. A branch that became a line is one row that opens it: "its own line now: L-12 · up next · holds up step 4".
+- Loading: never loads on its own.
+- Error: a change refused is said under its More ("Not changed: …"), until the next try.
+- Empty: never empty: a branch is made with at least one step.
+
+### components/entity/BranchMenu.tsx
+
+- Designed in: Plan-Tree.dc.html, B
+- What it shows: the three-dot More; opened, "Holds up" with each later step of its sequence and "Nothing", the one in force ticked; then "Rename or change its steps…", "Make it its own line…", "Remove the branch".
+- Picking: what it holds up changes at once; Remove waits with Undo, as a line's moves do; the other two open their sheets.
+- Loading: none of its own; the button reads "Changing…" while a change is on its way.
+- Error: "Not changed: …" under the button, with the tracker's words, until the next try.
+- Empty: a branch off the last step has no later step to hold up: "Holds up" lists only Nothing.
+
+### components/entity/WorkList.tsx
+
+- Designed in: Line-States.dc.html, states A and J
+- What it shows: WorkList, the issues on one step, each with its ref, its state in words and its pull requests ("#418 open · [cross] checks failing"); on a phone several merged ones fold to "4 pull requests merged [check]".
+- Loading: never loads on its own.
+- Error: cannot fail on its own.
+- Empty: not drawn for a step with no issues.
 
 ### components/entity/StepStatusMenu.tsx
 
-- Designed in: Line-States.dc.html, state A, the plan
-- What it shows: a plain menu button at the end of a step's row naming its status, "To do", "Under way" or "Done", with the caret; opened, the three choices with [check] beside the one in force. Its name says the step: "Step 2, Print and test-fit: to do".
+- Designed in: Line-States.dc.html, state A, the plan; Plan-Tree.dc.html, A
+- What it shows: a plain menu button at the end of a step's row naming its status, "To do", "Under way" or "Done", with the caret; opened, the three choices with [check] beside the one in force. Its name says the step by its address: "Step 2a.1, Pick a board: to do".
 - Picking: a different status is sent at once (no Undo, as picking the old one again puts it back); the button reads "Changing…" while it is on its way.
 - Loading: none of its own; it is drawn with its plan, which has loaded.
 - Error: "Not changed: …" under the button, with the tracker's words, until the next try.

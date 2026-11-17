@@ -1,6 +1,6 @@
 import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
-import type { EventAttrs, Issue, IssueStatus, Priority } from "../schemas.ts";
+import type { EventAttrs, Issue, IssueStatus, Priority, StepRef } from "../schemas.ts";
 import type { EventTypeName } from "../query/values.ts";
 import { applyPatch, assertVersion, emit, nextNumber } from "../store/common.ts";
 import type { Ctx } from "../store/context.ts";
@@ -21,7 +21,7 @@ import { buildIssueCard } from "./cards.ts";
 import { guardLineWrite, guardOnLine } from "../agents/claims.ts";
 import { DEVELOPER } from "../agents/state.ts";
 import { claimOf, getAgent } from "../store/agents.ts";
-import { checkStep } from "./lines.ts";
+import { stepFor } from "./plan.ts";
 import { addLink, guardEnds } from "./links.ts";
 
 export function issueAttrs(issue: Issue): EventAttrs {
@@ -45,7 +45,10 @@ export interface CreateIssueInput {
   labels?: readonly string[];
   milestone?: string;
   line?: string;
-  step?: number;
+  /** Its plan step, by address as typed: 2, or 2a.1. */
+  step?: StepRef;
+  /** Its plan step by id, for work Octotrack files itself on a step it already knows. */
+  stepId?: number;
 }
 
 /**
@@ -65,7 +68,7 @@ export function createIssue(ctx: Ctx, input: CreateIssueInput, forDeveloper = fa
   const work = isWork(input.status, input.assignee);
   // Filing on a line is writing to it: only from that line (D13).
   if (!forDeveloper) guardOnLine(ctx, line, work ? "work" : "scope", null);
-  checkStep(ctx, line, input.step ?? null);
+  const step = input.stepId ?? stepFor(ctx, line, input.step ?? null);
   const status = input.status ?? "todo";
   const ref = `${project.ref}-${nextNumber(ctx, `issue:${project.ref}`)}`;
   if (work && !forDeveloper) requireOnLine(ctx, { ref, line, project: project.ref });
@@ -83,7 +86,7 @@ export function createIssue(ctx: Ctx, input: CreateIssueInput, forDeveloper = fa
       JSON.stringify(input.labels ?? []),
       milestone?.ref ?? null,
       line,
-      input.step ?? null,
+      step,
       ctx.now,
       ctx.now,
       status === "done" || status === "cancelled" ? ctx.now : null,
@@ -229,8 +232,16 @@ export const issueOps = [
         requireOnLine(ctx, current);
         if (nextLine !== current.line) requireOnLine(ctx, { ...current, line: nextLine });
       }
-      const step = line === null ? null : input.step;
-      checkStep(ctx, nextLine, step === undefined ? current.step : step);
+      // A step is on one line's plan: moving the issue to another line leaves its step behind, unless one is given.
+      const moving = line !== undefined && line !== current.line;
+      const step =
+        line === null
+          ? null
+          : input.step === undefined
+            ? moving
+              ? null
+              : undefined
+            : stepFor(ctx, nextLine, input.step);
       const labels =
         input.addLabels === undefined && input.removeLabels === undefined
           ? undefined

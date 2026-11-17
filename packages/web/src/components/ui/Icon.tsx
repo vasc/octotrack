@@ -11,6 +11,8 @@ import {
   Contrast,
   CornerDownLeft,
   Ellipsis,
+  GitBranch,
+  GitMerge,
   GripVertical,
   Keyboard,
   type LucideIcon,
@@ -66,6 +68,10 @@ const ICONS = {
   down: { shape: ArrowDown },
   /** The Option key. */
   option: { shape: Option },
+  /** A branch of a plan: steps forking from a step. */
+  branch: { shape: GitBranch },
+  /** A step a branch joins: it waits for that branch. */
+  joins: { shape: GitMerge },
 } satisfies Record<string, { shape: LucideIcon; filled?: boolean }>;
 
 export type IconName = keyof typeof ICONS;

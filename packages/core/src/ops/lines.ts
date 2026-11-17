@@ -1,6 +1,6 @@
 import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
-import type { EventAttrs, Line, LinePlacement, LineState, PlanStep } from "../schemas.ts";
+import type { EventAttrs, Line, LinePlacement, LineState } from "../schemas.ts";
 import type { EventTypeName } from "../query/values.ts";
 import { applyPatch, type Changes, emit, nextNumber } from "../store/common.ts";
 import { rankAtEnd } from "../store/ranks.ts";
@@ -9,7 +9,7 @@ import { rows } from "../store/context.ts";
 import { filterEntities } from "../store/docs.ts";
 import { allLines, requireLine, requireProject, summarize } from "../store/entities.ts";
 import { loadGraph } from "../store/graph.ts";
-import { IssueRow, PlanStepRow, PrRow } from "../store/rows.ts";
+import { IssueRow, PrRow } from "../store/rows.ts";
 import {
   afterAdd,
   afterMove,
@@ -25,6 +25,7 @@ import { bind } from "./bind.ts";
 import { LOG_SEEN_KEY } from "./feed.ts";
 import { buildHome } from "./home.ts";
 import { requireDeveloper, requireDeveloperInPerson } from "./developer.ts";
+import { branchOfLine, loadPlan } from "./plan.ts";
 
 /** Below this gap two ranks are too close to split again, so the section is renumbered. */
 const SMALLEST_GAP = 1e-6;
@@ -53,7 +54,7 @@ function lineAttrs(ctx: Ctx, line: Line): EventAttrs {
   };
 }
 
-function emitLine(
+export function emitLine(
   ctx: Ctx,
   type: EventTypeName,
   line: Line,
@@ -85,7 +86,7 @@ function setRepos(ctx: Ctx, line: string, repos: readonly string[]): void {
   });
 }
 
-interface NewLine {
+export interface NewLine {
   title: string;
   doneWhen: string;
   repos: string[];
@@ -97,7 +98,7 @@ interface NewLine {
   recommendationWhy: string | null;
 }
 
-function insertLine(ctx: Ctx, input: NewLine): Line {
+export function insertLine(ctx: Ctx, input: NewLine): Line {
   const ref = `L-${nextNumber(ctx, "line")}`;
   ctx.sql.run(
     `INSERT INTO lines (ref, title, doneWhen, state, rank, tabledReason, lookAgainAt, proposedBy, recommendation,
@@ -249,26 +250,6 @@ function targetRank(
     return targetRank(ctx, line, input);
   }
   return rankBetween(low, high);
-}
-
-function planOf(ctx: Ctx, line: string): PlanStep[] {
-  return rows(ctx, PlanStepRow, "SELECT * FROM plan_steps WHERE line = ? ORDER BY position", [line]);
-}
-
-/** A step an issue names must exist in its line's plan. */
-export function checkStep(ctx: Ctx, line: string | null, step: number | null): void {
-  if (step === null) return;
-  if (line === null) {
-    throw new OctoError("invalid_input", "A step belongs to a line's plan", "Pass --line as well as --step.");
-  }
-  const steps = planOf(ctx, line);
-  if (step > steps.length) {
-    throw new OctoError(
-      "invalid_input",
-      `${line}'s plan has ${steps.length} step${steps.length === 1 ? "" : "s"}, so there is no step ${step}`,
-      `Run \`octo line show ${line}\` to see the plan, or set it with \`octo plan set ${line}\`.`,
-    );
-  }
 }
 
 export const lineOps = [
@@ -446,9 +427,11 @@ export const lineOps = [
     const issues = rows(
       ctx,
       IssueRow,
-      "SELECT * FROM issues WHERE line = ? ORDER BY step IS NULL, step, createdAt",
+      `SELECT i.* FROM issues i LEFT JOIN plan_steps s ON s.id = i.step WHERE i.line = ?
+       ORDER BY i.step IS NULL, s.ord, i.createdAt`,
       [line.ref],
     );
+    const plan = loadPlan(ctx, line.ref);
     const prsOf = (issue: string) =>
       rows(
         ctx,
@@ -459,7 +442,9 @@ export const lineOps = [
       ).map((pr) => ({ ref: pr.ref, repo: pr.repo, number: pr.number, state: pr.state, checks: pr.checks }));
     return {
       line,
-      steps: planOf(ctx, line.ref),
+      steps: plan.steps,
+      branches: plan.branches,
+      branchOf: branchOfLine(ctx, line.ref),
       issues: issues.map((value) => summarize({ kind: "issue", value })),
       work: issues.map((issue) => ({
         ref: issue.ref,
@@ -480,45 +465,6 @@ export const lineOps = [
   }),
 
   bind(contracts.homeShow, (ctx) => buildHome(ctx)),
-
-  bind(contracts.planSet, (ctx, input) => {
-    const line = requireLine(ctx, input.line);
-    guardOnLine(ctx, line.ref, "scope", null);
-    if (ENDED.has(line.state)) throw new OctoError("conflict", `${line.ref} already ended`);
-    const before = new Map(planOf(ctx, line.ref).map((step) => [step.title, step.status]));
-    ctx.sql.run("DELETE FROM plan_steps WHERE line = ?", [line.ref]);
-    input.steps.forEach((title, index) => {
-      ctx.sql.run("INSERT INTO plan_steps (line, position, title, status) VALUES (?, ?, ?, ?)", [
-        line.ref,
-        index + 1,
-        title,
-        before.get(title) ?? "todo",
-      ]);
-    });
-    emitLine(ctx, "line.plan_set", line, `${line.ref}'s plan set: ${input.steps.length} steps`);
-    return planOf(ctx, line.ref);
-  }),
-
-  bind(contracts.planStep, (ctx, input) => {
-    const line = requireLine(ctx, input.line);
-    guardOnLine(ctx, line.ref, "scope", null);
-    if (ENDED.has(line.state)) throw new OctoError("conflict", `${line.ref} already ended`);
-    const step = planOf(ctx, line.ref).find((candidate) => candidate.position === input.step);
-    if (step === undefined) {
-      throw new OctoError(
-        "not_found",
-        `${line.ref} has no step ${input.step}: see its plan with \`octo line show ${line.ref}\``,
-      );
-    }
-    ctx.sql.run("UPDATE plan_steps SET status = ? WHERE line = ? AND position = ?", [
-      input.status,
-      line.ref,
-      input.step,
-    ]);
-    const words = input.status === "todo" ? "to do" : input.status === "doing" ? "under way" : "done";
-    emitLine(ctx, "line.step_set", line, `${line.ref} step ${input.step} ${words}: ${step.title}`);
-    return planOf(ctx, line.ref);
-  }),
 
   bind(contracts.lineSummarize, (ctx, input) => {
     const line = requireLine(ctx, input.ref);

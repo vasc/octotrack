@@ -172,21 +172,22 @@ Only what floats over content gets a shadow. Everything else is separated by a l
 One bar on top, one column of reading under it, and any opened ref as a panel over the right of the page, as the
 E · One list boards draw it.
 
-| Token                 | Use for                                                                                      |
-| --------------------- | -------------------------------------------------------------------------------------------- |
-| `--page-width`        | How wide the bar's content and the page get                                                  |
-| `--panel-width`       | A line, task or issue opened over the page                                                   |
-| `--page-width-narrow` | A page of reading in one column: the log                                                     |
-| `--touch-target`      | The least height of anything tapped on a touch screen                                        |
-| `--sheet-width`       | A sheet's width on a wide screen                                                             |
-| `--control-height`    | Every control on a desktop: buttons, selects, the bar's pills; one height, so a row lines up |
-| `--icon-size`         | An icon beside a control's words, or alone in a control that names itself                    |
-| `--keys-column`       | The keys' column in the Keys sheet, one width for every group, so their meanings line up     |
-| `--icon-inline-size`  | An icon inside running words, as tall as they are: a state's mark, a link's arrow, a key     |
-| `--swatch-width`      | A theme's swatch in a menu, its ground and accent side by side; menu words start past it     |
-| `--tile-width`        | A tile's width before it grows to fill its row: folded sections' tiles, and swatches at half |
-| `--field-narrow`      | A box for one short value, such as a measurement, side by side with others                   |
-| `--text-input-touch`  | Text fields on a touch screen. Below 16px, iOS zooms the page on focus                       |
+| Token                 | Use for                                                                                            |
+| --------------------- | -------------------------------------------------------------------------------------------------- |
+| `--page-width`        | How wide the bar's content and the page get                                                        |
+| `--panel-width`       | A line, task or issue opened over the page                                                         |
+| `--page-width-narrow` | A page of reading in one column: the log                                                           |
+| `--touch-target`      | The least height of anything tapped on a touch screen                                              |
+| `--sheet-width`       | A sheet's width on a wide screen                                                                   |
+| `--control-height`    | Every control on a desktop: buttons, selects, the bar's pills; one height, so a row lines up       |
+| `--icon-size`         | An icon beside a control's words, or alone in a control that names itself                          |
+| `--keys-column`       | The keys' column in the Keys sheet, one width for every group, so their meanings line up           |
+| `--rail-width`        | The rail a plan branch hangs on, under the step it forks from: the tree drawn as plainly as a list |
+| `--icon-inline-size`  | An icon inside running words, as tall as they are: a state's mark, a link's arrow, a key           |
+| `--swatch-width`      | A theme's swatch in a menu, its ground and accent side by side; menu words start past it           |
+| `--tile-width`        | A tile's width before it grows to fill its row: folded sections' tiles, and swatches at half       |
+| `--field-narrow`      | A box for one short value, such as a measurement, side by side with others                         |
+| `--text-input-touch`  | Text fields on a touch screen. Below 16px, iOS zooms the page on focus                             |
 
 CSS custom properties cannot be used in media queries, so the breakpoint lives in `packages/web/src/styles.css`:
 

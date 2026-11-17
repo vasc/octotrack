@@ -12,7 +12,9 @@ import {
 import type { Ctx } from "../store/context.ts";
 import { one, rows } from "../store/context.ts";
 import { allLines } from "../store/entities.ts";
-import { DecisionRow, IssueRow, PlanStepRow } from "../store/rows.ts";
+import { DecisionRow, IssueRow } from "../store/rows.ts";
+import { waitsOn } from "../plan.ts";
+import { branchOfLine, loadPlan } from "./plan.ts";
 import { buildQueue } from "./decisions.ts";
 import { lineStart, runnerStatus, stepInFor, stepInKind, stepInReason } from "./runner.ts";
 import { atView, freedIssue, heldCount, heldOn, reconfirmingOn } from "./tasks.ts";
@@ -130,10 +132,10 @@ export function buildHome(ctx: Ctx): HomeView {
   );
 
   const details = (line: Line): LineHome => {
-    const steps = rows(ctx, PlanStepRow, "SELECT * FROM plan_steps WHERE line = ? ORDER BY position", [
-      line.ref,
-    ]);
+    const plan = loadPlan(ctx, line.ref);
+    const steps = plan.steps.filter((step) => step.branch === null);
     const current = currentStep(steps);
+    const branchOf = branchOfLine(ctx, line.ref);
     const working = line.state === "working";
     const questions: ForYou[] = working
       ? queue
@@ -182,7 +184,19 @@ export function buildHome(ctx: Ctx): HomeView {
       stepInKind: stepInKind(ctx, line),
       waitingOnYou: working && waitingOnYou(ctx, line.ref),
       step:
-        current === undefined ? null : { position: current.position, of: steps.length, title: current.title },
+        current === undefined
+          ? null
+          : {
+              position: current.position,
+              of: steps.length,
+              title: current.title,
+              waitsOn: waitsOn(current, plan.branches),
+            },
+      branchesOpen: plan.branches.filter((branch) => branch.state === "open").length,
+      branchOf:
+        branchOf === null
+          ? null
+          : { line: branchOf.line, address: branchOf.address, holdsUp: branchOf.holdsUp?.address ?? null },
       forYou: [...proposals, ...questions, ...tasks],
       held:
         working && owned

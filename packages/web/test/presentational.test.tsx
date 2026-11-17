@@ -88,7 +88,9 @@ import {
   event,
   issue,
   line,
+  lineHome,
   pendingChoice,
+  planStep,
   pr,
 } from "../src/design/fixtures.ts";
 import { homeActions, iconsIn, proposalMove, whole } from "./harness.tsx";
@@ -741,21 +743,7 @@ function TypingTask({
 describe("lines of work", () => {
   const card = (overrides: Parameters<typeof decision>[0] = {}) =>
     decisionCard({ decision: decision(overrides) });
-  const details = (overrides: Partial<LineHome> = {}): LineHome => ({
-    start: null,
-    step: null,
-    forYou: [],
-    stepIn: false,
-    stepInReason: null,
-    stepInKind: null,
-    waitingOnYou: false,
-    held: { questions: 0, tasks: 0 },
-    reconfirming: 0,
-    sinceSummary: 0,
-    scopedSteps: 0,
-    answers: [],
-    ...overrides,
-  });
+  const details = (overrides: Partial<LineHome> = {}): LineHome => lineHome(overrides);
 
   test("WorkingLine shows its place, who is on it, whether it waits on you, its step and its headline", () => {
     const view = render(
@@ -763,7 +751,9 @@ describe("lines of work", () => {
         line={line({ headline: "Printed; the short board fits." })}
         crew={{ owner: { name: "panel", state: "asleep" }, helpers: [], scoper: null, search: null }}
         details={details({
-          step: { position: 3, of: 4, title: "settle board and opening" },
+          step: { position: 3, of: 4, title: "settle board and opening", waitsOn: [] },
+          branchesOpen: 0,
+          branchOf: null,
           forYou: [{ kind: "question", card: card() }],
           waitingOnYou: true,
         })}
@@ -1070,9 +1060,9 @@ describe("a line opened", () => {
     const view = render(
       <PlanList
         steps={[
-          { line: "L-1", position: 1, title: "Model", status: "done" },
-          { line: "L-1", position: 2, title: "Print", status: "todo" },
-          { line: "L-1", position: 3, title: "Photograph", status: "todo" },
+          planStep({ position: 1, title: "Model", status: "done" }),
+          planStep({ position: 2, title: "Print" }),
+          planStep({ position: 3, title: "Photograph" }),
         ]}
         work={[
           {
@@ -1984,6 +1974,8 @@ describe("answers on their line", () => {
         details={{
           start: null,
           step: null,
+          branchesOpen: 0,
+          branchOf: null,
           forYou: [],
           stepIn: false,
           stepInReason: null,

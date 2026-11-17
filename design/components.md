@@ -45,6 +45,7 @@ gives an element a class or an inline style, and on a class in `ui.css` that is 
 | `RefText`      | Running text in which every ref is a `RefLink`                                                                                                                                                                             |
 | `TimeAgo`      | `now`, `5m`, `3h`, `2d`, then a date; the full time under the pointer                                                                                                                                                      |
 | `Keys`         | A key or chord as the Keys sheet lists it, with Return, the arrows and Option as icons                                                                                                                                     |
+| `Rail`         | A branch of a plan on a rail under the row it forks from, a group named for the branch                                                                                                                                     |
 | `Icon`         | Every icon, from Lucide, drawn in the text's colour; no font character stands in for one                                                                                                                                   |
 | `states`       | `LoadingState`, `EmptyState` (with the command that would change it) and `ErrorState`                                                                                                                                      |
 | `Loaded`       | A part of the page while it loads or failed to, then the part, marked out of date by `StaleNote` when a refresh fails                                                                                                      |
@@ -122,6 +123,8 @@ properties and appear on the `/design` specimen; **structural** ones load data a
 | `PushToggle`       | Structural | Buzz this device, or how buzzing stands                                                                                                            |
 | `NewLineSheet`     | Pure       | New line, as a `Sheet`: what it is, done when, its repos or that it is yours; up next, start, or table                                             |
 | `TableForm`        | Pure       | Tabling, as a `Sheet`: why it waits, when to look again, what it holds and who winds down                                                          |
+| `PromoteSheet`     | Pure       | Making a branch its own line, as a `Sheet`: title, done when, what moves; up next or start it                                                      |
+| `BranchEditSheet`  | Pure       | Changing a branch, as a `Sheet`: its title and its steps, one per line                                                                             |
 
 ### Questions: `decisions/`
 
@@ -164,33 +167,37 @@ properties and appear on the `/design` specimen; **structural** ones load data a
 
 ### An opened ref: `entity/` and `drift/`
 
-| Component          | Kind       | What it is                                                                                              |
-| ------------------ | ---------- | ------------------------------------------------------------------------------------------------------- |
-| `EntityPanel`      | Structural | Any item by ref, in a `Panel`: a line, an issue or task, or anything else                               |
-| `EntityCrumbs`     | Pure       | Where an item sits: its ref, its kind, its state                                                        |
-| `EntityBody`       | Pure       | What an item says, by its kind: `Pairs` and its body                                                    |
-| `LinePanelItem`    | Structural | A line opened: its head and choices, summary, what it needs, drift, plan, what is new, owner, Tell      |
-| `LinePanelHead`    | Pure       | The line's `Panel`: where it is, its title, done when, its choices                                      |
-| `LineActions`      | Pure       | A line's choices by its state, and More for Drop and Fold                                               |
-| `SummaryBox`       | Pure       | Its headline and summary, and when it was written                                                       |
-| `PanelForYou`      | Structural | What the line needs, the first open                                                                     |
-| `PlanList`         | Pure       | Its steps, done, now and next, with the work under each and a status menu on each                       |
-| `StepStatusMenu`   | Pure       | A step's status as a menu: to do, under way or done, the one in force ticked                            |
-| `SinceSummary`     | Pure       | What came after the summary, and the line in the Log                                                    |
-| `OwnerBox`         | Pure       | Who owns it and how they are, with Stop, I'll own it or Hand to an agent                                |
-| `OwnWorkBox`       | Pure       | On a line the developer owns: add a task or a note                                                      |
-| `TellBox`          | Pure       | A message to whoever owns it                                                                            |
-| `IssuePanel`       | Structural | An issue or task opened: where it sits, the task or issue, what it frees, pull requests, activity, Tell |
-| `TaskFrees`        | Pure       | What a task frees, and who holds it                                                                     |
-| `PullRequestBox`   | Pure       | An issue's pull requests and their checks                                                               |
-| `DecisionPanel`    | Structural | A question opened: in the queue, held, or answered, with Withdraw, Change answer or Reopen              |
-| `AnsweredDecision` | Pure       | A closed question: who answered and how, Answer, Then, and Change answer                                |
-| `PrPanel`          | Pure       | A pull request: its checks, review, branch and size                                                     |
-| `LinkList`         | Pure       | What an item connects to                                                                                |
-| `UpdatesSection`   | Structural | Notes posted on an item, and a box to post one                                                          |
-| `EventList`        | Pure       | What happened to an item, quiet rows, newest first                                                      |
-| `OpenDrift`        | Structural | What is out of date about an item                                                                       |
-| `DriftItem`        | Pure       | One thing out of date: its rule, what is wrong, the suggestion, Updated or Nothing to update            |
-| `DriftAnswer`      | Pure       | How it is cleared: what to check, the required note, Updated or Nothing to update                       |
-| `DriftBody`        | Structural | Drift opened by its own ref: what changed, answered in place                                            |
-| `RefNotFound`      | Pure       | A ref nothing answers to: why it may be gone, and a search of the log for it                            |
+| Component          | Kind       | What it is                                                                                               |
+| ------------------ | ---------- | -------------------------------------------------------------------------------------------------------- |
+| `EntityPanel`      | Structural | Any item by ref, in a `Panel`: a line, an issue or task, or anything else                                |
+| `EntityCrumbs`     | Pure       | Where an item sits: its ref, its kind, its state                                                         |
+| `EntityBody`       | Pure       | What an item says, by its kind: `Pairs` and its body                                                     |
+| `LinePanelItem`    | Structural | A line opened: its head and choices, summary, what it needs, drift, plan, what is new, owner, Tell       |
+| `LinePanelHead`    | Pure       | The line's `Panel`: where it is, its title, done when, its choices                                       |
+| `LineActions`      | Pure       | A line's choices by its state, and More for Drop and Fold                                                |
+| `SummaryBox`       | Pure       | Its headline and summary, and when it was written                                                        |
+| `PanelForYou`      | Structural | What the line needs, the first open                                                                      |
+| `PlanList`         | Pure       | The plan as a tree: its critical path, the step it is on, how many branches are open, work on no step    |
+| `PlanStepItem`     | Pure       | One step: done, now or next, what it waits on, its status menu, its issues, the branches forking from it |
+| `PlanBranchItem`   | Pure       | One branch on a `Rail`: what it holds up, how far along, its More, its own steps; or the line it became  |
+| `BranchMenu`       | Pure       | A branch's More: what it holds up, ticked; change it, make it its own line, remove it                    |
+| `WorkList`         | Pure       | The issues on a step, each with its state and pull requests                                              |
+| `StepStatusMenu`   | Pure       | A step's status as a menu: to do, under way or done, the one in force ticked                             |
+| `SinceSummary`     | Pure       | What came after the summary, and the line in the Log                                                     |
+| `OwnerBox`         | Pure       | Who owns it and how they are, with Stop, I'll own it or Hand to an agent                                 |
+| `OwnWorkBox`       | Pure       | On a line the developer owns: add a task or a note                                                       |
+| `TellBox`          | Pure       | A message to whoever owns it                                                                             |
+| `IssuePanel`       | Structural | An issue or task opened: where it sits, the task or issue, what it frees, pull requests, activity, Tell  |
+| `TaskFrees`        | Pure       | What a task frees, and who holds it                                                                      |
+| `PullRequestBox`   | Pure       | An issue's pull requests and their checks                                                                |
+| `DecisionPanel`    | Structural | A question opened: in the queue, held, or answered, with Withdraw, Change answer or Reopen               |
+| `AnsweredDecision` | Pure       | A closed question: who answered and how, Answer, Then, and Change answer                                 |
+| `PrPanel`          | Pure       | A pull request: its checks, review, branch and size                                                      |
+| `LinkList`         | Pure       | What an item connects to                                                                                 |
+| `UpdatesSection`   | Structural | Notes posted on an item, and a box to post one                                                           |
+| `EventList`        | Pure       | What happened to an item, quiet rows, newest first                                                       |
+| `OpenDrift`        | Structural | What is out of date about an item                                                                        |
+| `DriftItem`        | Pure       | One thing out of date: its rule, what is wrong, the suggestion, Updated or Nothing to update             |
+| `DriftAnswer`      | Pure       | How it is cleared: what to check, the required note, Updated or Nothing to update                        |
+| `DriftBody`        | Structural | Drift opened by its own ref: what changed, answered in place                                             |
+| `RefNotFound`      | Pure       | A ref nothing answers to: why it may be gone, and a search of the log for it                             |

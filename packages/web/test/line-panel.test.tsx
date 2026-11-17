@@ -5,12 +5,14 @@ import { LinePanelHead } from "../src/components/entity/LinePanelHead.tsx";
 import { OwnerBox } from "../src/components/entity/OwnerBox.tsx";
 import { PanelForYou } from "../src/components/entity/PanelForYou.tsx";
 import { OwnWorkBox } from "../src/components/entity/OwnWorkBox.tsx";
-import { PlanList } from "../src/components/entity/PlanList.tsx";
+import { type PlanActions, PlanList } from "../src/components/entity/PlanList.tsx";
+import { BranchEditSheet } from "../src/components/lines/BranchEditSheet.tsx";
+import { PromoteSheet } from "../src/components/lines/PromoteSheet.tsx";
 import { SinceSummary } from "../src/components/entity/SinceSummary.tsx";
 import { SummaryBox } from "../src/components/entity/SummaryBox.tsx";
 import { TellBox } from "../src/components/entity/TellBox.tsx";
 import { Panel } from "../src/components/ui/Panel.tsx";
-import { event, line } from "../src/design/fixtures.ts";
+import { event, line, planBranch, planStep } from "../src/design/fixtures.ts";
 import { homeActions, iconsIn, whole } from "./harness.tsx";
 
 const NOW = Date.parse("2026-11-16T12:00:00Z");
@@ -167,7 +169,7 @@ describe("PlanList", () => {
     const view = render(
       <PlanList
         foldMerged
-        steps={[{ position: 1, title: "Build the image", status: "doing", line: "L-1" }]}
+        steps={[planStep({ position: 1, title: "Build the image", status: "doing" })]}
         work={[
           { ...work("KECS-1"), step: 1, prs: [pr(418, "open", "failing")] },
           {
@@ -190,14 +192,22 @@ describe("PlanList", () => {
     expect(view.queryByText(/kore#/)).toBeNull();
   });
 
+  const noActions = (): PlanActions => ({
+    onStatus: mock(() => {}),
+    onHoldsUp: mock(() => {}),
+    onEdit: mock(() => {}),
+    onPromote: mock(() => {}),
+    onRemove: mock(() => {}),
+  });
+
   test("each step's status is set from a menu on it, the status in force ticked; an ended line has none", () => {
-    const onStatus = mock((_position: number, _status: "todo" | "doing" | "done") => {});
+    const onStatus = mock((_address: string, _status: "todo" | "doing" | "done") => {});
     const steps = [
-      { line: "L-1", position: 1, title: "Model", status: "done" as const },
-      { line: "L-1", position: 2, title: "Print", status: "todo" as const },
-      { line: "L-1", position: 3, title: "Photograph", status: "doing" as const },
+      planStep({ position: 1, title: "Model", status: "done" }),
+      planStep({ position: 2, title: "Print" }),
+      planStep({ position: 3, title: "Photograph", status: "doing" }),
     ];
-    const view = render(<PlanList steps={steps} work={[]} status={{ onStatus }} />);
+    const view = render(<PlanList steps={steps} work={[]} actions={{ ...noActions(), onStatus }} />);
     // The step under way is the line's current one, even with an earlier one still to do.
     view.getByText("step 3 of 3");
     view.getByRole("button", { name: "Step 1, Model: done" });
@@ -206,22 +216,135 @@ describe("PlanList", () => {
     const menu = within(view.getByRole("menu", { name: "Step 2's status" }));
     expect(menu.getByRole("menuitemradio", { name: "To do" }).getAttribute("aria-checked")).toBe("true");
     fireEvent.click(menu.getByRole("menuitemradio", { name: "Done" }));
-    expect(onStatus).toHaveBeenCalledWith(2, "done");
+    expect(onStatus).toHaveBeenCalledWith("2", "done");
     view.unmount();
 
     const busy = render(
       <PlanList
         steps={steps}
         work={[]}
-        status={{ onStatus, busy: 2, failed: { step: 1, message: "the tracker did not answer" } }}
+        actions={{ ...noActions(), busy: "2", failed: { at: "1", message: "the tracker did not answer" } }}
       />,
     );
     expect(busy.getByRole("button", { name: "Step 2, Print: to do" }).hasAttribute("disabled")).toBe(true);
     busy.getByText("Not changed: the tracker did not answer");
     busy.unmount();
 
-    const ended = render(<PlanList steps={steps} work={[]} state="done" />);
+    const ended = render(<PlanList steps={steps} work={[]} state="done" actions={noActions()} />);
     expect(ended.queryByRole("button", { name: /^Step 1/ })).toBeNull();
+  });
+
+  /** Model, Print, Hang it; off Print, branch 2a holds up step 3 with two steps and an issue, and 2b became L-12. */
+  const tree = () => {
+    const steps = [
+      planStep({ position: 1, title: "Model", status: "done" }),
+      planStep({ position: 2, title: "Print", status: "doing" }),
+      planStep({ id: 21, branch: 100, position: 1, address: "2a.1", title: "Pick a board", status: "done" }),
+      planStep({ id: 22, branch: 100, position: 2, address: "2a.2", title: "Order it" }),
+      planStep({ position: 3, title: "Hang it" }),
+    ];
+    const branches = [
+      planBranch({ id: 100, fromStep: 2, address: "2a", title: "Breakout", holdsUp: "3" }),
+      planBranch({
+        id: 101,
+        fromStep: 2,
+        position: 2,
+        address: "2b",
+        title: "Wall bracket",
+        holdsUp: "3",
+        became: { ref: "L-12", title: "Wall bracket", state: "tabled" },
+      }),
+    ];
+    return { steps, branches, work: [{ ...work("PANEL-9"), step: 22 }] };
+  };
+
+  test("a branch hangs on a rail under the step it forks from, with its own steps, now and issues", () => {
+    const { steps, branches, work: items } = tree();
+    const view = render(<PlanList steps={steps} branches={branches} work={items} actions={noActions()} />);
+    view.getByText("step 2 of 3 · 2 branches open");
+    const rail = within(view.getByRole("group", { name: "Branch 2a, Breakout" }));
+    rail.getByText("holds up step 3");
+    rail.getByText("1 of 2 done");
+    rail.getByRole("button", { name: "Step 2a.2, Order it: to do" });
+    rail.getByText("PANEL-9");
+    expect(iconsIn(rail.getByText("Breakout").closest(".ui-row") ?? view.container)[0]).toBe("branch");
+    // The branch's own now: its first step not done.
+    expect(rail.getAllByText("now")).toHaveLength(1);
+    // Step 3 waits on 2a, and on L-12, which is tabled, so it reads in the warm tone.
+    const hang = view.getByText("Hang it").closest(".ui-row") ?? view.container;
+    expect(iconsIn(hang)).toContain("joins");
+    view.getByText("waits on 2a and L-12, tabled");
+  });
+
+  test("a branch that became a line is one row that opens it", () => {
+    const { steps, branches, work: items } = tree();
+    const view = render(<PlanList steps={steps} branches={branches} work={items} actions={noActions()} />);
+    const became = within(view.getByRole("group", { name: "Branch 2b, Wall bracket" }));
+    became.getByText("its own line now: L-12");
+    became.getByRole("button", { name: "Open L-12, Wall bracket" });
+    expect(became.queryByRole("button", { name: /^More/ })).toBeNull();
+  });
+
+  test("a branch's More: what it holds up ticked, then change it, make it a line, or remove it", () => {
+    const { steps, branches, work: items } = tree();
+    const actions = noActions();
+    const view = render(<PlanList steps={steps} branches={branches} work={items} actions={actions} />);
+    fireEvent.click(view.getByRole("button", { name: "More: branch 2a, Breakout" }));
+    const menu = within(view.getByRole("menu", { name: "Branch 2a" }));
+    expect(menu.getByRole("menuitemradio", { name: "Step 3, Hang it" }).getAttribute("aria-checked")).toBe(
+      "true",
+    );
+    fireEvent.click(menu.getByRole("menuitemradio", { name: "Nothing" }));
+    expect(actions.onHoldsUp).toHaveBeenCalledWith(branches[0], null);
+    for (const [name, handler] of [
+      ["Rename or change its steps…", actions.onEdit],
+      ["Make it its own line…", actions.onPromote],
+      ["Remove the branch", actions.onRemove],
+    ] as const) {
+      fireEvent.click(view.getByRole("button", { name: "More: branch 2a, Breakout" }));
+      fireEvent.click(view.getByRole("menuitem", { name }));
+      expect(handler).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  test("the sheets: making a branch a line asks what finishes it; changing it takes its steps one per line", () => {
+    const [breakout] = tree().branches;
+    if (breakout === undefined) throw new Error("the tree has branch 2a");
+    const onPromote = mock(() => {});
+    const promote = render(
+      <PromoteSheet branch={breakout} issues={1} onPromote={onPromote} onCancel={() => {}} />,
+    );
+    // Opened by Return on its menu item, the same Return must land in no box: the one-line title takes the focus.
+    expect(document.activeElement).toBe(promote.getByLabelText("Title"));
+    promote.getByText(
+      "Its steps and 1 issue move to the new line. Here it stays as a row that opens it, still holding up step 3 until that line is done.",
+    );
+    const make = promote.getByRole("button", { name: "Make it a line, up next" });
+    expect(make.hasAttribute("disabled")).toBe(true);
+    fireEvent.change(promote.getByLabelText("Done when"), { target: { value: "A board is soldered in." } });
+    fireEvent.click(make);
+    expect(onPromote).toHaveBeenCalledWith({
+      title: "Breakout",
+      doneWhen: "A board is soldered in.",
+      where: "up_next",
+    });
+    promote.unmount();
+
+    const onSave = mock(() => {});
+    const { steps } = tree();
+    const edit = render(
+      <BranchEditSheet
+        branch={breakout}
+        steps={steps.filter((step) => step.branch === 100)}
+        onSave={onSave}
+        onCancel={() => {}}
+      />,
+    );
+    const box = edit.getByLabelText("Its steps, one per line");
+    expect(box).toHaveProperty("value", "Pick a board\nOrder it");
+    fireEvent.change(box, { target: { value: "Pick a board\n\nOrder it\nTest it" } });
+    fireEvent.click(edit.getByRole("button", { name: "Save" }));
+    expect(onSave).toHaveBeenCalledWith("Breakout", ["Pick a board", "Order it", "Test it"]);
   });
 
   test("a closed line with no summary says none was written", () => {

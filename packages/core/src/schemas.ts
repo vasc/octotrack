@@ -201,15 +201,52 @@ export type Line = z.infer<typeof Line>;
 export const PlanStepStatus = z.enum(["todo", "doing", "done"]);
 export type PlanStepStatus = z.infer<typeof PlanStepStatus>;
 
+/** One step of a line's plan, on its critical path or on a branch. */
 export const PlanStep = z.object({
+  id: z.number().int(),
   line: z.string(),
+  /** The branch it is on; null on the critical path. */
+  branch: z.number().int().nullable(),
+  /** Its place in its own sequence, from 1. */
   position: z.number().int(),
+  /** Where it sits in the tree, as typed and shown: "2" on the critical path, "2a.1" on branch 2a. */
+  address: z.string(),
   title: z.string(),
   status: PlanStepStatus,
 });
 export type PlanStep = z.infer<typeof PlanStep>;
 
-/** The step a line is on: the one under way, else the first not done; none once every step is done. */
+/** Open while it has work to do; done when every step is, or its line is; ended when its line was dropped. */
+export const PlanBranchState = z.enum(["open", "done", "ended"]);
+export type PlanBranchState = z.infer<typeof PlanBranchState>;
+
+/** A branch of a plan: steps that fork from a step, may hold up a later one, and may have become a line. */
+export const PlanBranch = z.object({
+  id: z.number().int(),
+  line: z.string(),
+  /** The step it forks from, by id. */
+  fromStep: z.number().int(),
+  /** Its place among the branches forking from that step, from 1. */
+  position: z.number().int(),
+  /** "2a": the step it forks from, and a letter. */
+  address: z.string(),
+  title: z.string(),
+  /** The address of the later step that waits for it; null when it holds nothing up. */
+  holdsUp: z.string().nullable(),
+  /** The line it became, if it did: its steps and issues live there. */
+  became: z.object({ ref: z.string(), title: z.string(), state: LineState }).nullable(),
+  state: PlanBranchState,
+});
+export type PlanBranch = z.infer<typeof PlanBranch>;
+
+/** A step named on the command line or by an agent: its address, or a number for a step on the critical path. */
+export const StepRef = z.union([z.string().min(1), z.number().int().positive()]);
+export type StepRef = z.infer<typeof StepRef>;
+
+/**
+ * The step a sequence is on: the one under way, else the first not done; none once every step is done. Given every
+ * step of a plan, pass only one sequence, such as the critical path's.
+ */
 export function currentStep<T extends { status: PlanStepStatus }>(steps: readonly T[]): T | undefined {
   return steps.find((step) => step.status === "doing") ?? steps.find((step) => step.status !== "done");
 }
@@ -749,7 +786,18 @@ export type LineWork = z.infer<typeof LineWork>;
 
 export const LineDetail = z.object({
   line: Line,
+  /** Every step, critical path and branches, in the tree's order read top to bottom. */
   steps: z.array(PlanStep),
+  branches: z.array(PlanBranch),
+  /** The plan branch this line grew out of, and the step there that waits for it. */
+  branchOf: z
+    .object({
+      line: z.string(),
+      title: z.string(),
+      address: z.string(),
+      holdsUp: z.object({ address: z.string(), title: z.string() }).nullable(),
+    })
+    .nullable(),
   issues: z.array(EntitySummary),
   work: z.array(LineWork),
 });
@@ -825,8 +873,22 @@ export type StartCause = z.infer<typeof StartCause>;
 export const LineHome = z.object({
   /** The latest session Octotrack started for it, if any. */
   start: LineStart.nullable(),
-  /** The first plan step not done, and how many steps there are. */
-  step: z.object({ position: z.number().int(), of: z.number().int(), title: z.string() }).nullable(),
+  /**
+   * The critical path's current step and how many steps it has, with what that step waits on: open branches by address
+   * ("2a"), lines a branch became by ref.
+   */
+  step: z
+    .object({
+      position: z.number().int(),
+      of: z.number().int(),
+      title: z.string(),
+      waitsOn: z.array(z.string()),
+    })
+    .nullable(),
+  /** How many of its plan's branches are open. */
+  branchesOpen: z.number().int(),
+  /** The plan branch this line grew out of: "branch 3a of L-2, holds up its step 4". */
+  branchOf: z.object({ line: z.string(), address: z.string(), holdsUp: z.string().nullable() }).nullable(),
   /** On a working line: what waits on the developer, in order. */
   forYou: z.array(ForYou),
   /** A working line that needs the developer to step in: nobody could be found and nothing is starting. */

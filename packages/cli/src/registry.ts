@@ -1,6 +1,7 @@
 import type { Command } from "./command.ts";
 import { decisionCommands } from "./commands/decisions.ts";
 import { lineCommands } from "./commands/lines.ts";
+import { planCommands } from "./commands/plan.ts";
 import { runnerCommands } from "./commands/runner.ts";
 import { taskCommands } from "./commands/tasks.ts";
 import { networkCommands } from "./commands/network.ts";
@@ -79,6 +80,7 @@ const OWN_COMMANDS: readonly Command[] = [
   ...installCommands,
   ...observeCommands,
   ...lineCommands,
+  ...planCommands,
   ...taskCommands,
   ...runnerCommands,
   ...decisionCommands,

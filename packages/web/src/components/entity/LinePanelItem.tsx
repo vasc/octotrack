@@ -9,7 +9,7 @@ import { useLineChoices } from "../../hooks/useLineChoices.ts";
 import { useMarkSeen } from "../../hooks/useMarkSeen.ts";
 import { useOpQuery } from "../../hooks/useOp.ts";
 import { failureText } from "../../lib/failure.ts";
-import { forYouCounts } from "../../lib/lines.ts";
+import { forYouCounts, issuesOnBranch } from "../../lib/lines.ts";
 import { moreSinceSummary } from "../../lib/log.ts";
 import { backEntity, pageUnder, useRoute } from "../../lib/router.ts";
 import { LineStepIn } from "../home/LineStepIn.tsx";
@@ -28,7 +28,9 @@ import { SinceSummary } from "./SinceSummary.tsx";
 import { SummaryBox } from "./SummaryBox.tsx";
 import { TellBox } from "./TellBox.tsx";
 import { useNarrow } from "../../hooks/useNarrow.ts";
-import { usePlanStatus } from "../../hooks/usePlanStatus.ts";
+import { usePlanActions } from "../../hooks/usePlanActions.ts";
+import { BranchEditSheet } from "../lines/BranchEditSheet.tsx";
+import { PromoteSheet } from "../lines/PromoteSheet.tsx";
 
 /**
  * A line opened, in one column read top to bottom: where it stands and how to move it, what it needs from you, its
@@ -64,7 +66,7 @@ export function LinePanelItem({
   const [starting, setStarting] = useState(false);
   const route = useRoute();
   const narrow = useNarrow();
-  const planStatus = usePlanStatus(line.ref);
+  const plan = usePlanActions(line.ref);
   const params = route.params;
   // Opened with t from home: straight to Tell.
   const telling = params.get("act") === "tell";
@@ -93,6 +95,7 @@ export function LinePanelItem({
       repos={line.repos.map(h.repoName)}
       held={forYouCounts(forYou)}
       back={from === null ? undefined : { label: from, onBack: backEntity }}
+      branchOf={shown.data?.branchOf ?? null}
       actions={
         stepIn !== null && details !== undefined && details.stepInKind !== null ? (
           // Nobody can take it: Step in, its reason and the action that fits, in place of the moves.
@@ -151,12 +154,29 @@ export function LinePanelItem({
       >
         <PlanList
           steps={shown.data?.steps ?? []}
+          branches={shown.data?.branches ?? []}
           work={shown.data?.work ?? []}
           state={line.state}
           foldMerged={narrow}
-          status={planStatus}
+          actions={plan.actions}
         />
       </Loaded>
+      {plan.editing === null ? null : (
+        <BranchEditSheet
+          branch={plan.editing.branch}
+          steps={plan.editing.steps}
+          onSave={plan.save}
+          onCancel={plan.cancel}
+        />
+      )}
+      {plan.promoting === null ? null : (
+        <PromoteSheet
+          branch={plan.promoting}
+          issues={issuesOnBranch(shown.data, plan.promoting)}
+          onPromote={plan.promote}
+          onCancel={plan.cancel}
+        />
+      )}
       <Loaded
         loaded={since.data !== undefined}
         error={since.error}

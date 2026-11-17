@@ -24,6 +24,22 @@ closed; the page behind does not react to keys. On a phone it rises from the bot
 - Error: tabling it waits with Undo like every choice; a request the tracker never took, or a refusal when it takes effect, is said in the Undo bar ("Did not happen: …") with Dismiss; the sheet closes as the choice is made.
 - Empty: Table it is off until a reason is typed; with nothing held and no owner, the consequence sentence is left out.
 
+### components/lines/PromoteSheet.tsx
+
+- Designed in: Plan-Tree.dc.html, C (title focused, two choices)
+- What it shows: "Make 3a its own line" and Cancel; "Its steps and 2 issues move to the new line. Here it stays as a row that opens it, still holding up step 4 until that line is done."; "Title" (the branch's), "Done when"; then "Make it a line, up next" and "Start it now".
+- Loading: never loads on its own: the branch and its issue count come from the plan already loaded.
+- Error: making it is a choice that waits with Undo; a refusal when it takes effect is said in the Undo bar ("Did not happen: …"); the sheet closes as the choice is made.
+- Empty: both actions are off until a title and a done when are given.
+
+### components/lines/BranchEditSheet.tsx
+
+- Designed in: Plan-Tree.dc.html, B
+- What it shows: "Change branch 2a" and Cancel; "Title"; "Its steps, one per line", filled with its steps; "A step whose words stay keeps its status and its issues."; "Save".
+- Loading: never loads on its own.
+- Error: a refusal is said under the branch's More ("Not changed: …") after the sheet closes.
+- Empty: Save is off until there is a title and at least one step; blank lines are left out.
+
 ### components/home/StartSheet.tsx
 
 - Designed in: Sheets.dc.html, state C

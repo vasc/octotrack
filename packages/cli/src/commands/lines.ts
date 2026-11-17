@@ -1,4 +1,4 @@
-import { contracts as c, PlanStepStatus } from "@octotrack/core";
+import { contracts as c } from "@octotrack/core";
 import { type Args, UsageError } from "../args.ts";
 import type { Command } from "../command.ts";
 import * as r from "../render.ts";
@@ -401,39 +401,6 @@ export const lineCommands: Command[] = [
     async run({ client, out }, args) {
       const outcome = await client.call(c.lineAcceptRecommended, { refs: args.requirePositionals("REF") });
       out.result(outcome, () => r.renderLines(outcome.data));
-    },
-  },
-  {
-    path: ["plan", "set"],
-    usage: "<LINE> <step>...",
-    summary: "Set a line's plan: its steps, in order",
-    examples: ['octo plan set L-2 "Model the base" "Print and test-fit" "Final print"'],
-    ops: [c.planSet.name],
-    async run({ client, out }, args) {
-      const line = args.requirePositional(0, "LINE");
-      const steps = args.positionals.slice(1);
-      if (steps.length === 0) throw new UsageError("Name at least one step");
-      const outcome = await client.call(c.planSet, { line, steps });
-      out.result(outcome, () => outcome.data.map((step) => `  ${step.position}. ${step.title}`).join("\n"));
-    },
-  },
-  {
-    path: ["plan", "step"],
-    usage: "<LINE> <step> <todo|doing|done>",
-    summary: "Set one step of a line's plan to do, under way or done",
-    examples: ["octo plan step L-2 1 done", "octo plan step L-2 2 doing"],
-    ops: [c.planStep.name],
-    async run({ client, out }, args) {
-      const line = args.requirePositional(0, "LINE");
-      const position = Number(args.requirePositional(1, "step"));
-      if (!Number.isInteger(position) || position < 1)
-        throw new UsageError("<step> is the step's number in the plan");
-      const status = PlanStepStatus.safeParse(args.requirePositional(2, "status"));
-      if (!status.success) throw new UsageError("<status> is todo, doing or done");
-      const outcome = await client.call(c.planStep, { line, step: position, status: status.data });
-      out.result(outcome, () =>
-        outcome.data.map((step) => `  ${step.position}. ${step.title} ${step.status}`).join("\n"),
-      );
     },
   },
 ];

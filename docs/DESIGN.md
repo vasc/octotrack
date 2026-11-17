@@ -1158,67 +1158,72 @@ What it changed in what was built before:
 - **Built only once agreed.** An exploratory branch, `lines-of-work`, tried an earlier version of this model in code. It
   added an "area" layer above projects, which this design drops, so it was research, not the starting point.
 
-## D15. A line's plan is a tree (proposed, not built)
+## D15. A line's plan is a tree
 
 **What the developer said:** "Linear plans are not reality", "In a line there will be a critical path and there will be
 side branches", "If a side branch becomes complex enough it will become its own line", and "Tracking and displaying
 this tree must be a part of the tool". Drawn on the canvas as "Line · its plan as a tree" (Plan-Tree.dc.html).
 
-**The problem.** A plan is one ordered list of steps today. Real work forks: parts are ordered while the print is
-tested, a bracket is designed beside the case, photos are taken whenever. Squeezed into one list, side work either
-pretends to be on the critical path (so "step 3 of 5" lies about what holds the line up) or is left out of the plan.
-Work that grows into its own effort has no way to leave the plan and become a line while keeping its link to what it
-holds up.
+**The problem.** A plan was one ordered list of steps. Real work forks: parts are ordered while the print is tested, a
+bracket is designed beside the case, photos are taken whenever. Squeezed into one list, side work either pretends to be
+on the critical path (so "step 3 of 5" lies about what holds the line up) or is left out of the plan. Work that grows
+into its own effort had no way to leave the plan and become a line while keeping its link to what it holds up.
 
-Everything below is my proposal, with its reasons.
+Everything below is my design, with its reasons.
 
 - **The critical path stays the numbered steps.** It is what done when needs, in order, and "step 2 of 4" counts only
   it. _Why:_ the developer named it; it keeps home's one fact honest. Branches never change the count.
-- **A branch forks from any step and may hold up one later step of the critical path.** It has a title and its own
-  ordered steps. A branch that holds up step 4 makes step 4 wait for it; one that holds nothing up is side work that
-  never keeps the line from done. Branches fork from branch steps too, so the plan is a tree of any depth. _Why:_ the
-  join is what makes a branch matter to the critical path, and it is the one fact a list cannot say. _Trade-off:_ a
-  branch joins at most one step; work that two steps need is two branches or belongs on the critical path. A full
-  dependency graph (any step waits on any steps) was considered and left out: it needs a graph editor to be readable,
-  and nobody asked for one.
+- **A branch forks from any step and may hold up one later step of the sequence it forks from.** It has a title and its
+  own ordered steps. A branch off the critical path that holds up step 4 makes step 4 wait for it; one that holds
+  nothing up is side work that never keeps the line from done. Branches fork from branch steps too, so the plan is a
+  tree of any depth, and a branch off a branch holds up a later step of that branch. _Why:_ the join is what makes a
+  branch matter, and it is the one fact a list cannot say. _Trade-off:_ a branch joins at most one step; work that two
+  steps need is two branches or belongs on the critical path. A full dependency graph (any step waits on any steps) was
+  considered and left out: it needs a graph editor to be readable, and nobody asked for one.
 - **Addresses read like the tree, ids stay put.** The critical path is `1`, `2`, `3`; branches off step 2 are `2a`,
   `2b`; their steps `2a.1`, `2a.2`; a branch off `2a.1` is `2a.1a`. Steps and branches have stable ids underneath, so
   an issue stays on its step when steps are inserted or the plan is rewritten; addresses are worked out when shown or
-  typed. _Why:_ the CLI and the panel need something short to say, and positions alone moved issues before.
-- **Status is per step, as today; a branch is done when all its steps are.** Each branch has its own current step (the
-  one under way, else the first not done). A step that waits on an open branch refuses Done, naming the branch, until
-  the branch is finished or set to hold nothing up. _Why:_ marking it done anyway would hide the very thing the join
-  records. _Trade-off:_ one more refusal to meet; the message says the two ways out.
-- **A branch becomes its own line by promotion.** Its title becomes the line's title, its steps the new line's critical
-  path (its own branches come along), and the issues on them move with it; done when is asked for, as for every line.
-  The developer places it at once (Working on, Up next, Table). An owner's promotion is a proposal with a
-  recommendation, like every line an agent wants, and the branch reads "proposed as L-12" until it is placed; Not a line
-  turns it back into a plain branch. In the old plan the branch stays as one row that opens the new line and still holds
-  up its step; it is done when that line is done. The new line's head says whose branch it is. _Why:_ the developer's
-  words; keeping the link means the parent's step still waits on the work wherever it now lives. When is "complex
-  enough" is the owner's judgment, guided by `octo guide` (it needs its own owner, its own repo, or would run beside the
-  critical path); there is no size or time threshold. _Trade-off:_ a branch can grow large before anyone promotes it;
-  the panel shows each branch's issue count, so it is seen.
-- **A step waiting on a line nobody is working on is drift.** When the line a branch became is tabled or dropped, the
-  step that waits on it says "waits on L-12, tabled" in the warm tone, and the parent's owner gets drift. Dropping that
-  line returns the branch here with the steps it had left; folding it back into its parent does the same with its
-  issues.
-- **Shown as an outline with rails (direction A on the canvas).** The critical path runs down the left as today; each
-  branch hangs under the step it forks from on a thin rail, with its own status menus and More (Add a step, Holds up…,
-  Rename, Make it its own line…, Remove the branch); the step a branch joins carries a merge mark and "waits on 2a".
-  Home adds "2 branches open" to a line's facts, and "waits on 2a" when the current step waits. _Why:_ it keeps every
-  step's menu and issues in place and works at phone width. _Trade-off:_ fork and join are read from words and the mark,
-  not seen as shapes. The canvas also draws direction E, a map with the critical path as a straight rail and branches
-  leaving and rejoining it, which shows the shape at a glance but needs a column per parallel branch and leaves no room
-  for menus and issues.
-- **Operations.** `plan.show` (the tree, also inside `line.show`); `plan.set` (the critical path, keeping branches by
-  the step they fork from, as statuses are kept today); `plan.branch` (add: from, holds up, title, steps);
-  `plan.branch.update` (title, holds up, steps); `plan.branch.remove` (its issues go back to the step it forked from);
-  `plan.step` (status, by address); `plan.promote` (a branch to a line). `issue create --step` takes an address.
-- **Data.** `plan_steps` gains an id and a branch (none for the critical path); a new `plan_branches` holds id, line,
-  the step it forks from, the step it holds up, title, and the line it became. `lines` gains the branch it came from.
-  `issues.step` holds a step id. The migration gives every existing step an id on the critical path and moves each
-  issue's position to that id; nothing else changes for plans without branches.
+  typed, and a bare number still names a step on the critical path. Each step also keeps its place in the tree read top
+  to bottom, so work is picked up in plan order. _Why:_ the CLI and the panel need something short to say, and
+  positions alone moved issues before.
+- **Rewriting a sequence keeps what stays.** `plan set` and changing a branch's steps match old steps by their words: a
+  step whose words stay keeps its id, status, issues and branches. A step taken out leaves its issues on no step (on a
+  branch, back on the step it forks from), and its branches move to the step before it.
+- **Status is per step; a branch is done when all its steps are.** Each branch has its own current step (the one under
+  way, else the first not done). A step that waits on an open branch refuses Done, naming the branch, until the branch
+  is finished or set to hold nothing up. _Why:_ marking it done anyway would hide the very thing the join records.
+  _Trade-off:_ one more refusal to meet; the message says the two ways out.
+- **A branch becomes its own line by promotion.** Its title becomes the line's title (the developer may change it), its
+  steps the new line's critical path (its own branches come along), and the issues on them move with it; done when is
+  asked for, as for every line. The developer places it up next or starts it, from a sheet, and like a line's other
+  moves it waits a few seconds with Undo. An owner's promotion is a proposal with a recommendation (up next unless it
+  says otherwise), like every line an agent wants. In the old plan the branch stays as one row that opens the new line
+  and still holds up its step; it is done when that line is done. The new line's head says whose branch it is, and its
+  row on Lines says "branch of L-1, holds up its step 3". _Why:_ the developer's words; keeping the link means the
+  parent's step still waits on the work wherever it now lives. When is "complex enough" is the owner's judgment, guided
+  by `octo guide` (it needs its own owner, its own repo, or would run beside the critical path); there is no size or
+  time threshold. _Trade-off:_ a branch can grow large before anyone promotes it; the panel shows how far along each
+  branch is, so it is seen.
+- **A line made from a branch that ends without being done stops holding its step up.** Dropped, or turned down as not
+  a line, the branch reads ended and the step it held no longer waits; its work went with that line. _Why:_ putting the
+  steps back would revive work the developer chose to drop. A tabled one still holds its step, which then reads "waits
+  on L-12, tabled" in the warm tone, so the stall shows on the plan.
+- **Shown as an outline with rails (direction A on the canvas).** The critical path runs down the left as before; each
+  branch hangs under the step it forks from on a rail, with its own status menus and its More (what it holds up, ticked;
+  Rename or change its steps…; Make it its own line…; Remove the branch, with Undo); the step a branch joins carries a
+  merge mark and "waits on 2a". Lines adds "2 branches open" to a line's facts, and "waits on 2a" when the current step
+  waits. _Why:_ it keeps every step's menu and issues in place and works at phone width. _Trade-off:_ fork and join are
+  read from words and the mark, not seen as shapes. The canvas also draws direction E, a map with the critical path as
+  a straight rail and branches leaving and rejoining it, which shows the shape at a glance but needs a column per
+  parallel branch and leaves no room for menus and issues.
+- **Operations.** `line.show` gives the tree as flat steps and branches with their addresses, which `octo plan show`
+  draws; `plan.set` (the critical path); `plan.branch` (add: from, holds up, title, steps); `plan.branch.update`
+  (title, holds up, steps); `plan.branch.remove` (its issues go back to the step it forked from); `plan.step` (status,
+  by address); `plan.promote` (a branch to a line). `issue create --step` and `issue update --step` take an address.
+- **Data (schema 26).** `plan_steps` gains an id, a branch (none for the critical path) and its place in the tree; a new
+  `plan_branches` holds id, line, the step it forks from, the step it holds up, title, and the line it became. `lines`
+  gains the branch it came from. `issues.step` holds a step id. The migration gives every existing step an id on the
+  critical path and moves each issue's position to that id; nothing else changes for plans without branches.
 
 ## Data model
 

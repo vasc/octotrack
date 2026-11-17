@@ -19,6 +19,7 @@ import { makeRoom, runnerOps } from "./ops/runner.ts";
 import { inboxOps } from "./ops/inbox.ts";
 import { taskOps } from "./ops/tasks.ts";
 import { lineOps } from "./ops/lines.ts";
+import { planOps } from "./ops/plan.ts";
 import { linkOps } from "./ops/links.ts";
 import { miscOps, seedViews } from "./ops/misc.ts";
 import { prOps } from "./ops/prs.ts";
@@ -115,6 +116,7 @@ const SYSTEM: Caller = { actor: "octotrack", channel: "cli", system: true };
 
 const ALL_OPS: readonly BoundOp[] = [
   ...lineOps,
+  ...planOps,
   ...claimOps,
   ...inboxOps,
   ...taskOps,

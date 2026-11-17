@@ -57,7 +57,7 @@ describe("home: one list, with what each line needs from the developer", () => {
 
     const home = w.as(w.dev, c.homeShow, {});
     const details = home.lines[line.ref];
-    expect(details?.step).toEqual({ position: 1, of: 3, title: "Model" });
+    expect(details?.step).toEqual({ position: 1, of: 3, title: "Model", waitsOn: [] });
     expect(
       details?.forYou.map((item) =>
         item.kind === "question" ? item.card.decision.ref : item.kind === "task" ? item.task.ref : item.line,

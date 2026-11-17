@@ -2,7 +2,7 @@ import type { Line, LineCrew, LineHome } from "@octotrack/core/schemas";
 import type { ReactNode } from "react";
 import type { DropTarget } from "../../hooks/useDragOrder.ts";
 import { lineFocusRef } from "../../lib/focus.ts";
-import { crewText } from "../../lib/lines.ts";
+import { branchOfText, crewText } from "../../lib/lines.ts";
 import { openEntity } from "../../lib/router.ts";
 import { Button } from "../ui/Button.tsx";
 import { Facts } from "../ui/Facts.tsx";
@@ -62,6 +62,7 @@ export function UpNextRow({
             ? null
             : `${details.reconfirming} re-confirming`}
           {line.doneWhenProposal === null ? null : "done when changed"}
+          {branchOfText(details)}
           {crewText(crew)}
         </Facts>
       }

@@ -404,7 +404,7 @@ export const taskOps = [
       assignee: DEVELOPER,
       line: line.ref,
       // It holds up what the issue it frees holds up: that issue's plan step, on this line.
-      ...(frees !== null && frees.line === line.ref && frees.step !== null ? { step: frees.step } : {}),
+      ...(frees !== null && frees.line === line.ref && frees.step !== null ? { stepId: frees.step } : {}),
     });
     // Filed on a line no agent works on (in a wind-down), it is held until one does.
     ctx.sql.run("UPDATE issues SET place = ?, outcome = ?, fields = ?, heldAt = ? WHERE ref = ?", [

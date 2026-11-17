@@ -50,7 +50,21 @@ export type WakeRow = z.infer<typeof WakeRow>;
 
 /** A line as stored; its repos live in their own table and are joined in when it is read. */
 export const LineRow = Line.omit({ repos: true });
-export const PlanStepRow = PlanStep;
+/** A plan step as stored: its address is worked out from the tree. */
+export const PlanStepRow = PlanStep.omit({ address: true }).extend({ ord: z.number().int() });
+export type PlanStepRow = z.infer<typeof PlanStepRow>;
+
+/** A plan branch as stored: by ids, its address and state worked out from the tree. */
+export const PlanBranchRow = z.object({
+  id: z.number().int(),
+  line: z.string(),
+  fromStep: z.number().int(),
+  holdsUp: z.number().int().nullable(),
+  position: z.number().int(),
+  title: z.string(),
+  became: z.string().nullable(),
+});
+export type PlanBranchRow = z.infer<typeof PlanBranchRow>;
 export const LineRepoRow = z.object({ line: z.string(), repo: z.string() });
 export const ClaimRow = LineClaim;
 export const NoticeRow = Notice.extend({ wakes: z.number().transform((value) => value !== 0) });

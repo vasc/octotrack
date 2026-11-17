@@ -376,6 +376,29 @@ const MIGRATIONS: readonly Migration[] = [
   UPDATE agents SET wakeEndedAt = wokenAt, wakeEnd = CASE WHEN wakeError IS NULL THEN 'exited' ELSE 'error' END
     WHERE wokenAt IS NOT NULL AND wakePid IS NULL;
   `,
+  // A plan is a tree (D15): every step gets an id, which issues hold in place of a position, so inserting a step moves
+  // nothing; a step sits on a branch, or on the critical path with none; ord is its place in the tree, read top to
+  // bottom, kept for ordering in SQL. A branch forks from a step, may hold up a later one, and may become a line.
+  `
+  CREATE TABLE plan_steps_tree (
+    id INTEGER PRIMARY KEY, line TEXT NOT NULL REFERENCES lines(ref), branch INTEGER, position INTEGER NOT NULL,
+    ord INTEGER NOT NULL, title TEXT NOT NULL, status TEXT NOT NULL
+  );
+  INSERT INTO plan_steps_tree (line, branch, position, ord, title, status)
+    SELECT line, NULL, position, position, title, status FROM plan_steps ORDER BY line, position;
+  UPDATE issues SET step = (
+    SELECT s.id FROM plan_steps_tree s WHERE s.line = issues.line AND s.branch IS NULL AND s.position = issues.step
+  ) WHERE step IS NOT NULL;
+  DROP TABLE plan_steps;
+  ALTER TABLE plan_steps_tree RENAME TO plan_steps;
+  CREATE INDEX plan_steps_line ON plan_steps(line);
+  CREATE TABLE plan_branches (
+    id INTEGER PRIMARY KEY, line TEXT NOT NULL REFERENCES lines(ref), fromStep INTEGER NOT NULL, holdsUp INTEGER,
+    position INTEGER NOT NULL, title TEXT NOT NULL, became TEXT REFERENCES lines(ref)
+  );
+  CREATE INDEX plan_branches_line ON plan_branches(line);
+  ALTER TABLE lines ADD COLUMN branchOf INTEGER;
+  `,
 ];
 
 const UserVersion = z.object({ user_version: z.number().int() });

@@ -29,9 +29,9 @@ export function StepStatusMenu({
   const words = stepStatusWords(step.status);
   return (
     <Menu
-      label={`Step ${step.position}, ${step.title}: ${words}`}
+      label={`Step ${step.address}, ${step.title}: ${words}`}
       text={words.charAt(0).toUpperCase() + words.slice(1)}
-      menuLabel={`Step ${step.position}'s status`}
+      menuLabel={`Step ${step.address}'s status`}
       busy={busy ? "Changing…" : undefined}
       failed={failed === undefined ? undefined : `Not changed: ${failed}`}
     >

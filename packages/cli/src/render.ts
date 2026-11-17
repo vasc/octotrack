@@ -23,9 +23,12 @@ import type {
   PullRequest,
   StatusUpdate,
   View,
+  PlanBranch,
+  PlanNode,
   Watch,
   WatchResult,
 } from "@octotrack/core";
+import { currentStep, planTree } from "@octotrack/core";
 
 // Asked of file descriptor 1, not of process.stdout, which in Bun would make the pipe non-blocking. What octo prints
 // arrives whole either way: see write.ts.
@@ -444,14 +447,70 @@ export function renderLine(detail: LineDetail): string {
   if (line.repos.length > 0) out.push(`Repos: ${line.repos.join(", ")}`);
   if (line.tabledReason !== null) out.push(`Tabled because: ${line.tabledReason}`);
   if (line.recommendationWhy !== null) out.push(`Why: ${line.recommendationWhy}`);
-  out.push("", bold("Plan"));
-  out.push(
-    detail.steps.length === 0
-      ? dim("  No plan yet.")
-      : detail.steps.map((step) => `  ${step.position}. ${step.title} ${dim(step.status)}`).join("\n"),
-  );
+  if (detail.branchOf !== null) {
+    const { branchOf } = detail;
+    out.push(
+      `Branch ${branchOf.address} of ${branchOf.line} ${branchOf.title}${branchOf.holdsUp === null ? "" : `; holds up its step ${branchOf.holdsUp.address}, ${branchOf.holdsUp.title}`}`,
+    );
+  }
+  out.push("", bold("Plan"), renderPlanRows(detail));
   out.push("", bold("Issues"), detail.issues.length === 0 ? dim("  None.") : renderSummaries(detail.issues));
   return out.join("\n");
+}
+
+/** What a plan branch says beside its title: the line it became, what it holds up, or that it is done. */
+function branchFacts(branch: PlanBranch): string {
+  const holds = branch.holdsUp === null ? "holds nothing up" : `holds up ${branch.holdsUp}`;
+  if (branch.became !== null) {
+    return `${branch.became.ref} ${STATE_LABEL[branch.became.state].toLowerCase()}, ${holds}`;
+  }
+  return branch.state === "done" ? `done, ${holds}` : holds;
+}
+
+/**
+ * A plan as a tree, one row per step and per branch: its address, a step's status, its title, then its issues and what
+ * it waits on, or what a branch holds up.
+ */
+export function renderPlanRows(detail: Pick<LineDetail, "steps" | "branches" | "work">): string {
+  if (detail.steps.length === 0 && detail.branches.length === 0) return dim("  No plan yet.");
+  const rows: string[] = [];
+  const width = Math.max(
+    4,
+    ...detail.steps.map((step) => step.address.length),
+    ...detail.branches.map((b) => b.address.length),
+  );
+  const titleWidth = Math.max(
+    ...detail.steps.map((step) => step.title.length),
+    ...detail.branches.map((b) => b.title.length),
+  );
+  const row = (address: string, status: string, title: string, facts: string) =>
+    `  ${address.padEnd(width)}  ${status.padEnd(5)}  ${facts === "" ? title : `${title.padEnd(titleWidth)}  ${dim(facts)}`}`;
+  const walk = (nodes: readonly PlanNode[]) => {
+    for (const node of nodes) {
+      const issues = detail.work.filter((item) => item.step === node.step.id).map((item) => item.ref);
+      const waits = node.waitsOn.length === 0 ? [] : [`waits on ${node.waitsOn.join(", ")}`];
+      rows.push(row(node.step.address, node.step.status, node.step.title, [...issues, ...waits].join("  ")));
+      for (const fork of node.branches) {
+        rows.push(row(fork.branch.address, "", fork.branch.title, branchFacts(fork.branch)));
+        walk(fork.steps);
+      }
+    }
+  };
+  walk(planTree(detail.steps, detail.branches));
+  return rows.join("\n");
+}
+
+/** A line's plan with a head saying where it stands: "L-2 Enclosure · step 2 of 4 · 2 branches open". */
+export function renderPlan(detail: LineDetail): string {
+  const path = detail.steps.filter((step) => step.branch === null);
+  const current = currentStep(path);
+  const open = detail.branches.filter((branch) => branch.state === "open").length;
+  const head = [
+    `${bold(detail.line.ref)} ${detail.line.title}`,
+    ...(current === undefined ? [] : [`step ${current.position} of ${path.length}`]),
+    ...(open === 0 ? [] : [`${open} branch${open === 1 ? "" : "es"} open`]),
+  ];
+  return [head.join(" · "), renderPlanRows(detail)].join("\n");
 }
 
 /** What the agent must hear, after its command's own output. */

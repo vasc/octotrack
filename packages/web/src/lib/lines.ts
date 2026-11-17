@@ -3,8 +3,10 @@ import type {
   HomeView,
   Line,
   LineCrew,
+  LineDetail,
   LineHome,
   LinePlacement,
+  PlanBranch,
   StepInKind,
   UrgentReason,
 } from "@octotrack/core/schemas";
@@ -190,4 +192,34 @@ export const STEP_IN_SHORT: Readonly<Record<StepInKind, string>> = {
 export function foldedNames(names: readonly string[], shown: number): string {
   const first = names.slice(0, shown).join(", ");
   return names.length <= shown ? first : `${first} and ${names.length - shown} more`;
+}
+
+/** How many issues sit on a branch's steps, at any depth: the ones that move with it when it becomes a line. */
+export function issuesOnBranch(detail: LineDetail | undefined, branch: PlanBranch): number {
+  if (detail === undefined) return 0;
+  const family = new Set([branch.id]);
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const other of detail.branches) {
+      const forksInFamily = detail.steps.some(
+        (step) => step.id === other.fromStep && step.branch !== null && family.has(step.branch),
+      );
+      if (forksInFamily && !family.has(other.id)) {
+        family.add(other.id);
+        grew = true;
+      }
+    }
+  }
+  const steps = new Set(
+    detail.steps.filter((step) => step.branch !== null && family.has(step.branch)).map((step) => step.id),
+  );
+  return detail.work.filter((item) => item.step !== null && steps.has(item.step)).length;
+}
+
+/** Where a line made from a plan branch came from: "branch of L-1, holds up its step 3"; null for any other line. */
+export function branchOfText(details: LineHome | undefined): string | null {
+  const branchOf = details?.branchOf ?? null;
+  if (branchOf === null) return null;
+  return `branch of ${branchOf.line}${branchOf.holdsUp === null ? "" : `, holds up its step ${branchOf.holdsUp}`}`;
 }

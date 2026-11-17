@@ -15,7 +15,8 @@ import { emit } from "../store/common.ts";
 import type { Ctx } from "../store/context.ts";
 import { one, placeholders, rows } from "../store/context.ts";
 import { allLines, getIssue, requireLine, requireProject, summarize } from "../store/entities.ts";
-import { IssueRow, PlanStepRow } from "../store/rows.ts";
+import { IssueRow } from "../store/rows.ts";
+import { loadPlan } from "./plan.ts";
 import { bind } from "./bind.ts";
 import { staleHeldOn } from "./tasks.ts";
 import { requireDeveloper } from "./developer.ts";
@@ -54,30 +55,40 @@ function nextIssue(ctx: Ctx, line: Line, role: ClaimRole, agent: Agent): EntityS
     `SELECT * FROM issues i WHERE i.line = ? AND i.status IN ('todo', 'backlog') AND i.assignee IS NULL
        AND i.project IN (${placeholders(repos)})
        AND ${NOT_BLOCKED}
-     ORDER BY i.step IS NULL, i.step, i.createdAt LIMIT 1`,
+     ORDER BY i.step IS NULL, (SELECT s.ord FROM plan_steps s WHERE s.id = i.step), i.createdAt LIMIT 1`,
     [line.ref, ...repos],
   );
   return issue === undefined ? null : summarize({ kind: "issue", value: issue });
 }
 
-/** What an owner with no issue to pick up should do: plan, break the current step into issues, or wait. */
+/**
+ * What an owner with no issue to pick up should do: plan, break a current step into issues, or wait. The critical path's
+ * current step comes first, then the current step of each open branch, in the tree's order.
+ */
 function ownerWithoutWork(ctx: Ctx, line: Line): string {
-  const steps = rows(ctx, PlanStepRow, "SELECT * FROM plan_steps WHERE line = ? ORDER BY position", [
-    line.ref,
-  ]);
-  const current = currentStep(steps);
+  const plan = loadPlan(ctx, line.ref);
+  const current = currentStep(plan.steps.filter((step) => step.branch === null));
   if (current === undefined) {
     return `${line.ref} has no plan step left: write its plan (octo plan set ${line.ref}), or propose done.`;
   }
-  const open = one(
-    ctx,
-    CountRow,
-    "SELECT COUNT(*) AS n FROM issues WHERE line = ? AND step = ? AND status NOT IN ('done', 'cancelled')",
-    [line.ref, current.position],
-  );
-  return (open?.n ?? 0) === 0
-    ? `On ${line.ref}, break step ${current.position} into issues, mark it done (octo plan step ${line.ref} ${current.position} done), or propose done: ${current.title}`
-    : `Nothing for you on ${line.ref} right now; you will be woken.`;
+  const branchSteps = plan.branches
+    .filter((branch) => branch.state === "open" && branch.became === null)
+    .flatMap((branch) => {
+      const step = currentStep(plan.steps.filter((candidate) => candidate.branch === branch.id));
+      return step === undefined ? [] : [step];
+    });
+  const bare = [current, ...branchSteps].find((step) => {
+    const open = one(
+      ctx,
+      CountRow,
+      "SELECT COUNT(*) AS n FROM issues WHERE line = ? AND step = ? AND status NOT IN ('done', 'cancelled')",
+      [line.ref, step.id],
+    );
+    return (open?.n ?? 0) === 0;
+  });
+  return bare === undefined
+    ? `Nothing for you on ${line.ref} right now; you will be woken.`
+    : `On ${line.ref}, break step ${bare.address} into issues, mark it done (octo plan step ${line.ref} ${bare.address} done), or propose done: ${bare.title}`;
 }
 
 function result(ctx: Ctx, line: Line, role: ClaimRole, agent: Agent): TakeResult {

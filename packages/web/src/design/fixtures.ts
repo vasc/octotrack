@@ -8,7 +8,10 @@ import type {
   Idea,
   Issue,
   Line,
+  LineHome,
   PendingChoice,
+  PlanBranch,
+  PlanStep,
   Project,
   PullRequest,
 } from "@octotrack/core/schemas";
@@ -296,6 +299,53 @@ export function idea(overrides: Partial<Idea> = {}): Idea {
     createdAt: AT,
     updatedAt: AT,
     createdBy: "dev",
+    ...overrides,
+  };
+}
+
+/** How a line stands on home, with nothing waiting and no plan unless given. */
+export function lineHome(overrides: Partial<LineHome> = {}): LineHome {
+  return {
+    start: null,
+    step: null,
+    branchesOpen: 0,
+    branchOf: null,
+    forYou: [],
+    stepIn: false,
+    stepInReason: null,
+    stepInKind: null,
+    waitingOnYou: false,
+    held: { questions: 0, tasks: 0 },
+    reconfirming: 0,
+    sinceSummary: 0,
+    scopedSteps: 0,
+    answers: [],
+    ...overrides,
+  };
+}
+
+/** A step on a plan's critical path by its position, its id and address following from it unless given. */
+export function planStep(overrides: Partial<PlanStep> & Pick<PlanStep, "position" | "title">): PlanStep {
+  return {
+    id: overrides.position,
+    line: "L-7",
+    branch: null,
+    address: String(overrides.position),
+    status: "todo",
+    ...overrides,
+  };
+}
+
+/** A branch of a plan, open and holding nothing up unless given. */
+export function planBranch(
+  overrides: Partial<PlanBranch> & Pick<PlanBranch, "id" | "fromStep" | "address" | "title">,
+): PlanBranch {
+  return {
+    line: "L-7",
+    position: 1,
+    holdsUp: null,
+    became: null,
+    state: "open",
     ...overrides,
   };
 }
