@@ -1,7 +1,14 @@
 import { z } from "zod";
 import { crewOf, waitingOnYou } from "../agents/claims.ts";
 import { DEVELOPER } from "../agents/state.ts";
-import type { ForYou, HomeView, Line, LineHome, LineState } from "../schemas.ts";
+import {
+  currentStep,
+  type ForYou,
+  type HomeView,
+  type Line,
+  type LineHome,
+  type LineState,
+} from "../schemas.ts";
 import type { Ctx } from "../store/context.ts";
 import { one, rows } from "../store/context.ts";
 import { allLines } from "../store/entities.ts";
@@ -126,7 +133,7 @@ export function buildHome(ctx: Ctx): HomeView {
     const steps = rows(ctx, PlanStepRow, "SELECT * FROM plan_steps WHERE line = ? ORDER BY position", [
       line.ref,
     ]);
-    const current = steps.find((step) => step.status !== "done");
+    const current = currentStep(steps);
     const working = line.state === "working";
     const questions: ForYou[] = working
       ? queue

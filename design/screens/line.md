@@ -79,6 +79,17 @@ owner, then Tell. A section with nothing in it says why in one sentence instead 
 - Loading: outlines of the rows in place of the list, under its heading (G); "Loading the plan…" for screen readers only.
 - Error: "Could not load the plan. The tracker did not answer." with Try again (H); the plan last loaded stays drawn below it under "As it was at 14:20".
 - Empty: with no steps and no issues, follows the Primitives pattern: "No plan yet" in one sentence saying who writes it (the design's empty sections say why, as Summary does).
+- Setting a step: on a line that has not ended, each step ends in its StepStatusMenu, and only "now" is said beside the current step's title; the current step is the one under way, else the first not done. On a done or dropped line each step says done, now or next and has no menu.
+
+### components/entity/StepStatusMenu.tsx
+
+- Designed in: Line.dc.html, the plan
+- What it shows: a plain menu button at the end of a step's row naming its status, "To do", "Under way" or "Done", with the caret; opened, the three choices with [check] beside the one in force. Its name says the step: "Step 2, Print and test-fit: to do".
+- Picking: a different status is sent at once (no Undo, as picking the old one again puts it back); the button reads "Changing…" while it is on its way.
+- Loading: none of its own; it is drawn with its plan, which has loaded.
+- Error: "Not changed: …" under the button, with the tracker's words, until the next try.
+- Empty: none; a plan with no steps draws no menu.
+- Who: the developer, from the line panel; an agent on the line uses `octo plan step <LINE> <step> <todo|doing|done>`.
 
 ### components/entity/SinceSummary.tsx
 

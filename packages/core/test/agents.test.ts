@@ -192,7 +192,7 @@ describe("taking a line", () => {
     w.as(a, c.lineTake, {});
     const again = w.as(a, c.lineTake, {});
     expect(again.role).toBe("owner");
-    expect(again.message).toContain("break step 1 into issues, or propose done");
+    expect(again.message).toContain("break step 1 into issues, mark it done (octo plan step");
   });
 
   test("an issue on a line is claimed only by an agent on that line", () => {

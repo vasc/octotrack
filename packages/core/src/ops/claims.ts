@@ -2,7 +2,14 @@ import { z } from "zod";
 import { endClaim, NOT_BLOCKED, setClaim, windingDown } from "../agents/claims.ts";
 import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
-import type { Agent, ClaimRole, EntitySummary, Line, TakeResult } from "../schemas.ts";
+import {
+  type Agent,
+  type ClaimRole,
+  currentStep,
+  type EntitySummary,
+  type Line,
+  type TakeResult,
+} from "../schemas.ts";
 import { addNotice, claimOf, claimsOn, getAgent, viewOf } from "../store/agents.ts";
 import { emit } from "../store/common.ts";
 import type { Ctx } from "../store/context.ts";
@@ -58,7 +65,7 @@ function ownerWithoutWork(ctx: Ctx, line: Line): string {
   const steps = rows(ctx, PlanStepRow, "SELECT * FROM plan_steps WHERE line = ? ORDER BY position", [
     line.ref,
   ]);
-  const current = steps.find((step) => step.status !== "done");
+  const current = currentStep(steps);
   if (current === undefined) {
     return `${line.ref} has no plan step left: write its plan (octo plan set ${line.ref}), or propose done.`;
   }
@@ -69,7 +76,7 @@ function ownerWithoutWork(ctx: Ctx, line: Line): string {
     [line.ref, current.position],
   );
   return (open?.n ?? 0) === 0
-    ? `On ${line.ref}, break step ${current.position} into issues, or propose done: ${current.title}`
+    ? `On ${line.ref}, break step ${current.position} into issues, mark it done (octo plan step ${line.ref} ${current.position} done), or propose done: ${current.title}`
     : `Nothing for you on ${line.ref} right now; you will be woken.`;
 }
 

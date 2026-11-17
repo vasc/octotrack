@@ -34,6 +34,7 @@ import {
   PendingChoice,
   Place,
   PlanStep,
+  PlanStepStatus,
   PrCard,
   PrChecks,
   Priority,
@@ -458,6 +459,12 @@ export const contracts = {
     "plan.set",
     "Set a line's plan: its steps, in order",
     z.strictObject({ line: z.string(), steps: z.array(Text).min(1) }),
+    z.array(PlanStep),
+  ),
+  planStep: write(
+    "plan.step",
+    "Set one step of a line's plan to do, under way or done",
+    z.strictObject({ line: z.string(), step: z.number().int().positive(), status: PlanStepStatus }),
     z.array(PlanStep),
   ),
   projectCreate: write(

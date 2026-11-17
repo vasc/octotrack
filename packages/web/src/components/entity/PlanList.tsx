@@ -1,4 +1,5 @@
-import type { Line, LineWork, PlanStep } from "@octotrack/core/schemas";
+import { currentStep, type Line, type LineWork, type PlanStep } from "@octotrack/core/schemas";
+import type { PlanStatus } from "../../hooks/usePlanStatus.ts";
 import { humanize } from "../../lib/format.ts";
 import { Fact, Facts } from "../ui/Facts.tsx";
 import { List } from "../ui/List.tsx";
@@ -8,6 +9,7 @@ import { Row } from "../ui/Row.tsx";
 import { Section } from "../ui/Section.tsx";
 import { Mark } from "../ui/Badge.tsx";
 import { Icon } from "../ui/Icon.tsx";
+import { StepStatusMenu } from "./StepStatusMenu.tsx";
 
 type Pr = LineWork["prs"][number];
 
@@ -45,12 +47,16 @@ function PrFact({ pr }: { pr: Pr }) {
   );
 }
 
-/** The plan: each step done, now or next, with its issues and their pull requests under the step it belongs to. */
+/**
+ * The plan: each step done, now or next, with its issues and their pull requests under the step it belongs to. On a
+ * line that has not ended, each step ends in a menu that sets it to do, under way or done.
+ */
 export function PlanList({
   steps,
   work,
   state = "working",
   foldMerged = false,
+  status,
 }: {
   steps: readonly PlanStep[];
   work: readonly LineWork[];
@@ -58,8 +64,11 @@ export function PlanList({
   state?: Line["state"];
   /** On a phone, several merged pull requests fold to one fact so the open work stands out. */
   foldMerged?: boolean;
+  /** Setting a step's status; without it, or once the line has ended, each step only says how it stands. */
+  status?: Pick<PlanStatus, "onStatus"> & Partial<Pick<PlanStatus, "busy" | "failed">>;
 }) {
-  const current = steps.find((step) => step.status !== "done")?.position ?? null;
+  const current = currentStep(steps)?.position ?? null;
+  const settable = status !== undefined && state !== "done" && state !== "dropped";
   const unplaced = work.filter((item) => item.step === null);
   const aside =
     steps.length === 0
@@ -90,7 +99,18 @@ export function PlanList({
                 key={step.position}
                 lead={<Icon name={done ? "check" : now ? "arrow" : "ring"} />}
                 title={step.title}
-                facts={now ? <Fact tone="strong">now</Fact> : done ? "done" : "next"}
+                // With its menu, the step's status is the menu's words, so only now is said beside the title.
+                facts={now ? <Fact tone="strong">now</Fact> : settable ? undefined : done ? "done" : "next"}
+                trailing={
+                  settable ? (
+                    <StepStatusMenu
+                      step={step}
+                      onStatus={(next) => status.onStatus(step.position, next)}
+                      busy={status.busy === step.position}
+                      failed={status.failed?.step === step.position ? status.failed.message : undefined}
+                    />
+                  ) : undefined
+                }
               >
                 {under.length === 0 ? null : <WorkList items={under} foldMerged={foldMerged} />}
               </Row>

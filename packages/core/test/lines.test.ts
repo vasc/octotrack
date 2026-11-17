@@ -132,6 +132,67 @@ describe("lines of work", () => {
     expect(home.proposed.map((line) => line.title)).toEqual(["An idea"]);
   });
 
+  test("a plan step's status is set one step at a time, and the step under way is the line's current one", () => {
+    const h = withRepos();
+    const line = h.developer(c.lineAdd, {
+      title: "Sendspin enclosure",
+      doneWhen: "Done.",
+      repos: ["PANEL"],
+      where: "working",
+    });
+    h.call(c.agentRegister, { repo: "PANEL" });
+    h.call(c.lineTake, { ref: line.ref });
+    h.call(c.planSet, { line: line.ref, steps: ["Model the base", "Print and test-fit", "Final print"] });
+
+    const marked = h.call(c.planStep, { line: line.ref, step: 1, status: "done" });
+    expect(marked.map((step) => step.status)).toEqual(["done", "todo", "todo"]);
+    expect(h.developer(c.homeShow, {}).lines[line.ref]?.step).toEqual({
+      position: 2,
+      of: 3,
+      title: "Print and test-fit",
+    });
+
+    // The developer may set any step, and a step under way is the current one even with an earlier one left open.
+    h.developer(c.planStep, { line: line.ref, step: 1, status: "todo" });
+    h.developer(c.planStep, { line: line.ref, step: 3, status: "doing" });
+    expect(h.developer(c.lineShow, { ref: line.ref }).steps.map((step) => step.status)).toEqual([
+      "todo",
+      "todo",
+      "doing",
+    ]);
+    expect(h.developer(c.homeShow, {}).lines[line.ref]?.step?.position).toBe(3);
+
+    // A status survives the plan being rewritten around the step.
+    h.call(c.planSet, { line: line.ref, steps: ["Model the base", "Final print"] });
+    expect(h.developer(c.lineShow, { ref: line.ref }).steps.map((step) => step.status)).toEqual([
+      "todo",
+      "doing",
+    ]);
+
+    const feed = h.developer(c.feedList, { query: `line:${line.ref}` });
+    expect(
+      feed.events.some((event) => event.type === "line.step_set" && event.summary.includes("Final print")),
+    ).toBe(true);
+  });
+
+  test("a step that is not in the plan, or a line that ended, refuses a status", () => {
+    const h = withRepos();
+    const line = h.developer(c.lineAdd, {
+      title: "Mount",
+      doneWhen: "Done.",
+      repos: ["PANEL"],
+      where: "working",
+    });
+    h.developer(c.planSet, { line: line.ref, steps: ["Model"] });
+    expect(refusal(() => h.developer(c.planStep, { line: line.ref, step: 2, status: "done" })).code).toBe(
+      "not_found",
+    );
+    h.developer(c.lineDone, { ref: line.ref });
+    expect(refusal(() => h.developer(c.planStep, { line: line.ref, step: 1, status: "done" })).code).toBe(
+      "conflict",
+    );
+  });
+
   test("issues belong to a line and a step of its plan", () => {
     const h = withRepos();
     const line = h.developer(c.lineAdd, {

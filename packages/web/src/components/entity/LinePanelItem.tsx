@@ -28,6 +28,7 @@ import { SinceSummary } from "./SinceSummary.tsx";
 import { SummaryBox } from "./SummaryBox.tsx";
 import { TellBox } from "./TellBox.tsx";
 import { useNarrow } from "../../hooks/useNarrow.ts";
+import { usePlanStatus } from "../../hooks/usePlanStatus.ts";
 
 /**
  * A line opened, in one column read top to bottom: where it stands and how to move it, what it needs from you, its
@@ -63,6 +64,7 @@ export function LinePanelItem({
   const [starting, setStarting] = useState(false);
   const route = useRoute();
   const narrow = useNarrow();
+  const planStatus = usePlanStatus(line.ref);
   const params = route.params;
   // Opened with t from home: straight to Tell.
   const telling = params.get("act") === "tell";
@@ -152,6 +154,7 @@ export function LinePanelItem({
           work={shown.data?.work ?? []}
           state={line.state}
           foldMerged={narrow}
+          status={planStatus}
         />
       </Loaded>
       <Loaded

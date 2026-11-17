@@ -499,6 +499,27 @@ export const lineOps = [
     return planOf(ctx, line.ref);
   }),
 
+  bind(contracts.planStep, (ctx, input) => {
+    const line = requireLine(ctx, input.line);
+    guardOnLine(ctx, line.ref, "scope", null);
+    if (ENDED.has(line.state)) throw new OctoError("conflict", `${line.ref} already ended`);
+    const step = planOf(ctx, line.ref).find((candidate) => candidate.position === input.step);
+    if (step === undefined) {
+      throw new OctoError(
+        "not_found",
+        `${line.ref} has no step ${input.step}: see its plan with \`octo line show ${line.ref}\``,
+      );
+    }
+    ctx.sql.run("UPDATE plan_steps SET status = ? WHERE line = ? AND position = ?", [
+      input.status,
+      line.ref,
+      input.step,
+    ]);
+    const words = input.status === "todo" ? "to do" : input.status === "doing" ? "under way" : "done";
+    emitLine(ctx, "line.step_set", line, `${line.ref} step ${input.step} ${words}: ${step.title}`);
+    return planOf(ctx, line.ref);
+  }),
+
   bind(contracts.lineSummarize, (ctx, input) => {
     const line = requireLine(ctx, input.ref);
     requireOwner(ctx, line, "write its summary");

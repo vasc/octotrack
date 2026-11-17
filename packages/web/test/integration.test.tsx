@@ -1122,6 +1122,28 @@ describe("lines of work", () => {
         expect(server.tracker.call(c.lineShow, { ref: "L-1" }, asDeveloper).line.state).toBe("dropped"),
       );
     });
+
+    test("a plan step is marked done from the line panel, and the next one becomes now", async () => {
+      seedLines();
+      server.tracker.call(
+        c.planSet,
+        { line: "L-1", steps: ["Model the base", "Print and test-fit"] },
+        asDeveloper,
+      );
+      navigate("/?ref=L-1");
+      const view = renderApp(<App />);
+      const panel = within(await view.findByRole("complementary", { name: "L-1" }));
+      await panel.findByText("step 1 of 2");
+      fireEvent.click(await panel.findByRole("button", { name: "Step 1, Model the base: to do" }));
+      fireEvent.click(panel.getByRole("menuitemradio", { name: "Done" }));
+      await waitFor(() =>
+        expect(
+          server.tracker.call(c.lineShow, { ref: "L-1" }, asDeveloper).steps.map((step) => step.status),
+        ).toEqual(["done", "todo"]),
+      );
+      await panel.findByText("step 2 of 2");
+      await panel.findByRole("button", { name: "Step 1, Model the base: done" });
+    });
   });
 
   test("a choice waits with Undo, and Undo or the u key means it never happened", async () => {

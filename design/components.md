@@ -174,7 +174,8 @@ properties and appear on the `/design` specimen; **structural** ones load data a
 | `LineActions`      | Pure       | A line's choices by its state, and More for Drop and Fold                                               |
 | `SummaryBox`       | Pure       | Its headline and summary, and when it was written                                                       |
 | `PanelForYou`      | Structural | What the line needs, the first open                                                                     |
-| `PlanList`         | Pure       | Its steps, done, now and next, with the work under each                                                 |
+| `PlanList`         | Pure       | Its steps, done, now and next, with the work under each and a status menu on each                       |
+| `StepStatusMenu`   | Pure       | A step's status as a menu: to do, under way or done, the one in force ticked                            |
 | `SinceSummary`     | Pure       | What came after the summary, and the line in the Log                                                    |
 | `OwnerBox`         | Pure       | Who owns it and how they are, with Stop, I'll own it or Hand to an agent                                |
 | `OwnWorkBox`       | Pure       | On a line the developer owns: add a task or a note                                                      |

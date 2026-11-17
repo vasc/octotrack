@@ -70,6 +70,7 @@ will be woken.
   octo post "what is happening" --on PANEL-4 --level progress
   octo issue update PANEL-4 --status in_review
   octo plan set L-7 "Model the base" "Print and test-fit" "Final print"
+  octo plan step L-7 1 done                   a step under way: doing; finished: done
   octo issue create "Measure the grip" --repo PANEL --line L-7 --step 2
   octo line summarize L-7 --headline "<one sentence that stands alone>" --summary-file -
   octo line propose-done L-7 How done when was met

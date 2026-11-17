@@ -190,6 +190,40 @@ describe("PlanList", () => {
     expect(view.queryByText(/kore#/)).toBeNull();
   });
 
+  test("each step's status is set from a menu on it, the status in force ticked; an ended line has none", () => {
+    const onStatus = mock((_position: number, _status: "todo" | "doing" | "done") => {});
+    const steps = [
+      { line: "L-1", position: 1, title: "Model", status: "done" as const },
+      { line: "L-1", position: 2, title: "Print", status: "todo" as const },
+      { line: "L-1", position: 3, title: "Photograph", status: "doing" as const },
+    ];
+    const view = render(<PlanList steps={steps} work={[]} status={{ onStatus }} />);
+    // The step under way is the line's current one, even with an earlier one still to do.
+    view.getByText("step 3 of 3");
+    view.getByRole("button", { name: "Step 1, Model: done" });
+    view.getByRole("button", { name: "Step 3, Photograph: under way" });
+    fireEvent.click(view.getByRole("button", { name: "Step 2, Print: to do" }));
+    const menu = within(view.getByRole("menu", { name: "Step 2's status" }));
+    expect(menu.getByRole("menuitemradio", { name: "To do" }).getAttribute("aria-checked")).toBe("true");
+    fireEvent.click(menu.getByRole("menuitemradio", { name: "Done" }));
+    expect(onStatus).toHaveBeenCalledWith(2, "done");
+    view.unmount();
+
+    const busy = render(
+      <PlanList
+        steps={steps}
+        work={[]}
+        status={{ onStatus, busy: 2, failed: { step: 1, message: "the tracker did not answer" } }}
+      />,
+    );
+    expect(busy.getByRole("button", { name: "Step 2, Print: to do" }).hasAttribute("disabled")).toBe(true);
+    busy.getByText("Not changed: the tracker did not answer");
+    busy.unmount();
+
+    const ended = render(<PlanList steps={steps} work={[]} state="done" />);
+    expect(ended.queryByRole("button", { name: /^Step 1/ })).toBeNull();
+  });
+
   test("a closed line with no summary says none was written", () => {
     render(<SummaryBox line={line({ state: "dropped" })} />).getByText("No summary was written.");
   });

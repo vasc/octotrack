@@ -59,6 +59,7 @@ export const EVENT_TYPES = [
   "line.folded",
   "line.reordered",
   "line.plan_set",
+  "line.step_set",
   "line.taken",
   "line.released",
   "agent.stopped",

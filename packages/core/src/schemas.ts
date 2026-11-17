@@ -209,6 +209,11 @@ export const PlanStep = z.object({
 });
 export type PlanStep = z.infer<typeof PlanStep>;
 
+/** The step a line is on: the one under way, else the first not done; none once every step is done. */
+export function currentStep<T extends { status: PlanStepStatus }>(steps: readonly T[]): T | undefined {
+  return steps.find((step) => step.status === "doing") ?? steps.find((step) => step.status !== "done");
+}
+
 export const DecisionOption = z.object({
   key: z.string(),
   label: z.string(),

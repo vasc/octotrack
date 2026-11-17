@@ -1200,6 +1200,18 @@ describe("lines of work from the CLI", () => {
     const shown = await octo(["line", "show", line.ref, "--text"]);
     expect(shown.stdout).toContain("1. Wire the probe");
     expect(shown.stdout).toContain(issue.ref);
+
+    const marked = await data(
+      z.array(z.object({ position: z.number(), status: z.string() })),
+      ["plan", "step", line.ref, "1", "done", "--me"],
+      "",
+    );
+    expect(marked.map((step) => step.status)).toEqual(["done", "todo"]);
+    const text = await octo(["plan", "step", line.ref, "2", "doing", "--me", "--text"], "");
+    expect(text.stdout).toContain("2. Calibrate doing");
+    const wrong = await octo(["plan", "step", line.ref, "2", "finished", "--me"], "");
+    expect(wrong.code).not.toBe(0);
+    expect(wrong.stdout).toContain("todo, doing or done");
   });
 });
 

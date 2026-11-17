@@ -936,6 +936,12 @@ you", answers wait in its inbox, and the next answer, finished task or Tell star
   Every reply to an agent's command carries its unread items and notices, so even an agent that never checks its inbox
   hears in time. _Why:_ questions stand alone, so any owner can act on their answers, and a dead owner then holds
   nothing up. The session still decides "if it want to be reawaken", once, by leaving a wake address or not.
+- **A plan step's status is set, one step at a time.** Each step is to do, under way or done. The line's owner sets it
+  with `octo plan step <LINE> <step> <todo|doing|done>`, and the developer from a menu on the step in the line panel;
+  rewriting the plan keeps the status of every step whose title stays. The current step, which home and the owner's
+  next job read, is the one under way, else the first not done. _Why:_ the developer found no way to mark a step done;
+  a status nobody can set left every line on step 1. Nothing infers it from the issues under a step, since a step can
+  be done with no issue on it, or not done with all of them closed.
 - **Every working line gets an owner, without the developer.** The search runs the moment a working line that is not the
   developer's has no owner, whether or not it has issues; with none, the owner's job is to break the current step into
   issues or propose done. Once every working line has an owner, spare sessions under the cap go to helpers for unclaimed
