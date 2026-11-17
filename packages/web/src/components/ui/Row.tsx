@@ -1,5 +1,6 @@
 import { type DragEvent, type ReactNode, useId } from "react";
 import { KindText } from "./Item.tsx";
+import { Icon } from "./Icon.tsx";
 
 /** The tone of the word that says what a row is: what needs you, what is stuck, or nothing in particular. */
 export type Tone = "needs" | "stuck" | "none";
@@ -84,7 +85,7 @@ export function Row(props: RowProps) {
         <input type="checkbox" className="ui-row-input" checked={props.checked} onChange={props.onToggle} />
         {text}
         <span className="ui-row-check" aria-hidden="true">
-          {props.checked ? "✓" : ""}
+          {props.checked ? <Icon name="check" /> : null}
         </span>
       </label>
     ) : (
@@ -106,7 +107,7 @@ export function Row(props: RowProps) {
         {trailing === undefined ? (
           props.onOpen === undefined ? null : (
             <span className="ui-row-chevron" aria-hidden="true">
-              ›
+              <Icon name="forward" />
             </span>
           )
         ) : (

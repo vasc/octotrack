@@ -21,7 +21,7 @@ ways out. A hairline separates reading from deciding.
 - What it shows: QuestionStrip, the question as title, its context; a hairline; "Your answer" over the options; then "In my own words" and "Later" (plus "Not urgent" when urgent).
 - Changes from today:
   - A visible "Your answer" label heads the options; with no recommendation it reads "Your answer · roadtrip makes no recommendation" (G).
-  - Answered (C): the pick is marked ✓, the other options step back, and "Sending to roadtrip in 4 s" with Undo shows in the card, not only in the Undo bar.
+  - Answered (C): the pick is marked [check], the other options step back, and "Sending to roadtrip in 4 s" with Undo shows in the card, not only in the Undo bar.
   - Phone (K): no key numbers, every target 44 px, options full width; the buttons keep their wide-screen words, so each has one name for a screen reader.
 - Loading: never loads on its own: given its question by DecisionCardItem.
 - Error: could not send (E): said in the Undo bar, as every choice the tracker never took is: "Did not happen: Sending … The tracker did not answer." with Dismiss (design log, "A choice the tracker never took"). A draft that cannot be saved follows the Primitives pattern: "Not saved: the tracker did not answer. Kept here; saves when it is back." Later, Bring back and Not urgent failures follow the Primitives pattern: said under the actions, with Try again.
@@ -40,7 +40,7 @@ ways out. A hairline separates reading from deciding.
 
 - Designed in: Main.dc.html; Question-States.dc.html, states B, C, G, K, L; Primitives.dc.html, Choice
 - What it shows: one option per row: its number on the label's baseline at the label's size, the label, then the description.
-- Changes from today: the recommended option says "Recommended" (capital, beside the label) and its reason lives inside it as "Why: …", not in a note under the list. Each option is a real control with hover, focus, chosen (✓) and stepped-back states (Primitives Choice). With no recommendation nothing is marked and the label above says so (G).
+- Changes from today: the recommended option says "Recommended" (capital, beside the label) and its reason lives inside it as "Why: …", not in a note under the list. Each option is a real control with hover, focus, chosen ([check]) and stepped-back states (Primitives Choice). With no recommendation nothing is marked and the label above says so (G).
 - Loading: never loads on its own: given the options by DecisionCardView.
 - Error: cannot fail on its own: a failed send is shown by DecisionCardView (E).
 - Empty: no options renders nothing; DecisionCardView then opens the own-words box (H).
@@ -84,7 +84,7 @@ ways out. A hairline separates reading from deciding.
 ### components/decisions/AnsweredDecision.tsx
 
 - Designed in: Question-States.dc.html, state J
-- What it shows: "Answered · D-20 · by you on the dashboard · 7 Nov", "Answer" (the option chosen, or the developer's own words, with any note), "Then" ("Picked up by funnel-session; not reported as carried out yet", "✓ Carried out: …", or "Not picked up yet"), then Change answer.
+- What it shows: "Answered · D-20 · by you on the dashboard · 7 Nov", "Answer" (the option chosen, or the developer's own words, with any note), "Then" ("Picked up by funnel-session; not reported as carried out yet", "[check] Carried out: …", or "Not picked up yet"), then Change answer.
 - Changes from today: new; replaces the Outcome, Note, Decided by, When, How and Source pairs and the read-only options list. What it was superseded by and where it was decided stay, as quiet notes.
 - Loading: never loads on its own: given the question by DecisionPanel.
 - Error: a failed Change answer is said by the Undo bar.
@@ -92,7 +92,7 @@ ways out. A hairline separates reading from deciding.
 ### components/home/ForYouRow.tsx
 
 - Designed in: Question-States.dc.html, states A, F; Home.dc.html (Urgent, line 2); Home-States.dc.html, state C
-- What it shows: one closed row ending in ›: kind, title, then the recommendation. "Question · D-65 / Which South Tyrol base…? / Recommended: Keep the cap in Merano: Hotel Jasmin". Focused, the opened item in its place.
+- What it shows: one closed row ending in [forward]: kind, title, then the recommendation. "Question · D-65 / Which South Tyrol base…? / Recommended: Keep the cap in Merano: Hotel Jasmin". Focused, the opened item in its place.
 - Changes from today:
   - Urgent rows read "Something broken · on 1 · The home worker fetches new videos again · D-75" (the line's number and title) instead of "Urgent · something broken · D-75".
   - A question put off reads "Later · D-65 · put off 1h ago" with Bring back at the end, and sinks below the rest (F).

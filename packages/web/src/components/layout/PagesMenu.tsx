@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { Appearance, Mode, Palette } from "../../lib/appearance.ts";
 import { Menu, MenuAction, MenuItem } from "../ui/Menu.tsx";
 import { AppearanceChoices } from "./AppearanceMenu.tsx";
+import { Icon } from "../ui/Icon.tsx";
 
 const PAGES = [
   { to: "/", name: "Lines" },
@@ -23,7 +24,7 @@ interface PagesMenuProps {
 }
 
 /**
- * On a phone, where the bar has no room for their names: the pages behind "☰", the one you are on checked, then
+ * On a phone, where the bar has no room for their names: the pages behind the three-bar icon, the one you are on checked, then
  * Appearance, which shows the themes and modes in the menu's place.
  */
 export function PagesMenu({ path, ...rest }: PagesMenuProps) {
@@ -50,7 +51,10 @@ function PagesChoices({
   if (showing === "appearance") {
     return (
       <>
-        <MenuAction onSelect={() => setShowing("pages")}>‹ Pages</MenuAction>
+        <MenuAction onSelect={() => setShowing("pages")}>
+          <Icon name="back" />
+          Pages
+        </MenuAction>
         <AppearanceChoices appearance={appearance} onPalette={onPalette} onMode={onMode} close={close} />
       </>
     );

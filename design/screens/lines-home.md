@@ -166,7 +166,7 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 
 - Designed in: Items.dc.html, state G; Line-States.dc.html, state D; More-States.dc.html, state J (folded at a place)
 - What it shows: on a line nobody can take, StepIn's sentence and its action; at a place, folded to one row with the short reason.
-- Changes from today: as StepIn; folded at a place it is one row, "▲ Step in · {short reason}", that opens it in place (More-States J).
+- Changes from today: as StepIn; folded at a place it is one row, "[triangle] Step in · {short reason}", that opens it in place (More-States J).
 - Loading: never loads on its own: given the line by WorkingSection.
 - Error: cannot fail on its own; StepIn's actions report their own failures.
 - Empty: renders nothing when the line needs no step-in.
@@ -174,7 +174,7 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 ### components/home/WaitingSections.tsx
 
 - Designed in: Home.dc.html; Home-FirstRun.dc.html; Home-States.dc.html, states C, I
-- What it shows: "Up next 3"; "Proposed 2" in ink like every section heading, each proposal's advice as "Recommends Start: …" in ink; then the folds "Tabled 4 · Labyrinth level editor, Matter binding backend and 2 more · 1 question held ›" and "Done lately 1 · Fix the Dinis reminder ›", one under the other.
+- What it shows: "Up next 3"; "Proposed 2" in ink like every section heading, each proposal's advice as "Recommends Start: …" in ink; then the folds "Tabled 4 · Labyrinth level editor, Matter binding backend and 2 more · 1 question held [forward]" and "Done lately 1 · Fix the Dinis reminder [forward]", one under the other.
 - Changes from today: the Tabled summary ends with what it holds ("· 1 question held", today "· N questions and N tasks held"); at a place Up next, Proposed and Tabled fold shut.
 - Loading: never loads on its own: given the lines by HomePage.
 - Error: cannot fail on its own.
@@ -192,7 +192,7 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 ### components/home/ProposalCard.tsx
 
 - Designed in: Home.dc.html (Proposed); Home-FirstRun.dc.html
-- What it shows: the title, "L-20 · MOBS · proposed by mobs", the recommendation with its reason, then the recommended move and "Other ▾".
+- What it shows: the title, "L-20 · MOBS · proposed by mobs", the recommendation with its reason, then the recommended move and "Other [caret]".
 - Changes from today: facts are ref, repo key and who proposed it (today "{by}, {age}", repos, first step, from); the "Done when" note is not drawn; the choices are one button plus a menu.
 - Loading: never loads on its own.
 - Error: each move it waits with Undo like every choice; a request the tracker never took, or a refusal when it takes effect, is said in the Undo bar ("Did not happen: …") with Dismiss; the pressed move says it is on its way meanwhile.
@@ -210,8 +210,8 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 ### components/home/ProposalChoices.tsx
 
 - Designed in: Home.dc.html (Proposed); Home-FirstRun.dc.html; Line-States.dc.html, state B; More-States.dc.html, state E (the Other menu)
-- What it shows: the recommended move as the one button ("Start", "Table"), then "Other ▾" holding the rest.
-- Changes from today: on Lines only the recommended move is a button and the others go under "Other ▾" (today all four or five are buttons); the menu's contents are not drawn and keep today's moves. In the line panel all moves stay buttons (Line-States B).
+- What it shows: the recommended move as the one button ("Start", "Table"), then "Other [caret]" holding the rest.
+- Changes from today: on Lines only the recommended move is a button and the others go under "Other [caret]" (today all four or five are buttons); the menu's contents are not drawn and keep today's moves. In the line panel all moves stay buttons (Line-States B).
 - Loading: a move waiting shows its busy word (Primitives Button).
 - Error: as ProposalCard.
 - Empty: never empty: a proposal can always be started.
@@ -228,7 +228,7 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 ### components/home/QuietRow.tsx
 
 - Designed in: More-States.dc.html, state D (the folds opened); Home.dc.html (closed)
-- What it shows: a tabled or done line in its fold: title, the reason ("No reason given" when there is none) and when to look again; tabled ones offer Up next and Start; a done one says "✓ done Tue". Who closed it is not drawn, as the tracker does not record it on the line.
+- What it shows: a tabled or done line in its fold: title, the reason ("No reason given" when there is none) and when to look again; tabled ones offer Up next and Start; a done one says "[check] done Tue". Who closed it is not drawn, as the tracker does not record it on the line.
 - Changes from today: none drawn; follows Row.
 - Loading: never loads on its own.
 - Error: cannot fail on its own; Up next and Start report their own failures.

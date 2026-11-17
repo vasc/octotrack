@@ -8,12 +8,19 @@ import { Note } from "../ui/Note.tsx";
 import { RefLink } from "../ui/RefLink.tsx";
 import { Stack } from "../ui/Pairs.tsx";
 import { DecisionMeta } from "./DecisionMeta.tsx";
+import type { ReactNode } from "react";
+import { Mark } from "../ui/Badge.tsx";
 
 /** What became of an answer: carried out, picked up and not reported yet, or not picked up. */
-function thenText(decision: Decision): string {
+function thenText(decision: Decision): ReactNode {
   if (decision.reportStatus !== null) {
     const how = decision.reportStatus === "done" ? "Carried out" : "Partly carried out";
-    return decision.reportNote === null ? `✓ ${how}` : `✓ ${how}: ${decision.reportNote}`;
+    return (
+      <>
+        <Mark tone="good" icon="check" />
+        {decision.reportNote === null ? how : `${how}: ${decision.reportNote}`}
+      </>
+    );
   }
   if (decision.pickedUpBy !== null)
     return `Picked up by ${decision.pickedUpBy}; not reported as carried out yet`;

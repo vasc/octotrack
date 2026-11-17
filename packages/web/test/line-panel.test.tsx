@@ -11,7 +11,7 @@ import { SummaryBox } from "../src/components/entity/SummaryBox.tsx";
 import { TellBox } from "../src/components/entity/TellBox.tsx";
 import { Panel } from "../src/components/ui/Panel.tsx";
 import { event, line } from "../src/design/fixtures.ts";
-import { homeActions, whole } from "./harness.tsx";
+import { homeActions, iconsIn, whole } from "./harness.tsx";
 
 const NOW = Date.parse("2026-11-16T12:00:00Z");
 
@@ -91,7 +91,7 @@ describe("the panel", () => {
     const onClose = mock(() => {});
     const onBack = mock(() => {});
     const view = render(<Panel title="L-1" onClose={onClose} back={{ label: "L-57", onBack }} />);
-    fireEvent.click(view.getByRole("button", { name: "‹ Back to L-57" }));
+    fireEvent.click(view.getByRole("button", { name: "Back to L-57" }));
     expect(onBack).toHaveBeenCalledTimes(1);
     fireEvent.click(view.getByRole("button", { name: "Close" }));
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -181,9 +181,12 @@ describe("PlanList", () => {
     );
     // Facts are drawn with a dot between them; each is its own piece.
     view.getByText("to do");
-    view.getByText(whole("#418 open · ✗ checks failing"));
+    const failing = view.getByText(whole("#418 open · checks failing"));
+    expect(iconsIn(failing)).toEqual(["cross"]);
     view.getByText("in progress");
-    view.getByText("3 pull requests merged ✓");
+    expect(iconsIn(view.getByText("3 pull requests merged").parentElement ?? view.container)).toContain(
+      "check",
+    );
     expect(view.queryByText(/kore#/)).toBeNull();
   });
 
@@ -264,11 +267,11 @@ describe("the panel on a phone", () => {
   test("its way back names the page under it, in place of Close", () => {
     const onClose = mock(() => {});
     const view = render(<Panel title="L-1" onClose={onClose} under="Log" />);
-    fireEvent.click(view.getByRole("button", { name: "‹ Log" }));
+    fireEvent.click(view.getByRole("button", { name: "Log" }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  test("More is ⋯ on a phone, still named More", () => {
+  test("More is the three-dot icon on a phone, still named More", () => {
     const view = render(
       <LineActions line={line({ state: "working" })} onChoose={() => {}} onTable={() => {}} />,
     );

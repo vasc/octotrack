@@ -4,10 +4,12 @@ import { openEntity } from "../../lib/router.ts";
 import { Button } from "../ui/Button.tsx";
 import { RefLink } from "../ui/RefLink.tsx";
 import { Row } from "../ui/Row.tsx";
+import type { ReactNode } from "react";
+import { Icon } from "../ui/Icon.tsx";
 
 type Answer = LineHome["answers"][number];
 
-function status(answer: Answer): string {
+function status(answer: Answer): ReactNode {
   switch (answer.status) {
     case "not_picked_up":
       return "not picked up yet";
@@ -16,7 +18,12 @@ function status(answer: Answer): string {
         ? "picked up"
         : `picked up by ${answer.by}${answer.at === null ? "" : `, ${sinceText(answer.at)}`}`;
     case "carried_out":
-      return answer.note === null ? "✓ carried out" : `✓ carried out: ${answer.note}`;
+      return (
+        <>
+          <Icon name="check" />
+          {answer.note === null ? "carried out" : `carried out: ${answer.note}`}
+        </>
+      );
     case "wake_failed":
       return `${answer.unwoken ?? "its agent"} could not be woken; finding an owner`;
   }

@@ -2,12 +2,13 @@ import type { ReactNode } from "react";
 import type { AgentView } from "@octotrack/core/schemas";
 import { AUTO_STOP_REASON } from "@octotrack/core/schemas";
 import { dayWord, type Tone, whenText } from "../../lib/format.ts";
-import { Glyph } from "../ui/Badge.tsx";
+import { Mark } from "../ui/Badge.tsx";
 import { Button } from "../ui/Button.tsx";
 import { Code, Note } from "../ui/Note.tsx";
 import { RefLink } from "../ui/RefLink.tsx";
 import { Cell } from "../ui/Table.tsx";
 import { TimeAgo } from "../ui/TimeAgo.tsx";
+import type { IconName } from "../ui/Icon.tsx";
 
 /** "owner of L-59", or "on L-59" for a claim with no role. */
 function claim(agent: AgentView, line: string): ReactNode {
@@ -89,18 +90,18 @@ function startWords(start: NonNullable<AgentView["start"]>, now: number): ReactN
   );
 }
 
-/** Each state's glyph and tone, so that it never rests on colour alone. */
-const STATE_GLYPH: Readonly<Record<AgentView["state"], readonly [string, Tone]>> = {
-  running: ["●", "good"],
-  asleep: ["◐", "neutral"],
-  quiet: ["○", "neutral"],
-  stopped: ["■", "bad"],
-  gone: ["✕", "neutral"],
+/** Each state's mark and tone, so that it never rests on colour alone. */
+const STATE_MARK: Readonly<Record<AgentView["state"], readonly [IconName, Tone]>> = {
+  running: ["dot", "good"],
+  asleep: ["half", "neutral"],
+  quiet: ["ring", "neutral"],
+  stopped: ["square", "bad"],
+  gone: ["cross", "neutral"],
 };
 
-/** A start still on its way is moving; one that failed or never took is stuck, marked ▲. */
-function startGlyph(start: NonNullable<AgentView["start"]>): readonly [string, Tone] {
-  return start.state === "starting" || start.state === "running" ? ["◐", "info"] : ["▲", "warn"];
+/** A start still on its way is moving; one that failed or never took is stuck, marked with the triangle. */
+function startMark(start: NonNullable<AgentView["start"]>): readonly [IconName, Tone] {
+  return start.state === "starting" || start.state === "running" ? ["half", "info"] : ["alert", "warn"];
 }
 
 /** The kind of session a wake address reaches, if it has one. */
@@ -181,13 +182,13 @@ export function AgentRosterRow({
   onLift(name: string): void;
   onRelease(name: string): void;
 }) {
-  const [glyph, tone] = agent.start === null ? STATE_GLYPH[agent.state] : startGlyph(agent.start);
+  const [mark, tone] = agent.start === null ? STATE_MARK[agent.state] : startMark(agent.start);
   return (
     <tr aria-label={agent.name}>
       <Cell place="lead">{agent.name}</Cell>
       <Cell place="fact">{agent.repo === null ? null : <Code>{agent.repo}</Code>}</Cell>
       <Cell place="main">
-        <Glyph tone={tone}>{glyph}</Glyph>{" "}
+        <Mark tone={tone} icon={mark} />
         <span>{agent.start === null ? nowWords(agent, waitsOnYou) : startWords(agent.start, now)}</span>
         {agent.note === null ? null : <Note>{agent.note}</Note>}
       </Cell>

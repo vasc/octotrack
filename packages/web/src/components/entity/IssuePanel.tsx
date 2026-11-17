@@ -23,6 +23,7 @@ import { OpenDrift } from "./OpenDrift.tsx";
 import { PullRequestBox } from "./PullRequestBox.tsx";
 import { TaskFrees } from "./TaskFrees.tsx";
 import { TellBox } from "./TellBox.tsx";
+import { Icon } from "../ui/Icon.tsx";
 
 /**
  * A task or an issue opened in place, as E-Issue draws it. A task: what it is, what to send back, and what it frees.
@@ -77,7 +78,7 @@ export function IssuePanel({
               ) : (
                 <TextLink onClick={() => openEntity(line.ref)}>{line.title}</TextLink>
               )}
-              {" › "}
+              <Icon name="forward" />
             </>
           )}
           <Code>{issue.ref}</Code>

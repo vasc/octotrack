@@ -481,7 +481,7 @@ Decisions made from that:
 - **Focus is a tint, with the keys beside it, not a word.** (Superseded in part above: the border became a tint.) The developer, looking at the built home: "focused text on
   lines is unnecessary, reminding about j an k shortcuts to the side would be better, in a subtle way". The word
   Focused, which the boards draw over the focused item, is gone; the item keeps its border, in the theme's accent, and out in the margin
-  beside it a quiet "k ↑ j ↓" says how to move on. _Decided:_ the hint shows only with a mouse or trackpad (keys belong
+  beside it a quiet "k [up] j [down]" says how to move on. _Decided:_ the hint shows only with a mouse or trackpad (keys belong
   to a keyboard) and where the window leaves a margin for it, and a screen reader is not told it, since focus moving
   already says where it is.
 - **A number key presses the button that shows the number.** On home, an item's numbered choices are buttons carrying
@@ -1065,7 +1065,7 @@ you", answers wait in its inbox, and the next answer, finished task or Tell star
   the lines with their items, then Proposed. Tab moves within the focused item, and 1–9 pick its numbered choices,
   numbered in the order drawn, sheets included: an option, a step-in action, a proposal's choice, Done or Can't do it,
   Accept or Keep current, Done or Not yet. There is only one focus, marked with a border in the theme's accent and, where the window has
-  room, a quiet "k ↑ j ↓" beside it (D13), so a key never acts on an item other than the one in focus. Live updates
+  room, a quiet "k [up] j [down]" beside it (D13), so a key never acts on an item other than the one in focus. Live updates
   never move it: new items appear without taking focus. After a choice, focus goes to the line's next item for you, then
   the next line; after Later, to the next item. Shift with J and K steps through the lines themselves, Working on then
   Up next, so a line with nothing for the developer can be reached; o, t and alt with the arrows act on the line of

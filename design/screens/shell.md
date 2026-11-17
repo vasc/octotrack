@@ -22,8 +22,8 @@ the canvas at https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 ### components/layout/TopBar.tsx
 
 - Designed in: Shell.dc.html, states A, E; Home-States.dc.html, state I
-- What it shows: "Octotrack", Log, Agents; then what waits on you ("1 urgent", "2 to answer"); then I'm at, "+ New line", appearance "◐", keys "?".
-- Changes from today: the current page is bold and underlined (today only ink colour); on a phone the bar folds to "Octotrack", "+" and "☰", with the counts on a row under it.
+- What it shows: "Octotrack", Log, Agents; then what waits on you ("1 urgent", "2 to answer"); then I'm at, "+ New line", appearance "[half]", keys "?".
+- Changes from today: the current page is bold and underlined (today only ink colour); on a phone the bar folds to "Octotrack", "+" and "[pages]", with the counts on a row under it.
 - Loading: while Lines is loading the counts area is empty.
 - Error: if Lines failed to load, the strip of Home-States F covers the counts. If the places fail to load, follows the Primitives pattern beside the bar's controls, with Try again (today I'm at silently vanishes).
 - Empty: counts appear only above zero, urgent first; with none, no counts. With no places, I'm at is not shown.
@@ -31,7 +31,7 @@ the canvas at https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 ### components/layout/AtMenu.tsx
 
 - Designed in: Shell.dc.html, state B
-- What it shows: "All places ▾" opening "I'm at": "✓ All places", "Home", "The bench", then "Places are added with octo place add".
+- What it shows: "All places [caret]" opening "I'm at": "[check] All places", "Home", "The bench", then "Places are added with octo place add".
 - Changes from today: the menu ends with how places are added.
 - Loading: follows the Primitives Button busy state while the change is sent.
 - Error: if setting it fails: "Not changed: …" under the button, until the next try (today at the top of the page).
@@ -40,7 +40,7 @@ the canvas at https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 ### components/layout/AppearanceMenu.tsx
 
 - Designed in: Shell.dc.html, state C
-- What it shows: "Appearance": "Theme" with all eight: ✓ Paper, Solarized, Gruvbox, Catppuccin, Rosé Pine, Nord, Everforest, High contrast, each swatch its ground; "Mode" with ✓ As the system, Light, Dark.
+- What it shows: "Appearance": "Theme" with all eight: [check] Paper, Solarized, Gruvbox, Catppuccin, Rosé Pine, Nord, Everforest, High contrast, each swatch its ground; "Mode" with [check] As the system, Light, Dark.
 - Changes from today: ticks, swatches and item text each start at one x position, and group labels line up with the item text (today three different starts); all eight themes are listed, since eight rows fit a menu.
 - Loading: never loads on its own: the choices are fixed.
 - Error: cannot fail on its own: a choice that cannot be stored still applies for the visit, as today.
@@ -49,8 +49,8 @@ the canvas at https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 ### components/layout/PagesMenu.tsx
 
 - Designed in: Shell.dc.html, state E; Home-States.dc.html, state I
-- What it shows: on a phone, "☰" opening "Pages": ✓ Lines, Log, Agents, Appearance.
-- Changes from today: Appearance moves into this menu on a phone; the button is "☰" (today "⋯").
+- What it shows: on a phone, "[pages]" opening "Pages": [check] Lines, Log, Agents, Appearance.
+- Changes from today: Appearance moves into this menu on a phone; the button is "[pages]" (today "[more]").
 - Loading: never loads on its own.
 - Error: cannot fail on its own.
 - Empty: never empty: the pages are fixed.

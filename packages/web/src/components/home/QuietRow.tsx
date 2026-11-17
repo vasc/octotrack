@@ -5,6 +5,7 @@ import { Button } from "../ui/Button.tsx";
 import { Facts } from "../ui/Facts.tsx";
 import { TextLink } from "../ui/RefLink.tsx";
 import { Row } from "../ui/Row.tsx";
+import { Mark } from "../ui/Badge.tsx";
 
 /** A tabled or finished line: why it waits, when to look again, and how to bring it back. */
 export function QuietRow({
@@ -25,7 +26,15 @@ export function QuietRow({
       title={<TextLink onClick={() => openEntity(line.ref)}>{line.title}</TextLink>}
       {...(done
         ? {
-            facts: `${line.state === "done" ? "✓ done" : "– dropped"} ${whenText(line.updatedAt).replace(/^(at|on) /, "")}`,
+            facts: (
+              <>
+                <Mark
+                  tone={line.state === "done" ? "good" : "neutral"}
+                  icon={line.state === "done" ? "check" : "dash"}
+                />
+                {`${line.state} ${whenText(line.updatedAt).replace(/^(at|on) /, "")}`}
+              </>
+            ),
           }
         : {})}
       {...(hasNote

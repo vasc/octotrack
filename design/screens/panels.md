@@ -11,7 +11,7 @@ importance. Loading, a failed part and not found follow `Line-States.dc.html` st
 - Designed in: Panels.dc.html, states B, C, D, E, F; Line-States.dc.html, states G, H, I
 - What it shows: loads the ref and draws the line panel, the issue panel, or the panel for any other kind: crumb, title, facts, then that kind's body.
 - Changes from today:
-  - Opened from another panel (F): "‹ Back to L-57" and Close; Esc and Back go one step back, Close shuts the panel. The same in every panel kind.
+  - Opened from another panel (F): "[back] Back to L-57" and Close; Esc and Back go one step back, Close shuts the panel. The same in every panel kind.
   - An old ref (an idea or milestone that became a line) opens what it became; only one that became nothing shows its old fields, labelled "from before lines" (E).
   - The status moves from the crumb to the row of facts under the title (B: "Open").
 - Loading: follows Line-States G: the crumb and Close at once, then "Loading…" naming what loads, never a bare panel.
@@ -42,10 +42,10 @@ importance. Loading, a failed part and not found follow `Line-States.dc.html` st
 ### components/entity/IssuePanel.tsx
 
 - Designed in: Panels.dc.html, state A; Items.dc.html, states A, B, D (a task opened by its ref)
-- What it shows: the crumb "L-57 Wall mount for the 4-inch square › PANEL-4", the title, "Blocked · nobody holds it · vasc/homepanel", the body, a note when it waits on you, Pull requests, Activity, then "Tell whoever takes L-57". A task shows TaskCard or TaskClosed instead.
+- What it shows: the crumb "L-57 Wall mount for the 4-inch square [forward] PANEL-4", the title, "Blocked · nobody holds it · vasc/homepanel", the body, a note when it waits on you, Pull requests, Activity, then "Tell whoever takes L-57". A task shows TaskCard or TaskClosed instead.
 - Changes from today:
   - The status is a word in the row of facts ("Blocked"), not after "Issue".
-  - The crumb uses ›, and the repo is its GitHub name.
+  - The crumb uses [forward], and the repo is its GitHub name.
 - Loading: follows Line-States G: crumb and title at once; Pull requests says "Loading pull requests…". While Lines loads, the line crumb and Tell's recipient follow the Primitives pattern instead of silently changing.
 - Error: follows Line-States H per part, with Try again. A failed Tell, Done or Can't is said where it was made (TellBox, TaskCard); today it is not shown here.
 - Empty: no pull requests: "None yet."; no activity: the section is left out; no line: no Tell.
@@ -62,7 +62,7 @@ importance. Loading, a failed part and not found follow `Line-States.dc.html` st
 ### components/entity/PullRequestBox.tsx
 
 - Designed in: Panels.dc.html, state A; Line-States.dc.html, state A (a pull request under its issue)
-- What it shows: "Pull requests", then each: its number, state and checks ("#418 open · ✗ checks failing").
+- What it shows: "Pull requests", then each: its number, state and checks ("#418 open · [cross] checks failing").
 - Changes from today: each pull request is one row of number, state and checks; size and age are not drawn.
 - Loading: "Loading pull requests…" under the heading.
 - Error: follows Line-States H: "Could not load the pull requests. The tracker did not answer." with Try again; earlier ones kept, marked "as of 14:20".
@@ -71,10 +71,10 @@ importance. Loading, a failed part and not found follow `Line-States.dc.html` st
 ### components/entity/PrPanel.tsx
 
 - Designed in: Panels.dc.html, state B
-- What it shows: "Open · vasc/stack#4 ↗ · by vasc · 9 days · +33 −2"; then its facts, a conflict first among them ("Merge ▲ conflicts with main; feat/draft-prs needs a rebase", the warn glyph, no box and no red), then Checks, Review, Branch and Synced; then the body.
+- What it shows: "Open · vasc/stack#4 [out] · by vasc · 9 days · +33 −2"; then its facts, a conflict first among them ("Merge [triangle] conflicts with main; feat/draft-prs needs a rebase", the warm mark, no box and no red), then Checks, Review, Branch and Synced; then the body.
 - Changes from today:
-  - State, link, author, age and size move into one row of facts; the external link carries ↗.
-  - What needs attention comes first among its facts, in words: a conflict is the Merge fact with the warn glyph, no box and no red.
+  - State, link, author, age and size move into one row of facts; the external link carries [out].
+  - What needs attention comes first among its facts, in words: a conflict is the Merge fact with the warm mark, no box and no red.
   - Checks and Review read "none run" and "none asked" (today "none"); Mergeable is said by the Merge fact instead of its own pair; Synced reads "2 min ago".
   - The size uses the same minus as everywhere ("−").
 - Loading: never loads on its own: given the pull request by EntityBody.
@@ -147,7 +147,7 @@ importance. Loading, a failed part and not found follow `Line-States.dc.html` st
 ### components/entity/RefNotFound.tsx
 
 - Designed in: Line-States.dc.html, state I
-- What it shows: in a panel titled "No line L-312": "No line was ever made with that ref; check it for a typo. Lines that were done, dropped or folded still open at their ref." and "Search the log for L-312 →"; other kinds say "No question D-9" and the same in their own word.
+- What it shows: in a panel titled "No line L-312": "No line was ever made with that ref; check it for a typo. Lines that were done, dropped or folded still open at their ref." and "Search the log for L-312 [arrow]"; other kinds say "No question D-9" and the same in their own word.
 - Changes from today: new; a ref nothing answered to was "Could not load L-312" with Try again.
 - Loading: never loads on its own: EntityPanel draws it once the tracker says the ref names nothing.
 - Error: it is the not-found state.

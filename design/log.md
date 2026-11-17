@@ -55,7 +55,7 @@ are design decisions taken there, open to change:
 - **One focus treatment:** a 1 px mid-grey edge (`--ink-3`, each theme's own) with a 3 px soft halo, outside a control, and the edge
   alone inside a row; on the dark primary button the edge sits 2 px off it. The developer found the first drawing's
   2 px ink ring "too strong", so it was softened; the edge still has 4.5:1 contrast on white, so it passes for
-  keyboard users. A chosen answer is a quiet grey edge, a faint fill and its ✓, not a heavy border. One selected
+  keyboard users. A chosen answer is a quiet grey edge, a faint fill and its [check], not a heavy border. One selected
   treatment: the accent-soft fill. Pressed darkens a step. Disabled is one pale grey look for every kind of
   button, never only faded. Nothing gets a coloured side bar.
 - **A failure is said where it happened,** with what to do and Try again, and the tracker's own hint when it sends one.
@@ -73,7 +73,7 @@ are design decisions taken there, open to change:
   number on its home row already says it.
 - **The accent is for what you answer or do,** questions and tasks. Proposed is a heading like the others, and a
   proposal's advice reads "Recommends Start:" in ink.
-- **Red is for what broke.** A merge conflict is ordinary work: it is a fact row with the warn glyph, after the
+- **Red is for what broke.** A merge conflict is ordinary work: it is a fact row with the warm mark, after the
   developer found the red box "way too strong for a merge conflict".
 - **Disabled is one look for every kind of button.** The developer: "I think disabled buttons are good, they just
   should look disabled", and "a main button and a secondary button do not need separate disabled states". A disabled
@@ -96,7 +96,7 @@ further down, each marked _Replaced_ there.
 
 - **Three pages: Lines, Log and Agents.** The decisions, pull requests, drift, issues and repos pages went, and with
   them the rail. A question is answered on its line, a pull request shows on its issue, drift on what it is about.
-- **One focus on home, a border in the accent with a quiet `k ↑ j ↓` beside it.** The word Focused, which the boards drew, was
+- **One focus on home, a border in the accent with a quiet `k [up] j [down]` beside it.** The word Focused, which the boards drew, was
   left out at the developer's word; the hint shows only with a mouse or trackpad, where there is room.
 - **One press answers, and every choice waits with Undo.** A stray key costs nothing, so there is no confirm step.
   Reordering, I'm at and Record answers act at once.

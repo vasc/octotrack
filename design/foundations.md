@@ -180,7 +180,9 @@ E · One list boards draw it.
 | `--touch-target`      | The least height of anything tapped on a touch screen                                        |
 | `--sheet-width`       | A sheet's width on a wide screen                                                             |
 | `--control-height`    | Every control on a desktop: buttons, selects, the bar's pills; one height, so a row lines up |
-| `--icon-size`         | The few icons, beside words or alone in a control that names itself                          |
+| `--icon-size`         | An icon beside a control's words, or alone in a control that names itself                    |
+| `--keys-column`       | The keys' column in the Keys sheet, one width for every group, so their meanings line up     |
+| `--icon-inline-size`  | An icon inside running words, as tall as they are: a state's mark, a link's arrow, a key     |
 | `--swatch-width`      | A theme's swatch in a menu, its ground and accent side by side; menu words start past it     |
 | `--tile-width`        | A tile's width before it grows to fill its row: folded sections' tiles, and swatches at half |
 | `--field-narrow`      | A box for one short value, such as a measurement, side by side with others                   |
@@ -207,4 +209,17 @@ There is none, and so there are no tokens for it. Things appear. See
 but always visible, since this product is meant to be driven by keyboard. Inputs take the same edge and halo. A dark
 primary button takes the edge set 2px off it, where a halo would vanish. The one focus on home is the exception: its
 item takes the `--accent-soft` fill and a 1px `--ink-3` edge drawn inside it instead of the halo, and, with a mouse or trackpad and room in the
-margin, a quiet "k ↑ j ↓" beside it in `--ink-3`, which a screen reader is not told.
+margin, a quiet "k" and "j", each with its up or down arrow icon, beside it in `--ink-3`, which a screen reader is not told.
+
+## Icons
+
+Every icon is drawn by Lucide (`lucide-react`), through the one `Icon` primitive, in the text's own colour. No character
+from a font ever stands in for an icon: not a check, a cross, a triangle, a dot, an arrow, a chevron or a key. A state's
+mark (check, cross, filled triangle, half circle, filled dot, dash, empty circle, filled square) is an icon in the
+state's tone, as tall as the words beside it. Separators between facts ("·"), the ellipsis on a busy word and a range
+such as "1–9" are punctuation, not icons, and stay text. A test fails if one of the old characters comes back.
+
+The specs and the log write an icon as its name in brackets: [check], [cross], [triangle], [dot], [half], [ring],
+[dash], [square] for the marks; [arrow] for a link to a page here or the step under way, [out] for one that leaves;
+[back] and [forward] for chevrons, [caret] for a menu's down chevron; [pages] and [more] for the phone's menus; [Return],
+[up], [down] and [Option] for keys.

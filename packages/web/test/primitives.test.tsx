@@ -1,4 +1,4 @@
-import { whole } from "./harness.tsx";
+import { iconsIn, whole } from "./harness.tsx";
 import { describe, expect, mock, test } from "bun:test";
 import { fireEvent, render, within } from "@testing-library/react";
 import { useState } from "react";
@@ -240,7 +240,7 @@ describe("Options", () => {
   test("a chosen option shows a tick in place of its number, and the rest step back", () => {
     const view = render(<Options options={options} onPick={() => {}} chosen="b" />);
     const chosen = view.getByRole("button", { name: /Keep the cap in Merano/ });
-    within(chosen).getByText("✓");
+    expect(iconsIn(chosen)).toEqual(["check"]);
     expect(within(chosen).queryByText("2")).toBeNull();
     expect(chosen.getAttribute("aria-pressed")).toBe("true");
     expect(view.getByRole("button", { name: /Raise the cap/ }).getAttribute("data-stepped")).toBe("true");
@@ -249,15 +249,15 @@ describe("Options", () => {
 
 describe("Badge", () => {
   test.each([
-    ["failing", "✗"],
-    ["merged", "✓"],
-    ["pending", "▲"],
-    ["in_progress", "◐"],
-    ["dropped", "–"],
-    ["backlog", "○"],
-  ])("%s carries the glyph %s as well as its word", (value, glyph) => {
+    ["failing", "cross"],
+    ["merged", "check"],
+    ["pending", "alert"],
+    ["in_progress", "half"],
+    ["dropped", "dash"],
+    ["backlog", "ring"],
+  ])("%s carries the mark %s as well as its word", (value, mark) => {
     const view = render(<StatusBadge value={value} />);
-    view.getByText(glyph);
+    expect(iconsIn(view.container)).toEqual([mark]);
   });
 
   test("no state renders nothing", () => {

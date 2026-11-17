@@ -1,46 +1,44 @@
 import type { ReactNode } from "react";
-import { glyphOf, humanize, type Tone, toneOf } from "../../lib/format.ts";
+import { humanize, markOf, type Tone, toneOf } from "../../lib/format.ts";
+import { Icon, type IconName } from "./Icon.tsx";
 
 /**
- * A state in small words with its glyph, never a pill and never colour alone: ✓ good news, ✗ something broke, ▲ stuck
- * or waiting, ◐ moving, ● needs you, – ended, ○ not started.
+ * A state in small words with its mark, never a pill and never colour alone: check for good news, cross for something
+ * broke, a triangle for stuck or waiting, a half circle for moving, a dot for needs you, a dash for ended, an empty
+ * circle for not started.
  */
 export function Badge({
   tone = "neutral",
-  glyph,
+  mark,
   children,
 }: {
   tone?: Tone;
-  glyph?: string;
+  mark?: IconName;
   children: ReactNode;
 }) {
   if (children === "" || children === null || children === undefined) return null;
   return (
     <span className="ui-tag" data-tone={tone}>
-      {glyph === undefined ? null : (
-        <>
-          <Glyph tone={tone}>{glyph}</Glyph>{" "}
-        </>
-      )}
+      {mark === undefined ? null : <Mark tone={tone} icon={mark} />}
       {children}
     </span>
   );
 }
 
-/** A value whose tone and glyph follow from what it means: failing is ✗, merged is ✓. */
+/** A value whose tone and mark follow from what it means: failing is a cross, merged a check. */
 export function StatusBadge({ value }: { value: string }) {
   return (
-    <Badge tone={toneOf(value)} glyph={glyphOf(value)}>
+    <Badge tone={toneOf(value)} mark={markOf(value)}>
       {humanize(value)}
     </Badge>
   );
 }
 
-/** A state's glyph alone, in its tone, before words that say the same: "●" before "running, on its line". */
-export function Glyph({ tone = "neutral", children }: { tone?: Tone; children: string }) {
+/** A state's mark alone, in its tone, before words that say the same: a dot before "running, on its line". */
+export function Mark({ tone = "neutral", icon }: { tone?: Tone; icon: IconName }) {
   return (
-    <span className="ui-glyph" data-tone={tone} aria-hidden="true">
-      {children}
+    <span className="ui-mark" data-tone={tone} aria-hidden="true">
+      <Icon name={icon} />
     </span>
   );
 }

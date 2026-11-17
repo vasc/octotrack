@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { Mark } from "./Badge.tsx";
+import type { IconName } from "./Icon.tsx";
 
 /**
  * A few words set apart on a soft ground in a tone: what an agent recommends, in the attention colour; why to step in,
@@ -6,14 +8,14 @@ import type { ReactNode } from "react";
  */
 export function Callout({
   tone = "attention",
-  glyph,
+  mark,
   lead,
   actions,
   children,
 }: {
   tone?: "attention" | "warn";
-  /** Status's mark before the lead, so the tone never rests on colour alone: ▲ for stepping in. */
-  glyph?: string;
+  /** Status's mark before the lead, so the tone never rests on colour alone: the triangle for stepping in. */
+  mark?: IconName;
   lead: string;
   /** What to do about it, under the words. */
   actions?: ReactNode;
@@ -22,11 +24,7 @@ export function Callout({
   return (
     <div className="ui-callout" data-tone={tone}>
       <p className="ui-callout-text">
-        {glyph === undefined ? null : (
-          <>
-            <span aria-hidden="true">{glyph}</span>{" "}
-          </>
-        )}
+        {mark === undefined ? null : <Mark tone={tone} icon={mark} />}
         <b>{lead}</b> {children}
       </p>
       {actions}

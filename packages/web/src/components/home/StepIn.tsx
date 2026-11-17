@@ -66,7 +66,7 @@ export function StepIn({
     <Focusable focusRef={stepInRef(line.ref)} label={`Step in on ${line.title}`} focused={focused}>
       <Callout
         tone="warn"
-        glyph="▲"
+        mark="alert"
         lead="Step in."
         actions={
           mode === "checkout" && checkoutRepo !== undefined && onCheckout !== undefined ? (

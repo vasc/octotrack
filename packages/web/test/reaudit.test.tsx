@@ -17,17 +17,22 @@ import { Button } from "../src/components/ui/Button.tsx";
 import { Waiting } from "../src/components/ui/Waiting.tsx";
 import { decision, decisionCard, drift, line, pendingChoice } from "../src/design/fixtures.ts";
 import { useRetryEvery } from "../src/hooks/useRetryEvery.ts";
-import { glyphOf } from "../src/lib/format.ts";
-import { whole } from "./harness.tsx";
+import { markOf } from "../src/lib/format.ts";
+import { iconsIn, whole } from "./harness.tsx";
 
 const noop = () => {};
 
 describe("glyphs follow Status", () => {
-  test("urgent, blocked and stuck are ▲; running and in progress ◐; refused ✗; cancelled –", () => {
-    expect(["urgent", "blocked", "blocker", "stuck"].map(glyphOf)).toEqual(["▲", "▲", "▲", "▲"]);
-    expect(["running", "progress", "in_progress"].map(glyphOf)).toEqual(["◐", "◐", "◐"]);
-    expect(glyphOf("refused")).toBe("✗");
-    expect(glyphOf("cancelled")).toBe("–");
+  test("urgent, blocked and stuck are the triangle; running and in progress the half circle; refused a cross; cancelled a dash", () => {
+    expect(["urgent", "blocked", "blocker", "stuck"].map(markOf)).toEqual([
+      "alert",
+      "alert",
+      "alert",
+      "alert",
+    ]);
+    expect(["running", "progress", "in_progress"].map(markOf)).toEqual(["half", "half", "half"]);
+    expect(markOf("refused")).toBe("cross");
+    expect(markOf("cancelled")).toBe("dash");
   });
 });
 
@@ -246,7 +251,7 @@ describe("a busy button", () => {
 });
 
 describe("busy words where a choice waits", () => {
-  test("Step in carries ▲, and the pressed action says it is on its way, the rest held", () => {
+  test("Step in carries the triangle, and the pressed action says it is on its way, the rest held", () => {
     const props = {
       line: line({ title: "Mount" }),
       reason: "It exits at once.",
@@ -255,7 +260,7 @@ describe("busy words where a choice waits", () => {
       onTable: noop,
     };
     const view = render(<StepIn {...props} />);
-    view.getByText("▲");
+    expect(iconsIn(view.getByText("Step in.").parentElement ?? view.container)).toEqual(["alert"]);
     fireEvent.click(view.getByRole("button", { name: "I'll own it" }));
     view.rerender(<StepIn {...props} busy />);
     view.getByRole("button", { name: "Owning…" });

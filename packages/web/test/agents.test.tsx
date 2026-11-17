@@ -6,7 +6,7 @@ import { AgentRoster } from "../src/components/agents/AgentRoster.tsx";
 import { AgentRosterRow } from "../src/components/agents/AgentRosterRow.tsx";
 import { agentView } from "../src/design/fixtures.ts";
 import { whenText } from "../src/lib/format.ts";
-import { whole } from "./harness.tsx";
+import { whole, iconsIn } from "./harness.tsx";
 
 const noop = () => {};
 const NOW = Date.parse("2026-11-14T12:00:00.000Z");
@@ -35,13 +35,14 @@ function row(overrides: Partial<AgentView>, props: { waitsOnYou?: boolean; busy?
 
 describe("AgentRosterRow", () => {
   test.each([
-    ["running", "●"],
-    ["asleep", "◐"],
-    ["quiet", "○"],
-    ["stopped", "■"],
-    ["gone", "✕"],
-  ] as const)("a %s agent carries its glyph as well as its words", (state, glyph) => {
-    row({ state }).getByText(glyph);
+    ["running", "dot"],
+    ["asleep", "half"],
+    ["quiet", "ring"],
+    ["stopped", "square"],
+    ["gone", "cross"],
+  ] as const)("a %s agent carries its mark as well as its words", (state, mark) => {
+    const view = row({ state });
+    expect(iconsIn(view.container)).toContain(mark);
   });
 
   test("its cells are its name, its repo's key, what it is doing now and when it was last seen", () => {
@@ -114,7 +115,7 @@ describe("AgentRosterRow", () => {
     );
   });
 
-  test("a session started for a line that never ran a command is marked ▲, with how its start went", () => {
+  test("a session started for a line that never ran a command is marked with the triangle, with how its start went", () => {
     const view = row({
       name: "trips.2",
       line: null,
@@ -125,7 +126,7 @@ describe("AgentRosterRow", () => {
       start: { line: "L-46", state: "failed", attempts: 3, since: "2026-11-10T09:00:00.000Z", exitCode: 127 },
     });
     const now = within(view.getByRole("row", { name: "trips.2" }));
-    now.getByText("▲");
+    expect(iconsIn(view.getByRole("row", { name: "trips.2" }))).toContain("alert");
     now.getByText(whole("started for L-46; exits at once (exit 127), retried since Tuesday"));
     now.getByText("never");
     row({

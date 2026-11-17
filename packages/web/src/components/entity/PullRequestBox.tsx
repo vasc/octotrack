@@ -6,16 +6,28 @@ import { Note } from "../ui/Note.tsx";
 import { Row } from "../ui/Row.tsx";
 import { Section } from "../ui/Section.tsx";
 import { ErrorState, LoadingState } from "../ui/states.tsx";
+import type { ReactNode } from "react";
+import { Mark } from "../ui/Badge.tsx";
 
-const CHECKS: Readonly<Record<Exclude<PullRequest["checks"], "none">, string>> = {
+const CHECKS: Readonly<Record<Exclude<PullRequest["checks"], "none">, ReactNode>> = {
   pending: "checks running",
-  passing: "✓ checks pass",
-  failing: "✗ checks failing",
+  passing: (
+    <>
+      <Mark tone="good" icon="check" />
+      checks pass
+    </>
+  ),
+  failing: (
+    <>
+      <Mark tone="bad" icon="cross" />
+      checks failing
+    </>
+  ),
 };
 
 /**
  * An issue's pull requests, one row each: its title, then its number, which leaves for GitHub, its state and its checks:
- * "#418 open · ✗ checks failing". Checks never run are not mentioned.
+ * "#418 open · checks failing", the last after a cross. Checks never run are not mentioned.
  */
 export function PullRequestBox({
   prs,

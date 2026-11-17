@@ -91,7 +91,7 @@ import {
   pendingChoice,
   pr,
 } from "../src/design/fixtures.ts";
-import { homeActions, proposalMove, whole } from "./harness.tsx";
+import { homeActions, iconsIn, proposalMove, whole } from "./harness.tsx";
 
 const form = decisionForm;
 
@@ -238,7 +238,7 @@ describe("DecisionCardView", () => {
     );
     const redis = view.getByRole("button", { name: /Redis/ });
     expect(redis.getAttribute("aria-pressed")).toBe("true");
-    within(redis).getByText("✓");
+    expect(iconsIn(redis)).toEqual(["check"]);
     expect(view.getByRole("button", { name: "SQS" }).getAttribute("data-stepped")).toBe("true");
     view.getByText(whole("Sending to New Year trip in 4 s"));
     fireEvent.click(view.getByRole("button", { name: "Undo the answer to D-1" }));
@@ -480,7 +480,7 @@ describe("BatchPanelView", () => {
     expect(button.hasAttribute("disabled")).toBe(false);
   });
 
-  test("its box says the format, a row not understood stops Record and says which, results carry ✓ or ✗", () => {
+  test("its box says the format, a row not understood stops Record and says which, results carry a check or a cross", () => {
     const view = render(
       <BatchPanelView
         {...base}
@@ -495,8 +495,8 @@ describe("BatchPanelView", () => {
     view.getByLabelText("One per row: the question, the option, a note if you like");
     view.getByRole("alert");
     view.getByText("Fix row 3 first");
-    view.getByText("✓ recorded");
-    view.getByText("✗ already answered");
+    expect(iconsIn(view.getByText("recorded"))).toEqual(["check"]);
+    expect(iconsIn(view.getByText("already answered"))).toEqual(["cross"]);
   });
 
   test("says it is recording while it sends", () => {
@@ -609,7 +609,7 @@ describe("TopBar", () => {
     fireEvent.click(view.getByRole("button", { name: "Pages: Lines" }));
     const menu = within(view.getByRole("menu", { name: "Pages" }));
     // The check before the page you are on is drawn for the eye only; the items name themselves.
-    expect(menu.getAllByRole("menuitemradio").map((item) => item.textContent?.replace("✓", ""))).toEqual([
+    expect(menu.getAllByRole("menuitemradio").map((item) => item.textContent)).toEqual([
       "Lines",
       "Log",
       "Agents",
@@ -643,8 +643,8 @@ describe("TopBar", () => {
     ).toEqual(["/?focus=D-60", "/?focus=D-56", "/?focus=L-6", "/?focus=stepin%3AL-9"]);
     const urgent = within(status).getByRole("link", { name: "1 urgent" });
     expect(urgent.getAttribute("data-urgent")).toBe("true");
-    // Its mark is Status's for urgent, ▲, never colour alone.
-    within(urgent).getByText("▲");
+    // Its mark is Status's for urgent, the triangle, never colour alone.
+    expect(iconsIn(urgent)).toEqual(["alert"]);
     // The number is its own piece, in ink, before the quieter words.
     expect(urgent.querySelector("b")?.textContent).toBe("1");
     expect(within(status).getByRole("link", { name: "4 to answer" }).getAttribute("data-urgent")).toBeNull();
@@ -1089,17 +1089,17 @@ describe("a line opened", () => {
     view.getByRole("heading", { name: "Plan" });
     view.getByText("step 2 of 3");
     for (const [mark, word, step] of [
-      ["✓", "done", "Model"],
-      ["→", "now", "Print"],
-      ["○", "next", "Photograph"],
+      ["check", "done", "Model"],
+      ["arrow", "now", "Print"],
+      ["ring", "next", "Photograph"],
     ] as const) {
-      view.getByText(mark);
       view.getByText(word);
-      view.getByText(step);
+      const row = view.getByText(step).closest(".ui-row");
+      expect(row === null ? [] : iconsIn(row)[0]).toBe(mark);
     }
     view.getByRole("button", { name: "OCT-6" });
     view.getByText("Test-print");
-    view.getByText("✗ checks failing");
+    expect(iconsIn(view.getByText("checks failing"))).toEqual(["cross"]);
     view.unmount();
     render(<PlanList steps={[]} work={[]} />).getByText("No plan yet. Its owner writes one.");
   });
@@ -1751,10 +1751,11 @@ describe("home's smaller pieces", () => {
   test("SpreadThin says nothing up to six working lines, then what spreading thin costs, in the header", () => {
     expect(render(<SpreadThin working={6} noOwner={3} waiting={2} />).container.textContent).toBe("");
     const view = render(<SpreadThin working={9} noOwner={3} waiting={2} />);
-    // Each carries Status's glyph, never colour alone: ▲ stuck, ● needs you.
-    const noOwner = view.getByText(whole("▲ 3 with no owner"));
-    expect(noOwner.getAttribute("data-tone")).toBe("stuck");
-    view.getByText(whole("● 2 waiting on you"));
+    // Each carries Status's mark, never colour alone: the triangle for stuck, the dot for needs you.
+    const noOwner = view.getByText(whole("3 with no owner")).closest("[data-tone='stuck']");
+    expect(noOwner === null ? [] : iconsIn(noOwner)).toEqual(["alert"]);
+    const waiting = view.getByText(whole("2 waiting on you")).parentElement;
+    expect(waiting === null ? [] : iconsIn(waiting)).toEqual(["dot"]);
   });
 
   test("StartSheetView settles a changed done when and a held question before Start, numbering every choice", () => {
@@ -1945,7 +1946,7 @@ describe("answers on their line", () => {
       view.getByRole("button", { name: "D-34" });
       view.getByText("26 mm");
       const status = view.getByText(
-        /^(not picked up|picked up|✓ carried out|.* could not be woken)/,
+        /^(not picked up|picked up|carried out|.* could not be woken)/,
       ).textContent;
       view.unmount();
       return status;
@@ -1961,8 +1962,11 @@ describe("answers on their line", () => {
       ),
     ).toBe("picked up by panel-widgets, 4m ago");
     expect(sentence(answer({ status: "carried_out", note: "model set to the short board" }))).toBe(
-      "✓ carried out: model set to the short board",
+      "carried out: model set to the short board",
     );
+    const carried = render(<AnswerStatus answer={answer({ status: "carried_out", note: null })} />);
+    expect(iconsIn(carried.getByText("carried out"))).toEqual(["check"]);
+    carried.unmount();
     expect(sentence(answer({ status: "wake_failed", unwoken: "panel-widgets" }))).toBe(
       "panel-widgets could not be woken; finding an owner",
     );
@@ -2183,8 +2187,8 @@ describe("PullRequestBox", () => {
     box.getByRole("link", { name: "#13" });
     box.getByText("Add retry");
     box.getByText("Drop the cache");
-    box.getByText("✓ checks pass");
-    box.getByText("✗ checks failing");
+    expect(iconsIn(box.getByText("checks pass"))).toEqual(["check"]);
+    expect(iconsIn(box.getByText("checks failing"))).toEqual(["cross"]);
     expect(box.queryByText("+10 −2")).toBeNull();
     expect(box.queryByText(/^opened /)).toBeNull();
     box.getByText("merged");
@@ -2884,7 +2888,7 @@ describe("AppearanceMenu", () => {
     fireEvent.click(view.getByRole("button", { name: "Appearance: Gruvbox, as the system" }));
     const menu = within(view.getByRole("menu", { name: "Appearance" }));
     // The check before the ones in force is drawn for the eye only; the items name themselves.
-    expect(menu.getAllByRole("menuitemradio").map((item) => item.textContent?.replace("✓", ""))).toEqual([
+    expect(menu.getAllByRole("menuitemradio").map((item) => item.textContent)).toEqual([
       "Paper",
       "Solarized",
       "Gruvbox",

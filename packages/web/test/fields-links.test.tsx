@@ -55,7 +55,7 @@ describe("empty containers draw nothing", () => {
 });
 
 describe("Link", () => {
-  test("says where it goes: → stays in the app, ↗ leaves it, neither read out", () => {
+  test("says where it goes: an arrow icon stays in the app, an outward one leaves it, neither read out", () => {
     const view = render(
       <p>
         <Link href="/log?q=L-3" onGo={noop}>
@@ -67,15 +67,18 @@ describe("Link", () => {
       </p>,
     );
     const inside = view.getByRole("link", { name: "This line in the log" });
-    expect(inside.textContent).toBe("This line in the log →");
+    expect(inside.textContent).toBe("This line in the log");
+    expect(inside.querySelector("svg[data-icon='arrow']")).not.toBeNull();
     const outside = view.getByRole("link", { name: "vasc/stack#4" });
-    expect(outside.textContent).toBe("vasc/stack#4 ↗");
+    expect(outside.textContent).toBe("vasc/stack#4");
+    expect(outside.querySelector("svg[data-icon='external']")).not.toBeNull();
   });
 
-  test("a link in written text carries ↗ and is a link of the house's look", () => {
+  test("a link in written text carries the outward arrow icon and is a link of the house's look", () => {
     const view = render(<MarkdownView text="See [the docs](https://example.com)." inline />);
     const link = view.getByRole("link", { name: "the docs" });
-    expect(link.textContent).toBe("the docs ↗");
+    expect(link.textContent).toBe("the docs");
+    expect(link.querySelector("svg[data-icon='external']")).not.toBeNull();
     expect(link.className).toBe("ui-link");
   });
 });

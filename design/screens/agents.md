@@ -25,8 +25,8 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 ### components/agents/AgentRosterRow.tsx
 
 - Designed in: Agents.dc.html, the board and state A
-- What it shows: a row of the roster's Table: name, repo key, what it is doing now with a glyph, last seen ("3h", or "never" for a session that ran no command), and its one action. Now reads: "● running, owner of L-59; its line waits on you", "◐ asleep, owner of L-24 · wakes by tmux", "○ quiet, still holding L-24", "● idle: nothing to take or scope in its repo", "■ stopped by you at 14:02: “wrong repo”", "■ stopped by Octotrack at 14:02, after 3 writes a line's state forbids", "▲ started for L-46; exits at once (exit 127), retried since today", "▲ started for L-46; ran but never took its line", "✕ gone: its wake failed (tmux: no session “ttube”)", "✕ gone, last owner of L-9". The agent's own note sits under Now.
-- Changes from today: a table row under headings, not a row of facts; every state has a glyph as well as words, and a failed start is ▲; the line's role is in the sentence ("owner of L-59") and the line is its ref alone, as drawn; the wake method is said ("wakes by tmux"); after Stop, Lift or Release the button reads "Stopping…" with Undo below until it takes effect.
+- What it shows: a row of the roster's Table: name, repo key, what it is doing now with its mark, last seen ("3h", or "never" for a session that ran no command), and its one action. Now reads: "[dot] running, owner of L-59; its line waits on you", "[half] asleep, owner of L-24 · wakes by tmux", "[ring] quiet, still holding L-24", "[dot] idle: nothing to take or scope in its repo", "[square] stopped by you at 14:02: “wrong repo”", "[square] stopped by Octotrack at 14:02, after 3 writes a line's state forbids", "[triangle] started for L-46; exits at once (exit 127), retried since today", "[triangle] started for L-46; ran but never took its line", "[cross] gone: its wake failed (tmux: no session “ttube”)", "[cross] gone, last owner of L-9". The agent's own note sits under Now.
+- Changes from today: a table row under headings, not a row of facts; every state has a mark as well as words, and a failed start is [triangle]; the line's role is in the sentence ("owner of L-59") and the line is its ref alone, as drawn; the wake method is said ("wakes by tmux"); after Stop, Lift or Release the button reads "Stopping…" with Undo below until it takes effect.
 - Loading: never loads on its own: given the agent by AgentsPage; "Stopping…" while a choice waits.
 - Error: Stop, Lift and Release wait with Undo like every choice; a request the tracker never took, or a refusal when it takes effect, is said in the Undo bar ("Did not happen: …") with Dismiss.
 - Empty: never empty: it exists only for an agent.
@@ -34,7 +34,7 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 ### components/home/PushToggle.tsx
 
 - Designed in: Agents.dc.html, state D
-- What it shows: "Buzz this device", then "Turning on…", then "✓ Buzzing this device · Stop".
+- What it shows: "Buzz this device", then "Turning on…", then "[check] Buzzing this device · Stop".
 - Changes from today: Stop turns buzzing off (today there is no way back); every refusal is said with what to do: "Notifications are blocked for this site. Allow them in the browser's site settings, then press again.", "You dismissed the browser's question; press again to be asked once more.", "This browser cannot buzz. On iPhone, add Octotrack to the home screen first." (today nothing is shown), "This tracker does not send notifications: it has no push key."
 - Loading: "Turning on…".
 - Error: the sentences above, in place of the button.

@@ -8,6 +8,7 @@ import { Note } from "../ui/Note.tsx";
 import { RefLink } from "../ui/RefLink.tsx";
 import { Row } from "../ui/Row.tsx";
 import { Sheet } from "../ui/Sheet.tsx";
+import { Mark } from "../ui/Badge.tsx";
 
 export interface BatchResultRow {
   ref: string;
@@ -100,7 +101,12 @@ export function BatchPanelView(props: BatchPanelViewProps) {
               key={result.ref}
               kind={<RefLink value={result.ref} />}
               tone={result.ok ? "none" : "stuck"}
-              title={result.ok ? "✓ recorded" : `✗ ${result.error ?? "not recorded"}`}
+              title={
+                <>
+                  <Mark tone={result.ok ? "good" : "bad"} icon={result.ok ? "check" : "cross"} />
+                  {result.ok ? "recorded" : (result.error ?? "not recorded")}
+                </>
+              }
             />
           ))}
         </List>

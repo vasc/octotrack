@@ -81,16 +81,16 @@ closed; the page behind does not react to keys. On a phone it rises from the bot
 ### components/decisions/BatchPanelView.tsx
 
 - Designed in: Sheets.dc.html, state E
-- What it shows: "Record answers" and Cancel; the box labelled "One per row: the question, the option, a note if you like"; the parse error; the results ("D-65 ✓ recorded", "D-20 ✗ already answered on 7 Nov"); then "Record 2" with "Fix row 3 first" beside it.
-- Changes from today: the label explains the format (today "Answers"); a row that cannot be read says "Row 3 is not understood: …"; an option that does not exist is said in its result, "D-75 has no option “fast start”. Its options are a, b, c, d."; results carry ✓ or ✗; a disabled Record says why beside it; while sending it reads "Recording…".
+- What it shows: "Record answers" and Cancel; the box labelled "One per row: the question, the option, a note if you like"; the parse error; the results ("D-65 [check] recorded", "D-20 [cross] already answered on 7 Nov"); then "Record 2" with "Fix row 3 first" beside it.
+- Changes from today: the label explains the format (today "Answers"); a row that cannot be read says "Row 3 is not understood: …"; an option that does not exist is said in its result, "D-75 has no option “fast start”. Its options are a, b, c, d."; results carry [check] or [cross]; a disabled Record says why beside it; while sending it reads "Recording…".
 - Loading: "Recording…" on the button while sending.
-- Error: the parse error under the box; each row's failure in the results with ✗ and the reason.
+- Error: the parse error under the box; each row's failure in the results with [cross] and the reason.
 - Empty: the box, a disabled "Record", and the format shown as its placeholder.
 
 ### components/home/KeyHelp.tsx
 
 - Designed in: Sheets.dc.html, state F
-- What it shows: "Keys" and Close; two groups. Moving: `j k` next, previous item; `J K` next, previous line; `o ↵` open the line; `g u` urgent question; `/` search the log; `esc` close, go back. Acting: `1–9` pick a numbered choice; `w` answer in your words; `l` later; `u` undo; `t` tell the owner; `⌥↑↓` move the line; `g p` I'm at; `r` record answers.
+- What it shows: "Keys" and Close; two groups. Moving: `j k` next, previous item; `J K` next, previous line; `o [Return]` open the line; `g u` urgent question; `/` search the log; `esc` close, go back. Acting: `1–9` pick a numbered choice; `w` answer in your words; `l` later; `u` undo; `t` tell the owner; `[Option][up][down]` move the line; `g p` I'm at; `r` record answers.
 - Changes from today: grouped into Moving and Acting; Cancel becomes Close; wording ("answer in your words", "tell the owner", "search the log", "close, go back"); opened from the Log or Agents, keys that only act on Lines say "on Lines"; not offered on touch screens.
 - Loading: never loads on its own: the list is fixed.
 - Error: cannot fail on its own.

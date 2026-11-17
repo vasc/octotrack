@@ -1,12 +1,13 @@
 import { Pairs } from "../ui/Pairs.tsx";
 import { Section } from "../ui/Section.tsx";
 import { Sheet } from "../ui/Sheet.tsx";
+import { Keys } from "../ui/Keys.tsx";
 
 /** The keys that move around, as the Keys sheet lists them. */
 export const MOVING_KEYS: readonly (readonly [string, string])[] = [
   ["j k", "next, previous item"],
   ["J K", "next, previous line"],
-  ["o ↵", "open the line"],
+  ["o Return", "open the line"],
   ["g u", "urgent question"],
   ["/", "search the log"],
   ["esc", "close, go back"],
@@ -19,7 +20,7 @@ export const ACTING_KEYS: readonly (readonly [string, string])[] = [
   ["l", "later"],
   ["u", "undo"],
   ["t", "tell the owner"],
-  ["⌥ ↑ ↓", "move the line"],
+  ["Option Up Down", "move the line"],
   ["g p", "I'm at"],
   ["r", "record answers"],
 ];
@@ -28,13 +29,13 @@ export const ACTING_KEYS: readonly (readonly [string, string])[] = [
 const LINES_ONLY: ReadonlySet<string> = new Set([
   "j k",
   "J K",
-  "o ↵",
+  "o Return",
   "g u",
   "1–9",
   "w",
   "l",
   "t",
-  "⌥ ↑ ↓",
+  "Option Up Down",
   "r",
 ]);
 
@@ -49,7 +50,7 @@ export function KeyHelp({ onClose, onLines = true }: { onClose(): void; onLines?
   const pairs = (keys: readonly (readonly [string, string])[]) =>
     keys.map(
       ([key, what]) =>
-        [<kbd key={key}>{key}</kbd>, onLines || !LINES_ONLY.has(key) ? what : `${what} on Lines`] as const,
+        [<Keys key={key} keys={key} />, onLines || !LINES_ONLY.has(key) ? what : `${what} on Lines`] as const,
     );
   return (
     <Sheet title="Keys" onClose={onClose} closeLabel="Close">

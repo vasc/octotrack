@@ -113,10 +113,26 @@
   white-space: nowrap;
 }
 
-/* Only the glyph carries the tone: ✓ in the good colour, ✗ in the bad, ▲ in the warm; the words stay grey. */
+/* Only the mark carries the tone: the check in the good colour, the cross in the bad, the triangle in the warm; the
+   words stay grey. A mark is an icon the size of the words it stands before, centred on them. */
 
-.ui-glyph {
+.ui-mark {
   color: var(--tone, var(--ink-3));
+  margin-right: var(--space-2);
+}
+
+/* Icons inside running words are as tall as the words: a mark, a link's arrow, a key, a crumb, a branch. */
+.ui-mark .ui-icon,
+.ui-link .ui-icon,
+.ui-keys .ui-icon,
+.ui-panel-crumbs .ui-icon,
+.ui-pairs .ui-icon {
+  width: var(--icon-inline-size);
+  height: var(--icon-inline-size);
+}
+
+.ui-link .ui-icon {
+  margin-left: var(--space-1);
 }
 
 .ui-facts {
@@ -206,6 +222,13 @@
 /* ---------- Button ---------- */
 
 /* Primary filled, plain a word that acts, quiet a word that steps back, icon a square around an icon. */
+/* A button's words and its icons sit in one row, centred in its height: a caret sits mid-button, not on the words. */
+.ui-button-words {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
 .ui-button {
   display: inline-flex;
   align-items: center;
@@ -544,7 +567,7 @@
   text-align: center;
 }
 
-/* A row picked with a check: the box itself is the browser's, kept for keys and screen readers, and drawn as a ✓. */
+/* A row picked with a check: the box itself is the browser's, kept for keys and screen readers, and drawn as a check icon. */
 .ui-row-input {
   position: absolute;
   width: 1px;
@@ -1115,6 +1138,11 @@
   font-size: var(--text-sm);
 }
 
+/* Keys listed in several groups share one column width, so every group's meanings start at the same x. */
+.ui-pairs:has(.ui-keys) {
+  grid-template-columns: var(--keys-column) minmax(0, 1fr);
+}
+
 .ui-pair {
   display: contents;
 }
@@ -1431,7 +1459,7 @@
   margin-left: auto;
 }
 
-/* What waits on the developer: numbers in ink, words quieter; urgent first, marked ▲. */
+/* What waits on the developer: numbers in ink, words quieter; urgent first, marked with the triangle. */
 .ui-counts {
   display: flex;
   flex-wrap: wrap;
@@ -1451,10 +1479,6 @@
   font-weight: var(--weight-medium);
   color: var(--ink);
   font-variant-numeric: tabular-nums;
-}
-
-.ui-count .ui-glyph {
-  margin-right: var(--space-2);
 }
 
 .ui-count:hover {

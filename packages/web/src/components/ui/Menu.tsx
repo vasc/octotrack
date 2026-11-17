@@ -35,7 +35,7 @@ export function Menu({
   drag?: { onDragStart(event: DragEvent): void; onDragEnd(): void };
   /** Which edge of the button the menu lines up with: the start for a row's lead, the end in the bar. */
   align?: "start" | "end";
-  /** Its icon shows only on a phone, in place of its words, which still name it: More as "⋯". */
+  /** Its icon shows only on a phone, in place of its words, which still name it: More as the three-dot icon. */
   iconOnPhone?: boolean;
   /** It cannot be opened until something else is done, such as a move of what it acts on taking effect. */
   disabled?: boolean;
@@ -156,7 +156,7 @@ export function MenuItem({
       onClick={onSelect}
     >
       <span className="ui-menu-check" aria-hidden="true">
-        {checked ? "✓" : ""}
+        {checked ? <Icon name="check" /> : null}
       </span>
       {children}
     </button>

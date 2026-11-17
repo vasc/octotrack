@@ -10,6 +10,7 @@ import {
   startTestServer,
   fakePush,
   type TestServer,
+  iconsIn,
   proposalMove,
   whole,
   wholeMatching,
@@ -467,7 +468,8 @@ describe("live updates, with nothing but the server's own notifications", () => 
       { repo: "a/b", number: 1, title: "PR from an agent", state: "open", checks: "passing" },
       "octo.1",
     );
-    await panel.findByText(whole("#1 open · ✓"));
+    const fact = await panel.findByText(whole("#1 open · "));
+    expect(iconsIn(fact)).toEqual(["check"]);
   });
 
   test("changes that leave nothing in the log still reach the page", async () => {
@@ -584,7 +586,10 @@ describe("decisions out of band", () => {
     act(() => box.focus());
     fireEvent.keyDown(box, { key: "Enter", metaKey: true });
 
-    await within(await sheet.findByRole("group", { name: "Results" })).findByText("✓ recorded");
+    const recorded = await within(await sheet.findByRole("group", { name: "Results" })).findByText(
+      "recorded",
+    );
+    expect(iconsIn(recorded)).toEqual(["check"]);
     view.getByText(/no option “nope”/);
     expect(server.act(c.decisionList, { query: `ref:${first.ref}` })[0]).toMatchObject({
       status: "decided",
@@ -1377,7 +1382,7 @@ describe("lines of work", () => {
       await view.findByRole("article", { name: "Which board?" });
       fireEvent.keyDown(window, { key: "?" });
       const help = within(await view.findByRole("dialog", { name: "Keys" }));
-      help.getByText("g u");
+      help.getByText(whole("g u"));
       fireEvent.click(help.getByRole("button", { name: "Close" }));
       await gone(() => view.queryByRole("dialog", { name: "Keys" }));
       fireEvent.keyDown(window, { key: "r" });
@@ -2787,7 +2792,7 @@ describe("lines of work", () => {
       const view = renderApp(<App />);
       const panel = within(await view.findByRole("complementary", { name: issue.ref }));
       const section = panel;
-      // The crumb: its line by ref and title, then › and its own ref.
+      // The crumb: its line by ref and title, then a forward chevron and its own ref.
       await within(section.getByRole("navigation", { name: "Where this is" })).findByRole("button", {
         name: "Sendspin enclosure",
       });
@@ -2795,7 +2800,7 @@ describe("lines of work", () => {
       section.getByText("held by octo.1");
       expect(section.getAllByRole("button", { name: task.ref }).length).toBeGreaterThan(0);
       await section.findByText(/Shorter board/);
-      section.getByText("✗ checks failing");
+      expect(iconsIn(section.getByText("checks failing"))).toEqual(["cross"]);
 
       fireEvent.change(section.getByLabelText(`Tell octo.1, who holds ${issue.ref}`), {
         target: { value: "Try the 40 mm one" },

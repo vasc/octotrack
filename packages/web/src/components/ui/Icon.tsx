@@ -1,78 +1,91 @@
+import {
+  ArrowDown,
+  ArrowRight,
+  ArrowUp,
+  ArrowUpRight,
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Circle,
+  Contrast,
+  CornerDownLeft,
+  Ellipsis,
+  GripVertical,
+  Keyboard,
+  type LucideIcon,
+  MapPin,
+  Menu,
+  Minus,
+  Option,
+  Plus,
+  Square,
+  Triangle,
+  X,
+} from "lucide-react";
+
+/** Each icon the dashboard draws, from Lucide, and whether its shape is filled in. */
+const ICONS = {
+  plus: { shape: Plus },
+  pin: { shape: MapPin },
+  keyboard: { shape: Keyboard },
+  grip: { shape: GripVertical },
+  chevron: { shape: ChevronDown },
+  pages: { shape: Menu },
+  more: { shape: Ellipsis },
+  appearance: { shape: Contrast },
+  /** Done, passing, merged, chosen. */
+  check: { shape: Check },
+  /** Failing, refused, gone. */
+  cross: { shape: X },
+  /** Stuck, urgent, step in. */
+  alert: { shape: Triangle, filled: true },
+  /** Needs you, running. */
+  dot: { shape: Circle, filled: true },
+  /** Moving, asleep. */
+  half: { shape: Contrast },
+  /** Not started, quiet. */
+  ring: { shape: Circle },
+  /** Ended without being done. */
+  dash: { shape: Minus },
+  /** Stopped. */
+  square: { shape: Square, filled: true },
+  /** A link to a page here, or the step under way. */
+  arrow: { shape: ArrowRight },
+  /** A link that leaves the dashboard. */
+  external: { shape: ArrowUpRight },
+  /** The way back. */
+  back: { shape: ChevronLeft },
+  /** Opens, goes into. */
+  forward: { shape: ChevronRight },
+  /** The Return key. */
+  enter: { shape: CornerDownLeft },
+  /** The up arrow key. */
+  up: { shape: ArrowUp },
+  /** The down arrow key. */
+  down: { shape: ArrowDown },
+  /** The Option key. */
+  option: { shape: Option },
+} satisfies Record<string, { shape: LucideIcon; filled?: boolean }>;
+
+export type IconName = keyof typeof ICONS;
+
 /**
- * The few icons the dashboard uses, drawn inline on a 24-unit grid with the text's own colour, so they need no
- * library and follow the theme. Shapes after Lucide (ISC licence).
+ * An icon from Lucide beside words, or alone inside a control that names itself: it is never read out on its own, and
+ * it takes the text's own colour, so it follows the theme. No character from a font ever stands in for one.
  */
-const PATHS = {
-  plus: (
-    <>
-      <path d="M5 12h14" />
-      <path d="M12 5v14" />
-    </>
-  ),
-  pin: (
-    <>
-      <path d="M20 10c0 5-5.5 10.2-7.4 11.8a1 1 0 0 1-1.2 0C9.5 20.2 4 15 4 10a8 8 0 0 1 16 0" />
-      <circle cx="12" cy="10" r="3" />
-    </>
-  ),
-  keyboard: (
-    <>
-      <rect width="20" height="16" x="2" y="4" rx="2" />
-      <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10" />
-    </>
-  ),
-  grip: (
-    <>
-      <circle cx="9" cy="5" r="1" />
-      <circle cx="9" cy="12" r="1" />
-      <circle cx="9" cy="19" r="1" />
-      <circle cx="15" cy="5" r="1" />
-      <circle cx="15" cy="12" r="1" />
-      <circle cx="15" cy="19" r="1" />
-    </>
-  ),
-  chevron: <path d="m6 9 6 6 6-6" />,
-  pages: (
-    <>
-      <path d="M4 6h16" />
-      <path d="M4 12h16" />
-      <path d="M4 18h16" />
-    </>
-  ),
-  more: (
-    <>
-      <circle cx="5" cy="12" r="1" />
-      <circle cx="12" cy="12" r="1" />
-      <circle cx="19" cy="12" r="1" />
-    </>
-  ),
-  /** Appearance: a circle half in ink, as light and dark share it. */
-  appearance: (
-    <>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" />
-    </>
-  ),
-} as const;
-
-export type IconName = keyof typeof PATHS;
-
-/** An icon beside words, or alone inside a control that names itself: it is never read out on its own. */
 export function Icon({ name }: { name: IconName }) {
+  const icon: { shape: LucideIcon; filled?: boolean } = ICONS[name];
+  const Shape = icon.shape;
   return (
-    <svg
+    <Shape
       className="ui-icon"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      // A filled shape is fill alone: an outline round it would round it into a blob at the size of words.
+      fill={icon.filled === true ? "currentColor" : "none"}
+      stroke={icon.filled === true ? "none" : "currentColor"}
       aria-hidden="true"
       focusable="false"
       data-icon={name}
-    >
-      {PATHS[name]}
-    </svg>
+    />
   );
 }

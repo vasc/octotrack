@@ -15,7 +15,7 @@ owner, then Tell. A section with nothing in it says why in one sentence instead 
   - Owner shows for every live line, saying who will own it when there is none yet (today it shows only while working).
   - Done or dropped (F): read only, with "Plan, summary and history stay below, as they were when it closed."
   - Working with no owner (D): the step-in sentence and its actions sit at the head, not in the owner's note.
-  - Phone (J): the panel is the whole screen, "‹ Lines" replaces Close, actions full width.
+  - Phone (J): the panel is the whole screen, "[back] Lines" replaces Close, actions full width.
 - Loading: the head comes from Lines at once; only the slow parts wait, drawn as outlines of their rows (G); "Loading the plan…" is said to screen readers only. While Lines itself is still loading, Owner and For you follow the Primitives pattern ("Loading…" in that section) instead of showing "no owner".
 - Error: one part failed (H): said in that part, "Could not load the plan. The tracker did not answer." with Try again; the rest still works. The plan last loaded stays drawn below it under "As it was at 14:20". Not found (I): "No line L-312 / No line was ever made with that ref; check it for a typo. Lines that were done, dropped or folded still open at their ref." with Close (a folded or dropped line keeps its ref, so only a ref never made lands here). Failed moves, tells and adds are said where they were made (see LineActions, TellBox, OwnWorkBox).
 - Empty: never empty: a line always has a head; each empty section says why in one sentence.
@@ -26,8 +26,8 @@ owner, then Tell. A section with nothing in it says why in one sentence instead 
 - What it shows: crumbs (state and place in order, ref, repo), Close, the title, "Done when" over its sentence, then the line's moves.
 - Changes from today:
   - Crumbs read "Up next · L-3 · LimbicAI/hydra": the state, no position (the number on its home row already shows that) (today "Up next · Line 3 of 10 · L-3 · hydra"); owned lines add "yours" (E); the repo is its GitHub name.
-  - Close carries no key hint (Esc is in the Keys sheet); on a phone it is "‹ Lines" (J).
-  - Opened from another panel (Panels F): "‹ Back to L-57" beside Close; Esc and Back go one step back, Close shuts the panel (today Close goes back).
+  - Close carries no key hint (Esc is in the Keys sheet); on a phone it is "[back] Lines" (J).
+  - Opened from another panel (Panels F): "[back] Back to L-57" beside Close; Esc and Back go one step back, Close shuts the panel (today Close goes back).
   - Proposed (B): "Proposed by ttube, 2d ago · L-59 · TTUBE", then "Recommended: start it." with its reason, above the moves.
   - Tabled (C): "Waits for", "Look again" and "Held: 1 question, 2 tasks, released when it starts" at the top.
   - Done (F): "Done · closed Tue 14:02 · L-19". Who closed it is not drawn: the tracker does not record it on the line.
@@ -39,13 +39,13 @@ owner, then Tell. A section with nothing in it says why in one sentence instead 
 ### components/entity/LineActions.tsx
 
 - Designed in: Line.dc.html; Line-States.dc.html, states A, B, C, D, J
-- What it shows: the moves the line's state allows, the main one first, rarer ones under "More ▾".
+- What it shows: the moves the line's state allows, the main one first, rarer ones under "More [caret]".
 - Changes from today:
   - Working (A): Done, Move to up next, Table, More (Done is first; today it is last).
   - Proposed (B): Start, Up next, Table, "Fold into…", Not a line.
   - Up next: Start, Table, More, with nothing explaining them beside them.
   - Working with no owner (D): Try now, I'll own it, Table it.
-  - Phone (J): the More button is "⋯".
+  - Phone (J): the More button is "[more]".
 - Loading: never loads on its own: given the line by LinePanelHead. A move that is waiting shows its busy word in the button (Primitives Button: "Starting…").
 - Error: each move it waits with Undo like every choice; a request the tracker never took, or a refusal when it takes effect, is said in the Undo bar ("Did not happen: …") with Dismiss; a move refused when it takes effect reads "Did not happen: moving L-24 to up next. It changed meanwhile. Look again."
 - Empty: done or dropped lines have no moves; the head says how it closed (F).
@@ -62,7 +62,7 @@ owner, then Tell. A section with nothing in it says why in one sentence instead 
 ### components/entity/PanelForYou.tsx
 
 - Designed in: Line-States.dc.html, state A
-- What it shows: "For you" with its count, then each item as a row ("Question · D-91 / Cut production UK over this week or wait for the IAM clean-up? ›"); a pressed row opens in place.
+- What it shows: "For you" with its count, then each item as a row ("Question · D-91 / Cut production UK over this week or wait for the IAM clean-up? [forward]"); a pressed row opens in place.
 - Changes from today: none drawn beyond the closed row; the opened item follows Question and Items.
 - Loading: while Lines loads, follows the Primitives pattern: "Loading…" under "For you", instead of hiding the section.
 - Error: if Lines fails to load, follows the Primitives pattern: "Could not load what needs you. The tracker did not answer." with Try again. Each item's own failures are its own (Question-States E).
@@ -71,11 +71,11 @@ owner, then Tell. A section with nothing in it says why in one sentence instead 
 ### components/entity/PlanList.tsx
 
 - Designed in: Line.dc.html; Line-States.dc.html, states A, G, H, J
-- What it shows: "Plan" with "step 2 of 3", then each step with ✓ done, → now, ○ next, and under it its issues with their state and pull requests ("#418 open · ✗ checks failing").
+- What it shows: "Plan" with "step 2 of 3", then each step with [check] done, [arrow] now, [ring] next, and under it its issues with their state and pull requests ("#418 open · [cross] checks failing").
 - Changes from today:
   - Not scoped: the aside reads "not scoped yet · 4 issues already on it", and the unplaced work sits under "Not on a step yet".
-  - Pull requests are listed with their check: "#405 merged · ✓".
-  - Phone (J): an issue reads "Build kore's ECS image in the pull request / KECS-1 · to do"; several merged PRs fold to "4 pull requests merged ✓".
+  - Pull requests are listed with their check: "#405 merged · [check]".
+  - Phone (J): an issue reads "Build kore's ECS image in the pull request / KECS-1 · to do"; several merged PRs fold to "4 pull requests merged [check]".
 - Loading: outlines of the rows in place of the list, under its heading (G); "Loading the plan…" for screen readers only.
 - Error: "Could not load the plan. The tracker did not answer." with Try again (H); the plan last loaded stays drawn below it under "As it was at 14:20".
 - Empty: with no steps and no issues, follows the Primitives pattern: "No plan yet" in one sentence saying who writes it (the design's empty sections say why, as Summary does).
@@ -83,7 +83,7 @@ owner, then Tell. A section with nothing in it says why in one sentence instead 
 ### components/entity/SinceSummary.tsx
 
 - Designed in: Line.dc.html; Line-States.dc.html, state A
-- What it shows: "New since the summary" with its count (or "What happened" when there is no summary), "This line in the log →", the unseen events with their time, then "5 you have seen".
+- What it shows: "New since the summary" with its count (or "What happened" when there is no summary), "This line in the log [arrow]", the unseen events with their time, then "5 you have seen".
 - Changes from today: the heading "So far" becomes "What happened"; each event has its time in the lead ("14:20"); the seen ones are a pressable "Show the 7 you have seen".
 - Loading: follows Line-States G: "Loading what happened…".
 - Error: follows Line-States H: "Could not load what happened. The tracker did not answer." with Try again; earlier events kept, marked "as of 14:20".

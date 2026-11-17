@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
+import { Icon } from "./Icon.tsx";
 
 /**
  * A link that goes somewhere, in the words around it: to GitHub in a new tab, or to a page here that can be opened in
- * another with Cmd. Underlined in a light rule that darkens under the pointer; → after it stays in the app, ↗ leaves
- * it, drawn for the eye only.
+ * another with Cmd. Underlined in a light rule that darkens under the pointer; an arrow icon after it stays in the
+ * app, an outward one leaves it, drawn for the eye only.
  */
 export function Link({
   href,
@@ -30,7 +31,7 @@ export function Link({
       }}
     >
       {children}
-      <span aria-hidden="true">{external ? " ↗" : " →"}</span>
+      <Icon name={external ? "external" : "arrow"} />
     </a>
   );
 }

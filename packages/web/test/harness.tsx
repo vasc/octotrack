@@ -232,3 +232,8 @@ export function homeActions(overrides: Partial<HomeActions> = {}): HomeActions {
     ...overrides,
   };
 }
+
+/** The icons drawn inside an element, by name, in order. */
+export function iconsIn(element: Element): string[] {
+  return [...element.querySelectorAll("svg[data-icon]")].map((svg) => svg.getAttribute("data-icon") ?? "");
+}

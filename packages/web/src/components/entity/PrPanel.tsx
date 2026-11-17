@@ -1,11 +1,12 @@
 import type { PullRequest } from "@octotrack/core/schemas";
 import { ageWords, clockTime } from "../../lib/format.ts";
-import { Glyph, StatusBadge } from "../ui/Badge.tsx";
+import { Mark, StatusBadge } from "../ui/Badge.tsx";
 import { Facts } from "../ui/Facts.tsx";
 import { Kind } from "../ui/Item.tsx";
 import { Link } from "../ui/Link.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
 import { Pairs, Stack } from "../ui/Pairs.tsx";
+import { Icon } from "../ui/Icon.tsx";
 
 /** When it was last synced, as words after Synced: "2 min ago", or "just now". */
 function syncedWords(iso: string, now: number): string {
@@ -44,14 +45,23 @@ export function PrPanel({
             "Merge",
             pr.mergeable === "conflicting" ? (
               <>
-                <Glyph tone="warn">▲</Glyph> conflicts with {pr.baseRef === "" ? "its base" : pr.baseRef};{" "}
-                {pr.headRef} needs a rebase
+                <Mark tone="warn" icon="alert" />
+                conflicts with {pr.baseRef === "" ? "its base" : pr.baseRef}; {pr.headRef} needs a rebase
               </>
             ) : null,
           ],
           ["Checks", pr.checks === "none" ? "none run" : <StatusBadge key="checks" value={pr.checks} />],
           ["Review", pr.review === "none" ? "none asked" : <StatusBadge key="review" value={pr.review} />],
-          ["Branch", pr.baseRef === "" ? pr.headRef : `${pr.headRef} → ${pr.baseRef}`],
+          [
+            "Branch",
+            pr.baseRef === "" ? (
+              pr.headRef
+            ) : (
+              <>
+                {pr.headRef} <Icon name="arrow" /> {pr.baseRef}
+              </>
+            ),
+          ],
           [
             "Synced",
             stale !== undefined

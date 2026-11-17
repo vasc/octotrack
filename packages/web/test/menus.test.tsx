@@ -60,7 +60,7 @@ describe("PagesMenu", () => {
     );
     fireEvent.click(view.getByRole("button", { name: "Pages: Log" }));
     fireEvent.click(view.getByRole("menuitem", { name: "Appearance" }));
-    fireEvent.click(view.getByRole("menuitem", { name: "‹ Pages" }));
+    fireEvent.click(view.getByRole("menuitem", { name: "Pages" }));
     view.getByRole("menuitemradio", { name: "Log" });
   });
 });

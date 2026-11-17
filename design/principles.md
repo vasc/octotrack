@@ -65,7 +65,7 @@ control, so that nothing is only reachable by knowing the shortcut.
 
 ## 7. State is never only a color
 
-Failing is red, and it also says "failing" or shows a ✕. Everything must survive color blindness, a bad monitor and a
+Failing is red, and it also says "failing" or shows a [cross] icon. Everything must survive color blindness, a bad monitor and a
 screen reader. The one exception is the mark beside a log row, whose sentence says the same thing in words.
 
 ## 8. Say what is true, and what to do about it

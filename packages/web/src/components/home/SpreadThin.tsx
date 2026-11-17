@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Glyph } from "../ui/Badge.tsx";
+import { Mark } from "../ui/Badge.tsx";
 import { Fact, Facts } from "../ui/Facts.tsx";
 import { TextLink } from "../ui/RefLink.tsx";
 
@@ -7,8 +7,8 @@ import { TextLink } from "../ui/RefLink.tsx";
 const SPREAD_THIN_AFTER = 6;
 
 /**
- * What working on many lines at once costs, in Working on's header: "▲ 3 with no owner", "● 2 waiting on you", each
- * with its glyph so it never rests on colour alone.
+ * What working on many lines at once costs, in Working on's header: "3 with no owner" after a triangle, "2 waiting on
+ * you" after a dot, each with its mark so it never rests on colour alone.
  */
 export function SpreadThin({
   working,
@@ -30,12 +30,14 @@ export function SpreadThin({
     <Facts>
       {noOwner === 0 ? null : (
         <Fact tone="stuck">
-          <Glyph tone="warn">▲</Glyph> <Jump onJump={onNoOwner}>{noOwner} with no owner</Jump>
+          <Mark tone="warn" icon="alert" />
+          <Jump onJump={onNoOwner}>{noOwner} with no owner</Jump>
         </Fact>
       )}
       {waiting === 0 ? null : (
         <span>
-          <Glyph tone="attention">●</Glyph> <Jump onJump={onWaiting}>{`${waiting} waiting on you`}</Jump>
+          <Mark tone="attention" icon="dot" />
+          <Jump onJump={onWaiting}>{`${waiting} waiting on you`}</Jump>
         </span>
       )}
     </Facts>

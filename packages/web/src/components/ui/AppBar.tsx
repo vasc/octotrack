@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Glyph } from "./Badge.tsx";
+import { Mark } from "./Badge.tsx";
 
 /** The one bar over every page: the name and the pages, then what waits, then the actions at its end. */
 export function AppBar({ nav, status, actions }: { nav: ReactNode; status?: ReactNode; actions: ReactNode }) {
@@ -56,7 +56,7 @@ export function Counts({ label, children }: { label: string; children: ReactNode
   );
 }
 
-/** One count, opening the first item it counts; urgent goes first, marked ▲ as Status marks it. */
+/** One count, opening the first item it counts; urgent goes first, marked with the triangle Status marks it with. */
 export function Count({
   n,
   label,
@@ -81,7 +81,7 @@ export function Count({
         onGo(href);
       }}
     >
-      {urgent ? <Glyph tone="warn">▲</Glyph> : null}
+      {urgent ? <Mark tone="warn" icon="alert" /> : null}
       <b>{n}</b>
       {label}
     </a>

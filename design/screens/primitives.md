@@ -22,7 +22,7 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 
 - Designed in: Shell.dc.html, state A; Home-States.dc.html, state I
 - What it shows: the name and pages, what waits on you, then the controls.
-- Changes from today: the current page is bold and underlined (today ink colour only); counts and page links get 44 px targets on touch (Refs, links, keys, counts); the urgent count's mark follows Status ("▲ urgent").
+- Changes from today: the current page is bold and underlined (today ink colour only); counts and page links get 44 px targets on touch (Refs, links, keys, counts); the urgent count's mark follows Status ("[triangle] urgent").
 - Loading: never loads on its own: TopBar leaves the counts out while loading.
 - Error: cannot fail on its own.
 - Empty: no counts: the counts area is left out.
@@ -30,8 +30,8 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 ### components/ui/Badge.tsx
 
 - Designed in: Primitives.dc.html, Status
-- What it shows: a state in small words with its glyph: "● needs you", "▲ urgent, stuck, step in", "✓ done, passing, merged", "✗ failing, refused" (a conflict is ▲, warm), "◐ running, in progress", "○ quiet, next, not started", "– dropped, closed, withdrawn".
-- Changes from today: always a glyph and a word, never colour alone (today colour and word only, and "bad" is drawn in the warn colour).
+- What it shows: a state in small words after its mark, a Lucide icon in the state's tone: a filled dot for needs you; a filled triangle for urgent, stuck, step in (a conflict too, warm); a check for done, passing, merged; a cross for failing, refused; a half circle for running, in progress; an empty circle for quiet, next, not started; a dash for dropped, closed, withdrawn.
+- Changes from today: always a mark and a word, never colour alone; the mark is an icon, never a character from a font.
 - Loading: never loads on its own.
 - Error: cannot fail on its own.
 - Empty: no state renders nothing (today an empty span).
@@ -84,7 +84,7 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 ### components/ui/Fold.tsx
 
 - Designed in: Primitives.dc.html, Fold; Home.dc.html
-- What it shows: closed ("Tabled 4 · Labyrinth level editor and 3 more ›"), open ("Tabled 4 ⌄" then its rows), and held open while an item inside has focus ("stays open while you are in it").
+- What it shows: closed ("Tabled 4 · Labyrinth level editor and 3 more" and a forward chevron), open (the chevron turned down, then its rows), and held open while an item inside has focus ("stays open while you are in it").
 - Changes from today: the held state says why it stays open instead of only disabling the head.
 - Loading: never loads on its own.
 - Error: cannot fail on its own.
@@ -93,11 +93,20 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 ### components/ui/Icon.tsx
 
 - Designed in: Primitives.dc.html, Button (icon); Shell.dc.html, state A
-- What it shows: the small icons in buttons and menus: plus, more ("⋯"), appearance ("◐"), pages ("☰").
-- Changes from today: a pages icon for the phone bar ("☰").
+- What it shows: every icon, from Lucide: plus, pin, keyboard, grip, the down caret, pages (three bars), more (three dots), appearance (a half-filled circle); the state marks (check, cross, filled triangle, filled dot, half circle, empty circle, dash, filled square); arrows (to a page here, leaving the dashboard, back, forward); and the Return, up, down and Option keys.
+- Changes from today: every icon comes from Lucide instead of hand-drawn paths or characters from a font.
 - Loading: never loads on its own.
 - Error: cannot fail on its own.
 - Empty: never empty.
+
+### components/ui/Keys.tsx
+
+- Designed in: Sheets.dc.html, Keys
+- What it shows: a key or a chord as the Keys sheet lists it: letters as letters ("g u"), and Return, the up and down arrows and Option as their Lucide icons, each with its name kept for a screen reader.
+- Changes from today: Return, the arrows and Option are icons, never characters from a font.
+- Loading: never loads on its own.
+- Error: cannot fail on its own.
+- Empty: never empty: it always names a key.
 
 ### components/ui/Item.tsx
 
@@ -111,8 +120,8 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 ### components/ui/Link.tsx
 
 - Designed in: Primitives.dc.html, Refs, links, keys, counts
-- What it shows: a link in running text: "This line in the log →" stays in the app, "vasc/stack#4 ↗" leaves it.
-- Changes from today: links in text are underlined in a light rule that darkens on hover (today no underline until hover); → or ↗ says where it goes; 44 px hit area on touch.
+- What it shows: a link in running text: "This line in the log" with an arrow icon stays in the app, "vasc/stack#4" with an outward arrow icon leaves it.
+- Changes from today: links in text are underlined in a light rule that darkens on hover (today no underline until hover); an arrow or an outward arrow icon says where it goes; 44 px hit area on touch.
 - Loading: never loads on its own.
 - Error: cannot fail on its own.
 - Empty: never empty.
@@ -139,7 +148,7 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 
 - Designed in: Main.dc.html (question context); Line-States.dc.html, state A (summary)
 - What it shows: agent- or developer-written text as prose.
-- Changes from today: links in prose are underlined in the light rule and carry ↗ when they leave the app (today indistinguishable from text).
+- Changes from today: links in prose are underlined in the light rule and carry the outward arrow icon when they leave the app (today indistinguishable from text).
 - Loading: the plain text shows while the renderer loads, as today.
 - Error: cannot fail on its own: if the renderer cannot load, the plain text stays.
 - Empty: empty text renders nothing.
@@ -184,7 +193,7 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 
 - Designed in: Primitives.dc.html, Choice; Main.dc.html
 - What it shows: each option in default, hover, focus, recommended, chosen and unavailable: number on the label's baseline at the label's size, then label, "Recommended", and the description.
-- Changes from today: the number is drawn at the label's size (today 12 px mono); "Recommended" is marked on the option, with its why inside it; chosen shows ✓ in place of the number and the rest step back; 44 px targets on touch (today about 37 px).
+- Changes from today: the number is drawn at the label's size (today 12 px mono); "Recommended" is marked on the option, with its why inside it; chosen shows a check icon in place of the number and the rest step back; 44 px targets on touch (today about 37 px).
 - Loading: never loads on its own.
 - Error: cannot fail on its own: a failed send is said by its owner (Question-States E).
 - Empty: no options renders nothing.
@@ -210,7 +219,7 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 ### components/ui/Panel.tsx
 
 - Designed in: Line.dc.html; Line-States.dc.html, states G, H, I, J; Panels.dc.html, state F
-- What it shows: the crumb, Close, the title, then the sections; opened from another panel, "‹ Back to L-57" beside Close; on a phone the whole screen with "‹ Lines".
+- What it shows: the crumb, Close, the title, then the sections; opened from another panel, "Back to L-57", after a back chevron, beside Close; on a phone the whole screen with "Lines" after the same chevron.
 - Changes from today: Back is its own button; Close always shuts the panel; Close carries no key hint.
 - Loading: drawn at once with what is known; sections say what they load (Line-States G).
 - Error: not found (Line-States I) and a failed part (H) are drawn inside it by its owner.
@@ -237,7 +246,7 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 ### components/ui/Row.tsx
 
 - Designed in: Primitives.dc.html, Row
-- What it shows: lead, title, facts, note, and at the end the actions or › when it opens something; in default, hover, focused item and opens-a-panel.
+- What it shows: lead, title, facts, note, and at the end the actions or a forward chevron when it opens something; in default, hover, focused item and opens-a-panel.
 - Changes from today: the focused item has the fill plus the 1 px grey focus edge drawn inside the row (today only the fill); nothing ever gets a coloured side bar.
 - Loading: never loads on its own; on a first load its owner draws rows as outlines (Home-States D).
 - Error: cannot fail on its own: an owner says a failure under the row ("Not moved. …", Home-States H).

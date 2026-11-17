@@ -15,7 +15,7 @@ import { QuietRow } from "../src/components/home/QuietRow.tsx";
 import { UpNextRow } from "../src/components/home/UpNextRow.tsx";
 import { WorkingLine } from "../src/components/home/WorkingLine.tsx";
 import { decisionCard, issue, line } from "../src/design/fixtures.ts";
-import { whole } from "./harness.tsx";
+import { iconsIn, whole } from "./harness.tsx";
 
 const NOW = Date.parse("2026-11-16T12:00:00Z");
 
@@ -284,7 +284,7 @@ describe("QuietRow", () => {
       />,
     );
     expect(view.container.querySelector(".ui-row-note")).toBeNull();
-    view.getByText(/^✓ done /);
+    expect(iconsIn(view.getByText(/^done /))).toEqual(["check"]);
   });
 
   test("a tabled line with no reason says so", () => {

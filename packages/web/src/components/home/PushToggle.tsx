@@ -2,6 +2,7 @@ import type { PushState } from "../../hooks/usePush.ts";
 import { Button } from "../ui/Button.tsx";
 import { Note } from "../ui/Note.tsx";
 import { TextLink } from "../ui/RefLink.tsx";
+import { Icon } from "../ui/Icon.tsx";
 
 /** Why this device cannot buzz yet, and what to do about it. */
 const REFUSED: Readonly<Record<"blocked" | "dismissed" | "unsupported" | "no-key", string>> = {
@@ -34,7 +35,7 @@ export function PushToggle({
       {state === "turning-on" ? <Note>Turning on…</Note> : null}
       {state === "on" ? (
         <Note>
-          ✓ Buzzing this device · <TextLink onClick={onTurnOff}>Stop</TextLink>
+          <Icon name="check" /> Buzzing this device · <TextLink onClick={onTurnOff}>Stop</TextLink>
         </Note>
       ) : null}
       {state === "blocked" || state === "dismissed" ? (

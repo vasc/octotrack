@@ -1,3 +1,5 @@
+import type { IconName } from "../components/ui/Icon.tsx";
+
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
@@ -238,21 +240,21 @@ export function toneOf(value: string): Tone {
   return TONES[value] ?? "neutral";
 }
 
-/** States that have ended without being done: drawn with a dash. */
+/** States that have ended without being done: marked with a dash icon. */
 const ENDED = new Set(["dropped", "closed", "withdrawn", "rejected", "folded", "superseded", "cancelled"]);
 
-const GLYPHS: Readonly<Record<Tone, string>> = {
-  good: "✓",
-  bad: "✗",
-  warn: "▲",
-  attention: "●",
-  info: "◐",
-  neutral: "○",
+const MARKS: Readonly<Record<Tone, IconName>> = {
+  good: "check",
+  bad: "cross",
+  warn: "alert",
+  attention: "dot",
+  info: "half",
+  neutral: "ring",
 };
 
-/** The glyph a state carries beside its word, so that it never rests on colour alone. */
-export function glyphOf(value: string): string {
-  return ENDED.has(value) ? "–" : GLYPHS[toneOf(value)];
+/** The icon a state carries beside its word, so that it never rests on colour alone. */
+export function markOf(value: string): IconName {
+  return ENDED.has(value) ? "dash" : MARKS[toneOf(value)];
 }
 
 /** Splits text around refs such as D-3 or OCT-12, so that they can be made clickable. */

@@ -1,4 +1,5 @@
 import { type ReactNode, useState } from "react";
+import { Icon } from "./Icon.tsx";
 
 /**
  * A section folded to one row: its title and count, and after them a few of what it holds by name; opened, its rows.
@@ -39,7 +40,7 @@ export function Fold({
           <span className="ui-fold-held">stays open while you are in it</span>
         ) : (
           <span className="ui-row-chevron" aria-hidden="true" data-open={shown ? "true" : undefined}>
-            ›
+            <Icon name="forward" />
           </span>
         )}
       </button>

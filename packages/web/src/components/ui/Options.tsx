@@ -1,4 +1,5 @@
 import { type ReactNode, useId } from "react";
+import { Icon } from "./Icon.tsx";
 
 export interface Option {
   key: string;
@@ -62,7 +63,7 @@ export function Options({
               onClick={() => onPick(option.key)}
             >
               <span className="ui-option-key" aria-hidden="true">
-                {isChosen ? "✓" : String(firstChoice + index)}
+                {isChosen ? <Icon name="check" /> : String(firstChoice + index)}
               </span>
               <span className="ui-option-words">
                 <span className="ui-option-label">

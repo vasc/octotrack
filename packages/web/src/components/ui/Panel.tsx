@@ -1,11 +1,12 @@
 import type { ReactNode, Ref } from "react";
 import { Only } from "./AppBar.tsx";
 import { Button } from "./Button.tsx";
+import { Icon } from "./Icon.tsx";
 
 /**
  * An item opened by its ref, over the right of the page so the list keeps its place behind it; the whole screen on a
  * phone. Where it sits, small and grey, then Back to the panel it was opened from and Close, which always shuts it, and
- * on a phone is the way back to the page under it ("‹ Lines"); then its title and its sections.
+ * on a phone is the way back to the page under it ("Lines", after a back arrow); then its title and its sections.
  */
 export function Panel({
   crumbs,
@@ -31,12 +32,20 @@ export function Panel({
     <div className="ui-panel">
       <header className="ui-panel-head">
         <div className="ui-panel-crumbs">{crumbs}</div>
-        {back === undefined ? null : <Button onClick={back.onBack}>‹ Back to {back.label}</Button>}
+        {back === undefined ? null : (
+          <Button onClick={back.onBack}>
+            <Icon name="back" />
+            Back to {back.label}
+          </Button>
+        )}
         <Only on="wide">
           <Button onClick={onClose}>Close</Button>
         </Only>
         <Only on="phone">
-          <Button onClick={onClose}>‹ {under}</Button>
+          <Button onClick={onClose}>
+            <Icon name="back" />
+            {under}
+          </Button>
         </Only>
       </header>
       {title === undefined ? null : <h1 className="ui-panel-title">{title}</h1>}
