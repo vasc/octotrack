@@ -2,6 +2,11 @@ import { Fact, Facts } from "../ui/Facts.tsx";
 import type { LineCrew, LineHome } from "@octotrack/core/schemas";
 import { branchOfText, crewText } from "../../lib/lines.ts";
 
+/** What the current step waits on: "waits on 2a and L-12, tabled", the tabled line said as such. */
+function waitsText(refs: readonly string[], stalled: readonly string[]): string {
+  return `waits on ${refs.map((ref) => (stalled.includes(ref) ? `${ref}, tabled` : ref)).join(" and ")}`;
+}
+
 /**
  * The facts beside a line's title, each after a dot: who is on it, whether it waits on you, held work being
  * re-confirmed, its plan step. No owner reads in the warm tone.
@@ -41,14 +46,15 @@ export function LineMeta({
       : [`${details.branchesOpen} branch${details.branchesOpen === 1 ? "" : "es"} open`]),
     ...(details === undefined || details.step === null || details.step.waitsOn.length === 0
       ? []
-      : [`waits on ${details.step.waitsOn.join(" and ")}`]),
+      : [waitsText(details.step.waitsOn, details.step.stalledOn)]),
     ...(origin === null ? [] : [origin]),
   ];
   if (facts.length === 0) return null;
   return (
     <Facts>
       {facts.map((fact) =>
-        fact.startsWith("no owner") ? (
+        // No owner, or a step waiting on a tabled line: nothing moves until the developer acts.
+        fact.startsWith("no owner") || fact.includes(", tabled") ? (
           <Fact key={fact} tone="stuck">
             {fact}
           </Fact>

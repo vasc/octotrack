@@ -74,6 +74,27 @@ function ownedLine() {
   return { ...w, ref: line.ref, owner };
 }
 
+describe("an agent records what the developer told it", () => {
+  test("it answers, reopens, puts off and records decisions on its line, with no permission asked", () => {
+    const w = ownedLine();
+    const ask = () =>
+      w.as(w.owner, c.decisionAsk, { title: "Which board goes in?", context: SITUATION, options: OPTIONS });
+    const asked = ask();
+    const answered = w.as(w.owner, c.decisionResolve, { ref: asked.ref, option: "b" });
+    expect([answered.status, answered.chosenOption]).toEqual(["decided", "b"]);
+    w.as(w.owner, c.decisionReopen, { ref: asked.ref });
+    const later = ask();
+    w.as(w.owner, c.decisionPostpone, { ref: later.ref });
+    const recorded = w.as(w.owner, c.decisionRecord, { title: "Use the 30 mm board", chosen: "30 mm" });
+    expect(recorded.status).toBe("decided");
+    // Who recorded it stays in the log.
+    const feed = w.as(w.dev, c.feedList, { query: asked.ref });
+    expect(feed.events.some((event) => event.actor === "panel" && event.type === "decision.resolved")).toBe(
+      true,
+    );
+  });
+});
+
 describe("a question stands alone", () => {
   test("asked from a line, it belongs to that line and to the issue the asker holds", () => {
     const w = ownedLine();

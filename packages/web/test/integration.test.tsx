@@ -1180,6 +1180,57 @@ describe("lines of work", () => {
       );
       await panel.findByText(/its own line now: L-\d+/);
     });
+
+    test("a step that waits says why it was not done, under its menu; a branch is renamed through its sheet", async () => {
+      seedLines();
+      server.tracker.call(c.planSet, { line: "L-1", steps: ["Model", "Print", "Hang it"] }, asDeveloper);
+      server.tracker.call(
+        c.planBranch,
+        { line: "L-1", from: "2", holdsUp: "3", title: "Breakout", steps: ["Pick a board"] },
+        asDeveloper,
+      );
+      navigate("/?ref=L-1");
+      const view = renderApp(<App />);
+      const panel = within(await view.findByRole("complementary", { name: "L-1" }));
+      fireEvent.click(await panel.findByRole("button", { name: "Step 3, Hang it: to do" }));
+      fireEvent.click(panel.getByRole("menuitemradio", { name: "Done" }));
+      await panel.findByText("Not changed: Step 3 waits on 2a, Breakout");
+
+      fireEvent.click(panel.getByRole("button", { name: "More: branch 2a, Breakout" }));
+      fireEvent.click(panel.getByRole("menuitem", { name: "Rename or change its steps…" }));
+      const sheet = within(await view.findByRole("dialog", { name: "Change branch 2a" }));
+      fireEvent.change(sheet.getByLabelText("Title"), { target: { value: "USB-C breakout" } });
+      fireEvent.change(sheet.getByLabelText("Its steps, one per line"), {
+        target: { value: "Pick a board\nOrder it" },
+      });
+      fireEvent.click(sheet.getByRole("button", { name: "Save" }));
+      await waitFor(() =>
+        expect(
+          server.tracker.call(c.lineShow, { ref: "L-1" }, asDeveloper).steps.map((step) => step.address),
+        ).toEqual(["1", "2", "2a.1", "2a.2", "3"]),
+      );
+      await panel.findByRole("group", { name: "Branch 2a, USB-C breakout" });
+    });
+
+    test("a removal waiting in Undo's window removes the branch it was asked for, though its address moved", async () => {
+      seedLines();
+      server.tracker.call(c.planSet, { line: "L-1", steps: ["Model", "Print"] }, asDeveloper);
+      for (const title of ["First", "Second"]) {
+        server.tracker.call(c.planBranch, { line: "L-1", from: "2", title, steps: ["x"] }, asDeveloper);
+      }
+      navigate("/?ref=L-1");
+      const view = renderApp(<App />);
+      const panel = within(await view.findByRole("complementary", { name: "L-1" }));
+      fireEvent.click(await panel.findByRole("button", { name: "More: branch 2b, Second" }));
+      fireEvent.click(panel.getByRole("menuitem", { name: "Remove the branch" }));
+      await view.findByText(/Removing branch 2b, Second/);
+      // Meanwhile First goes, so Second is 2a now.
+      server.tracker.call(c.planBranchRemove, { line: "L-1", branch: "2a" }, asDeveloper);
+      await answerNow(view);
+      await waitFor(() =>
+        expect(server.tracker.call(c.lineShow, { ref: "L-1" }, asDeveloper).branches).toEqual([]),
+      );
+    });
   });
 
   test("a choice waits with Undo, and Undo or the u key means it never happened", async () => {

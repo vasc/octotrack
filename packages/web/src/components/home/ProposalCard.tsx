@@ -31,6 +31,8 @@ interface ProposalCardProps {
   busy?: boolean;
   /** Drawn under a group that already says the move, as on first run. */
   grouped?: boolean;
+  /** For a line made from a plan branch: "branch of L-1, holds up its step 3". */
+  origin?: string | null;
 }
 
 /**
@@ -51,6 +53,7 @@ export function ProposalCard({
   lastUpNext = null,
   busy = false,
   grouped = false,
+  origin = null,
 }: ProposalCardProps) {
   const [mode, setMode] = useState<"table" | "fold" | null>(null);
   const fromTable = line.tabledReason !== null;
@@ -68,6 +71,7 @@ export function ProposalCard({
           <Code>{line.ref}</Code>
           {repoKeys.join(", ")}
           {line.proposedBy === null ? null : `proposed by ${line.proposedBy}`}
+          {origin}
         </Facts>
       }
       note={<ProposalCase line={line} lastUpNext={lastUpNext} whyOnly={grouped} />}

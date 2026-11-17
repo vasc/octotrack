@@ -24,6 +24,8 @@ export function usePlanActions(line: string) {
   const [editing, setEditing] = useState<{ branch: PlanBranch; steps: readonly PlanStep[] } | null>(null);
   const [promoting, setPromoting] = useState<PlanBranch | null>(null);
   const statusAt = typeof status.variables?.step === "string" ? status.variables.step : null;
+  // Every change names its step or branch by id as well, so one sent after Undo's window, or from a sheet left open,
+  // reaches the same one though its address moved meanwhile.
   const branchAt = branch.variables?.branch ?? null;
   const failed =
     status.error !== null && statusAt !== null
@@ -32,23 +34,25 @@ export function usePlanActions(line: string) {
         ? { at: branchAt, message: branch.error.message }
         : null;
   const actions: PlanActions = {
-    onStatus: (address, next) => {
+    onStatus: (step, next) => {
       status.reset();
       branch.reset();
-      status.mutate({ line, step: address, status: next });
+      status.mutate({ line, step: step.address, stepId: step.id, status: next });
     },
     onHoldsUp: (target, step) => {
       status.reset();
       branch.reset();
-      branch.mutate({ line, branch: target.address, holdsUp: step });
+      branch.mutate({ line, branch: target.address, id: target.id, holdsUp: step });
     },
     onEdit: (target, steps) => setEditing({ branch: target, steps }),
     onPromote: (target) => setPromoting(target),
     onRemove: (target) =>
       choices.make(
         contracts.planBranchRemove.name,
-        { line, branch: target.address },
-        `Removing branch ${target.address}, ${target.title}`,
+        { line, branch: target.address, id: target.id },
+        target.became === null
+          ? `Removing branch ${target.address}, ${target.title}`
+          : `Removing branch ${target.address}; ${target.became.ref} stays a line of its own`,
       ),
     busy: status.isPending ? statusAt : branch.isPending ? branchAt : null,
     failed,
@@ -63,14 +67,20 @@ export function usePlanActions(line: string) {
       if (editing === null) return;
       status.reset();
       branch.reset();
-      branch.mutate({ line, branch: editing.branch.address, title, steps: [...steps] });
+      branch.mutate({
+        line,
+        branch: editing.branch.address,
+        id: editing.branch.id,
+        title,
+        steps: [...steps],
+      });
       setEditing(null);
     },
     promote: (input: Promotion) => {
       if (promoting === null) return;
       choices.make(
         contracts.planPromote.name,
-        { line, branch: promoting.address, ...input },
+        { line, branch: promoting.address, id: promoting.id, ...input },
         `Making ${promoting.address} its own line: ${input.title}`,
       );
       setPromoting(null);

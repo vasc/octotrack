@@ -1283,6 +1283,22 @@ describe("lines of work from the CLI", () => {
     expect((await octo(["plan", "show", line.ref, "--text", "--me"], "")).stdout).not.toContain(
       "README photos",
     );
+
+    // "none" holds nothing up, when adding a branch as when changing one.
+    const side = await octo(
+      ["plan", "branch", line.ref, "--from", "1", "--holds-up", "none", "Notes", "Write", "--me"],
+      "",
+    );
+    expect(side.code).toBe(0);
+    expect((await octo(["plan", "show", line.ref, "--text", "--me"], "")).stdout).toMatch(
+      /1a\s+Notes\s+holds nothing up/,
+    );
+
+    // The line a branch became, dropped, ends the branch: it holds nothing up any more.
+    await octo(["line", "drop", bracket.ref, "--me"], "");
+    const ended = await octo(["plan", "show", line.ref, "--text", "--me"], "");
+    expect(ended.stdout).toMatch(new RegExp(`2a\\s+Breakout\\s+${bracket.ref} dropped, ended`));
+    expect(ended.stdout).not.toMatch(/waits on/);
   });
 });
 

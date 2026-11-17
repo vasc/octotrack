@@ -93,7 +93,7 @@ owner, then Tell. A section with nothing in it says why in one sentence instead 
 ### components/entity/PlanBranchItem.tsx
 
 - Designed in: Plan-Tree.dc.html, A, B and F
-- What it shows: on a Rail, the branch's row: [branch], "2a Order the USB-C breakout", "holds up step 3" or "holds nothing up" (or "done"), "1 of 2 done", its BranchMenu; then its own steps, each a PlanStepItem with the branch's own now. A branch that became a line is one row that opens it: "its own line now: L-12 · up next · holds up step 4".
+- What it shows: on a Rail, the branch's row: [branch], "2a Order the USB-C breakout", "holds up step 3" or "holds nothing up" (or "done"), "1 of 2 done", its BranchMenu; then its own steps, each a PlanStepItem with the branch's own now. A branch that became a line is one row that opens it: "its own line now: L-12 · up next · holds up step 4", with a BranchMenu offering only what it holds up and Remove; one whose line was dropped reads "ended" and has no menu.
 - Loading: never loads on its own.
 - Error: a change refused is said under its More ("Not changed: …"), until the next try.
 - Empty: never empty: a branch is made with at least one step.
@@ -105,7 +105,7 @@ owner, then Tell. A section with nothing in it says why in one sentence instead 
 - Picking: what it holds up changes at once; Remove waits with Undo, as a line's moves do; the other two open their sheets.
 - Loading: none of its own; the button reads "Changing…" while a change is on its way.
 - Error: "Not changed: …" under the button, with the tracker's words, until the next try.
-- Empty: a branch off the last step has no later step to hold up: "Holds up" lists only Nothing.
+- Empty: a branch off the last step has no later step to hold up: "Holds up" lists only Nothing. A branch that became a line offers only "Holds up" and "Remove the branch", whose Undo bar says the line stays ("Removing branch 3a; L-12 stays a line of its own").
 
 ### components/entity/WorkList.tsx
 

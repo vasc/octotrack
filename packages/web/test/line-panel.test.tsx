@@ -13,6 +13,7 @@ import { SummaryBox } from "../src/components/entity/SummaryBox.tsx";
 import { TellBox } from "../src/components/entity/TellBox.tsx";
 import { Panel } from "../src/components/ui/Panel.tsx";
 import { event, line, planBranch, planStep } from "../src/design/fixtures.ts";
+import type { PlanStep } from "@octotrack/core/schemas";
 import { homeActions, iconsIn, whole } from "./harness.tsx";
 
 const NOW = Date.parse("2026-11-16T12:00:00Z");
@@ -201,7 +202,7 @@ describe("PlanList", () => {
   });
 
   test("each step's status is set from a menu on it, the status in force ticked; an ended line has none", () => {
-    const onStatus = mock((_address: string, _status: "todo" | "doing" | "done") => {});
+    const onStatus = mock((_step: PlanStep, _status: "todo" | "doing" | "done") => {});
     const steps = [
       planStep({ position: 1, title: "Model", status: "done" }),
       planStep({ position: 2, title: "Print" }),
@@ -216,7 +217,8 @@ describe("PlanList", () => {
     const menu = within(view.getByRole("menu", { name: "Step 2's status" }));
     expect(menu.getByRole("menuitemradio", { name: "To do" }).getAttribute("aria-checked")).toBe("true");
     fireEvent.click(menu.getByRole("menuitemradio", { name: "Done" }));
-    expect(onStatus).toHaveBeenCalledWith("2", "done");
+    // By the step itself, so its id goes with it: addresses shift as steps come and go.
+    expect(onStatus).toHaveBeenCalledWith(steps[1], "done");
     view.unmount();
 
     const busy = render(
@@ -276,13 +278,40 @@ describe("PlanList", () => {
     view.getByText("waits on 2a and L-12, tabled");
   });
 
-  test("a branch that became a line is one row that opens it", () => {
+  test("a branch that became a line is one row that opens it, with a More that only changes its hold or removes it", () => {
     const { steps, branches, work: items } = tree();
-    const view = render(<PlanList steps={steps} branches={branches} work={items} actions={noActions()} />);
+    const actions = noActions();
+    const view = render(<PlanList steps={steps} branches={branches} work={items} actions={actions} />);
     const became = within(view.getByRole("group", { name: "Branch 2b, Wall bracket" }));
     became.getByText("its own line now: L-12");
     became.getByRole("button", { name: "Open L-12, Wall bracket" });
-    expect(became.queryByRole("button", { name: /^More/ })).toBeNull();
+    fireEvent.click(became.getByRole("button", { name: "More: branch 2b, Wall bracket" }));
+    const menu = within(view.getByRole("menu", { name: "Branch 2b" }));
+    fireEvent.click(menu.getByRole("menuitemradio", { name: "Nothing" }));
+    expect(actions.onHoldsUp).toHaveBeenCalledWith(branches[1], null);
+    fireEvent.click(became.getByRole("button", { name: "More: branch 2b, Wall bracket" }));
+    expect(view.queryByRole("menuitem", { name: "Make it its own line…" })).toBeNull();
+    expect(view.queryByRole("menuitem", { name: "Rename or change its steps…" })).toBeNull();
+    fireEvent.click(view.getByRole("menuitem", { name: "Remove the branch" }));
+    expect(actions.onRemove).toHaveBeenCalledWith(branches[1]);
+  });
+
+  test("a branch whose line was dropped reads ended, not what it held", () => {
+    const { steps, work: items } = tree();
+    const dropped = planBranch({
+      id: 101,
+      fromStep: 2,
+      position: 2,
+      address: "2b",
+      title: "Wall bracket",
+      holdsUp: "3",
+      became: { ref: "L-12", title: "Wall bracket", state: "dropped" },
+      state: "ended",
+    });
+    const view = render(<PlanList steps={steps} branches={[dropped]} work={items} actions={noActions()} />);
+    const rail = within(view.getByRole("group", { name: "Branch 2b, Wall bracket" }));
+    rail.getByText("ended");
+    expect(rail.queryByText(/holds up/)).toBeNull();
   });
 
   test("a branch's More: what it holds up ticked, then change it, make it a line, or remove it", () => {

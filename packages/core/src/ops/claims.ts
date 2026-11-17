@@ -8,6 +8,7 @@ import {
   currentStep,
   type EntitySummary,
   type Line,
+  type PlanBranch,
   type TakeResult,
 } from "../schemas.ts";
 import { addNotice, claimOf, claimsOn, getAgent, viewOf } from "../store/agents.ts";
@@ -16,6 +17,7 @@ import type { Ctx } from "../store/context.ts";
 import { one, placeholders, rows } from "../store/context.ts";
 import { allLines, getIssue, requireLine, requireProject, summarize } from "../store/entities.ts";
 import { IssueRow } from "../store/rows.ts";
+import { waitsOn } from "../plan.ts";
 import { loadPlan } from "./plan.ts";
 import { bind } from "./bind.ts";
 import { staleHeldOn } from "./tasks.ts";
@@ -62,8 +64,9 @@ function nextIssue(ctx: Ctx, line: Line, role: ClaimRole, agent: Agent): EntityS
 }
 
 /**
- * What an owner with no issue to pick up should do: plan, break a current step into issues, or wait. The critical path's
- * current step comes first, then the current step of each open branch, in the tree's order.
+ * What an owner with no issue to pick up should do: plan, break a current step into issues, or wait. A current step
+ * that waits on open branches is not the job: those branches' current steps are, first; then the critical path's current
+ * step, when nothing holds it up; then the current step of each other open branch, in the tree's order.
  */
 function ownerWithoutWork(ctx: Ctx, line: Line): string {
   const plan = loadPlan(ctx, line.ref);
@@ -71,24 +74,36 @@ function ownerWithoutWork(ctx: Ctx, line: Line): string {
   if (current === undefined) {
     return `${line.ref} has no plan step left: write its plan (octo plan set ${line.ref}), or propose done.`;
   }
-  const branchSteps = plan.branches
-    .filter((branch) => branch.state === "open" && branch.became === null)
-    .flatMap((branch) => {
-      const step = currentStep(plan.steps.filter((candidate) => candidate.branch === branch.id));
-      return step === undefined ? [] : [step];
-    });
-  const bare = [current, ...branchSteps].find((step) => {
-    const open = one(
+  const open = plan.branches.filter((branch) => branch.state === "open");
+  const holding = open.filter((branch) => branch.holdsUp === current.address);
+  const currentOf = (branches: readonly PlanBranch[]) =>
+    branches
+      .filter((branch) => branch.became === null)
+      .flatMap((branch) => {
+        const step = currentStep(plan.steps.filter((candidate) => candidate.branch === branch.id));
+        return step === undefined ? [] : [step];
+      });
+  const candidates = [
+    ...currentOf(holding),
+    ...(holding.length === 0 ? [current] : []),
+    ...currentOf(open.filter((branch) => !holding.includes(branch))),
+  ];
+  const bare = candidates.find((step) => {
+    const work = one(
       ctx,
       CountRow,
       "SELECT COUNT(*) AS n FROM issues WHERE line = ? AND step = ? AND status NOT IN ('done', 'cancelled')",
       [line.ref, step.id],
     );
-    return (open?.n ?? 0) === 0;
+    return (work?.n ?? 0) === 0;
   });
-  return bare === undefined
+  if (bare !== undefined) {
+    return `On ${line.ref}, break step ${bare.address} into issues, mark it done (octo plan step ${line.ref} ${bare.address} done), or propose done: ${bare.title}`;
+  }
+  const waits = waitsOn(current, plan.branches);
+  return waits.length === 0
     ? `Nothing for you on ${line.ref} right now; you will be woken.`
-    : `On ${line.ref}, break step ${bare.address} into issues, mark it done (octo plan step ${line.ref} ${bare.address} done), or propose done: ${bare.title}`;
+    : `Nothing for you on ${line.ref} right now: step ${current.address} waits on ${waits.join(" and ")}; you will be woken.`;
 }
 
 function result(ctx: Ctx, line: Line, role: ClaimRole, agent: Agent): TakeResult {

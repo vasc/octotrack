@@ -346,10 +346,12 @@ Decisions made from that:
 - **Old names keep working for at least a phase** (`decision.*`, `project:`, M-, I- and U- refs), and the riskiest
   automation, the automatic Stop and the runner, first runs in a mode that only records what it would have done.
 - **Who may do what, as built after the audit.** Only the server records wakes, starts, exits and closes. Answering,
-  Later, reopening and recording a question on a line are developer operations an agent may only relay with `--said`;
-  withdrawing one is for the developer, its asker or an agent on its line. A decision recorded after the fact is placed
-  like a question (the line named, the line of the issue named, or the recording agent's line), so recording one on a
-  line asks for `--said` too. Undo, drafts, turning on notifications, `seen`, the app being opened (`push.seen`) and
+  Later, reopening, replacing and recording a question are open to agents with no permission asked: the developer
+  answers in conversation, and the agent records it; the log shows who recorded it, and the developer's words when the
+  agent passes `--said`. _Why:_ the developer, on finding agents refused: "I don't want idiotic permissions", "This is
+  about tracking agent work", "An agent must track and answer I wrote to them". Withdrawing one is for the developer,
+  its asker or an agent on its line. A decision recorded after the fact is placed like a question (the line named, the
+  line of the issue named, or the recording agent's line). Undo, drafts, turning on notifications, `seen`, the app being opened (`push.seen`) and
   I'm at are the developer's in person, never relayed: they record what the developer has looked at and where they are,
   which no agent witnesses, and one made on an agent's word would hide things from the developer or silence the phone.
   A call that names an agent is never the developer on the server either, and no agent may be called `dev`,
@@ -1134,7 +1136,7 @@ What it changed in what was built before:
   `line accept-recommended`, `seen`, `place add` and `place remove`, `repo checkout`, `push seen` and `push unsubscribe`
   (Buzz this device subscribes from the dashboard); for agents, `agent register`, `line take` and `line release`,
   `line propose` (with `--urgent` and a reason, for something broken on a line no agent may work on) and
-  `line propose-done`, `question record --said`, `done-when set`, `task file` (naming the issue it frees),
+  `line propose-done`, `question resolve` and `question record` for what the developer told them, `done-when set`, `task file` (naming the issue it frees),
   `held confirm` and `held withdraw`, `summary write`; and for the developer on a line of their own, `task add` and
   `note add`. The operations keep their `decision.*` names, and the CLI takes `question` for every `decision` command
   (D13); `decision postpone` is also `question later`, and `decision wake` and `--wake` give way to the wake address an
@@ -1204,10 +1206,19 @@ Everything below is my design, with its reasons.
   by `octo guide` (it needs its own owner, its own repo, or would run beside the critical path); there is no size or
   time threshold. _Trade-off:_ a branch can grow large before anyone promotes it; the panel shows how far along each
   branch is, so it is seen.
+- **Changes name a branch or step by its id as well as its address.** The dashboard sends both, so a change that waits
+  in Undo's window, or a sheet left open, reaches the same branch though an earlier one was removed meanwhile and the
+  addresses moved; the CLI names them by address, as typed. A branch may hold up only a step not yet done. An owner with
+  no issue to pick up is pointed first at the branches its current step waits on, and told what the step waits on when
+  nothing is left to break into issues. Changing a step's status or a branch makes the summary due, as rewriting the
+  plan does. Removing a branch that a line was made from, or under which one was, leaves that line as it is, no longer
+  linked; the Undo bar says so for the branch itself.
 - **A line made from a branch that ends without being done stops holding its step up.** Dropped, or turned down as not
   a line, the branch reads ended and the step it held no longer waits; its work went with that line. _Why:_ putting the
-  steps back would revive work the developer chose to drop. A tabled one still holds its step, which then reads "waits
-  on L-12, tabled" in the warm tone, so the stall shows on the plan.
+  steps back would revive work the developer chose to drop; it reads "ended" in the plan. A tabled one still holds its
+  step, which then reads "waits on L-12, tabled" in the warm tone, on the plan and on Lines, so the stall shows. Moving
+  a branch's issues to the line it became is in the feed, like a fold; an agent's claim on them is let go and work
+  under way goes back to to do, since nobody works on the new line until it starts, and questions about them go along.
 - **Shown as an outline with rails (direction A on the canvas).** The critical path runs down the left as before; each
   branch hangs under the step it forks from on a rail, with its own status menus and its More (what it holds up, ticked;
   Rename or change its steps…; Make it its own line…; Remove the branch, with Undo); the step a branch joins carries a

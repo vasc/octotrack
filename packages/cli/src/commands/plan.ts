@@ -64,7 +64,7 @@ export const planCommands: Command[] = [
       from: { ...STRING, description: "The step it forks from, by address (required)" },
       "holds-up": {
         ...STRING,
-        description: "A later step that waits for it; leave out when it holds nothing up",
+        description: "A later step that waits for it, or none (the default)",
       },
     },
     examples: ['octo plan branch L-2 --from 2 --holds-up 3 "Order the breakout" "Pick a board" "Order it"'],
@@ -80,7 +80,7 @@ export const planCommands: Command[] = [
         compact({
           line: args.requirePositional(0, "LINE"),
           from,
-          holdsUp: args.str("holds-up"),
+          holdsUp: holdsUp(args.str("holds-up")),
           title,
           steps,
         }),

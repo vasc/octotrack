@@ -16,7 +16,8 @@ import { WorkList } from "./WorkList.tsx";
 
 /** What the developer can do to a plan from the line panel: steps and branches, each by its address. */
 export interface PlanActions {
-  onStatus(address: string, status: PlanStepStatus): void;
+  /** By the step itself, so its id goes along: addresses shift as steps come and go. */
+  onStatus(step: PlanStep, status: PlanStepStatus): void;
   onHoldsUp(branch: PlanBranch, step: string | null): void;
   onEdit(branch: PlanBranch, steps: readonly PlanStep[]): void;
   onPromote(branch: PlanBranch): void;

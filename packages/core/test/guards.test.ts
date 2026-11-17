@@ -497,26 +497,16 @@ describe("agents write only to the line they are on", () => {
   });
 });
 
-describe("recording a decision already settled on a line is the developer's", () => {
-  test("an agent on a line needs the developer's words, which the log quotes", () => {
+describe("recording a decision already settled on a line", () => {
+  test("an agent records what the developer told it; their words, when passed, are quoted in the log", () => {
     const w = world();
-    const refusal = w.refused(() => w.as(w.owner, c.decisionRecord, { title: "Use X", chosen: "X" }));
-    expect(refusal.code).toBe("forbidden");
-    expect(refusal.hint).toContain("--said");
+    expect(w.as(w.owner, c.decisionRecord, { title: "Use Y", chosen: "Y" }).status).toBe("decided");
     const recorded = w.as(w.agent("panel", { said: "we use X" }), c.decisionRecord, {
       title: "Use X",
       chosen: "X",
     });
     expect(recorded.line).toBe(w.line);
     expect(w.events(`ref:${recorded.ref} event:decision.resolved`)[0]?.attrs.said).toBe("we use X");
-  });
-
-  test("so does an agent naming a line it is not on", () => {
-    const w = world();
-    expect(
-      w.refused(() => w.as(w.outsider, c.decisionRecord, { title: "Use X", chosen: "X", issue: w.issue }))
-        .code,
-    ).toBe("forbidden");
   });
 
   test("it can be on a line: the one named, or the line of the issue named", () => {
@@ -585,6 +575,27 @@ describe("work on a line makes its summary fall due", () => {
   test("a question asked there", () => {
     const w = world();
     w.ask();
+    w.later(61);
+    w.tracker.sweep();
+    expect(due(w)).toEqual([w.line]);
+  });
+
+  test("a plan step marked done, and a branch added (audit of D15, 8)", () => {
+    const w = world();
+    w.as(w.owner, c.planSet, { line: w.line, steps: ["Base", "Lid"] });
+    const summarize = () =>
+      w.as(w.owner, c.lineSummarize, { ref: w.line, headline: "Under way.", summary: "Base first." });
+    summarize();
+    w.later(1);
+    w.as(w.owner, c.planStep, { line: w.line, step: "1", status: "done" });
+    w.later(61);
+    w.tracker.sweep();
+    expect(due(w)).toEqual([w.line]);
+    summarize();
+    w.tracker.sweep();
+    expect(due(w)).toEqual([]);
+    w.later(1);
+    w.as(w.owner, c.planBranch, { line: w.line, from: "2", title: "Hinge", steps: ["Print it"] });
     w.later(61);
     w.tracker.sweep();
     expect(due(w)).toEqual([w.line]);

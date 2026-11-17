@@ -1,11 +1,12 @@
 import { z } from "zod";
-import { afterAdd, guardOnLine } from "../agents/claims.ts";
+import { afterAdd, guardOnLine, settleHeldWork } from "../agents/claims.ts";
+import { DEVELOPER } from "../agents/state.ts";
 import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
-import { branchState, layOut, waitsOn } from "../plan.ts";
+import { branchFamily, branchState, layOut, waitsOn } from "../plan.ts";
 import type { Line, LineDetail, LineState, PlanBranch, PlanStep, StepRef } from "../schemas.ts";
 import { LineState as LineStateSchema } from "../schemas.ts";
-import { applyPatch } from "../store/common.ts";
+import { applyPatch, emit } from "../store/common.ts";
 import type { Ctx } from "../store/context.ts";
 import { one, rows } from "../store/context.ts";
 import { requireLine } from "../store/entities.ts";
@@ -101,32 +102,43 @@ function addressOf(ref: StepRef): string {
   return typeof ref === "number" ? String(ref) : ref.trim().toLowerCase();
 }
 
-/** A step of a line's plan by its address, or a refusal that says how to see the plan. */
+/**
+ * A step of a line's plan by its address, or by its id when one is given, since an address shifts as steps come and go;
+ * or a refusal that says how to see the plan.
+ */
 function requireStep(
   plan: LoadedPlan,
   line: string,
   ref: StepRef,
   code: "not_found" | "invalid_input",
+  id?: number,
 ): PlanStep {
   const address = addressOf(ref);
-  const step = plan.steps.find((candidate) => candidate.address === address);
+  const step = plan.steps.find((candidate) =>
+    id === undefined ? candidate.address === address : candidate.id === id,
+  );
   if (step === undefined) {
     throw new OctoError(
       code,
-      `${line}'s plan has no step ${address}`,
+      id === undefined ? `${line}'s plan has no step ${address}` : `That step is no longer in ${line}'s plan`,
       `See its plan with \`octo plan show ${line}\`.`,
     );
   }
   return step;
 }
 
-function requireBranch(plan: LoadedPlan, line: string, address: string): PlanBranch {
+/** A branch by its address, or by its id when one is given, which stays put while addresses shift. */
+function requireBranch(plan: LoadedPlan, line: string, address: string, id?: number): PlanBranch {
   const wanted = address.trim().toLowerCase();
-  const branch = plan.branches.find((candidate) => candidate.address === wanted);
+  const branch = plan.branches.find((candidate) =>
+    id === undefined ? candidate.address === wanted : candidate.id === id,
+  );
   if (branch === undefined) {
     throw new OctoError(
       "not_found",
-      `${line}'s plan has no branch ${wanted}`,
+      id === undefined
+        ? `${line}'s plan has no branch ${wanted}`
+        : `That branch is no longer in ${line}'s plan`,
       `See its plan with \`octo plan show ${line}\`.`,
     );
   }
@@ -168,6 +180,13 @@ function checkHoldsUp(
         : `Pick a step after ${from.address} on its branch, or none.`,
     );
   }
+  if (target.status === "done") {
+    throw new OctoError(
+      "invalid_input",
+      `Step ${target.address} is done, so nothing can hold it up`,
+      `Set it back to to do first (octo plan step ${line} ${target.address} todo), or pick a later step.`,
+    );
+  }
   return target.id;
 }
 
@@ -187,9 +206,26 @@ function insertSteps(
 }
 
 /**
+ * Removes branches and every branch under them, with their steps; the issues on those steps go to `issuesTo`, and a line
+ * made from any of them stays as it is, no longer linked to this plan.
+ */
+function removeBranches(ctx: Ctx, plan: LoadedPlan, roots: readonly number[], issuesTo: number | null): void {
+  const family = new Set(roots.flatMap((root) => branchFamily(plan.stepRows, plan.branchRows, root)));
+  for (const step of plan.stepRows) {
+    if (step.branch === null || !family.has(step.branch)) continue;
+    ctx.sql.run("UPDATE issues SET step = ? WHERE step = ?", [issuesTo, step.id]);
+    ctx.sql.run("DELETE FROM plan_steps WHERE id = ?", [step.id]);
+  }
+  for (const id of family) {
+    ctx.sql.run("UPDATE lines SET branchOf = NULL WHERE branchOf = ?", [id]);
+    ctx.sql.run("DELETE FROM plan_branches WHERE id = ?", [id]);
+  }
+}
+
+/**
  * Rewrites one sequence, the critical path or a branch's steps, to these titles. A step whose title stays keeps its id,
  * status, issues and branches; issues on a step that goes move to `orphanStep` (none on the critical path), and branches
- * forking from it move to the step before it, or the first one.
+ * forking from it move to the nearest step before it that stays, else the new first step.
  */
 function rewriteSequence(
   ctx: Ctx,
@@ -201,6 +237,7 @@ function rewriteSequence(
 ): void {
   const old = plan.stepRows.filter((row) => row.branch === branch).sort((a, b) => a.position - b.position);
   const unused = [...old];
+  const kept = new Set<number>();
   const fresh: { title: string; position: number }[] = [];
   titles.forEach((title, index) => {
     const match = unused.findIndex((row) => row.title === title);
@@ -210,25 +247,32 @@ function rewriteSequence(
       return;
     }
     ctx.sql.run("UPDATE plan_steps SET position = ? WHERE id = ?", [index + 1, row.id]);
+    kept.add(row.id);
   });
   for (const step of fresh) insertSteps(ctx, line, branch, [step.title], step.position);
-  const now = rows(
+  const gone = new Set(unused.map((row) => row.id));
+  // Only steps that stay may take a leaving step's branches: the ones it had are re-read after the new ones went in.
+  const survivors = rows(
     ctx,
     PlanStepRowSchema,
-    `SELECT * FROM plan_steps WHERE line = ? AND branch IS ? ORDER BY position`,
+    "SELECT * FROM plan_steps WHERE line = ? AND branch IS ? ORDER BY position",
     [line, branch],
-  );
-  for (const gone of unused) {
-    ctx.sql.run("UPDATE issues SET step = ? WHERE step = ?", [orphanStep, gone.id]);
-    // Its branches move to the nearest step before it that stays, else the first step.
-    const before = old.slice(0, old.indexOf(gone)).reverse();
-    const target = before.find((row) => !unused.includes(row))?.id ?? now[0]?.id ?? null;
+  ).filter((row) => !gone.has(row.id));
+  for (const leaving of unused) {
+    ctx.sql.run("UPDATE issues SET step = ? WHERE step = ?", [orphanStep, leaving.id]);
+    const before = old.slice(0, old.indexOf(leaving)).reverse();
+    const target = before.find((row) => kept.has(row.id))?.id ?? survivors[0]?.id ?? null;
+    const moving = plan.branchRows.filter((row) => row.fromStep === leaving.id);
     if (target === null) {
-      ctx.sql.run("DELETE FROM plan_branches WHERE fromStep = ?", [gone.id]);
+      removeBranches(
+        ctx,
+        plan,
+        moving.map((row) => row.id),
+        orphanStep,
+      );
     } else {
       const last =
         one(ctx, MaxRow, "SELECT MAX(position) AS n FROM plan_branches WHERE fromStep = ?", [target])?.n ?? 0;
-      const moving = plan.branchRows.filter((row) => row.fromStep === gone.id);
       moving.forEach((row, index) => {
         ctx.sql.run("UPDATE plan_branches SET fromStep = ?, position = ? WHERE id = ?", [
           target,
@@ -237,11 +281,11 @@ function rewriteSequence(
         ]);
       });
     }
-    ctx.sql.run("UPDATE plan_branches SET holdsUp = NULL WHERE holdsUp = ?", [gone.id]);
-    ctx.sql.run("DELETE FROM plan_steps WHERE id = ?", [gone.id]);
+    ctx.sql.run("UPDATE plan_branches SET holdsUp = NULL WHERE holdsUp = ?", [leaving.id]);
+    ctx.sql.run("DELETE FROM plan_steps WHERE id = ?", [leaving.id]);
   }
   // A branch that now holds up a step at or before the one it forks from holds nothing up.
-  const position = new Map(now.map((row) => [row.id, row.position]));
+  const position = new Map(survivors.map((row) => [row.id, row.position]));
   for (const row of rows(ctx, PlanBranchRow, "SELECT * FROM plan_branches WHERE line = ?", [line])) {
     const from = position.get(row.fromStep);
     const held = row.holdsUp === null ? undefined : position.get(row.holdsUp);
@@ -251,17 +295,39 @@ function rewriteSequence(
   }
 }
 
-/** Every branch under this one, at any depth, with this one first. */
-function branchFamily(plan: LoadedPlan, branch: number): number[] {
-  const family = [branch];
-  for (let index = 0; index < family.length; index += 1) {
-    const current = family[index];
-    const steps = plan.stepRows.filter((row) => row.branch === current).map((row) => row.id);
-    for (const child of plan.branchRows) {
-      if (steps.includes(child.fromStep) && !family.includes(child.id)) family.push(child.id);
-    }
+/**
+ * The issues on a promoted branch's steps go to the line it became, as a fold moves a line's issues: each move is in the
+ * feed; an agent's claim is let go, since nobody works on a new line until it starts and finds its own; work under way
+ * goes back to to do; questions about them go along; and what the new line holds waits as that line's state says.
+ */
+function moveIssues(ctx: Ctx, from: Line, to: Line, steps: readonly number[]): void {
+  if (steps.length === 0) return;
+  const issues = rows(
+    ctx,
+    IssueRow,
+    `SELECT * FROM issues WHERE step IN (${steps.map(() => "?").join(", ")})`,
+    steps,
+  );
+  for (const issue of issues) {
+    const claimed = issue.assignee !== null && issue.assignee !== DEVELOPER;
+    const changes = applyPatch(ctx, "issues", issue.ref, issue, {
+      line: to.ref,
+      ...(claimed ? { assignee: null } : {}),
+      ...(claimed && issue.status === "in_progress" ? { status: "todo" } : {}),
+    });
+    emit(ctx, {
+      type: "issue.updated",
+      kind: "issue",
+      ref: issue.ref,
+      project: issue.project,
+      line: to.ref,
+      summary: `${issue.ref} moved from ${from.ref} to ${to.ref} with its plan branch: ${issue.title}`,
+      attrs: { status: issue.status },
+      changes,
+    });
+    ctx.sql.run("UPDATE decisions SET line = ? WHERE issue = ? AND line IS ?", [to.ref, issue.ref, from.ref]);
   }
-  return family;
+  settleHeldWork(ctx, to);
 }
 
 const STATUS_WORDS = { todo: "to do", doing: "under way", done: "done" } as const;
@@ -299,7 +365,7 @@ export const planOps = [
   bind(contracts.planStep, (ctx, input) => {
     const line = planLine(ctx, input.line);
     const plan = loadPlan(ctx, line.ref);
-    const step = requireStep(plan, line.ref, input.step, "not_found");
+    const step = requireStep(plan, line.ref, input.step, "not_found", input.stepId);
     const waiting = waitsOn(step, plan.branches);
     if (input.status === "done" && waiting.length > 0) {
       const names = plan.branches
@@ -352,7 +418,7 @@ export const planOps = [
   bind(contracts.planBranchUpdate, (ctx, input) => {
     const line = planLine(ctx, input.line);
     const plan = loadPlan(ctx, line.ref);
-    const branch = requireBranch(plan, line.ref, input.branch);
+    const branch = requireBranch(plan, line.ref, input.branch, input.id);
     if (input.steps !== undefined && branch.became !== null) {
       throw new OctoError(
         "conflict",
@@ -386,19 +452,8 @@ export const planOps = [
   bind(contracts.planBranchRemove, (ctx, input) => {
     const line = planLine(ctx, input.line);
     const plan = loadPlan(ctx, line.ref);
-    const branch = requireBranch(plan, line.ref, input.branch);
-    const family = branchFamily(plan, branch.id);
-    const steps = plan.stepRows
-      .filter((row) => row.branch !== null && family.includes(row.branch))
-      .map((row) => row.id);
-    for (const step of steps) {
-      ctx.sql.run("UPDATE issues SET step = ? WHERE step = ?", [branch.fromStep, step]);
-      ctx.sql.run("DELETE FROM plan_steps WHERE id = ?", [step]);
-    }
-    for (const id of family) {
-      ctx.sql.run("UPDATE lines SET branchOf = NULL WHERE branchOf = ?", [id]);
-      ctx.sql.run("DELETE FROM plan_branches WHERE id = ?", [id]);
-    }
+    const branch = requireBranch(plan, line.ref, input.branch, input.id);
+    removeBranches(ctx, plan, [branch.id], branch.fromStep);
     relayout(ctx, line.ref);
     emitLine(
       ctx,
@@ -412,7 +467,7 @@ export const planOps = [
   bind(contracts.planPromote, (ctx, input) => {
     const line = planLine(ctx, input.line);
     const plan = loadPlan(ctx, line.ref);
-    const branch = requireBranch(plan, line.ref, input.branch);
+    const branch = requireBranch(plan, line.ref, input.branch, input.id);
     if (branch.became !== null) {
       throw new OctoError("conflict", `${branch.address} already became ${branch.became.ref}`);
     }
@@ -435,7 +490,7 @@ export const planOps = [
         : (input.why ?? `It grew out of branch ${branch.address} of ${line.ref}, ${line.title}.`),
     });
     // Its steps become the new line's critical path, and every branch under it goes along with its steps.
-    const family = branchFamily(plan, branch.id);
+    const family = branchFamily(plan.stepRows, plan.branchRows, branch.id);
     const moved = plan.stepRows.filter((row) => row.branch !== null && family.includes(row.branch));
     for (const row of moved) {
       ctx.sql.run("UPDATE plan_steps SET line = ?, branch = ? WHERE id = ?", [
@@ -444,18 +499,15 @@ export const planOps = [
         row.id,
       ]);
     }
-    for (const id of family.slice(1))
+    for (const id of family.slice(1)) {
       ctx.sql.run("UPDATE plan_branches SET line = ? WHERE id = ?", [created.ref, id]);
-    const ids = moved.map((row) => row.id);
-    if (ids.length > 0) {
-      const issues = rows(
-        ctx,
-        IssueRow,
-        `SELECT * FROM issues WHERE step IN (${ids.map(() => "?").join(", ")})`,
-        ids,
-      );
-      for (const issue of issues) applyPatch(ctx, "issues", issue.ref, issue, { line: created.ref });
     }
+    moveIssues(
+      ctx,
+      line,
+      created,
+      moved.map((row) => row.id),
+    );
     ctx.sql.run("UPDATE plan_branches SET became = ? WHERE id = ?", [created.ref, branch.id]);
     ctx.sql.run("UPDATE lines SET branchOf = ? WHERE ref = ?", [branch.id, created.ref]);
     relayout(ctx, line.ref);

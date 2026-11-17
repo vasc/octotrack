@@ -466,7 +466,13 @@ export const contracts = {
   planStep: write(
     "plan.step",
     "Set one step of a line's plan to do, under way or done, by its address: 2, or 2a.1 on a branch",
-    z.strictObject({ line: z.string(), step: StepRef, status: PlanStepStatus }),
+    z.strictObject({
+      line: z.string(),
+      step: StepRef,
+      /** The step's id, which stays put while addresses shift: given, it wins over the address. */
+      stepId: z.number().int().optional(),
+      status: PlanStepStatus,
+    }),
     z.array(PlanStep),
   ),
   planBranch: write(
@@ -487,6 +493,8 @@ export const contracts = {
     z.strictObject({
       line: z.string(),
       branch: z.string(),
+      /** The branch's id, which stays put while addresses shift: given, it wins over the address. */
+      id: z.number().int().optional(),
       title: Text.optional(),
       holdsUp: StepRef.nullable().optional(),
       steps: z.array(Text).min(1).optional(),
@@ -496,7 +504,7 @@ export const contracts = {
   planBranchRemove: write(
     "plan.branch.remove",
     "Remove a branch from a line's plan; its issues go back to the step it forked from",
-    z.strictObject({ line: z.string(), branch: z.string() }),
+    z.strictObject({ line: z.string(), branch: z.string(), id: z.number().int().optional() }),
     z.array(PlanBranch),
   ),
   planPromote: write(
@@ -505,6 +513,7 @@ export const contracts = {
     z.strictObject({
       line: z.string(),
       branch: z.string(),
+      id: z.number().int().optional(),
       title: Text.optional(),
       doneWhen: Text,
       /** The developer's: where the new line goes. */

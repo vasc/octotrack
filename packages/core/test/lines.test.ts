@@ -151,6 +151,7 @@ describe("lines of work", () => {
       of: 3,
       title: "Print and test-fit",
       waitsOn: [],
+      stalledOn: [],
     });
 
     // The developer may set any step, and a step under way is the current one even with an earlier one left open.

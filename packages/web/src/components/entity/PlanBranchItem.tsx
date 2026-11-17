@@ -12,8 +12,12 @@ import { BranchMenu } from "./BranchMenu.tsx";
 import type { PlanActions } from "./PlanList.tsx";
 import { PlanStepItem, StepTitle } from "./PlanStepItem.tsx";
 
-/** What a branch holds up, in a few words: "holds up step 3", or "holds nothing up". */
+/**
+ * What a branch holds up, in a few words: "holds up step 3", or "holds nothing up"; a branch whose line ended without
+ * being done is "ended", since it holds nothing any more.
+ */
 function holdsText(branch: PlanBranch): string {
+  if (branch.state === "ended") return "ended";
   return branch.holdsUp === null ? "holds nothing up" : `holds up step ${branch.holdsUp}`;
 }
 
@@ -55,6 +59,18 @@ export function PlanBranchItem({
           }
           openLabel={`Open ${became.ref}, ${became.title}`}
           onOpen={() => openEntity(became.ref)}
+          trailing={
+            actions === undefined || branch.state === "ended" ? undefined : (
+              <BranchMenu
+                branch={branch}
+                later={later}
+                onHoldsUp={(step) => actions.onHoldsUp(branch, step)}
+                onRemove={() => actions.onRemove(branch)}
+                busy={actions.busy === branch.address}
+                failed={actions.failed?.at === branch.address ? actions.failed.message : undefined}
+              />
+            )
+          }
         />
       </Rail>
     );

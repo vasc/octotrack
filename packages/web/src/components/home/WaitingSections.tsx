@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import type { DropTarget } from "../../hooks/useDragOrder.ts";
 import type { HomeActions } from "../../hooks/useHome.ts";
 import { lineFocusRef } from "../../lib/focus.ts";
-import { foldedNames, heldOnTabled } from "../../lib/lines.ts";
+import { branchOfText, foldedNames, heldOnTabled } from "../../lib/lines.ts";
 import { Fold } from "../ui/Fold.tsx";
 import { List } from "../ui/List.tsx";
 import { Section } from "../ui/Section.tsx";
@@ -96,6 +96,7 @@ export function WaitingSections({
       busy={h.held.has(line.ref)}
       grouped={firstRun}
       line={line}
+      origin={branchOfText(home.lines[line.ref])}
       focused={focus === line.ref}
       foldTargets={[...home.working, ...home.upNext]}
       repoKeys={line.repos}
@@ -168,7 +169,13 @@ export function WaitingSections({
         >
           <List>
             {home.tabled.map((line) => (
-              <QuietRow key={line.ref} line={line} onStart={onStarting} onQueue={h.queue} />
+              <QuietRow
+                key={line.ref}
+                line={line}
+                onStart={onStarting}
+                onQueue={h.queue}
+                origin={branchOfText(home.lines[line.ref])}
+              />
             ))}
           </List>
         </Fold>

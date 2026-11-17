@@ -66,28 +66,20 @@ describe("only the server records wakes", () => {
   });
 });
 
-describe("answering a question on a line is the developer's", () => {
-  test("an agent is refused, and relays the developer's words with --said, which the log quotes", () => {
+describe("an agent answers a question the developer answered to it", () => {
+  test("with no permission asked; the developer's words, when it passes them, are quoted in the log", () => {
     const w = world();
     const asked = w.as(w.agent("panel"), c.decisionAsk, {
       title: "Which?",
       context: "Context.",
       options: OPTIONS,
     });
-    const refusal = w.refused(() =>
-      w.as(w.agent("panel"), c.decisionResolve, { ref: asked.ref, option: "a" }),
-    );
-    expect(refusal.code).toBe("forbidden");
-    expect(refusal.hint).toContain("--said");
-    expect(w.refused(() => w.as(w.agent("panel"), c.decisionPostpone, { ref: asked.ref })).code).toBe(
-      "forbidden",
-    );
-    expect(w.refused(() => w.as(w.agent("panel"), c.decisionReopen, { ref: asked.ref })).code).toBe(
-      "forbidden",
-    );
+    w.as(w.agent("panel"), c.decisionPostpone, { ref: asked.ref });
     w.as(w.agent("panel", { said: "yes, go ahead" }), c.decisionResolve, { ref: asked.ref, option: "a" });
     const event = w.as(w.dev, c.feedList, { query: `ref:${asked.ref} event:decision.resolved` }).events[0];
     expect(event?.attrs.said).toBe("yes, go ahead");
+    w.as(w.agent("panel"), c.decisionReopen, { ref: asked.ref });
+    expect(w.as(w.agent("panel"), c.decisionResolve, { ref: asked.ref, option: "a" }).status).toBe("decided");
   });
 
   test("an agent off the line cannot withdraw its questions; the asker and the developer can", () => {

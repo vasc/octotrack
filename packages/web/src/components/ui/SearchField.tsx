@@ -37,7 +37,7 @@ export function SearchField({
   const id = useId();
   const [active, setActive] = useState(0);
   const [focused, setFocused] = useState(false);
-  const wrap = useRef<HTMLElement>(null);
+  const wrap = useRef<HTMLDivElement>(null);
   useCloseOnOutsideTap(wrap, focused, setFocused);
   const open = focused && completions.length > 0;
   const highlighted = Math.min(active, completions.length - 1);
@@ -47,7 +47,10 @@ export function SearchField({
     setActive(0);
   };
   return (
-    <search
+    // A search landmark as a div: Safari before 17, and the test DOM, do not know the <search> element.
+    // biome-ignore lint/a11y/useSemanticElements: <search> is not known everywhere this runs
+    <div
+      role="search"
       className="ui-search"
       ref={wrap}
       onFocus={() => setFocused(true)}
@@ -123,6 +126,6 @@ export function SearchField({
           ))}
         </span>
       ) : null}
-    </search>
+    </div>
   );
 }

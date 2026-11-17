@@ -90,7 +90,7 @@ export function LinesGallery() {
             }}
             details={{
               start: null,
-              step: { position: 3, of: 4, title: "settle board and opening", waitsOn: [] },
+              step: { position: 3, of: 4, title: "settle board and opening", waitsOn: [], stalledOn: [] },
               branchesOpen: 0,
               branchOf: null,
               forYou: [{ kind: "question", card: QUESTION }],

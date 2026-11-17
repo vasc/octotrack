@@ -751,7 +751,7 @@ describe("lines of work", () => {
         line={line({ headline: "Printed; the short board fits." })}
         crew={{ owner: { name: "panel", state: "asleep" }, helpers: [], scoper: null, search: null }}
         details={details({
-          step: { position: 3, of: 4, title: "settle board and opening", waitsOn: [] },
+          step: { position: 3, of: 4, title: "settle board and opening", waitsOn: [], stalledOn: [] },
           branchesOpen: 0,
           branchOf: null,
           forYou: [{ kind: "question", card: card() }],
@@ -2230,7 +2230,7 @@ describe("FoldPicker", () => {
     );
     fireEvent.click(view.getByRole("button", { name: "Shelf" }));
     expect(onFold).toHaveBeenCalledWith("L-2");
-    view.getByRole("dialog").focus();
+    act(() => view.getByRole("dialog").focus());
     fireEvent.keyDown(window, { key: "1" });
     expect(onFold).toHaveBeenCalledWith("L-1");
     fireEvent.click(view.getByRole("button", { name: "Cancel" }));
@@ -3019,7 +3019,8 @@ describe("useReloadOnNewBuild", () => {
     // The reload came back with the same old assets: the served page still differs, but it was already tried.
     const second = renderHook(() => useReloadOnNewBuild(options));
     window.dispatchEvent(new Event("pageshow"));
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    // The hook notes it is waiting meanwhile: inside act, as every update a test lets happen.
+    await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
     expect(reload).toHaveBeenCalledTimes(1);
     await waitFor(() => expect(second.result.current.waiting).toBe(true));
     sessionStorage.clear();

@@ -36,7 +36,7 @@ import { DEVELOPER } from "../agents/state.ts";
 import { addNotice, claimOf } from "../store/agents.ts";
 import { addToInbox } from "../store/inbox.ts";
 import { bind } from "./bind.ts";
-import { requireDeveloper, requireServer } from "./developer.ts";
+import { requireServer } from "./developer.ts";
 import { addLink, guardEnds } from "./links.ts";
 
 export function decisionAttrs(decision: Decision): EventAttrs {
@@ -190,13 +190,8 @@ interface ResolveInput {
  * A question on a line is answered, postponed, reopened or replaced only by the developer, or by an agent quoting
  * them. One from before lines keeps the older rules, until those go.
  */
-function requireDeveloperOnLine(ctx: Ctx, decision: Decision, what: string): void {
-  if (decision.line !== null) requireDeveloper(ctx, what);
-}
-
 function resolveDecision(ctx: Ctx, input: ResolveInput): Decision {
   const current = requireDecision(ctx, input.ref);
-  requireDeveloperOnLine(ctx, current, "answer a question");
   const option = input.option ?? null;
   const note = input.note ?? null;
 
@@ -586,10 +581,8 @@ export const decisionOps = [
   }),
 
   bind(contracts.decisionRecord, (ctx, input) => {
-    // On a line only the developer decides: an agent records a decision there only on their quoted words, which the
-    // log shows. One on no line keeps the rules from before lines, as questions there do.
+    // An agent records what the developer told it, on its line or on none; the log shows who recorded it.
     const placed = placeQuestion(ctx, input);
-    if (placed.line !== null) requireDeveloper(ctx, "record a decision on a line");
     const decision = insertDecision(ctx, {
       title: input.title,
       context: input.context,
@@ -619,7 +612,6 @@ export const decisionOps = [
   }),
 
   bind(contracts.decisionReopen, (ctx, input) => {
-    requireDeveloperOnLine(ctx, requireDecision(ctx, input.ref), "reopen a question");
     return transition(
       ctx,
       input.ref,
@@ -647,7 +639,6 @@ export const decisionOps = [
 
   bind(contracts.decisionPostpone, (ctx, input) => {
     const current = requireDecision(ctx, input.ref);
-    requireDeveloperOnLine(ctx, current, "move a question to Later");
     if (current.status !== "open") {
       throw new OctoError(
         "conflict",
@@ -739,7 +730,6 @@ export const decisionOps = [
   bind(contracts.decisionSupersede, (ctx, input) => {
     const replacement = requireDecision(ctx, input.by);
     const current = requireDecision(ctx, input.ref);
-    requireDeveloperOnLine(ctx, current, "replace a question");
     if (current.ref === replacement.ref)
       throw new OctoError("invalid_input", "A decision cannot supersede itself");
     addLink(ctx, replacement.ref, "supersedes", current.ref);
@@ -754,7 +744,6 @@ export const decisionOps = [
   }),
 
   bind(contracts.decisionNotUrgent, (ctx, input) => {
-    requireDeveloper(ctx, "say a question is not urgent");
     const current = requireDecision(ctx, input.ref);
     if (current.urgentReason === null || current.notUrgentAt !== null) {
       throw new OctoError("conflict", `${current.ref} is not urgent`);

@@ -3,7 +3,7 @@ import { Menu, MenuAction, MenuGroup, MenuItem } from "../ui/Menu.tsx";
 
 /**
  * A branch's More: which later step it holds up, or none, ticked; then changing it, making it its own line, and removing
- * it.
+ * it. A branch that became a line offers only its hold and Remove.
  */
 export function BranchMenu({
   branch,
@@ -19,8 +19,9 @@ export function BranchMenu({
   /** The steps after the one it forks from, in its sequence: what it may hold up. */
   later: readonly PlanStep[];
   onHoldsUp(step: string | null): void;
-  onEdit(): void;
-  onPromote(): void;
+  /** Left out for a branch that became a line: its steps are that line's now. */
+  onEdit?: (() => void) | undefined;
+  onPromote?: (() => void) | undefined;
   onRemove(): void;
   /** A change to it is on its way. */
   busy?: boolean;
@@ -61,22 +62,26 @@ export function BranchMenu({
             </MenuItem>
           </MenuGroup>
           <MenuGroup label="This branch">
-            <MenuAction
-              onSelect={() => {
-                close();
-                onEdit();
-              }}
-            >
-              Rename or change its steps…
-            </MenuAction>
-            <MenuAction
-              onSelect={() => {
-                close();
-                onPromote();
-              }}
-            >
-              Make it its own line…
-            </MenuAction>
+            {onEdit === undefined ? null : (
+              <MenuAction
+                onSelect={() => {
+                  close();
+                  onEdit();
+                }}
+              >
+                Rename or change its steps…
+              </MenuAction>
+            )}
+            {onPromote === undefined ? null : (
+              <MenuAction
+                onSelect={() => {
+                  close();
+                  onPromote();
+                }}
+              >
+                Make it its own line…
+              </MenuAction>
+            )}
             <MenuAction
               onSelect={() => {
                 close();

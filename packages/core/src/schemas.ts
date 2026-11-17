@@ -883,6 +883,8 @@ export const LineHome = z.object({
       of: z.number().int(),
       title: z.string(),
       waitsOn: z.array(z.string()),
+      /** The lines among those it waits on that are tabled, so nothing will finish them until one starts. */
+      stalledOn: z.array(z.string()),
     })
     .nullable(),
   /** How many of its plan's branches are open. */

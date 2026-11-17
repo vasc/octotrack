@@ -147,6 +147,41 @@ describe("UpNextRow", () => {
     );
     working.getByText("branch of L-1");
     working.getByText("2 branches open");
+    working.unmount();
+    // What the step waits on, warm when it is a tabled line nothing will finish until it starts.
+    const stalled = render(
+      <WorkingLine
+        line={line()}
+        details={details({
+          step: { position: 3, of: 4, title: "Hang it", waitsOn: ["2a", "L-12"], stalledOn: ["L-12"] },
+        })}
+      >
+        {null}
+      </WorkingLine>,
+    );
+    const waits = stalled.getByText("waits on 2a and L-12, tabled");
+    expect(waits.closest("[data-tone='stuck']")).not.toBeNull();
+  });
+
+  test("a proposal or a tabled line made from a plan branch says so too", () => {
+    const proposal = render(
+      <ProposalCard
+        line={line({ state: "proposed", proposedBy: "panel", recommendation: "up_next" })}
+        origin="branch of L-1, holds up its step 3"
+        foldTargets={[]}
+        onStart={() => {}}
+        onQueue={() => {}}
+        onTable={() => {}}
+        onFold={() => {}}
+        onReject={() => {}}
+        onDrop={() => {}}
+      />,
+    );
+    proposal.getByText("branch of L-1, holds up its step 3");
+    proposal.unmount();
+    render(
+      <QuietRow line={line({ state: "tabled", tabledReason: "Later" })} origin="branch of L-1" />,
+    ).getByText("branch of L-1");
   });
 });
 

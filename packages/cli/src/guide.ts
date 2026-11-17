@@ -48,9 +48,10 @@ One name is one session in one checkout. Set it once, and say how to wake you, o
 ${wakeSection(adapters)}
 
 Your repo is read from your checkout's remote. Names shaped like a ref (GARDEN-2) are refused, and so are dev, octotrack
-and github. You are never the developer. When the developer tells you in conversation to do one of their operations
-(start a line, stop an agent), relay their words with \`--said "<exactly what they said>"\`. It is recorded with your
-name.
+and github. You are never the developer. When the developer answers one of your questions in conversation, or tells
+you a decision, record it yourself: \`octo question resolve D-3 b\`, \`octo question record "<title>" --chosen "<what>"\`.
+When they tell you to do one of their other operations (start a line, stop an agent), relay their words with
+\`--said "<exactly what they said>"\`. Either is recorded with your name.
 
 ## Taking a line
 

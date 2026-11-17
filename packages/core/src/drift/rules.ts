@@ -367,8 +367,8 @@ const SummaryState = z.object({
 export const SUMMARY_DUE_MS = 60 * 60 * 1000;
 
 /**
- * Summaries stay true without anyone reading history: an hour after significant work on a working line (a plan
- * changed, an issue closed, a question asked or answered, a pull request merged), its summary is due until the owner rewrites it. What
+ * Summaries stay true without anyone reading history: an hour after significant work on a working line (a plan,
+ * a step or a branch changed, an issue closed, a question asked or answered, a pull request merged), its summary is due until the owner rewrites it. What
  * counts is decided by what happened, not by the agent.
  */
 function summaryRules(ctx: Ctx): DesiredDrift[] {
@@ -379,7 +379,9 @@ function summaryRules(ctx: Ctx): DesiredDrift[] {
     `SELECT l.ref AS ref, (SELECT repo FROM line_repos WHERE line = l.ref ORDER BY position LIMIT 1) AS repo,
        l.summaryAt AS summaryAt,
        (SELECT MAX(e.ts) FROM events e WHERE e.line = l.ref
-          AND (e.type IN ('line.plan_set', 'decision.requested', 'decision.resolved', 'decision.changed', 'pr.merged')
+          AND (e.type IN ('line.plan_set', 'line.step_set', 'line.branch_added', 'line.branch_changed',
+                          'line.branch_removed', 'line.branch_promoted', 'decision.requested', 'decision.resolved',
+                          'decision.changed', 'pr.merged')
                OR (e.type = 'issue.status_changed' AND json_extract(e.attrs, '$.status') IN ('done', 'cancelled')))) AS lastWork
      FROM lines l WHERE l.state = 'working' AND l.ownedBy IS NULL`,
   ).flatMap((line): DesiredDrift[] => {

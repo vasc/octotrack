@@ -1,3 +1,4 @@
+import { branchFamily } from "@octotrack/core/plan";
 import type {
   ForYou,
   HomeView,
@@ -197,20 +198,7 @@ export function foldedNames(names: readonly string[], shown: number): string {
 /** How many issues sit on a branch's steps, at any depth: the ones that move with it when it becomes a line. */
 export function issuesOnBranch(detail: LineDetail | undefined, branch: PlanBranch): number {
   if (detail === undefined) return 0;
-  const family = new Set([branch.id]);
-  let grew = true;
-  while (grew) {
-    grew = false;
-    for (const other of detail.branches) {
-      const forksInFamily = detail.steps.some(
-        (step) => step.id === other.fromStep && step.branch !== null && family.has(step.branch),
-      );
-      if (forksInFamily && !family.has(other.id)) {
-        family.add(other.id);
-        grew = true;
-      }
-    }
-  }
+  const family = new Set(branchFamily(detail.steps, detail.branches, branch.id));
   const steps = new Set(
     detail.steps.filter((step) => step.branch !== null && family.has(step.branch)).map((step) => step.id),
   );

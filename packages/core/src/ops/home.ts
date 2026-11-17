@@ -191,6 +191,11 @@ export function buildHome(ctx: Ctx): HomeView {
               of: steps.length,
               title: current.title,
               waitsOn: waitsOn(current, plan.branches),
+              stalledOn: plan.branches.flatMap((branch) =>
+                branch.holdsUp === current.address && branch.became?.state === "tabled"
+                  ? [branch.became.ref]
+                  : [],
+              ),
             },
       branchesOpen: plan.branches.filter((branch) => branch.state === "open").length,
       branchOf:

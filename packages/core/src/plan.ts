@@ -83,6 +83,26 @@ export function waitsOn(step: { address: string }, branches: readonly PlanBranch
     .map((branch) => branch.became?.ref ?? branch.address);
 }
 
+/**
+ * A branch and every branch under it, at any depth, the branch itself first: the branches forking from its steps, and
+ * from theirs.
+ */
+export function branchFamily(
+  steps: readonly { id: number; branch: number | null }[],
+  branches: readonly { id: number; fromStep: number }[],
+  root: number,
+): number[] {
+  const family = [root];
+  for (let index = 0; index < family.length; index += 1) {
+    const current = family[index];
+    const own = new Set(steps.filter((step) => step.branch === current).map((step) => step.id));
+    for (const child of branches) {
+      if (own.has(child.fromStep) && !family.includes(child.id)) family.push(child.id);
+    }
+  }
+  return family;
+}
+
 /** A step as the plan draws it: what it waits on, and the branches forking from it. */
 export interface PlanNode {
   step: PlanStep;

@@ -103,6 +103,53 @@ describe("migrations", () => {
     expect(tableNames(driver)).toContain("plan_branches");
   });
 
+  test("version 26: a step past the plan's end or on no line becomes none, and each line keeps its own steps", () => {
+    const driver = memoryDriver();
+    migrate(driver, 25);
+    const at = "2026-11-17T12:00:00.000Z";
+    for (const ref of ["L-1", "L-2"]) {
+      driver.run(
+        `INSERT INTO lines (ref, title, doneWhen, state, rank, source, version, createdAt, updatedAt, createdBy)
+         VALUES (?, 'A line', 'Done.', 'working', 1, 'developer', 1, ?, ?, 'dev')`,
+        [ref, at, at],
+      );
+      for (const position of [1, 2]) {
+        driver.run("INSERT INTO plan_steps (line, position, title, status) VALUES (?, ?, ?, 'todo')", [
+          ref,
+          position,
+          `${ref} step ${position}`,
+        ]);
+      }
+    }
+    driver.run(
+      `INSERT INTO projects (ref, name, description, status, horizon, version, createdAt, updatedAt, createdBy)
+       VALUES ('OCT', 'Octotrack', '', 'active', 'now', 1, ?, ?, 'dev')`,
+      [at, at],
+    );
+    const issue = (ref: string, line: string | null, step: number) =>
+      driver.run(
+        `INSERT INTO issues (ref, project, title, body, status, priority, labels, line, step, version, createdAt,
+           updatedAt, createdBy)
+         VALUES (?, 'OCT', 'Work', '', 'todo', 'none', '[]', ?, ?, 1, ?, ?, 'dev')`,
+        [ref, line, step, at, at],
+      );
+    issue("OCT-1", "L-2", 2);
+    issue("OCT-2", "L-1", 5);
+    issue("OCT-3", null, 1);
+    migrate(driver, 26);
+    const stepOf = (ref: string) =>
+      z
+        .object({ step: z.number().nullable() })
+        .parse(driver.all("SELECT step FROM issues WHERE ref = ?", [ref])[0]).step;
+    const titleOf = (id: number | null) =>
+      z
+        .array(z.object({ title: z.string() }))
+        .parse(driver.all("SELECT title FROM plan_steps WHERE id = ?", [id]))[0]?.title;
+    expect(titleOf(stepOf("OCT-1"))).toBe("L-2 step 2");
+    expect(stepOf("OCT-2")).toBeNull();
+    expect(stepOf("OCT-3")).toBeNull();
+  });
+
   test("a failing step leaves the database at the version before it", () => {
     const driver = memoryDriver();
     const steps: readonly Migration[] = [

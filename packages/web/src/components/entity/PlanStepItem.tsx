@@ -10,8 +10,8 @@ import { WorkList } from "./WorkList.tsx";
 import { StepStatusMenu } from "./StepStatusMenu.tsx";
 
 /**
- * What a step waits on, after a merge mark: a branch by its address, a line by its ref, warm when that line is tabled
- * or nobody works on it, since then nothing will finish it.
+ * What a step waits on, after a merge mark: a branch by its address, a line by its ref, warm when that line is tabled,
+ * since then nothing will finish it until it starts.
  */
 function WaitsOn({ refs, branches }: { refs: readonly string[]; branches: readonly PlanBranch[] }) {
   const words = refs.map((ref) => {
@@ -86,7 +86,7 @@ export function PlanStepItem({
         actions === undefined ? undefined : (
           <StepStatusMenu
             step={step}
-            onStatus={(next: PlanStepStatus) => actions.onStatus(step.address, next)}
+            onStatus={(next: PlanStepStatus) => actions.onStatus(step, next)}
             busy={actions.busy === step.address}
             failed={actions.failed?.at === step.address ? actions.failed.message : undefined}
           />

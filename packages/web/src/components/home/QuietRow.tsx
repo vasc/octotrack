@@ -12,10 +12,13 @@ export function QuietRow({
   line,
   onStart,
   onQueue,
+  origin = null,
 }: {
   line: Line;
   onStart?: (ref: string) => void;
   onQueue?: (ref: string) => void;
+  /** For a line made from a plan branch: "branch of L-1, holds up its step 3". */
+  origin?: string | null;
 }) {
   const done = line.state === "done" || line.state === "dropped";
   // A tabled line always says why it waits, if only that no reason was given; a closed one says when it closed.
@@ -36,7 +39,9 @@ export function QuietRow({
               </>
             ),
           }
-        : {})}
+        : origin === null
+          ? {}
+          : { facts: origin })}
       {...(hasNote
         ? {
             note: (

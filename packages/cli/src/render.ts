@@ -460,7 +460,13 @@ export function renderLine(detail: LineDetail): string {
 
 /** What a plan branch says beside its title: the line it became, what it holds up, or that it is done. */
 function branchFacts(branch: PlanBranch): string {
-  const holds = branch.holdsUp === null ? "holds nothing up" : `holds up ${branch.holdsUp}`;
+  // Its line ended without being done: it holds nothing any more.
+  const holds =
+    branch.state === "ended"
+      ? "ended"
+      : branch.holdsUp === null
+        ? "holds nothing up"
+        : `holds up ${branch.holdsUp}`;
   if (branch.became !== null) {
     return `${branch.became.ref} ${STATE_LABEL[branch.became.state].toLowerCase()}, ${holds}`;
   }
