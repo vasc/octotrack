@@ -790,17 +790,6 @@ describe("what the re-audit found", () => {
       expect(result.stdout + result.stderr).toContain("octo agent register --wake");
     }
   });
-
-  test("an agent's own report is never taken as GitHub's: pr.sync is the server's", async () => {
-    const result = await octo([
-      "op",
-      "pr.sync",
-      "--input",
-      JSON.stringify({ prs: [], failures: [{ repo: "acme/web", error: "fake" }] }),
-    ]);
-    expect(result.code).not.toBe(0);
-    expect(result.stdout + result.stderr).toContain("Only the server's pull request sync");
-  });
 });
 
 describe("several things at once", () => {

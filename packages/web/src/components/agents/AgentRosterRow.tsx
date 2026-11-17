@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import type { AgentView } from "@octotrack/core/schemas";
-import { AUTO_STOP_REASON } from "@octotrack/core/schemas";
 import { dayWord, type Tone, whenText } from "../../lib/format.ts";
 import { Mark } from "../ui/Badge.tsx";
 import { Button } from "../ui/Button.tsx";
@@ -28,10 +27,7 @@ function nowWords(agent: AgentView, waitsOnYou: boolean): ReactNode {
   switch (agent.state) {
     case "stopped": {
       const when = agent.stoppedAt === null ? "" : ` ${whenText(agent.stoppedAt)}`;
-      if (agent.stoppedReason === AUTO_STOP_REASON) {
-        return `stopped by Octotrack${when}, after 3 writes a line's state forbids`;
-      }
-      return `stopped by you${when}${agent.stoppedReason === null ? "" : `: “${agent.stoppedReason}”`}`;
+      return `stopped${when}${agent.stoppedReason === null ? "" : `: “${agent.stoppedReason}”`}`;
     }
     case "gone":
       if (agent.wakeError !== null) return `gone: its wake failed (${agent.wakeError})`;

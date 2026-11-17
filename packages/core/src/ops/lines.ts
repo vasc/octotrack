@@ -10,16 +10,9 @@ import { filterEntities } from "../store/docs.ts";
 import { allLines, requireLine, requireProject, summarize } from "../store/entities.ts";
 import { loadGraph } from "../store/graph.ts";
 import { IssueRow, PrRow } from "../store/rows.ts";
-import {
-  afterAdd,
-  afterMove,
-  guardLineWrite,
-  guardOnLine,
-  settleHeldWork,
-  windDown,
-} from "../agents/claims.ts";
+import { afterAdd, afterMove, settleHeldWork, windDown } from "../agents/claims.ts";
 import { DEVELOPER } from "../agents/state.ts";
-import { addNotice, claimOf } from "../store/agents.ts";
+import { addNotice } from "../store/agents.ts";
 import { addToInbox } from "../store/inbox.ts";
 import { bind } from "./bind.ts";
 import { LOG_SEEN_KEY } from "./feed.ts";
@@ -31,19 +24,6 @@ import { branchOfLine, loadPlan } from "./plan.ts";
 const SMALLEST_GAP = 1e-6;
 
 const ENDED: ReadonlySet<LineState> = new Set(["done", "dropped"]);
-
-/** Only the owner speaks for the line: its summary and its case for done. The developer may too. */
-function requireOwner(ctx: Ctx, line: Line, what: string): void {
-  if (ctx.developer) return;
-  const claim = claimOf(ctx, ctx.actor);
-  if (claim === null || claim.line !== line.ref || claim.role !== "owner") {
-    throw new OctoError(
-      "forbidden",
-      `Only ${line.ref}'s owner may ${what}`,
-      "Helpers report to the owner instead.",
-    );
-  }
-}
 
 function lineAttrs(ctx: Ctx, line: Line): EventAttrs {
   return {
@@ -462,8 +442,6 @@ export const lineOps = [
 
   bind(contracts.lineSummarize, (ctx, input) => {
     const line = requireLine(ctx, input.ref);
-    requireOwner(ctx, line, "write its summary");
-    guardLineWrite(ctx, line.ref, "scope");
     const changes = applyPatch(ctx, "lines", line.ref, line, {
       headline: input.headline,
       summary: input.summary,
@@ -487,19 +465,6 @@ export const lineOps = [
       emitLine(ctx, "line.done_when_set", updated, `${updated.ref} is done when: ${input.doneWhen}`, changes);
       return updated;
     }
-    const claim = claimOf(ctx, ctx.actor);
-    // Its proposer writes a proposal's done when only while it is a proposal; once placed, the line is its agents'.
-    const mayPropose =
-      (claim !== null && claim.line === line.ref && claim.role !== "helper") ||
-      (line.state === "proposed" && line.proposedBy === ctx.actor);
-    if (!mayPropose) {
-      throw new OctoError(
-        "forbidden",
-        `Only ${line.ref}'s owner or scoper proposes its done when`,
-        `Take it first: octo line take ${line.ref}`,
-      );
-    }
-    guardOnLine(ctx, line.ref, "scope", line.ref);
     // A proposed line's done when is still its agent's own words, so it writes it directly. Any other line's is the
     // developer's to accept: on a working line as an item for them, on a waiting one in its Start sheet.
     const direct = line.state === "proposed";
@@ -560,7 +525,6 @@ export const lineOps = [
 
   bind(contracts.lineProposeDone, (ctx, input) => {
     const line = requireLine(ctx, input.ref);
-    requireOwner(ctx, line, "propose it is done");
     if (line.state !== "working") throw new OctoError("conflict", `${line.ref} is not being worked on`);
     const changes = applyPatch(ctx, "lines", line.ref, line, {
       doneProposal: input.why,

@@ -85,76 +85,7 @@ function world() {
   };
 }
 
-describe("an agent claims, progresses and finishes issues only on the line it is on", () => {
-  test("issue update cannot take or finish another line's issue", () => {
-    const w = world();
-    const refusal = w.refused(() =>
-      w.as(w.outsider, c.issueUpdate, { refs: [w.issue], assignee: "outsider", status: "done" }),
-    );
-    expect(refusal.code).toBe("forbidden");
-    expect(refusal.message).toContain("which you are not on");
-    expect(
-      w.refused(() => w.as(w.outsider, c.issueUpdate, { refs: [w.issue], status: "in_progress" })).code,
-    ).toBe("forbidden");
-    w.as(w.owner, c.issueClaim, { refs: [w.issue] });
-    expect(w.refused(() => w.as(w.outsider, c.issueUpdate, { refs: [w.issue], assignee: null })).code).toBe(
-      "forbidden",
-    );
-    expect(w.as(w.owner, c.issueUpdate, { refs: [w.issue], status: "done" })[0]?.status).toBe("done");
-  });
-
-  test("nor move an issue onto a line it is not on and claim it there", () => {
-    const w = world();
-    const loose = w.as(w.dev, c.issueCreate, { project: "PANEL", title: "Loose" }).ref;
-    expect(
-      w.refused(() => w.as(w.outsider, c.issueUpdate, { refs: [loose], line: w.line, assignee: "outsider" }))
-        .code,
-    ).toBe("forbidden");
-  });
-
-  test("nor file an issue on that line already claimed or in progress", () => {
-    const w = world();
-    expect(
-      w.refused(() =>
-        w.as(w.outsider, c.issueCreate, {
-          project: "PANEL",
-          title: "Mine",
-          line: w.line,
-          assignee: "outsider",
-        }),
-      ).code,
-    ).toBe("forbidden");
-    expect(
-      w.refused(() =>
-        w.as(w.outsider, c.issueCreate, {
-          project: "PANEL",
-          title: "Mine",
-          line: w.line,
-          status: "in_progress",
-        }),
-      ).code,
-    ).toBe("forbidden");
-    expect(
-      w.as(w.owner, c.issueCreate, { project: "PANEL", title: "Mine", line: w.line, assignee: "panel" })
-        .assignee,
-    ).toBe("panel");
-  });
-});
-
 describe("a question on a line is refined only by its asker or the agents on its line, while it is open", () => {
-  test("an agent from outside cannot rewrite it", () => {
-    const w = world();
-    const asked = w.ask();
-    const refusal = w.refused(() =>
-      w.as(w.outsider, c.decisionUpdate, {
-        ref: asked,
-        options: [{ key: "a", label: "Delete prod", description: "" }],
-      }),
-    );
-    expect(refusal.code).toBe("forbidden");
-    expect(w.as(w.dev, c.entityShow, { ref: asked }).summary.title).toBe("Which way?");
-  });
-
   test("the asker's change must still stand alone", () => {
     const w = world();
     const asked = w.ask();
@@ -171,16 +102,6 @@ describe("a question on a line is refined only by its asker or the agents on its
     ).toBe("invalid_input");
     expect(w.as(w.owner, c.decisionUpdate, { ref: asked, title: "Which way up?" }).title).toBe(
       "Which way up?",
-    );
-  });
-
-  test("nothing is written to it once its line is tabled", () => {
-    const w = world();
-    const asked = w.ask();
-    w.as(w.dev, c.lineTable, { ref: w.line, reason: "Waiting on the board" });
-    w.later(16);
-    expect(w.refused(() => w.as(w.owner, c.decisionUpdate, { ref: asked, title: "Changed" })).code).toBe(
-      "forbidden",
     );
   });
 
@@ -305,43 +226,6 @@ describe("what records the developer's own attention is theirs in person; the re
 });
 
 describe("pull requests on lines that are not being worked on", () => {
-  test("an agent's report for an issue on a tabled or up-next line is refused and counted", () => {
-    const w = world();
-    w.as(w.dev, c.lineTable, { ref: w.line, reason: "Waiting on the board" });
-    w.later(16);
-    const refusal = w.refused(() =>
-      w.as(w.owner, c.prUpsert, {
-        repo: "vasc/homepanel",
-        number: 1,
-        title: `Fixes ${w.issue}`,
-        state: "open",
-      }),
-    );
-    expect(refusal.code).toBe("forbidden");
-    const queued = w.as(w.dev, c.lineAdd, {
-      title: "Next",
-      doneWhen: "Done.",
-      repos: ["PANEL"],
-      where: "up_next",
-    });
-    const next = w.as(w.dev, c.issueCreate, { project: "PANEL", title: "Later", line: queued.ref }).ref;
-    expect(
-      w.refused(() =>
-        w.as(w.owner, c.prUpsert, {
-          repo: "vasc/homepanel",
-          number: 2,
-          title: "Work",
-          issues: [next],
-          state: "open",
-        }),
-      ).code,
-    ).toBe("forbidden");
-    expect(w.events("event:write.refused").map((event) => [event.line, event.attrs.counted])).toEqual([
-      [queued.ref, "yes"],
-      [w.line, "yes"],
-    ]);
-  });
-
   test("pull request events name the line of the issue they implement", () => {
     const w = world();
     w.as(w.owner, c.prUpsert, {
@@ -422,78 +306,6 @@ describe("Not a line returns old work for good", () => {
     const fresh = w.as(w.dev, c.issueCreate, { project: "PANEL", title: "New and loose" }).ref;
     expect(drift()).toEqual([`1 open issue in PANEL is on no line`]);
     expect(w.as(w.dev, c.driftList, { query: "rule:unplaced-work" })[0]?.fingerprint).toBe(fresh);
-  });
-});
-
-describe("agents write only to the line they are on", () => {
-  test("links: an agent from outside can neither add nor remove them", () => {
-    const w = world();
-    w.as(w.dev, c.placeAdd, { name: "the bench" });
-    const task = w.as(w.owner, c.taskFile, {
-      title: "Measure the board",
-      place: "the bench",
-      outcome: "Its width in mm",
-      frees: w.issue,
-    });
-    const asked = w.as(w.owner, c.decisionAsk, {
-      title: "Which way?",
-      context: SITUATION,
-      options: OPTIONS,
-      waitsFor: task.ref,
-    });
-    const refusal = w.refused(() =>
-      w.as(w.outsider, c.linkRemove, { from: task.ref, rel: "blocks", to: asked.ref }),
-    );
-    expect(refusal.code).toBe("forbidden");
-    expect(w.as(w.dev, c.decisionQueue, {}).map((card) => card.decision.ref)).toEqual([]);
-    expect(
-      w.refused(() => w.as(w.outsider, c.linkAdd, { from: w.issue, rel: "relates", to: asked.ref })).code,
-    ).toBe("forbidden");
-    expect(w.as(w.owner, c.linkAdd, { from: w.issue, rel: "relates", to: asked.ref }).toRef).toBe(asked.ref);
-  });
-
-  test("drift: an agent from outside can neither take nor clear a line's drift", () => {
-    const w = world();
-    w.as(w.dev, c.issueUpdate, { refs: [w.issue], status: "in_review" });
-    const [drift] = w.as(w.dev, c.driftList, { query: "rule:in-review-without-pr" });
-    if (drift === undefined) throw new Error("expected drift");
-    expect(w.refused(() => w.as(w.outsider, c.driftClaim, { refs: [drift.ref] })).code).toBe("forbidden");
-    expect(
-      w.refused(() => w.as(w.outsider, c.driftAck, { refs: [drift.ref], mode: "verified", note: "fine" }))
-        .code,
-    ).toBe("forbidden");
-    expect(
-      w.refused(() => w.as(w.outsider, c.driftAck, { target: w.issue, mode: "verified", note: "fine" })).code,
-    ).toBe("forbidden");
-    expect(w.as(w.owner, c.driftClaim, { refs: [drift.ref] })[0]?.claimedBy).toBe("panel");
-  });
-
-  test("notes: an agent from outside cannot post on a line's issue", () => {
-    const w = world();
-    expect(w.refused(() => w.as(w.outsider, c.updatePost, { body: "Mine now", target: w.issue })).code).toBe(
-      "forbidden",
-    );
-    expect(w.as(w.owner, c.updatePost, { body: "Base modelled", target: w.issue }).target).toBe(w.issue);
-  });
-
-  test("held work: an agent from outside cannot re-confirm a line's question", () => {
-    const w = world();
-    const asked = w.ask();
-    expect(w.refused(() => w.as(w.outsider, c.heldConfirm, { refs: [asked] })).code).toBe("forbidden");
-  });
-
-  test("answers: an agent from outside cannot pick one up or say it was carried out", () => {
-    const w = world();
-    const asked = w.ask();
-    w.as(w.dev, c.decisionResolve, { ref: asked, option: "a" });
-    expect(w.refused(() => w.as(w.outsider, c.decisionPickup, { ref: asked })).code).toBe("forbidden");
-    expect(
-      w.refused(() => w.as(w.outsider, c.decisionReport, { ref: asked, status: "done", note: "Did it" }))
-        .code,
-    ).toBe("forbidden");
-    expect(
-      w.as(w.owner, c.decisionReport, { ref: asked, status: "done", note: "Laid flat" }).reportStatus,
-    ).toBe("done");
   });
 });
 
@@ -612,73 +424,6 @@ describe("work on a line makes its summary fall due", () => {
   });
 });
 
-describe("agents write only to the line they are on, scoping included (third audit, N4)", () => {
-  test("plan set: an agent from outside cannot replace a line's plan", () => {
-    const w = world();
-    expect(w.refused(() => w.as(w.outsider, c.planSet, { line: w.line, steps: ["Mine"] })).code).toBe(
-      "forbidden",
-    );
-    expect(w.as(w.owner, c.planSet, { line: w.line, steps: ["Base", "Lid"] })).toHaveLength(2);
-  });
-
-  test("task file: an agent from outside cannot file a task for the developer on a line", () => {
-    const w = world();
-    w.as(w.dev, c.placeAdd, { name: "the bench" });
-    const task = { title: "Measure", place: "the bench", outcome: "Width in mm" };
-    expect(w.refused(() => w.as(w.outsider, c.taskFile, { ...task, line: w.line })).code).toBe("forbidden");
-    expect(
-      w.refused(() => w.as(w.outsider, c.taskFile, { ...task, line: w.line, frees: w.issue })).code,
-    ).toBe("forbidden");
-    expect(w.as(w.owner, c.taskFile, task).line).toBe(w.line);
-  });
-
-  test("issue update: an agent from outside can neither take an issue off a line nor rewrite it", () => {
-    const w = world();
-    expect(w.refused(() => w.as(w.outsider, c.issueUpdate, { refs: [w.issue], line: null })).code).toBe(
-      "forbidden",
-    );
-    expect(
-      w.refused(() =>
-        w.as(w.outsider, c.issueUpdate, { refs: [w.issue], title: "Hijacked", status: "blocked" }),
-      ).code,
-    ).toBe("forbidden");
-    const loose = w.as(w.dev, c.issueCreate, { project: "PANEL", title: "Loose" }).ref;
-    expect(w.refused(() => w.as(w.outsider, c.issueUpdate, { refs: [loose], line: w.line })).code).toBe(
-      "forbidden",
-    );
-    expect(w.as(w.owner, c.issueUpdate, { refs: [w.issue], title: "Base, flat" })[0]?.title).toBe(
-      "Base, flat",
-    );
-  });
-
-  test("issue create: an agent from outside cannot file an issue on a line, nor one that blocks its work", () => {
-    const w = world();
-    expect(
-      w.refused(() => w.as(w.outsider, c.issueCreate, { project: "PANEL", title: "Mine", line: w.line }))
-        .code,
-    ).toBe("forbidden");
-    expect(
-      w.refused(() =>
-        w.as(w.outsider, c.issueCreate, { project: "OTHER", title: "Blocker", blocks: [w.issue] }),
-      ).code,
-    ).toBe("forbidden");
-    expect(w.as(w.owner, c.issueCreate, { project: "PANEL", title: "Lid", line: w.line }).line).toBe(w.line);
-  });
-
-  test("question ask: an agent from outside cannot put a question in a line's queue", () => {
-    const w = world();
-    const question = { title: "Which way?", context: SITUATION, options: OPTIONS };
-    expect(w.refused(() => w.as(w.outsider, c.decisionAsk, { ...question, line: w.line })).code).toBe(
-      "forbidden",
-    );
-    expect(w.refused(() => w.as(w.outsider, c.decisionAsk, { ...question, issue: w.issue })).code).toBe(
-      "forbidden",
-    );
-    expect(w.as(w.dev, c.decisionQueue, {})).toEqual([]);
-    expect(w.as(w.owner, c.decisionAsk, question).line).toBe(w.line);
-  });
-});
-
 describe("the developer's own operations, relayed, take effect", () => {
   test("a task added to the developer's own line on their words is added", () => {
     const w = world();
@@ -691,30 +436,6 @@ describe("the developer's own operations, relayed, take effect", () => {
     const relayed = w.agent("panel", { said: "add measuring the shelf to my line" });
     expect(w.as(relayed, c.taskAdd, { line: mine, title: "Measure the shelf" }).line).toBe(mine);
     expect(w.as(relayed, c.noteAdd, { line: mine, body: "Shelf is oak." }).line).toBe(mine);
-  });
-});
-
-describe("pull request sync is the server's, or the developer's (third audit, N3)", () => {
-  test("an agent can neither write pull requests through sync nor say how sync went", () => {
-    const w = world();
-    const pr = {
-      repo: "vasc/homepanel",
-      number: 40,
-      title: "Mine",
-      state: "open",
-      body: `Fixes ${w.issue}`,
-    } as const;
-    for (const caller of [w.outsider, w.owner]) {
-      expect(w.refused(() => w.as(caller, c.prSync, { prs: [pr] })).code).toBe("forbidden");
-      expect(
-        w.refused(() =>
-          w.as(caller, c.prSync, { prs: [], failures: [{ repo: "vasc/homepanel", error: "fake" }] }),
-        ).code,
-      ).toBe("forbidden");
-    }
-    expect(w.as(w.dev, c.prList, {})).toEqual([]);
-    expect(w.as(w.github, c.prSync, { prs: [pr] }).synced).toBe(1);
-    expect(w.as(w.dev, c.prSync, { prs: [], repos: ["vasc/homepanel"] }).synced).toBe(0);
   });
 });
 
@@ -746,42 +467,6 @@ describe("agents write only to the line they are on, the rest of it (fourth audi
     return own.ref;
   }
 
-  test("pr upsert: an agent cannot link a pull request to another line's issue, nor rewrite one linked there", () => {
-    const w = world();
-    elsewhere(w);
-    const pr = { repo: "vasc/homepanel", title: "Base", state: "open" } as const;
-    expect(w.refused(() => w.as(w.outsider, c.prUpsert, { ...pr, number: 7, issues: [w.issue] })).code).toBe(
-      "forbidden",
-    );
-    expect(
-      w.refused(() => w.as(w.outsider, c.prUpsert, { ...pr, number: 8, title: `Fixes ${w.issue}` })).code,
-    ).toBe("forbidden");
-    expect(w.as(w.dev, c.linkList, { ref: w.issue })).toEqual([]);
-    const own = w.as(w.owner, c.prUpsert, { ...pr, number: 9, issues: [w.issue] });
-    expect(w.refused(() => w.as(w.outsider, c.prUpsert, { ...pr, number: 9, state: "merged" })).code).toBe(
-      "forbidden",
-    );
-    expect(w.as(w.dev, c.prList, {}).map((card) => [card.pr.ref, card.pr.state])).toEqual([
-      [own.ref, "open"],
-    ]);
-  });
-
-  test("decision record: an agent on no line cannot record a decision that holds up or changes a line's work", () => {
-    const w = world();
-    const decision = { title: "Use PLA", context: "Printed parts.", chosen: "PLA" };
-    expect(
-      w.refused(() => w.as(w.outsider, c.decisionRecord, { ...decision, affects: [w.issue] })).code,
-    ).toBe("forbidden");
-    expect(w.refused(() => w.as(w.outsider, c.decisionRecord, { ...decision, blocks: [w.issue] })).code).toBe(
-      "forbidden",
-    );
-    expect(w.as(w.dev, c.linkList, { ref: w.issue })).toEqual([]);
-    expect(w.as(w.dev, c.driftList, { query: "rule:decision-outcome" })).toEqual([]);
-    const loose = w.as(w.dev, c.issueCreate, { project: "OTHER", title: "Loose" }).ref;
-    const recorded = w.as(w.outsider, c.decisionRecord, { ...decision, affects: [loose] });
-    expect(w.as(w.dev, c.linkList, { ref: loose }).map((link) => link.fromRef)).toEqual([recorded.ref]);
-  });
-
   test("watch check: an agent cannot check another agent's watch and take its events", () => {
     const w = world();
     const watch = w.as(w.owner, c.watchCreate, {
@@ -796,91 +481,6 @@ describe("agents write only to the line they are on, the rest of it (fourth audi
     expect(own[0]?.clauses[0]?.events.map((event) => event.type)).toEqual(["issue.created"]);
   });
 
-  test("issue update and claim: an agent cannot finish, reopen or take the developer's task", () => {
-    const w = world();
-    w.as(w.dev, c.placeAdd, { name: "the bench" });
-    const task = w.as(w.owner, c.taskFile, {
-      title: "Measure",
-      place: "the bench",
-      outcome: "Width in mm",
-    }).ref;
-    for (const change of [
-      { status: "done" },
-      { status: "cancelled" },
-      { assignee: "panel" },
-      { assignee: null },
-    ] as const) {
-      const refusal = w.refused(() => w.as(w.owner, c.issueUpdate, { refs: [task], ...change }));
-      expect(refusal.code).toBe("forbidden");
-      expect(refusal.hint).toContain("held withdraw");
-    }
-    expect(w.refused(() => w.as(w.owner, c.issueClaim, { refs: [task], force: true })).code).toBe(
-      "forbidden",
-    );
-    const kept = w.as(w.dev, c.issueList, { query: `ref:${task}` })[0]?.issue;
-    expect([kept?.status, kept?.assignee, kept?.result]).toEqual(["todo", "dev", null]);
-    expect(w.as(w.owner, c.issueUpdate, { refs: [task], title: "Measure the width" })[0]?.title).toBe(
-      "Measure the width",
-    );
-    expect(
-      w.as(w.owner, c.heldWithdraw, { refs: [task], why: "Found it in the datasheet" }).withdrawn,
-    ).toEqual([task]);
-  });
-
-  test("issue update and claim: an agent cannot reopen or take a task the developer closed (fifth audit, B12)", () => {
-    const w = world();
-    w.as(w.dev, c.placeAdd, { name: "the bench" });
-    const task = w.as(w.owner, c.taskFile, {
-      title: "Measure",
-      place: "the bench",
-      outcome: "Width in mm",
-    }).ref;
-    w.as(w.dev, c.taskCant, { ref: task, why: "No calipers" });
-    for (const change of [{ status: "todo" }, { status: "done" }, { assignee: "panel" }] as const) {
-      const refusal = w.refused(() => w.as(w.owner, c.issueUpdate, { refs: [task], ...change }));
-      expect(refusal.code).toBe("forbidden");
-      expect(refusal.hint).toContain("octo task file");
-    }
-    expect(w.refused(() => w.as(w.owner, c.issueClaim, { refs: [task], force: true })).code).toBe(
-      "forbidden",
-    );
-    const kept = w.as(w.dev, c.issueList, { query: `ref:${task}` })[0]?.issue;
-    expect([kept?.status, kept?.assignee, kept?.result]).toEqual(["cancelled", "dev", "No calipers"]);
-    expect(w.as(w.dev, c.homeShow, {}).counts.toDo).toBe(0);
-  });
-
-  test("issue release: an agent cannot move another line's unclaimed work back to todo", () => {
-    const w = world();
-    elsewhere(w);
-    w.as(w.dev, c.issueUpdate, { refs: [w.issue], status: "in_progress" });
-    expect(w.refused(() => w.as(w.outsider, c.issueRelease, { refs: [w.issue] })).code).toBe("forbidden");
-    expect(w.as(w.dev, c.issueList, { query: `ref:${w.issue}` })[0]?.issue.status).toBe("in_progress");
-    expect(w.as(w.owner, c.issueRelease, { refs: [w.issue] })[0]?.status).toBe("todo");
-  });
-
-  test("done when: the agent that proposed a line cannot propose a new one once it started, from another line", () => {
-    const w = world();
-    const proposal = w.as(w.owner, c.linePropose, {
-      title: "Stand",
-      doneWhen: "It stands.",
-      repos: ["PANEL"],
-      recommendation: "start",
-      why: "It is next.",
-    }).ref;
-    expect(w.as(w.owner, c.lineDoneWhen, { ref: proposal, doneWhen: "It stands up." }).doneWhen).toBe(
-      "It stands up.",
-    );
-    w.as(w.dev, c.lineStart, { ref: proposal });
-    const refusal = w.refused(() =>
-      w.as(w.owner, c.lineDoneWhen, { ref: proposal, doneWhen: "Hijacked", why: "x" }),
-    );
-    expect(refusal.code).toBe("forbidden");
-    expect(w.as(w.dev, c.lineShow, { ref: proposal }).line.doneWhenProposal).toBeNull();
-    expect(
-      w.as(w.owner, c.lineDoneWhen, { ref: w.line, doneWhen: "It closes.", why: "Lid" }).doneWhenProposal,
-    ).toBe("It closes.");
-  });
-
   test("held confirm: only an open question or an open task is re-confirmed", () => {
     const w = world();
     const asked = w.ask();
@@ -890,7 +490,7 @@ describe("agents write only to the line they are on, the rest of it (fourth audi
     expect(w.events("event:held.confirmed")).toEqual([]);
   });
 
-  test("held withdraw: a proposal's proposer withdraws what it asked there, as it re-confirms it", () => {
+  test("held withdraw: what was asked on a proposal is re-confirmed and withdrawn", () => {
     const w = world();
     const proposal = w.as(w.outsider, c.linePropose, {
       title: "Stand",
@@ -906,24 +506,7 @@ describe("agents write only to the line they are on, the rest of it (fourth audi
       line: proposal,
     }).ref;
     w.as(w.outsider, c.heldConfirm, { refs: [asked] });
-    expect(w.refused(() => w.as(w.owner, c.heldWithdraw, { refs: [asked] })).code).toBe("forbidden");
     expect(w.as(w.outsider, c.heldWithdraw, { refs: [asked], why: "Decided" }).withdrawn).toEqual([asked]);
-  });
-
-  test("question withdraw: its asker cannot withdraw it once its line is tabled, unless the developer said so", () => {
-    const w = world();
-    const asked = w.ask();
-    const kept = w.ask();
-    w.as(w.dev, c.lineTable, { ref: w.line, reason: "Later" });
-    w.later(20);
-    const refusal = w.refused(() => w.as(w.owner, c.decisionWithdraw, { ref: asked }));
-    expect([refusal.code, refusal.message]).toEqual([
-      "forbidden",
-      `${w.line} is tabled: nothing is written to it`,
-    ]);
-    expect(
-      w.as(w.agent("panel", { said: "drop that question" }), c.decisionWithdraw, { ref: kept }).status,
-    ).toBe("withdrawn");
   });
 
   test("pull request drift: it is work on the line of the issue the pull request implements", () => {
@@ -937,18 +520,6 @@ describe("agents write only to the line they are on, the rest of it (fourth audi
     const [drift] = w.as(w.dev, c.driftList, { query: "rule:pr-checks-failing" });
     if (drift === undefined) throw new Error("expected drift");
     expect(drift.assignee).toBe("panel");
-    expect(w.refused(() => w.as(w.outsider, c.driftClaim, { refs: [drift.ref] })).code).toBe("forbidden");
-    expect(
-      w.refused(() => w.as(w.outsider, c.driftAck, { refs: [drift.ref], mode: "verified", note: "fine" }))
-        .code,
-    ).toBe("forbidden");
-    expect(
-      w.refused(() => w.as(w.outsider, c.driftAck, { target: drift.target, mode: "verified", note: "fine" }))
-        .code,
-    ).toBe("forbidden");
-    expect(w.refused(() => w.as(w.outsider, c.updatePost, { body: "Mine", target: drift.target })).code).toBe(
-      "forbidden",
-    );
     expect(w.as(w.owner, c.driftClaim, { refs: [drift.ref] })[0]?.claimedBy).toBe("panel");
     expect(w.as(w.owner, c.updatePost, { body: "Fixing the test", target: drift.target }).target).toBe(
       drift.target,

@@ -1,4 +1,3 @@
-import { AUTO_STOP_REASON } from "./schemas.ts";
 import { z } from "zod";
 import type { BatchOp, BatchRequest, BatchResult, Contract, ErrorBody } from "./contracts.ts";
 import { contracts } from "./contracts.ts";
@@ -7,7 +6,7 @@ import { migrate } from "./db/migrations.ts";
 import { reconcileDrift } from "./drift/engine.ts";
 import { offersFor, settle } from "./agents/claims.ts";
 import { refuseIfStopped, resolveAgent } from "./agents/identity.ts";
-import { OctoError, RefusedWrite } from "./errors.ts";
+import { OctoError } from "./errors.ts";
 import type { BoundOp } from "./ops/bind.ts";
 import { decisionOps } from "./ops/decisions.ts";
 import { ideaOps } from "./ops/ideas.ts";
@@ -27,7 +26,7 @@ import { projectOps } from "./ops/projects.ts";
 import type { Channel, Drift, FeedEvent, Notice } from "./schemas.ts";
 import { takeNotices } from "./store/agents.ts";
 import { takeInbox } from "./store/inbox.ts";
-import { countOf, currentCursor, emit } from "./store/common.ts";
+import { currentCursor } from "./store/common.ts";
 import type { Ctx } from "./store/context.ts";
 import { rows } from "./store/context.ts";
 import { EventRow } from "./store/rows.ts";
@@ -108,9 +107,6 @@ const AGENT_TOUCH_INTERVAL_MS = 30_000;
  * Whether the third write in an hour that a line's state forbids stops the agent, or is only recorded as "would stop".
  * Off for now: risky automation runs watching first (docs/DESIGN.md, D13).
  */
-const AUTO_STOP_ACTS = false;
-const AUTO_STOP_AFTER = 3;
-const HOUR_MS = 60 * 60 * 1000;
 
 const SYSTEM: Caller = { actor: "octotrack", channel: "cli", system: true };
 
@@ -355,50 +351,6 @@ export class Tracker {
     ]);
   }
 
-  /**
-   * Logs a write the line's state refused, outside the refused write's own transaction, which has rolled back. On the
-   * third counted refusal in an hour Octotrack would stop the agent; for now it only says so.
-   */
-  private recordRefusal(ctx: Ctx, op: string, refusal: RefusedWrite): void {
-    const before = currentCursor(ctx);
-    this.sql.transaction(() => {
-      emit(ctx, {
-        type: "write.refused",
-        kind: "agent",
-        ref: ctx.actor,
-        project: null,
-        line: refusal.line,
-        summary: `${ctx.actor} was refused ${op} on ${refusal.line}: ${refusal.message}`,
-        attrs: { op, counted: refusal.counted ? "yes" : "no" },
-      });
-      if (!refusal.counted) return;
-      const counted = countOf(
-        ctx,
-        `SELECT COUNT(*) AS n FROM events WHERE type = 'write.refused' AND actor = ? AND ts >= ?
-           AND json_extract(attrs, '$.counted') = 'yes'`,
-        [ctx.actor, new Date(Date.parse(ctx.now) - HOUR_MS).toISOString()],
-      );
-      if (counted !== AUTO_STOP_AFTER) return;
-      if (AUTO_STOP_ACTS) {
-        ctx.sql.run("UPDATE agents SET stoppedAt = ?, stoppedReason = ? WHERE name = ?", [
-          ctx.now,
-          AUTO_STOP_REASON,
-          ctx.actor,
-        ]);
-      }
-      emit(ctx, {
-        type: AUTO_STOP_ACTS ? "agent.stopped" : "agent.would_stop",
-        kind: "agent",
-        ref: ctx.actor,
-        project: null,
-        line: refusal.line,
-        summary: `${AUTO_STOP_ACTS ? "Stopped" : "Would have stopped"} ${ctx.actor}: a third write in an hour that a line's state forbids`,
-        attrs: { op },
-      });
-    });
-    this.notify(this.eventsSince(before));
-  }
-
   private requireOp(name: string): BoundOp {
     const op = this.ops.get(name);
     if (op === undefined) {
@@ -421,17 +373,11 @@ export class Tracker {
       return { data, driftOpened: [], cursor: currentCursor(ctx), notices: deliver() };
     }
     const before = currentCursor(ctx);
-    let data: unknown;
-    try {
-      data = this.sql.transaction(() => {
-        const result = op.run(ctx, input);
-        if (!NO_RECONCILE.has(name)) reconcileDrift(ctx, before);
-        return result;
-      });
-    } catch (error) {
-      if (error instanceof RefusedWrite) this.recordRefusal(this.ctx(who), name, error);
-      throw error;
-    }
+    const data: unknown = this.sql.transaction(() => {
+      const result = op.run(ctx, input);
+      if (!NO_RECONCILE.has(name)) reconcileDrift(ctx, before);
+      return result;
+    });
     const events = this.eventsSince(before);
     if (!POLLS.has(name) || events.length > 0 || ctx.visibleChange) this.notify(events);
     const saved = name === DRAFT_SAVE ? DraftSaved.safeParse(data) : null;
@@ -480,8 +426,7 @@ export class Tracker {
     const outputs: unknown[] = [];
     const state: {
       failure: { index: number; error: ErrorBody } | null;
-      refused: { op: string; error: RefusedWrite } | null;
-    } = { failure: null, refused: null };
+    } = { failure: null };
     const rollback = new Error("batch rollback");
     this.touchAgent(ctx, who);
     try {
@@ -494,7 +439,6 @@ export class Tracker {
             if (item.as !== undefined) aliases.set(item.as, output);
           } catch (error) {
             state.failure = { index, error: toErrorBody(error) };
-            if (error instanceof RefusedWrite) state.refused = { op: item.op, error };
             throw rollback;
           }
         }
@@ -504,7 +448,6 @@ export class Tracker {
       if (error !== rollback) throw error;
     }
     const failed = state.failure;
-    if (state.refused !== null) this.recordRefusal(this.ctx(who), state.refused.op, state.refused.error);
     if (failed !== null) {
       return {
         ok: false,

@@ -82,19 +82,6 @@ describe("an agent answers a question the developer answered to it", () => {
     expect(w.as(w.agent("panel"), c.decisionResolve, { ref: asked.ref, option: "a" }).status).toBe("decided");
   });
 
-  test("an agent off the line cannot withdraw its questions; the asker and the developer can", () => {
-    const w = world();
-    const asked = w.as(w.agent("panel"), c.decisionAsk, {
-      title: "Which?",
-      context: "Context.",
-      options: OPTIONS,
-    });
-    expect(w.refused(() => w.as(w.agent("mallory"), c.decisionWithdraw, { ref: asked.ref })).code).toBe(
-      "forbidden",
-    );
-    expect(w.as(w.agent("panel"), c.decisionWithdraw, { ref: asked.ref }).status).toBe("withdrawn");
-  });
-
   test("a question from before lines keeps the older rules", () => {
     const w = world();
     const asked = w.as(w.agent("legacy"), c.decisionAsk, { title: "Old style" });
@@ -103,12 +90,11 @@ describe("an agent answers a question the developer answered to it", () => {
     ).toBe("decided");
   });
 
-  test("a question naming an issue on a line belongs to that line, so only the agents on it ask it", () => {
+  test("a question naming an issue on a line belongs to that line, whoever asks it", () => {
     const w = world();
     const issue = w.as(w.dev, c.issueCreate, { project: "PANEL", title: "Base", line: w.line.ref });
     const question = { title: "Which?", context: "Context.", options: OPTIONS, issue: issue.ref };
-    // Its answer would go to whoever holds the line, not to an asker from outside it (third audit, N4).
-    expect(w.refused(() => w.as(w.agent("visitor"), c.decisionAsk, question)).code).toBe("forbidden");
+    expect(w.as(w.agent("visitor"), c.decisionAsk, question).line).toBe(w.line.ref);
     expect(w.as(w.agent("panel"), c.decisionAsk, question).line).toBe(w.line.ref);
     expect(
       w.refused(() => w.as(w.agent("panel"), c.decisionAsk, { title: "Bare", issue: issue.ref })).code,
@@ -154,10 +140,10 @@ describe("what an agent may say about itself and its repos", () => {
     );
   });
 
-  test("an agent names its repo once, and anyone may change a repo's GitHub name, which must be owner/name", () => {
+  test("an agent may change its repo, and anyone may change a repo's GitHub name, which must be owner/name", () => {
     const w = world();
     w.as(w.dev, c.projectCreate, { key: "OCT", name: "Octotrack" });
-    expect(w.refused(() => w.as(w.agent("panel"), c.agentRegister, { repo: "OCT" })).code).toBe("forbidden");
+    expect(w.as(w.agent("panel"), c.agentRegister, { repo: "OCT" }).repo).toBe("OCT");
     expect(w.as(w.agent("panel"), c.agentRegister, { repo: "PANEL" }).repo).toBe("PANEL");
     expect(w.as(w.agent("panel"), c.projectUpdate, { ref: "OCT", repo: "vasc/oct" }).repo).toBe("vasc/oct");
     expect(w.refused(() => w.as(w.dev, c.projectUpdate, { ref: "OCT", repo: "not a slug" })).code).toBe(

@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { OctoError, RefusedWrite } from "../errors.ts";
 import { implementedRefs } from "../refs.ts";
 import type { Line, LineClaim, LineCrew, Notice } from "../schemas.ts";
 import type { EventTypeName } from "../query/values.ts";
@@ -38,7 +37,6 @@ const SearchRow = z.object({
 });
 type Search = z.infer<typeof SearchRow>;
 const LastOwnerRow = z.object({ lastOwner: z.string().nullable(), lastOwnerEnded: ClaimEnd.nullable() });
-const WindDownRow = z.object({ windDownWrites: z.number() });
 
 const later = (iso: string, ms: number) => new Date(Date.parse(iso) + ms).toISOString();
 
@@ -556,97 +554,3 @@ export function crewOf(ctx: Ctx, line: Line): LineCrew {
 }
 
 /** What kind of write: scoping (done when, plan, issues and notes) or work (claiming, progress, pull requests). */
-export type LineWrite = "scope" | "work";
-
-/**
- * What agents may write depends on the line's state (docs/DESIGN.md). The developer and Octotrack itself are never
- * held to it. Refusals that the state forbids count toward the automatic stop; the others are ordinary answers.
- */
-export function guardLineWrite(ctx: Ctx, lineRef: string | null, kind: LineWrite): void {
-  if (lineRef === null || ctx.developer || ctx.system) return;
-  const line = requireLine(ctx, lineRef);
-  const claim = claimOf(ctx, ctx.actor);
-  const onLine = claim !== null && claim.line === line.ref;
-  if (windingDown(line, ctx.now) && onLine) {
-    const writes = one(ctx, WindDownRow, "SELECT windDownWrites FROM lines WHERE ref = ?", [line.ref]);
-    if ((writes?.windDownWrites ?? 0) !== 0) return;
-    throw new RefusedWrite(
-      `${line.ref} is winding down and no longer takes your writes`,
-      null,
-      line.ref,
-      false,
-    );
-  }
-  if (line.ownedBy !== null) {
-    throw new RefusedWrite(
-      `${line.ref} is the developer's own: no agent writes to it until they hand it back`,
-      null,
-      line.ref,
-      false,
-    );
-  }
-  const state = line.state.replace("_", " ");
-  switch (line.state) {
-    case "working":
-      return;
-    case "proposed":
-      if (kind === "scope" && line.proposedBy === ctx.actor) return;
-      throw new RefusedWrite(
-        `${line.ref} is a proposal: only the agent that proposed it may scope it, and nobody works on it yet`,
-        "Wait for the developer to place it.",
-        line.ref,
-        false,
-      );
-    case "up_next":
-      if (kind === "scope") {
-        if (onLine && claim?.role === "scoper") return;
-        throw new RefusedWrite(
-          `${line.ref} is up next: only its scoper may scope it`,
-          `Take it to scope: octo line take ${line.ref}`,
-          line.ref,
-          false,
-        );
-      }
-      throw new RefusedWrite(
-        `${line.ref} is up next: nobody claims, progresses or reports work on it until it starts`,
-        "Scope it instead: its done when, plan, questions and tasks.",
-        line.ref,
-        true,
-      );
-    default:
-      throw new RefusedWrite(
-        `${line.ref} is ${state}: nothing is written to it`,
-        "Run octo line take for a line that is being worked on.",
-        line.ref,
-        true,
-      );
-  }
-}
-
-/**
- * An agent writes only to the line it is on, or to a proposal it made itself: nothing of another line's is changed from
- * outside it. The developer and Octotrack itself may write anywhere.
- */
-export function requireOnLineOf(ctx: Ctx, lineRef: string | null, ref: string | null): void {
-  if (lineRef === null || ctx.developer || ctx.system) return;
-  if (claimOf(ctx, ctx.actor)?.line === lineRef) return;
-  const line = requireLine(ctx, lineRef);
-  if (line.state === "proposed" && line.proposedBy === ctx.actor) return;
-  throw new OctoError(
-    "forbidden",
-    // Something new has no ref yet: what is refused is filing it there.
-    ref === null
-      ? `You are not on ${line.ref}, so you cannot write to it`
-      : `${ref} is on ${line.ref}, which you are not on`,
-    `Only the agents on ${line.ref} write to it. Take it first if it is yours to work on: octo line take ${line.ref}`,
-  );
-}
-
-/**
- * A write to something on a line: allowed by the line's state, and made from the line itself. `ref` is what is written
- * to, or null for something new being filed there.
- */
-export function guardOnLine(ctx: Ctx, lineRef: string | null, kind: LineWrite, ref: string | null): void {
-  guardLineWrite(ctx, lineRef, kind);
-  requireOnLineOf(ctx, lineRef, ref);
-}

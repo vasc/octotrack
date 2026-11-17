@@ -195,16 +195,6 @@ describe("taking a line", () => {
     expect(again.message).toContain("break step 1 into issues, mark it done (octo plan step");
   });
 
-  test("an issue on a line is claimed only by an agent on that line", () => {
-    const w = world();
-    const line = w.line("Sendspin enclosure", "working");
-    w.as(w.dev, c.issueCreate, { project: "PANEL", title: "Model the base", line: line.ref });
-    const a = w.agent("one");
-    expect(w.refusal(() => w.as(a, c.issueClaim, { refs: ["PANEL-1"] })).hint).toContain("octo line take");
-    w.as(a, c.lineTake, { ref: line.ref });
-    expect(w.as(a, c.issueClaim, { refs: ["PANEL-1"] })[0]?.assignee).toBe("one");
-  });
-
   test("taking another line releases the first; when the owner leaves, a helper becomes owner with no search", () => {
     const w = world();
     const top = w.line("Sendspin enclosure", "working");
@@ -242,7 +232,7 @@ describe("stopping an agent", () => {
 });
 
 describe("what agents may write depends on the line's state", () => {
-  test("a working line moved away gives its crew 15 minutes to wind down, then writes there are refused", () => {
+  test("a working line moved away gives its crew 15 minutes to wind down, and tells it so", () => {
     const w = world();
     const line = w.line("Sendspin enclosure", "working");
     w.as(w.dev, c.issueCreate, { project: "PANEL", title: "Model the base", line: line.ref });
@@ -254,18 +244,13 @@ describe("what agents may write depends on the line's state", () => {
     w.as(a, c.issueUpdate, { refs: ["PANEL-1"], body: "Hand-off: the base is modelled to 26 mm." });
 
     w.later(16);
-    for (const body of ["one", "two"]) {
-      expect(w.refusal(() => w.as(a, c.issueUpdate, { refs: ["PANEL-1"], body })).code).toBe("forbidden");
-    }
-    expect(w.as(w.dev, c.feedList, { query: "event:agent.would_stop" }).events).toEqual([]);
-    w.refusal(() => w.as(a, c.issueUpdate, { refs: ["PANEL-1"], body: "three" }));
-    // Record only, for now: the automatic Stop says what it would have done and does not stop.
-    expect(w.as(w.dev, c.feedList, { query: "event:agent.would_stop" }).events).toHaveLength(1);
-    expect(w.as(w.dev, c.feedList, { query: "event:write.refused" }).events).toHaveLength(3);
+    // Nothing is refused after it either: Octotrack tracks the work, it does not hold permissions over it.
+    w.as(a, c.issueUpdate, { refs: ["PANEL-1"], body: "A late note on the base." });
+    expect(w.as(w.dev, c.feedList, { query: "event:write.refused" }).events).toEqual([]);
     expect(w.as(a, c.agentNote, { note: "fine" }).note).toBe("fine");
   });
 
-  test("an up-next line takes scoping from its scoper, refuses claims, and the scoper owns it when it starts", () => {
+  test("an up-next line is scoped by its scoper, and the scoper owns it when it starts", () => {
     const w = world();
     const line = w.line("Wall mount", "up_next");
     w.as(w.dev, c.issueCreate, { project: "PANEL", title: "Measure the wall", line: line.ref });
@@ -273,11 +258,6 @@ describe("what agents may write depends on the line's state", () => {
     const taken = w.as(a, c.lineTake, { ref: line.ref });
     expect(taken.role).toBe("scoper");
     w.as(a, c.planSet, { line: line.ref, steps: ["Measure", "Model"] });
-    expect(w.refusal(() => w.as(a, c.issueClaim, { refs: ["PANEL-1"] })).code).toBe("forbidden");
-    const other = w.agent("two", "/src/homepanel-2");
-    expect(w.refusal(() => w.as(other, c.planSet, { line: line.ref, steps: ["Mine"] })).code).toBe(
-      "forbidden",
-    );
 
     w.as(w.dev, c.lineStart, { ref: line.ref });
     expect(w.as(w.dev, c.homeShow, {}).crews[line.ref]?.owner?.name).toBe("one");

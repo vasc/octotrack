@@ -68,7 +68,7 @@ will be woken.
 
 ## The loop, as owner or helper
 
-  octo issue claim PANEL-4                    only on your line; a helper only in its own repo
+  octo issue claim PANEL-4
   octo post "what is happening" --on PANEL-4 --level progress
   octo issue update PANEL-4 --status in_review
   octo plan set L-7 "Model the base" "Print and test-fit" "Final print"
@@ -97,14 +97,13 @@ way: finish your current issue, then octo line release.
 
 ## What you may write
 
-  working on               anything, on the line you hold
-  up next                  scoping only (done when, plan, questions, tasks), by the agent that took it to scope
-  proposed                 scoping only, by the agent that proposed it
-  tabled, done, dropped    nothing
+Anything, on any line: Octotrack tracks the work, it holds no permissions over it. Keep to your own line unless the
+developer asks otherwise, since the log shows who wrote what. A line's state says where the work is: working lines are
+worked on, up-next lines are scoped (done when, plan, questions, tasks), proposals wait for a place, and tabled, done
+and dropped lines wait or are finished.
 
 When a working line moves away, you get a wind-down notice: 15 minutes for a hand-off note, reports on answers you
-took, and, for done or dropped, closing or folding its open issues. Then your claim ends. Writes a line's state forbids
-are refused and logged, and three in an hour would stop you.
+took, and, for done or dropped, closing or folding its open issues. Then your claim ends.
 
 ## Asking the developer
 

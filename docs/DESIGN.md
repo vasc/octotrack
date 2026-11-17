@@ -297,8 +297,8 @@ Decisions made from that:
   whose repo has no GitHub remote names it once with `agent register --repo`. Reads with no agent name stay answered,
   since they change nothing; writes with none are refused. Ref-shaped names are refused only for new agents, so no
   existing one is locked out. Owner search step 2 offers a line in the replies of idle agents with its repo for 30
-  seconds before the runner may start a session for it; with no runner set up, home asks the developer to step in. The
-  automatic stop only records "would stop" (`agent.would_stop` in the log) until it has been watched for a week.
+  seconds before the runner may start a session for it; with no runner set up, home asks the developer to step in. There
+  is no automatic stop any more: with no permissions over the work (below), nothing is refused for it to count.
 - **Questions and the line inbox, as built.** Questions keep their `decision.*` operation names and D- refs; the CLI
   also takes D14's words, `question <word>` for every `decision` command, with `question later` for postpone and
   `question change` for Change answer (answering again, sent as replacing the earlier answer). A
@@ -345,8 +345,12 @@ Decisions made from that:
   started keeps its line until the developer releases it from Agents, where its last command shows how long it has been.
 - **Old names keep working for at least a phase** (`decision.*`, `project:`, M-, I- and U- refs), and the riskiest
   automation, the automatic Stop and the runner, first runs in a mode that only records what it would have done.
-- **No permissions over the work.** Octotrack tracks agents' work; it does not hold permissions over it. Every operation
-  on the work is open to agents as to the developer: answering, Later, reopening, replacing and recording questions;
+- **No permissions over the work.** Octotrack tracks agents' work; it does not hold permissions over it. An agent writes
+  to any line, whether or not it is on it and whatever the line's state: issues filed, claimed, progressed, finished
+  or moved; plans and branches; questions asked, refined, answered or withdrawn; links, drift, notes, held work, pull
+  requests and their sync; summaries and done whens. Nothing is refused for it, so nothing counts toward an automatic
+  stop, which is gone; claims still say who works on what, and a wind-down still gives a crew its notice. Every
+  operation on the work is open to agents as to the developer: answering, Later, reopening, replacing and recording questions;
   adding, placing, ordering, moving, folding, rejecting, owning and handing over lines; done whens, Not yet, tasks'
   outcomes and Can't do it, places, notes, Tell; stopping, lifting and releasing agents; repos' GitHub names and
   checkouts; Try now. The log shows who did each, and quotes the developer's words when the agent passes `--said`
@@ -362,7 +366,9 @@ Decisions made from that:
   and a clone already in place is used only if its origin is that repo. Withdrawing a question is for the developer,
   its asker or an agent on its line. A decision recorded after the fact is placed like a question (the line named, the
   line of the issue named, or the recording agent's line).
-- **Agents write only to the line they are on, as built after the second audit.** On top of what the line's state
+- **Agents write only to the line they are on, as built after the second audit.** _Superseded by "No permissions over
+  the work": agents write to any line, in any state, and nothing is refused or counted; what follows is the history._
+  On top of what the line's state
   allows, an agent changes something on a line only from that line (or, on a proposal, as its proposer): claiming,
   progressing, finishing or reassigning an issue (through `issue update` and `issue create` as well as `issue claim`),
   links either of whose ends is on a line, a line's drift, notes on its items, re-confirming its held work, and picking
@@ -658,7 +664,8 @@ Decisions made from that:
     were refused there, as writes to a line no agent may touch, though D14 says every developer operation accepts the
     developer's words.
 - **What the fourth audit changed in core and the CLI.**
-  - _Agents write only to the line they are on, the rest of it._ A pull request report (`pr upsert`) is refused unless
+  - _Agents write only to the line they are on, the rest of it._ _(Superseded by "No permissions over the work".)_ A
+    pull request report (`pr upsert`) was refused unless
     every issue it implements (named, linked already, or named by its branch or a closing keyword) is on the
     reporting agent's line, so it can neither link nor rewrite another line's pull request. A decision recorded on no
     line guards both ends of the `blocks` and `affects` links it adds, as asking does. A watch is checked, as it is
@@ -901,7 +908,7 @@ Everything below is a design decision made from that, with its reasoning.
 | asleep      | not running, with a wake address, including a session Octotrack started whose process exited          | kept; woken by inbox items and waking notices               |
 | quiet       | not running, no wake address                                                                          | kept; Agents shows its last command, with Release beside it |
 | gone        | a wake failed, or the runner saw the process of a session Octotrack started exit with no wake address | ended; a worktree Octotrack made goes to the next session   |
-| stopped     | Stop, or a third write in an hour that a line's state forbids                                         | ended; every write refused until the developer lifts it     |
+| stopped     | Stop, by the developer or an agent                                                                    | ended; every write refused until it is lifted               |
 
 An agent is idle when it is on no line or only scoping, and reachable when it is running or asleep. No claim ends on
 a timer: a line can run for weeks with its owner busy and silent, and silence alone says nothing.
@@ -986,11 +993,8 @@ you", answers wait in its inbox, and the next answer, finished task or Tell star
   request sync sees that issue's ref in the branch name or after a closing keyword (Fixes, Closes), counted once per
   pull request; pull requests already open at the deadline are held and listed once in the log. Since every push comes
   through the developer's one GitHub login, these are shown in the log on their line but never blamed on an agent. On
-  the third write from one agent in an hour that the line's state forbids (anything on a tabled, done or dropped line;
-  on an up-next line, an issue claimed, an issue moved to in progress or done, or a pull request reported), Octotrack
-  stops that agent itself; other refusals, such as a take refused or a question without a situation, are ordinary
-  answers and never count. It says so in the log, and leaves Lift on Agents, since asking the developer to click Stop
-  would add nothing. Wind-down notices reach helpers too. Stop's Undo bar says when another agent will then take the
+  the third write from one agent in an hour that the line's state forbids, Octotrack was to stop that agent itself
+  (_superseded by "No permissions over the work": nothing is refused, so there is no automatic stop_). Wind-down notices reach helpers too. Stop's Undo bar says when another agent will then take the
   line, and offers Pause the line instead, which moves it to up next. Stop refuses every write under that agent's name,
   ends its claims, sends it a notice, runs the developer's local stop command if one is set, and marks it stopped on
   Agents until lifted. _Trade-off:_ Octotrack cannot kill a session; refusing its writes and telling it is what it can

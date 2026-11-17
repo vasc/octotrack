@@ -91,13 +91,13 @@ export function resolveAgent(
   return name;
 }
 
-/** Writes from a stopped agent are refused, and never recorded or counted: the developer already knows. */
+/** Writes from a stopped agent are refused: a stop is a stop, made on purpose by the developer or an agent. */
 export function refuseIfStopped(ctx: Ctx, name: string): void {
   const agent = getAgent(ctx, name);
   if (agent === null || agent.stoppedAt === null) return;
   throw new OctoError(
     "forbidden",
-    `The developer stopped ${name}${agent.stoppedReason === null ? "" : `: ${agent.stoppedReason}`}`,
-    "Every write under your name is refused until the developer lifts the stop.",
+    `${name} was stopped${agent.stoppedReason === null ? "" : `: ${agent.stoppedReason}`}`,
+    "Every write under your name is refused until the stop is lifted.",
   );
 }

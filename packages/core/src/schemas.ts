@@ -511,9 +511,6 @@ export const LineClaim = z.object({
 });
 export type LineClaim = z.infer<typeof LineClaim>;
 
-/** The reason Octotrack gives when it stops an agent itself, so the roster can tell its Stop from the developer's. */
-export const AUTO_STOP_REASON = "a third write in an hour that a line's state forbids";
-
 /** An agent as the roster shows it: with its state and the line it is on. */
 export const AgentView = Agent.extend({
   state: AgentState,

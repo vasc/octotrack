@@ -336,10 +336,6 @@ describe("summaries stay true", () => {
     w.later(61);
     w.tracker.sweep();
     expect(due().map((drift) => [drift.target, drift.assignee])).toEqual([[w.line, "panel"]]);
-    expect(
-      w.refusal(() => w.as(w.agent("helper"), c.lineSummarize, { ref: w.line, headline: "x", summary: "y" }))
-        .code,
-    ).toBe("forbidden");
     w.as(w.owner, c.lineSummarize, {
       ref: w.line,
       headline: "The base is modelled; the board choice is next.",

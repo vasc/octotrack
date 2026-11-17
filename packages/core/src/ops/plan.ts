@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { afterAdd, guardOnLine, settleHeldWork } from "../agents/claims.ts";
+import { afterAdd, settleHeldWork } from "../agents/claims.ts";
 import { DEVELOPER } from "../agents/state.ts";
 import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
@@ -156,7 +156,6 @@ export function stepFor(ctx: Ctx, line: string | null, ref: StepRef | null): num
 /** Writing a plan is scoping its line, and only while it has not ended. */
 function planLine(ctx: Ctx, ref: string): Line {
   const line = requireLine(ctx, ref);
-  guardOnLine(ctx, line.ref, "scope", null);
   if (ENDED.has(line.state)) throw new OctoError("conflict", `${line.ref} already ended`);
   return line;
 }

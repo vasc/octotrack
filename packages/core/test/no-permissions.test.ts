@@ -105,3 +105,59 @@ describe("an agent may do what was once only the developer's", () => {
     ).toBe("working");
   });
 });
+
+describe("an agent writes to any line, whatever line it is on and whatever state the line is in", () => {
+  test("files, changes and claims work, plans, asks and withdraws, with no claim on that line", () => {
+    const h = harness();
+    h.developer(c.projectCreate, { key: "PANEL", name: "Home panel", repo: "vasc/homepanel" });
+    h.developer(c.projectCreate, { key: "OCT", name: "Octotrack", repo: "vasc/octotrack" });
+    const working = h.developer(c.lineAdd, {
+      title: "Working",
+      doneWhen: "Done.",
+      repos: ["PANEL"],
+      where: "working",
+    });
+    const next = h.developer(c.lineAdd, {
+      title: "Next",
+      doneWhen: "Done.",
+      repos: ["PANEL"],
+      where: "up_next",
+    });
+    const mine = h.developer(c.lineAdd, { title: "Mine", doneWhen: "Done.", where: "working" });
+    const proposal = h.call(
+      c.linePropose,
+      { title: "Theirs", doneWhen: "Done.", repos: ["OCT"], recommendation: "up_next", why: "Soon." },
+      "someone-else",
+    );
+    // An agent registered in OCT, on no line, writes to all of them.
+    h.call(c.agentRegister, { repo: "OCT" }, "roamer");
+    const onWorking = h.call(c.issueCreate, { project: "PANEL", title: "Base", line: working.ref }, "roamer");
+    h.call(c.issueClaim, { refs: [onWorking.ref] }, "roamer");
+    h.call(c.issueUpdate, { refs: [onWorking.ref], status: "in_progress" }, "roamer");
+    const onNext = h.call(c.issueCreate, { project: "PANEL", title: "Lid", line: next.ref }, "roamer");
+    h.call(c.issueUpdate, { refs: [onNext.ref], status: "in_progress" }, "roamer");
+    h.call(c.planSet, { line: proposal.ref, steps: ["Sketch"] }, "roamer");
+    h.call(c.planSet, { line: mine.ref, steps: ["Scan"] }, "roamer");
+    const asked = h.call(
+      c.decisionAsk,
+      {
+        title: "Which lid?",
+        context: "Two fit.",
+        line: next.ref,
+        options: [
+          { key: "a", label: "Flat", description: "Prints fast." },
+          { key: "b", label: "Domed", description: "Looks better." },
+        ],
+      },
+      "someone-else",
+    );
+    h.call(c.decisionWithdraw, { ref: asked.ref }, "roamer");
+    expect(h.developer(c.lineShow, { ref: next.ref }).work.map((item) => item.status)).toEqual([
+      "in_progress",
+    ]);
+    // Nothing was refused, so nothing counts toward stopping anyone.
+    expect(
+      h.developer(c.agentList, {}).find((agent) => agent.name === "roamer")?.stoppedAt ?? null,
+    ).toBeNull();
+  });
+});

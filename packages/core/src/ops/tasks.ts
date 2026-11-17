@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { guardOnLine, holdsWork } from "../agents/claims.ts";
+import { holdsWork } from "../agents/claims.ts";
 import { HELD_CURRENT_MS } from "../agents/held.ts";
 import { DEVELOPER } from "../agents/state.ts";
 import { contracts } from "../contracts.ts";
@@ -375,7 +375,6 @@ export const taskOps = [
       throw new OctoError("invalid_input", "A task waits on a line", "Take a line first, or pass --line.");
     }
     const line = requireLine(ctx, lineRef);
-    guardOnLine(ctx, line.ref, "scope", null);
     const place = requirePlace(ctx, input.place);
     const fields = distinctFields(input.fields ?? []);
     const frees =
@@ -388,7 +387,6 @@ export const taskOps = [
           )[0] ?? null)
         : requireIssue(ctx, input.frees);
     // The issue it frees is held behind it, so that is a write to that issue's line too.
-    if (frees !== null) guardOnLine(ctx, frees.line, "scope", frees.ref);
     const project = frees?.project ?? line.repos[0];
     if (project === undefined) {
       throw new OctoError(
@@ -454,7 +452,6 @@ export const taskOps = [
     const lines = new Set<string>();
     for (const ref of input.refs) {
       const entity = requireHeldItem(ctx, ref);
-      guardOnLine(ctx, entity.line, "scope", entity.value.ref);
       // Re-confirmed, it is current again; on a line agents work on it reaches the developer from now.
       const working = !holdsWork(requireLine(ctx, entity.line));
       ctx.sql.run(
@@ -480,7 +477,6 @@ export const taskOps = [
     for (const ref of input.refs) {
       const entity = requireHeldItem(ctx, ref);
       // Withdrawing is scoping: only from the line, or on a proposal by its proposer, as re-confirming is.
-      guardOnLine(ctx, entity.line, "scope", entity.value.ref);
       if (entity.kind === "decision") withdrawQuestion(ctx, entity.value.ref, input.why);
       else {
         const why = input.why ?? "it no longer stands";
@@ -500,18 +496,13 @@ export const taskOps = [
         "Your own tasks go on lines you own. On an agent's line, agents file tasks for you.",
       );
     }
-    const task = createIssue(
-      ctx,
-      {
-        project: line.repos[0] ?? ownProject(ctx),
-        title: input.title,
-        ...(input.body === undefined ? {} : { body: input.body }),
-        assignee: DEVELOPER,
-        line: line.ref,
-      },
-      // Relayed with --said, it is still the developer's task on the developer's line.
-      true,
-    );
+    const task = createIssue(ctx, {
+      project: line.repos[0] ?? ownProject(ctx),
+      title: input.title,
+      ...(input.body === undefined ? {} : { body: input.body }),
+      assignee: DEVELOPER,
+      line: line.ref,
+    });
     // Nothing to report back to anyone: the outcome is empty, and Done needs no words.
     ctx.sql.run("UPDATE issues SET place = ?, outcome = '' WHERE ref = ?", [
       input.place === undefined ? null : requirePlace(ctx, input.place),

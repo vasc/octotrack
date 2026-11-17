@@ -18,26 +18,18 @@ import { applyPatch, assertVersion, emit, nextNumber } from "../store/common.ts"
 import type { Ctx } from "../store/context.ts";
 import { one, rows } from "../store/context.ts";
 import { filterEntities } from "../store/docs.ts";
-import {
-  allLines,
-  requireDecision,
-  requireEntity,
-  requireIssue,
-  requireLine,
-  requireProject,
-  resolveRef,
-} from "../store/entities.ts";
+import { allLines, requireDecision, requireIssue, requireLine, requireProject } from "../store/entities.ts";
 import { loadGraph } from "../store/graph.ts";
 import { DecisionRow, IssueRow, WatchRow } from "../store/rows.ts";
 import { toWatch } from "../watch/engine.ts";
 import { z } from "zod";
-import { guardLineWrite, guardOnLine, holdsWork, requireOnLineOf } from "../agents/claims.ts";
+import { holdsWork } from "../agents/claims.ts";
 import { DEVELOPER } from "../agents/state.ts";
 import { addNotice, claimOf } from "../store/agents.ts";
 import { addToInbox } from "../store/inbox.ts";
 import { bind } from "./bind.ts";
 import { requireServer } from "./developer.ts";
-import { addLink, guardEnds } from "./links.ts";
+import { addLink } from "./links.ts";
 
 export function decisionAttrs(decision: Decision): EventAttrs {
   return {
@@ -318,8 +310,6 @@ function refineable(ctx: Ctx, current: Decision): void {
     );
   }
   if (ctx.developer || ctx.system) return;
-  guardLineWrite(ctx, current.line, "scope");
-  if (current.requestedBy !== ctx.actor) requireOnLineOf(ctx, current.line, current.ref);
   const waiting = one(
     ctx,
     Waiting,
@@ -426,8 +416,7 @@ export function buildQueue(ctx: Ctx, query: string | undefined) {
 }
 
 /**
- * A question that no longer stands, withdrawn by whoever may: the developer, its asker, or an agent on its line. Any
- * other agent is refused, so nobody clears a line's questions from outside it.
+ * A question that no longer stands, withdrawn by the developer or any agent; the log shows who.
  */
 export function withdrawQuestion(ctx: Ctx, ref: string, note: string | undefined): Decision {
   const current = requireDecision(ctx, ref);
@@ -437,21 +426,6 @@ export function withdrawQuestion(ctx: Ctx, ref: string, note: string | undefined
       `${current.ref} is ${current.status}, only open decisions can be withdrawn`,
     );
   }
-  if (
-    current.line !== null &&
-    !ctx.developer &&
-    ctx.said === null &&
-    current.requestedBy !== ctx.actor &&
-    claimOf(ctx, ctx.actor)?.line !== current.line
-  ) {
-    throw new OctoError(
-      "forbidden",
-      `${current.ref} is on ${current.line}, which you are not on`,
-      "Only the developer, the agent that asked, or an agent on that line can withdraw it.",
-    );
-  }
-  // Withdrawing is scoping the line, which its state allows or refuses: a tabled, done or dropped line takes nothing.
-  if (ctx.said === null) guardLineWrite(ctx, current.line, "scope");
   return transition(
     ctx,
     ref,
@@ -467,7 +441,6 @@ export const decisionOps = [
     const placed = placeQuestion(ctx, input);
     if (placed.line !== null) {
       // A question joins its line's queue and its answer goes to whoever holds the line: asked only from that line.
-      guardOnLine(ctx, placed.line.ref, "scope", null);
       if (!ctx.developer) checkStandalone(input, placed.line);
     } else if (input.urgent !== undefined) {
       throw new OctoError("invalid_input", "Urgent is for questions on lines being worked on");
@@ -487,13 +460,7 @@ export const decisionOps = [
         throw new OctoError("invalid_input", `${task.ref} is not a task for the developer`);
       }
       // Held behind the task: asking the developer what their own measurement is about to answer wastes their time.
-      guardEnds(ctx, requireEntity(ctx, task.ref), decision.ref);
       addLink(ctx, task.ref, "blocks", decision.ref);
-    }
-    // What the question holds up or changes is written to as well: only on the asker's line, or on no line.
-    const asked = requireEntity(ctx, decision.ref);
-    for (const target of [...(input.blocks ?? []), ...(input.affects ?? [])]) {
-      guardEnds(ctx, asked, resolveRef(ctx, target));
     }
     for (const target of input.blocks ?? []) addLink(ctx, decision.ref, "blocks", target);
     for (const target of input.affects ?? []) addLink(ctx, decision.ref, "affects", target);
@@ -593,12 +560,7 @@ export const decisionOps = [
       line: placed.line?.ref ?? null,
       issue: placed.issue,
     });
-    // What it holds up or changes is written to as well, as when a question is asked: only on the recorder's line, or
-    // on no line. An `affects` link raises drift on its target, routed to that line's owner.
-    const recorded = requireEntity(ctx, decision.ref);
-    for (const target of [...(input.blocks ?? []), ...(input.affects ?? [])]) {
-      guardEnds(ctx, recorded, resolveRef(ctx, target));
-    }
+    // An `affects` link raises drift on its target, routed to that line's owner.
     for (const target of input.blocks ?? []) addLink(ctx, decision.ref, "blocks", target);
     for (const target of input.affects ?? []) addLink(ctx, decision.ref, "affects", target);
     return resolveDecision(ctx, {
@@ -670,9 +632,7 @@ export const decisionOps = [
         ),
   ),
   bind(contracts.decisionPickup, (ctx, input) => {
-    const current = requireAnswered(ctx, input.ref);
-    // An answer on a line is for the agents on it: nobody else picks it up or says what became of it.
-    guardOnLine(ctx, current.line, "scope", current.ref);
+    requireAnswered(ctx, input.ref);
     return transition(
       ctx,
       input.ref,
@@ -684,7 +644,6 @@ export const decisionOps = [
   }),
   bind(contracts.decisionReport, (ctx, input) => {
     const current = requireAnswered(ctx, input.ref);
-    guardOnLine(ctx, current.line, "scope", current.ref);
     const verb = input.status === "done" ? "carried out" : "partly carried out";
     return transition(
       ctx,

@@ -198,7 +198,7 @@ describe("seen", () => {
     w.as(w.dev, c.seen, {});
     expect(w.as(w.dev, c.feedList, { unseen: true }).events).toEqual([]);
   });
-  test("changes on no line and rule breaks stay not seen until Mark all seen, whatever lines are opened", () => {
+  test("changes on no line stay not seen until Mark all seen, whatever lines are opened", () => {
     const w = world();
     const line = w.line("Enclosure");
     w.as(w.dev, c.issueCreate, { project: "PANEL", title: "Model the base", line: line.ref });
@@ -208,12 +208,10 @@ describe("seen", () => {
     w.as(w.dev, c.seen, {});
     w.later(16);
     w.as(w.agent("stray"), c.issueCreate, { project: "PANEL", title: "On no line" });
-    expect(() => w.as(owner, c.issueUpdate, { refs: ["PANEL-1"], body: "late" })).toThrow();
     w.later(1);
     w.as(w.dev, c.seen, { line: line.ref });
     const unseen = w.as(w.dev, c.feedList, { unseen: true }).events.map((event) => event.type);
     expect(unseen).toContain("issue.created");
-    expect(unseen).toContain("write.refused");
     w.later(1);
     w.as(w.dev, c.seen, {});
     expect(w.as(w.dev, c.feedList, { unseen: true }).events).toEqual([]);

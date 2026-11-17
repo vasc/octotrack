@@ -263,13 +263,6 @@ describe("a plan as a tree", () => {
     expect(h.developer(c.homeShow, {}).lines[line]?.step?.stalledOn).toEqual([bracket.ref]);
   });
 
-  test("an agent on another line may not change this one's plan", () => {
-    const { h, line } = enclosure();
-    expect(
-      refusal(() => h.call(c.planBranch, { line, from: "2", title: "Mine", steps: ["x"] }, "stranger")).code,
-    ).not.toBe("not_found");
-  });
-
   describe("audit of D15", () => {
     test("1: taking out the first step keeps its branches, moved to the new first step, with their issues", () => {
       const { h, line } = enclosure();

@@ -1,7 +1,6 @@
 import { z } from "zod";
-import { guardOnLine, windingDown } from "../agents/claims.ts";
+import { windingDown } from "../agents/claims.ts";
 import { contracts, type PrInput } from "../contracts.ts";
-import { OctoError } from "../errors.ts";
 import { extractIssueRefs, implementedRefs, normalizeRef } from "../refs.ts";
 import type { EventAttrs, Issue, Line, PullRequest } from "../schemas.ts";
 import type { EventTypeName } from "../query/values.ts";
@@ -265,12 +264,6 @@ function upsertPr(ctx: Ctx, input: PrInput): { pr: PullRequest; changed: boolean
 
 export const prOps = [
   bind(contracts.prUpsert, (ctx, input) => {
-    // An agent reporting a pull request is working on the lines of the issues it implements: named, linked already or
-    // named by its branch or a closing keyword. Each must be its own line, in a state that takes work, or the report
-    // would link, or rewrite, another line's pull request from outside it.
-    const existing = getPrByNumber(ctx, input.repo, input.number);
-    for (const issue of implementedIssues(ctx, existing?.ref ?? null, input))
-      guardOnLine(ctx, issue.line, "work", issue.ref);
     const pr = upsertPr(ctx, input).pr;
     // Reported, not seen on GitHub: until sync confirms it, the runner never closes it.
     ctx.sql.run("UPDATE prs SET githubAt = NULL WHERE ref = ?", [pr.ref]);
@@ -278,15 +271,6 @@ export const prOps = [
   }),
 
   bind(contracts.prSync, (ctx, input) => {
-    // What GitHub says is reported by the server's own sync, or by the developer: an agent could otherwise write any
-    // pull request, past the line rules pr.upsert keeps, and say a repo's sync is failing or fine.
-    if (!ctx.system && !ctx.developer) {
-      throw new OctoError(
-        "forbidden",
-        "Only the server's pull request sync reports what GitHub says",
-        "Ask the server to sync now: octo pr sync. To report your own pull request: octo pr upsert.",
-      );
-    }
     for (const repo of input.repos ?? []) {
       ctx.sql.run(
         `INSERT INTO github_sync (repo, lastOkAt, error, updatedAt) VALUES (?, ?, NULL, ?)

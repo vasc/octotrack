@@ -481,7 +481,7 @@ describe("live updates, with nothing but the server's own notifications", () => 
     const main = within(view.getByRole("main"));
     await main.findByText("octo.2");
     server.tracker.call(c.agentStop, { name: "octo.2" }, { actor: "dev", channel: "dashboard" });
-    await main.findByText(/stopped by you/);
+    await main.findByText(/^stopped /);
   });
 
   test("a change landing between the first load and the stream connecting is not lost", async () => {

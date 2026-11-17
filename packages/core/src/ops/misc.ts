@@ -8,7 +8,6 @@ import type { Counts, Decision, Drift, Issue, StatusUpdate } from "../schemas.ts
 import { countOf, emit, nextNumber, currentCursor } from "../store/common.ts";
 import { type Ctx, rows } from "../store/context.ts";
 import { filterEntities, findEntities, isReady } from "../store/docs.ts";
-import { guardOnLine } from "../agents/claims.ts";
 import { viewOf } from "../store/agents.ts";
 import {
   findEntity,
@@ -122,24 +121,7 @@ function describeNext(
   return parts.length === 0 ? "Nothing to do." : `${parts.join("; ")}.`;
 }
 
-/**
- * The line a drift is about: the line it names, or the line of the issue or question it names, or of the work the pull
- * request it names implements.
- */
-function lineOfDrift(ctx: Ctx, drift: Drift): string | null {
-  const target = findEntity(ctx, drift.target);
-  return target === null ? null : lineConcerned(ctx, target);
-}
-
-/** Drift on a line is cleared and taken only from that line. */
-function guardDrift(ctx: Ctx, drift: Drift): void {
-  guardOnLine(ctx, lineOfDrift(ctx, drift), "scope", drift.ref);
-}
-
-/**
- * A note on anything: kept as an update, and shown in the log on the line it concerns. `forDeveloper` is for the
- * developer's own note on a line of theirs, which an agent may relay with --said.
- */
+/** A note on anything: kept as an update, and shown in the log on the line it concerns. */
 function postUpdate(
   ctx: Ctx,
   input: {
@@ -148,12 +130,10 @@ function postUpdate(
     project?: string | undefined;
     level?: StatusUpdate["level"] | undefined;
   },
-  forDeveloper = false,
 ): StatusUpdate {
   const target = input.target === undefined ? null : requireEntity(ctx, input.target);
   const targetRef = target?.value.ref ?? null;
   const line = target === null ? null : lineConcerned(ctx, target);
-  if (target !== null && !forDeveloper) guardOnLine(ctx, line, "scope", target.value.ref);
   const project =
     input.project === undefined
       ? target === null
@@ -198,7 +178,7 @@ export const miscOps = [
         "Notes go on lines you own; tell its owner instead.",
       );
     }
-    postUpdate(ctx, { body: input.body, target: line.ref }, true);
+    postUpdate(ctx, { body: input.body, target: line.ref });
     return { line: line.ref };
   }),
 
@@ -227,14 +207,6 @@ export const miscOps = [
   }),
 
   bind(contracts.driftAck, (ctx, input) => {
-    for (const raw of input.refs ?? []) {
-      const drift = getDrift(ctx, normalizeRef(raw));
-      if (drift !== null) guardDrift(ctx, drift);
-    }
-    if (input.target !== undefined) {
-      const target = findEntity(ctx, input.target);
-      if (target !== null) guardOnLine(ctx, lineConcerned(ctx, target), "scope", target.value.ref);
-    }
     return { acknowledged: ackDrift(ctx, input) };
   }),
 
@@ -244,7 +216,6 @@ export const miscOps = [
       const ref = normalizeRef(rawRef);
       const drift = getDrift(ctx, ref);
       if (drift === null) throw notFound(rawRef);
-      guardDrift(ctx, drift);
       if (drift.claimedBy !== null && drift.claimedBy !== ctx.actor && input.force !== true) {
         throw new OctoError(
           "conflict",

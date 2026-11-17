@@ -1,5 +1,5 @@
 import { describe, expect, mock, test } from "bun:test";
-import { AUTO_STOP_REASON, type AgentView } from "@octotrack/core/schemas";
+import type { AgentView } from "@octotrack/core/schemas";
 import { fireEvent, render, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { AgentRoster } from "../src/components/agents/AgentRoster.tsx";
@@ -106,13 +106,11 @@ describe("AgentRosterRow", () => {
         onRelease={noop}
       />,
     );
-    mine.getByText(whole(`stopped by you ${whenText(stoppedAt)}: “wrong repo”`));
+    // Whoever stopped it, the developer or an agent, the log names; the row says it is stopped, when and why.
+    mine.getByText(whole(`stopped ${whenText(stoppedAt)}: “wrong repo”`));
     fireEvent.click(mine.getByRole("button", { name: "Lift panel" }));
     expect(onLift).toHaveBeenCalledWith("panel");
     mine.unmount();
-    row({ state: "stopped", stoppedAt, stoppedReason: AUTO_STOP_REASON }).getByText(
-      whole(`stopped by Octotrack ${whenText(stoppedAt)}, after 3 writes a line's state forbids`),
-    );
   });
 
   test("a session started for a line that never ran a command is marked with the triangle, with how its start went", () => {
