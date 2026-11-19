@@ -83,31 +83,50 @@ export function orderedRefs(home: HomeView): string[] {
   ];
 }
 
-/** The first item a header count stands for, in focus order: where clicking the count goes. */
-export function firstOf(home: HomeView, count: keyof HomeCounts): string | null {
+/** Every item a header count stands for, in focus order. */
+export function refsOf(home: HomeView, count: keyof HomeCounts): string[] {
   const items = home.working.flatMap((line) => home.lines[line.ref]?.forYou ?? []);
   switch (count) {
     case "urgent":
-      return (
-        home.urgent[0]?.decision.ref ?? home.proposed.find((line) => line.urgentReason !== null)?.ref ?? null
-      );
-    case "toAnswer": {
-      const question = items.find((item) => item.kind === "question");
-      return question === undefined ? (home.noLine[0]?.decision.ref ?? null) : refOf(question);
-    }
-    case "toDo": {
-      const task = items.find((item) => item.kind === "task");
-      return task === undefined ? null : refOf(task);
-    }
-    case "toAccept": {
-      const proposal = items.find((item) => item.kind === "done" || item.kind === "done_when");
-      return proposal === undefined ? (home.proposed[0]?.ref ?? null) : refOf(proposal);
-    }
-    case "toStepIn": {
-      const line = home.working.find((candidate) => home.lines[candidate.ref]?.stepIn === true);
-      return line === undefined ? null : stepInRef(line.ref);
-    }
+      return [
+        ...home.urgent.map((card) => card.decision.ref),
+        ...home.proposed.filter((line) => line.urgentReason !== null).map((line) => line.ref),
+      ];
+    case "toAnswer":
+      return [
+        ...items.filter((item) => item.kind === "question").map(refOf),
+        ...home.noLine.map((card) => card.decision.ref),
+      ];
+    case "toDo":
+      return items.filter((item) => item.kind === "task").map(refOf);
+    case "toAccept":
+      return [
+        ...items.filter((item) => item.kind === "done" || item.kind === "done_when").map(refOf),
+        ...home.proposed.map((line) => line.ref),
+      ];
+    case "toStepIn":
+      return home.working
+        .filter((line) => home.lines[line.ref]?.stepIn === true)
+        .map((line) => stepInRef(line.ref));
   }
+}
+
+/** The first item a header count stands for, in focus order. */
+export function firstOf(home: HomeView, count: keyof HomeCounts): string | null {
+  return refsOf(home, count)[0] ?? null;
+}
+
+/**
+ * Where a press of a header count goes: the next such item after `from` in focus order, round to the first after the
+ * last; the first when there is nothing to go on from. So each press moves on, and one item already in focus is never
+ * pressed to no effect.
+ */
+export function nextOf(home: HomeView, count: keyof HomeCounts, from: string | null): string | null {
+  const refs = refsOf(home, count);
+  const order = orderedRefs(home);
+  const at = from === null ? -1 : order.indexOf(from);
+  if (at === -1) return refs[0] ?? null;
+  return refs.find((ref) => order.indexOf(ref) > at) ?? refs[0] ?? null;
 }
 
 /**

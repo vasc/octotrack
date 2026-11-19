@@ -556,9 +556,9 @@ describe("DriftItem", () => {
 
 describe("TopBar", () => {
   const counts = [
-    { key: "toAnswer" as const, label: "to answer", count: 4, to: "D-56" },
-    { key: "toAccept" as const, label: "to accept", count: 1, to: "L-6" },
-    { key: "toStepIn" as const, label: "to step in", count: 1, to: "stepin:L-9" },
+    { key: "toAnswer" as const, label: "to answer", count: 4 },
+    { key: "toAccept" as const, label: "to accept", count: 1 },
+    { key: "toStepIn" as const, label: "to step in", count: 1 },
   ];
 
   test("puts Lines first: the name opens it, and Log and Agents are quieter places beside it", () => {
@@ -583,10 +583,8 @@ describe("TopBar", () => {
     expect(nav.getAllByRole("link").map((link) => link.textContent)).toEqual(["Octotrack", "Log", "Agents"]);
     expect(nav.getByRole("link", { name: "Log" }).getAttribute("aria-current")).toBe("page");
     expect(nav.getByRole("link", { name: "Octotrack" }).getAttribute("aria-current")).toBeNull();
-    expect(view.getByRole("link", { name: "4 to answer" }).getAttribute("href")).toBe("/?focus=D-56");
-    expect(view.getByRole("link", { name: "1 to step in" }).getAttribute("href")).toBe(
-      "/?focus=stepin%3AL-9",
-    );
+    expect(view.getByRole("link", { name: "4 to answer" }).getAttribute("href")).toBe("/?next=toAnswer");
+    expect(view.getByRole("link", { name: "1 to step in" }).getAttribute("href")).toBe("/?next=toStepIn");
     expect(view.queryByRole("combobox")).toBeNull();
     fireEvent.click(view.getByRole("button", { name: "I'm at: All places" }));
     const menu = within(view.getByRole("menu", { name: "I'm at" }));
@@ -630,7 +628,7 @@ describe("TopBar", () => {
         onPalette={() => {}}
         onMode={() => {}}
         path="/"
-        counts={[{ key: "urgent" as const, label: "urgent", count: 1, to: "D-60" }, ...counts]}
+        counts={[{ key: "urgent" as const, label: "urgent", count: 1 }, ...counts]}
         places={[]}
         at={null}
         onAt={() => {}}
@@ -643,7 +641,7 @@ describe("TopBar", () => {
       within(status)
         .getAllByRole("link")
         .map((link) => link.getAttribute("href")),
-    ).toEqual(["/?focus=D-60", "/?focus=D-56", "/?focus=L-6", "/?focus=stepin%3AL-9"]);
+    ).toEqual(["/?next=urgent", "/?next=toAnswer", "/?next=toAccept", "/?next=toStepIn"]);
     const urgent = within(status).getByRole("link", { name: "1 urgent" });
     expect(urgent.getAttribute("data-urgent")).toBe("true");
     // Its mark is Status's for urgent, the triangle, never colour alone.

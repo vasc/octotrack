@@ -326,7 +326,7 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 ### components/ui/Notice.tsx
 
 - Designed in: Home-FirstRun.dc.html; Home-States.dc.html, states A, B, E
-- What it shows: "Nothing is placed yet" with its sentence and "Accept 50 recommendations"; "No lines yet" with `octo guide` and New line; "Nothing needs you"; "The tracker is not answering" in the bad tone.
+- What it shows: "Nothing is placed yet" with its sentence and "Accept 50 recommendations"; "No lines yet" with `octo guide` and New line; "Nothing needs you"; "The tracker is not answering" in the bad tone. The action sits at the end on a wide screen; where the words and it do not fit side by side, it wraps under the words, which keep the full width.
 - Changes from today: new; these were rows in a one-row list.
 - Loading: never loads on its own.
 - Error: its bad form is itself the error (E).

@@ -33,12 +33,12 @@ const PHONE_OPEN_LINES = 2;
 export function HomePage() {
   const h = useHome();
   const { params } = useRoute();
-  // A tapped notification, or a count in the bar, opens its item focused.
+  // A tapped notification opens its item focused; a count in the bar, the next item it counts.
   const asked = params.get("focus");
   const narrow = useNarrow();
   const home = h.home.data;
   const page = useRef<HTMLDivElement>(null);
-  const focusState = useHomeFocusOnPage(page, home, asked, h.held);
+  const focusState = useHomeFocusOnPage(page, home, asked, h.held, params.get("next"));
   const { focus, choose, skip } = focusState;
   const [starting, setStarting] = useState<string | null>(null);
   // With a ref open in the panel, or a Start sheet open, that takes the keys and home stands down, so one key never

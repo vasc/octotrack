@@ -22,7 +22,7 @@ the canvas at https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 ### components/layout/TopBar.tsx
 
 - Designed in: Shell.dc.html, states A, E; Home-States.dc.html, state I
-- What it shows: "Octotrack", Log, Agents; then what waits on you ("1 urgent", "2 to answer"); then I'm at, "+ New line", appearance "[half]", keys "?".
+- What it shows: "Octotrack", Log, Agents; then what waits on you ("1 urgent", "2 to answer"); then I'm at, "+ New line", appearance "[half]", keys "?". Each count goes to Lines with the next item it counts after the one in focus, round to the first after the last, so every press moves on, even on a phone where there are no keys and focus starts on the very item a count would name; pressed on another page, it goes to the first.
 - Changes from today: the current page is bold and underlined (today only ink colour); on a phone the bar folds to "Octotrack", "+" and "[pages]", with the counts on a row under it.
 - Loading: while Lines is loading the counts area is empty.
 - Error: if Lines failed to load, the strip of Home-States F covers the counts. If the places fail to load, follows the Primitives pattern beside the bar's controls, with Try again (today I'm at silently vanishes).

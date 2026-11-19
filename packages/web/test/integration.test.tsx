@@ -1587,6 +1587,27 @@ describe("lines of work", () => {
       await view.findByRole("article", { name: "Weigh it" });
     });
 
+    test("each press of a count goes on to the next such item, from the one in focus, and round again", async () => {
+      seedLines();
+      server.act(
+        c.linePropose,
+        { title: "Garden feed", doneWhen: "It loads.", recommendation: "up_next", why: "It broke." },
+        "panel-agent",
+      );
+      navigate("/");
+      const view = renderApp(<App />);
+      const count = await view.findByRole("link", { name: "2 to accept" });
+      const focusedOn = (name: string) =>
+        waitFor(() => expect(focusOf(view.getByRole("article", { name }))).toBe("true"));
+      // Focus starts on the first proposal, so a count that went to the first such item would do nothing at all.
+      await focusedOn("Wall mount");
+      // From the one in focus, a press moves on, on a phone where there are no keys to move with, and round again.
+      fireEvent.click(count);
+      await focusedOn("Garden feed");
+      fireEvent.click(view.getByRole("link", { name: "2 to accept" }));
+      await focusedOn("Wall mount");
+    });
+
     test("past six working lines, the header says what spreading thin costs", async () => {
       for (const index of [1, 2, 3, 4, 5, 6, 7]) {
         server.tracker.call(

@@ -1930,9 +1930,11 @@
   background: var(--bad-soft);
 }
 
+/* The words take their own width, up to a line's measure, so where they and the action do not fit side by side the
+   action wraps under them rather than squeezing them into a column. */
 .ui-notice-words {
   display: flex;
-  flex: 1;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: var(--space-2);
   min-width: 0;

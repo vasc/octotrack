@@ -2,7 +2,6 @@ import { contracts } from "@octotrack/core/contracts";
 import type { HomeCounts } from "@octotrack/core/schemas";
 import { useMemo } from "react";
 import type { CountLink } from "../components/layout/TopBar.tsx";
-import { firstOf } from "../lib/focus.ts";
 import { useOpMutation, useOpQuery } from "./useOp.ts";
 
 const LABELS: readonly (readonly [keyof HomeCounts, string])[] = [
@@ -27,7 +26,6 @@ export function useTopBar() {
             key,
             label,
             count: data.counts[key],
-            to: firstOf(data, key),
           })),
     [data],
   );

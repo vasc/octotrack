@@ -8,13 +8,11 @@ import { AppearanceMenu } from "./AppearanceMenu.tsx";
 import { AtMenu } from "./AtMenu.tsx";
 import { PagesMenu } from "./PagesMenu.tsx";
 
-/** The header counts, each a link to the first such item in focus order. Zeros are left out. */
+/** The header counts, each a link to the next such item in focus order, on Lines. Zeros are left out. */
 export interface CountLink {
   key: keyof HomeCounts;
   label: string;
   count: number;
-  /** The item it opens, focused on Lines. */
-  to: string | null;
 }
 
 export interface TopBarProps {
@@ -87,7 +85,7 @@ export function TopBar({
                 n={count.count}
                 label={count.label}
                 urgent={count.key === "urgent"}
-                href={count.to === null ? "/" : `/?focus=${encodeURIComponent(count.to)}`}
+                href={`/?next=${count.key}`}
                 onGo={navigate}
               />
             ))}

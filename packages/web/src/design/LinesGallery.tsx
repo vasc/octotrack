@@ -54,10 +54,10 @@ export function LinesGallery() {
           onMode={() => {}}
           path="/"
           counts={[
-            { key: "toAnswer", label: "to answer", count: 4, to: "D-56" },
-            { key: "toDo", label: "to do", count: 3, to: "OCT-7" },
-            { key: "toAccept", label: "to accept", count: 1, to: "L-6" },
-            { key: "toStepIn", label: "to step in", count: 1, to: "stepin:L-9" },
+            { key: "toAnswer", label: "to answer", count: 4 },
+            { key: "toDo", label: "to do", count: 3 },
+            { key: "toAccept", label: "to accept", count: 1 },
+            { key: "toStepIn", label: "to step in", count: 1 },
           ]}
           places={["the bench", "the Mac"]}
           at={null}
