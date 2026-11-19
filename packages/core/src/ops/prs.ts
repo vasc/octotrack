@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { windingDown } from "../agents/claims.ts";
 import { contracts, type PrInput } from "../contracts.ts";
-import { extractIssueRefs, implementedRefs, normalizeRef } from "../refs.ts";
+import { extractIssueRefs, implementedRefs, normalizeRef, parseRepoPrRef } from "../refs.ts";
+import { notFound } from "../errors.ts";
 import type { EventAttrs, Issue, Line, PullRequest } from "../schemas.ts";
 import type { EventTypeName } from "../query/values.ts";
 import { applyPatch, countOf, emit, nextNumber } from "../store/common.ts";
@@ -262,7 +263,74 @@ function upsertPr(ctx: Ctx, input: PrInput): { pr: PullRequest; changed: boolean
   return { pr: getPr(ctx, pr.ref) ?? pr, changed };
 }
 
+/** A pull request by its ref, PR-12, or as agents have it to hand, owner/repo#12. */
+function requirePrRef(ctx: Ctx, ref: string): PullRequest {
+  const byNumber = parseRepoPrRef(ref);
+  const pr =
+    byNumber === null ? getPr(ctx, normalizeRef(ref)) : getPrByNumber(ctx, byNumber.repo, byNumber.number);
+  if (pr === null) throw notFound(ref);
+  return pr;
+}
+
+/** Still open: open first, drafts after; ready to merge before either, the latest said first. */
+function comparePrsOnLine(a: PullRequest, b: PullRequest): number {
+  if ((a.readyAt === null) !== (b.readyAt === null)) return a.readyAt === null ? 1 : -1;
+  if (a.readyAt !== null && b.readyAt !== null && a.readyAt !== b.readyAt)
+    return a.readyAt < b.readyAt ? 1 : -1;
+  if (a.state !== b.state) return a.state === "open" ? -1 : 1;
+  return a.number - b.number;
+}
+
+/** A line's pull requests still open, those implementing any of its issues, ready to merge first. */
+export function openPrsOn(ctx: Ctx, line: string): PullRequest[] {
+  return rows(
+    ctx,
+    PrRow,
+    `SELECT DISTINCT p.* FROM prs p
+       JOIN links k ON k.fromRef = p.ref AND k.rel = 'implements'
+       JOIN issues i ON i.ref = k.toRef
+     WHERE i.line = ? AND p.state IN ('open', 'draft')`,
+    [line],
+  ).sort(comparePrsOnLine);
+}
+
 export const prOps = [
+  bind(contracts.prReadyToMerge, (ctx, input) => {
+    const pr = requirePrRef(ctx, input.ref);
+    const ready = input.ready ?? true;
+    const why = input.why?.trim() ?? "";
+    ctx.sql.run(
+      "UPDATE prs SET readyBy = ?, readyAt = ?, readyWhy = ?, readySha = ?, updatedAt = ? WHERE ref = ?",
+      [
+        ready ? ctx.actor : null,
+        ready ? ctx.now : null,
+        ready && why !== "" ? why : null,
+        ready ? pr.headSha : null,
+        ctx.now,
+        pr.ref,
+      ],
+    );
+    const label = `${pr.ref} (${pr.repo}#${pr.number})`;
+    const issues = implementedIssues(ctx, pr.ref, {
+      repo: pr.repo,
+      number: pr.number,
+      title: pr.title,
+      state: pr.state,
+    });
+    emit(ctx, {
+      type: ready ? "pr.ready_to_merge" : "pr.not_ready_to_merge",
+      kind: "pr",
+      ref: pr.ref,
+      project: pr.project,
+      line: lineOf(issues),
+      summary: ready
+        ? `${label} is ready to merge${why === "" ? "" : `: ${why}`}`
+        : `${label} is not ready to merge after all: ${pr.title}`,
+      attrs: prAttrs(pr),
+    });
+    return getPr(ctx, pr.ref) ?? pr;
+  }),
+
   bind(contracts.prUpsert, (ctx, input) => {
     const pr = upsertPr(ctx, input).pr;
     // Reported, not seen on GitHub: until sync confirms it, the runner never closes it.

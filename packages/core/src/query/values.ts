@@ -34,6 +34,8 @@ export const EVENT_TYPES = [
   "pr.merged",
   "pr.closed",
   "pr.ready",
+  "pr.ready_to_merge",
+  "pr.not_ready_to_merge",
   "pr.reopened",
   "pr.checks_changed",
   "pr.review_changed",

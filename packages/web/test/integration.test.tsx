@@ -462,7 +462,8 @@ describe("live updates, with nothing but the server's own notifications", () => 
     );
     fireEvent.click(view.getByRole("button", { name: "Enclosure" }));
     const panel = within(await view.findByRole("complementary", { name: "L-1" }));
-    await panel.findByText(/checks failing/);
+    const prs = within(await panel.findByRole("region", { name: "Pull requests" }));
+    await prs.findByText(/checks failing/);
     server.act(
       c.prUpsert,
       { repo: "a/b", number: 1, title: "PR from an agent", state: "open", checks: "passing" },
@@ -1611,6 +1612,37 @@ describe("lines of work", () => {
           "Weekly digest",
         ),
       );
+    });
+
+    test("a line shows its open pull requests, the ones its agent says are ready to merge first, here and in its panel", async () => {
+      seedLines();
+      const base = server.act(c.issueCreate, { project: "OCT", title: "Base", line: "L-1" }, "octo.1");
+      for (const [number, title] of [
+        [14, "Print the base"],
+        [15, "Print the lid"],
+      ] as const) {
+        server.act(
+          c.prUpsert,
+          { repo: "acme/panel", number, title, state: "open", issues: [base.ref] },
+          "octo.1",
+        );
+      }
+      server.act(c.prReadyToMerge, { ref: "acme/panel#15", why: "Printed and fits." }, "octo.1");
+      navigate("/");
+      const view = renderApp(<App />);
+      const line = within(await view.findByRole("article", { name: "Sendspin enclosure" }));
+      const named = () => line.getAllByRole("article").map((row) => row.getAttribute("aria-label"));
+      await waitFor(() =>
+        expect(named()).toEqual(["Ready to merge: Print the lid", "Pull request: Print the base"]),
+      );
+      line.getByText("Printed and fits.");
+      navigate("/?ref=L-1");
+      const panel = within(await view.findByRole("complementary", { name: "L-1" }));
+      const prs = within(await panel.findByRole("region", { name: "Pull requests" }));
+      expect(prs.getAllByRole("article").map((row) => row.getAttribute("aria-label"))).toEqual([
+        "Ready to merge: Print the lid",
+        "Pull request: Print the base",
+      ]);
     });
 
     test("a press anywhere on a line that is not one of its controls opens it", async () => {

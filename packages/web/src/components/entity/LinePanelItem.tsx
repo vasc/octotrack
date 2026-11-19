@@ -30,6 +30,8 @@ import { TellBox } from "./TellBox.tsx";
 import { useNarrow } from "../../hooks/useNarrow.ts";
 import { usePlanActions } from "../../hooks/usePlanActions.ts";
 import { BranchEditSheet } from "../lines/BranchEditSheet.tsx";
+import { LinePrs } from "../lines/LinePrs.tsx";
+import { Section } from "../ui/Section.tsx";
 import { PromoteSheet } from "../lines/PromoteSheet.tsx";
 
 /**
@@ -143,6 +145,12 @@ export function LinePanelItem({
         </Note>
       )}
       <PanelForYou title={line.title} items={forYou} h={h} status={homeStatus("what needs you")} />
+      {/* Loading and failing show once, with the plan, which comes in the same answer. */}
+      {shown.data === undefined || shown.data.prs.length === 0 ? null : (
+        <Section title="Pull requests" count={shown.data.prs.length}>
+          <LinePrs prs={shown.data.prs} />
+        </Section>
+      )}
       <SummaryBox line={line} />
       <OpenDrift drift={drift} />
       <Loaded

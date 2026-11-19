@@ -121,10 +121,9 @@ their next command, and wakes them if they are asleep. Urgent is for working lin
 
 ## Things the developer does with their hands
 
-Anything only the developer can do (merge a pull request, log in to a service, plug something in, measure, play-test)
-is a task, never a question: a question is for a choice between options. A title is enough.
+Anything only the developer can do (log in to a service, plug something in, measure, play-test) is a task, never a
+question: a question is for a choice between options. A title is enough.
 
-  octo task file "Merge vasc/homepanel#14: checks pass and it is reviewed"
   octo task file "Log in to Tailscale on the Mac mini" --place "the Mac mini"
   octo task file "Measure the grip" --place "the bench" --outcome "The five numbers the model assumes, in mm" \\
     --field Length --field Holes --field "USB-C grip" --field Flange --field Clearance
@@ -139,6 +138,16 @@ and the task stays open. When they tell you the outcome in conversation, record 
   octo task done PANEL-9 --value "Length=41 mm" --said "<exactly what they said>"
 
 If it no longer stands, withdraw it with octo held withdraw. If it is needed again after it closed, file a new task.
+
+## Pull requests ready to merge
+
+A pull request is ready to merge when you judge it is: what that means differs between developers and repos, so it is
+yours to decide (checks green, reviewed, tried on the device, whatever this one needs). Say so, and why; it shows first
+among its line's pull requests, with your words, for the developer to merge. A push after it shows as well. Take it back
+if it stops being ready:
+
+  octo pr ready vasc/homepanel#14 "Printed and fits; checks pass"
+  octo pr ready PR-12 --not
 
 ## Proposing lines
 

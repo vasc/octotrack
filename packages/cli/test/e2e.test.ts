@@ -595,6 +595,16 @@ describe("what the audit found", () => {
     expect((await finish(waiting)).code).toBe(0);
   }, 15000);
 
+  test("an agent says a PR is ready to merge, and why, and can take it back", async () => {
+    await octo(["pr", "upsert", "acme/ready#4", "Print the lid"]);
+    const Ready = z.object({ readyBy: z.string().nullable(), readyWhy: z.string().nullable() });
+    const ready = await data(Ready, ["pr", "ready", "acme/ready#4", "Checks", "pass", "and", "it", "fits"]);
+    expect(ready).toEqual({ readyBy: "agent-a", readyWhy: "Checks pass and it fits" });
+    const back = await data(Ready, ["pr", "ready", "acme/ready#4", "--not"]);
+    expect(back).toEqual({ readyBy: null, readyWhy: null });
+    expect((await octo(["pr", "ready", "acme/ready#4", "--not", "because"])).code).toBe(2);
+  });
+
   test("--timeout 0 checks once and answers honestly", async () => {
     const decision = await data(WithRef, ["decision", "ask", "Zero timeout"]);
     const open = await octo(["watch", "--until", `ref:${decision.ref} status:decided`, "--timeout", "0"]);

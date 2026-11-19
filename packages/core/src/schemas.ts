@@ -335,6 +335,16 @@ export const PullRequest = z.object({
   deletions: z.number().int(),
   mergedAt: z.string().nullable(),
   closedAt: z.string().nullable(),
+  /**
+   * Who said it is ready to merge, and when: an agent's judgment, since ready means different things for different
+   * people and repos. Null until one says so, and again once it is taken back.
+   */
+  readyBy: z.string().nullable(),
+  readyAt: z.string().nullable(),
+  /** Why it is ready, in the words of whoever said so. */
+  readyWhy: z.string().nullable(),
+  /** The commit it was at when it was said to be ready: a push after that shows. */
+  readySha: z.string().nullable(),
   version: z.number().int(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -798,6 +808,8 @@ export const LineDetail = z.object({
     .nullable(),
   issues: z.array(EntitySummary),
   work: z.array(LineWork),
+  /** Its pull requests still open, ready to merge first, then open ones, then drafts. */
+  prs: z.array(PullRequest),
 });
 export type LineDetail = z.infer<typeof LineDetail>;
 
@@ -929,6 +941,8 @@ export const LineHome = z.object({
       unwoken: z.string().nullable(),
     }),
   ),
+  /** Its pull requests still open, ready to merge first, as the line's panel lists them. */
+  prs: z.array(PullRequest),
 });
 export type LineHome = z.infer<typeof LineHome>;
 

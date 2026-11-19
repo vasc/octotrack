@@ -1,6 +1,7 @@
 import type { ForYou, HomeView } from "@octotrack/core/schemas";
 import { type ReactNode, useState } from "react";
 import type { DropTarget } from "../../hooks/useDragOrder.ts";
+import { LinePrs } from "../lines/LinePrs.tsx";
 import type { HomeActions } from "../../hooks/useHome.ts";
 import { lineFocusRef, refOf, stepInRef } from "../../lib/focus.ts";
 import { List } from "../ui/List.tsx";
@@ -115,6 +116,7 @@ export function WorkingSection({
                     onShowMore={() => setExpanded(new Set([...expanded, line.ref]))}
                   />
                 )}
+                {at !== null || folded ? null : <LinePrs prs={details?.prs ?? []} />}
               </WorkingLine>
             );
           })}

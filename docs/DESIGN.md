@@ -345,7 +345,7 @@ Decisions made from that:
   started keeps its line until the developer releases it from Agents, where its last command shows how long it has been.
 - **Old names keep working for at least a phase** (`decision.*`, `project:`, M-, I- and U- refs), and the riskiest
   automation, the automatic Stop and the runner, first runs in a mode that only records what it would have done.
-- **A task is anything the developer does with their own hands.** Merging a pull request, logging in to a service,
+- **A task is anything the developer does with their own hands.** Logging in to a service, plugging something in,
   measuring: an agent files a task, never a question, which is for a choice between options. A title is enough: a place
   is optional, and one not on the list yet is added to it; what to send back is optional, and with none Done needs no
   words (any typed go along as a note). The developer marks it done, says it cannot be done, or replies (`task.reply`):
@@ -353,6 +353,15 @@ Decisions made from that:
   operator is missing, sometimes the operator needs to do something like merge a pr or login to a service, now the ai
   has to set that up as a fake question and thats annoying, its a task that can be marked as done or replied to". Tasks
   existed, but demanded a place from a list the developer had left empty, so every one was refused.
+- **Ready to merge is the agent's call, and a line shows its pull requests.** An agent says a pull request is ready to
+  merge (`pr.ready_to_merge`, `octo pr ready <PR> [why]`, `--not` takes it back), recording who, when, why and the commit
+  it was at. A line lists its pull requests still open, those said ready first, then open, then drafts: under a working
+  line on home and as Pull requests in its panel, right after For you. A push after it was said ready shows as "pushed
+  to since"; nothing takes the mark away on its own. Merging a pull request is no longer filed as a task. _Why:_ the
+  developer: "when a line has prs it should show the list of prs prominently, especially the ones ready to merge, ready
+  to merge is a decision the agent does, it can mean different things for different people and repos". Keeping the
+  mark through a push, and showing the push, is my decision: dropping it would be a rule the developer did not ask for,
+  while hiding the push would let a stale judgment pass for a current one.
 - **No rule without a reason.** A refusal stays only when it keeps the data whole (a cycle of blocks, an option a
   question does not have, a step that is not in the plan), keeps two hands off one thing at once (an issue another holds,
   without `--force`; an answer waiting out its Undo; a second scoper), or keeps the log readable (agent names). Everything

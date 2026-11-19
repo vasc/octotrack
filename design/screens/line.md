@@ -107,6 +107,23 @@ owner, then Tell. A section with nothing in it says why in one sentence instead 
 - Error: "Not changed: …" under the button, with the tracker's words, until the next try.
 - Empty: a branch off the last step has no later step to hold up: "Holds up" lists only Nothing. A branch that became a line offers only "Holds up" and "Remove the branch", whose Undo bar says the line stays ("Removing branch 3a; L-12 stays a line of its own").
 
+### components/lines/LinePrs.tsx
+
+- Designed in: none yet; drawn from Primitives.dc.html, Row, as a list of rows like the plan's work.
+- What it shows: a line's pull requests still open, one row each, in the order the server gives: those an agent said are ready to merge first, named "Ready to merge" in the colour for what needs you, with who said so ("by panel-widgets") and why as the note ("Printed and fits; checks pass."); then open ones ("Pull request") and drafts ("Draft"). Facts: owner/repo#number, a link out to GitHub where it is merged; its checks; its review ("approved", "review requested", "changes requested" in the warm tone); "pushed to since" in the warm tone when a commit came after it was said ready. Merged and closed ones are left to the plan's work. On home it sits under a working line, after what it needs from you, and not on a folded line; in the line's panel it is the Pull requests section, right after For you.
+- Changes from today: new; before, a line's pull requests showed only as facts under the plan's issues, and merging one was filed as a task.
+- Loading: never loads on its own: home has it with the line; in the panel it comes with the plan, which says Loading and Could not load for both.
+- Error: cannot fail on its own.
+- Empty: draws nothing: no section, no rows.
+
+### components/lines/PrChecks.tsx
+
+- Designed in: Line-States.dc.html, state A (the checks in WorkList's facts).
+- What it shows: a pull request's checks: "checks failing" after a cross in the warm tone, a check when they pass, "checks running", nothing when none ran.
+- Loading: never loads on its own.
+- Error: cannot fail on its own.
+- Empty: checks never run draw nothing.
+
 ### components/entity/WorkList.tsx
 
 - Designed in: Line-States.dc.html, states A and J

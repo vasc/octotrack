@@ -1,26 +1,13 @@
 import type { LineWork } from "@octotrack/core/schemas";
 import { humanize } from "../../lib/format.ts";
+import { PrChecks } from "../lines/PrChecks.tsx";
 import { Mark } from "../ui/Badge.tsx";
-import { Fact, Facts } from "../ui/Facts.tsx";
+import { Facts } from "../ui/Facts.tsx";
 import { List } from "../ui/List.tsx";
 import { RefLink } from "../ui/RefLink.tsx";
 import { Row } from "../ui/Row.tsx";
 
 type Pr = LineWork["prs"][number];
-
-/** A pull request's checks in a word or two; failing ones in the warm tone, since they hold the work up. */
-function ChecksWord({ checks }: { checks: Pr["checks"] }) {
-  if (checks === "failing")
-    return (
-      <Fact tone="stuck">
-        <Mark tone="bad" icon="cross" />
-        checks failing
-      </Fact>
-    );
-  if (checks === "passing") return <Mark tone="good" icon="check" />;
-  if (checks === "pending") return "checks running";
-  return null;
-}
 
 /** An issue's state in words: "to do", "in progress". */
 function statusWords(status: LineWork["status"]): string {
@@ -35,7 +22,7 @@ function PrFact({ pr }: { pr: Pr }) {
       {pr.checks === "none" ? null : (
         <>
           {" · "}
-          <ChecksWord checks={pr.checks} />
+          <PrChecks checks={pr.checks} />
         </>
       )}
     </>

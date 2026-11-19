@@ -90,6 +90,10 @@ export function pr(overrides: Partial<PullRequest> = {}): PullRequest {
     deletions: 2,
     mergedAt: null,
     closedAt: null,
+    readyBy: null,
+    readyAt: null,
+    readyWhy: null,
+    readySha: null,
     version: 1,
     createdAt: AT,
     updatedAt: AT,
@@ -320,6 +324,7 @@ export function lineHome(overrides: Partial<LineHome> = {}): LineHome {
     sinceSummary: 0,
     scopedSteps: 0,
     answers: [],
+    prs: [],
     ...overrides,
   };
 }

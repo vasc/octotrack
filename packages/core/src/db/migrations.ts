@@ -399,6 +399,14 @@ const MIGRATIONS: readonly Migration[] = [
   CREATE INDEX plan_branches_line ON plan_branches(line);
   ALTER TABLE lines ADD COLUMN branchOf INTEGER;
   `,
+  // A pull request an agent says is ready to merge, by its own judgment of what that means for this repo and developer:
+  // who said so, when, why, and the commit it was at, so a push after it shows.
+  `
+  ALTER TABLE prs ADD COLUMN readyBy TEXT;
+  ALTER TABLE prs ADD COLUMN readyAt TEXT;
+  ALTER TABLE prs ADD COLUMN readyWhy TEXT;
+  ALTER TABLE prs ADD COLUMN readySha TEXT;
+  `,
 ];
 
 const UserVersion = z.object({ user_version: z.number().int() });

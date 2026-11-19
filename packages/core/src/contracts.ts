@@ -945,6 +945,19 @@ export const contracts = {
   ),
 
   prUpsert: write("pr.upsert", "Create or update a pull request", PrInput, PullRequest),
+  prReadyToMerge: write(
+    "pr.ready_to_merge",
+    "Say a pull request is ready to merge, by your own judgment of what ready means for its repo and its developer; ready false takes it back",
+    z.strictObject({
+      /** PR-12, or owner/repo#12. */
+      ref: z.string().min(1),
+      /** False takes it back. Default: true. */
+      ready: z.boolean().optional(),
+      /** Why it is ready, which the developer reads beside it. */
+      why: z.string().optional(),
+    }),
+    PullRequest,
+  ),
   prSync: write(
     "pr.sync",
     "Report the state of many pull requests at once",

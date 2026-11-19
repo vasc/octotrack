@@ -83,6 +83,35 @@ export const networkCommands: Command[] = [
     },
   },
   {
+    path: ["pr", "ready"],
+    usage: "<PR> [why]",
+    summary:
+      "Say a pull request is ready to merge, by your judgment of what ready means for its repo and developer; it shows first on its line",
+    options: {
+      not: { type: "boolean", description: "Take it back: it is not ready to merge after all" },
+    },
+    examples: [
+      'octo pr ready vasc/homepanel#15 "Printed and fits; checks pass"',
+      "octo pr ready PR-12 --not",
+    ],
+    ops: [c.prReadyToMerge.name],
+    async run({ client, out }, args) {
+      const why = args.positionals.slice(1).join(" ").trim();
+      const ready = !args.flag("not");
+      if (!ready && why !== "") throw new UsageError("--not takes no reason");
+      const outcome = await client.call(
+        c.prReadyToMerge,
+        compact({ ref: args.requirePositional(0, "PR"), ready, why: why === "" ? undefined : why }),
+      );
+      const pr = outcome.data;
+      out.result(outcome, () =>
+        ready
+          ? `${r.bold(`${pr.repo}#${pr.number}`)} is ready to merge: ${pr.title}`
+          : `${r.bold(`${pr.repo}#${pr.number}`)} is no longer ready to merge: ${pr.title}`,
+      );
+    },
+  },
+  {
     path: ["pr", "sync"],
     summary: "Have the server pull PR status from GitHub now, for one repo or every repo with a GitHub name",
     options: {

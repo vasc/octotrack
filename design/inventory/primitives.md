@@ -233,7 +233,7 @@
 - **Phone / touch:** none directly. Inside a Row on ≤720px, the `.ui-row-facts` wrapper becomes a block under the title.
 - **Content edge cases:**
   - Text flows inline and wraps anywhere, so a separator dot can start a line.
-  - `Children.toArray` drops `null`, `undefined` and booleans, but not `""`. An empty-string child still renders as a fact with a leading "·", despite the doc comment saying "empty ones are left out".
+  - `Children.toArray` drops `null`, `undefined` and booleans, and Facts drops `""` itself. A child component that renders nothing still makes a `.ui-fact` span, which `.ui-fact:empty` hides, and the dot goes only between facts that are not empty.
   - There is no truncation.
 - **Used by:**
   - Facts: agents/AgentRosterRow, decisions/DecisionMeta, decisions/QuestionStrip, drift/DriftItem, entity/EntityCrumbs, entity/EventList, entity/IssuePanel, entity/LinePanelHead, entity/LinkList, entity/OwnerBox, entity/PlanList, entity/PullRequestBox, entity/SinceSummary, entity/TaskFrees, entity/UpdatesSection, feed/FeedItem, feed/LogGroup, home/AtSection, home/LineMeta, home/NothingNeedsYou, home/ProposalCard, home/QuietRow, home/SpreadThin, home/TaskCard, home/TaskClosed, home/UpNextRow.
@@ -1357,7 +1357,7 @@
   - Button is nowrap with no max-width (ui.css:207).
   - The textarea grows without limit (ui.css:545-548, Field.tsx:44-50).
 - **Lead column overflow.** `.ui-row-lead` has a fixed width of 24 (ui.css:322), so lead numbers of three or more digits overflow; `.ui-lead` uses min-width and grows (ui.css:592).
-- **Facts keeps empty strings.** Facts does not drop `""` children, which then render with a leading "·" (Facts.tsx:5).
+- **Facts keeps empty strings.** Fixed: Facts drops `""`, and an empty fact draws no dot.
 - **Option text indent.** With no number drawn, the empty grid column still adds an 8px indent (ui.css:794-795, 811-813).
 - **Prose elements not styled:** tables, hr, img, h5, h6 and task-list checkboxes (ui.css:121-188).
 - **States have no horizontal padding.** They sit flush with the edge, not at `row-inset` (ui.css:884).

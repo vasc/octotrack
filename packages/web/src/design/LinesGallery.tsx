@@ -114,6 +114,7 @@ export function LinesGallery() {
                   unwoken: null,
                 },
               ],
+              prs: [],
             }}
           >
             <List>
@@ -285,6 +286,7 @@ export function LinesGallery() {
               sinceSummary: 0,
               scopedSteps: 0,
               answers: [],
+              prs: [],
             }}
             onStart={NOOP}
           />

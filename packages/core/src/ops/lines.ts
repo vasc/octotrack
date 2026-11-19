@@ -10,6 +10,7 @@ import { filterEntities } from "../store/docs.ts";
 import { allLines, requireLine, requireProject, summarize } from "../store/entities.ts";
 import { loadGraph } from "../store/graph.ts";
 import { IssueRow, PrRow } from "../store/rows.ts";
+import { openPrsOn } from "./prs.ts";
 import { afterAdd, afterMove, settleHeldWork, windDown } from "../agents/claims.ts";
 import { DEVELOPER } from "../agents/state.ts";
 import { addNotice } from "../store/agents.ts";
@@ -396,6 +397,7 @@ export const lineOps = [
         assignee: issue.assignee,
         prs: prsOf(issue.ref),
       })),
+      prs: openPrsOn(ctx, line.ref),
     };
   }),
 

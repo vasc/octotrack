@@ -132,6 +132,7 @@ const EVERY_WRITE: readonly (readonly [string, unknown])[] = [
   ["decision.supersede", { ref: "D-2", by: "D-3" }],
   ["pr.upsert", { repo: "a/b", number: 1, title: "Renamed", state: "open" }],
   ["pr.sync", { prs: [{ repo: "a/b", number: 2, title: "Another", state: "open" }] }],
+  ["pr.ready_to_merge", { ref: "a/b#1", why: "Checks pass" }],
   ["link.add", { from: "OCT-1", rel: "relates", to: "D-1" }],
   ["link.remove", { from: "OCT-1", rel: "relates", to: "D-1" }],
   ["update.post", { body: "Hello", target: "OCT-1" }],

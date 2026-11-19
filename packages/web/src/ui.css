@@ -142,7 +142,12 @@
   color: var(--ink-3);
 }
 
-.ui-fact + .ui-fact::before {
+/* A fact whose part drew nothing takes no place and no dot, so a run of facts never shows "· ·". */
+.ui-fact:empty {
+  display: none;
+}
+
+.ui-fact:not(:empty) ~ .ui-fact:not(:empty)::before {
   content: "·";
   margin: 0 var(--space-3);
   color: var(--ink-3);

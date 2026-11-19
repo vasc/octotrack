@@ -13,6 +13,7 @@ import type { Ctx } from "../store/context.ts";
 import { one, rows } from "../store/context.ts";
 import { allLines } from "../store/entities.ts";
 import { DecisionRow, IssueRow } from "../store/rows.ts";
+import { openPrsOn } from "./prs.ts";
 import { waitsOn } from "../plan.ts";
 import { branchOfLine, loadPlan } from "./plan.ts";
 import { buildQueue } from "./decisions.ts";
@@ -216,6 +217,7 @@ export function buildHome(ctx: Ctx): HomeView {
       sinceSummary: line.summaryAt === null ? 0 : changesSince(ctx, line.ref, line.summaryAt),
       scopedSteps: steps.length,
       answers: working ? answersOn(ctx, line.ref) : [],
+      prs: openPrsOn(ctx, line.ref),
     };
   };
 

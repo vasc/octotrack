@@ -177,6 +177,8 @@ properties and appear on the `/design` specimen; **structural** ones load data a
 | `LineActions`      | Pure       | A line's choices by its state, and More for Drop and Fold                                                |
 | `SummaryBox`       | Pure       | Its headline and summary, and when it was written                                                        |
 | `PanelForYou`      | Structural | What the line needs, the first open                                                                      |
+| `LinePrs`          | Pure       | Its open pull requests, ready to merge first, each out to GitHub                                         |
+| `PrChecks`         | Pure       | A pull request's checks in a word or two, failing ones warm                                              |
 | `PlanList`         | Pure       | The plan as a tree: its critical path, the step it is on, how many branches are open, work on no step    |
 | `PlanStepItem`     | Pure       | One step: done, now or next, what it waits on, its status menu, its issues, the branches forking from it |
 | `PlanBranchItem`   | Pure       | One branch on a `Rail`: what it holds up, how far along, its More, its own steps; or the line it became  |

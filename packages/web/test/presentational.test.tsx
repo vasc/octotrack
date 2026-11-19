@@ -48,6 +48,7 @@ import { LineActions } from "../src/components/entity/LineActions.tsx";
 import { OwnWorkBox } from "../src/components/entity/OwnWorkBox.tsx";
 import { TellBox } from "../src/components/entity/TellBox.tsx";
 import { TableForm } from "../src/components/lines/TableForm.tsx";
+import { LinePrs } from "../src/components/lines/LinePrs.tsx";
 import { TopBar } from "../src/components/layout/TopBar.tsx";
 import { PagesMenu } from "../src/components/layout/PagesMenu.tsx";
 import { UndoBar } from "../src/components/layout/UndoBar.tsx";
@@ -1988,6 +1989,7 @@ describe("answers on their line", () => {
           sinceSummary: 0,
           scopedSteps: 0,
           answers: [answer({}), answer({ ref: "D-2", answer: "USB-C", status: "carried_out" })],
+          prs: [],
         }}
       />,
     );
@@ -3055,5 +3057,56 @@ describe("useReloadOnNewBuild", () => {
     } finally {
       box.remove();
     }
+  });
+});
+
+describe("LinePrs", () => {
+  const ready = pr({
+    ref: "PR-2",
+    number: 15,
+    title: "Print the lid",
+    url: "https://github.com/acme/app/pull/15",
+    readyBy: "panel-widgets",
+    readyAt: "2026-11-19T10:00:00.000Z",
+    readyWhy: "Printed and fits; checks pass.",
+    readySha: "abc",
+    review: "approved",
+  });
+  const open = pr({ ref: "PR-1", number: 14, title: "Print the base", checks: "failing" });
+  const draft = pr({ ref: "PR-3", number: 16, title: "Try a thinner lid", state: "draft", checks: "none" });
+
+  test("lists them in the order given, a ready one saying so, who said it and why, each out to GitHub", () => {
+    const view = render(<LinePrs prs={[ready, open, draft]} />);
+    const rows = view.getAllByRole("article");
+    expect(rows.map((row) => row.getAttribute("aria-label"))).toEqual([
+      "Ready to merge: Print the lid",
+      "Pull request: Print the base",
+      "Draft: Try a thinner lid",
+    ]);
+    const first = within(rows[0] ?? document.body);
+    first.getByText("Ready to merge");
+    first.getByText("Printed and fits; checks pass.");
+    first.getByText("by panel-widgets");
+    first.getByText("approved");
+    expect(first.getByRole("link", { name: "acme/app#15" }).getAttribute("href")).toBe(
+      "https://github.com/acme/app/pull/15",
+    );
+    within(rows[1] ?? document.body).getByText("checks failing");
+    expect(within(rows[0] ?? document.body).queryByText("pushed to since")).toBeNull();
+  });
+
+  test("checks never run and no review add no empty fact", () => {
+    const view = render(<LinePrs prs={[draft]} />);
+    expect(view.container.querySelectorAll(".ui-fact")).toHaveLength(1);
+  });
+
+  test("a push after it was said to be ready shows beside it", () => {
+    const view = render(<LinePrs prs={[{ ...ready, headSha: "def" }]} />);
+    view.getByText("pushed to since");
+  });
+
+  test("with none, it draws nothing", () => {
+    const view = render(<LinePrs prs={[]} />);
+    expect(view.container.innerHTML).toBe("");
   });
 });
