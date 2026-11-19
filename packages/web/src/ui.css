@@ -477,6 +477,11 @@
   inset: 0;
 }
 
+/* A line opened by a press anywhere on its head, as its title's link opens it. */
+.ui-row-head[data-action="press"] {
+  cursor: pointer;
+}
+
 .ui-row-head:is([data-action="open"], [data-action="toggle"]) {
   position: relative;
   cursor: pointer;

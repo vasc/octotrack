@@ -6,7 +6,6 @@ import { branchOfText, crewText } from "../../lib/lines.ts";
 import { openEntity } from "../../lib/router.ts";
 import { Button } from "../ui/Button.tsx";
 import { Facts } from "../ui/Facts.tsx";
-import { TextLink } from "../ui/RefLink.tsx";
 import { Note } from "../ui/Note.tsx";
 import { Row } from "../ui/Row.tsx";
 
@@ -53,7 +52,8 @@ export function UpNextRow({
       current={focused}
       {...(drop === undefined ? {} : { drop })}
       {...(handle === undefined ? {} : { lead: handle })}
-      title={<TextLink onClick={() => openEntity(line.ref)}>{line.title}</TextLink>}
+      title={line.title}
+      onPress={() => openEntity(line.ref)}
       facts={
         <Facts>
           {scoping}

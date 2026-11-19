@@ -254,7 +254,7 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 ### components/ui/Row.tsx
 
 - Designed in: Primitives.dc.html, Row
-- What it shows: lead, title, facts, note, and at the end the actions or a forward chevron when it opens something; in default, hover, focused item and opens-a-panel.
+- What it shows: lead, title, facts, note, and at the end the actions or a forward chevron when it opens something; in default, hover, focused item and opens-a-panel. A row that is a thing of its own and opens (`onPress`, a line of work) draws its title as a link and opens on a press anywhere on its head that is not one of its controls nor a selection of its words, with a pointer cursor; a drag target draws a rule where a dragged row would land.
 - Changes from today: the focused item has the fill plus the 1 px grey focus edge drawn inside the row (today only the fill); nothing ever gets a coloured side bar.
 - Loading: never loads on its own; on a first load its owner draws rows as outlines (Home-States D).
 - Error: cannot fail on its own: an owner says a failure under the row ("Not moved. …", Home-States H).

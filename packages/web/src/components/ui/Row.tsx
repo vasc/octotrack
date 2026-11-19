@@ -2,6 +2,7 @@ import { type ReactNode, useId } from "react";
 import type { DropTarget } from "../../hooks/useDragOrder.ts";
 import { KindText } from "./Item.tsx";
 import { Icon } from "./Icon.tsx";
+import { TextLink } from "./RefLink.tsx";
 
 /** The tone of the word that says what a row is: what needs you, what is stuck, or nothing in particular. */
 export type Tone = "needs" | "stuck" | "none";
@@ -36,10 +37,18 @@ type RowProps = {
   /** Another row can be dragged onto it, landing before or after it: a rule shows where while it is over it. */
   drop?: DropTarget;
 } & (
-  | { onOpen?: never; checked?: never; onToggle?: never }
-  | { onOpen(): void; checked?: never; onToggle?: never }
-  | { checked: boolean; onToggle(): void; onOpen?: never }
+  | { onOpen?: never; checked?: never; onToggle?: never; onPress?: never }
+  /**
+   * A thing of its own that opens, such as a line of work: its title is a link that opens it, and so is a press
+   * anywhere on its head that is not one of its controls, nor a selection of its words.
+   */
+  | { onPress(): void; onOpen?: never; checked?: never; onToggle?: never }
+  | { onOpen(): void; checked?: never; onToggle?: never; onPress?: never }
+  | { checked: boolean; onToggle(): void; onOpen?: never; onPress?: never }
 );
+
+/** What on a row's head acts by itself, so a press on it is not a press on the row. */
+const CONTROLS = "a, button, input, textarea, select, label, summary, [role='menu']";
 
 /**
  * One row of a list, the one shape everything in a list takes: what it is, its title and its facts, a quiet note, and
@@ -73,7 +82,9 @@ export function Row(props: RowProps) {
         </span>
       )}
       <span>
-        <span className="ui-row-title">{title}</span>
+        <span className="ui-row-title">
+          {props.onPress === undefined ? title : <TextLink onClick={props.onPress}>{title}</TextLink>}
+        </span>
         {facts === undefined ? null : <span className="ui-row-facts">{facts}</span>}
       </span>
       {note === undefined ? null : <span className="ui-row-note">{note}</span>}
@@ -90,7 +101,21 @@ export function Row(props: RowProps) {
         </span>
       </label>
     ) : (
-      <div className="ui-row-head" data-action={props.onOpen === undefined ? undefined : "open"}>
+      // biome-ignore lint/a11y/noStaticElementInteractions: a pointer's shortcut to the title's link, which keys reach
+      // biome-ignore lint/a11y/useKeyWithClickEvents: the title's link is the same action, in the tab order
+      <div
+        className="ui-row-head"
+        data-action={props.onOpen !== undefined ? "open" : props.onPress !== undefined ? "press" : undefined}
+        onClick={
+          props.onPress === undefined
+            ? undefined
+            : (event) => {
+                if (event.target instanceof Element && event.target.closest(CONTROLS) !== null) return;
+                if (window.getSelection()?.isCollapsed === false) return;
+                props.onPress?.();
+              }
+        }
+      >
         {lead === undefined ? null : <span className="ui-row-lead">{lead}</span>}
         {props.onOpen === undefined ? (
           text

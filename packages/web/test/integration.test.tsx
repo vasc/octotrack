@@ -1613,6 +1613,22 @@ describe("lines of work", () => {
       );
     });
 
+    test("a press anywhere on a line that is not one of its controls opens it", async () => {
+      seedLines();
+      navigate("/");
+      const view = renderApp(<App />);
+      const working = within(await view.findByRole("region", { name: "Working on" }));
+      // Its handle is a control: pressed, it opens its moves, not the line.
+      fireEvent.click(working.getByRole("button", { name: "Move Sendspin enclosure" }));
+      expect(view.queryByRole("complementary", { name: "L-1" })).toBeNull();
+      fireEvent.keyDown(window, { key: "Escape" });
+      const line = working.getByRole("article", { name: "Sendspin enclosure" });
+      const facts = line.querySelector(".ui-row-facts");
+      if (facts === null) throw new Error("The line shows no facts");
+      fireEvent.click(facts);
+      await view.findByRole("complementary", { name: "L-1" });
+    });
+
     test("a line is dragged by its handle before another, or sent to up next from its menu", async () => {
       seedLines();
       navigate("/");
@@ -2219,6 +2235,70 @@ describe("lines of work", () => {
       await waitFor(() => expect(document.activeElement?.contains(plug)).toBe(true));
       fireEvent.focus(view.getByRole("button", { name: "Open D-1" }));
       await waitFor(() => expect(selected(view, "Which board?")).toBe("true"));
+    });
+
+    test("one press opens what it lands on: nothing moves while the press is held", async () => {
+      onLine();
+      // Urgent, so it is open at the top, and Which plug? is its line's own row below it.
+      server.act(
+        c.decisionAsk,
+        { title: "Which board?", context: "Printed.", options, urgent: "time_boxed" },
+        "octo.1",
+      );
+      server.act(c.decisionAsk, { title: "Which plug?", context: "Side.", options }, "octo.1");
+      navigate("/");
+      const view = renderApp(<App />);
+      const plug = await view.findByRole("button", { name: "Open D-2" });
+      // A press takes the browser's focus as it goes down; Which board? stays open until the press ends, or the page
+      // would move under the pointer and the press would land on something else.
+      fireEvent.pointerDown(plug, { pointerId: 1, button: 0 });
+      fireEvent.focus(plug);
+      await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+      expect(view.queryByRole("button", { name: "Open D-1" })).toBeNull();
+      fireEvent.pointerUp(plug, { pointerId: 1, button: 0 });
+      fireEvent.click(plug);
+      await waitFor(() => expect(selected(view, "Which plug?")).toBe("true"));
+      view.getByRole("button", { name: "Open D-1" });
+    });
+
+    test("what was pressed stays where it was on the page when the item open above it folds", async () => {
+      onLine();
+      // Urgent, so it is open at the top, and Which plug? is its line's own row below it.
+      server.act(
+        c.decisionAsk,
+        { title: "Which board?", context: "Printed.", options, urgent: "time_boxed" },
+        "octo.1",
+      );
+      server.act(c.decisionAsk, { title: "Which plug?", context: "Side.", options }, "octo.1");
+      navigate("/");
+      const view = renderApp(<App />);
+      const plug = await view.findByRole("button", { name: "Open D-2" });
+      // The test page has no layout: Which plug? sits 160 pixels higher once Which board? folds to a row above it.
+      const box = spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
+        this: HTMLElement,
+      ) {
+        const folded = document.querySelector('[aria-label="Open D-1"]') !== null;
+        const top = this.getAttribute("data-focus-ref") === "D-2" ? (folded ? 300 : 460) : 0;
+        return DOMRect.fromRect({ y: top, height: 40 });
+      });
+      const scroll = spyOn(window, "scrollBy").mockImplementation(() => {});
+      // The browser's focus follows to the item opened, without scrolling it into view as focus otherwise does.
+      const focused: unknown[] = [];
+      const focus = spyOn(HTMLElement.prototype, "focus").mockImplementation((options) => {
+        focused.push(options);
+      });
+      plug.focus();
+      fireEvent.pointerDown(plug, { pointerId: 1, button: 0 });
+      fireEvent.focus(plug);
+      fireEvent.pointerUp(plug, { pointerId: 1, button: 0 });
+      fireEvent.click(plug);
+      await waitFor(() => expect(selected(view, "Which plug?")).toBe("true"));
+      expect(scroll).toHaveBeenCalledWith(0, -160);
+      await waitFor(() => expect(focused.length).toBeGreaterThan(1));
+      expect(focused.slice(1)).toEqual(focused.slice(1).map(() => ({ preventScroll: true })));
+      box.mockRestore();
+      scroll.mockRestore();
+      focus.mockRestore();
     });
 
     test("after a choice takes its item away, the browser's focus follows home's to the next item", async () => {

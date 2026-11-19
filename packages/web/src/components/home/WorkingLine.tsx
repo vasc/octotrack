@@ -6,7 +6,6 @@ import { openEntity } from "../../lib/router.ts";
 import { List } from "../ui/List.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
 import { Note } from "../ui/Note.tsx";
-import { TextLink } from "../ui/RefLink.tsx";
 import { Row } from "../ui/Row.tsx";
 import { AnswerStatus } from "./AnswerStatus.tsx";
 import { LineMeta } from "./LineMeta.tsx";
@@ -55,7 +54,8 @@ export function WorkingLine({
       current={focused}
       {...(drop === undefined ? {} : { drop })}
       {...(handle === undefined ? {} : { lead: handle })}
-      title={<TextLink onClick={() => openEntity(line.ref)}>{line.title}</TextLink>}
+      title={line.title}
+      onPress={() => openEntity(line.ref)}
       {...(fold === "at"
         ? {}
         : {

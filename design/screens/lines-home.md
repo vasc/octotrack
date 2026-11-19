@@ -111,7 +111,7 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 ### components/home/WorkingLine.tsx
 
 - Designed in: Home.dc.html; Main.dc.html; Home-States.dc.html, states C, H, I
-- What it shows: the line's number, title, its facts, the headline as a note, verbatim as its owner wrote it with the summary (`line.summarize`), so it never refers to the page ("Docker disk capped at 60 GB; 41 GB free after the last deploy."), then what it needs from you.
+- What it shows: the line's number, title, its facts, the headline as a note, verbatim as its owner wrote it with the summary (`line.summarize`), so it never refers to the page ("Docker disk capped at 60 GB; 41 GB free after the last deploy."), then what it needs from you. One press anywhere on the line, off its handle and its controls, opens its panel, as its title does; there is no selecting step.
 - Changes from today: a failed move is said under the line: "Not moved. The tracker did not answer; it is back where it was." (H); the "N changes since" link is not drawn.
 - Loading: never loads on its own: given its line by WorkingSection.
 - Error: a move that fails (H), as above.
@@ -147,7 +147,7 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 ### components/home/LineForYouItem.tsx
 
 - Designed in: Main.dc.html; Question-States.dc.html, state A
-- What it shows: a row that opens in place while it has focus (Main: the question opened under its line, ringed).
+- What it shows: a row that opens in place while it has focus (Main: the question opened under its line, ringed) One press opens it: focus moves when the press ends, not as it goes down, so nothing folds under the pointer mid-press; and when the item open above it folds, the page scrolls so the one pressed stays where it was on the screen.
 - Changes from today: the focused item is tinted with the grey edge inside it (Primitives Row; the halo is for controls, not rows).
 - Loading: never loads on its own: given its item by LineForYou.
 - Error: cannot fail on its own; the opened item's failures are its own.

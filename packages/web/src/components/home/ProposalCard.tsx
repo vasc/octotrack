@@ -8,7 +8,6 @@ import { ProposalChoices } from "./ProposalChoices.tsx";
 import { URGENT_REASON } from "../../lib/lines.ts";
 import { Facts } from "../ui/Facts.tsx";
 import { Code } from "../ui/Note.tsx";
-import { TextLink } from "../ui/RefLink.tsx";
 import { Row } from "../ui/Row.tsx";
 
 interface ProposalCardProps {
@@ -65,7 +64,8 @@ export function ProposalCard({
       {...(line.urgentReason === null
         ? {}
         : { kind: URGENT_REASON[line.urgentReason], tone: "stuck" as const })}
-      title={<TextLink onClick={() => openEntity(line.ref)}>{line.title}</TextLink>}
+      title={line.title}
+      onPress={() => openEntity(line.ref)}
       facts={
         <Facts>
           <Code>{line.ref}</Code>

@@ -3,7 +3,6 @@ import { whenText } from "../../lib/format.ts";
 import { openEntity } from "../../lib/router.ts";
 import { Button } from "../ui/Button.tsx";
 import { Facts } from "../ui/Facts.tsx";
-import { TextLink } from "../ui/RefLink.tsx";
 import { Row } from "../ui/Row.tsx";
 import { Mark } from "../ui/Badge.tsx";
 
@@ -26,7 +25,8 @@ export function QuietRow({
   return (
     <Row
       label={line.title}
-      title={<TextLink onClick={() => openEntity(line.ref)}>{line.title}</TextLink>}
+      title={line.title}
+      onPress={() => openEntity(line.ref)}
       {...(done
         ? {
             facts: (
