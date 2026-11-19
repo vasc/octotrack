@@ -96,7 +96,7 @@ export function TaskCard({
             multiline
             autoFocus
           />
-        ) : own && !cant ? null : named && !cant ? (
+        ) : own && !asked && !named && !cant ? null : named && !cant ? (
           <>
             {task.outcome === null ? null : <Markdown text={task.outcome} />}
             <OutcomeFields

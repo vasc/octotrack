@@ -86,6 +86,7 @@
   --radius-lg: 8px;
   --radius-xl: 8px;
   --radius-pill: 999px;
+  --radius-inner: calc(var(--radius-lg) - 1px);
 
   /* Elevation: only for what floats over content. Everything else is separated by a line. */
   --shadow-popover: 0 6px 20px rgb(0 0 0 / 0.14);

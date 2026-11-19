@@ -135,14 +135,15 @@ The names are multiples of the unit: `--space-4` is four units.
 
 ## Shape
 
-| Token           | Use for                                             |
-| --------------- | --------------------------------------------------- |
-| `--radius-none` | A row reaching its sheet's edges, its tint square   |
-| `--radius-sm`   | Small marks, progress bars, badges                  |
-| `--radius-md`   | Buttons, inputs, options, repo chips                |
-| `--radius-lg`   | Questions, tasks and rows under a line              |
-| `--radius-xl`   | Line cards, the Up next card, proposals             |
-| `--radius-pill` | Pills: the header counts, a group read as one thing |
+| Token            | Use for                                                                                                 |
+| ---------------- | ------------------------------------------------------------------------------------------------------- |
+| `--radius-none`  | A row reaching its sheet's edges, its tint square                                                       |
+| `--radius-sm`    | Small marks, progress bars, badges                                                                      |
+| `--radius-md`    | Buttons, inputs, options, repo chips                                                                    |
+| `--radius-lg`    | Questions, tasks and rows under a line                                                                  |
+| `--radius-xl`    | Line cards, the Up next card, proposals                                                                 |
+| `--radius-pill`  | Pills: the header counts, a group read as one thing                                                     |
+| `--radius-inner` | A sheet's corner inside its 1px edge: the first and last rows take it, so a highlight follows the curve |
 
 ## Elevation
 

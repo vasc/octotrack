@@ -373,6 +373,17 @@
   border-top: 1px solid var(--line);
 }
 
+/* The first and last rows follow the sheet's corners, so a highlight's edge curves with it instead of being cut off. */
+.ui-list > :first-child {
+  border-top-left-radius: var(--radius-inner);
+  border-top-right-radius: var(--radius-inner);
+}
+
+.ui-list > :last-child {
+  border-bottom-left-radius: var(--radius-inner);
+  border-bottom-right-radius: var(--radius-inner);
+}
+
 /* Cards: each row its own sheet, a step apart, for rows that hold much under them. */
 .ui-list[data-cards="true"] {
   gap: var(--space-6);
@@ -607,6 +618,11 @@
   border: 0;
   border-radius: var(--radius-none);
   overflow: visible;
+}
+
+/* A list inside a row has no corners of its own, so neither do its rows. */
+.ui-row-body .ui-list > * {
+  border-radius: var(--radius-none);
 }
 
 .ui-row-body .ui-list > * + * {

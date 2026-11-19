@@ -267,6 +267,22 @@ describe("TaskCard, as drawn", () => {
     view.getByRole("button", { name: "Back" });
   });
 
+  test("a task the developer filed that asks for an outcome still shows its box, so Done can be pressed", () => {
+    const onDone = mock((_outcome: { result?: string }) => {});
+    const view = render(
+      <TaskCard
+        {...props}
+        words="41 mm"
+        onDone={onDone}
+        task={issue({ ref: "PANEL-1", outcome: "In mm", createdBy: "dev" })}
+      />,
+    );
+    view.getByText("Your task");
+    view.getByLabelText("In mm");
+    fireEvent.click(view.getByRole("button", { name: "Done" }));
+    expect(onDone).toHaveBeenCalledWith({ result: "41 mm" });
+  });
+
   test("a task of the developer's own is theirs: Done and Can't", () => {
     const view = render(
       <TaskCard {...props} task={issue({ ref: "LIFE-1", outcome: "", createdBy: "dev" })} />,
