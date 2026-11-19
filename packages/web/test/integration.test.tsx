@@ -1156,6 +1156,17 @@ describe("lines of work", () => {
       );
     });
 
+    test("a press outside the line panel closes it; one inside it, or on the Undo bar, does not", async () => {
+      seedLines();
+      navigate("/?ref=L-1");
+      const view = renderApp(<App />);
+      const panel = await view.findByRole("complementary", { name: "L-1" });
+      fireEvent.pointerDown(within(panel).getByRole("heading", { name: "Sendspin enclosure" }));
+      expect(view.queryByRole("complementary", { name: "L-1" })).not.toBeNull();
+      fireEvent.pointerDown(document.body);
+      await gone(() => view.queryByRole("complementary", { name: "L-1" }));
+    });
+
     test("a plan step is marked done from the line panel, and the next one becomes now", async () => {
       seedLines();
       server.tracker.call(

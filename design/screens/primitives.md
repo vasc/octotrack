@@ -228,7 +228,7 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 
 - Designed in: Line.dc.html; Line-States.dc.html, states G, H, I, J; Panels.dc.html, state F
 - What it shows: the crumb, Close, the title, then the sections; opened from another panel, "Back to L-57", after a back chevron, beside Close; on a phone the whole screen with "Lines" after the same chevron.
-- Changes from today: Back is its own button; Close always shuts the panel; Close carries no key hint.
+- Changes from today: Back is its own button; Close always shuts the panel; Close carries no key hint; a press on the page beside it shuts it too (one on another item there opens that item), while a press in a sheet, menu or the Undo bar opened over it does not.
 - Loading: drawn at once with what is known; sections say what they load (Line-States G).
 - Error: not found (Line-States I) and a failed part (H) are drawn inside it by its owner.
 - Empty: never empty: it always has its head.
