@@ -771,7 +771,22 @@
   font: inherit;
   color: inherit;
   text-align: left;
+  cursor: pointer;
+}
+
+/* A handle that drags: a finger on it drags the line rather than scrolling the page. */
+.ui-lead[data-drag="true"] {
+  touch-action: none;
   cursor: grab;
+}
+
+/* Where a dragged line would land: a rule along the edge of the line it is over. */
+.ui-row[data-drop-edge="before"] {
+  box-shadow: var(--shadow-drop-before);
+}
+
+.ui-row[data-drop-edge="after"] {
+  box-shadow: var(--shadow-drop-after);
 }
 
 .ui-lead:hover,

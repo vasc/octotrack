@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "bun:test";
+import { beforeEach, describe, expect, spyOn, test } from "bun:test";
 import type { QueryClient } from "@tanstack/react-query";
 import { act, fireEvent, type RenderResult, waitFor, within } from "@testing-library/react";
 import { App } from "../src/App.tsx";
@@ -1618,12 +1618,25 @@ describe("lines of work", () => {
       navigate("/");
       const view = renderApp(<App />);
       const working = within(await view.findByRole("region", { name: "Working on" }));
-      // A browser's drag always carries a data transfer; the test gives one, as the page sets data on it.
-      fireEvent.dragStart(working.getByRole("button", { name: "Move Weekly digest" }), {
-        dataTransfer: { setData: () => {} },
-      });
-      fireEvent.dragOver(working.getByRole("article", { name: "Sendspin enclosure" }));
-      fireEvent.drop(working.getByRole("article", { name: "Sendspin enclosure" }));
+      // Dragged with a pointer, as a mouse, a finger or a pen does. The test page has no layout, so what lies under the
+      // pointer, and where that row sits, are given here: the top half of Sendspin enclosure, so it lands before it.
+      const target = working.getByRole("article", { name: "Sendspin enclosure" });
+      const under = spyOn(document, "elementFromPoint").mockReturnValue(target);
+      const box = spyOn(target, "getBoundingClientRect").mockReturnValue(
+        DOMRect.fromRect({ y: 100, height: 40 }),
+      );
+      const grip = working.getByRole("button", { name: "Move Weekly digest" });
+      fireEvent.pointerDown(grip, { pointerId: 1, clientX: 10, clientY: 200, button: 0 });
+      fireEvent.pointerMove(window, { pointerId: 1, clientX: 10, clientY: 110 });
+      await working
+        .findByRole("article", { name: "Sendspin enclosure" })
+        .then((row) => expect(row.getAttribute("data-drop-edge")).toBe("before"));
+      fireEvent.pointerUp(window, { pointerId: 1, clientX: 10, clientY: 110 });
+      // The click that ends a drag opens no menu.
+      fireEvent.click(grip);
+      expect(view.queryByRole("menu")).toBeNull();
+      under.mockRestore();
+      box.mockRestore();
       await waitFor(() =>
         expect(server.tracker.call(c.homeShow, {}, asDeveloper).working.map((line) => line.title)).toEqual([
           "Weekly digest",

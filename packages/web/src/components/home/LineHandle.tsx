@@ -39,18 +39,7 @@ export function LineHandle({
       menuLabel={`Move ${title}`}
       lead={String(number)}
       align="start"
-      {...(drag === undefined
-        ? {}
-        : {
-            drag: {
-              onDragStart: (event) => {
-                // Some browsers start a drag only when it carries data.
-                event.dataTransfer.setData("text/plain", title);
-                drag.onDragStart(event);
-              },
-              onDragEnd: drag.onDragEnd,
-            },
-          })}
+      {...(drag === undefined ? {} : { drag })}
     >
       {(close) =>
         (

@@ -367,7 +367,7 @@ Three components sit outside this scope and are named but not inventoried: Decis
   - Click → a menu (`"Move {title}"`) with `"Move to top"`, `"Up"`, `"Down"`, and on working lines only `"To up next"`.
   - Unavailable items stay but are disabled. The first enabled item is autofocused.
   - Top, Up and Down run immediately (`lineOrder`). To up next is a choice with Undo (`"Moving X to up next"`).
-  - Drag the number onto another line in the same section → it lands before that line. Dropping into the other section does nothing.
+  - Drag the number onto another line in the same section → it lands before that line in its top half, after it in its bottom half, shown by a rule. Dropping into the other section does nothing.
   - Esc, a tap elsewhere or blur closes the menu. `Alt+↑/↓` moves the focused line.
 - **States:** menu open or closed; up/down/top disabled at the ends.
 - **Loading:** none. No pending state.
@@ -711,11 +711,11 @@ Three components sit outside this scope and are named but not inventoried: Decis
 9. **Query errors can sit above stale data.** HomePage.tsx:70 with useOp.ts:18: the error and the stale home both show, and there is no retry.
 10. **No in-flight state for immediate actions.** Nothing shows while these run:
     - Leave: AtSection.tsx:21
-    - Reorder, menu and drag: useHome.ts:126–145; useDragOrder.ts:36–40
+    - Reorder, menu and drag: useHome.ts:126–145; useDragOrder.ts
     - Every `choices.make` button until the pending list refetches, including Can't do it (TaskCard.tsx:127)
 11. **Some actions refuse without explanation.**
     - CheckoutForm.tsx:18 and :35: Set is disabled for a relative path, with no message.
-    - useDragOrder.ts:34: a drop across sections is ignored.
+    - useDragOrder.ts: a drop across sections is ignored, though no rule shows there.
     - focus.ts:219: a number key on a disabled button does nothing.
 12. **Push gives no feedback in two cases.**
     - PushToggle.tsx:21: an unsupported browser renders nothing.

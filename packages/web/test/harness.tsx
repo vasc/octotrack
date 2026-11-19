@@ -227,7 +227,7 @@ export function homeActions(overrides: Partial<HomeActions> = {}): HomeActions {
     acceptRecommended: mock(() => {}),
     taskDone: mock(() => {}),
     taskCant: mock(() => {}),
-    dropBefore: mock(() => {}),
+    dropOn: mock(() => {}),
     reorder: mock(() => {}),
     ...overrides,
   };

@@ -566,7 +566,7 @@
     - `menuLabel: string`: the `aria-label` of the menu, and the trigger's `title` when the trigger is icon-only.
     - `buttonRef?`
     - `lead?: string`: makes the trigger a row lead (`.ui-lead`): a small grey number with no button chrome.
-    - `drag?: {onDragStart, onDragEnd}`: makes the trigger draggable.
+    - `drag?: DragHandle` (`onPointerDown`, `dragged()`): pressed and moved, the trigger drags; the click that ends a drag opens no menu. It sets `data-drag="true"`.
     - `align?: "start"|"end"`, default end: which edge the list lines up with.
     - `children(close)`
   - `MenuGroup`:
@@ -586,7 +586,7 @@
   - **Trigger**
     - Icon only: `.ui-button[data-variant=icon]`, a 32x32 square in `--ink-2`.
     - Icon and text: `.ui-button[data-variant=plain]` showing icon, words and a 16px chevron.
-    - Lead: `.ui-lead`, which has `min-width: --lead-width` (24), no padding or border, radius sm, inherited font and colour (mono xs `--ink-3` from `.ui-row-lead`), left-aligned text, and `cursor: grab` whether or not `drag` is passed.
+    - Lead: `.ui-lead`, which has `min-width: --lead-width` (24), no padding or border, radius sm, inherited font and colour (mono xs `--ink-3` from `.ui-row-lead`), left-aligned text, and a pointer cursor; with `drag`, `cursor: grab` and `touch-action: none`, so a finger drags rather than scrolls.
   - **`.ui-menu`**
     - `position: relative; display: inline-flex`.
   - **`.ui-menu-list`**
@@ -905,7 +905,7 @@
   - `openLabel?`: the open button's `aria-label`; the row text becomes its `aria-describedby`.
   - `current?`: sets `data-current` and `aria-current`.
   - `focusRef?`: sets `data-focus-ref` and `tabIndex=-1`.
-  - `drop?`: drag-over and drop handlers.
+  - `drop?: DropTarget` (`ref`, `section`, `edge`): written as `data-drop-ref`, `data-drop-section` and `data-drop-edge`.
   - Mutually exclusive:
     - `onOpen()`: the row opens. The text becomes `button.ui-row-open` and a chevron is added.
     - `checked` + `onToggle()`: the row is a choice. It becomes a `<label>` with a hidden checkbox and a ✓.
@@ -960,7 +960,7 @@
   - **Disabled:** no prop and no style.
   - **Checked:** only the ✓ glyph in accent; no tint and no weight change.
   - **Unchecked:** an empty 16px slot with no box drawn, so it is invisible that the row is a choice until something is checked.
-  - **Drag-over and dragging:** no styling. The `drop` handlers draw no insertion line.
+  - **Drag-over:** `data-drop-edge="before"` draws `--shadow-drop-before` along the top edge, `"after"` `--shadow-drop-after` along the bottom.
   - **Open:** a Row has no open state; its chevron never rotates. Only Fold sets `data-open`.
 - **Keyboard and screen reader:**
   - The wrapper is a div, or an `article` with `aria-label` when `label` is set; `aria-current="true"` when current.
@@ -1246,7 +1246,7 @@
 1. **`:active` / pressed.** No rule in ui.css styles a pressed state for any primitive. The only pressed feedback is the touch tap flash in styles.css:24.
 2. **Open state of a Menu trigger.** `.ui-button[aria-expanded="true"]` has no rule, so an open icon or text menu looks closed. Only `.ui-lead` styles open (ui.css:603-608).
 3. **Row open state.** Row has no expanded or open state; its chevron is static. Only Fold rotates its chevron (ui.css:430-432).
-4. **Drag.** There is no drag-over insertion indicator, no dragging-source style, and no drop-target highlight on Row. The `drop` prop is at Row.tsx:34 and 124; ui.css has no rule. `.ui-lead` shows `cursor: grab` even when it is not draggable (ui.css:600).
+4. **Drag.** Fixed: drag follows the pointer (mouse, finger, pen) and Row draws an insertion rule where the line would land. A lead that does not drag has a pointer cursor, not a grab one.
 5. **Checked / unchecked toggle row.** Unchecked shows nothing; checked shows only a ✓ in accent (ui.css:434-440). There is no selected tint and no visible box.
 6. **MenuItem checked.** Only a ✓ in `--ink-2` (ui.css:643-647), with no tint.
 7. **Recommended option.** `data-recommended` has no rule (Options.tsx:34); only the inline word "recommended" marks it.

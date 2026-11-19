@@ -141,8 +141,8 @@ export function useHome() {
       ),
     taskCant: (task: Issue, why: string) =>
       choices.make(contracts.taskCant.name, { ref: task.ref, why }, cantSummary(task, why)),
-    /** Dragged onto another line: it lands before it. */
-    dropBefore: (ref: string, before: string) => move({ ref, before }),
+    /** Dragged onto another line: it lands before or after it. */
+    dropOn: (ref: string, place: { before: string } | { after: string }) => move({ ref, ...place }),
     reorder(ref: string, direction: Move) {
       if (direction === "top") {
         move({ ref, to: "top" });

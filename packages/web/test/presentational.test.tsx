@@ -1865,22 +1865,17 @@ describe("home's smaller pieces", () => {
 describe("LineHandle", () => {
   test("is the one way to reorder: drag it, or open it for Top, Up, Down and To up next", () => {
     const onMove = mock((_direction: string) => {});
-    const drag = { onDragStart: mock(() => {}), onDragEnd: mock(() => {}) };
+    const drag = { onPointerDown: mock(() => {}), dragged: () => false };
     const view = render(
       <LineHandle title="One" number={1} canMoveUp canMoveDown canQueue drag={drag} onMove={onMove} />,
     );
     const handle = view.getByRole("button", { name: "Move One" });
     // The handle is the line's number in the order.
     expect(handle.textContent).toBe("1");
-    expect(handle.getAttribute("draggable")).toBe("true");
-    const carried: string[] = [];
-    fireEvent.dragStart(handle, {
-      dataTransfer: { setData: (_type: string, data: string) => carried.push(data) },
-    });
-    expect(drag.onDragStart).toHaveBeenCalledTimes(1);
-    expect(carried).toEqual(["One"]);
-    fireEvent.dragEnd(handle);
-    expect(drag.onDragEnd).toHaveBeenCalledTimes(1);
+    // A finger on it drags the line rather than scrolling the page.
+    expect(handle.getAttribute("data-drag")).toBe("true");
+    fireEvent.pointerDown(handle, { pointerId: 1 });
+    expect(drag.onPointerDown).toHaveBeenCalledTimes(1);
     expect(handle.getAttribute("aria-expanded")).toBe("false");
     fireEvent.click(handle);
     const menu = within(view.getByRole("menu", { name: "Move One" }));

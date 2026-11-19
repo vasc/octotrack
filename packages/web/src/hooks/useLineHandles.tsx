@@ -10,7 +10,7 @@ export type LineSection = "working" | "up_next";
  * line can be dropped. Built here so home's sections only place them.
  */
 export function useLineHandles(h: HomeActions) {
-  const dragFor = useDragOrder(h.dropBefore);
+  const dragFor = useDragOrder(h.dropOn);
   const drop = (ref: string, section: LineSection) => dragFor(ref, section).target;
   const handle = (
     title: string,

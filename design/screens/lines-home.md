@@ -120,7 +120,7 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 ### components/home/LineHandle.tsx
 
 - Designed in: Home.dc.html; Home-States.dc.html, state H; Primitives.dc.html, Row
-- What it shows: a six-dot grip in quiet grey beside the line's number, one button ("Move The home worker fetches new videos again") on every Working on and Up next row; it drags, and pressed it opens Move to top, Up, Down, To up next.
+- What it shows: a six-dot grip in quiet grey beside the line's number, one button ("Move The home worker fetches new videos again") on every Working on and Up next row; it drags, with a mouse, a finger or a pen, and pressed without moving it opens Move to top, Up, Down, To up next. While a line is dragged over another in its section, a rule in the accent colour runs along that line's top edge (it lands before it) or its bottom edge (after it), by which half the pointer is in; letting go moves it there. Over itself, the other section or nothing, no rule shows and letting go leaves it where it was.
 - Changes from today: the grip is always drawn, so reordering can be found without hovering or knowing a key (today only a bare number with a grab cursor); a failed move is said beside the line (H).
 - Loading: never loads on its own.
 - Error: "Not moved. The tracker did not answer; it is back where it was." under the line that moved (H).

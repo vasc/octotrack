@@ -157,6 +157,8 @@ Only what floats over content gets a shadow. Everything else is separated by a l
 | `--scrim`              | What dims the page and its bar behind a sheet                                       |
 | `--shadow-focus`       | The halo round a focused control                                                    |
 | `--shadow-focus-inset` | The grey edge drawn inside a focused row, item or menu item                         |
+| `--shadow-drop-before` | The rule along a line's top edge where a dragged line would land before it          |
+| `--shadow-drop-after`  | The rule along a line's bottom edge where a dragged line would land after it        |
 | `--shadow-pressed`     | A filled button held down: a step darker                                            |
 | `--focus-halo`         | The soft halo round a focused control, outside its grey edge                        |
 | `--row-inset`          | How far a sheet's rows sit from its edges: their text and focus tint line up on it  |

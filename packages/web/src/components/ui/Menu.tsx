@@ -1,4 +1,5 @@
-import type { DragEvent, ReactNode, Ref } from "react";
+import type { ReactNode, Ref } from "react";
+import type { DragHandle } from "../../hooks/useDragOrder.ts";
 import { useMenu } from "../../hooks/useMenu.ts";
 import { Icon, type IconName } from "./Icon.tsx";
 
@@ -31,8 +32,8 @@ export function Menu({
   buttonRef?: Ref<HTMLButtonElement>;
   /** The button is a row's lead, such as its number in the order, in the lead's own small grey figures. */
   lead?: string;
-  /** The button also drags what it leads. */
-  drag?: { onDragStart(event: DragEvent): void; onDragEnd(): void };
+  /** The button also drags what it leads: pressed and moved, it drags; pressed and let go, it opens. */
+  drag?: DragHandle;
   /** Which edge of the button the menu lines up with: the start for a row's lead, the end in the bar. */
   align?: "start" | "end";
   /** Its icon shows only on a phone, in place of its words, which still name it: More as the three-dot icon. */
@@ -60,14 +61,15 @@ export function Menu({
         data-variant={lead !== undefined ? undefined : text === undefined ? "icon" : "plain"}
         aria-label={label}
         title={text === undefined && lead === undefined ? menuLabel : undefined}
-        draggable={drag === undefined ? undefined : true}
-        onDragStart={drag?.onDragStart}
-        onDragEnd={drag?.onDragEnd}
+        data-drag={drag === undefined ? undefined : "true"}
+        onPointerDown={drag?.onPointerDown}
         disabled={disabled || busy !== undefined}
         aria-busy={busy === undefined ? undefined : true}
         aria-haspopup="menu"
         aria-expanded={menu.open}
-        onClick={menu.toggle}
+        onClick={() => {
+          if (drag?.dragged() !== true) menu.toggle();
+        }}
         onBlur={menu.leave}
       >
         {icon === undefined ? null : iconOnPhone ? (

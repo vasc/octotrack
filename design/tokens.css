@@ -98,6 +98,8 @@
   /* Focus: a soft halo outside a control; the grey edge drawn inside an item the keys act on; pressed, a step darker. */
   --shadow-focus: 0 0 0 var(--focus-halo) var(--accent-soft);
   --shadow-focus-inset: inset 0 0 0 1px var(--ink-3);
+  --shadow-drop-before: inset 0 2px 0 var(--accent);
+  --shadow-drop-after: inset 0 -2px 0 var(--accent);
   --shadow-pressed: inset 0 0 0 100vmax var(--scrim);
   /* The soft halo round a focused control, outside its grey edge. */
   --focus-halo: 3px;

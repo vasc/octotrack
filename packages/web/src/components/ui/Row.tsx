@@ -1,4 +1,5 @@
-import { type DragEvent, type ReactNode, useId } from "react";
+import { type ReactNode, useId } from "react";
+import type { DropTarget } from "../../hooks/useDragOrder.ts";
 import { KindText } from "./Item.tsx";
 import { Icon } from "./Icon.tsx";
 
@@ -32,8 +33,8 @@ type RowProps = {
   current?: boolean;
   /** Where the keys find it. */
   focusRef?: string;
-  /** Another row dragged onto it lands before it. */
-  drop?: { onDragOver(event: DragEvent): void; onDrop(event: DragEvent): void };
+  /** Another row can be dragged onto it, landing before or after it: a rule shows where while it is over it. */
+  drop?: DropTarget;
 } & (
   | { onOpen?: never; checked?: never; onToggle?: never }
   | { onOpen(): void; checked?: never; onToggle?: never }
@@ -123,7 +124,9 @@ export function Row(props: RowProps) {
     "data-quiet": quiet ? "true" : undefined,
     "data-focus-ref": focusRef,
     tabIndex: focusRef === undefined ? undefined : -1,
-    ...drop,
+    "data-drop-ref": drop?.ref,
+    "data-drop-section": drop?.section,
+    "data-drop-edge": drop?.edge ?? undefined,
   };
   const body =
     children === undefined || children === null || children === false ? null : (
