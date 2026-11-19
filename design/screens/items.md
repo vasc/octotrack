@@ -32,9 +32,11 @@ what it is, what you do, other ways out.
   - "What to send back" heads the fields; the count reads "1 of 2 filled · saved as you type" (today "1 of 2 filled, saved").
   - Can't do it (B): "Why PANEL-6 cannot be done", then "Close it" and "Back" (today "Cancel").
   - A task of your own (C) is one row: "Your task · LIFE-1 · at home", the title, Done and "Can't".
+  - Nothing asked back, such as "Merge vasc/homepanel#14": "Anything to say · optional" under the title, and Done needs no words.
+  - 3 · Reply, on a task an agent filed: "Reply to panel-widgets", then "Send" and "Back"; the words go to the agent after Undo's window, and the task stays open.
 - Loading: Done shows its busy word while it sends (Primitives Button).
 - Error: Done and Close it wait with Undo like every choice; a request the tracker never took, or a refusal when it takes effect, is said in the Undo bar ("Did not happen: …") with Dismiss; what was filled in stays in the draft.
-- Empty: Done is off until the named fields are filled, with the count saying how many are.
+- Empty: Done is off until the named fields are filled, with the count saying how many are; Send is off until a reply is typed.
 
 ### components/home/OutcomeFields.tsx
 

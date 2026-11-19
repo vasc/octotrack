@@ -379,7 +379,7 @@ export const taskOps = [
       throw new OctoError("invalid_input", "A task waits on a line", "Take a line first, or pass --line.");
     }
     const line = requireLine(ctx, lineRef);
-    const place = requirePlace(ctx, input.place);
+    const place = input.place === undefined ? null : requirePlace(ctx, input.place);
     const fields = distinctFields(input.fields ?? []);
     const frees =
       input.frees === undefined
@@ -411,12 +411,37 @@ export const taskOps = [
     // Filed on a line no agent works on (in a wind-down), it is held until one does.
     ctx.sql.run("UPDATE issues SET place = ?, outcome = ?, fields = ?, heldAt = ? WHERE ref = ?", [
       place,
-      input.outcome,
+      input.outcome ?? "",
       JSON.stringify(fields),
       holdsWork(line) ? ctx.now : null,
       task.ref,
     ]);
     if (frees !== null) addLink(ctx, task.ref, "blocks", frees.ref);
+    return requireIssue(ctx, task.ref);
+  }),
+
+  bind(contracts.taskReply, (ctx, input) => {
+    const task = requireTask(ctx, input.ref);
+    const said = oneLine(input.body);
+    if (task.line !== null) {
+      addToInbox(
+        ctx,
+        task.line,
+        "task_reply",
+        task.ref,
+        freedBy(ctx, task.ref),
+        `Reply on ${task.ref} ("${task.title}"): ${said}`,
+      );
+    }
+    emit(ctx, {
+      type: "task.replied",
+      kind: "issue",
+      ref: task.ref,
+      project: task.project,
+      line: task.line,
+      summary: `${task.ref} replied to by ${ctx.developer ? "the developer" : ctx.actor}: ${said}`,
+      attrs: { status: task.status },
+    });
     return requireIssue(ctx, task.ref);
   }),
 

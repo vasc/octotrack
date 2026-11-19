@@ -18,8 +18,8 @@ export function taskOutcome(
 ): TaskOutcome | null {
   const words = note.trim();
   if (task.fields.length === 0) {
-    // A task of the developer's own sends nothing back; the server records it as done.
-    if (task.outcome === "") return {};
+    // Nothing was asked back: Done needs no words, and any words typed go along as a note.
+    if (task.outcome === "") return words === "" ? {} : { result: words };
     return words === "" ? null : { result: words };
   }
   const filled = Object.fromEntries(task.fields.map((name) => [name, (values[name] ?? "").trim()]));

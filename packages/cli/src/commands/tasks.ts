@@ -11,10 +11,14 @@ export const taskCommands: Command[] = [
   {
     path: ["task", "file"],
     usage: "<title>",
-    summary: "File a task for the developer: where it is done, what to report, and the issue it frees",
+    summary:
+      "File a task for the developer, anything done with their own hands: merge a pull request, log in, measure something",
     options: {
-      place: { ...STRING, description: "One of the developer's places (required): octo place list" },
-      outcome: { ...STRING, description: "What the developer reports when it is done (required)" },
+      place: {
+        ...STRING,
+        description: "Where it is done, if that matters; a new place is added to the list",
+      },
+      outcome: { ...STRING, description: "What to send back, if anything; with none, Done needs no words" },
       body: { ...STRING, short: "b", description: "Details" },
       "body-file": { ...STRING, description: "Read details from a file, - for stdin" },
       line: { ...STRING, description: "The line it waits on. Default: yours" },
@@ -25,20 +29,19 @@ export const taskCommands: Command[] = [
       },
     },
     examples: [
+      'octo task file "Merge vasc/homepanel#14: its checks pass and it is reviewed"',
+      'octo task file "Log in to Tailscale on the Mac mini" --place "the Mac mini"',
       'octo task file "Measure the grip" --place "the bench" --outcome "The five numbers, in mm"',
       'octo task file "Measure the board" --place "the bench" --outcome "In mm" --field Length --field Holes',
     ],
     ops: [c.taskFile.name],
     async run({ client, out }, args) {
-      const place = args.str("place");
-      const outcome = args.str("outcome");
-      if (place === undefined || outcome === undefined) throw new UsageError("Pass --place and --outcome");
       const filed = await client.call(
         c.taskFile,
         compact({
           title: args.requirePositional(0, "title"),
-          place,
-          outcome,
+          place: args.str("place"),
+          outcome: args.str("outcome"),
           body: await textOption(args, "body"),
           line: args.str("line"),
           frees: args.str("frees"),
@@ -48,8 +51,21 @@ export const taskCommands: Command[] = [
       out.result(
         filed,
         () =>
-          `${r.bold(filed.data.ref)} for the developer at ${filed.data.place ?? "?"}: ${filed.data.title}`,
+          `${r.bold(filed.data.ref)} for the developer${filed.data.place === null ? "" : ` at ${filed.data.place}`}: ${filed.data.title}`,
       );
+    },
+  },
+  {
+    path: ["task", "reply"],
+    usage: "<REF> <words>",
+    summary: "Reply to a task: the words go to the agent waiting on it, and the task stays open",
+    examples: ['octo task reply PANEL-9 "Its checks are red; fix them first" --me'],
+    ops: [c.taskReply.name],
+    async run({ client, out }, args) {
+      const words = args.positionals.slice(1).join(" ").trim();
+      if (words === "") throw new UsageError("Say what to reply");
+      const replied = await client.call(c.taskReply, { ref: args.requirePositional(0, "REF"), body: words });
+      out.result(replied, () => `Replied on ${r.bold(replied.data.ref)}: ${replied.data.title}`);
     },
   },
   {

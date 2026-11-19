@@ -71,6 +71,24 @@ function world() {
   };
 }
 
+describe("a task is anything the developer does with their own hands", () => {
+  test("filed with only a title, such as merging a pull request, it is done with no words, or replied to", () => {
+    const w = world();
+    const merge = w.as(w.owner, c.taskFile, { title: "Merge vasc/homepanel#14" });
+    expect([merge.assignee, merge.place, merge.line]).toEqual(["dev", null, w.line]);
+    expect(w.as(w.dev, c.homeShow, {}).lines[w.line]?.forYou.map((item) => item.kind)).toEqual(["task"]);
+    // A reply goes to the agent and leaves the task open.
+    w.as(w.dev, c.taskReply, { ref: merge.ref, body: "Its checks are red; fix them first." });
+    const heard = w.notices(w.owner);
+    expect(heard.map((notice) => notice.kind)).toEqual(["task_reply"]);
+    expect(heard[0]?.body).toContain("Its checks are red; fix them first.");
+    expect(w.as(w.dev, c.homeShow, {}).lines[w.line]?.forYou.map((item) => item.kind)).toEqual(["task"]);
+    const done = w.as(w.dev, c.taskDone, { ref: merge.ref });
+    expect(done.status).toBe("done");
+    expect(w.notices(w.owner).map((notice) => notice.kind)).toEqual(["task_done"]);
+  });
+});
+
 describe("tasks: what the developer is asked to do", () => {
   test("a task has a place, added to the list if new, an outcome to report, and frees the issue its filer holds", () => {
     const w = world();

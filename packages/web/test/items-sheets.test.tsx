@@ -216,8 +216,11 @@ describe("TaskCard, as drawn", () => {
     onValue: noop,
     why: "",
     onWhy: noop,
+    reply: "",
+    onReplyWords: noop,
     onDone: noop,
     onCant: noop,
+    onReply: noop,
   };
 
   test("what to send back sits under a heading, and what it frees opens", () => {
@@ -237,6 +240,30 @@ describe("TaskCard, as drawn", () => {
     fireEvent.click(view.getByRole("button", { name: "Can't do it" }));
     view.getByLabelText("Why PANEL-6 cannot be done");
     view.getByRole("button", { name: "Close it" });
+    view.getByRole("button", { name: "Back" });
+  });
+
+  test("a task with nothing asked back, such as merging a pull request, is done with no words, or replied to", () => {
+    const onDone = mock((_outcome: { result?: string }) => {});
+    const onReply = mock((_words: string) => {});
+    const view = render(
+      <TaskCard
+        {...props}
+        onDone={onDone}
+        onReply={onReply}
+        reply="Its checks are red"
+        task={issue({ ref: "PANEL-9", title: "Merge vasc/homepanel#14", outcome: "", createdBy: "panel" })}
+      />,
+    );
+    view.getByText("Task for you");
+    view.getByText("filed by panel");
+    view.getByLabelText("Anything to say · optional");
+    fireEvent.click(view.getByRole("button", { name: "Done" }));
+    expect(onDone).toHaveBeenCalledWith({});
+    fireEvent.click(view.getByRole("button", { name: "Reply" }));
+    view.getByLabelText("Reply to panel");
+    fireEvent.click(view.getByRole("button", { name: "Send" }));
+    expect(onReply).toHaveBeenCalledWith("Its checks are red");
     view.getByRole("button", { name: "Back" });
   });
 

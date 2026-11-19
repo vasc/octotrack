@@ -146,6 +146,9 @@ export function LinesGallery() {
           onWhy={NOOP}
           onDone={NOOP}
           onCant={NOOP}
+          reply=""
+          onReplyWords={NOOP}
+          onReply={NOOP}
         />
       </Example>
       <Example label="Spread thin">

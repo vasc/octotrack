@@ -5,7 +5,7 @@ import type { Ctx } from "./context.ts";
 import { rows } from "./context.ts";
 import { getIssue } from "./entities.ts";
 
-export const InboxKind = z.enum(["answer", "tell", "task_done", "task_cant", "not_yet"]);
+export const InboxKind = z.enum(["answer", "tell", "task_done", "task_cant", "task_reply", "not_yet"]);
 export type InboxKind = z.infer<typeof InboxKind>;
 
 const InboxRow = z.object({

@@ -121,22 +121,24 @@ their next command, and wakes them if they are asleep. Urgent is for working lin
 
 ## Things the developer does with their hands
 
-A measurement, a login, a play-test: file a task, at one of the developer's places.
+Anything only the developer can do (merge a pull request, log in to a service, plug something in, measure, play-test)
+is a task, never a question: a question is for a choice between options. A title is enough.
 
-  octo place list
+  octo task file "Merge vasc/homepanel#14: checks pass and it is reviewed"
+  octo task file "Log in to Tailscale on the Mac mini" --place "the Mac mini"
   octo task file "Measure the grip" --place "the bench" --outcome "The five numbers the model assumes, in mm" \\
     --field Length --field Holes --field "USB-C grip" --field Flange --field Clearance
   octo decision ask "Which board?" ... --waits-for PANEL-9     a question the task would settle waits behind it
 
-The task frees the issue you hold. Name each thing to send back with --field, a short label on one line with no = or
-:, such as Length: the developer gets a one-line box for each, and Done needs them all. Its outcome comes back to you
-like an answer, one "Name: value" per field. When they tell you the outcome in conversation, record it yourself, with
-their words:
+The task frees the issue you hold. A place is where it is done, when that matters; a new place is added to the list.
+With --outcome, the developer sends that back when they mark it done; name each thing with --field, a short label on
+one line with no = or :, and Done needs them all, one "Name: value" per field. With neither, Done needs no words. The
+developer may also reply to a task without closing it ("its checks are red"): the reply comes to you like an answer,
+and the task stays open. When they tell you the outcome in conversation, record it yourself, with their words:
 
   octo task done PANEL-9 --value "Length=41 mm" --said "<exactly what they said>"
 
-If it no longer stands, withdraw it with octo held withdraw. Once closed it stays closed: if it is needed again, file
-a new task.
+If it no longer stands, withdraw it with octo held withdraw. If it is needed again after it closed, file a new task.
 
 ## Proposing lines
 

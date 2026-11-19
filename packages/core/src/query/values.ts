@@ -76,6 +76,7 @@ export const EVENT_TYPES = [
   "line.look_again",
   "decision.not_urgent",
   "task.done",
+  "task.replied",
   "place.added",
   "pr.after_wind_down",
   "line.prs_held",

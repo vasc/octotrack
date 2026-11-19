@@ -23,8 +23,13 @@ export interface TaskCardProps {
   /** Why it cannot be done, kept apart from what was found, so neither is sent as the other. */
   why: string;
   onWhy(why: string): void;
+  /** A reply typed so far, kept as a draft by the caller. */
+  reply: string;
+  onReplyWords(words: string): void;
   onDone(outcome: TaskOutcome): void;
   onCant(why: string): void;
+  /** Words back to the agent waiting on it; the task stays open. */
+  onReply(words: string): void;
   /** Its Done or Can't do it is waiting with Undo: neither is sent again. */
   sending?: boolean;
   /** The plan step it holds up, by title, where that is known. */
@@ -35,8 +40,9 @@ export interface TaskCardProps {
 
 /**
  * A task opened: where, what it is, and what to send back, as a form saved as it is typed: one box, or a box for each
- * named outcome and a note, with how many are filled. 1 · Done sends it; 2 · Can't do it asks why and closes it as not
- * done. A task of the developer's own has nothing to send back: Done is enough.
+ * named outcome and a note, with how many are filled, or with nothing asked back an optional note. 1 · Done sends it;
+ * 2 · Can't do it asks why and closes it as not done; 3 · Reply sends the agent words and leaves it open. A task of the
+ * developer's own has nothing to send anyone: Done is enough.
  */
 export function TaskCard({
   task,
@@ -46,22 +52,33 @@ export function TaskCard({
   onValue,
   why,
   onWhy,
+  reply,
+  onReplyWords,
   onDone,
   onCant,
+  onReply,
   sending = false,
   holdsUp,
   frees = null,
 }: TaskCardProps) {
-  const [cant, setCant] = useState(false);
-  const own = task.outcome === "";
+  const [mode, setMode] = useState<"cant" | "reply" | null>(null);
+  const cant = mode === "cant";
+  const replying = mode === "reply";
+  // Filed by the developer for themself: nobody waits on it, so there is nothing to send and no one to reply to.
+  const own = task.createdBy === "dev";
+  const asked = task.outcome !== null && task.outcome !== "";
   const named = task.fields.length > 0;
   const outcome = taskOutcome(task, values, words);
   const ready = outcome !== null && !sending;
   const form = (
     <form
-      aria-label={cant ? "Say why it cannot be done" : "Report the outcome"}
+      aria-label={cant ? "Say why it cannot be done" : replying ? "Reply" : "Report the outcome"}
       onSubmit={(event) => {
         event.preventDefault();
+        if (replying) {
+          if (reply.trim() !== "" && !sending) onReply(reply.trim());
+          return;
+        }
         if (cant) {
           if (why.trim() !== "" && !sending) onCant(why.trim());
           return;
@@ -71,7 +88,15 @@ export function TaskCard({
       }}
     >
       <Stack>
-        {own && !cant ? null : named && !cant ? (
+        {replying ? (
+          <Field
+            label={`Reply to ${task.createdBy}`}
+            value={reply}
+            onChange={onReplyWords}
+            multiline
+            autoFocus
+          />
+        ) : own && !cant ? null : named && !cant ? (
           <>
             {task.outcome === null ? null : <Markdown text={task.outcome} />}
             <OutcomeFields
@@ -84,14 +109,32 @@ export function TaskCard({
           </>
         ) : (
           <Field
-            label={cant ? `Why ${task.ref} cannot be done` : (task.outcome ?? "What you found")}
+            label={
+              cant
+                ? `Why ${task.ref} cannot be done`
+                : asked
+                  ? (task.outcome ?? "")
+                  : "Anything to say · optional"
+            }
             placeholder={cant ? "Why not" : undefined}
             value={cant ? why : words}
             onChange={cant ? onWhy : onWords}
             multiline
           />
         )}
-        {cant ? (
+        {replying ? (
+          <Actions>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={reply.trim() === ""}
+              busy={sending ? "Sending…" : undefined}
+            >
+              Send
+            </Button>
+            <Button onClick={() => setMode(null)}>Back</Button>
+          </Actions>
+        ) : cant ? (
           <Actions>
             <Button
               type="submit"
@@ -101,7 +144,7 @@ export function TaskCard({
             >
               Close it
             </Button>
-            <Button onClick={() => setCant(false)}>Back</Button>
+            <Button onClick={() => setMode(null)}>Back</Button>
           </Actions>
         ) : (
           <Actions>
@@ -114,9 +157,14 @@ export function TaskCard({
             >
               Done
             </Button>
-            <Button choice={2} onClick={() => setCant(true)}>
+            <Button choice={2} onClick={() => setMode("cant")}>
               {own ? "Can't" : "Can't do it"}
             </Button>
+            {own ? null : (
+              <Button choice={3} onClick={() => setMode("reply")}>
+                Reply
+              </Button>
+            )}
             {own ? null : (
               <Note>
                 {named
@@ -143,7 +191,13 @@ export function TaskCard({
       }
       title={task.title}
       answer={form}
-      {...(own && !cant ? {} : { answerLabel: cant ? "Why not" : "What to send back" })}
+      {...(cant
+        ? { answerLabel: "Why not" }
+        : replying
+          ? { answerLabel: "Your reply" }
+          : asked || named
+            ? { answerLabel: "What to send back" }
+            : {})}
     >
       {task.body === "" ? null : <Markdown text={task.body} />}
       {frees === null ? null : (

@@ -93,7 +93,7 @@ properties and appear on the `/design` specimen; **structural** ones load data a
 | `AtPlaceItems`     | Pure       | At a place, that place's tasks opened on their line                                                                                                |
 | `AtSection`        | Pure       | I'm at: where, when it ends, Leave                                                                                                                 |
 | `AtUpNext`         | Pure       | At a place, its tasks from lines up next                                                                                                           |
-| `TaskCard`         | Pure       | A task opened as an `Item`: what to send back, Done and Can't do it, numbered                                                                      |
+| `TaskCard`         | Pure       | A task opened as an `Item`: what to send back, Done, Can't do it and Reply, numbered                                                               |
 | `TaskItem`         | Structural | A task with what is typed kept as a draft                                                                                                          |
 | `OutcomeFields`    | Pure       | A task's named outcomes side by side, then a note                                                                                                  |
 | `TaskClosed`       | Pure       | A closed task: how and when, and what was sent back                                                                                                |

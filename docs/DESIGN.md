@@ -345,6 +345,14 @@ Decisions made from that:
   started keeps its line until the developer releases it from Agents, where its last command shows how long it has been.
 - **Old names keep working for at least a phase** (`decision.*`, `project:`, M-, I- and U- refs), and the riskiest
   automation, the automatic Stop and the runner, first runs in a mode that only records what it would have done.
+- **A task is anything the developer does with their own hands.** Merging a pull request, logging in to a service,
+  measuring: an agent files a task, never a question, which is for a choice between options. A title is enough: a place
+  is optional, and one not on the list yet is added to it; what to send back is optional, and with none Done needs no
+  words (any typed go along as a note). The developer marks it done, says it cannot be done, or replies (`task.reply`):
+  the words reach the agent like an answer, and the task stays open. _Why:_ the developer: "a concept of a task for the
+  operator is missing, sometimes the operator needs to do something like merge a pr or login to a service, now the ai
+  has to set that up as a fake question and thats annoying, its a task that can be marked as done or replied to". Tasks
+  existed, but demanded a place from a list the developer had left empty, so every one was refused.
 - **No rule without a reason.** A refusal stays only when it keeps the data whole (a cycle of blocks, an option a
   question does not have, a step that is not in the plan), keeps two hands off one thing at once (an issue another holds,
   without `--force`; an answer waiting out its Undo; a second scoper), or keeps the log readable (agent names). Everything

@@ -168,6 +168,7 @@ const EVERY_WRITE: readonly (readonly [string, unknown])[] = [
   ["place.add", { name: "the shed" }],
   ["task.file", { line: "L-1", title: "Measure", place: "the bench", outcome: "Numbers", frees: "OCT-1" }],
   ["line.release", {}],
+  ["task.reply", { ref: "OCT-2", body: "Which bench?" }],
   ["task.done", { ref: "OCT-2", result: "12 mm" }],
   ["task.cant", { ref: "OCT-3", why: "No scale" }],
   ["held.withdraw", { refs: ["OCT-5"] }],

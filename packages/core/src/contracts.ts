@@ -639,11 +639,13 @@ export const contracts = {
   ),
   taskFile: write(
     "task.file",
-    "File a task for the developer: where it is done, what to report, and the issue it frees",
+    "File a task for the developer, anything done with their own hands (merge a pull request, log in somewhere, measure something): optionally where, what to report, and the issue it frees",
     z.strictObject({
       title: Text,
-      place: z.string(),
-      outcome: Text,
+      /** Where it is done, when that matters; a place not on the list yet is added to it. */
+      place: z.string().optional(),
+      /** What to send back, when something is; with none, Done needs no words. */
+      outcome: Text.optional(),
       body: z.string().optional(),
       line: z.string().optional(),
       /** The issue it frees. Default: the one you hold on the line. */
@@ -651,6 +653,12 @@ export const contracts = {
       /** Named outcomes, each sent back on its own, such as the five measurements a model assumes. */
       fields: z.array(Text).max(12).optional(),
     }),
+    Issue,
+  ),
+  taskReply: write(
+    "task.reply",
+    "Reply to a task: the words go to whoever holds the issue it frees, else the line's owner, and the task stays open",
+    z.strictObject({ ref: z.string(), body: Text }),
     Issue,
   ),
   taskDone: write(

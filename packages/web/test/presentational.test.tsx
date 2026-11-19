@@ -736,6 +736,9 @@ function TypingTask({
       onWhy={setWhy}
       onDone={onDone}
       onCant={onCant}
+      reply=""
+      onReplyWords={() => {}}
+      onReply={() => {}}
     />
   );
 }
@@ -2804,6 +2807,9 @@ describe("TaskCard's strip", () => {
         onWhy={() => {}}
         onDone={() => {}}
         onCant={() => {}}
+        reply=""
+        onReplyWords={() => {}}
+        onReply={() => {}}
       />,
     );
     view.getByText(/holds up the final print/);

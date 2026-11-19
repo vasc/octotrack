@@ -547,6 +547,7 @@ export const NoticeKind = z.enum([
   "tell",
   "task_done",
   "task_cant",
+  "task_reply",
   "done_when",
   // Kept for notices sent before Not yet went through the line's inbox.
   "keep_going",

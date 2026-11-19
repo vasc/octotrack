@@ -984,6 +984,31 @@ describe("lines of work", () => {
     await gone(() => line.queryByRole("button", { name: `Open ${task.ref}` }));
   });
 
+  test("a task with only a title is replied to, and stays open; then done with no words", async () => {
+    seedLines();
+    server.act(c.agentRegister, { repo: "OCT" }, "octo.1");
+    server.act(c.lineTake, { ref: "L-1" }, "octo.1");
+    const task = server.act(c.taskFile, { title: "Merge vasc/stack#4" }, "octo.1");
+    navigate("/lines");
+    const view = renderApp(<App />);
+    const line = within(await view.findByRole("article", { name: "Sendspin enclosure" }));
+    const opened = within(await line.findByRole("article", { name: "Merge vasc/stack#4" }));
+    fireEvent.click(opened.getByRole("button", { name: "Reply" }));
+    fireEvent.change(opened.getByLabelText("Reply to octo.1"), { target: { value: "Its checks are red" } });
+    fireEvent.click(opened.getByRole("button", { name: "Send" }));
+    await answerNow(view);
+    await waitFor(() =>
+      expect(
+        server.tracker
+          .execute(c.agentList.name, {}, { actor: "octo.1", channel: "cli" })
+          .notices.map((n) => n.body),
+      ).toContainEqual(expect.stringContaining("Its checks are red")),
+    );
+    expect(server.tracker.call(c.issueList, { query: `ref:${task.ref}` }, asDeveloper)[0]?.issue.status).toBe(
+      "todo",
+    );
+  });
+
   describe("choices from home and the line panel", () => {
     function withTask() {
       seedLines();
