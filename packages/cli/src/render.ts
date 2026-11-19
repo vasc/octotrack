@@ -209,7 +209,9 @@ function prLine(card: PrCard): string[] {
     statusColor(pr.state),
     `checks:${statusColor(pr.checks)}`,
     `review:${statusColor(pr.review)}`,
-    pr.title + (card.attention.length > 0 ? yellow(` [${card.attention.join(", ")}]`) : ""),
+    (pr.readyAt === null ? "" : `${green("ready to merge")} `) +
+      pr.title +
+      (card.attention.length > 0 ? yellow(` [${card.attention.join(", ")}]`) : ""),
   ];
 }
 
@@ -217,8 +219,12 @@ export function renderPrs(cards: readonly PrCard[]): string {
   return cards.length === 0 ? dim("No pull requests.") : table(cards.map(prLine));
 }
 
+/** One pull request; one said to be ready to merge says so, by whom and why. */
 export function renderPr(pr: PullRequest): string {
-  return `${bold(pr.ref)} ${pr.repo}#${pr.number} ${statusColor(pr.state)}: ${pr.title}`;
+  const head = `${bold(pr.ref)} ${pr.repo}#${pr.number} ${statusColor(pr.state)}: ${pr.title}`;
+  if (pr.readyAt === null) return head;
+  const why = pr.readyWhy === null ? "" : `: ${pr.readyWhy}`;
+  return `${head}\n  ${green("ready to merge")}, says ${pr.readyBy ?? "someone"}${why}`;
 }
 
 export function renderIdeas(ideas: readonly Idea[]): string {

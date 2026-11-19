@@ -989,24 +989,36 @@ describe("lines of work", () => {
     seedLines();
     server.act(c.agentRegister, { repo: "OCT" }, "octo.1");
     server.act(c.lineTake, { ref: "L-1" }, "octo.1");
-    const task = server.act(c.taskFile, { title: "Merge vasc/stack#4" }, "octo.1");
+    const task = server.act(c.taskFile, { title: "Log in to Tailscale" }, "octo.1");
     navigate("/lines");
     const view = renderApp(<App />);
     const line = within(await view.findByRole("article", { name: "Sendspin enclosure" }));
-    const opened = within(await line.findByRole("article", { name: "Merge vasc/stack#4" }));
+    const opened = within(await line.findByRole("article", { name: "Log in to Tailscale" }));
     fireEvent.click(opened.getByRole("button", { name: "Reply" }));
-    fireEvent.change(opened.getByLabelText("Reply to octo.1"), { target: { value: "Its checks are red" } });
+    fireEvent.change(opened.getByLabelText("Reply to octo.1"), { target: { value: "Which account?" } });
     fireEvent.click(opened.getByRole("button", { name: "Send" }));
+    // Sent, the box closes; the reply waits out its Undo, and Done is not held up by it.
+    await waitFor(() => expect(opened.queryByLabelText("Reply to octo.1")).toBeNull());
+    await opened.findByText(/Replying: Which account\?/);
+    expect(opened.getByRole("button", { name: "Done" }).getAttribute("aria-busy")).toBeNull();
     await answerNow(view);
+    await opened.findByText(/You replied: Which account\?/);
     await waitFor(() =>
       expect(
         server.tracker
           .execute(c.agentList.name, {}, { actor: "octo.1", channel: "cli" })
           .notices.map((n) => n.body),
-      ).toContainEqual(expect.stringContaining("Its checks are red")),
+      ).toContainEqual(expect.stringContaining("Which account?")),
     );
     expect(server.tracker.call(c.issueList, { query: `ref:${task.ref}` }, asDeveloper)[0]?.issue.status).toBe(
       "todo",
+    );
+    fireEvent.click(opened.getByRole("button", { name: "Done" }));
+    await answerNow(view);
+    await waitFor(() =>
+      expect(
+        server.tracker.call(c.issueList, { query: `ref:${task.ref}` }, asDeveloper)[0]?.issue.status,
+      ).toBe("done"),
     );
   });
 
@@ -1162,9 +1174,29 @@ describe("lines of work", () => {
       navigate("/?ref=L-1");
       const view = renderApp(<App />);
       const panel = await view.findByRole("complementary", { name: "L-1" });
-      fireEvent.pointerDown(within(panel).getByRole("heading", { name: "Sendspin enclosure" }));
-      expect(view.queryByRole("complementary", { name: "L-1" })).not.toBeNull();
+      const press = (target: Element) => {
+        fireEvent.pointerDown(target);
+        fireEvent.click(target);
+      };
+      const open = () => expect(view.queryByRole("complementary", { name: "L-1" })).not.toBeNull();
+      press(within(panel).getByRole("heading", { name: "Sendspin enclosure" }));
+      open();
+      // The panel itself, below its content: on a phone it is the whole screen.
+      press(panel);
+      open();
+      // A finger scrolling the page beside it ends in no click, and leaves it open.
       fireEvent.pointerDown(document.body);
+      open();
+      // Text selected from inside it out to the page beside it is no press outside it.
+      fireEvent.pointerDown(within(panel).getByRole("heading", { name: "Sendspin enclosure" }));
+      fireEvent.click(document.body);
+      open();
+      // Something it shows over the page, such as the Undo bar, is part of it.
+      fireEvent.click(view.getByRole("button", { name: "Done" }));
+      const undo = await view.findByRole("button", { name: "Undo" });
+      press(undo);
+      open();
+      press(document.body);
       await gone(() => view.queryByRole("complementary", { name: "L-1" }));
     });
 
@@ -1608,6 +1640,20 @@ describe("lines of work", () => {
       await focusedOn("Wall mount");
     });
 
+    test("a count pressed on another page goes to the first item it counts", async () => {
+      seedLines();
+      server.act(
+        c.linePropose,
+        { title: "Garden feed", doneWhen: "It loads.", recommendation: "up_next", why: "It broke." },
+        "panel-agent",
+      );
+      navigate("/log");
+      const view = renderApp(<App />);
+      fireEvent.click(await view.findByRole("link", { name: "2 to accept" }));
+      await waitFor(() => expect(focusOf(view.getByRole("article", { name: "Wall mount" }))).toBe("true"));
+      expect(window.location.search).toBe("");
+    });
+
     test("past six working lines, the header says what spreading thin costs", async () => {
       for (const index of [1, 2, 3, 4, 5, 6, 7]) {
         server.tracker.call(
@@ -1664,6 +1710,68 @@ describe("lines of work", () => {
         "Ready to merge: Print the lid",
         "Pull request: Print the base",
       ]);
+    });
+
+    test("a drag lands after a line from its lower half, and does nothing over itself, another section, after Esc, or for a second finger", async () => {
+      seedLines();
+      server.tracker.call(
+        c.lineAdd,
+        { title: "Shopping list", doneWhen: "Shared.", where: "up_next" },
+        asDeveloper,
+      );
+      navigate("/");
+      const view = renderApp(<App />);
+      const working = within(await view.findByRole("region", { name: "Working on" }));
+      const sendspin = working.getByRole("article", { name: "Sendspin enclosure" });
+      const digest = working.getByRole("article", { name: "Weekly digest" });
+      const shopping = await view.findByRole("article", { name: "Shopping list" });
+      let under: Element = sendspin;
+      const point = spyOn(document, "elementFromPoint").mockImplementation(() => under);
+      const box = spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(() =>
+        DOMRect.fromRect({ y: 100, height: 40 }),
+      );
+      const order = () => server.tracker.call(c.homeShow, {}, asDeveloper).working.map((line) => line.title);
+      const grip = () => working.getByRole("button", { name: "Move Sendspin enclosure" });
+      const drag = (
+        to: Element,
+        y: number,
+        end: () => void = () => fireEvent.pointerUp(window, { pointerId: 1, clientX: 10, clientY: y }),
+      ) => {
+        under = to;
+        fireEvent.pointerDown(grip(), { pointerId: 1, clientX: 10, clientY: 300, button: 0 });
+        fireEvent.pointerMove(window, { pointerId: 1, clientX: 10, clientY: y });
+        end();
+        // A browser sends the click to what the press and the lift share, here the line's own head.
+        const head = to.querySelector(".ui-row-head");
+        if (head !== null) fireEvent.click(head);
+      };
+      // Over itself: nothing moves, and the click that ends the drag opens nothing.
+      drag(sendspin, 110);
+      expect(view.queryByRole("complementary", { name: "L-1" })).toBeNull();
+      // Over a line in another section: nothing moves.
+      drag(shopping, 110);
+      // Esc while dragging: nothing moves.
+      drag(digest, 130, () => {
+        fireEvent.keyDown(document.body, { key: "Escape" });
+        fireEvent.pointerUp(window, { pointerId: 1, clientX: 10, clientY: 130 });
+      });
+      // A second finger lifting elsewhere neither ends the drag nor drops it.
+      under = digest;
+      fireEvent.pointerDown(grip(), { pointerId: 1, clientX: 10, clientY: 300, button: 0 });
+      fireEvent.pointerMove(window, { pointerId: 1, clientX: 10, clientY: 130 });
+      fireEvent.pointerUp(window, { pointerId: 2, clientX: 10, clientY: 130 });
+      expect(digest.getAttribute("data-drop-edge")).toBe("after");
+      await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+      expect(order()).toEqual(["Sendspin enclosure", "Weekly digest"]);
+      // The first finger lifting, in the lower half of Weekly digest, lands it after.
+      fireEvent.pointerUp(window, { pointerId: 1, clientX: 10, clientY: 130 });
+      point.mockRestore();
+      box.mockRestore();
+      await waitFor(() => expect(order()).toEqual(["Weekly digest", "Sendspin enclosure"]));
+      expect(view.queryByRole("complementary", { name: "L-1" })).toBeNull();
+      // The handle still opens its moves from the keyboard afterwards.
+      fireEvent.click(working.getByRole("button", { name: "Move Sendspin enclosure" }));
+      view.getByRole("menu", { name: "Move Sendspin enclosure" });
     });
 
     test("a press anywhere on a line that is not one of its controls opens it", async () => {
@@ -2312,6 +2420,44 @@ describe("lines of work", () => {
       fireEvent.click(plug);
       await waitFor(() => expect(selected(view, "Which plug?")).toBe("true"));
       view.getByRole("button", { name: "Open D-1" });
+    });
+
+    test("a tap opens what it lands on too, though a touch screen sends its focus and click after the finger lifts", async () => {
+      onLine();
+      server.act(
+        c.decisionAsk,
+        { title: "Which board?", context: "Printed.", options, urgent: "time_boxed" },
+        "octo.1",
+      );
+      server.act(c.decisionAsk, { title: "Which plug?", context: "Side.", options }, "octo.1");
+      navigate("/");
+      const view = renderApp(<App />);
+      const plug = await view.findByRole("button", { name: "Open D-2" });
+      fireEvent.pointerDown(plug, { pointerId: 1, button: 0, pointerType: "touch" });
+      fireEvent.pointerUp(plug, { pointerId: 1, button: 0, pointerType: "touch" });
+      await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+      fireEvent.focus(plug);
+      await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+      expect(view.queryByRole("button", { name: "Open D-1" })).toBeNull();
+      fireEvent.click(plug);
+      await waitFor(() => expect(selected(view, "Which plug?")).toBe("true"));
+    });
+
+    test("a right press, which ends in no click, leaves Tab moving focus as before", async () => {
+      onLine();
+      server.act(
+        c.decisionAsk,
+        { title: "Which board?", context: "Printed.", options, urgent: "time_boxed" },
+        "octo.1",
+      );
+      server.act(c.decisionAsk, { title: "Which plug?", context: "Side.", options }, "octo.1");
+      navigate("/");
+      const view = renderApp(<App />);
+      const plug = await view.findByRole("button", { name: "Open D-2" });
+      fireEvent.pointerDown(plug, { pointerId: 1, button: 2 });
+      fireEvent.keyDown(document.body, { key: "Tab" });
+      fireEvent.focus(plug);
+      await waitFor(() => expect(selected(view, "Which plug?")).toBe("true"));
     });
 
     test("what was pressed stays where it was on the page when the item open above it folds", async () => {

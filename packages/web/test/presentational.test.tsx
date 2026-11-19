@@ -1864,7 +1864,7 @@ describe("home's smaller pieces", () => {
 describe("LineHandle", () => {
   test("is the one way to reorder: drag it, or open it for Top, Up, Down and To up next", () => {
     const onMove = mock((_direction: string) => {});
-    const drag = { onPointerDown: mock(() => {}), dragged: () => false };
+    const drag = { onPointerDown: mock(() => {}) };
     const view = render(
       <LineHandle title="One" number={1} canMoveUp canMoveDown canQueue drag={drag} onMove={onMove} />,
     );
@@ -2812,6 +2812,38 @@ describe("TaskCard's strip", () => {
   });
 });
 
+describe("TaskCard's reply", () => {
+  const card = (replied: { words: string; pending: boolean } | null) => (
+    <TaskCard
+      task={issue({ title: "Log in", createdBy: "panel-widgets" })}
+      words=""
+      onWords={() => {}}
+      values={{}}
+      onValue={() => {}}
+      why=""
+      onWhy={() => {}}
+      onDone={() => {}}
+      onCant={() => {}}
+      reply="And the second account"
+      onReplyWords={() => {}}
+      onReply={() => {}}
+      replied={replied}
+    />
+  );
+
+  test("says a reply is on its way, and holds a second until it has gone", () => {
+    const view = render(card({ words: "Which account?", pending: true }));
+    view.getByText("Replying: Which account?");
+    fireEvent.click(view.getByRole("button", { name: "Reply" }));
+    expect(view.getByRole("button", { name: "Send" })).toHaveProperty("disabled", true);
+  });
+
+  test("says what was replied once it has gone", () => {
+    const view = render(card({ words: "Which account?", pending: false }));
+    view.getByText("You replied: Which account?");
+  });
+});
+
 describe("useHeldValue, through TextBox", () => {
   test("a box with focus keeps its words when other words arrive, but empties when its draft does, as when sent", () => {
     const view = render(<TextBox label="Note" value="Print it" onChange={() => {}} />);
@@ -3101,6 +3133,12 @@ describe("LinePrs", () => {
   test("a push after it was said to be ready shows beside it", () => {
     const view = render(<LinePrs prs={[{ ...ready, headSha: "def" }]} />);
     view.getByText("pushed to since");
+  });
+
+  test("one said ready that is still a draft says so, since GitHub will not merge a draft", () => {
+    const view = render(<LinePrs prs={[{ ...ready, state: "draft" }]} />);
+    view.getByText("Ready to merge");
+    view.getByText("draft");
   });
 
   test("with none, it draws nothing", () => {

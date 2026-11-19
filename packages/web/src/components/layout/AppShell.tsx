@@ -7,7 +7,7 @@ import { usePanelFocus } from "../../hooks/usePanelFocus.ts";
 import { useReloadOnNewBuild } from "../../hooks/useReloadOnNewBuild.ts";
 import { useSeen } from "../../hooks/useSeen.ts";
 import { useTopBar } from "../../hooks/useTopBar.ts";
-import { backEntity, navigate, setParams, useRoute } from "../../lib/router.ts";
+import { backEntity, closeEntity, navigate, setParams, useRoute } from "../../lib/router.ts";
 import { useNewLine } from "../../hooks/useNewLine.ts";
 import { NewLineSheet } from "../lines/NewLineSheet.tsx";
 import { Side } from "../ui/Panel.tsx";
@@ -106,7 +106,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <PendingChoices />
         </main>
         {entity === null ? null : (
-          <Side label={entity} ref={panel}>
+          <Side label={entity} ref={panel} onClose={closeEntity}>
             <PartBoundary key={entity}>
               <EntityPanel entityRef={entity} />
             </PartBoundary>

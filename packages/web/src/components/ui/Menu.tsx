@@ -32,7 +32,7 @@ export function Menu({
   buttonRef?: Ref<HTMLButtonElement>;
   /** The button is a row's lead, such as its number in the order, in the lead's own small grey figures. */
   lead?: string;
-  /** The button also drags what it leads: pressed and moved, it drags; pressed and let go, it opens. */
+  /** The button also drags what it leads: pressed and moved, it drags, and the drag's click is swallowed; tapped, it opens. */
   drag?: DragHandle;
   /** Which edge of the button the menu lines up with: the start for a row's lead, the end in the bar. */
   align?: "start" | "end";
@@ -67,9 +67,7 @@ export function Menu({
         aria-busy={busy === undefined ? undefined : true}
         aria-haspopup="menu"
         aria-expanded={menu.open}
-        onClick={() => {
-          if (drag?.dragged() !== true) menu.toggle();
-        }}
+        onClick={menu.toggle}
         onBlur={menu.leave}
       >
         {icon === undefined ? null : iconOnPhone ? (

@@ -74,7 +74,7 @@ function world() {
 describe("a task is anything the developer does with their own hands", () => {
   test("filed with only a title, such as merging a pull request, it is done with no words, or replied to", () => {
     const w = world();
-    const merge = w.as(w.owner, c.taskFile, { title: "Merge vasc/homepanel#14" });
+    const merge = w.as(w.owner, c.taskFile, { title: "Log in to Tailscale" });
     expect([merge.assignee, merge.place, merge.line]).toEqual(["dev", null, w.line]);
     expect(w.as(w.dev, c.homeShow, {}).lines[w.line]?.forYou.map((item) => item.kind)).toEqual(["task"]);
     // A reply goes to the agent and leaves the task open.

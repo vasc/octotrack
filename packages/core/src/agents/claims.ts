@@ -324,7 +324,7 @@ export function windDown(ctx: Ctx, line: Line, writes: boolean): void {
   const ending = line.state === "done" || line.state === "dropped";
   const now = line.ownedBy !== null ? "the developer's own now" : `now ${line.state.replace("_", " ")}`;
   const todo = !writes
-    ? "Stop scoping it; your writes there are refused from now."
+    ? "Stop scoping it: your claim on it ends now."
     : ending
       ? "Write a hand-off note, report on answers you took, then close or fold every open issue and pull request, and leave a closing note."
       : "Write a hand-off note, report on answers you took, and leave a branch note.";

@@ -105,9 +105,7 @@ export const networkCommands: Command[] = [
       );
       const pr = outcome.data;
       out.result(outcome, () =>
-        ready
-          ? `${r.bold(`${pr.repo}#${pr.number}`)} is ready to merge: ${pr.title}`
-          : `${r.bold(`${pr.repo}#${pr.number}`)} is no longer ready to merge: ${pr.title}`,
+        ready ? r.renderPr(pr) : `${r.bold(`${pr.repo}#${pr.number}`)} is not ready to merge: ${pr.title}`,
       );
     },
   },

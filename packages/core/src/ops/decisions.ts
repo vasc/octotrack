@@ -461,6 +461,18 @@ export const decisionOps = [
     const current = requireDecision(ctx, input.ref);
     assertVersion(current.ref, current.version, input.ifVersion);
     refineable(ctx, current);
+    // An answer names its option by key: options that leave it out would leave the answer pointing at nothing.
+    if (
+      input.options !== undefined &&
+      current.chosenOption !== null &&
+      !normalizeOptions(input.options).some((option) => option.key === current.chosenOption)
+    ) {
+      throw new OctoError(
+        "invalid_input",
+        `${current.ref} was answered with option ${current.chosenOption}, which these options leave out`,
+        `Keep option ${current.chosenOption} among them, or reopen the question first.`,
+      );
+    }
     if (current.line !== null && !ctx.developer) {
       // Refined, it must still stand alone, as it had to when asked.
       const recommendation =

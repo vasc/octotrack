@@ -211,7 +211,8 @@ export function buildHome(ctx: Ctx): HomeView {
               questions: held.filter((item) => item.kind === "question").length,
               tasks: held.filter((item) => item.kind === "task").length,
             },
-      // Only an agent re-confirms, and none may write to a line the developer owns, so there nothing is re-confirming.
+      // Only an agent re-confirms, and a line the developer owns holds what its agents left until it is handed back to
+      // one, so nothing there waits to be re-confirmed.
       reconfirming:
         !owned && (line.state === "working" || line.state === "up_next") ? reconfirmingOn(ctx, line.ref) : 0,
       sinceSummary: line.summaryAt === null ? 0 : changesSince(ctx, line.ref, line.summaryAt),
@@ -240,7 +241,8 @@ export function buildHome(ctx: Ctx): HomeView {
       toDo: working.reduce((sum, line) => sum + openTasks(ctx, line.ref).length, 0),
       toAccept:
         inState("proposed").length +
-        lines.filter((line) => line.doneWhenProposal !== null || line.doneProposal !== null).length,
+        // What home shows: a case for done, or a new done when, is an item on a working line only.
+        working.filter((line) => line.doneWhenProposal !== null || line.doneProposal !== null).length,
       toStepIn: working.filter((line) => lineDetails[line.ref]?.stepIn === true).length,
       urgent: urgent.length + urgentProposals,
     },

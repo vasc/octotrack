@@ -38,6 +38,8 @@ export function LinePrs({ prs }: { prs: readonly PullRequest[] }) {
                   {pr.repo}#{pr.number}
                 </Link>
                 {pr.readyBy === null ? "" : `by ${pr.readyBy}`}
+                {/* Ready, but still a draft on GitHub, which will not merge until it is marked ready for review. */}
+                {kind === "Ready to merge" && pr.state === "draft" ? <Fact tone="stuck">draft</Fact> : ""}
                 {/* Facts leave out only empty words, not a part that draws nothing, so those are left out here. */}
                 {pr.checks === "none" ? "" : <PrChecks checks={pr.checks} />}
                 {pr.review === "none" ? "" : <ReviewWord review={pr.review} />}

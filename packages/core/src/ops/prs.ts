@@ -299,17 +299,25 @@ export const prOps = [
     const pr = requirePrRef(ctx, input.ref);
     const ready = input.ready ?? true;
     const why = input.why?.trim() ?? "";
-    ctx.sql.run(
-      "UPDATE prs SET readyBy = ?, readyAt = ?, readyWhy = ?, readySha = ?, updatedAt = ? WHERE ref = ?",
-      [
-        ready ? ctx.actor : null,
-        ready ? ctx.now : null,
-        ready && why !== "" ? why : null,
-        ready ? pr.headSha : null,
-        ctx.now,
-        pr.ref,
-      ],
+    const already = pr.readyAt !== null;
+    // Said again, it is still ready since it was first said, so it keeps its place in the line's list; the words and
+    // the commit are what is said now.
+    const changes = applyPatch(
+      ctx,
+      "prs",
+      pr.ref,
+      pr,
+      ready
+        ? {
+            readyBy: ctx.actor,
+            readyAt: already ? undefined : ctx.now,
+            readyWhy: why === "" ? (already ? undefined : null) : why,
+            readySha: pr.headSha,
+          }
+        : { readyBy: null, readyAt: null, readyWhy: null, readySha: null },
     );
+    const updated = getPr(ctx, pr.ref) ?? pr;
+    if (Object.keys(changes).length === 0) return updated;
     const label = `${pr.ref} (${pr.repo}#${pr.number})`;
     const issues = implementedIssues(ctx, pr.ref, {
       repo: pr.repo,
@@ -326,9 +334,10 @@ export const prOps = [
       summary: ready
         ? `${label} is ready to merge${why === "" ? "" : `: ${why}`}`
         : `${label} is not ready to merge after all: ${pr.title}`,
-      attrs: prAttrs(pr),
+      attrs: prAttrs(updated),
+      changes,
     });
-    return getPr(ctx, pr.ref) ?? pr;
+    return updated;
   }),
 
   bind(contracts.prUpsert, (ctx, input) => {

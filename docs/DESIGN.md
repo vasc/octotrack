@@ -357,7 +357,9 @@ Decisions made from that:
   merge (`pr.ready_to_merge`, `octo pr ready <PR> [why]`, `--not` takes it back), recording who, when, why and the commit
   it was at. A line lists its pull requests still open, those said ready first, then open, then drafts: under a working
   line on home and as Pull requests in its panel, right after For you. A push after it was said ready shows as "pushed
-  to since"; nothing takes the mark away on its own. Merging a pull request is no longer filed as a task. _Why:_ the
+  to since"; nothing takes the mark away on its own. A pull request to merge needs no task: said ready, it is in front of the developer already. An agent marks ready
+  through the usual patch, so saying it again keeps when it was first said, and nothing is logged unless something
+  changed. The runner never closes a pull request said ready when its line ends: it waits to be merged. _Why:_ the
   developer: "when a line has prs it should show the list of prs prominently, especially the ones ready to merge, ready
   to merge is a decision the agent does, it can mean different things for different people and repos". Keeping the
   mark through a push, and showing the push, is my decision: dropping it would be a rule the developer did not ask for,
@@ -816,9 +818,25 @@ Decisions made from that:
     an alias table would hold the same fact twice.
   - _Places live in the database,_ edited only through the developer's `place` operations, not in a file beside the
     allowed hosts. _Why:_ they are then in the backups and migration rehearsals with everything else.
-  - _Dragging a line is the browser's drag and drop, by its handle, and the handle is also a button_ that opens Move to
-    top, Up, Down and To up next. _Why:_ a touch drag needs a long press that fights scrolling, a keyboard and a screen
+  - _Dragging a line follows the pointer, by its handle, and the handle is also a button_ that opens Move to top, Up,
+    Down and To up next. The drag is pointer events, not the browser's drag and drop: they work alike for a mouse, a
+    finger and a pen, the handle takes no scrolling touch (`touch-action: none`), and the page scrolls when the drag is
+    held at the top or bottom of the window. Only the pointer that started it moves or ends it, Esc cancels it, and the
+    click a browser sends when it ends is swallowed, so letting go over the line itself opens nothing. A rule along the
+    line under the pointer, at its top or bottom edge, shows where it lands. _Why:_ the developer, of the browser's drag
+    and drop: "dragging to reorder doesn't work at all"; it never worked on a touch screen. A keyboard and a screen
     reader cannot drag, and a separate Reorder mode was a second control for the same job, so the one handle does both.
+  - _A press opens what it lands on, in one go._ The browser gives focus as a press goes down; home moves its own focus,
+    which opens an item in place and folds the one open before, only with the press's click, and the item pressed stays
+    where it was on the screen while the page above it changes (the page scrolls by what moved, and focus follows without
+    scrolling). A press is held until its click or the next key, never timed, since a touch screen sends its click after
+    the finger lifts. A press anywhere on a line's head that is not one of its controls opens the line, as its title does.
+    _Why:_ the developer: "clicking on a line or question takes an annoying two clicks and often changes the positioning
+    of the content, seems to be selecting first, when I press on something I opening it, theres no intermediary step".
+  - _A press on the page beside a panel closes it,_ as a tap outside closes a sheet: one that starts and ends outside the
+    panel, which is its full height whether loaded, loading or failed. What the panel shows over the page, a sheet, a
+    menu's list, the Undo bar, is part of it; a finger scrolling the page ends in no click and leaves it open. _Why:_ the
+    developer: "clicking outside a sheet doesn't dismiss the sheet".
   - _An agent's checkout is its own folder_ (`git rev-parse --show-toplevel`, so a linked worktree for an agent working
     in one), since one name is one session in one checkout; only the runner needs a repo's main checkout.
   - _Not a line is attested per issue, not as a closed drift._ D6 attests a drift by its fingerprint, and the
@@ -893,7 +911,9 @@ Everything below is a design decision made from that, with its reasoning.
   item as one row, and further lines are one row each with how many items wait, except that a Step in item always shows
   on its line. Up-next rows show their done when and how far scoping got, and their names open the line in place like
   any other; the tabled row names its lines; done lines stay a few days under Done lately. The header counts what is
-  waiting (to answer, to do, to accept, to step in), and each count links to the first such item in focus order. Past
+  waiting (to answer, to do, to accept, to step in), and each count goes to the next such item after the one in focus,
+  round to the first after the last (`?next=<count>`), or to the first when pressed on another page. To accept counts
+  what home shows: proposals, and a case for done or a new done when on a working line. Past
   six working lines, the header also says what spreading thin is costing (lines with no owner, lines waiting on you): a
   nudge to table, never a cap. _Why:_ the first drafts stacked a queue above the list, so the same lines were read twice
   and the lines were not at the centre.

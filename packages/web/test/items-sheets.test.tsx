@@ -243,7 +243,7 @@ describe("TaskCard, as drawn", () => {
     view.getByRole("button", { name: "Back" });
   });
 
-  test("a task with nothing asked back, such as merging a pull request, is done with no words, or replied to", () => {
+  test("a task with nothing asked back, such as logging in, is done with no words, or replied to", () => {
     const onDone = mock((_outcome: { result?: string }) => {});
     const onReply = mock((_words: string) => {});
     const view = render(
@@ -251,8 +251,8 @@ describe("TaskCard, as drawn", () => {
         {...props}
         onDone={onDone}
         onReply={onReply}
-        reply="Its checks are red"
-        task={issue({ ref: "PANEL-9", title: "Merge vasc/homepanel#14", outcome: "", createdBy: "panel" })}
+        reply="Which account?"
+        task={issue({ ref: "PANEL-9", title: "Log in to Tailscale", outcome: "", createdBy: "panel" })}
       />,
     );
     view.getByText("Task for you");
@@ -263,8 +263,10 @@ describe("TaskCard, as drawn", () => {
     fireEvent.click(view.getByRole("button", { name: "Reply" }));
     view.getByLabelText("Reply to panel");
     fireEvent.click(view.getByRole("button", { name: "Send" }));
-    expect(onReply).toHaveBeenCalledWith("Its checks are red");
-    view.getByRole("button", { name: "Back" });
+    expect(onReply).toHaveBeenCalledWith("Which account?");
+    // Sent, the box closes and the task is back to Done, Can't do it and Reply.
+    expect(view.queryByLabelText("Reply to panel")).toBeNull();
+    view.getByRole("button", { name: "Done" });
   });
 
   test("a task the developer filed that asks for an outcome still shows its box, so Done can be pressed", () => {

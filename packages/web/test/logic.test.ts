@@ -15,7 +15,7 @@ import {
   timeLabel,
   toneOf,
 } from "../src/lib/format.ts";
-import { focusLabel, nextFocus } from "../src/lib/focus.ts";
+import { focusLabel, nextFocus, nextOf, refsOf } from "../src/lib/focus.ts";
 import {
   forYouCounts,
   heldOnTabled,
@@ -29,7 +29,16 @@ import { issueLinks } from "../src/lib/links.ts";
 import { moreSinceSummary, scanningText } from "../src/lib/log.ts";
 import { doneWhenSaid, LINE_SAID } from "../src/lib/said.ts";
 import { DEFAULT_APPEARANCE, PALETTES, readAppearance, tintBrowserBar } from "../src/lib/appearance.ts";
-import { decision, decisionCard, event, issue, pendingChoice } from "../src/design/fixtures.ts";
+import {
+  decision,
+  decisionCard,
+  event,
+  issue,
+  line,
+  lineHome,
+  pendingChoice,
+} from "../src/design/fixtures.ts";
+import type { HomeView } from "@octotrack/core/schemas";
 import { answerWaiting } from "../src/hooks/useDecisionForm.ts";
 import { closeEntity, navigate, openEntity, setParams } from "../src/lib/router.ts";
 
@@ -241,6 +250,10 @@ describe("taskOutcome", () => {
     expect(taskOutcome(issue({ outcome: "Grams" }), {}, " ")).toBeNull();
     expect(taskOutcome(issue({ outcome: "Grams" }), {}, " 212 g ")).toEqual({ result: "212 g" });
     expect(taskOutcome(issue({ outcome: "" }), {}, "")).toEqual({});
+    // Nothing asked back, words typed anyway go along as a note.
+    expect(taskOutcome(issue({ outcome: "" }), {}, " Done on the Mac ")).toEqual({
+      result: "Done on the Mac",
+    });
   });
 });
 
@@ -542,5 +555,55 @@ describe("scanningText", () => {
   test("says how far back a search with nothing yet has looked", () => {
     expect(scanningText(500)).toBe("Nothing in the last 500 events yet; searching older ones…");
     expect(scanningText(10000)).toBe("Nothing in the last 10,000 events yet; searching older ones…");
+  });
+});
+
+describe("where a count in the bar goes", () => {
+  const home: HomeView = {
+    runner: { configured: false, cap: 1, dryRun: false },
+    at: null,
+    urgent: [decisionCard({ decision: decision({ ref: "D-9", urgentReason: "broken" }) })],
+    noLine: [decisionCard({ decision: decision({ ref: "D-7" }) })],
+    lines: {
+      "L-1": lineHome({
+        forYou: [
+          { kind: "question", card: decisionCard({ decision: decision({ ref: "D-1" }) }) },
+          { kind: "task", task: issue({ ref: "OCT-4" }), frees: null },
+          { kind: "done", line: "L-1", text: "It fits.", by: "panel", doneWhen: "It fits." },
+        ],
+      }),
+      "L-2": lineHome({
+        stepIn: true,
+        forYou: [{ kind: "question", card: decisionCard({ decision: decision({ ref: "D-2" }) }) }],
+      }),
+    },
+    counts: { urgent: 2, toAnswer: 3, toDo: 1, toAccept: 3, toStepIn: 1 },
+    working: [line({ ref: "L-1" }), line({ ref: "L-2" })],
+    upNext: [],
+    proposed: [
+      line({ ref: "L-5", state: "proposed", urgentReason: "broken" }),
+      line({ ref: "L-6", state: "proposed" }),
+    ],
+    tabled: [],
+    doneLately: [],
+    crews: {},
+  };
+
+  test("each count stands for its items in the order j walks them", () => {
+    expect(refsOf(home, "urgent")).toEqual(["D-9", "L-5"]);
+    expect(refsOf(home, "toAnswer")).toEqual(["D-1", "D-2", "D-7"]);
+    expect(refsOf(home, "toDo")).toEqual(["OCT-4"]);
+    expect(refsOf(home, "toAccept")).toEqual(["done:L-1", "L-5", "L-6"]);
+    expect(refsOf(home, "toStepIn")).toEqual(["stepin:L-2"]);
+  });
+
+  test("a press goes to the next after the one in focus, round to the first, and to the first from nowhere", () => {
+    expect(nextOf(home, "toAnswer", null)).toBe("D-1");
+    expect(nextOf(home, "toAnswer", "D-1")).toBe("D-2");
+    expect(nextOf(home, "toAnswer", "D-7")).toBe("D-1");
+    // From an item of another kind, the next of this kind after it.
+    expect(nextOf(home, "toAnswer", "OCT-4")).toBe("D-2");
+    expect(nextOf(home, "toDo", "OCT-4")).toBe("OCT-4");
+    expect(nextOf(home, "toAccept", "line:L-1")).toBe("done:L-1");
   });
 });

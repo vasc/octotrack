@@ -1,4 +1,4 @@
-import { type RefObject, useId, useRef, useState } from "react";
+import { type RefObject, useId, useRef, useState, useCallback } from "react";
 import { focusLeft, useCloseOnOutsideTap } from "../../hooks/useCloseOnOutsideTap.ts";
 
 export interface Completion {
@@ -38,7 +38,8 @@ export function SearchField({
   const [active, setActive] = useState(0);
   const [focused, setFocused] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
-  useCloseOnOutsideTap(wrap, focused, setFocused);
+  const blurred = useCallback(() => setFocused(false), []);
+  useCloseOnOutsideTap(wrap, focused, blurred);
   const open = focused && completions.length > 0;
   const highlighted = Math.min(active, completions.length - 1);
   const take = (index: number) => {

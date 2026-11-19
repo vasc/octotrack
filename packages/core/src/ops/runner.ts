@@ -850,14 +850,15 @@ export const runnerOps = [
       z.object({ pr: z.string(), repo: z.string(), number: z.number().int(), line: z.string() }),
       // Only those open when the line ended, unchanged since and as GitHub still reports them (D14); only in the
       // GitHub repo of the issue it implements, since a pull request's row may name any repo; and never while it also
-      // implements work still wanted: an open issue, or one on a line that has not ended.
+      // implements work still wanted: an open issue, or one on a line that has not ended; nor one an agent said is
+      // ready to merge, which waits for the developer to merge it rather than being thrown away.
       `SELECT p.ref AS pr, p.repo AS repo, p.number AS number, MIN(i.line) AS line
        FROM prs p JOIN links k ON k.fromRef = p.ref AND k.rel = 'implements'
        JOIN issues i ON i.ref = k.toRef JOIN lines l ON l.ref = i.line
        JOIN projects r ON r.ref = i.project
        JOIN line_closing_prs s ON s.line = l.ref AND s.pr = p.ref AND s.headSha = p.headSha
        WHERE p.state IN ('open', 'draft') AND l.state IN ('done', 'dropped') AND l.windDownUntil IS NULL
-         AND p.githubAt IS NOT NULL
+         AND p.githubAt IS NOT NULL AND p.readyAt IS NULL
          AND i.status IN ('done', 'cancelled')
          AND r.repo IS NOT NULL AND lower(r.repo) = lower(p.repo)
          AND NOT EXISTS (

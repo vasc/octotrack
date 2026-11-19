@@ -639,7 +639,7 @@ export const contracts = {
   ),
   taskFile: write(
     "task.file",
-    "File a task for the developer, anything done with their own hands (merge a pull request, log in somewhere, measure something): optionally where, what to report, and the issue it frees",
+    "File a task for the developer, anything done with their own hands (log in somewhere, plug something in, measure something; a pull request to merge is said ready with pr.ready_to_merge instead): optionally where, what to report, and the issue it frees",
     z.strictObject({
       title: Text,
       /** Where it is done, when that matters; a place not on the list yet is added to it. */
@@ -820,7 +820,7 @@ export const contracts = {
   ),
   decisionUpdate: write(
     "decision.update",
-    "Refine an open decision",
+    "Refine a question, whatever it stands at; once answered, its options must keep the one chosen",
     z.strictObject({
       ref: z.string(),
       title: Text.optional(),

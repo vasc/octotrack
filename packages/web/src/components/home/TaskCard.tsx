@@ -32,6 +32,8 @@ export interface TaskCardProps {
   onReply(words: string): void;
   /** Its Done or Can't do it is waiting with Undo: neither is sent again. */
   sending?: boolean;
+  /** The last reply sent from here: on its way while it waits out its Undo, then sent. */
+  replied?: { words: string; pending: boolean } | null;
   /** The plan step it holds up, by title, where that is known. */
   holdsUp?: string;
   /** The issue its outcome frees, by ref and title, where that is known. */
@@ -58,6 +60,7 @@ export function TaskCard({
   onCant,
   onReply,
   sending = false,
+  replied = null,
   holdsUp,
   frees = null,
 }: TaskCardProps) {
@@ -76,7 +79,10 @@ export function TaskCard({
       onSubmit={(event) => {
         event.preventDefault();
         if (replying) {
-          if (reply.trim() !== "" && !sending) onReply(reply.trim());
+          if (reply.trim() === "" || replied?.pending === true) return;
+          onReply(reply.trim());
+          // Sent, the reply waits out its Undo in the bar; the task is back to Done, Can't do it and Reply.
+          setMode(null);
           return;
         }
         if (cant) {
@@ -124,11 +130,11 @@ export function TaskCard({
         )}
         {replying ? (
           <Actions>
+            {/* One reply at a time: the last one may still be waiting out its Undo. */}
             <Button
               type="submit"
               variant="primary"
-              disabled={reply.trim() === ""}
-              busy={sending ? "Sending…" : undefined}
+              disabled={reply.trim() === "" || replied?.pending === true}
             >
               Send
             </Button>
@@ -164,6 +170,9 @@ export function TaskCard({
               <Button choice={3} onClick={() => setMode("reply")}>
                 Reply
               </Button>
+            )}
+            {replied === null ? null : (
+              <Note>{replied.pending ? `Replying: ${replied.words}` : `You replied: ${replied.words}`}</Note>
             )}
             {own ? null : (
               <Note>

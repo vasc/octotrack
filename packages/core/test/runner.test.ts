@@ -146,6 +146,26 @@ describe("closing up after a line ends", () => {
     expect(w.tracker.call(c.runnerCloses, {}, w.runner)).toEqual([]);
   });
 
+  test("a pull request an agent said is ready to merge is never closed with its line: it waits to be merged", () => {
+    const w = world();
+    const line = w.line("Enclosure");
+    const issue = w.tracker.call(c.issueCreate, { project: "PANEL", title: "Base", line: line.ref }, w.dev);
+    w.tracker.call(
+      c.prSync,
+      {
+        prs: [
+          { repo: "vasc/homepanel", number: 14, title: "Base", state: "open", body: `Fixes ${issue.ref}` },
+        ],
+      },
+      GITHUB,
+    );
+    w.tracker.call(c.prReadyToMerge, { ref: "vasc/homepanel#14", why: "Checks pass." }, w.dev);
+    w.tracker.call(c.lineDone, { ref: line.ref }, w.dev);
+    w.later(16);
+    w.tracker.sweep();
+    expect(w.tracker.call(c.runnerCloses, {}, w.runner)).toEqual([]);
+  });
+
   test("a worktree Octotrack made is offered for removal once nobody uses it", () => {
     const w = world();
     const line = w.line("Enclosure");

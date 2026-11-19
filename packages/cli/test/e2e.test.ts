@@ -605,6 +605,33 @@ describe("what the audit found", () => {
     expect((await octo(["pr", "ready", "acme/ready#4", "--not", "because"])).code).toBe(2);
   });
 
+  test("the developer replies to a task, and the agent waiting on it hears the words; the task stays open", async () => {
+    await octo(["project", "create", "REPLY", "Replies", "--me"], "");
+    const line = await data(
+      WithRef,
+      [
+        "line",
+        "add",
+        "Remote access",
+        "--done-when",
+        "It connects",
+        "-r",
+        "REPLY",
+        "--where",
+        "working",
+        "--me",
+      ],
+      "",
+    );
+    await octo(["line", "take", line.ref], "replier");
+    const Task = z.object({ ref: z.string(), status: z.string() });
+    const task = await data(Task, ["task", "file", "Log in to Tailscale"], "replier");
+    const replied = await data(Task, ["task", "reply", task.ref, "Which", "account?", "--me"], "");
+    expect(replied).toEqual({ ref: task.ref, status: "todo" });
+    const heard = await octo(["agent", "list"], "replier");
+    expect(heard.stdout).toContain("Which account?");
+  });
+
   test("--timeout 0 checks once and answers honestly", async () => {
     const decision = await data(WithRef, ["decision", "ask", "Zero timeout"]);
     const open = await octo(["watch", "--until", `ref:${decision.ref} status:decided`, "--timeout", "0"]);

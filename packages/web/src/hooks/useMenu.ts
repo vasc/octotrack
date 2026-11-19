@@ -1,4 +1,4 @@
-import { type FocusEvent, type KeyboardEvent, type RefObject, useRef, useState } from "react";
+import { type FocusEvent, type KeyboardEvent, type RefObject, useCallback, useRef, useState } from "react";
 import { focusLeft, useCloseOnOutsideTap } from "./useCloseOnOutsideTap.ts";
 
 /**
@@ -15,7 +15,8 @@ export function useMenu(trigger?: RefObject<HTMLButtonElement | null>) {
   const own = useRef<HTMLButtonElement>(null);
   const button = trigger ?? own;
   const wrap = useRef<HTMLSpanElement>(null);
-  useCloseOnOutsideTap(wrap, open, setOpen);
+  const shut = useCallback(() => setOpen(false), []);
+  useCloseOnOutsideTap(wrap, open, shut);
   const close = () => {
     setOpen(false);
     button.current?.focus();

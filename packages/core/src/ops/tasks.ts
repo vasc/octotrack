@@ -31,6 +31,11 @@ function emitPlace(ctx: Ctx, type: EventTypeName, name: string, summary: string)
   emit(ctx, { type, kind: "place", ref: name, project: null, summary });
 }
 
+/** A task's place, if it names one: blank words name none, so no nameless place is ever added. */
+function placeOf(ctx: Ctx, name: string | undefined): string | null {
+  return name === undefined || name.trim() === "" ? null : requirePlace(ctx, name);
+}
+
 /** A place by its name; one not on the list yet is added to it, as the developer would with octo place add. */
 function requirePlace(ctx: Ctx, name: string): string {
   const wanted = name.trim();
@@ -379,7 +384,7 @@ export const taskOps = [
       throw new OctoError("invalid_input", "A task waits on a line", "Take a line first, or pass --line.");
     }
     const line = requireLine(ctx, lineRef);
-    const place = input.place === undefined ? null : requirePlace(ctx, input.place);
+    const place = placeOf(ctx, input.place);
     const fields = distinctFields(input.fields ?? []);
     const frees =
       input.frees === undefined
@@ -521,7 +526,7 @@ export const taskOps = [
     });
     // Nothing to report back to anyone: the outcome is empty, and Done needs no words.
     ctx.sql.run("UPDATE issues SET place = ?, outcome = '' WHERE ref = ?", [
-      input.place === undefined ? null : requirePlace(ctx, input.place),
+      placeOf(ctx, input.place),
       task.ref,
     ]);
     return requireIssue(ctx, task.ref);
@@ -530,10 +535,10 @@ export const taskOps = [
   bind(contracts.at, (ctx, input) => {
     // Where the developer is, only the developer can say: an agent was not there to see it.
     requireDeveloperInPerson(ctx, "say where they are");
-    if (input.place === undefined) {
+    const place = placeOf(ctx, input.place);
+    if (place === null) {
       ctx.sql.run("DELETE FROM developer_at");
     } else {
-      const place = requirePlace(ctx, input.place);
       const until = new Date(Date.parse(ctx.now) + AT_LASTS_MS).toISOString();
       ctx.sql.run(
         "INSERT INTO developer_at (id, place, until) VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET place = excluded.place, until = excluded.until",

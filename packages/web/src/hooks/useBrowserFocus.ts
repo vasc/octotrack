@@ -22,7 +22,7 @@ function focusRefOf(target: EventTarget | null): string | null {
  * item already holding the browser's focus, such as a box being typed in. And a click or Tab into an item makes it
  * home's focus. The browser's focus is outside React, so effects bring the two in line.
  *
- * A press moves home's focus only once it ends, as a click: the browser gives focus as the press goes down, and opening
+ * A press moves home's focus only with its click: the browser gives focus as the press goes down, and opening
  * the pressed item then would fold the one open above it, moving the page under the pointer so the press lands on
  * something else. And the item pressed stays where it was on the screen while the one above it folds.
  */
@@ -85,16 +85,16 @@ export function useBrowserFocus(
   useEffect(() => {
     const element = container.current;
     if (element === null) return;
-    // A press is held from the pointer going down until its click, which comes in the same task as the pointer going
-    // up; a press that ends with no click, dragged off, is let go after it.
+    // A press is held from the pointer going down until its click. A touch screen sends the click, and the focus before
+    // it, a while after the finger lifts, so nothing is timed from the lift. A press that ends in no click, a finger
+    // that scrolled, is let go by the next key, since only a key moves focus without a pointer. Only the main button
+    // presses: a right press opens the browser's menu and ends in no click.
     let pressing = false;
-    const onPointerDown = () => {
-      pressing = true;
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.button === 0) pressing = true;
     };
-    const onPointerUp = () => {
-      setTimeout(() => {
-        pressing = false;
-      });
+    const onKeyDown = () => {
+      pressing = false;
     };
     const onFocusIn = (event: FocusEvent) => {
       if (pressing) return;
@@ -116,14 +116,12 @@ export function useBrowserFocus(
       });
     };
     element.addEventListener("pointerdown", onPointerDown, true);
-    window.addEventListener("pointerup", onPointerUp, true);
-    window.addEventListener("pointercancel", onPointerUp, true);
+    window.addEventListener("keydown", onKeyDown, true);
     element.addEventListener("focusin", onFocusIn);
     element.addEventListener("click", onClick, true);
     return () => {
       element.removeEventListener("pointerdown", onPointerDown, true);
-      window.removeEventListener("pointerup", onPointerUp, true);
-      window.removeEventListener("pointercancel", onPointerUp, true);
+      window.removeEventListener("keydown", onKeyDown, true);
       element.removeEventListener("focusin", onFocusIn);
       element.removeEventListener("click", onClick, true);
     };

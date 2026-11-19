@@ -12,7 +12,7 @@ export const taskCommands: Command[] = [
     path: ["task", "file"],
     usage: "<title>",
     summary:
-      "File a task for the developer, anything done with their own hands: merge a pull request, log in, measure something",
+      "File a task for the developer, anything done with their own hands: log in, plug something in, measure something",
     options: {
       place: {
         ...STRING,
@@ -29,7 +29,7 @@ export const taskCommands: Command[] = [
       },
     },
     examples: [
-      'octo task file "Merge vasc/homepanel#14: its checks pass and it is reviewed"',
+      'octo task file "Log in to Tailscale on the Mac mini"',
       'octo task file "Log in to Tailscale on the Mac mini" --place "the Mac mini"',
       'octo task file "Measure the grip" --place "the bench" --outcome "The five numbers, in mm"',
       'octo task file "Measure the board" --place "the bench" --outcome "In mm" --field Length --field Holes',
