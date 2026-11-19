@@ -19,10 +19,14 @@ export function useLineChoices(line: Line) {
   return {
     choose: (choice: LineChoice) =>
       choices.make(OPS[choice], { ref: line.ref }, LINE_SAID[choice](line.title)),
-    table: (reason: string, lookAgainAt: string | null) =>
+    table: (reason: string | null, lookAgainAt: string | null) =>
       choices.make(
         contracts.lineTable.name,
-        { ref: line.ref, reason, ...(lookAgainAt === null ? {} : { lookAgainAt }) },
+        {
+          ref: line.ref,
+          ...(reason === null ? {} : { reason }),
+          ...(lookAgainAt === null ? {} : { lookAgainAt }),
+        },
         LINE_SAID.table(line.title),
       ),
     doneWhen: (accept: boolean) =>

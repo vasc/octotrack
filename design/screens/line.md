@@ -13,7 +13,7 @@ owner, then Tell. A section with nothing in it says why in one sentence instead 
 - Changes from today:
   - One column on every screen: the plan is no longer beside What's new and Owner.
   - Owner shows for every live line, saying who will own it when there is none yet (today it shows only while working).
-  - Done or dropped (F): read only, with "Plan, summary and history stay below, as they were when it closed."
+  - Done or dropped (F): says when it closed, and offers Start, Up next, Table and More like any line not being worked on; its plan keeps its menus.
   - Working with no owner (D): the step-in sentence and its actions sit at the head, not in the owner's note.
   - Phone (J): the panel is the whole screen, "[back] Lines" replaces Close, actions full width.
 - Loading: the head comes from Lines at once; only the slow parts wait, drawn as outlines of their rows (G); "Loading the plan…" is said to screen readers only. While Lines itself is still loading, Owner and For you follow the Primitives pattern ("Loading…" in that section) instead of showing "no owner".

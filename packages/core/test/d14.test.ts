@@ -172,7 +172,9 @@ describe("I'm at", () => {
     expect(at?.tasks.map((task) => task.ref)).toEqual([here.ref, held.ref]);
     w.later(4 * HOUR);
     expect(w.as(w.dev, c.homeShow, {}).at).toBeNull();
-    expect(() => w.as(w.dev, c.at, { place: "the moon" })).toThrow();
+    // A place not on the list yet is added to it.
+    w.as(w.dev, c.at, { place: "the moon" });
+    expect(w.as(w.dev, c.placeList, {}).map((place) => place.name)).toContain("the moon");
   });
 
   test("with no place, it leaves", () => {
@@ -229,7 +231,8 @@ describe("the developer's own line", () => {
     expect(notes.map((event) => event.summary).join(" ")).toContain("The 2024 box is in the loft.");
     expect(w.as(w.dev, c.homeShow, {}).lines[mine.ref]?.forYou.map((item) => item.kind)).toEqual(["task"]);
     const theirs = w.line("Enclosure");
-    expect(() => w.as(w.dev, c.taskAdd, { line: theirs.ref, title: "Not mine" })).toThrow();
+    // A line the agents work on takes the developer's own tasks too.
+    expect(w.as(w.dev, c.taskAdd, { line: theirs.ref, title: "Mine there" }).line).toBe(theirs.ref);
     // An agent the developer asked may add a note there too.
     expect(w.as(w.agent("panel"), c.noteAdd, { line: mine.ref, body: "Box 2 is in the shed." }).line).toBe(
       mine.ref,

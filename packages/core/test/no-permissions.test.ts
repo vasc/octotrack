@@ -161,3 +161,105 @@ describe("an agent writes to any line, whatever line it is on and whatever state
     ).toBeNull();
   });
 });
+
+describe("no rule without a reason", () => {
+  test("a line that ended starts again, comes back up next or is tabled; ended lines fold and keep plans", () => {
+    const h = harness();
+    h.developer(c.projectCreate, { key: "PANEL", name: "Home panel", repo: "vasc/homepanel" });
+    const add = (title: string) =>
+      h.developer(c.lineAdd, { title, doneWhen: "Done.", repos: ["PANEL"], where: "working" });
+    const done = add("Finished");
+    h.developer(c.lineDone, { ref: done.ref });
+    expect(h.developer(c.lineStart, { ref: done.ref }).state).toBe("working");
+    const dropped = add("Dropped");
+    h.developer(c.lineDrop, { ref: dropped.ref });
+    expect(h.developer(c.lineQueue, { ref: dropped.ref }).state).toBe("up_next");
+    h.developer(c.lineDone, { ref: dropped.ref });
+    // Tabled with no reason given, which the line then says.
+    expect(h.developer(c.lineTable, { ref: dropped.ref }).tabledReason).toBeNull();
+    const ended = add("Ended");
+    h.developer(c.lineDone, { ref: ended.ref });
+    h.call(c.planSet, { line: ended.ref, steps: ["Write it up"] });
+    h.developer(c.lineFold, { ref: ended.ref, into: done.ref });
+    const into = add("Into");
+    h.developer(c.lineDrop, { ref: into.ref });
+    h.developer(c.lineFold, { ref: done.ref, into: into.ref });
+    // Owned whatever its state.
+    const waiting = h.developer(c.lineAdd, {
+      title: "Waits",
+      doneWhen: "Done.",
+      repos: ["PANEL"],
+      where: "up_next",
+    });
+    expect(h.developer(c.lineOwn, { ref: waiting.ref }).ownedBy).toBe("dev");
+  });
+
+  test("an agent takes any line: tabled, winding down, the developer's own, another repo's, already scoped", () => {
+    const h = harness();
+    h.developer(c.projectCreate, { key: "PANEL", name: "Home panel", repo: "vasc/homepanel" });
+    h.developer(c.projectCreate, { key: "OCT", name: "Octotrack", repo: "vasc/octotrack" });
+    const tabled = h.developer(c.lineAdd, {
+      title: "Later",
+      doneWhen: "Done.",
+      repos: ["PANEL"],
+      where: "tabled",
+    });
+    h.call(c.agentRegister, { repo: "OCT" }, "far");
+    expect(h.call(c.lineTake, { ref: tabled.ref }, "far").role).toBe("scoper");
+    h.call(c.lineRelease, {}, "far");
+    const mine = h.developer(c.lineAdd, { title: "Mine", doneWhen: "Done.", where: "working" });
+    expect(h.call(c.lineTake, { ref: mine.ref }, "far").role).toBe("owner");
+    h.call(c.lineRelease, {}, "far");
+    // An agent with no repo said takes a line too.
+    expect(h.call(c.lineTake, { ref: tabled.ref }, "fresh").role).toBe("scoper");
+  });
+
+  test("questions are answered, refined and withdrawn whatever they stand at", () => {
+    const h = harness();
+    h.developer(c.projectCreate, { key: "PANEL", name: "Home panel", repo: "vasc/homepanel" });
+    const options = [
+      { key: "a", label: "Flat", description: "Prints fast." },
+      { key: "b", label: "Domed", description: "Looks better." },
+    ];
+    const asked = h.call(c.decisionAsk, { title: "Which lid?", context: "Two fit.", options });
+    h.call(c.decisionWithdraw, { ref: asked.ref });
+    expect(h.call(c.decisionResolve, { ref: asked.ref, option: "a" }).status).toBe("decided");
+    h.call(c.decisionUpdate, { ref: asked.ref, title: "Which lid, for the hallway?" });
+    expect(h.call(c.decisionWithdraw, { ref: asked.ref }).status).toBe("withdrawn");
+  });
+
+  test("tasks and notes go on any line, and a task at a new place adds the place", () => {
+    const h = harness();
+    h.developer(c.projectCreate, { key: "PANEL", name: "Home panel", repo: "vasc/homepanel" });
+    const line = h.developer(c.lineAdd, {
+      title: "Agents'",
+      doneWhen: "Done.",
+      repos: ["PANEL"],
+      where: "working",
+    });
+    h.developer(c.taskAdd, { line: line.ref, title: "Measure it" });
+    h.developer(c.noteAdd, { line: line.ref, body: "The tape is in the drawer." });
+    h.call(c.agentRegister, { repo: "PANEL" });
+    h.call(c.lineTake, { ref: line.ref });
+    h.call(c.taskFile, { title: "Weigh it", place: "the shed", outcome: "Grams." });
+    expect(h.developer(c.placeList, {}).map((place) => place.name)).toContain("the shed");
+  });
+
+  test("a plan step is done even while a branch it waits on is open, and a branch may hold up a done step", () => {
+    const h = harness();
+    h.developer(c.projectCreate, { key: "PANEL", name: "Home panel", repo: "vasc/homepanel" });
+    const line = h.developer(c.lineAdd, {
+      title: "One",
+      doneWhen: "Done.",
+      repos: ["PANEL"],
+      where: "working",
+    });
+    h.developer(c.planSet, { line: line.ref, steps: ["A", "B", "C"] });
+    h.developer(c.planBranch, { line: line.ref, from: "1", holdsUp: "2", title: "Side", steps: ["x"] });
+    h.developer(c.planStep, { line: line.ref, step: "2", status: "done" });
+    h.developer(c.planStep, { line: line.ref, step: "3", status: "done" });
+    h.developer(c.planBranch, { line: line.ref, from: "1", holdsUp: "3", title: "Late", steps: ["y"] });
+    // A done step waits on nothing, so home says nothing waits.
+    expect(h.developer(c.lineShow, { ref: line.ref }).steps.map((step) => step.status)).toContain("done");
+  });
+});

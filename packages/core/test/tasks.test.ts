@@ -72,7 +72,7 @@ function world() {
 }
 
 describe("tasks: what the developer is asked to do", () => {
-  test("a task has a place from the developer's list, an outcome to report, and frees the issue its filer holds", () => {
+  test("a task has a place, added to the list if new, an outcome to report, and frees the issue its filer holds", () => {
     const w = world();
     const task = w.as(w.owner, c.taskFile, {
       title: "Measure the grip",
@@ -83,9 +83,9 @@ describe("tasks: what the developer is asked to do", () => {
     expect(
       w.as(w.dev, c.entityShow, { ref: task.ref }).links.map((link) => [link.fromRef, link.rel, link.toRef]),
     ).toContainEqual([task.ref, "blocks", "PANEL-1"]);
-    expect(
-      w.refusal(() => w.as(w.owner, c.taskFile, { title: "x", place: "the garage", outcome: "y" })).hint,
-    ).toContain("the bench");
+    // A place not on the list yet is added to it.
+    w.as(w.owner, c.taskFile, { title: "x", place: "the garage", outcome: "y" });
+    expect(w.as(w.dev, c.placeList, {}).map((place) => place.name)).toContain("the garage");
   });
 
   test("Done sends the outcome to whoever holds the freed issue; Can't do it sends why and closes it as not done", () => {
@@ -444,14 +444,13 @@ describe("done when and done are the developer's to accept", () => {
 });
 
 describe("a line the developer owns", () => {
-  test("winds its agents down, takes no owner, refuses agent writes, and goes back with Hand to an agent", () => {
+  test("winds its agents down, and goes back with Hand to an agent", () => {
     const w = world();
     w.as(w.dev, c.lineOwn, { ref: w.line });
     expect(w.notices(w.owner).map((notice) => notice.kind)).toEqual(["wind_down"]);
     w.later(16);
     w.tracker.sweep();
     expect(w.as(w.dev, c.homeShow, {}).crews[w.line]).toBeUndefined();
-    expect(w.refusal(() => w.as(w.owner, c.lineTake, { ref: w.line })).message).toContain("the developer's");
     w.as(w.dev, c.lineHand, { ref: w.line });
     // Its last owner wound down rather than left, so it is offered the line first.
     expect(w.as(w.dev, c.homeShow, {}).crews[w.line]?.search?.step).toBe(1);

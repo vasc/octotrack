@@ -106,10 +106,10 @@ export function useHome() {
     queue: (ref: string) => choices.make(contracts.lineQueue.name, { ref }, LINE_SAID.queue(titleOf(ref))),
     reject: (ref: string) => choices.make(contracts.lineReject.name, { ref }, LINE_SAID.reject(titleOf(ref))),
     drop: (ref: string) => choices.make(contracts.lineDrop.name, { ref }, LINE_SAID.drop(titleOf(ref))),
-    table: (ref: string, reason: string, lookAgainAt: string | null = null) =>
+    table: (ref: string, reason: string | null, lookAgainAt: string | null = null) =>
       choices.make(
         contracts.lineTable.name,
-        { ref, reason, ...(lookAgainAt === null ? {} : { lookAgainAt }) },
+        { ref, ...(reason === null ? {} : { reason }), ...(lookAgainAt === null ? {} : { lookAgainAt }) },
         LINE_SAID.table(titleOf(ref)),
       ),
     fold: (ref: string, into: string) =>

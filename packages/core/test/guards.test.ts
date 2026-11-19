@@ -105,7 +105,7 @@ describe("a question on a line is refined only by its asker or the agents on its
     );
   });
 
-  test("an answered question, or one whose answer waits with Undo, is not rewritten under it", () => {
+  test("a question whose answer waits with Undo is not rewritten under it; an answered one may be", () => {
     const w = world();
     const waiting = w.ask();
     w.as(w.dev, c.choiceMake, {
@@ -119,9 +119,7 @@ describe("a question on a line is refined only by its asker or the agents on its
     ).toBe("conflict");
     const answered = w.ask();
     w.as(w.dev, c.decisionResolve, { ref: answered, option: "b" });
-    expect(w.refused(() => w.as(w.owner, c.decisionUpdate, { ref: answered, title: "Changed" })).code).toBe(
-      "conflict",
-    );
+    expect(w.as(w.owner, c.decisionUpdate, { ref: answered, title: "Changed" }).title).toBe("Changed");
   });
 });
 

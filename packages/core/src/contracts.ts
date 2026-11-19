@@ -425,8 +425,8 @@ export const contracts = {
   lineQueue: write("line.queue", "Move a line to up next, at the end", LineRef, Line),
   lineTable: write(
     "line.table",
-    "Table a line, saying why, with an optional date to look again",
-    z.strictObject({ ref: z.string(), reason: Text, lookAgainAt: DateText.optional() }),
+    "Table a line, saying why if there is a why, with an optional date to look again",
+    z.strictObject({ ref: z.string(), reason: Text.optional(), lookAgainAt: DateText.optional() }),
     Line,
   ),
   lineDone: write("line.done", "Finish a line", LineRef, Line),

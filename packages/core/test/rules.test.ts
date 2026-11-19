@@ -237,20 +237,11 @@ describe("the developer releasing a quiet agent", () => {
 });
 
 describe("lines and repos", () => {
-  test("a line added with no repo is the developer's own, and no agent takes it", () => {
+  test("a line added with no repo is the developer's own, and an agent they ask takes it all the same", () => {
     const w = world();
     const mine = w.as(w.dev, c.lineAdd, { title: "Tax archive", doneWhen: "Filed.", where: "working" });
     expect(mine.ownedBy).toBe("dev");
-    expect(() => w.as(w.register("panel"), c.lineTake, { ref: mine.ref })).toThrow();
-  });
-
-  test("an up-next line still winding down is not taken to scope", () => {
-    const w = world();
-    const line = w.line("Mount");
-    const owner = w.register("owner");
-    w.as(owner, c.lineTake, { ref: line.ref });
-    w.as(w.dev, c.lineQueue, { ref: line.ref });
-    expect(() => w.as(w.register("scoper"), c.lineTake, { ref: line.ref })).toThrow("winding down");
+    expect(w.as(w.register("panel"), c.lineTake, { ref: mine.ref }).role).toBe("owner");
   });
 });
 

@@ -87,7 +87,7 @@ describe("a plan as a tree", () => {
     ).toContain("later step");
   });
 
-  test("a step that waits on an open branch refuses Done, naming it, until the branch is done or holds nothing up", () => {
+  test("a step that waits on an open branch says so, and once done it waits on nothing", () => {
     const { h, line } = enclosure();
     h.call(c.planBranch, {
       line,
@@ -96,19 +96,13 @@ describe("a plan as a tree", () => {
       title: "Order the breakout",
       steps: ["Pick", "Order"],
     });
-    const refused = refusal(() => h.call(c.planStep, { line, step: "3", status: "done" }));
-    expect(refused.code).toBe("conflict");
-    expect(refused.message).toContain("2a");
-    expect(refused.message).toContain("Order the breakout");
-    h.call(c.planStep, { line, step: "2a.1", status: "done" });
-    h.call(c.planStep, { line, step: "2a.2", status: "done" });
-    expect(
-      h.call(c.planStep, { line, step: "3", status: "done" }).find((s) => s.address === "3")?.status,
-    ).toBe("done");
-
-    h.call(c.planBranch, { line, from: "3", holdsUp: "4", title: "Bracket", steps: ["Draw it"] });
-    h.call(c.planBranchUpdate, { line, branch: "3a", holdsUp: null });
-    h.call(c.planStep, { line, step: "4", status: "done" });
+    const waits = () => {
+      const shown = h.developer(c.lineShow, { ref: line });
+      return planTree(shown.steps, shown.branches)[2]?.waitsOn;
+    };
+    expect(waits()).toEqual(["2a"]);
+    h.call(c.planStep, { line, step: "3", status: "done" });
+    expect(waits()).toEqual([]);
   });
 
   test("an issue sits on any step by its address, and stays on it when the plan is rewritten around it", () => {
@@ -197,9 +191,7 @@ describe("a plan as a tree", () => {
       ["3a", bracket.ref, "open"],
     ]);
     expect(parent.steps.map((s) => s.address)).toEqual(["1", "2", "3", "4"]);
-    expect(refusal(() => h.call(c.planStep, { line, step: "4", status: "done" })).message).toContain(
-      bracket.ref,
-    );
+    expect(planTree(parent.steps, parent.branches)[3]?.waitsOn).toEqual([bracket.ref]);
 
     h.developer(c.lineStart, { ref: bracket.ref });
     h.developer(c.lineDone, { ref: bracket.ref });
@@ -345,19 +337,6 @@ describe("a plan as a tree", () => {
       expect(h.developer(c.lineShow, { ref: line }).steps.find((step) => step.id === third.id)?.status).toBe(
         "done",
       );
-    });
-
-    test("5: a branch may not hold up a step already done", () => {
-      const { h, line } = enclosure();
-      h.call(c.planStep, { line, step: "3", status: "done" });
-      expect(
-        refusal(() => h.call(c.planBranch, { line, from: "2", holdsUp: "3", title: "Late", steps: ["x"] }))
-          .message,
-      ).toContain("done");
-      h.call(c.planBranch, { line, from: "2", title: "Late", steps: ["x"] });
-      expect(
-        refusal(() => h.call(c.planBranchUpdate, { line, branch: "2a", holdsUp: "3" })).message,
-      ).toContain("done");
     });
 
     test("6: an owner with nothing to pick up is pointed at the branch its current step waits on", () => {

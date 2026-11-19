@@ -106,7 +106,7 @@ export function LinePanelHead({
               {line.recommendationWhy === null ? null : <Markdown text={line.recommendationWhy} inline />}
             </Callout>
           ) : null}
-          {closed ? <Note>Plan, summary and history stay below, as they were when it closed.</Note> : actions}
+          {actions}
         </Stack>
       }
     >

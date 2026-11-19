@@ -18,7 +18,7 @@ interface ProposalCardProps {
   foldTargets: readonly Line[];
   onStart(ref: string): void;
   onQueue(ref: string): void;
-  onTable(ref: string, reason: string, lookAgainAt: string | null): void;
+  onTable(ref: string, reason: string | null, lookAgainAt: string | null): void;
   onFold(ref: string, into: string): void;
   onReject(ref: string): void;
   /** For a tabled line back to look at: it was a line, so it is dropped, not rejected. */

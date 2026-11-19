@@ -18,11 +18,11 @@ closed; the page behind does not react to keys. On a phone it rises from the bot
 ### components/lines/TableForm.tsx
 
 - Designed in: Sheets.dc.html, states B, G
-- What it shows: "Table Buzz speed follow-ups" and Cancel; "Why it waits"; "Look again on · optional"; "Tabling holds 1 question and 2 tasks until it starts again; buzz winds down."; "Table it".
+- What it shows: "Table Buzz speed follow-ups" and Cancel; "Why it waits · optional"; "Look again on · optional"; "Tabling holds 1 question and 2 tasks until it starts again; buzz winds down."; "Table it".
 - Changes from today: the date says it is optional; the consequence is one sentence (today "Holds 1 question and 2 tasks · panel-widgets winds down").
 - Loading: never loads on its own: given what the line holds by its opener; tabling waits with Undo from the Undo bar, so there is no busy word in the sheet.
 - Error: tabling it waits with Undo like every choice; a request the tracker never took, or a refusal when it takes effect, is said in the Undo bar ("Did not happen: …") with Dismiss; the sheet closes as the choice is made.
-- Empty: Table it is off until a reason is typed; with nothing held and no owner, the consequence sentence is left out.
+- Empty: with no reason typed it tables all the same, and the line says "No reason given"; with nothing held and no owner, the consequence sentence is left out.
 
 ### components/lines/PromoteSheet.tsx
 

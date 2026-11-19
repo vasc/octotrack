@@ -345,6 +345,17 @@ Decisions made from that:
   started keeps its line until the developer releases it from Agents, where its last command shows how long it has been.
 - **Old names keep working for at least a phase** (`decision.*`, `project:`, M-, I- and U- refs), and the riskiest
   automation, the automatic Stop and the runner, first runs in a mode that only records what it would have done.
+- **No rule without a reason.** A refusal stays only when it keeps the data whole (a cycle of blocks, an option a
+  question does not have, a step that is not in the plan), keeps two hands off one thing at once (an issue another holds,
+  without `--force`; an answer waiting out its Undo; a second scoper), or keeps the log readable (agent names). Everything
+  else was a constraint without a reason, and is gone: a line moves from any state, a done or dropped one included, and
+  folds or is folded either way; its plan is written in any state; a line is tabled with or without a reason ("No reason
+  given"); any line is owned; any agent takes any line, whatever its state, its repo or whether it is winding down or
+  already scoped (as owner or helper while worked on, else as scoper); a question is answered, refined or withdrawn
+  whatever it stands at; the developer's tasks and notes go on any line; a task at a place not on the list adds the
+  place; a plan step is marked done while a branch it waits on is open, and then waits on nothing; a branch may hold up
+  a step already done. _Why:_ the developer: "a line that is ended stays ended, sounds insane, do not add constraints
+  unless theres a justification for it, this is the same crap as the thing where only I can do x or y".
 - **No permissions over the work.** Octotrack tracks agents' work; it does not hold permissions over it. An agent writes
   to any line, whether or not it is on it and whatever the line's state: issues filed, claimed, progressed, finished
   or moved; plans and branches; questions asked, refined, answered or withdrawn; links, drift, notes, held work, pull

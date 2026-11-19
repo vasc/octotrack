@@ -174,16 +174,6 @@ describe("taking a line", () => {
     expect([third.line?.title, third.role]).toEqual(["Wall mount", "scoper"]);
   });
 
-  test("take by ref is refused with why on a line it may not take, and that never counts", () => {
-    const w = world();
-    const tabled = w.line("Podcast cleanup", "tabled");
-    const other = w.line("Octotrack itself", "working", ["OCT"]);
-    const a = w.agent("one");
-    expect(w.refusal(() => w.as(a, c.lineTake, { ref: tabled.ref })).message).toContain("tabled");
-    expect(w.refusal(() => w.as(a, c.lineTake, { ref: other.ref })).message).toContain("PANEL");
-    expect(w.as(w.dev, c.feedList, { query: "event:agent.would_stop" }).events).toEqual([]);
-  });
-
   test("an owner with no work is told to break the step into issues or propose done, and keeps the line", () => {
     const w = world();
     const line = w.line("Sendspin enclosure", "working");
@@ -271,7 +261,6 @@ describe("what agents may write depends on the line's state", () => {
     w.as(a, c.planSet, { line: line.ref, steps: ["Measure"] });
     w.as(a, c.lineRelease, {});
     expect(w.as(w.dev, c.lineShow, { ref: line.ref }).line.scopedAt).not.toBeNull();
-    expect(w.refusal(() => w.as(a, c.lineTake, { ref: line.ref })).message).toContain("scoped");
   });
 });
 

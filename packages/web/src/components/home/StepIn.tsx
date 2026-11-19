@@ -22,7 +22,7 @@ export interface StepInProps {
   checkoutRepo?: string;
   onCheckout?: (ref: string, repo: string, path: string) => void;
   onOwn(ref: string): void;
-  onTable(ref: string, reason: string, lookAgainAt: string | null): void;
+  onTable(ref: string, reason: string | null, lookAgainAt: string | null): void;
   /** What was pressed waits with Undo: it says it is on its way, and nothing else is pressed meanwhile. */
   busy?: boolean;
 }

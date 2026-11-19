@@ -910,7 +910,9 @@ describe("lines of work", () => {
     const panel = within(await view.findByRole("complementary", { name: "L-1" }));
     fireEvent.click(await panel.findByRole("button", { name: "Table" }));
     const tabling = within(await view.findByRole("dialog", { name: "Table Sendspin enclosure" }));
-    fireEvent.change(tabling.getByLabelText("Why it waits"), { target: { value: "Waiting on the board" } });
+    fireEvent.change(tabling.getByLabelText("Why it waits · optional"), {
+      target: { value: "Waiting on the board" },
+    });
     fireEvent.click(tabling.getByRole("button", { name: "Table it" }));
     await answerNow(view);
     const tabled = within(await view.findByRole("region", { name: "Tabled" }));
@@ -1067,17 +1069,21 @@ describe("lines of work", () => {
     });
 
     test("a choice that fails when it takes effect says why in the Undo bar, until dismissed", async () => {
-      const proposal = seedLines();
+      const asked = seedDecision();
       navigate("/");
       const view = renderApp(<App />);
-      const proposed = within(await view.findByRole("region", { name: "Proposed" }));
-      proposalMove(proposed, "Start", "Wall mount");
+      await view.findByRole("heading", { name: "Which queue?" });
+      fireEvent.click(view.getByRole("button", { name: /Redis/ }));
       await view.findByRole("button", { name: "Undo" });
-      // Meanwhile, from elsewhere, the proposal is turned down, so starting it can no longer work.
-      server.tracker.call(c.lineReject, { ref: proposal.ref }, asDeveloper);
+      // Meanwhile, from elsewhere, the question loses the option picked, so the answer can no longer be given.
+      server.tracker.call(
+        c.decisionUpdate,
+        { ref: asked.ref, options: [{ key: "sqs", label: "SQS" }] },
+        asDeveloper,
+      );
       await answerNow(view);
       const alert = await view.findByRole("alert");
-      expect(alert.textContent).toContain("Did not happen: Starting Wall mount.");
+      expect(alert.textContent).toContain("Did not happen");
       fireEvent.click(view.getByRole("button", { name: "Dismiss" }));
       await gone(() => view.queryByRole("alert"));
     });
@@ -1105,7 +1111,9 @@ describe("lines of work", () => {
       const panel = within(await view.findByRole("complementary", { name: "L-1" }));
       fireEvent.click(await panel.findByRole("button", { name: "Table" }));
       const tabling = within(await view.findByRole("dialog", { name: "Table Sendspin enclosure" }));
-      fireEvent.change(tabling.getByLabelText("Why it waits"), { target: { value: "Waiting on boards" } });
+      fireEvent.change(tabling.getByLabelText("Why it waits · optional"), {
+        target: { value: "Waiting on boards" },
+      });
       fireEvent.click(tabling.getByRole("button", { name: "Table it" }));
       await answerNow(view);
       await waitFor(() =>
@@ -1181,7 +1189,7 @@ describe("lines of work", () => {
       await panel.findByText(/its own line now: L-\d+/);
     });
 
-    test("a step that waits says why it was not done, under its menu; a branch is renamed through its sheet", async () => {
+    test("a step that waits is marked done all the same; a branch is renamed through its sheet", async () => {
       seedLines();
       server.tracker.call(c.planSet, { line: "L-1", steps: ["Model", "Print", "Hang it"] }, asDeveloper);
       server.tracker.call(
@@ -1194,7 +1202,13 @@ describe("lines of work", () => {
       const panel = within(await view.findByRole("complementary", { name: "L-1" }));
       fireEvent.click(await panel.findByRole("button", { name: "Step 3, Hang it: to do" }));
       fireEvent.click(panel.getByRole("menuitemradio", { name: "Done" }));
-      await panel.findByText("Not changed: Step 3 waits on 2a, Breakout");
+      await waitFor(() =>
+        expect(
+          server.tracker
+            .call(c.lineShow, { ref: "L-1" }, asDeveloper)
+            .steps.find((step) => step.address === "3")?.status,
+        ).toBe("done"),
+      );
 
       fireEvent.click(panel.getByRole("button", { name: "More: branch 2a, Breakout" }));
       fireEvent.click(panel.getByRole("menuitem", { name: "Rename or change its steps…" }));
@@ -1861,7 +1875,9 @@ describe("lines of work", () => {
       const panel = within(await view.findByRole("complementary", { name: "L-1" }));
       fireEvent.click(await panel.findByRole("button", { name: "Table" }));
       const tabling = within(await view.findByRole("dialog", { name: "Table Sendspin enclosure" }));
-      fireEvent.change(tabling.getByLabelText("Why it waits"), { target: { value: "After the move" } });
+      fireEvent.change(tabling.getByLabelText("Why it waits · optional"), {
+        target: { value: "After the move" },
+      });
       fireEvent.change(tabling.getByLabelText("Look again on · optional"), {
         target: { value: "2027-02-01" },
       });
@@ -2073,7 +2089,9 @@ describe("lines of work", () => {
       const stepIn = within(await view.findByRole("group", { name: "Step in on Nobody's line" }));
       fireEvent.click(stepIn.getByRole("button", { name: "Table it" }));
       const tabling = within(await view.findByRole("dialog", { name: "Table Nobody's line" }));
-      fireEvent.change(tabling.getByLabelText("Why it waits"), { target: { value: "Not this month" } });
+      fireEvent.change(tabling.getByLabelText("Why it waits · optional"), {
+        target: { value: "Not this month" },
+      });
       fireEvent.click(tabling.getByRole("button", { name: "Table it" }));
       await answerNow(view);
       await waitFor(() =>

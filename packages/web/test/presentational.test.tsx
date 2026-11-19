@@ -909,7 +909,7 @@ describe("lines of work", () => {
     expect(onOwn).toHaveBeenCalledWith("L-1");
     fireEvent.click(view.getByRole("button", { name: "Table it" }));
     const sheet = within(view.getByRole("dialog", { name: "Table Sendspin enclosure" }));
-    fireEvent.change(sheet.getByLabelText("Why it waits"), { target: { value: "Later" } });
+    fireEvent.change(sheet.getByLabelText("Why it waits · optional"), { target: { value: "Later" } });
     fireEvent.click(sheet.getByRole("button", { name: "Table it" }));
     expect(onTable).toHaveBeenCalledWith("L-1", "Later", null);
     expect(view.queryByRole("dialog")).toBeNull();
@@ -1381,13 +1381,16 @@ describe("UndoBar when a choice failed", () => {
 });
 
 describe("tabling and a line's own choices", () => {
-  test("TableForm will not table without a reason, and sends it trimmed", () => {
-    const onTable = mock((_reason: string, _lookAgainAt: string | null) => {});
+  test("TableForm tables with a reason, trimmed, or without one", () => {
+    const onTable = mock((_reason: string | null, _lookAgainAt: string | null) => {});
     const onCancel = mock(() => {});
     const view = render(<TableForm title="Trip" onTable={onTable} onCancel={onCancel} />);
     const table = view.getByRole("button", { name: "Table it" });
-    expect(table.hasAttribute("disabled")).toBe(true);
-    fireEvent.change(view.getByLabelText("Why it waits"), { target: { value: "  After the move  " } });
+    fireEvent.click(table);
+    expect(onTable).toHaveBeenCalledWith(null, null);
+    fireEvent.change(view.getByLabelText("Why it waits · optional"), {
+      target: { value: "  After the move  " },
+    });
     fireEvent.click(table);
     expect(onTable).toHaveBeenCalledWith("After the move", null);
     fireEvent.click(view.getByRole("button", { name: "Cancel" }));
@@ -1406,7 +1409,7 @@ describe("tabling and a line's own choices", () => {
     );
     const sheet = within(view.getByRole("dialog", { name: "Table Podcast cleanup" }));
     sheet.getByRole("heading", { name: "Table Podcast cleanup" });
-    expect(document.activeElement).toBe(sheet.getByLabelText("Why it waits"));
+    expect(document.activeElement).toBe(sheet.getByLabelText("Why it waits · optional"));
     sheet.getByText("Tabling holds 2 questions until it starts again; mediarr winds down.");
     expect(sheet.getByLabelText("Look again on · optional").getAttribute("type")).toBe("date");
   });
@@ -1465,8 +1468,9 @@ describe("tabling and a line's own choices", () => {
     );
     expect(onFold).toHaveBeenCalledWith("L-2");
     proposed.unmount();
+    // A line that ended starts again, comes back up next, or is tabled, like any line not being worked on.
     const done = render(<LineActions line={line({ state: "done" })} {...props} />);
-    expect(done.queryAllByRole("button")).toHaveLength(0);
+    expect(names(done)).toEqual(["Start", "Up next", "Table", "More"]);
   });
 });
 
@@ -1629,7 +1633,7 @@ describe("saying something to a line", () => {
   test("TableForm sends a look-again date when one is given", () => {
     const onTable = mock((_reason: string, _lookAgainAt: string | null) => {});
     const view = render(<TableForm title="Trip" onTable={onTable} onCancel={() => {}} />);
-    fireEvent.change(view.getByLabelText("Why it waits"), { target: { value: "Winter" } });
+    fireEvent.change(view.getByLabelText("Why it waits · optional"), { target: { value: "Winter" } });
     fireEvent.change(view.getByLabelText("Look again on · optional"), { target: { value: "2027-03-01" } });
     fireEvent.click(view.getByRole("button", { name: "Table it" }));
     expect(onTable).toHaveBeenCalledWith("Winter", "2027-03-01");
@@ -2426,7 +2430,9 @@ describe("LineStepIn", () => {
     expect(h.own).toHaveBeenCalledWith("L-1");
     fireEvent.click(failing.getByRole("button", { name: "Table it" }));
     const sheet = within(failing.getByRole("dialog", { name: "Table Sendspin enclosure" }));
-    fireEvent.change(sheet.getByLabelText("Why it waits"), { target: { value: "After the move" } });
+    fireEvent.change(sheet.getByLabelText("Why it waits · optional"), {
+      target: { value: "After the move" },
+    });
     fireEvent.click(sheet.getByRole("button", { name: "Table it" }));
     expect(h.table).toHaveBeenCalledWith("L-1", "After the move", null);
     failing.unmount();

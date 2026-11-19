@@ -53,7 +53,7 @@ export function PlanList({
 }) {
   const path = steps.filter((step) => step.branch === null);
   const current = currentStep(path);
-  const live = actions !== undefined && state !== "done" && state !== "dropped" ? actions : undefined;
+  const live = actions;
   const placed = new Set(steps.map((step) => step.id));
   const unplaced = work.filter((item) => item.step === null || !placed.has(item.step));
   const open = branches.filter((branch) => branch.state === "open").length;

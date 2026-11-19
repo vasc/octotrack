@@ -218,42 +218,15 @@ function nothing(agent: Agent): TakeResult {
   };
 }
 
-/** Which role a named line would give this agent, or why it cannot have it. Refusals here never count. */
-function roleOn(ctx: Ctx, agent: Agent, line: Line): ClaimRole {
-  if (line.ownedBy !== null) {
-    throw new OctoError(
-      "conflict",
-      `${line.ref} is the developer's own; it goes back to agents when they hand it over`,
-    );
-  }
-  if (line.repos.length === 0) {
-    throw new OctoError("conflict", `${line.ref} names no repo, so there is nowhere to work on it`);
-  }
-  if (windingDown(line, ctx.now)) {
-    throw new OctoError("conflict", `${line.ref} is winding down; take it once its agents have wrapped up`);
-  }
-  if (agent.repo === null) {
-    throw new OctoError("conflict", "Say which repo you serve first", "octo agent register --repo <KEY>");
-  }
-  if (line.repos.length > 0 && !line.repos.includes(agent.repo)) {
-    throw new OctoError(
-      "conflict",
-      `${line.ref} is for ${line.repos.join(", ")}; you serve ${agent.repo}`,
-      "Run octo line take with no ref for a line in your repo.",
-    );
-  }
+/**
+ * Which role a named line gives this agent: on a line being worked on, owner, or helper when it has one; on any other
+ * line, scoper, unless another agent is scoping it already, since two scopers would write over each other's plan.
+ */
+function roleOn(ctx: Ctx, line: Line): ClaimRole {
   if (line.state === "working") return hasOwner(ctx, line) ? "helper" : "owner";
-  if (line.state === "up_next") {
-    if (line.scopedAt !== null) throw new OctoError("conflict", `${line.ref} is already scoped`);
-    const scoper = claimsOn(ctx, line.ref).find((claim) => claim.role === "scoper");
-    if (scoper !== undefined) throw new OctoError("conflict", `${scoper.agent} is scoping ${line.ref}`);
-    return "scoper";
-  }
-  throw new OctoError(
-    "conflict",
-    `${line.ref} is ${line.state.replace("_", " ")}; only lines being worked on, or up next to scope, can be taken`,
-    "Run octo line take with no ref for a line in your repo.",
-  );
+  const scoper = claimsOn(ctx, line.ref).find((claim) => claim.role === "scoper");
+  if (scoper !== undefined) throw new OctoError("conflict", `${scoper.agent} is scoping ${line.ref}`);
+  return "scoper";
 }
 
 function takeOwnLine(ctx: Ctx, agent: Agent, line: Line, role: ClaimRole): TakeResult {
@@ -352,7 +325,7 @@ export const claimOps = [
     }
     const line = requireLine(ctx, input.ref);
     if (current !== null && current.line === line.ref) return takeOwnLine(ctx, agent, line, current.role);
-    return claimLine(ctx, agent, line, roleOn(ctx, agent, line));
+    return claimLine(ctx, agent, line, roleOn(ctx, line));
   }),
 
   bind(contracts.lineRelease, (ctx) => {

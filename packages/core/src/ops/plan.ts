@@ -3,8 +3,8 @@ import { afterAdd, settleHeldWork } from "../agents/claims.ts";
 import { DEVELOPER } from "../agents/state.ts";
 import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
-import { branchFamily, branchState, layOut, waitsOn } from "../plan.ts";
-import type { Line, LineDetail, LineState, PlanBranch, PlanStep, StepRef } from "../schemas.ts";
+import { branchFamily, branchState, layOut } from "../plan.ts";
+import type { Line, LineDetail, PlanBranch, PlanStep, StepRef } from "../schemas.ts";
 import { LineState as LineStateSchema } from "../schemas.ts";
 import { applyPatch, emit } from "../store/common.ts";
 import type { Ctx } from "../store/context.ts";
@@ -18,8 +18,6 @@ import {
 } from "../store/rows.ts";
 import { bind } from "./bind.ts";
 import { emitLine, insertLine } from "./lines.ts";
-
-const ENDED: ReadonlySet<LineState> = new Set(["done", "dropped"]);
 
 const BecameRow = z.object({ ref: z.string(), title: z.string(), state: LineStateSchema });
 const BranchOfRow = z.object({ branchOf: z.number().int().nullable() });
@@ -153,10 +151,9 @@ export function stepFor(ctx: Ctx, line: string | null, ref: StepRef | null): num
   return requireStep(loadPlan(ctx, line), line, ref, "invalid_input").id;
 }
 
-/** Writing a plan is scoping its line, and only while it has not ended. */
+/** The line whose plan is written, whatever state it is in. */
 function planLine(ctx: Ctx, ref: string): Line {
   const line = requireLine(ctx, ref);
-  if (ENDED.has(line.state)) throw new OctoError("conflict", `${line.ref} already ended`);
   return line;
 }
 
@@ -176,13 +173,6 @@ function checkHoldsUp(
       from.branch === null
         ? `Pick a step after ${from.address} on the critical path, or none.`
         : `Pick a step after ${from.address} on its branch, or none.`,
-    );
-  }
-  if (target.status === "done") {
-    throw new OctoError(
-      "invalid_input",
-      `Step ${target.address} is done, so nothing can hold it up`,
-      `Set it back to to do first (octo plan step ${line} ${target.address} todo), or pick a later step.`,
     );
   }
   return target.id;
@@ -364,21 +354,6 @@ export const planOps = [
     const line = planLine(ctx, input.line);
     const plan = loadPlan(ctx, line.ref);
     const step = requireStep(plan, line.ref, input.step, "not_found", input.stepId);
-    const waiting = waitsOn(step, plan.branches);
-    if (input.status === "done" && waiting.length > 0) {
-      const names = plan.branches
-        .filter((branch) => waiting.includes(branch.became?.ref ?? branch.address))
-        .map((branch) =>
-          branch.became === null
-            ? `${branch.address}, ${branch.title}`
-            : `${branch.became.ref}, ${branch.became.title}`,
-        );
-      throw new OctoError(
-        "conflict",
-        `Step ${step.address} waits on ${names.join(" and ")}`,
-        "Finish what it waits on, or set that branch to hold nothing up.",
-      );
-    }
     ctx.sql.run("UPDATE plan_steps SET status = ? WHERE id = ?", [input.status, step.id]);
     emitLine(
       ctx,
@@ -472,9 +447,6 @@ export const planOps = [
     const where = input.where ?? "up_next";
     // Placed where it is said to go: by the developer always, by an agent when it says where; else a proposal.
     const placing = ctx.developer || input.where !== undefined;
-    if (placing && where === "tabled" && input.reason === undefined) {
-      throw new OctoError("invalid_input", "A tabled line needs a reason", 'Pass --reason "<why not now>".');
-    }
     const created = insertLine(ctx, {
       title: input.title ?? branch.title,
       doneWhen: input.doneWhen,

@@ -187,13 +187,6 @@ function resolveDecision(ctx: Ctx, input: ResolveInput): Decision {
   const option = input.option ?? null;
   const note = input.note ?? null;
 
-  if (current.status === "withdrawn" || current.status === "superseded") {
-    throw new OctoError(
-      "conflict",
-      `${current.ref} is ${current.status}`,
-      "Reopen it first if it still matters.",
-    );
-  }
   if (current.status === "decided") {
     if (current.chosenOption === option && (note === null || current.resolutionNote === note)) return current;
     if (input.force !== true) {
@@ -298,17 +291,10 @@ const Waiting = z.object({ id: z.number() });
 const StepOrdRow = z.object({ ref: z.string(), ord: z.number().int() });
 
 /**
- * Only an open question is refined, and an agent refines one on a line only from that line, or as its asker, while the
- * line takes writes. An answer waiting out its Undo is applied by option key, so nothing may change under it.
+ * A question is refined whatever it stands at, except while an answer to it waits out its Undo: that answer is applied
+ * by option key, so nothing may change under it.
  */
 function refineable(ctx: Ctx, current: Decision): void {
-  if (current.status !== "open") {
-    throw new OctoError(
-      "conflict",
-      `${current.ref} is ${current.status}, so it is no longer refined`,
-      "Ask a new question if something changed.",
-    );
-  }
   if (ctx.developer || ctx.system) return;
   const waiting = one(
     ctx,
@@ -420,12 +406,7 @@ export function buildQueue(ctx: Ctx, query: string | undefined) {
  */
 export function withdrawQuestion(ctx: Ctx, ref: string, note: string | undefined): Decision {
   const current = requireDecision(ctx, ref);
-  if (current.status !== "open") {
-    throw new OctoError(
-      "conflict",
-      `${current.ref} is ${current.status}, only open decisions can be withdrawn`,
-    );
-  }
+  if (current.status === "withdrawn") return current;
   return transition(
     ctx,
     ref,

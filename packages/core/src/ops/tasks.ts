@@ -31,17 +31,21 @@ function emitPlace(ctx: Ctx, type: EventTypeName, name: string, summary: string)
   emit(ctx, { type, kind: "place", ref: name, project: null, summary });
 }
 
+/** A place by its name; one not on the list yet is added to it, as the developer would with octo place add. */
 function requirePlace(ctx: Ctx, name: string): string {
-  const list = places(ctx);
-  const found = list.find((place) => place.name.toLowerCase() === name.trim().toLowerCase());
+  const wanted = name.trim();
+  const found = places(ctx).find((place) => place.name.toLowerCase() === wanted.toLowerCase());
   if (found !== undefined) return found.name;
-  throw new OctoError(
-    "invalid_input",
-    `"${name}" is not one of the developer's places`,
-    list.length === 0
-      ? "The developer has no places yet; they add them with octo place add."
-      : `Use one of: ${list.map((place) => place.name).join(", ")}.`,
+  addPlace(ctx, wanted);
+  return wanted;
+}
+
+function addPlace(ctx: Ctx, name: string): void {
+  ctx.sql.run(
+    "INSERT INTO places (name, position) VALUES (?, (SELECT COALESCE(MAX(position), 0) + 1 FROM places))",
+    [name],
   );
+  emitPlace(ctx, "place.added", name, `${name} added to the places`);
 }
 
 function requireTask(ctx: Ctx, ref: string): Issue {
@@ -430,13 +434,7 @@ export const taskOps = [
 
   bind(contracts.placeAdd, (ctx, input) => {
     const exists = places(ctx).some((place) => place.name.toLowerCase() === input.name.toLowerCase());
-    if (!exists) {
-      ctx.sql.run(
-        "INSERT INTO places (name, position) VALUES (?, (SELECT COALESCE(MAX(position), 0) + 1 FROM places))",
-        [input.name],
-      );
-      emitPlace(ctx, "place.added", input.name, `${input.name} added to the places`);
-    }
+    if (!exists) addPlace(ctx, input.name);
     return places(ctx);
   }),
 
@@ -489,13 +487,6 @@ export const taskOps = [
 
   bind(contracts.taskAdd, (ctx, input) => {
     const line = requireLine(ctx, input.line);
-    if (line.ownedBy !== DEVELOPER) {
-      throw new OctoError(
-        "conflict",
-        `${line.ref} is not yours`,
-        "Your own tasks go on lines you own. On an agent's line, agents file tasks for you.",
-      );
-    }
     const task = createIssue(ctx, {
       project: line.repos[0] ?? ownProject(ctx),
       title: input.title,

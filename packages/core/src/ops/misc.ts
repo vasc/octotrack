@@ -3,7 +3,6 @@ import { contracts } from "../contracts.ts";
 import { ackDrift } from "../drift/engine.ts";
 import { notFound, OctoError } from "../errors.ts";
 import { parseQuery, QUERY_FIELDS } from "../query/index.ts";
-import { DEVELOPER } from "../agents/state.ts";
 import type { Counts, Decision, Drift, Issue, StatusUpdate } from "../schemas.ts";
 import { countOf, emit, nextNumber, currentCursor } from "../store/common.ts";
 import { type Ctx, rows } from "../store/context.ts";
@@ -171,13 +170,6 @@ export const miscOps = [
 
   bind(contracts.noteAdd, (ctx, input) => {
     const line = requireLine(ctx, input.line);
-    if (line.ownedBy !== DEVELOPER) {
-      throw new OctoError(
-        "conflict",
-        `${line.ref} is not yours`,
-        "Notes go on lines you own; tell its owner instead.",
-      );
-    }
     postUpdate(ctx, { body: input.body, target: line.ref });
     return { line: line.ref };
   }),

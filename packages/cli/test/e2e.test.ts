@@ -1240,10 +1240,6 @@ describe("lines of work from the CLI", () => {
     expect(shown.stdout).toMatch(/3\s+todo\s+Hang it\s+waits on 2a/);
     expect(shown.stdout).toMatch(/3a\s+README photos\s+holds nothing up/);
 
-    const refused = await octo(["plan", "step", line.ref, "3", "done", "--me"], "");
-    expect(refused.code).not.toBe(0);
-    expect(refused.stdout).toContain("waits on 2a");
-
     const bracket = await data(
       Line,
       [

@@ -62,12 +62,12 @@ describe("every choice waits a few seconds with Undo", () => {
     expect(w.state()).toBe("working");
     const doomed = w.tracker.call(
       c.choiceMake,
-      { op: "line.reject", input: { ref: w.line.ref }, summary: "Not a line" },
+      { op: "line.fold", input: { ref: w.line.ref, into: w.line.ref }, summary: "Folded into itself" },
       w.dev,
     );
     const failed = w.tracker.call(c.choiceNow, { id: doomed.id }, w.dev);
     expect(failed.state).toBe("failed");
-    expect(failed.error).toContain("cannot be rejected");
+    expect(failed.error).toContain("cannot fold into itself");
   });
 
   test("a choice that fails for a reason not written for people says so plainly, never raw text", () => {
@@ -108,7 +108,7 @@ describe("every choice waits a few seconds with Undo", () => {
     w.tracker.call(c.draftSave, { key: "own:L-1", text: "Bought the board" }, w.dev);
     const doomed = w.tracker.call(
       c.choiceMake,
-      { op: "line.reject", input: { ref: w.line.ref }, summary: "Not a line", draft: "own:L-1" },
+      { op: "line.fold", input: { ref: w.line.ref, into: w.line.ref }, summary: "Folded", draft: "own:L-1" },
       w.dev,
     );
     expect(w.tracker.call(c.choiceNow, { id: doomed.id }, w.dev).state).toBe("failed");
@@ -155,14 +155,14 @@ describe("a choice that failed", () => {
     const w = world();
     const doomed = w.tracker.call(
       c.choiceMake,
-      { op: "line.reject", input: { ref: w.line.ref }, summary: "Not a line" },
+      { op: "line.fold", input: { ref: w.line.ref, into: w.line.ref }, summary: "Folded into itself" },
       w.dev,
     );
     w.later(6000);
     w.tracker.applyDueChoices();
     const listed = w.tracker.call(c.choiceList, {}, w.dev);
     expect(listed.map((choice) => [choice.id, choice.state])).toEqual([[doomed.id, "failed"]]);
-    expect(listed[0]?.error).toContain("cannot be rejected");
+    expect(listed[0]?.error).toContain("cannot fold into itself");
     w.tracker.call(c.choiceUndo, { id: doomed.id }, w.dev);
     expect(w.tracker.call(c.choiceList, {}, w.dev)).toEqual([]);
   });

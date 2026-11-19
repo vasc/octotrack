@@ -12,7 +12,7 @@ export interface LineActionsProps {
   /** Who winds down when the line moves away: its owner, when it has one. */
   owner?: string | null;
   onChoose(choice: LineChoice): void;
-  onTable(reason: string, lookAgainAt: string | null): void;
+  onTable(reason: string | null, lookAgainAt: string | null): void;
   /** What waits on the developer on the line, which tabling holds. */
   held?: { questions: number; tasks: number };
   /** For a proposal: the open lines it could fold into instead. */
@@ -31,7 +31,6 @@ export function LineActions({
   onFold,
 }: LineActionsProps) {
   const [mode, setMode] = useState<"table" | "fold" | null>(null);
-  if (line.state === "done" || line.state === "dropped") return null;
   if (mode === "table") {
     return (
       <TableForm
@@ -59,7 +58,8 @@ export function LineActions({
       />
     );
   }
-  const waiting = line.state === "up_next" || line.state === "tabled" || line.state === "proposed";
+  // A line not being worked on starts again, a done or dropped one included.
+  const waiting = line.state !== "working";
   const canFold = onFold !== undefined && foldTargets.length > 0;
   return (
     <Actions>
@@ -70,9 +70,9 @@ export function LineActions({
           Start
         </Button>
       ) : null}
-      {line.state === "tabled" || line.state === "proposed" ? (
+      {line.state === "working" || line.state === "up_next" ? null : (
         <Button onClick={() => onChoose("queue")}>Up next</Button>
-      ) : null}
+      )}
       {line.state === "tabled" ? null : <Button onClick={() => setMode("table")}>Table</Button>}
       {line.state === "proposed" && canFold ? (
         <Button onClick={() => setMode("fold")}>Fold into</Button>
@@ -82,7 +82,7 @@ export function LineActions({
           Not a line
         </Button>
       ) : null}
-      {line.state === "proposed" ? null : (
+      {line.state === "proposed" || line.state === "dropped" ? null : (
         <Menu
           label={canFold ? "More: drop this line, fold it into another" : "More: drop this line"}
           text="More"

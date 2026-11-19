@@ -111,28 +111,15 @@ export function insertLine(ctx: Ctx, input: NewLine): Line {
 
 const PLACE_STATE: Readonly<Record<"start" | "queue", LineState>> = { start: "working", queue: "up_next" };
 
-/** Which states a move may leave from. A line that ended stays ended: new work is a new line. */
+/** Where each move takes a line. A line moves from any state, a finished or dropped one included. */
 const MOVES = {
-  start: { to: "working", from: ["proposed", "up_next", "tabled"], event: "line.started", verb: "started" },
-  queue: { to: "up_next", from: ["proposed", "working", "tabled"], event: "line.queued", verb: "is up next" },
-  table: {
-    to: "tabled",
-    from: ["proposed", "working", "up_next", "tabled"],
-    event: "line.tabled",
-    verb: "tabled",
-  },
-  done: { to: "done", from: ["working", "up_next", "tabled"], event: "line.done", verb: "is done" },
-  drop: {
-    to: "dropped",
-    from: ["proposed", "working", "up_next", "tabled"],
-    event: "line.dropped",
-    verb: "dropped",
-  },
-  reject: { to: "dropped", from: ["proposed"], event: "line.rejected", verb: "is not a line" },
-} as const satisfies Record<
-  string,
-  { to: LineState; from: readonly LineState[]; event: string; verb: string }
->;
+  start: { to: "working", event: "line.started", verb: "started" },
+  queue: { to: "up_next", event: "line.queued", verb: "is up next" },
+  table: { to: "tabled", event: "line.tabled", verb: "tabled" },
+  done: { to: "done", event: "line.done", verb: "is done" },
+  drop: { to: "dropped", event: "line.dropped", verb: "dropped" },
+  reject: { to: "dropped", event: "line.rejected", verb: "is not a line" },
+} as const satisfies Record<string, { to: LineState; event: string; verb: string }>;
 
 type MoveName = keyof typeof MOVES;
 
@@ -140,29 +127,17 @@ function move(
   ctx: Ctx,
   rawRef: string,
   name: MoveName,
-  extra: { tabledReason?: string; lookAgainAt?: string | null } = {},
+  extra: { tabledReason?: string | undefined; lookAgainAt?: string | null } = {},
 ): Line {
   const rule = MOVES[name];
   const current = requireLine(ctx, rawRef);
   if (current.state === rule.to && name !== "table") return current;
-  const allowed: readonly LineState[] = rule.from;
-  if (!allowed.includes(current.state)) {
-    throw new OctoError(
-      "conflict",
-      `${current.ref} is ${current.state.replace("_", " ")}, so it cannot be ${name === "reject" ? "rejected" : `moved that way`}`,
-      ENDED.has(current.state)
-        ? "A line that ended stays ended. Add a new line for new work."
-        : name === "reject"
-          ? "Only a proposal can be rejected. Drop a line that was placed: octo line drop."
-          : null,
-    );
-  }
   // A line out of tabled no longer waits for anything; one back under Proposed by its date keeps the reason beside it.
   const leavingTable = current.tabledReason !== null && rule.to !== "tabled";
   const changes = applyPatch(ctx, "lines", current.ref, current, {
     state: rule.to,
     rank: current.state === rule.to ? undefined : rankAtEnd(ctx, rule.to),
-    tabledReason: rule.to === "tabled" ? extra.tabledReason : leavingTable ? null : undefined,
+    tabledReason: rule.to === "tabled" ? (extra.tabledReason ?? null) : leavingTable ? null : undefined,
     lookAgainAt: rule.to === "tabled" ? (extra.lookAgainAt ?? null) : leavingTable ? null : undefined,
     // A case for done is about the line as it was; once it moves, it is answered.
     doneProposal: current.state === rule.to ? undefined : null,
@@ -173,7 +148,7 @@ function move(
   const updated = requireLine(ctx, current.ref);
   afterMove(ctx, current, updated, name === "reject" ? "said it is not a line" : undefined);
   if (Object.keys(changes).length > 0) {
-    const why = rule.to === "tabled" ? `: ${extra.tabledReason ?? ""}` : "";
+    const why = rule.to === "tabled" && extra.tabledReason !== undefined ? `: ${extra.tabledReason}` : "";
     emitLine(ctx, rule.event, updated, `${updated.ref} ${rule.verb}${why} (${updated.title})`, changes);
   }
   return updated;
@@ -233,9 +208,6 @@ function targetRank(
 
 export const lineOps = [
   bind(contracts.lineAdd, (ctx, input) => {
-    if (input.where === "tabled" && input.reason === undefined) {
-      throw new OctoError("invalid_input", "A tabled line needs a reason", 'Pass --reason "<why not now>".');
-    }
     const line = insertLine(ctx, {
       title: input.title,
       doneWhen: input.doneWhen,
@@ -342,10 +314,6 @@ export const lineOps = [
     const current = requireLine(ctx, input.ref);
     const into = requireLine(ctx, input.into);
     if (current.ref === into.ref) throw new OctoError("invalid_input", "A line cannot fold into itself");
-    if (ENDED.has(current.state)) throw new OctoError("conflict", `${current.ref} already ended`);
-    if (ENDED.has(into.state)) {
-      throw new OctoError("conflict", `${into.ref} already ended`, "Fold into a line that is still open.");
-    }
     const issues = rows(ctx, IssueRow, "SELECT * FROM issues WHERE line = ?", [current.ref]);
     for (const issue of issues) {
       const changes = applyPatch(ctx, "issues", issue.ref, issue, { line: into.ref, step: null });
@@ -525,7 +493,6 @@ export const lineOps = [
 
   bind(contracts.lineProposeDone, (ctx, input) => {
     const line = requireLine(ctx, input.ref);
-    if (line.state !== "working") throw new OctoError("conflict", `${line.ref} is not being worked on`);
     const changes = applyPatch(ctx, "lines", line.ref, line, {
       doneProposal: input.why,
       doneProposedBy: ctx.actor,
@@ -561,9 +528,6 @@ export const lineOps = [
 
   bind(contracts.lineOwn, (ctx, input) => {
     const line = requireLine(ctx, input.ref);
-    if (line.state !== "working") {
-      throw new OctoError("conflict", `${line.ref} is not being worked on`, "Start it first, then own it.");
-    }
     if (line.ownedBy !== null) return line;
     const changes = applyPatch(ctx, "lines", line.ref, line, { ownedBy: DEVELOPER });
     const updated = requireLine(ctx, line.ref);

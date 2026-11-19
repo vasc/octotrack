@@ -175,7 +175,7 @@ describe("lines of work", () => {
     ).toBe(true);
   });
 
-  test("a step that is not in the plan, or a line that ended, refuses a status", () => {
+  test("a step that is not in the plan refuses a status; a line that ended still takes one", () => {
     const h = withRepos();
     const line = h.developer(c.lineAdd, {
       title: "Mount",
@@ -188,9 +188,7 @@ describe("lines of work", () => {
       "not_found",
     );
     h.developer(c.lineDone, { ref: line.ref });
-    expect(refusal(() => h.developer(c.planStep, { line: line.ref, step: 1, status: "done" })).code).toBe(
-      "conflict",
-    );
+    expect(h.developer(c.planStep, { line: line.ref, step: 1, status: "done" })[0]?.status).toBe("done");
   });
 
   test("issues belong to a line and a step of its plan", () => {

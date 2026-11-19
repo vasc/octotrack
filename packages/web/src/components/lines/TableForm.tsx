@@ -21,8 +21,8 @@ function consequences(held: { questions: number; tasks: number } | undefined, ow
 }
 
 /**
- * Tabling a line, in a sheet of its own: why it waits, since a tabled line always says why, and if wanted a day to
- * look at it again, when it comes back under Proposed.
+ * Tabling a line, in a sheet of its own: why it waits, if there is a why to say, and if wanted a day to look at it
+ * again, when it comes back under Proposed.
  */
 export function TableForm({
   title,
@@ -36,13 +36,13 @@ export function TableForm({
   held?: { questions: number; tasks: number };
   /** Who winds down: its owner, when it has one. */
   owner?: string | null;
-  onTable(reason: string, lookAgainAt: string | null): void;
+  onTable(reason: string | null, lookAgainAt: string | null): void;
   onCancel(): void;
 }) {
   const [reason, setReason] = useState("");
   const [lookAgain, setLookAgain] = useState("");
   const table = () => {
-    if (reason.trim() !== "") onTable(reason.trim(), lookAgain === "" ? null : lookAgain);
+    onTable(reason.trim() === "" ? null : reason.trim(), lookAgain === "" ? null : lookAgain);
   };
   const facts = consequences(held, owner);
   return (
@@ -51,13 +51,13 @@ export function TableForm({
       onClose={onCancel}
       actions={
         <Actions>
-          <Button variant="primary" disabled={reason.trim() === ""} onClick={table}>
+          <Button variant="primary" onClick={table}>
             Table it
           </Button>
         </Actions>
       }
     >
-      <Field label="Why it waits" value={reason} onChange={setReason} onSubmit={table} autoFocus />
+      <Field label="Why it waits · optional" value={reason} onChange={setReason} onSubmit={table} autoFocus />
       <Field label="Look again on · optional" type="date" value={lookAgain} onChange={setLookAgain} />
       {facts === "" ? null : <Note>{facts}</Note>}
     </Sheet>

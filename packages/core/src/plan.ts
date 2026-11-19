@@ -76,8 +76,15 @@ export function branchState(
   return ownSteps.length > 0 && ownSteps.every((step) => step.status === "done") ? "done" : "open";
 }
 
-/** What a step waits on: each open branch that holds it up, by the ref of the line it became, else its address. */
-export function waitsOn(step: { address: string }, branches: readonly PlanBranch[]): string[] {
+/**
+ * What a step waits on: each open branch that holds it up, by the ref of the line it became, else its address. A step
+ * already done waits on nothing.
+ */
+export function waitsOn(
+  step: { address: string; status: PlanStepStatus },
+  branches: readonly PlanBranch[],
+): string[] {
+  if (step.status === "done") return [];
   return branches
     .filter((branch) => branch.holdsUp === step.address && branch.state === "open")
     .map((branch) => branch.became?.ref ?? branch.address);

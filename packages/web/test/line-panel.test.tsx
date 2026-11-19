@@ -82,10 +82,17 @@ describe("the line's head", () => {
     view.getByText("1 question, 2 tasks, released when it starts");
   });
 
-  test("a done line says so, read only", () => {
-    const view = render(<LinePanelHead line={line({ state: "done" })} repos={[]} now={NOW} />);
+  test("a done line says so, and still offers its moves", () => {
+    const view = render(
+      <LinePanelHead
+        line={line({ state: "done" })}
+        repos={[]}
+        now={NOW}
+        actions={<button type="button">Start</button>}
+      />,
+    );
     view.getByText("Done");
-    view.getByText("Plan, summary and history stay below, as they were when it closed.");
+    view.getByRole("button", { name: "Start" });
   });
 });
 
@@ -201,7 +208,7 @@ describe("PlanList", () => {
     onRemove: mock(() => {}),
   });
 
-  test("each step's status is set from a menu on it, the status in force ticked; an ended line has none", () => {
+  test("each step's status is set from a menu on it, the status in force ticked, on any line", () => {
     const onStatus = mock((_step: PlanStep, _status: "todo" | "doing" | "done") => {});
     const steps = [
       planStep({ position: 1, title: "Model", status: "done" }),
@@ -232,8 +239,9 @@ describe("PlanList", () => {
     busy.getByText("Not changed: the tracker did not answer");
     busy.unmount();
 
+    // A line that ended keeps its menus: it can be reopened, and its plan with it.
     const ended = render(<PlanList steps={steps} work={[]} state="done" actions={noActions()} />);
-    expect(ended.queryByRole("button", { name: /^Step 1/ })).toBeNull();
+    ended.getByRole("button", { name: "Step 1, Model: done" });
   });
 
   /** Model, Print, Hang it; off Print, branch 2a holds up step 3 with two steps and an issue, and 2b became L-12. */
