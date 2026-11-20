@@ -101,6 +101,24 @@ describe("home: one list, with what each line needs from the developer", () => {
     expect(home.counts).toMatchObject({ toAccept: 1, toStepIn: 1 });
   });
 
+  test("to accept counts each proposal: a line's case for done and its new done when are two", () => {
+    const w = world();
+    const line = w.as(w.dev, c.lineAdd, {
+      title: "Enclosure",
+      doneWhen: "It fits.",
+      repos: ["PANEL"],
+      where: "working",
+    });
+    const panel = w.agent("panel");
+    w.as(panel, c.lineTake, { ref: line.ref });
+    w.as(panel, c.lineDoneWhen, { ref: line.ref, doneWhen: "It fits and holds.", why: "It fell off." });
+    w.as(panel, c.lineProposeDone, { ref: line.ref, why: "Printed and fitted." });
+
+    const home = w.as(w.dev, c.homeShow, {});
+    expect(home.lines[line.ref]?.forYou.map((item) => item.kind)).toEqual(["done", "done_when"]);
+    expect(home.counts.toAccept).toBe(2);
+  });
+
   test("an urgent question stands at the very top, apart from its line", () => {
     const w = world();
     const line = w.as(w.dev, c.lineAdd, {

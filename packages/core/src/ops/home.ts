@@ -241,8 +241,11 @@ export function buildHome(ctx: Ctx): HomeView {
       toDo: working.reduce((sum, line) => sum + openTasks(ctx, line.ref).length, 0),
       toAccept:
         inState("proposed").length +
-        // What home shows: a case for done, or a new done when, is an item on a working line only.
-        working.filter((line) => line.doneWhenProposal !== null || line.doneProposal !== null).length,
+        // What home shows: a case for done and a new done when are each an item, on a working line only.
+        working.reduce(
+          (sum, line) => sum + Number(line.doneProposal !== null) + Number(line.doneWhenProposal !== null),
+          0,
+        ),
       toStepIn: working.filter((line) => lineDetails[line.ref]?.stepIn === true).length,
       urgent: urgent.length + urgentProposals,
     },
