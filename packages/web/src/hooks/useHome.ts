@@ -5,8 +5,6 @@ import { contracts } from "@octotrack/core/contracts";
 import type { HomeView, Issue, Line } from "@octotrack/core/schemas";
 import { useMemo, useState } from "react";
 import type { z } from "zod";
-import { failureText } from "../lib/failure.ts";
-import { REFUSED } from "../lib/refused.ts";
 import type { Move } from "../components/home/LineHandle.tsx";
 import { useChoices } from "./useChoices.ts";
 import { useOpMutation, useOpQuery } from "./useOp.ts";
@@ -37,10 +35,9 @@ export function useHome() {
       new Map((projects.data ?? []).map((card) => [card.project.ref, card.project.repo ?? card.project.ref])),
     [projects.data],
   );
-  // Reordering and I'm at change only what home shows, are undone by doing them again, and are never on a number
-  // key, so they act at once; every other choice waits with Undo (D13).
+  // Reordering changes only what home shows, is undone by doing it again, and is never on a number key, so it acts at
+  // once; every other choice waits with Undo (D13).
   const order = useOpMutation(contracts.lineOrder);
-  const at = useOpMutation(contracts.at);
   // The line whose last move the tracker did not take: said under that line until it moves again.
   const [notMoved, setNotMoved] = useState<string | null>(null);
   const move = (input: z.input<typeof contracts.lineOrder.input>) =>
@@ -48,7 +45,6 @@ export function useHome() {
       onSuccess: () => setNotMoved(null),
       onError: () => setNotMoved(input.ref),
     });
-  const places = useOpQuery(contracts.placeList, {});
   const choices = useChoices();
   const { pending } = choices;
   // Items whose choice waits with Undo: home holds them still and disarms their keys until it takes effect. A choice
@@ -77,7 +73,6 @@ export function useHome() {
     lineOf,
     held,
     notMoved,
-    places: (places.data ?? []).map((place) => place.name),
     // Try now retries every line stopped the same way: one fix, such as logging in, fixes them all.
     retry: (ref: string) =>
       choices.make(contracts.runnerRetry.name, { line: ref, same: true }, `Trying ${titleOf(ref)} again`),
@@ -93,13 +88,6 @@ export function useHome() {
         { repo, path, retry: line },
         `Setting ${repoNames.get(repo) ?? repo}'s checkout to ${path}, then trying ${titleOf(line)} again`,
       ),
-    /** A change of place is on its way. */
-    atBusy: at.isPending,
-    at: (place: string | null) =>
-      at.mutate(place === null ? {} : { place }, {
-        onError: (error) =>
-          REFUSED.add(place === null ? "Leaving the place" : `I'm at ${place}`, failureText(error).text),
-      }),
     repos,
     repoName: (key: string) => repoNames.get(key) ?? key,
     start: (ref: string) => choices.make(contracts.lineStart.name, { ref }, LINE_SAID.start(titleOf(ref))),

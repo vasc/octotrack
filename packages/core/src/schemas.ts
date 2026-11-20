@@ -946,16 +946,6 @@ export const LineHome = z.object({
 });
 export type LineHome = z.infer<typeof LineHome>;
 
-/** The header's counts, each a door to the first such item. */
-export const HomeCounts = z.object({
-  toAnswer: z.number().int(),
-  toDo: z.number().int(),
-  toAccept: z.number().int(),
-  toStepIn: z.number().int(),
-  urgent: z.number().int(),
-});
-export type HomeCounts = z.infer<typeof HomeCounts>;
-
 /** The home screen: every line, in the developer's order, section by section. */
 /** How the local runner is set up on this machine, as it last reported. */
 export const RunnerStatus = z.object({ configured: z.boolean(), cap: z.number().int(), dryRun: z.boolean() });
@@ -973,7 +963,6 @@ export const HomeView = z.object({
   /** Questions from before lines, on no line, below every line's: their agents still owe them a line. */
   noLine: z.array(DecisionCard),
   lines: z.record(z.string(), LineHome),
-  counts: HomeCounts,
   working: z.array(Line),
   upNext: z.array(Line),
   proposed: z.array(Line),

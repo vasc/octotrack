@@ -8,6 +8,7 @@ import type { ReactNode } from "react";
 import type { z } from "zod";
 import type { HomeView } from "@octotrack/core/schemas";
 import type { HomeActions } from "../src/hooks/useHome.ts";
+import { UNDONE } from "../src/lib/undone.ts";
 
 /** Stands in for the browser's EventSource, so that a test can push a change whenever it wants to. */
 export class FakeEventSource {
@@ -78,6 +79,8 @@ export function startTestServer(options: { live?: boolean; pushKey?: string } = 
     return app.request(url.toString(), init);
   };
   Object.assign(globalThis, { fetch: answer, EventSource: FakeEventSource });
+  // A new tracker numbers its choices from 1 again, so undos remembered against the last one are forgotten.
+  UNDONE.clear();
   FakeEventSource.instances = [];
   return {
     tracker,
@@ -205,12 +208,9 @@ export function homeActions(overrides: Partial<HomeActions> = {}): HomeActions {
     lineOf: () => null,
     held: new Set<string>(),
     notMoved: null,
-    places: [],
     retry: mock(() => {}),
     anyway: mock(() => {}),
     setCheckout: mock(() => {}),
-    at: mock(() => {}),
-    atBusy: false,
     repos: [],
     repoName: (key: string) => key,
     start: mock(() => {}),

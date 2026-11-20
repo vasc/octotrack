@@ -1,6 +1,6 @@
 import { contracts } from "@octotrack/core/contracts";
 import { useOpQuery } from "../../hooks/useOp.ts";
-import { closeEntity, pageUnder, useRoute } from "../../lib/router.ts";
+import { closeEntity } from "../../lib/router.ts";
 import { StaleNote } from "../ui/Loaded.tsx";
 import { Panel } from "../ui/Panel.tsx";
 import { ErrorState, LoadingState } from "../ui/states.tsx";
@@ -22,8 +22,6 @@ import { useBootstrap } from "../../hooks/useBootstrap.ts";
 /** Any item, by ref: what it is, what it connects to, what is out of date about it, and how it got here. */
 export function EntityPanel({ entityRef }: { entityRef: string }) {
   const detail = useOpQuery(contracts.entityShow, { ref: entityRef });
-  const route = useRoute();
-  const under = pageUnder(route.path);
   // Opened from another peek: Back returns there.
   const back = useBackTo();
   const h = useHome();
@@ -34,7 +32,7 @@ export function EntityPanel({ entityRef }: { entityRef: string }) {
     // A ref nothing answers to: said as such, not as a failure to load.
     if (detail.error instanceof ApiError && detail.error.code === "not_found") {
       return (
-        <Panel onClose={closeEntity} under={under} title={notFoundTitle(entityRef)}>
+        <Panel onClose={closeEntity} title={notFoundTitle(entityRef)}>
           <RefNotFound refName={entityRef} />
         </Panel>
       );
@@ -45,7 +43,7 @@ export function EntityPanel({ entityRef }: { entityRef: string }) {
       return <LinePanelItem line={known} drift={[]} stale={null} />;
     }
     return (
-      <Panel onClose={closeEntity} under={under}>
+      <Panel onClose={closeEntity}>
         {detail.error === null ? (
           <LoadingState label={`Loading ${entityRef}`} />
         ) : (
@@ -93,7 +91,6 @@ export function EntityPanel({ entityRef }: { entityRef: string }) {
       crumbs={<EntityCrumbs summary={summary} drift={"rule" in entity ? entity : undefined} />}
       title={summary.title}
       onClose={closeEntity}
-      under={under}
       back={back}
     >
       {stale === null ? null : <StaleNote at={detail.dataUpdatedAt} what={summary.ref} onRetry={retry} />}

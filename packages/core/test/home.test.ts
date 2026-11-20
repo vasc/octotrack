@@ -63,10 +63,10 @@ describe("home: one list, with what each line needs from the developer", () => {
         item.kind === "question" ? item.card.decision.ref : item.kind === "task" ? item.task.ref : item.line,
       ),
     ).toEqual([asked.ref, task.ref]);
-    expect(home.counts).toEqual({ toAnswer: 1, toDo: 1, toAccept: 0, toStepIn: 0, urgent: 0 });
+    expect([home.urgent, home.proposed]).toEqual([[], []]);
   });
 
-  test("up-next lines say what they hold and how far scoping got; proposals and step-ins are counted", () => {
+  test("up-next lines say what they hold and how far scoping got; proposals and step-ins are there", () => {
     const w = world();
     const waiting = w.as(w.dev, c.lineAdd, {
       title: "Wall mount",
@@ -98,10 +98,11 @@ describe("home: one list, with what each line needs from the developer", () => {
     expect(home.lines[waiting.ref]?.held).toEqual({ questions: 0, tasks: 1 });
     expect(home.lines[waiting.ref]?.scopedSteps).toBe(2);
     expect(home.lines[nobody.ref]?.forYou).toEqual([]);
-    expect(home.counts).toMatchObject({ toAccept: 1, toStepIn: 1 });
+    expect(home.proposed).toHaveLength(1);
+    expect(home.lines[nobody.ref]?.stepIn).toBe(true);
   });
 
-  test("to accept counts each proposal: a line's case for done and its new done when are two", () => {
+  test("a line's case for done and its new done when are two items to accept", () => {
     const w = world();
     const line = w.as(w.dev, c.lineAdd, {
       title: "Enclosure",
@@ -116,7 +117,6 @@ describe("home: one list, with what each line needs from the developer", () => {
 
     const home = w.as(w.dev, c.homeShow, {});
     expect(home.lines[line.ref]?.forYou.map((item) => item.kind)).toEqual(["done", "done_when"]);
-    expect(home.counts.toAccept).toBe(2);
   });
 
   test("an urgent question stands at the very top, apart from its line", () => {
@@ -138,6 +138,5 @@ describe("home: one list, with what each line needs from the developer", () => {
     const home = w.as(w.dev, c.homeShow, {});
     expect(home.urgent.map((card) => card.decision.ref)).toEqual([urgent.ref]);
     expect(home.lines[line.ref]?.forYou).toEqual([]);
-    expect(home.counts.urgent).toBe(1);
   });
 });

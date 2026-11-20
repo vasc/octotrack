@@ -2,6 +2,7 @@ import { contracts } from "@octotrack/core/contracts";
 import { ApiError } from "../api/client.ts";
 import { failureText } from "../lib/failure.ts";
 import { REFUSED } from "../lib/refused.ts";
+import { UNDONE } from "../lib/undone.ts";
 import { useOpMutation, useOpQuery } from "./useOp.ts";
 
 /** An Undo the tracker refused because the choice already took effect, said as such. */
@@ -35,6 +36,7 @@ export function useChoices() {
       undo.mutate(
         { id },
         {
+          onSuccess: () => UNDONE.add(id),
           onError: (error) =>
             tooLate(error)
               ? REFUSED.add("Too late to undo", "it already took effect.", false)

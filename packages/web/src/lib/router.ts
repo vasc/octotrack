@@ -30,13 +30,6 @@ export interface Route {
   params: URLSearchParams;
 }
 
-/** The page a panel opens over, by name, for its way back on a phone: Lines unless it is the Log or Agents. */
-export function pageUnder(path: string): string {
-  if (path === "/log") return "Log";
-  if (path === "/agents") return "Agents";
-  return "Lines";
-}
-
 export function useRoute(): Route {
   const current = useSyncExternalStore(subscribe, snapshot);
   const url = new URL(current, "http://local");
@@ -61,6 +54,11 @@ export function setParams(patch: Readonly<Record<string, string | null>>, replac
 export function openEntity(ref: string, act: "tell" | null = null): void {
   const current = new URLSearchParams(window.location.search).get("ref");
   setParams({ ref, act, from: current !== null && current !== ref ? current : null });
+}
+
+/** Peeks at a ref from the page itself, never stacked on what may be open: its way back is the page. */
+export function peekEntity(ref: string): void {
+  setParams({ ref, act: null, from: null });
 }
 
 export function closeEntity(): void {

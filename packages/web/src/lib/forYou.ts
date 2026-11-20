@@ -2,7 +2,7 @@ import type { DecisionCard, ForYou, HomeView, Line, StepInKind } from "@octotrac
 import { refOf, stepInRef } from "./focus.ts";
 import { STEP_IN_SHORT } from "./lines.ts";
 
-/** A view of For you: everything, or what one of the bar's counts counts. */
+/** A view of For you: everything, or one kind of what waits. */
 export type Filter = "all" | "urgent" | "toAnswer" | "toDo" | "toAccept" | "toStepIn";
 
 /** The rail, top to bottom: each view, its words, and where it lives. */
@@ -207,24 +207,4 @@ export function entryText(entry: Entry): { where: string; title: string; note: s
         note: `No agent: ${STEP_IN_SHORT[entry.item.stepKind]}`,
       };
   }
-}
-
-/** The words for what follows a view once its own entries are done: "4 to do, 2 to accept and 2 to step in". */
-export function afterText(counts: Record<Filter, number>, filter: Filter): string | null {
-  if (filter === "all") return null;
-  const words: Readonly<Record<Exclude<Filter, "all">, string>> = {
-    urgent: "urgent",
-    toAnswer: "to answer",
-    toDo: "to do",
-    toAccept: "to accept",
-    toStepIn: "to step in",
-  };
-  const others = FILTERS.flatMap((view) =>
-    view.key === "all" || view.key === filter || counts[view.key] === 0
-      ? []
-      : [`${counts[view.key]} ${words[view.key]}`],
-  );
-  if (others.length === 0) return null;
-  const last = others.pop();
-  return others.length === 0 ? `${last}` : `${others.join(", ")} and ${last}`;
 }

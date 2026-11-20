@@ -1,4 +1,3 @@
-import { pageUnder } from "../src/lib/router.ts";
 import { describe, expect, test } from "bun:test";
 import { newBuild } from "../src/lib/build.ts";
 import { suggest } from "../src/hooks/useSuggestions.ts";
@@ -15,7 +14,7 @@ import {
   timeLabel,
   toneOf,
 } from "../src/lib/format.ts";
-import { focusLabel, nextFocus, nextOf, refsOf } from "../src/lib/focus.ts";
+import { focusLabel } from "../src/lib/focus.ts";
 import {
   forYouCounts,
   heldOnTabled,
@@ -24,21 +23,12 @@ import {
   tellSummary,
   undoLines,
 } from "../src/lib/lines.ts";
-import { askedText, cantSummary, doneSummary, howClosed, isTask, taskOutcome } from "../src/lib/tasks.ts";
+import { cantSummary, doneSummary, howClosed, isTask, taskOutcome } from "../src/lib/tasks.ts";
 import { issueLinks } from "../src/lib/links.ts";
 import { moreSinceSummary, scanningText } from "../src/lib/log.ts";
 import { doneWhenSaid, LINE_SAID } from "../src/lib/said.ts";
 import { DEFAULT_APPEARANCE, PALETTES, readAppearance, tintBrowserBar } from "../src/lib/appearance.ts";
-import {
-  decision,
-  decisionCard,
-  event,
-  issue,
-  line,
-  lineHome,
-  pendingChoice,
-} from "../src/design/fixtures.ts";
-import type { HomeView } from "@octotrack/core/schemas";
+import { decision, decisionCard, event, issue, pendingChoice } from "../src/design/fixtures.ts";
 import { answerWaiting } from "../src/hooks/useDecisionForm.ts";
 import { closeEntity, navigate, openEntity, setParams } from "../src/lib/router.ts";
 
@@ -173,24 +163,6 @@ describe("router", () => {
   });
 });
 
-describe("nextFocus", () => {
-  test("stays put when something arrives, even ahead of it", () => {
-    expect(nextFocus("D-2", ["D-2", "D-3"], ["D-9", "D-2", "D-3"], "D-9")).toBe("D-2");
-  });
-
-  test("moves to the next item when its own is gone, else the one before, else where it starts", () => {
-    expect(nextFocus("D-2", ["D-1", "D-2", "D-3"], ["D-1", "D-3"], "D-1")).toBe("D-3");
-    expect(nextFocus("D-3", ["D-1", "D-2", "D-3"], ["D-1", "D-2"], "D-1")).toBe("D-2");
-    expect(nextFocus("D-3", ["D-3"], ["D-7"], "D-7")).toBe("D-7");
-  });
-
-  test("starts where it is told to, when that is there, else at the first item", () => {
-    expect(nextFocus(null, [], ["D-1", "D-2"], "D-2")).toBe("D-2");
-    expect(nextFocus(null, [], ["D-1", "D-2"], "D-5")).toBe("D-1");
-    expect(nextFocus(null, [], [], null)).toBeNull();
-  });
-});
-
 describe("timeLabel", () => {
   test("the time today, the weekday and time this past week, else the date", () => {
     const now = new Date(2026, 10, 14, 18, 0).getTime();
@@ -285,16 +257,6 @@ describe("sinceText", () => {
     expect(sinceText("2026-11-14T11:55:00.000Z", now)).toBe("5m ago");
     expect(sinceText("2026-11-12T12:00:00.000Z", now)).toBe("2d ago");
     expect(sinceText("2026-10-01T12:00:00.000Z", now)).toBe("on 1 Oct");
-  });
-});
-
-describe("askedText", () => {
-  const now = Date.parse("2026-11-14T12:00:00.000Z");
-  test("says when a task was asked, or re-confirmed if later", () => {
-    expect(askedText({ createdAt: "2026-11-14T10:00:00.000Z", confirmedAt: null }, now)).toBe("asked 2h ago");
-    expect(
-      askedText({ createdAt: "2026-11-01T10:00:00.000Z", confirmedAt: "2026-11-14T11:59:50.000Z" }, now),
-    ).toBe("re-confirmed just now");
   });
 });
 
@@ -542,68 +504,9 @@ describe("answerWaiting", () => {
   });
 });
 
-describe("pageUnder", () => {
-  test("names the page a panel opens over, for its way back on a phone", () => {
-    expect(pageUnder("/")).toBe("Lines");
-    expect(pageUnder("/log")).toBe("Log");
-    expect(pageUnder("/agents")).toBe("Agents");
-    expect(pageUnder("/nowhere")).toBe("Lines");
-  });
-});
-
 describe("scanningText", () => {
   test("says how far back a search with nothing yet has looked", () => {
     expect(scanningText(500)).toBe("Nothing in the last 500 events yet; searching older ones…");
     expect(scanningText(10000)).toBe("Nothing in the last 10,000 events yet; searching older ones…");
-  });
-});
-
-describe("where a count in the bar goes", () => {
-  const home: HomeView = {
-    runner: { configured: false, cap: 1, dryRun: false },
-    at: null,
-    urgent: [decisionCard({ decision: decision({ ref: "D-9", urgentReason: "broken" }) })],
-    noLine: [decisionCard({ decision: decision({ ref: "D-7" }) })],
-    lines: {
-      "L-1": lineHome({
-        forYou: [
-          { kind: "question", card: decisionCard({ decision: decision({ ref: "D-1" }) }) },
-          { kind: "task", task: issue({ ref: "OCT-4" }), frees: null },
-          { kind: "done", line: "L-1", text: "It fits.", by: "panel", doneWhen: "It fits." },
-        ],
-      }),
-      "L-2": lineHome({
-        stepIn: true,
-        forYou: [{ kind: "question", card: decisionCard({ decision: decision({ ref: "D-2" }) }) }],
-      }),
-    },
-    counts: { urgent: 2, toAnswer: 3, toDo: 1, toAccept: 3, toStepIn: 1 },
-    working: [line({ ref: "L-1" }), line({ ref: "L-2" })],
-    upNext: [],
-    proposed: [
-      line({ ref: "L-5", state: "proposed", urgentReason: "broken" }),
-      line({ ref: "L-6", state: "proposed" }),
-    ],
-    tabled: [],
-    doneLately: [],
-    crews: {},
-  };
-
-  test("each count stands for its items in the order j walks them", () => {
-    expect(refsOf(home, "urgent")).toEqual(["D-9", "L-5"]);
-    expect(refsOf(home, "toAnswer")).toEqual(["D-1", "D-2", "D-7"]);
-    expect(refsOf(home, "toDo")).toEqual(["OCT-4"]);
-    expect(refsOf(home, "toAccept")).toEqual(["done:L-1", "L-5", "L-6"]);
-    expect(refsOf(home, "toStepIn")).toEqual(["stepin:L-2"]);
-  });
-
-  test("a press goes to the next after the one in focus, round to the first, and to the first from nowhere", () => {
-    expect(nextOf(home, "toAnswer", null)).toBe("D-1");
-    expect(nextOf(home, "toAnswer", "D-1")).toBe("D-2");
-    expect(nextOf(home, "toAnswer", "D-7")).toBe("D-1");
-    // From an item of another kind, the next of this kind after it.
-    expect(nextOf(home, "toAnswer", "OCT-4")).toBe("D-2");
-    expect(nextOf(home, "toDo", "OCT-4")).toBe("OCT-4");
-    expect(nextOf(home, "toAccept", "line:L-1")).toBe("done:L-1");
   });
 });

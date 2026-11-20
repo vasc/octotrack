@@ -1,5 +1,4 @@
 import type { FeedEvent, Issue } from "@octotrack/core/schemas";
-import { sinceText } from "./format.ts";
 
 /** What Done sends for a task: its words, or each named outcome with any note beside them. */
 export interface TaskOutcome {
@@ -30,13 +29,6 @@ export function taskOutcome(
 /** How many of a task's named outcomes have something in them. */
 export function filledCount(task: Issue, values: Readonly<Record<string, string>>): number {
   return task.fields.filter((name) => (values[name] ?? "").trim() !== "").length;
-}
-
-/** When a task was asked for, or re-confirmed if that was later, since that is what keeps it current. */
-export function askedText(task: Pick<Issue, "createdAt" | "confirmedAt">, now: number = Date.now()): string {
-  return task.confirmedAt !== null && task.confirmedAt > task.createdAt
-    ? `re-confirmed ${sinceText(task.confirmedAt, now)}`
-    : `asked ${sinceText(task.createdAt, now)}`;
 }
 
 /** Done in the Undo bar, worded as it happens: what is sent and to which line, or that a task of one's own is done. */

@@ -255,6 +255,19 @@ describe("For you", () => {
     expect(rail(view).getByRole("link", { name: "All, 0" }).getAttribute("aria-current")).toBe("page");
   });
 
+  test("a view emptied by the last answer hands on to the next view that holds something", async () => {
+    twoLines();
+    ask("Which board?", "octo.1");
+    server.act(c.taskFile, { title: "Weigh it", outcome: "Grams" }, "octo.1");
+    navigate("/for-you/to-answer");
+    const view = renderApp(<App />);
+    await opened(view, "Which board?");
+    fireEvent.keyDown(window, { key: "1" });
+    await answerNow(view);
+    await waitFor(() => expect(window.location.pathname).toBe("/for-you/to-do"));
+    await opened(view, "Weigh it");
+  });
+
   test("a view with nothing in it says so and offers the next view that holds something", async () => {
     twoLines();
     server.act(c.taskFile, { title: "Weigh it", outcome: "Grams" }, "octo.1");

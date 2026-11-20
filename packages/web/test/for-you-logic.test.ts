@@ -31,7 +31,6 @@ const home: HomeView = {
       forYou: [{ kind: "question", card: decisionCard({ decision: decision({ ref: "D-2", line: "L-2" }) }) }],
     }),
   },
-  counts: { urgent: 2, toAnswer: 3, toDo: 1, toAccept: 3, toStepIn: 1 },
   working: [line({ ref: "L-1" }), line({ ref: "L-2" })],
   upNext: [],
   proposed: [

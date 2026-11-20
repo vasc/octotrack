@@ -7,7 +7,7 @@ import { TableForm } from "../lines/TableForm.tsx";
 import { Facts } from "../ui/Facts.tsx";
 import { Item } from "../ui/Item.tsx";
 import { Markdown } from "../ui/Markdown.tsx";
-import { Code } from "../ui/Note.tsx";
+import { Code, Note } from "../ui/Note.tsx";
 import { type Option, Options } from "../ui/Options.tsx";
 import { Pairs } from "../ui/Pairs.tsx";
 
@@ -145,7 +145,12 @@ export function ProposalItem({
             onCancel={() => setMode(null)}
           />
         ) : (
-          <Options options={ordered} onPick={pick} chosen={busy ? (picked ?? undefined) : undefined} />
+          <>
+            <Options options={ordered} onPick={pick} chosen={busy ? (picked ?? undefined) : undefined} />
+            {line.urgentReason === null ? null : (
+              <Note>It is also in To accept: placing it here takes it out of both.</Note>
+            )}
+          </>
         )
       }
     >

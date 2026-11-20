@@ -10,17 +10,7 @@ import { LineActions } from "./LineActions.tsx";
 export function LineMoves({ view }: { view: LineView }) {
   const { line, h, details, stepIn } = view;
   if (stepIn !== null && details !== undefined && details.stepInKind !== null)
-    return (
-      <LineStepIn
-        line={line}
-        reason={stepIn}
-        kind={details.stepInKind}
-        focused={false}
-        folded={false}
-        h={h}
-        onFocus={() => {}}
-      />
-    );
+    return <LineStepIn line={line} reason={stepIn} kind={details.stepInKind} focused={false} h={h} />;
   if (view.starting)
     return (
       <StartSheet

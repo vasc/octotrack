@@ -15,7 +15,6 @@ export function LinePanelHead({
   held,
   now = Date.now(),
   back,
-  under,
   actions,
   branchOf = null,
   children,
@@ -26,10 +25,8 @@ export function LinePanelHead({
   /** What waits on the developer and is held while the line waits. */
   held?: { questions: number; tasks: number };
   now?: number;
-  /** Opened from another panel: the ref it came from and the way back. */
+  /** Opened from another peek: what that one is, and the way back to it. */
   back?: { label: string; onBack(): void } | undefined;
-  /** The page it opens over, which its way back names on a phone. */
-  under?: string;
   /** Its moves, under what finishes it. */
   actions?: ReactNode;
   /** The plan branch it grew out of, and the step there that waits for it. */
@@ -41,7 +38,6 @@ export function LinePanelHead({
       crumbs={<LineFacts line={line} repos={repos} now={now} />}
       title={line.title}
       onClose={closeEntity}
-      {...(under === undefined ? {} : { under })}
       back={back}
       page={{ href: `/lines/${line.ref}`, onGo: (href) => navigate(href) }}
       head={<LineStanding line={line} held={held} now={now} branchOf={branchOf} actions={actions} />}

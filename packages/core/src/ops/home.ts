@@ -229,26 +229,12 @@ export function buildHome(ctx: Ctx): HomeView {
   const proposed = inState("proposed").sort(
     (a, b) => Number(b.urgentReason !== null) - Number(a.urgentReason !== null),
   );
-  const urgentProposals = proposed.filter((line) => line.urgentReason !== null).length;
   return {
     runner: runnerStatus(ctx),
     at: atView(ctx),
     urgent,
     noLine: queue.filter((card) => card.decision.line === null && !urgent.includes(card)),
     lines: lineDetails,
-    counts: {
-      toAnswer: queue.length - urgent.length,
-      toDo: working.reduce((sum, line) => sum + openTasks(ctx, line.ref).length, 0),
-      toAccept:
-        inState("proposed").length +
-        // What home shows: a case for done and a new done when are each an item, on a working line only.
-        working.reduce(
-          (sum, line) => sum + Number(line.doneProposal !== null) + Number(line.doneWhenProposal !== null),
-          0,
-        ),
-      toStepIn: working.filter((line) => lineDetails[line.ref]?.stepIn === true).length,
-      urgent: urgent.length + urgentProposals,
-    },
     working,
     upNext: inState("up_next"),
     proposed,

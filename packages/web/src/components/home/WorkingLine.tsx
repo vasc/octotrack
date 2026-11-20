@@ -1,7 +1,7 @@
 import type { Line, LineCrew, LineHome } from "@octotrack/core/schemas";
 import type { ReactNode } from "react";
 import type { DropTarget } from "../../hooks/useDragOrder.ts";
-import { lineFocusRef, refOf } from "../../lib/focus.ts";
+import { lineFocusRef, refOf, stepInRef } from "../../lib/focus.ts";
 import { forYouPath } from "../../lib/forYou.ts";
 import { waitsText } from "../../lib/lines.ts";
 import { navigate } from "../../lib/router.ts";
@@ -70,7 +70,7 @@ export function WorkingLine({
                   <Waits
                     label="Step in"
                     tone="warn"
-                    href={forYouPath("toStepIn", `stepin:${line.ref}`)}
+                    href={forYouPath("toStepIn", stepInRef(line.ref))}
                     onGo={navigate}
                   />
                 ) : null}

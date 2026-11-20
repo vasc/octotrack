@@ -144,10 +144,9 @@ describe("what to accept", () => {
     const waiting = h.developer(c.lineAdd, { title: "Wall mount", doneWhen: "It hangs.", where: "up_next" });
     const working = h.developer(c.lineAdd, { title: "Enclosure", doneWhen: "It fits.", where: "working" });
     h.call(c.lineProposeDone, { ref: waiting.ref, why: "It hangs flush." });
-    expect(h.developer(c.homeShow, {}).counts.toAccept).toBe(0);
+    expect(h.developer(c.homeShow, {}).lines[waiting.ref]?.forYou ?? []).toEqual([]);
     h.call(c.lineProposeDone, { ref: working.ref, why: "It fits." });
     const home = h.developer(c.homeShow, {});
-    expect(home.counts.toAccept).toBe(1);
     expect(home.lines[working.ref]?.forYou.map((item) => item.kind)).toEqual(["done"]);
   });
 });

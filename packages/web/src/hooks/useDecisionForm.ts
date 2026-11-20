@@ -46,7 +46,12 @@ export function answerWaiting(pending: readonly PendingChoice[], ref: string): P
 }
 
 /** Answering one question: an option in one press, or the developer's own words; Later; Not urgent. */
-export function useDecisionForm(decision: Decision, onPostponed?: (ref: string) => void): DecisionForm {
+export function useDecisionForm(
+  decision: Decision,
+  onPostponed?: (ref: string) => void,
+  /** Answered, by an option or in words: the page may move on while the answer waits with Undo. */
+  onAnswered?: (ref: string) => void,
+): DecisionForm {
   const key = `answer:${decision.ref}`;
   // Words typed as an answer are a draft on the server, like a Tell: they follow the developer between devices.
   const draft = useDraft(key);
@@ -83,6 +88,7 @@ export function useDecisionForm(decision: Decision, onPostponed?: (ref: string) 
         note: null,
         summary: `Sending "${label}" to ${to}`,
       });
+      onAnswered?.(decision.ref);
     },
     openOwn: () => setWriting(true),
     closeOwn: () => setWriting(false),
@@ -100,6 +106,7 @@ export function useDecisionForm(decision: Decision, onPostponed?: (ref: string) 
           draft: key,
         }),
       );
+      onAnswered?.(decision.ref);
     },
     postpone: () => {
       const undo = decision.postponedAt !== null;

@@ -15,6 +15,7 @@ export function ForYouItem({
   onNotYet,
   onDoneWhen,
   onPostponed,
+  onAnswered,
 }: {
   item: ForYou;
   /** The line's title, for proposals about the line itself. */
@@ -27,6 +28,8 @@ export function ForYouItem({
   onNotYet(line: string, why: string): void;
   onDoneWhen(line: string, accept: boolean): void;
   onPostponed?: (ref: string) => void;
+  /** A question answered: the page may move on while the answer waits with Undo. */
+  onAnswered?: (ref: string) => void;
 }) {
   switch (item.kind) {
     case "question":
@@ -36,6 +39,7 @@ export function ForYouItem({
           active
           armed={armed}
           {...(onPostponed === undefined ? {} : { onPostponed })}
+          {...(onAnswered === undefined ? {} : { onAnswered })}
         />
       );
     case "task":

@@ -1050,9 +1050,13 @@ describe("lines of work", () => {
       const opened = within(await view.findByRole("article", { name: "Measure the grip" }));
       fireEvent.change(opened.getByLabelText("Five numbers"), { target: { value: "41, 38, 12" } });
       fireEvent.click(opened.getByRole("button", { name: "Done" }));
+      // Done waits with Undo, and For you moves on to the next item meanwhile.
+      await view.findByRole("heading", { name: "Wall mount" });
       fireEvent.click(await view.findByRole("button", { name: "Undo" }));
       await gone(() => view.queryByRole("button", { name: "Undo" }));
-      expect(opened.getByLabelText("Five numbers")).toHaveProperty("value", "41, 38, 12");
+      // Undone, the task opens again where it was left, what was typed still in it.
+      const back = within(await view.findByRole("region", { name: "Open now" }));
+      await waitFor(() => expect(back.getByLabelText("Five numbers")).toHaveProperty("value", "41, 38, 12"));
     });
 
     test("the Undo bar's live region is there before the first choice, so that one is announced too", async () => {
@@ -2342,8 +2346,10 @@ describe("lines of work", () => {
       fireEvent.click(opened.getByRole("button", { name: "Done" }));
       fireEvent.click(await view.findByRole("button", { name: "Undo" }));
       await gone(() => view.queryByRole("button", { name: "Undo" }));
-      expect(opened.getByLabelText("Length")).toHaveProperty("value", "41");
-      expect(opened.getByLabelText("Holes")).toHaveProperty("value", "38");
+      // Undone, the task is open again, its boxes as they were.
+      const back = within(await view.findByRole("region", { name: "Open now" }));
+      await waitFor(() => expect(back.getByLabelText("Length")).toHaveProperty("value", "41"));
+      expect(back.getByLabelText("Holes")).toHaveProperty("value", "38");
     });
 
     test("an outcome typed before the task's draft has loaded joins it, never replacing what was kept", async () => {

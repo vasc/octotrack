@@ -113,7 +113,7 @@ describe("an urgent proposal", () => {
     });
     const home = w.as(w.dev, c.homeShow, {});
     expect(home.proposed.map((line) => line.ref)[0]).toBe(broken.ref);
-    expect(home.counts.urgent).toBe(1);
+    expect(home.proposed.filter((line) => line.urgentReason !== null)).toHaveLength(1);
     expect(broken.urgentReason).toBe("broken");
   });
 });

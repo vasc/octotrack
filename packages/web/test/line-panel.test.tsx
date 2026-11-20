@@ -475,10 +475,13 @@ describe("OwnWorkBox", () => {
 });
 
 describe("the panel on a phone", () => {
-  test("its way back names the page under it, in place of Close", () => {
+  test("a peek has one head on every width: its own page and the cross that closes it", () => {
     const onClose = mock(() => {});
-    const view = render(<Panel title="L-1" onClose={onClose} under="Log" />);
-    fireEvent.click(view.getByRole("button", { name: "Log" }));
+    const view = render(
+      <Panel title="L-1" onClose={onClose} page={{ href: "/lines/L-1", onGo: () => {} }} />,
+    );
+    expect(view.getAllByRole("link", { name: "Open the full page" })).toHaveLength(1);
+    fireEvent.click(view.getByRole("button", { name: "Close" }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 

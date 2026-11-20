@@ -1,3 +1,4 @@
+import type { HomeView } from "../src/schemas.ts";
 import { describe, expect, test } from "bun:test";
 import type { z } from "zod";
 import type { Contract } from "../src/contracts.ts";
@@ -7,6 +8,15 @@ import { sinceSummaryQuery } from "../src/query/index.ts";
 import type { Caller } from "../src/tracker.ts";
 import { Tracker } from "../src/tracker.ts";
 import { memoryDriver } from "./helpers.ts";
+
+/** What reaches the developer, as For you lists it: questions on working lines and on none, tasks on working lines. */
+function reaching(home: HomeView): { toAnswer: number; toDo: number } {
+  const items = Object.values(home.lines).flatMap((line) => line.forYou);
+  return {
+    toAnswer: items.filter((item) => item.kind === "question").length + home.noLine.length,
+    toDo: items.filter((item) => item.kind === "task").length,
+  };
+}
 
 const START = "2026-11-14T09:00:00.000Z";
 const MINUTE = 60_000;
@@ -505,7 +515,9 @@ describe("folding carries whether questions and tasks are held", () => {
         item.kind === "question" ? item.card.decision.ref : item.kind === "task" ? item.task.ref : item.kind,
       ),
     ).toEqual([asked.ref, task.ref]);
-    expect([home.counts.toAnswer, home.counts.toDo, home.lines[w.line]?.reconfirming]).toEqual([1, 1, 0]);
+    expect([reaching(home).toAnswer, reaching(home).toDo, home.lines[w.line]?.reconfirming]).toEqual([
+      1, 1, 0,
+    ]);
   });
 
   test("into an up-next line, they are held, and any gone stale is re-confirmed before it reaches the developer", () => {
@@ -522,12 +534,12 @@ describe("folding carries whether questions and tasks are held", () => {
       where: "up_next",
     });
     w.as(w.dev, c.lineFold, { ref: w.line, into: waiting.ref });
-    expect(w.as(w.dev, c.homeShow, {}).counts.toAnswer).toBe(0);
+    expect(reaching(w.as(w.dev, c.homeShow, {})).toAnswer).toBe(0);
     w.later(8 * DAY);
     expect(w.as(w.dev, c.homeShow, {}).lines[waiting.ref]?.reconfirming).toBe(1);
     w.as(w.dev, c.lineStart, { ref: waiting.ref });
     const home = w.as(w.dev, c.homeShow, {});
-    expect([home.counts.toAnswer, home.lines[waiting.ref]?.reconfirming]).toEqual([0, 1]);
+    expect([reaching(home).toAnswer, home.lines[waiting.ref]?.reconfirming]).toEqual([0, 1]);
     expect(w.as(w.dev, c.heldList, { line: waiting.ref }).map((item) => [item.ref, item.current])).toEqual([
       [asked.ref, false],
     ]);
@@ -557,7 +569,7 @@ describe("the agents' questions and tasks on a line the developer owns", () => {
       mine.ref,
     ]);
     expect([line?.held, line?.reconfirming]).toEqual([{ questions: 2, tasks: 1 }, 0]);
-    expect([home.counts.toAnswer, home.counts.toDo]).toEqual([0, 1]);
+    expect([reaching(home).toAnswer, reaching(home).toDo]).toEqual([0, 1]);
     expect(w.as(w.dev, c.heldList, { line: w.line }).map((item) => item.ref)).toEqual([
       asked.ref,
       late.ref,
@@ -602,7 +614,7 @@ describe("the agents' questions and tasks on a line the developer owns", () => {
     const home = w.as(w.dev, c.homeShow, {});
     expect(w.as(w.dev, c.lineShow, { ref: w.line }).line.ownedBy).toBe("dev");
     expect(home.lines[w.line]?.forYou).toEqual([]);
-    expect([home.lines[w.line]?.held, home.counts.toAnswer, home.counts.toDo]).toEqual([
+    expect([home.lines[w.line]?.held, reaching(home).toAnswer, reaching(home).toDo]).toEqual([
       { questions: 1, tasks: 1 },
       0,
       0,

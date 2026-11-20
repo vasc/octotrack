@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
+import { useChoices } from "../../hooks/useChoices.ts";
 import { useForYou } from "../../hooks/useForYou.ts";
 import { useForYouKeys } from "../../hooks/useForYouKeys.ts";
 import { useHome } from "../../hooks/useHome.ts";
 import { useHotkeys } from "../../hooks/useHotkeys.ts";
 import { FILTERS, type Filter, forYouPath, nextFilter } from "../../lib/forYou.ts";
 import { nextAsk, runningAgents } from "../../lib/lines.ts";
-import { navigate, openEntity, useRoute } from "../../lib/router.ts";
+import { navigate, peekEntity, useRoute } from "../../lib/router.ts";
 import { RecordAnswers } from "../home/RecordAnswers.tsx";
 import { StartSheet } from "../home/StartSheet.tsx";
 import { NotAnswering } from "../home/NotAnswering.tsx";
@@ -36,7 +37,8 @@ export function ForYouPage({ filter }: { filter: Filter }) {
   const h = useHome();
   const { params } = useRoute();
   const home = h.home.data;
-  const view = useForYou(home, filter, params.get("item") ?? params.get("focus"));
+  const { pending } = useChoices();
+  const view = useForYou(home, filter, params.get("item") ?? params.get("focus"), pending);
   const peek = params.get("ref");
   const [starting, setStarting] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
@@ -97,14 +99,14 @@ export function ForYouPage({ filter }: { filter: Filter }) {
                   entry={entry}
                   step={step}
                   peeking={entry.line !== null && peek === entry.line.ref}
-                  onPeek={(line) => openEntity(line)}
+                  onPeek={(line) => peekEntity(line)}
                 >
                   <ForYouEntry
                     entry={entry}
                     home={home}
                     h={h}
                     armed={armed}
-                    onPutOff={view.putOff}
+                    onMoveOn={view.moveOn}
                     onStarting={setStarting}
                   />
                 </ForYouCard>

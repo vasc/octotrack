@@ -1,22 +1,19 @@
 import { type ReactNode, type Ref, useRef } from "react";
 import { useCloseOnOutsideTap } from "../../hooks/useCloseOnOutsideTap.ts";
-import { Only } from "./AppBar.tsx";
-import { Button, IconButton } from "./Button.tsx";
+import { IconButton } from "./Button.tsx";
 import { Icon } from "./Icon.tsx";
 import { Link } from "./Link.tsx";
 
 /**
- * An item opened by its ref, a peek over the right of the page beside what you are doing; the whole screen on a phone.
+ * An item opened by its ref, a peek over the right of the page beside what you are doing; from the bottom on a phone.
  * Its head is one row: the way back to the peek it was opened from, where it sits, small and grey, its own page when it
- * has one, and Close, which always shuts it; on a phone Close is the way back to the page under it ("Lines", after a
- * back arrow). Then its title and its sections.
+ * has one, and Close, which always shuts it. Then its title and its sections.
  */
 export function Panel({
   crumbs,
   title,
   onClose,
   back,
-  under = "Lines",
   page,
   head,
   children,
@@ -26,8 +23,6 @@ export function Panel({
   onClose(): void;
   /** Opened from another peek: what that one is, and the way back to it. */
   back?: { label: string; onBack(): void } | undefined;
-  /** The page it opens over, which its way back names on a phone. */
-  under?: string;
   /** Its own page, for all of it: "Open the full page". */
   page?: { href: string; onGo(href: string): void } | undefined;
   /** What belongs with the title, such as what finishes it and its moves; a hairline then sets the sections apart. */
@@ -50,21 +45,11 @@ export function Panel({
         )}
         <div className="ui-panel-crumbs">{crumbs}</div>
         {page === undefined ? null : (
-          <Only on="wide">
-            <Link href={page.href} onGo={page.onGo}>
-              Open the full page
-            </Link>
-          </Only>
+          <Link href={page.href} onGo={page.onGo}>
+            Open the full page
+          </Link>
         )}
-        <Only on="wide">
-          <IconButton icon="cross" label="Close" onClick={onClose} />
-        </Only>
-        <Only on="phone">
-          <Button onClick={onClose}>
-            <Icon name="back" />
-            {under}
-          </Button>
-        </Only>
+        <IconButton icon="cross" label="Close" onClick={onClose} />
       </header>
       {title === undefined ? null : <h1 className="ui-panel-title">{title}</h1>}
       {head === undefined ? null : <div className="ui-panel-top">{head}</div>}
@@ -75,7 +60,6 @@ export function Panel({
   );
 }
 
-/** Where an opened ref is drawn: over the right of the page, or the whole screen on a phone. */
 /** Drawn over the page and part of what is open, not outside it: a sheet opened from the panel, a menu's list, the Undo bar. */
 const PART_OF_IT = ".ui-sheet-layer, .ui-toasts, .ui-menu-list";
 

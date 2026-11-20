@@ -2203,8 +2203,6 @@ describe("LineStepIn", () => {
     line: line(),
     reason: props.kind === null ? null : "Why, as the server words it.",
     focused: false,
-    folded: false,
-    onFocus: () => {},
     ...props,
   });
   const choices = (view: ReturnType<typeof render>) =>
@@ -2272,15 +2270,9 @@ describe("LineStepIn", () => {
     expect(h.retry).not.toHaveBeenCalled();
   });
 
-  test("folded at a place, is one row saying why in a few words, until it has focus", () => {
-    const onFocus = mock((_ref: string) => {});
+  test("with focus, it is the one the keys act on", () => {
     const h = homeActions();
-    const view = render(<LineStepIn {...stepIn({ h, kind: "failing", folded: true, onFocus })} />);
-    expect(view.queryByRole("group")).toBeNull();
-    fireEvent.click(view.getByRole("button", { name: "Step in a start keeps failing" }));
-    expect(onFocus).toHaveBeenCalledWith("stepin:L-1");
-    view.unmount();
-    const focused = render(<LineStepIn {...stepIn({ h, kind: "failing", folded: true, focused: true })} />);
+    const focused = render(<LineStepIn {...stepIn({ h, kind: "failing", focused: true })} />);
     const group = focused.getByRole("group", { name: "Step in on Sendspin enclosure" });
     expect(group.getAttribute("aria-current")).toBe("true");
   });

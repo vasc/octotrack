@@ -2,7 +2,6 @@ import type { Drift, Line } from "@octotrack/core/schemas";
 import { useBackTo } from "../../hooks/useBackTo.ts";
 import { useLineView } from "../../hooks/useLineView.ts";
 import { failureText } from "../../lib/failure.ts";
-import { pageUnder, useRoute } from "../../lib/router.ts";
 import { LinePrs } from "../lines/LinePrs.tsx";
 import { Loaded, StaleNote } from "../ui/Loaded.tsx";
 import { Note } from "../ui/Note.tsx";
@@ -39,7 +38,6 @@ export function LinePanelItem({
 }) {
   const view = useLineView(line);
   const { h, home, shown, unmarked } = view;
-  const route = useRoute();
   // Opened from another peek: Back returns there.
   const back = useBackTo();
   // Until Lines has loaded once, who owns the line and what it needs from the developer are not known: say so.
@@ -51,7 +49,6 @@ export function LinePanelItem({
     ) : undefined;
   return (
     <LinePanelHead
-      under={pageUnder(route.path)}
       line={line}
       repos={line.repos.map(h.repoName)}
       held={view.held}

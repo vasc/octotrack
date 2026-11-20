@@ -17,6 +17,7 @@ export function DecisionCardItem({
   active = false,
   armed = active,
   onPostponed,
+  onAnswered,
   titled = true,
 }: {
   card: DecisionCard;
@@ -25,8 +26,10 @@ export function DecisionCardItem({
   active?: boolean;
   armed?: boolean;
   onPostponed?: (ref: string) => void;
+  /** Answered: the page may move on while the answer waits with Undo. */
+  onAnswered?: (ref: string) => void;
 }) {
-  const form = useDecisionForm(card.decision, onPostponed);
+  const form = useDecisionForm(card.decision, onPostponed, onAnswered);
   const { answer, postpone, ownWords, openOwn } = form;
   const keys = useMemo(() => {
     if (!active || !armed || ownWords !== null || form.waiting !== null) return NO_KEYS;
