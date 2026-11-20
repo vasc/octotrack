@@ -8,10 +8,9 @@
   box-sizing: border-box;
 }
 
+/* No fixed height: the page grows with what is on it, so the sticky bar stays at the top the whole way down. */
 html,
-body,
-#root {
-  height: 100%;
+body {
   margin: 0;
 }
 

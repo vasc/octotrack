@@ -283,6 +283,24 @@ describe("the dashboard uses the language instead of going around it", () => {
   });
 });
 
+describe("the page scrolls as one", () => {
+  const css = stylesCss.replace(/\/\*[\s\S]*?\*\//g, "");
+  /** Every declaration made for one selector, wherever it is listed among others. */
+  const declarationsFor = (selector: string) =>
+    [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+      .filter((match) => (match[1] ?? "").split(",").some((part) => part.trim() === selector))
+      .map((match) => match[2] ?? "")
+      .join("");
+
+  test("the bar stays at the top all the way down: what holds it grows with the page instead of ending at one screen", () => {
+    // The bar is sticky, and a sticky element stays only while its parent is in view; a parent one window tall lets
+    // it scroll away after the first screen.
+    for (const holder of ["body", "#root"]) {
+      expect(declarationsFor(holder)).not.toMatch(/(^|[;\s])(max-)?height:/);
+    }
+  });
+});
+
 describe("a finger can use it", () => {
   const css = stylesCss.replace(/\/\*[\s\S]*?\*\//g, "");
   const coarse = /@media \(pointer: coarse\) \{([\s\S]*?)\n\}/.exec(css)?.[1] ?? "";

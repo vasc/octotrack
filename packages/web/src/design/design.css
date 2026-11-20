@@ -3,12 +3,6 @@
  * themselves are the product's components, styled only by ui.css.
  */
 
-.design-page {
-  min-height: 100%;
-  overflow: auto;
-  height: 100%;
-}
-
 .design-head {
   display: flex;
   align-items: center;

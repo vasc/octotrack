@@ -26,7 +26,7 @@ export function DesignPage() {
   const mode = params.get("theme");
   const themes = mode === "light" || mode === "dark" ? [mode] : ["light", "dark"];
   return (
-    <div className="design-page">
+    <div>
       <header className="design-head">
         <h1>Octotrack design language</h1>
         <Actions>
