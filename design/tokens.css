@@ -109,6 +109,8 @@
   --shadow-stack: calc(-1 * var(--space-12)) 0 0 0 var(--surface-2), calc(-1 * var(--space-12) - 1px) 0 0 0 var(--line);
   /* The open item's card, lifted a little from the page. */
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.06), 0 12px 32px -12px rgb(0 0 0 / 0.12);
+  /* What dims everything around a peek on a phone. */
+  --shadow-scrim: 0 0 0 100vmax var(--scrim);
   /* A sheet lifted over the page. */
   --shadow-sheet: 0 16px 48px rgb(0 0 0 / 0.18);
   /* What dims the page and its bar behind a sheet. */
@@ -148,6 +150,8 @@
   --detail-width: 1180px;
   --detail-aside: 340px;
   --peek-offset: calc(var(--space-unit) * 40);
+  /* On a phone a peek rises from the bottom, the page it was opened from still showing above it. */
+  --peek-top-phone: 22vh;
   /* The bar's height, which a peek starts under, and a peek's own head row. */
   --bar-height: calc(var(--control-height) + var(--space-12));
   --peek-head: calc(var(--control-height) + var(--space-10));

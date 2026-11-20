@@ -1,15 +1,13 @@
 import type { ReactNode } from "react";
-import { Mark } from "./Badge.tsx";
 
-/** The one bar over every page: the name and the pages, then what waits, then the actions at its end. */
-export function AppBar({ nav, status, actions }: { nav: ReactNode; status?: ReactNode; actions: ReactNode }) {
+/** The one bar over every page: the name and the pages, then the actions at its end. */
+export function AppBar({ nav, actions }: { nav: ReactNode; actions: ReactNode }) {
   return (
     <header className="ui-bar">
       <div className="ui-bar-inner">
         <nav aria-label="Main" className="ui-bar-nav">
           {nav}
         </nav>
-        {status}
         <span className="ui-bar-actions">{actions}</span>
       </div>
     </header>
@@ -51,47 +49,6 @@ export function BarLink({
     >
       {children}
       {count === undefined || count === 0 ? null : <span className="ui-bar-count">{count}</span>}
-    </a>
-  );
-}
-
-/** What waits on the developer, announced as one region: each a number in ink and quieter words. */
-export function Counts({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <span className="ui-counts" role="status" aria-label={label}>
-      {children}
-    </span>
-  );
-}
-
-/** One count, opening the first item it counts; urgent goes first, marked with the triangle Status marks it with. */
-export function Count({
-  n,
-  label,
-  href,
-  urgent = false,
-  onGo,
-}: {
-  n: number;
-  label: string;
-  href: string;
-  urgent?: boolean;
-  onGo(href: string): void;
-}) {
-  return (
-    <a
-      className="ui-count"
-      data-urgent={urgent ? "true" : undefined}
-      href={href}
-      onClick={(event) => {
-        if (event.metaKey || event.ctrlKey) return;
-        event.preventDefault();
-        onGo(href);
-      }}
-    >
-      {urgent ? <Mark tone="warn" icon="alert" /> : null}
-      <b>{n}</b>
-      {label}
     </a>
   );
 }

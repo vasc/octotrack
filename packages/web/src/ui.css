@@ -1587,33 +1587,6 @@
   margin-left: auto;
 }
 
-/* What waits on the developer: numbers in ink, words quieter; urgent first, marked with the triangle. */
-.ui-counts {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--space-2) var(--space-8);
-  font-size: var(--text-sm);
-}
-
-.ui-count {
-  color: var(--ink-3);
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.ui-count b {
-  margin-right: var(--space-2);
-  font-weight: var(--weight-medium);
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
-
-.ui-count:hover {
-  color: var(--ink);
-}
-
-
 /* A theme naming itself in its own colours: its ground and its colour for what needs you. */
 .ui-swatch {
   display: inline-flex;
@@ -1746,10 +1719,6 @@
     padding: var(--space-8) var(--space-4) var(--space-32);
   }
 
-  .ui-side {
-    top: 0;
-  }
-
   .ui-panel-head {
     padding: 0 var(--space-4) 0 var(--space-8);
   }
@@ -1778,21 +1747,25 @@
   }
 
   .ui-bar-inner {
-    flex-wrap: wrap;
-    gap: var(--space-4);
-    padding: var(--space-3) var(--space-4) var(--space-3) var(--space-8);
+    gap: var(--space-2);
+    padding: 0 var(--space-4) 0 var(--space-6);
   }
 
-  /* On a phone the bar is the name and the actions, with what waits on its own line under them. */
-  .ui-bar-link:not([data-brand="true"]) {
+  /* On a phone the name gives way to the pages: Lines and For you keep their words. */
+  .ui-bar-link[data-brand="true"] {
     display: none;
   }
 
-  .ui-counts {
-    order: 3;
-    flex-basis: 100%;
-    gap: var(--space-1) var(--space-6);
-    padding-bottom: var(--space-2);
+  /* A peek on a phone rises from the bottom over the dimmed page, which shows above it. */
+  .ui-side {
+    top: var(--peek-top-phone);
+    border-left: 0;
+    border-radius: var(--radius-card) var(--radius-card) var(--radius-none) var(--radius-none);
+    box-shadow: var(--shadow-scrim);
+  }
+
+  .ui-side[data-stacked="true"] {
+    box-shadow: var(--shadow-scrim);
   }
 
   /* On a phone a table's headings step away and each row wraps: its lead and what acts on it, its main cell, its facts. */
@@ -1875,9 +1848,8 @@
     width: var(--touch-target);
   }
 
-  /* The bar's pages and counts are a finger's height, centred on their words. */
-  .ui-bar-link,
-  .ui-count {
+  /* The bar's pages are a finger's height, centred on their words. */
+  .ui-bar-link {
     display: inline-flex;
     align-items: center;
     min-height: var(--touch-target);
@@ -2674,4 +2646,54 @@
 
 .ui-waits:hover {
   box-shadow: var(--shadow-tile);
+}
+
+/* For you and its peeks on a phone, after the rules they change. */
+@media (max-width: 720px) {
+  /* For you on a phone: the open item takes the width, under the rail as a row of views; Next steps away. */
+  .ui-triage {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-8);
+    padding: var(--space-8) var(--space-6) var(--space-32);
+  }
+
+  .ui-triage-next {
+    display: none;
+  }
+
+  .ui-triage[data-folded="true"] {
+    padding-left: var(--space-6);
+  }
+
+  .ui-filter-rail {
+    flex-direction: row;
+    gap: var(--space-2);
+    margin-inline: calc(-1 * var(--space-6));
+    padding-inline: var(--space-6);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .ui-filter-rail-label {
+    display: none;
+  }
+
+  .ui-filter-rail-link {
+    flex: none;
+    gap: var(--space-4);
+  }
+
+  .ui-filter-rail-link[data-empty="true"]:not([aria-current="page"]) {
+    display: none;
+  }
+
+  .ui-card,
+  .ui-cleared {
+    padding: var(--space-10) var(--space-8);
+  }
+
+  .ui-card .ui-item-title,
+  .ui-cleared-title {
+    font-size: var(--text-title);
+  }
 }

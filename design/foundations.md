@@ -165,6 +165,7 @@ Only what floats over content gets a shadow. Everything else is separated by a l
 | `--shadow-card`        | The open item's card on For you, lifted a little from the page                      |
 | `--shadow-tile`        | A tile's edge: the page you are on in the bar, the view you are in, an item in Next |
 | `--shadow-tile-hover`  | That edge under the pointer, a step darker                                          |
+| `--shadow-scrim`       | What dims everything around a peek on a phone                                       |
 | `--shadow-stack`       | A peek opened from another: the one under it, an edge to its left                   |
 | `--shadow-sheet`       | A sheet lifted over the page and its bar                                            |
 | `--scrim`              | What dims the page and its bar behind a sheet                                       |
@@ -195,6 +196,7 @@ E · One list boards draw it.
 | `--rail-column`       | For you's rail of views                                                                            |
 | `--detail-width`      | A line on a page of its own, at most                                                               |
 | `--detail-aside`      | The column beside its plan: what is for you there, its summary, what happened                      |
+| `--peek-top-phone`    | Where a peek starts on a phone: the page it was opened from still shows above it                   |
 | `--bar-height`        | The bar's height, which a peek starts under                                                        |
 | `--peek-head`         | A peek's head row: the way back, where it sits, its own page, Close                                |
 | `--card-width`        | For you's open item at most                                                                        |

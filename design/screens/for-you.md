@@ -8,7 +8,7 @@ question), `T-Task.dc.html`, `T-Accept.dc.html` (an urgent proposal), `T-StepIn.
 ### components/foryou/ForYouPage.tsx
 
 - Designed in: triage/Main.dc.html, T-Task, T-Accept, T-StepIn, T-OwnWords, T-Undo, T-Done, T-Peek-Line
-- What it shows: the rail of views on the left, the one entry open in the middle, Next on the right; a peek folds the rail and Next and moves the card left.
+- What it shows: the rail of views on the left, the one entry open in the middle, Next on the right; a peek folds the rail and Next and moves the card left. On a phone (triage/T-Task-Phone, T-Peek-Phone) the views are a row that scrolls sideways over the card, Next steps away, and a peek rises from the bottom over the dimmed page.
 - Changes from today: new. It replaces the bar's counts, which jumped between items on Lines; Later sends an item to the bottom of the list.
 - Loading: "Loading what waits on you" in the middle, the rail's counts at zero.
 - Error: the tracker not answering on first load: the notice with Try now, as Lines has it.
