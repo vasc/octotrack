@@ -1,6 +1,6 @@
 import type { HomeView } from "@octotrack/core/schemas";
-import { useMemo, useState } from "react";
-import { lineFocusRef } from "../lib/focus.ts";
+import { useEffect, useMemo, useState } from "react";
+import { focusItem, lineFocusRef } from "../lib/focus.ts";
 import { navigate, openEntity } from "../lib/router.ts";
 import type { HotkeyMap } from "./useHotkeys.ts";
 
@@ -39,5 +39,14 @@ export function useLinesKeys(options: {
           };
     return { j: step(true), k: step(false), ...onLine };
   }, [home, inspecting, line, move]);
+  // The browser's focus and scroll go with the keys' to the line, so it is in view and a screen reader follows; both are
+  // the browser's, outside React.
+  useEffect(() => {
+    if (line === null) return;
+    const element = focusItem(document, lineFocusRef(line));
+    if (element === undefined) return;
+    element.focus({ preventScroll: true });
+    if (typeof element.scrollIntoView === "function") element.scrollIntoView({ block: "nearest" });
+  }, [line]);
   return { keys, focus: line === null ? null : lineFocusRef(line) };
 }

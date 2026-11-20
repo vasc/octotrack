@@ -1475,6 +1475,8 @@ describe("lines of work", () => {
       const first = await view.findByRole("article", { name: "Sendspin enclosure" });
       fireEvent.keyDown(window, { key: "j" });
       await waitFor(() => expect(focusOf(first)).toBe("true"));
+      // The browser's focus goes to the line too, so a screen reader follows and it is brought into view.
+      expect(document.activeElement).toBe(first);
       fireEvent.keyDown(window, { key: "ArrowDown", altKey: true });
       await waitFor(() =>
         expect(server.tracker.call(c.homeShow, {}, asDeveloper).working.map((line) => line.ref)).toEqual([
@@ -2438,7 +2440,7 @@ describe("lines of work", () => {
     fireEvent.click(await view.findByRole("link", { name: "Lines" }));
     await view.findByRole("region", { name: "Working on" });
     fireEvent.click(view.getByRole("button", { name: "More" }));
-    fireEvent.click(view.getByRole("menuitem", { name: "Log" }));
+    fireEvent.click(view.getByRole("menuitem", { name: /^Log/ }));
     await view.findByRole("heading", { name: "Log" });
   });
 

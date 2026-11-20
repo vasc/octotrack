@@ -60,6 +60,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       <TopBar
         path={path}
         waiting={bar.waiting}
+        logNote={bar.logNote}
+        agentsNote={bar.agentsNote}
         onNewLine={() => setParams({ new: "1" })}
         onKeys={openKeys}
         appearance={look.appearance}

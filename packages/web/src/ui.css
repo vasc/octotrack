@@ -2286,6 +2286,11 @@
   scroll-margin: var(--space-32);
 }
 
+/* The open item takes focus so Tab starts in it; its accent edge already shows which it is. */
+.ui-card:focus {
+  outline: none;
+}
+
 .ui-card .ui-item {
   gap: var(--space-14);
 }

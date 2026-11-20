@@ -1,6 +1,7 @@
 import type { Drift, Line } from "@octotrack/core/schemas";
 import { useBackTo } from "../../hooks/useBackTo.ts";
 import { useLineView } from "../../hooks/useLineView.ts";
+import { useRoute } from "../../lib/router.ts";
 import { failureText } from "../../lib/failure.ts";
 import { LinePrs } from "../lines/LinePrs.tsx";
 import { Loaded, StaleNote } from "../ui/Loaded.tsx";
@@ -37,6 +38,8 @@ export function LinePanelItem({
   onRetry?: () => void;
 }) {
   const view = useLineView(line);
+  // Peeked at from For you: the item open there.
+  const { params } = useRoute();
   const { h, home, shown, unmarked } = view;
   // Opened from another peek: Back returns there.
   const back = useBackTo();
@@ -62,7 +65,13 @@ export function LinePanelItem({
           Could not mark {line.ref} seen. {failureText(unmarked).text}
         </Note>
       )}
-      <PanelForYou title={line.title} items={view.forYou} h={h} status={homeStatus("what needs you")} />
+      <PanelForYou
+        title={line.title}
+        items={view.forYou}
+        h={h}
+        status={homeStatus("what needs you")}
+        except={params.get("item")}
+      />
       {/* Loading and failing show once, with the plan, which comes in the same answer. */}
       {shown.data === undefined || shown.data.prs.length === 0 ? null : (
         <Section title="Pull requests" count={shown.data.prs.length}>

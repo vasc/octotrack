@@ -218,10 +218,11 @@ describe("the dashboard uses the language instead of going around it", () => {
     const ringless = [
       ...stylesCss.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/([^{}]+)\{([^{}]*outline:\s*none[^{}]*)\}/g),
     ].map((match) => (match[1] ?? "").trim());
-    // A row's or an item's tint, a menu item's tint, and a box's border already show focus; the panel takes focus only
-    // so the keys and a screen reader start in it, and its own edge shows where it is.
+    // A row's or an item's tint, a menu item's tint, and a box's border already show focus; the panel and For you's open
+    // card take focus only so the keys and a screen reader start in them, and their own edges show where they are.
     expect(ringless.sort()).toEqual(
       [
+        ".ui-card:focus",
         ".ui-field :is(input, textarea):focus",
         ".ui-menu-item:focus-visible",
         ".ui-row:focus,\n.ui-focusable:focus",

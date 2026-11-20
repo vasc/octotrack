@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { useChoices } from "../../hooks/useChoices.ts";
+import { useClearedToday } from "../../hooks/useClearedToday.ts";
 import { useForYou } from "../../hooks/useForYou.ts";
 import { useForYouKeys } from "../../hooks/useForYouKeys.ts";
 import { useHome } from "../../hooks/useHome.ts";
 import { useHotkeys } from "../../hooks/useHotkeys.ts";
 import { FILTERS, type Filter, forYouPath, nextFilter } from "../../lib/forYou.ts";
-import { nextAsk, runningAgents } from "../../lib/lines.ts";
+import { nextAsk, workingOn } from "../../lib/lines.ts";
 import { navigate, peekEntity, useRoute } from "../../lib/router.ts";
 import { RecordAnswers } from "../home/RecordAnswers.tsx";
 import { StartSheet } from "../home/StartSheet.tsx";
@@ -65,6 +66,8 @@ export function ForYouPage({ filter }: { filter: Filter }) {
   }, [home, open]);
   const startingLine = home?.proposed.find((line) => line.ref === starting);
   const then = nextFilter(counts, filter);
+  // Asked only once everything is clear, when it is said.
+  const cleared = useClearedToday(open === null && filter === "all");
   return (
     <>
       {recording ? <RecordAnswers onClose={() => setRecording(false)} /> : null}
@@ -78,7 +81,8 @@ export function ForYouPage({ filter }: { filter: Filter }) {
         ) : open === null ? (
           <ForYouEmpty
             filter={filter}
-            working={runningAgents(home)}
+            working={workingOn(home)}
+            cleared={cleared}
             nextAsk={nextAsk(home)}
             then={
               then === null

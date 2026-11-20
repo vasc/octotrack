@@ -97,7 +97,8 @@ export function ForYouGallery() {
       <Example label="Nothing waits on you">
         <ForYouEmpty
           filter="all"
-          working={1}
+          working={[{ agent: "panel-widgets", line: "Sendspin enclosure" }]}
+          cleared={{ questions: 3, tasks: 2, lines: 1 }}
           nextAsk={{ title: "One plan, one meal", step: "step 2" }}
           then={null}
         />
@@ -105,7 +106,7 @@ export function ForYouGallery() {
       <Example label="A view with nothing in it">
         <ForYouEmpty
           filter="toAnswer"
-          working={1}
+          working={[]}
           nextAsk={null}
           then={{ filter: "toDo", label: "To do", count: 4 }}
         />

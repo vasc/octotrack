@@ -8,6 +8,10 @@ import { AppearanceChoices } from "./AppearanceMenu.tsx";
 
 interface MoreMenuProps {
   onGo(to: string): void;
+  /** How much is unseen in the Log, in a few words, or nothing. */
+  logNote?: string | null;
+  /** How many agents are working, in a few words, or nothing. */
+  agentsNote?: string | null;
   onKeys(): void;
   appearance: Appearance;
   onPalette(palette: Palette): void;
@@ -33,6 +37,8 @@ function MoreChoices({
   appearance,
   onPalette,
   onMode,
+  logNote = null,
+  agentsNote = null,
 }: MoreMenuProps & { close(): void }) {
   // Which of the two the open menu shows is this menu's own; it starts over each time the menu opens.
   const [showing, setShowing] = useState<"more" | "appearance">("more");
@@ -54,8 +60,12 @@ function MoreChoices({
   };
   return (
     <>
-      <MenuAction onSelect={go("/log")}>Log</MenuAction>
-      <MenuAction onSelect={go("/agents")}>Agents</MenuAction>
+      <MenuAction onSelect={go("/log")} {...(logNote === null ? {} : { trailing: logNote })}>
+        Log
+      </MenuAction>
+      <MenuAction onSelect={go("/agents")} {...(agentsNote === null ? {} : { trailing: agentsNote })}>
+        Agents
+      </MenuAction>
       <MenuAction onSelect={() => setShowing("appearance")} trailing={theme}>
         Appearance
       </MenuAction>

@@ -590,6 +590,24 @@ describe("TopBar", () => {
     bar("/lines", null).getByRole("link", { name: "For you" });
   });
 
+  test("More says how much is unseen in the Log and how many agents are working, beside each", () => {
+    const view = render(
+      <MoreMenu
+        onGo={() => {}}
+        onKeys={() => {}}
+        appearance={{ palette: "paper", mode: "system" }}
+        onPalette={() => {}}
+        onMode={() => {}}
+        logNote="3 unseen"
+        agentsNote="1 working"
+      />,
+    );
+    fireEvent.click(view.getByRole("button", { name: "More" }));
+    const menu = within(view.getByRole("menu", { name: "More" }));
+    expect(menu.getByRole("menuitem", { name: /^Log/ }).textContent).toBe("Log3 unseen");
+    expect(menu.getByRole("menuitem", { name: /^Agents/ }).textContent).toBe("Agents1 working");
+  });
+
   test("More holds the Log, Agents, the appearance with its themes one step in, and the keys", () => {
     const go = mock((_to: string) => {});
     const onKeys = mock(() => {});

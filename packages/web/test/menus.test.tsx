@@ -64,6 +64,6 @@ describe("MoreMenu", () => {
       />,
     );
     fireEvent.click(appearanceIn(view).getByRole("menuitem", { name: "More" }));
-    view.getByRole("menuitem", { name: "Log" });
+    view.getByRole("menuitem", { name: /^Log/ });
   });
 });

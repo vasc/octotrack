@@ -8,27 +8,34 @@ import { List } from "../ui/List.tsx";
 import { Section } from "../ui/Section.tsx";
 
 /**
- * What the line needs from the developer, in the panel: one row each, opened in its place on a press. While Lines loads, or if it failed, the section stays, saying so.
+ * What the line needs from the developer, in its peek: one row each, opened in its place on a press. Peeked at from
+ * For you, the item already open there is left out, and the rest are what else is for you here. While Lines loads, or
+ * if it failed, the section stays, saying so.
  */
 export function PanelForYou({
   title,
-  items,
+  items: all,
   h,
   status,
+  except = null,
 }: {
   title: string;
   items: readonly ForYou[];
   h: HomeActions;
   /** Lines is loading or failed: said under the heading in place of the items. */
   status?: ReactNode;
+  /** The item open on For you, beside the peek: left out here. */
+  except?: string | null;
 }) {
+  const items = all.filter((item) => refOf(item) !== except);
+  const heading = items.length === all.length ? "For you" : "Also for you here";
   const [open, setOpen] = useState<string | null>(null);
   // Each starts as a row, as drawn; a press opens it in its place.
   const focused = items.some((item) => refOf(item) === open) ? open : null;
   if (status !== undefined) return <Section title="For you">{status}</Section>;
   if (items.length === 0) return null;
   return (
-    <Section title="For you" count={items.length}>
+    <Section title={heading} count={items.length}>
       <List>
         {items.map((item) => {
           const ref = refOf(item);

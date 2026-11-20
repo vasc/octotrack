@@ -16,6 +16,7 @@ export function ForYouItem({
   onDoneWhen,
   onPostponed,
   onAnswered,
+  lineNamed = false,
 }: {
   item: ForYou;
   /** The line's title, for proposals about the line itself. */
@@ -30,6 +31,8 @@ export function ForYouItem({
   onPostponed?: (ref: string) => void;
   /** A question answered: the page may move on while the answer waits with Undo. */
   onAnswered?: (ref: string) => void;
+  /** Its line is named just above it, so a question does not name it again. */
+  lineNamed?: boolean;
 }) {
   switch (item.kind) {
     case "question":
@@ -40,6 +43,7 @@ export function ForYouItem({
           armed={armed}
           {...(onPostponed === undefined ? {} : { onPostponed })}
           {...(onAnswered === undefined ? {} : { onAnswered })}
+          placed={!lineNamed}
         />
       );
     case "task":

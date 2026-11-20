@@ -149,6 +149,8 @@ describe("For you", () => {
     fireEvent.keyDown(window, { key: "j" });
     await opened(view, "Which day?");
     expect(new URLSearchParams(window.location.search).get("item")).toBe("D-2");
+    // The browser's focus goes with it, so Tab starts in it and a screen reader follows.
+    await waitFor(() => expect(document.activeElement).toBe(card(view)));
     view.getByText("2 of 2 open");
     fireEvent.keyDown(window, { key: "k" });
     await opened(view, "Which board?");
@@ -248,6 +250,21 @@ describe("For you", () => {
     within(card(view)).getByRole("button", { name: "Up next, recommended" });
   });
 
+  test("cleared, it names who is working on what, and what you cleared today, with the way to see it", async () => {
+    twoLines();
+    ask("Which board?", "octo.1");
+    const view = renderApp(<App />);
+    await opened(view, "Which board?");
+    fireEvent.keyDown(window, { key: "1" });
+    await answerNow(view);
+    await view.findByRole("heading", { name: "Nothing waits on you" });
+    await view.findByText(
+      /2 agents are working: octo\.1 on Sendspin enclosure, digest\.1 on Weekly digest\./,
+    );
+    await view.findByText("You cleared today: 1 question answered.");
+    expect(view.getByRole("link", { name: "See them" }).getAttribute("href")).toMatch(/^\/log\?q=/);
+  });
+
   test("with nothing waiting, it says so, who is at work, and leads to Lines", async () => {
     const view = renderApp(<App />);
     await view.findByRole("heading", { name: "Nothing waits on you" });
@@ -289,6 +306,10 @@ describe("For you", () => {
     fireEvent.click(line);
     const peek = within(await view.findByRole("complementary", { name: "L-1" }));
     await peek.findByRole("heading", { name: "Sendspin enclosure", level: 1 });
+    // What else waits on the line is listed, not the one already open on the card.
+    const also = within(await peek.findByRole("region", { name: "Also for you here" }));
+    also.getByRole("button", { name: "Open D-2" });
+    expect(also.queryByRole("button", { name: "Open D-1" })).toBeNull();
     // The card stays, open on the same question, its line marked as the one peeked at.
     await opened(view, "Which board?");
     expect(
@@ -301,6 +322,25 @@ describe("For you", () => {
     await view.findByRole("complementary", { name: "L-1" });
     fireEvent.keyDown(window, { key: "Escape" });
     await gone(() => view.queryByRole("complementary", { name: "L-1" }));
+  });
+
+  test("an urgent question's card names its line once", async () => {
+    twoLines();
+    server.act(
+      c.decisionAsk,
+      {
+        title: "Order now?",
+        context: "Stock.",
+        options,
+        recommendation: "a",
+        why: "It sells out.",
+        urgent: "costs_money",
+      },
+      "octo.1",
+    );
+    const view = renderApp(<App />);
+    await opened(view, "Order now?");
+    expect(within(card(view)).getAllByText(/Sendspin enclosure/)).toHaveLength(1);
   });
 
   test("an address under For you that is no view leads nowhere, and Go to Lines goes to Lines", async () => {

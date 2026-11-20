@@ -6,7 +6,7 @@ import { PeekLink } from "../ui/PeekLink.tsx";
 
 /**
  * The one entry open on For you, in place in its list: the line it is on, which peeks in place, and where that line
- * stands; then the entry itself. Opened, it comes into view, as the browser's scroll is outside React.
+ * stands; then the entry itself. Opened, it comes into view and takes the focus, both the browser's, outside React.
  */
 export function ForYouCard({
   entry,
@@ -26,8 +26,13 @@ export function ForYouCard({
   const card = useRef<HTMLElement>(null);
   useEffect(() => {
     const element = card.current;
-    if (element !== null && typeof element.scrollIntoView === "function")
-      element.scrollIntoView({ block: "nearest" });
+    if (element === null) return;
+    // Focus goes to it unless it is somewhere of its own, such as a box being typed in: the one open before is gone with
+    // its controls, and the keys moved here, so a screen reader follows and Tab starts in it.
+    const active = document.activeElement;
+    if (active === null || active === document.body || !active.isConnected)
+      element.focus({ preventScroll: true });
+    if (typeof element.scrollIntoView === "function") element.scrollIntoView({ block: "nearest" });
   }, []);
   const line = entry.line;
   return (

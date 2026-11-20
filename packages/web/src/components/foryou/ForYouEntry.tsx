@@ -90,6 +90,7 @@ export function ForYouEntry({
           onDoneWhen={moving(h.doneWhen)}
           onPostponed={onMoveOn}
           onAnswered={onMoveOn}
+          lineNamed={line !== null}
         />
       );
       // A question numbers its own answers; anything else is pressed by number through its focus ref.

@@ -19,6 +19,7 @@ export function DecisionCardItem({
   onPostponed,
   onAnswered,
   titled = true,
+  placed = true,
 }: {
   card: DecisionCard;
   /** Its title is drawn; not where a panel's head already carries it. */
@@ -28,6 +29,8 @@ export function DecisionCardItem({
   onPostponed?: (ref: string) => void;
   /** Answered: the page may move on while the answer waits with Undo. */
   onAnswered?: (ref: string) => void;
+  /** An urgent one names its line, which stands apart from it; not where the line is named just above it. */
+  placed?: boolean;
 }) {
   const form = useDecisionForm(card.decision, onPostponed, onAnswered);
   const { answer, postpone, ownWords, openOwn } = form;
@@ -40,7 +43,8 @@ export function DecisionCardItem({
     return { ...Object.fromEntries(numbered), w: openOwn, l: postpone };
   }, [active, armed, ownWords, form.waiting, card.decision.options, answer, postpone, openOwn]);
   useHotkeys(keys);
-  const line = useLinePlace(card.decision.line);
+  const place = useLinePlace(card.decision.line);
+  const line = placed ? place : null;
   const now = useClock(form.waiting !== null);
   return <DecisionCardView card={card} form={form} line={line} now={now} titled={titled} />;
 }

@@ -223,3 +223,11 @@ export function waitsText(forYou: readonly ForYou[]): string | null {
   if (forYou.every((item) => item.kind === "task")) return `${n} task${n === 1 ? "" : "s"} for you`;
   return `${n} for you`;
 }
+
+/** The agents running now, each with the line it owns, in the order of lines: who is working on what. */
+export function workingOn(home: HomeView): { agent: string; line: string }[] {
+  return home.working.flatMap((line) => {
+    const owner = home.crews[line.ref]?.owner;
+    return owner != null && owner.state === "running" ? [{ agent: owner.name, line: line.title }] : [];
+  });
+}
