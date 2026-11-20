@@ -287,7 +287,11 @@ describe("a wake that runs past its deadline (fourth audit, A1)", () => {
     await dispatcher.dispatch();
     expect(stopsDuringRun).toEqual([{ name: "panel", woken: true }]);
     const agent = tracker.call(c.agentList, {}, dev).find((item) => item.name === "panel");
-    expect([agent?.state, agent?.line, agent?.wakeError]).toEqual(["asleep", line.ref, null]);
+    expect([agent?.state, agent?.lines[0]?.line ?? null, agent?.wakeError]).toEqual([
+      "asleep",
+      line.ref,
+      null,
+    ]);
     const events = tracker.call(c.feedList, { query: "event:agent.wake_ended,agent.gone" }, dev).events;
     expect(events.map((event) => event.type)).toEqual(["agent.wake_ended"]);
   });

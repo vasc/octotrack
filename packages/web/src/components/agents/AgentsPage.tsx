@@ -55,11 +55,15 @@ export function AgentsPage() {
                 key={agent.name}
                 busy={choices.waiting(`agent:${agent.name}`)}
                 agent={agent}
-                waitsOnYou={lineWaitsOnYou(facts, agent.line)}
+                waitsOnYou={agent.lines.some((claim) => lineWaitsOnYou(facts, claim.line))}
                 onStop={(name) => choices.make(contracts.agentStop.name, { name }, `Stopping ${name}`)}
                 onLift={(name) => choices.make(contracts.agentLift.name, { name }, `Lifting ${name}'s stop`)}
                 onRelease={(name) =>
-                  choices.make(contracts.agentRelease.name, { name }, `Releasing ${name} from its line`)
+                  choices.make(
+                    contracts.agentRelease.name,
+                    { name },
+                    `Releasing ${name} from ${agent.lines.length === 1 ? "its line" : "its lines"}`,
+                  )
                 }
               />
             )}

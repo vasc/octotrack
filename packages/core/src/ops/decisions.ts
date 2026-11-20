@@ -25,7 +25,7 @@ import { toWatch } from "../watch/engine.ts";
 import { z } from "zod";
 import { holdsWork } from "../agents/claims.ts";
 import { DEVELOPER } from "../agents/state.ts";
-import { addNotice, claimOf } from "../store/agents.ts";
+import { addNotice, onlyLineOf } from "../store/agents.ts";
 import { addToInbox } from "../store/inbox.ts";
 import { bind } from "./bind.ts";
 import { requireServer } from "./developer.ts";
@@ -76,7 +76,7 @@ function placeQuestion(ctx: Ctx, input: InsertDecision): { line: Line | null; is
   const named = input.issue === undefined || input.issue === null ? null : requireIssue(ctx, input.issue);
   // A question about an issue on a line belongs to that line, whoever asks it.
   const lineRef =
-    input.line ?? named?.line ?? (ctx.developer ? null : (claimOf(ctx, ctx.actor)?.line ?? null));
+    input.line ?? named?.line ?? (ctx.developer ? null : onlyLineOf(ctx, ctx.actor, "the question is on"));
   const line = lineRef === null || lineRef === undefined ? null : requireLine(ctx, lineRef);
   if (named !== null) {
     if (line !== null && named.line !== line.ref) {

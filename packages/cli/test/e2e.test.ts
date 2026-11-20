@@ -632,6 +632,30 @@ describe("what the audit found", () => {
     expect(heard.stdout).toContain("Which account?");
   });
 
+  test("an agent takes a second line and keeps the first, then leaves one by its ref", async () => {
+    await octo(["project", "create", "TWO", "Two lines", "--me"], "");
+    const add = (title: string) =>
+      data(
+        WithRef,
+        ["line", "add", title, "--done-when", "Done", "-r", "TWO", "--where", "working", "--me"],
+        "",
+      );
+    const first = await add("Enclosure");
+    const second = await add("Wall mount");
+    await octo(["agent", "register", "--repo", "TWO"], "two-lines");
+    await octo(["line", "take", first.ref], "two-lines");
+    await octo(["line", "take", second.ref], "two-lines");
+    const Listed = z.array(z.object({ name: z.string(), lines: z.array(z.object({ line: z.string() })) }));
+    const on = async () =>
+      (await data(Listed, ["agent", "list"], "two-lines"))
+        .find((agent) => agent.name === "two-lines")
+        ?.lines.map((claim) => claim.line);
+    expect(await on()).toEqual([first.ref, second.ref]);
+    expect((await octo(["line", "release"], "two-lines")).code).not.toBe(0);
+    await octo(["line", "release", first.ref], "two-lines");
+    expect(await on()).toEqual([second.ref]);
+  });
+
   test("--timeout 0 checks once and answers honestly", async () => {
     const decision = await data(WithRef, ["decision", "ask", "Zero timeout"]);
     const open = await octo(["watch", "--until", `ref:${decision.ref} status:decided`, "--timeout", "0"]);

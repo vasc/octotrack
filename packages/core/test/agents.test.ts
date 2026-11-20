@@ -185,7 +185,7 @@ describe("taking a line", () => {
     expect(again.message).toContain("break step 1 into issues, mark it done (octo plan step");
   });
 
-  test("taking another line releases the first; when the owner leaves, a helper becomes owner with no search", () => {
+  test("taking another line keeps the first; when the owner leaves one, a helper becomes owner with no search", () => {
     const w = world();
     const top = w.line("Sendspin enclosure", "working");
     const next = w.line("Wall mount", "working");
@@ -195,8 +195,11 @@ describe("taking a line", () => {
     w.as(one, c.lineTake, { ref: top.ref });
     w.as(two, c.lineTake, { ref: top.ref });
     w.as(one, c.lineTake, { ref: next.ref });
+    expect(w.as(w.dev, c.homeShow, {}).crews[top.ref]?.owner?.name).toBe("one");
+    w.as(one, c.lineRelease, { ref: top.ref });
     const crew = w.as(w.dev, c.homeShow, {}).crews[top.ref];
     expect(crew?.owner?.name).toBe("two");
+    expect(w.as(w.dev, c.homeShow, {}).crews[next.ref]?.owner?.name).toBe("one");
     const notices = w.outcome(two, c.agentList.name, {}).notices.map((notice) => notice.kind);
     expect(notices).toContain("promoted");
   });
@@ -330,5 +333,100 @@ describe("dates and deadlines", () => {
     w.later(16);
     w.tracker.sweep();
     expect(w.as(w.dev, c.issueList, { query: "ref:PANEL-1" })[0]?.issue.status).toBe("cancelled");
+  });
+});
+
+describe("an agent on several lines", () => {
+  test("taking another line keeps the first: it holds both, and the roster lists both", () => {
+    const w = world();
+    const panel = w.agent("panel");
+    const enclosure = w.line("Enclosure", "working");
+    const mount = w.line("Wall mount", "working");
+    w.as(panel, c.lineTake, { ref: enclosure.ref });
+    w.as(panel, c.lineTake, { ref: mount.ref });
+    const view = w.as(w.dev, c.agentList, {}).find((agent) => agent.name === "panel");
+    expect(view?.lines).toEqual([
+      { line: enclosure.ref, role: "owner" },
+      { line: mount.ref, role: "owner" },
+    ]);
+    const home = w.as(w.dev, c.homeShow, {});
+    expect(home.crews[enclosure.ref]?.owner?.name).toBe("panel");
+    expect(home.crews[mount.ref]?.owner?.name).toBe("panel");
+  });
+
+  test("a write that names no line goes to its only line, and on several it asks which", () => {
+    const w = world();
+    const panel = w.agent("panel");
+    const enclosure = w.line("Enclosure", "working");
+    const mount = w.line("Wall mount", "working");
+    w.as(panel, c.lineTake, { ref: enclosure.ref });
+    expect(w.as(panel, c.taskFile, { title: "Measure the grip" }).line).toBe(enclosure.ref);
+    w.as(panel, c.lineTake, { ref: mount.ref });
+    const asked = w.refusal(() => w.as(panel, c.decisionAsk, { title: "Which board?" }));
+    expect(asked.message).toContain(enclosure.ref);
+    expect(asked.message).toContain(mount.ref);
+    const question = w.as(panel, c.decisionAsk, {
+      title: "Which board?",
+      context: "The base is printed for the 26 mm board.",
+      options: [
+        { key: "a", label: "26 mm", description: "Print as it is." },
+        { key: "b", label: "30 mm", description: "Remodel first." },
+      ],
+      line: mount.ref,
+    });
+    expect(question.line).toBe(mount.ref);
+    expect(w.as(panel, c.taskFile, { title: "Hang it", line: mount.ref }).line).toBe(mount.ref);
+  });
+
+  test("it leaves one line by ref, keeping the rest; with several, leaving needs a ref", () => {
+    const w = world();
+    const panel = w.agent("panel");
+    const enclosure = w.line("Enclosure", "working");
+    const mount = w.line("Wall mount", "working");
+    w.as(panel, c.lineTake, { ref: enclosure.ref });
+    w.as(panel, c.lineTake, { ref: mount.ref });
+    expect(w.refusal(() => w.as(panel, c.lineRelease, {})).message).toContain(mount.ref);
+    expect(w.as(panel, c.lineRelease, { ref: enclosure.ref }).line).toBe(enclosure.ref);
+    const view = w.as(w.dev, c.agentList, {}).find((agent) => agent.name === "panel");
+    expect(view?.lines).toEqual([{ line: mount.ref, role: "owner" }]);
+    expect(w.as(panel, c.lineRelease, {}).line).toBe(mount.ref);
+  });
+
+  test("an answer on any of its lines reaches it, and Stop ends every claim", () => {
+    const w = world();
+    const panel = w.agent("panel");
+    const enclosure = w.line("Enclosure", "working");
+    const mount = w.line("Wall mount", "working");
+    w.as(panel, c.lineTake, { ref: enclosure.ref });
+    w.as(panel, c.lineTake, { ref: mount.ref });
+    const asked = w.as(panel, c.decisionAsk, {
+      title: "Which screws?",
+      context: "The wall is plasterboard.",
+      options: [
+        { key: "a", label: "Toggles", description: "Hold in plasterboard." },
+        { key: "b", label: "Plugs", description: "Need a stud." },
+      ],
+      line: mount.ref,
+    });
+    w.as({ ...w.dev, developer: true }, c.decisionResolve, { ref: asked.ref, option: "a" });
+    const reply = w.outcome(panel, c.agentList.name, {});
+    expect(reply.notices.some((notice) => notice.body.includes("Toggles"))).toBe(true);
+    w.as({ ...w.dev, developer: true }, c.agentStop, { name: "panel" });
+    const home = w.as(w.dev, c.homeShow, {});
+    expect(home.crews[enclosure.ref]?.owner ?? null).toBeNull();
+    expect(home.crews[mount.ref]?.owner ?? null).toBeNull();
+  });
+
+  test("the developer releases it from one line, or from all", () => {
+    const w = world();
+    const panel = w.agent("panel");
+    const enclosure = w.line("Enclosure", "working");
+    const mount = w.line("Wall mount", "working");
+    w.as(panel, c.lineTake, { ref: enclosure.ref });
+    w.as(panel, c.lineTake, { ref: mount.ref });
+    expect(w.as(w.dev, c.agentRelease, { name: "panel", line: enclosure.ref }).lines).toEqual([
+      { line: mount.ref, role: "owner" },
+    ]);
+    expect(w.as(w.dev, c.agentRelease, { name: "panel" }).lines).toEqual([]);
   });
 });

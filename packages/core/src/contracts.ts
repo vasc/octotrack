@@ -1120,21 +1120,21 @@ export const contracts = {
   ),
   agentRelease: write(
     "agent.release",
-    "End an agent's claim on its line, such as one that went quiet; it may take a line again",
-    z.strictObject({ name: z.string() }),
+    "End an agent's claim on a line, or on every line it is on, such as one that went quiet; it may take lines again",
+    z.strictObject({ name: z.string(), line: z.string().optional() }),
     AgentView,
   ),
   agentLift: write("agent.lift", "Lift an agent's stop", z.strictObject({ name: z.string() }), AgentView),
   lineTake: write(
     "line.take",
-    "Take a line: by ref, or with none the line you should be on. Says what to do next",
+    "Take a line: by ref, which adds it to any lines you are on, or with none the line you should work on next. Says what to do next",
     z.strictObject({ ref: z.string().optional() }),
     TakeResult,
   ),
   lineRelease: write(
     "line.release",
-    "Leave your line. A scoper that leaves a done when and a plan leaves it scoped",
-    Empty,
+    "Leave a line, by ref, or your only line. A scoper that leaves a done when and a plan leaves it scoped",
+    z.strictObject({ ref: z.string().optional() }),
     z.object({ line: z.string().nullable() }),
   ),
   agentNote: write(

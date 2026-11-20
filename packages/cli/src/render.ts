@@ -539,7 +539,9 @@ export function renderAgents(agents: readonly AgentView[]): string {
       bold(agent.name),
       agent.state === "stopped" || agent.state === "gone" ? yellow(agent.state) : agent.state,
       agent.repo ?? dim("no repo"),
-      agent.line === null ? dim("no line") : `${agent.line} ${agent.role ?? ""}`.trim(),
+      agent.lines.length === 0
+        ? dim("no line")
+        : agent.lines.map((claim) => `${claim.line} ${claim.role}`).join(", "),
       dim(`last ${when(agent.lastSeenAt)}`),
       agent.note ?? "",
     ]),

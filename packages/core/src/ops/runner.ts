@@ -1,7 +1,7 @@
 import { z } from "zod";
 import {
   CHECK_IN_MS,
-  endClaim,
+  endClaims,
   NOT_BLOCKED,
   searchOf,
   searchStep,
@@ -13,7 +13,7 @@ import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
 import { StartCause } from "../schemas.ts";
 import type { Line, LineStart, RunnerDue, RunnerStatus, StartRole, StepInKind } from "../schemas.ts";
-import { addNotice, claimOf, claimsOn, getAgent } from "../store/agents.ts";
+import { addNotice, claimsOf, claimsOn, getAgent } from "../store/agents.ts";
 import { emit, nextNumber } from "../store/common.ts";
 import type { Ctx } from "../store/context.ts";
 import { one, placeholders, rows } from "../store/context.ts";
@@ -712,7 +712,7 @@ export const runnerOps = [
     const output = input.output.trim().slice(-OUTPUT_KEPT) || null;
     const ranCommands = agent !== null && agent.lastSeenAt > start.startedAt;
     const took =
-      claimOf(ctx, input.name) !== null ||
+      claimsOf(ctx, input.name).length > 0 ||
       (one(
         ctx,
         CountRow,
@@ -756,7 +756,8 @@ export const runnerOps = [
       "UPDATE runner_starts SET state = ?, output = ?, endedAt = ?, exitedAt = ?, nextTryAt = ?, exitCode = ?, ran = ?, cause = ? WHERE id = ?",
       [state, kept, ctx.now, ctx.now, nextTryAt, input.code, took ? 1 : 0, input.cause ?? null, start.id],
     );
-    const claim = keeps ? claimOf(ctx, input.name) : endClaim(ctx, input.name, "exit");
+    const claims = keeps ? claimsOf(ctx, input.name) : endClaims(ctx, input.name, "exit");
+    const claim = claims.find((held) => held.line === start.line) ?? claims[0] ?? null;
     if (agent !== null && !keeps) {
       ctx.sql.run("UPDATE agents SET goneAt = ? WHERE name = ?", [ctx.now, input.name]);
     }
@@ -936,7 +937,9 @@ export const runnerOps = [
       rows(ctx, StartRow, "SELECT * FROM runner_starts WHERE exitedAt IS NULL").map((start) => start.name),
     );
     return rows(ctx, WorktreeRow, "SELECT * FROM runner_worktrees WHERE removedAt IS NULL ORDER BY createdAt")
-      .filter((tree) => !inUse.has(tree.path) && !live.has(tree.agent) && claimOf(ctx, tree.agent) === null)
+      .filter(
+        (tree) => !inUse.has(tree.path) && !live.has(tree.agent) && claimsOf(ctx, tree.agent).length === 0,
+      )
       .map(({ removedAt: _removed, ...tree }) => tree);
   }),
 

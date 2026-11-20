@@ -4,7 +4,7 @@ import type { Line, LineClaim, LineCrew, Notice } from "../schemas.ts";
 import type { EventTypeName } from "../query/values.ts";
 import { applyPatch, emit } from "../store/common.ts";
 import { HELD_CURRENT_MS } from "./held.ts";
-import { addNotice, briefOf, claimOf, claimsOn, getAgent } from "../store/agents.ts";
+import { addNotice, briefOf, claimOn, claimsOf, claimsOn, getAgent } from "../store/agents.ts";
 import type { Ctx } from "../store/context.ts";
 import { one, rows } from "../store/context.ts";
 import { allLines, requireLine } from "../store/entities.ts";
@@ -24,7 +24,10 @@ const OFFER_STEP_MS = 30_000;
 /** Scoping goes stale: an up-next line needs scoping again after eight weeks. */
 const SCOPING_LASTS_MS = 8 * 7 * 24 * 60 * MINUTE_MS;
 
-/** Why a claim ended. Only an owner that wound down or whose process exited is offered its line first again. */
+/**
+ * Why a claim ended. Only an owner that wound down or whose process exited is offered its line first again. "switch" is
+ * kept for lines whose last owner left that way, from when taking a line ended the one before.
+ */
 export const ClaimEnd = z.enum(["release", "released", "switch", "stop", "gone", "wind_down", "exit"]);
 export type ClaimEnd = z.infer<typeof ClaimEnd>;
 const COMES_BACK_FIRST: ReadonlySet<ClaimEnd> = new Set(["wind_down", "exit"]);
@@ -79,14 +82,22 @@ function hasPlanAndGoal(ctx: Ctx, line: Line): boolean {
   return line.doneWhen.trim() !== "" && (steps?.n ?? 0) > 0;
 }
 
+/** Ends every claim an agent holds, as Stop, a session gone or exited does: the lines it left, longest-held first. */
+export function endClaims(ctx: Ctx, agent: string, why: ClaimEnd): LineClaim[] {
+  return claimsOf(ctx, agent).flatMap((claim) => {
+    const ended = endClaim(ctx, agent, claim.line, why);
+    return ended === null ? [] : [ended];
+  });
+}
+
 /**
- * Ends an agent's claim. An owner leaving a working line hands it to its longest-standing helper with no search, or else
- * the search for an owner starts; a scoper releasing a line with a done when and a plan leaves it scoped.
+ * Ends an agent's claim on one line. An owner leaving a working line hands it to its longest-standing helper with no
+ * search, or else the search for an owner starts; a scoper releasing a line with a done when and a plan leaves it scoped.
  */
-export function endClaim(ctx: Ctx, agent: string, why: ClaimEnd): LineClaim | null {
-  const claim = claimOf(ctx, agent);
+export function endClaim(ctx: Ctx, agent: string, lineRef: string, why: ClaimEnd): LineClaim | null {
+  const claim = claimOn(ctx, agent, lineRef);
   if (claim === null) return null;
-  ctx.sql.run("DELETE FROM line_claims WHERE agent = ?", [agent]);
+  ctx.sql.run("DELETE FROM line_claims WHERE agent = ? AND line = ?", [agent, lineRef]);
   const line = requireLine(ctx, claim.line);
   freeIssues(ctx, agent, line);
   if (claim.role === "owner") {
@@ -96,7 +107,10 @@ export function endClaim(ctx: Ctx, agent: string, why: ClaimEnd): LineClaim | nu
       if (helper === undefined) {
         startSearch(ctx, line, null);
       } else {
-        ctx.sql.run("UPDATE line_claims SET role = 'owner' WHERE agent = ?", [helper.agent]);
+        ctx.sql.run("UPDATE line_claims SET role = 'owner' WHERE agent = ? AND line = ?", [
+          helper.agent,
+          line.ref,
+        ]);
         addNotice(
           ctx,
           helper.agent,
@@ -277,8 +291,8 @@ function firstOfferFor(ctx: Ctx, line: Line): string | null {
   if (!COMES_BACK_FIRST.has(last.lastOwnerEnded)) return null;
   const agent = getAgent(ctx, last.lastOwner);
   if (agent === null || !isReachable(agentState(agent, ctx.now))) return null;
-  const claim = claimOf(ctx, agent.name);
-  return claim === null || claim.role === "scoper" ? agent.name : null;
+  // Idle, or only scoping: one at work owning or helping elsewhere is not offered it first.
+  return claimsOf(ctx, agent.name).every((claim) => claim.role === "scoper") ? agent.name : null;
 }
 
 /**
@@ -297,7 +311,10 @@ function beginWorking(ctx: Ctx, line: Line): void {
   const crew = claimsOn(ctx, line.ref);
   const scoper = crew.find((claim) => claim.role === "scoper");
   if (scoper !== undefined && !crew.some((claim) => claim.role === "owner")) {
-    ctx.sql.run("UPDATE line_claims SET role = 'owner' WHERE agent = ?", [scoper.agent]);
+    ctx.sql.run("UPDATE line_claims SET role = 'owner' WHERE agent = ? AND line = ?", [
+      scoper.agent,
+      line.ref,
+    ]);
     addNotice(
       ctx,
       scoper.agent,
@@ -387,7 +404,7 @@ export function afterAdd(ctx: Ctx, line: Line): void {
 export function settle(ctx: Ctx): void {
   for (const line of allLines(ctx, "WHERE windDownUntil IS NOT NULL AND windDownUntil <= ?", [ctx.now])) {
     if (line.state !== "working" || line.ownedBy !== null) {
-      for (const claim of claimsOn(ctx, line.ref)) endClaim(ctx, claim.agent, "wind_down");
+      for (const claim of claimsOn(ctx, line.ref)) endClaim(ctx, claim.agent, line.ref, "wind_down");
     }
     if (line.state === "done" || line.state === "dropped") closeWithLine(ctx, line);
     else if (line.state !== "working" || line.ownedBy !== null) listHeldPrs(ctx, line);
@@ -517,12 +534,18 @@ export function offersFor(ctx: Ctx, name: string): Notice[] {
   if (agent === null || agent.repo === null) return [];
   const state = agentState(agent, ctx.now);
   if (state === "stopped" || state === "gone") return [];
-  const claim = claimOf(ctx, name);
-  if (claim !== null && claim.role === "owner") return [];
+  const claims = claimsOf(ctx, name);
+  // An owner speaks for its line already; lines needing an owner are offered to idle agents and helpers.
+  if (claims.some((claim) => claim.role === "owner")) return [];
   const repo = agent.repo;
   return allLines(ctx, "WHERE state = 'working'").flatMap((line): Notice[] => {
     const search = searchOf(ctx, line.ref);
-    if (search === null || line.ownedBy !== null || claim?.line === line.ref || !line.repos.includes(repo)) {
+    if (
+      search === null ||
+      line.ownedBy !== null ||
+      claims.some((claim) => claim.line === line.ref) ||
+      !line.repos.includes(repo)
+    ) {
       return [];
     }
     if (searchStep(search, ctx.now) === 1) return [];

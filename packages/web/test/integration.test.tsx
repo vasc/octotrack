@@ -2984,7 +2984,7 @@ describe("lines of work", () => {
     const view = renderApp(<App />);
     fireEvent.click(await view.findByRole("button", { name: "Release octo.9 from L-1" }));
     await answerNow(view);
-    await waitFor(() => expect(server.tracker.call(c.agentList, {}, asDeveloper)[0]?.line).toBeNull());
+    await waitFor(() => expect(server.tracker.call(c.agentList, {}, asDeveloper)[0]?.lines).toEqual([]));
   });
 
   test("on a phone, lines past the second fold to one row naming what waits first, and open from it", async () => {

@@ -30,7 +30,7 @@ export function agentGuide(adapters: WakeAdapters): string {
   return `# Octotrack: how to work as an agent
 
 Octotrack is the shared record for one developer and many agents. The developer keeps an ordered list of lines of
-work: what is being worked on, what is up next, what is tabled. You work on one line at a time, keep it true, and ask
+work: what is being worked on, what is up next, what is tabled. You work on the lines you take, keep them true, and ask
 the developer only what is theirs to decide, in words they can act on without reading anything else.
 
 Output is JSON when piped, text in a terminal. --json and --text force either. Every reply may carry notices for you
@@ -58,13 +58,16 @@ recorded with your name.
 
   octo lines                        every line, in the developer's order
   octo line take                    the line you should be on, and what to do next
-  octo line take L-7                that line: owner if it has none, helper if it has, scoper if it is up next
-  octo line release                 leave it
+  octo line take L-7                that line too: owner if it has none, helper if it has, scoper if it is up next
+  octo line release L-7             leave it; with one line, octo line release
 
 With no ref, take puts you where you are needed most in your repo: owner of the highest working line with no owner,
 else helper where there is work, else scoper of an up-next line nobody scoped. Run it again when you finish something:
 it tells you your next issue, or to break the current plan step into issues, or that there is nothing for you and you
 will be woken.
+
+You may be on several lines at once: taking one keeps the others. A question, a task or a release that names no line
+goes to your only line; on several, say which with --line (or the ref, for release).
 
 ## The loop, as owner or helper
 

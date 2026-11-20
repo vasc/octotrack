@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { endClaim, NOT_BLOCKED, setClaim, windingDown } from "../agents/claims.ts";
+import { endClaim, endClaims, NOT_BLOCKED, setClaim, windingDown } from "../agents/claims.ts";
 import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
 import {
@@ -11,7 +11,7 @@ import {
   type PlanBranch,
   type TakeResult,
 } from "../schemas.ts";
-import { addNotice, claimOf, claimsOn, getAgent, viewOf } from "../store/agents.ts";
+import { addNotice, claimOn, claimsOf, claimsOn, getAgent, onlyLineOf, viewOf } from "../store/agents.ts";
 import { emit } from "../store/common.ts";
 import type { Ctx } from "../store/context.ts";
 import { one, placeholders, rows } from "../store/context.ts";
@@ -161,7 +161,10 @@ function isUnscoped(ctx: Ctx, line: Line): boolean {
   return line.scopedAt === null && !claimsOn(ctx, line.ref).some((claim) => claim.role === "scoper");
 }
 
-/** Where an agent with no line belongs, in the developer's order: owner, then helper where there is work, then scoper. */
+/**
+ * Where an agent belongs next, in the developer's order: owner, then helper where there is work, then scoper; never a
+ * line it is on already or the one it just left.
+ */
 function findLine(
   ctx: Ctx,
   agent: Agent,
@@ -170,8 +173,13 @@ function findLine(
 ): { line: Line; role: ClaimRole } | null {
   const repo = agent.repo;
   if (repo === null) return null;
+  const on = new Set(claimsOf(ctx, agent.name).map((claim) => claim.line));
   const mine = (line: Line) =>
-    line.ref !== exclude && line.ownedBy === null && line.repos.includes(repo) && !windingDown(line, ctx.now);
+    line.ref !== exclude &&
+    !on.has(line.ref) &&
+    line.ownedBy === null &&
+    line.repos.includes(repo) &&
+    !windingDown(line, ctx.now);
   const working = allLines(ctx, "WHERE state = 'working'").filter(mine);
   const unowned = working.find((line) => !hasOwner(ctx, line));
   if (unowned !== undefined) return { line: unowned, role: "owner" };
@@ -184,9 +192,8 @@ function findLine(
   return toScope === undefined ? null : { line: toScope, role: "scoper" };
 }
 
+/** Puts the agent on a line as well as any it is on already. */
 function claimLine(ctx: Ctx, agent: Agent, line: Line, role: ClaimRole): TakeResult {
-  const current = claimOf(ctx, agent.name);
-  if (current !== null && current.line !== line.ref) endClaim(ctx, agent.name, "switch");
   setClaim(ctx, agent.name, line, role);
   // Only what is held waits for it: an old question that reaches the developer already needs nobody's word.
   const stale = staleHeldOn(ctx, line.ref);
@@ -234,7 +241,7 @@ function takeOwnLine(ctx: Ctx, agent: Agent, line: Line, role: ClaimRole): TakeR
   if (role === "helper") {
     const here = result(ctx, line, role, agent);
     if (here.next !== null) return here;
-    endClaim(ctx, agent.name, "release");
+    endClaim(ctx, agent.name, line.ref, "release");
     const elsewhere = findLine(ctx, agent, line.ref, true);
     return elsewhere === null ? nothing(agent) : claimLine(ctx, agent, elsewhere.line, elsewhere.role);
   }
@@ -262,12 +269,13 @@ export const claimOps = [
       reason,
       agent.name,
     ]);
-    const claim = endClaim(ctx, agent.name, "stop");
+    const left = endClaims(ctx, agent.name, "stop");
+    const first = left[0]?.line ?? null;
     addNotice(
       ctx,
       agent.name,
       "stop",
-      claim?.line ?? null,
+      first,
       `${whoDid(ctx)} stopped you${reason === null ? "" : `: ${reason}`}. Every write under your name is refused until it is lifted.`,
       false,
     );
@@ -276,8 +284,8 @@ export const claimOps = [
       kind: "agent",
       ref: agent.name,
       project: agent.repo,
-      line: claim?.line ?? null,
-      summary: `${agent.name} stopped${reason === null ? "" : `: ${reason}`}`,
+      line: first,
+      summary: `${agent.name} stopped${reason === null ? "" : `: ${reason}`}${left.length > 1 ? `, leaving ${left.map((claim) => claim.line).join(", ")}` : ""}`,
       attrs: { channel: ctx.channel, ...(ctx.said === null ? {} : { said: ctx.said }) },
     });
     return viewOf(ctx, requireAgent(ctx, agent.name));
@@ -285,8 +293,13 @@ export const claimOps = [
 
   bind(contracts.agentRelease, (ctx, input) => {
     const agent = requireAgent(ctx, input.name);
-    const claim = endClaim(ctx, agent.name, "released");
-    if (claim !== null) {
+    const left =
+      input.line === undefined
+        ? endClaims(ctx, agent.name, "released")
+        : [endClaim(ctx, agent.name, requireLine(ctx, input.line).ref, "released")].flatMap((claim) =>
+            claim === null ? [] : [claim],
+          );
+    for (const claim of left) {
       addNotice(
         ctx,
         agent.name,
@@ -317,19 +330,30 @@ export const claimOps = [
 
   bind(contracts.lineTake, (ctx, input) => {
     const agent = requireSelf(ctx);
-    const current = claimOf(ctx, agent.name);
     if (input.ref === undefined) {
-      if (current !== null) return takeOwnLine(ctx, agent, requireLine(ctx, current.line), current.role);
-      const found = findLine(ctx, agent, null, true);
-      return found === null ? nothing(agent) : claimLine(ctx, agent, found.line, found.role);
+      const claims = claimsOf(ctx, agent.name);
+      if (claims.length === 0) {
+        const found = findLine(ctx, agent, null, true);
+        return found === null ? nothing(agent) : claimLine(ctx, agent, found.line, found.role);
+      }
+      // On several lines: the first, longest-held, with something to do next; else the one taken last.
+      const withWork = claims.find(
+        (claim) => result(ctx, requireLine(ctx, claim.line), claim.role, agent).next !== null,
+      );
+      const current = withWork ?? claims[claims.length - 1];
+      if (current === undefined) return nothing(agent);
+      return takeOwnLine(ctx, agent, requireLine(ctx, current.line), current.role);
     }
     const line = requireLine(ctx, input.ref);
-    if (current !== null && current.line === line.ref) return takeOwnLine(ctx, agent, line, current.role);
+    const current = claimOn(ctx, agent.name, line.ref);
+    if (current !== null) return takeOwnLine(ctx, agent, line, current.role);
     return claimLine(ctx, agent, line, roleOn(ctx, line));
   }),
 
-  bind(contracts.lineRelease, (ctx) => {
+  bind(contracts.lineRelease, (ctx, input) => {
     const agent = requireSelf(ctx);
-    return { line: endClaim(ctx, agent.name, "release")?.line ?? null };
+    const line =
+      input.ref === undefined ? onlyLineOf(ctx, agent.name, "to leave") : requireLine(ctx, input.ref).ref;
+    return { line: line === null ? null : (endClaim(ctx, agent.name, line, "release")?.line ?? null) };
   }),
 ];

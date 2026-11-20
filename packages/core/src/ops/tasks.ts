@@ -6,7 +6,7 @@ import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
 import type { AtView, Decision, HeldItem, Issue, Place } from "../schemas.ts";
 import type { EventTypeName } from "../query/values.ts";
-import { claimOf } from "../store/agents.ts";
+import { onlyLineOf } from "../store/agents.ts";
 import { applyPatch, emit } from "../store/common.ts";
 import type { Ctx } from "../store/context.ts";
 import { one, rows } from "../store/context.ts";
@@ -379,7 +379,7 @@ function requireHeldItem(ctx: Ctx, ref: string): HeldWork {
 
 export const taskOps = [
   bind(contracts.taskFile, (ctx, input) => {
-    const lineRef = input.line ?? (ctx.developer ? null : (claimOf(ctx, ctx.actor)?.line ?? null));
+    const lineRef = input.line ?? (ctx.developer ? null : onlyLineOf(ctx, ctx.actor, "the task is on"));
     if (lineRef === null) {
       throw new OctoError("invalid_input", "A task waits on a line", "Take a line first, or pass --line.");
     }

@@ -284,11 +284,21 @@ export const systemCommands: Command[] = [
   {
     path: ["agent", "release"],
     usage: "<name>",
-    summary: "End an agent's claim on its line, such as one that went quiet",
+    summary: "End an agent's claims, such as one that went quiet: on every line it is on, or the one given",
+    options: { line: { type: "string", description: "Only this line" } },
+    examples: ["octo agent release panel.2 --me", "octo agent release panel.2 --line L-7 --me"],
     ops: [c.agentRelease.name],
     async run({ client, out }, args) {
-      const outcome = await client.call(c.agentRelease, { name: args.requirePositional(0, "name") });
-      out.result(outcome, () => `${r.bold(outcome.data.name)} released; its line looks for an owner.`);
+      const line = args.str("line");
+      const outcome = await client.call(c.agentRelease, {
+        name: args.requirePositional(0, "name"),
+        ...(line === undefined ? {} : { line }),
+      });
+      out.result(
+        outcome,
+        () =>
+          `${r.bold(outcome.data.name)} released${line === undefined ? "" : ` from ${line}`}; a line it owned looks for an owner.`,
+      );
     },
   },
   {

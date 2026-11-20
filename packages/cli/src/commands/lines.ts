@@ -231,10 +231,13 @@ export const lineCommands: Command[] = [
   },
   {
     path: ["line", "release"],
-    summary: "Leave your line",
+    usage: "[REF]",
+    summary: "Leave a line: the one named, or your only line",
+    examples: ["octo line release L-7", "octo line release"],
     ops: [c.lineRelease.name],
-    async run({ client, out }) {
-      const outcome = await client.call(c.lineRelease, {});
+    async run({ client, out }, args) {
+      const ref = args.positionals[0];
+      const outcome = await client.call(c.lineRelease, ref === undefined ? {} : { ref });
       out.result(outcome, () =>
         outcome.data.line === null ? "You were on no line." : `Left ${outcome.data.line}.`,
       );

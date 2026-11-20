@@ -130,10 +130,10 @@ describe("a session Octotrack started that can be woken", () => {
     w.as(session, c.lineTake, { ref: first.ref });
     w.as(w.server, c.runnerExited, { name: "panel.1", code: 0, output: "" });
     const listed = w.as(w.dev, c.agentList, {}).find((agent) => agent.name === "panel.1");
-    expect(listed?.line).toBe(first.ref);
+    expect(listed?.lines[0]?.line ?? null).toBe(first.ref);
     w.later(20);
     const later = w.as(w.dev, c.agentList, {}).find((agent) => agent.name === "panel.1");
-    expect([later?.state, later?.line]).toEqual(["asleep", first.ref]);
+    expect([later?.state, later?.lines[0]?.line ?? null]).toEqual(["asleep", first.ref]);
     const second = w.line("Second");
     w.later(1);
     expect(w.as(w.server, c.runnerDue, {}).map((due) => due.line)).toEqual([second.ref]);
@@ -225,7 +225,7 @@ describe("the developer releasing a quiet agent", () => {
     ).toContain("other released you");
     w.as(quiet, c.lineTake, { ref: line.ref });
     w.as(w.dev, c.agentRelease, { name: "quiet" });
-    expect(w.as(w.dev, c.agentList, {}).find((agent) => agent.name === "quiet")?.line).toBeNull();
+    expect(w.as(w.dev, c.agentList, {}).find((agent) => agent.name === "quiet")?.lines).toEqual([]);
     expect(w.issue(work.ref)?.assignee).toBeNull();
     expect(
       w

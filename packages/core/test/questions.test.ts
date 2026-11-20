@@ -202,7 +202,7 @@ describe("the line inbox", () => {
     });
     expect(w.as(w.dev, c.agentWakes, {})).toEqual([]);
     const listed = w.as(w.dev, c.agentList, {}).find((agent) => agent.name === "panel");
-    expect([listed?.state, listed?.line]).toEqual(["gone", null]);
+    expect([listed?.state, listed?.lines[0]?.line ?? null]).toEqual(["gone", null]);
     const taken = w.tracker.execute(c.lineTake.name, { ref: w.ref }, w.agent("panel.2"));
     expect(taken.notices.map((notice) => notice.kind)).toEqual(["answer"]);
   });

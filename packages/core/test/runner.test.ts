@@ -73,7 +73,11 @@ describe("owner search step 3: a session the start command runs", () => {
     const session: Caller = { actor: "panel.1", channel: "cli", checkout: "/wt/panel.1" };
     w.tracker.call(c.lineTake, { ref: line.ref }, session);
     const agent = w.tracker.call(c.agentList, {}, w.dev).find((item) => item.name === "panel.1");
-    expect([agent?.startedBy, agent?.repo, agent?.line]).toEqual(["octotrack", "PANEL", line.ref]);
+    expect([agent?.startedBy, agent?.repo, agent?.lines[0]?.line ?? null]).toEqual([
+      "octotrack",
+      "PANEL",
+      line.ref,
+    ]);
   });
 
   test("a start that fails at once spends nothing and is retried with the same name, less often each time", () => {
@@ -106,7 +110,7 @@ describe("owner search step 3: a session the start command runs", () => {
     );
     w.tracker.call(c.runnerExited, { name: "panel.1", code: 0, output: "" }, w.runner);
     const agent = w.tracker.call(c.agentList, {}, w.dev).find((item) => item.name === "panel.1");
-    expect([agent?.state, agent?.line]).toEqual(["gone", null]);
+    expect([agent?.state, agent?.lines[0]?.line ?? null]).toEqual(["gone", null]);
   });
 
   test("Try now clears the wait on a failing start", () => {
@@ -684,7 +688,7 @@ describe("what the third audit found in the runner", () => {
     ]);
     expect(w.tracker.call(c.runnerRestarted, { alive: [name] }, w.runner).settled).toBe(0);
     const agent = w.tracker.call(c.agentList, {}, w.dev).find((item) => item.name === name);
-    expect([agent?.state, agent?.line]).toEqual(["running", line.ref]);
+    expect([agent?.state, agent?.lines[0]?.line ?? null]).toEqual(["running", line.ref]);
     expect(due(w)).toEqual([]);
     expect(w.tracker.call(c.runnerRestarted, { alive: [] }, w.runner).settled).toBe(1);
   });
@@ -1039,7 +1043,11 @@ describe("a wake that runs past its deadline (fourth audit, A1)", () => {
     w.tracker.call(c.agentWoken, { name, pid: 4242 }, w.runner);
     w.later(30);
     w.tracker.call(c.agentWoken, { name, ended: "deadline" }, w.runner);
-    expect([agent()?.state, agent()?.line, agent()?.wakeError]).toEqual(["asleep", line.ref, null]);
+    expect([agent()?.state, agent()?.lines[0]?.line ?? null, agent()?.wakeError]).toEqual([
+      "asleep",
+      line.ref,
+      null,
+    ]);
     const ended = w.tracker.call(c.feedList, { query: "event:agent.wake_ended,agent.gone" }, w.dev).events;
     expect(ended.map((event) => [event.type, event.summary])).toEqual([
       [
@@ -1117,7 +1125,7 @@ describe("the roster's start attempts (fourth audit A22)", () => {
     w.tracker.call(c.lineTake, { ref: line.ref }, panel);
     w.tracker.call(c.lineRelease, {}, panel);
     const view = w.tracker.call(c.agentList, {}, w.dev).find((agent) => agent.name === "panel");
-    expect([view?.line, view?.lastLine]).toEqual([null, line.ref]);
+    expect([view?.lines[0]?.line ?? null, view?.lastLine]).toEqual([null, line.ref]);
   });
 });
 

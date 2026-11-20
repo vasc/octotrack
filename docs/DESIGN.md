@@ -944,8 +944,15 @@ Everything below is a design decision made from that, with its reasoning.
   work" above, an agent makes what were the developer's operations itself; passing `--said "<the developer's words>"`
   records why (channel `out_of_band`), and the log shows it, never folded, naming the agent and quoting the words. Agent operations need a registered name, and Octotrack numbers the sessions
   it starts upward from the repo's name (octotrack.3), never reusing one. Who holds a line is one table of claims (line,
-  agent, and a role of owner, helper or scoper); an agent is on one line at a time and claims issues only there: an owner
-  in any repo its line names that has a checkout here, a helper only in its own repo. Work is an open issue on a line, in a repo, not blocked, not the developer's and not claimed. A line is scoped
+  agent, and a role of owner, helper or scoper); an agent is on any number of lines, and claims issues only on lines it
+  is on: an owner in any repo its line names that has a checkout here, a helper only in its own repo. Taking a line keeps
+  the others. A question, a task or a release that names no line goes to the agent's only line; on several it names
+  one, since any guess could put the work on the wrong line. Stop, an exit and a session gone end every claim; the
+  developer releases an agent from one line or all. A line still has at most one owner and one scoper, since two would
+  write over each other's summary and plan. Lines needing an owner are offered to idle agents and helpers, not to an
+  owner, which already speaks for a line; it may still take one. _Why, for several lines:_ the developer: "'Octotrack
+  lets one agent hold only one line' is again an unjustified restriction" (their quotation marks, as single ones here).
+  Work is an open issue on a line, in a repo, not blocked, not the developer's and not claimed. A line is scoped
   once it has a done when and a plan step and its scoper has released it, and unscoped again after eight weeks. _Why:_
   "the top line first" would pile every idle agent onto line one, and a crash, a clean exit and a line waiting on the
   developer must each come out right without the developer.

@@ -1,3 +1,4 @@
+import { OctoError } from "../errors.ts";
 import { agentState } from "../agents/state.ts";
 import { AgentView } from "../schemas.ts";
 import type { Agent, AgentBrief, LineClaim, Notice, NoticeKind } from "../schemas.ts";
@@ -10,8 +11,29 @@ export function getAgent(ctx: Ctx, name: string): Agent | null {
   return one(ctx, AgentRow, "SELECT * FROM agents WHERE name = ?", [name]);
 }
 
-export function claimOf(ctx: Ctx, agent: string): LineClaim | null {
-  return one(ctx, ClaimRow, "SELECT * FROM line_claims WHERE agent = ?", [agent]);
+/** Every line an agent is on, longest-standing first. */
+export function claimsOf(ctx: Ctx, agent: string): LineClaim[] {
+  return rows(ctx, ClaimRow, "SELECT * FROM line_claims WHERE agent = ? ORDER BY since, line", [agent]);
+}
+
+/** An agent's claim on one line, if it is on it. */
+export function claimOn(ctx: Ctx, agent: string, line: string): LineClaim | null {
+  return one(ctx, ClaimRow, "SELECT * FROM line_claims WHERE agent = ? AND line = ?", [agent, line]);
+}
+
+/**
+ * The line a write by this agent is about when it names none: its only line, or none when it is on none. On several
+ * it must say which, since any guess could put the work on the wrong line.
+ */
+export function onlyLineOf(ctx: Ctx, agent: string, what: string): string | null {
+  const claims = claimsOf(ctx, agent);
+  if (claims.length <= 1) return claims[0]?.line ?? null;
+  const lines = claims.map((claim) => claim.line);
+  throw new OctoError(
+    "invalid_input",
+    `You are on ${lines.slice(0, -1).join(", ")} and ${lines.at(-1) ?? ""}: say which line ${what}`,
+    "Pass --line <REF>.",
+  );
 }
 
 /** Who is on a line, longest-standing first, which is also who a helper promotion picks. */
@@ -28,9 +50,9 @@ const RefRow = z.object({ ref: z.string() });
 const StartView = AgentView.shape.start.unwrap();
 
 export function viewOf(ctx: Ctx, agent: Agent): AgentView {
-  const claim = claimOf(ctx, agent.name);
+  const claims = claimsOf(ctx, agent.name);
   const last =
-    claim === null
+    claims.length === 0
       ? (one(ctx, RefRow, "SELECT ref FROM lines WHERE lastOwner = ? ORDER BY updatedAt DESC LIMIT 1", [
           agent.name,
         ])?.ref ?? null)
@@ -52,8 +74,7 @@ export function viewOf(ctx: Ctx, agent: Agent): AgentView {
   return {
     ...agent,
     state: agentState(agent, ctx.now),
-    line: claim?.line ?? null,
-    role: claim?.role ?? null,
+    lines: claims.map((claim) => ({ line: claim.line, role: claim.role })),
     lastLine: last,
     start,
   };

@@ -9,14 +9,34 @@ import { Cell } from "../ui/Table.tsx";
 import { TimeAgo } from "../ui/TimeAgo.tsx";
 import type { IconName } from "../ui/Icon.tsx";
 
-/** "owner of L-59", or "on L-59" for a claim with no role. */
-function claim(agent: AgentView, line: string): ReactNode {
-  return (
+/** Each of its lines joined as a sentence lists them: "a", "a and b", "a, b and c". */
+function listed(agent: AgentView, part: (claim: AgentView["lines"][number]) => ReactNode): ReactNode {
+  return agent.lines.map((claim, index) => (
+    <span key={claim.line}>
+      {index === 0 ? null : index === agent.lines.length - 1 ? " and " : ", "}
+      {part(claim)}
+    </span>
+  ));
+}
+
+/** Every line it is on, as what: "owner of L-59 and helper of L-61". */
+function claims(agent: AgentView): ReactNode {
+  return listed(agent, (claim) => (
     <>
-      {agent.role === null ? "on " : `${agent.role} of `}
-      <RefLink value={line} />
+      {claim.role} of <RefLink value={claim.line} />
     </>
-  );
+  ));
+}
+
+/** Every line it holds, by ref alone: "L-24 and L-30". */
+function held(agent: AgentView): ReactNode {
+  return listed(agent, (claim) => <RefLink value={claim.line} />);
+}
+
+/** Its lines by ref, as a button's name says them. */
+function heldWords(agent: AgentView): string {
+  const refs = agent.lines.map((claim) => claim.line);
+  return refs.length < 2 ? (refs[0] ?? "") : `${refs.slice(0, -1).join(", ")} and ${refs.at(-1) ?? ""}`;
 }
 
 /** What an agent is doing now, in a few words, as the Agents drawing writes it. */
@@ -39,23 +59,23 @@ function nowWords(agent: AgentView, waitsOnYou: boolean): ReactNode {
         </>
       );
     case "quiet":
-      return agent.line === null ? (
-        "quiet"
-      ) : (
-        <>
-          quiet, still holding <RefLink value={agent.line} />
-        </>
-      );
+      return agent.lines.length === 0 ? "quiet" : <>quiet, still holding {held(agent)}</>;
     default:
-      if (agent.line === null) {
+      if (agent.lines.length === 0) {
         return agent.state === "running"
           ? "idle: nothing to take or scope in its repo"
           : `${agent.state}, on no line`;
       }
       return (
         <>
-          {agent.state}, {claim(agent, agent.line)}
-          {waitsOnYou ? "; its line waits on you" : agent.state === "asleep" ? reach : ""}
+          {agent.state}, {claims(agent)}
+          {waitsOnYou
+            ? agent.lines.length === 1
+              ? "; its line waits on you"
+              : "; a line of its waits on you"
+            : agent.state === "asleep"
+              ? reach
+              : ""}
         </>
       );
   }
@@ -122,10 +142,10 @@ function AgentAction({
   onRelease(name: string): void;
 }) {
   if (agent.state === "gone") return null;
-  if (agent.state === "quiet" && agent.line !== null) {
+  if (agent.state === "quiet" && agent.lines.length > 0) {
     return (
       <Button
-        aria-label={busy ? `Releasing ${agent.name}` : `Release ${agent.name} from ${agent.line}`}
+        aria-label={busy ? `Releasing ${agent.name}` : `Release ${agent.name} from ${heldWords(agent)}`}
         busy={busy ? "Releasing…" : undefined}
         onClick={() => onRelease(agent.name)}
       >
@@ -169,7 +189,7 @@ export function AgentRosterRow({
   onRelease,
 }: {
   agent: AgentView;
-  /** Its line has questions or tasks waiting on the developer. */
+  /** A line it is on has questions or tasks waiting on the developer. */
   waitsOnYou?: boolean;
   /** A Stop, Lift or Release of it waits with Undo. */
   busy?: boolean;

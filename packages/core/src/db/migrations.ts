@@ -407,6 +407,20 @@ const MIGRATIONS: readonly Migration[] = [
   ALTER TABLE prs ADD COLUMN readyWhy TEXT;
   ALTER TABLE prs ADD COLUMN readySha TEXT;
   `,
+  // An agent holds any number of lines: a claim is an agent on a line. Still one owner and one scoper per line, since
+  // two would write over each other's summary and plan.
+  `
+  CREATE TABLE line_claims_many (
+    agent TEXT NOT NULL REFERENCES agents(name), line TEXT NOT NULL REFERENCES lines(ref),
+    role TEXT NOT NULL, since TEXT NOT NULL, PRIMARY KEY (agent, line)
+  );
+  INSERT INTO line_claims_many (agent, line, role, since) SELECT agent, line, role, since FROM line_claims;
+  DROP TABLE line_claims;
+  ALTER TABLE line_claims_many RENAME TO line_claims;
+  CREATE INDEX line_claims_line ON line_claims(line);
+  CREATE UNIQUE INDEX line_claims_one_owner ON line_claims(line) WHERE role = 'owner';
+  CREATE UNIQUE INDEX line_claims_one_scoper ON line_claims(line) WHERE role = 'scoper';
+  `,
 ];
 
 const UserVersion = z.object({ user_version: z.number().int() });

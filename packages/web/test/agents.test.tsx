@@ -46,7 +46,7 @@ describe("AgentRosterRow", () => {
   });
 
   test("its cells are its name, its repo's key, what it is doing now and when it was last seen", () => {
-    const view = row({ state: "running", line: "L-59", role: "owner" });
+    const view = row({ state: "running", lines: [{ line: "L-59", role: "owner" }] });
     const its = within(view.getByRole("row", { name: "panel" }));
     // Its name heads its row.
     expect(its.getByRole("rowheader").textContent).toBe("panel");
@@ -56,22 +56,50 @@ describe("AgentRosterRow", () => {
     within(cells[1] ?? document.body).getByText(whole("running, owner of L-59"));
     expect(cells[2]?.textContent).toBe("3h");
     view.unmount();
-    row({ state: "asleep", line: "L-59", role: "owner" }).getByText(
+    row({ state: "asleep", lines: [{ line: "L-59", role: "owner" }] }).getByText(
       whole("asleep, owner of L-59 · wakes by screen"),
     );
   });
 
   test("says its role on its line and when that line waits on the developer", () => {
-    row({ state: "running", line: "L-59", role: "owner", wakeAddress: null }, { waitsOnYou: true }).getByText(
-      whole("running, owner of L-59; its line waits on you"),
+    row(
+      { state: "running", lines: [{ line: "L-59", role: "owner" }], wakeAddress: null },
+      { waitsOnYou: true },
+    ).getByText(whole("running, owner of L-59; its line waits on you"));
+  });
+
+  test("an agent on several lines names each, as what, and Release frees it from all of them", () => {
+    row({
+      state: "running",
+      lines: [
+        { line: "L-59", role: "owner" },
+        { line: "L-61", role: "helper" },
+      ],
+    }).getByText(whole("running, owner of L-59 and helper of L-61"));
+    const view = inTable(
+      <AgentRosterRow
+        agent={agentView({
+          state: "quiet",
+          lines: [
+            { line: "L-24", role: "owner" },
+            { line: "L-30", role: "scoper" },
+          ],
+          wakeAddress: null,
+        })}
+        onStop={noop}
+        onLift={noop}
+        onRelease={noop}
+      />,
     );
+    view.getByText(whole("quiet, still holding L-24 and L-30"));
+    view.getByRole("button", { name: "Release panel from L-24 and L-30" });
   });
 
   test("a quiet agent still holding a line says so, and offers Release", () => {
     const onRelease = mock((_name: string) => {});
     const view = inTable(
       <AgentRosterRow
-        agent={agentView({ state: "quiet", line: "L-24", wakeAddress: null })}
+        agent={agentView({ state: "quiet", lines: [{ line: "L-24", role: "owner" }], wakeAddress: null })}
         onStop={noop}
         onLift={noop}
         onRelease={onRelease}
@@ -84,9 +112,7 @@ describe("AgentRosterRow", () => {
   });
 
   test("a running agent on no line is idle", () => {
-    row({ state: "running", line: null, role: null }).getByText(
-      whole("idle: nothing to take or scope in its repo"),
-    );
+    row({ state: "running", lines: [] }).getByText(whole("idle: nothing to take or scope in its repo"));
   });
 
   test("tells the developer's Stop from Octotrack's, and offers Lift", () => {
@@ -98,8 +124,7 @@ describe("AgentRosterRow", () => {
           state: "stopped",
           stoppedAt,
           stoppedReason: "wrong repo",
-          line: null,
-          role: null,
+          lines: [],
         })}
         onStop={noop}
         onLift={onLift}
@@ -116,8 +141,7 @@ describe("AgentRosterRow", () => {
   test("a session started for a line that never ran a command is marked with the triangle, with how its start went", () => {
     const view = row({
       name: "trips.2",
-      line: null,
-      role: null,
+      lines: [],
       wakeAddress: null,
       startedBy: "octotrack",
       state: "gone",
@@ -128,7 +152,7 @@ describe("AgentRosterRow", () => {
     now.getByText(whole("started for L-46; exits at once (exit 127), retried since Tuesday"));
     now.getByText("never");
     row({
-      line: null,
+      lines: [],
       start: {
         line: "L-46",
         state: "never_took",
@@ -140,11 +164,11 @@ describe("AgentRosterRow", () => {
   });
 
   test("a gone agent names the line it last owned, or why its wake failed, and has nothing to press", () => {
-    const view = row({ state: "gone", line: null, role: null, lastLine: "L-9" });
+    const view = row({ state: "gone", lines: [], lastLine: "L-9" });
     view.getByText(whole("gone, last owner of L-9"));
     expect(view.queryByRole("button", { name: /^(Stop|Lift|Release)/ })).toBeNull();
     view.unmount();
-    row({ state: "gone", line: null, wakeError: "tmux: no session “ttube”" }).getByText(
+    row({ state: "gone", lines: [], wakeError: "tmux: no session “ttube”" }).getByText(
       whole("gone: its wake failed (tmux: no session “ttube”)"),
     );
   });
@@ -181,7 +205,7 @@ describe("AgentRoster", () => {
   test("running, stopped and gone agents always show; quiet ones fold after the first few", () => {
     const agents = [
       agentView({ name: "builder", state: "running" }),
-      ...["a", "b", "c", "d", "e"].map((name) => agentView({ name, state: "quiet", line: null })),
+      ...["a", "b", "c", "d", "e"].map((name) => agentView({ name, state: "quiet", lines: [] })),
       agentView({ name: "halted", state: "stopped" }),
     ];
     const view = render(<AgentRoster agents={agents} row={rows} />);

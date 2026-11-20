@@ -4,7 +4,7 @@ import { InputError, OctoError } from "../errors.ts";
 import { Channel, PendingChoice } from "../schemas.ts";
 import type { Ctx } from "../store/context.ts";
 import { one, rows } from "../store/context.ts";
-import { claimOf } from "../store/agents.ts";
+import { claimsOf } from "../store/agents.ts";
 import { getLine } from "../store/entities.ts";
 import { bind } from "./bind.ts";
 import { requireDeveloperInPerson } from "./developer.ts";
@@ -68,14 +68,16 @@ function targetOf(op: string, input: unknown): string | null {
   return null;
 }
 
-/** The working line a Stop would leave without its owner. */
+/** The working line a Stop would leave without its owner: the first, when it owns several. */
 function lineLeft(ctx: Ctx, row: ChoiceRow): string | null {
   if (row.op !== contracts.agentStop.name) return null;
   const stopping = Stopping.safeParse(JSON.parse(row.input));
   if (!stopping.success) return null;
-  const claim = claimOf(ctx, stopping.data.name);
-  if (claim === null || claim.role !== "owner") return null;
-  return getLine(ctx, claim.line)?.state === "working" ? claim.line : null;
+  return (
+    claimsOf(ctx, stopping.data.name).find(
+      (claim) => claim.role === "owner" && getLine(ctx, claim.line)?.state === "working",
+    )?.line ?? null
+  );
 }
 
 function view(ctx: Ctx, row: ChoiceRow): PendingChoice {

@@ -521,11 +521,11 @@ export const LineClaim = z.object({
 });
 export type LineClaim = z.infer<typeof LineClaim>;
 
-/** An agent as the roster shows it: with its state and the line it is on. */
+/** An agent as the roster shows it: with its state and the lines it is on. */
 export const AgentView = Agent.extend({
   state: AgentState,
-  line: z.string().nullable(),
-  role: ClaimRole.nullable(),
+  /** Every line it is on, and as what, longest-standing first. */
+  lines: z.array(z.object({ line: z.string(), role: ClaimRole })),
   /** The line it last owned, once it holds none: what a gone or quiet agent was on. */
   lastLine: z.string().nullable(),
   /**

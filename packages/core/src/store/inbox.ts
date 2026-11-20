@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Notice } from "../schemas.ts";
-import { claimOf, claimsOn } from "./agents.ts";
+import { claimOn, claimsOf, claimsOn } from "./agents.ts";
 import type { Ctx } from "./context.ts";
 import { rows } from "./context.ts";
 import { getIssue } from "./entities.ts";
@@ -47,7 +47,7 @@ export function addToInbox(
 export function recipientOf(ctx: Ctx, item: InboxItem): string | null {
   if (item.issue !== null) {
     const holder = getIssue(ctx, item.issue)?.assignee ?? null;
-    if (holder !== null && claimOf(ctx, holder)?.line === item.line) return holder;
+    if (holder !== null && claimOn(ctx, holder, item.line) !== null) return holder;
   }
   return claimsOn(ctx, item.line).find((claim) => claim.role === "owner")?.agent ?? null;
 }
@@ -58,11 +58,11 @@ export function pendingInbox(ctx: Ctx, line: string): InboxItem[] {
   ]);
 }
 
-/** The items waiting for this agent on its line. */
+/** The items waiting for this agent on its lines. */
 export function inboxFor(ctx: Ctx, agent: string): InboxItem[] {
-  const claim = claimOf(ctx, agent);
-  if (claim === null) return [];
-  return pendingInbox(ctx, claim.line).filter((item) => recipientOf(ctx, item) === agent);
+  return claimsOf(ctx, agent).flatMap((claim) =>
+    pendingInbox(ctx, claim.line).filter((item) => recipientOf(ctx, item) === agent),
+  );
 }
 
 /** Hands this agent its items, once, as notices on the reply that carries them. */

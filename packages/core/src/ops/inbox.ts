@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { endClaim, endFirstOffer } from "../agents/claims.ts";
+import { endClaims, endFirstOffer } from "../agents/claims.ts";
 import { agentState, wakeRuns } from "../agents/state.ts";
 import { contracts } from "../contracts.ts";
 import { OctoError } from "../errors.ts";
 import type { AgentWake } from "../schemas.ts";
-import { addNotice, claimOf, getAgent, viewOf } from "../store/agents.ts";
+import { addNotice, claimsOf, getAgent, viewOf } from "../store/agents.ts";
 import { emit } from "../store/common.ts";
 import { rows } from "../store/context.ts";
 import { requireIssue, requireLine } from "../store/entities.ts";
@@ -136,7 +136,8 @@ export const inboxOps = [
         input.ended,
         agent.name,
       ]);
-      const line = claimOf(ctx, agent.name)?.line ?? null;
+      const lines = claimsOf(ctx, agent.name).map((claim) => claim.line);
+      const line = lines.length === 1 ? (lines[0] ?? null) : null;
       // Killed at its deadline, the wake had reached its session, which was at work: the session is not gone, and
       // keeps its line (fourth audit, A1). It is told to carry on, which wakes it again at once (fifth audit, B3).
       if (input.ended === "deadline") {
@@ -190,13 +191,13 @@ export const inboxOps = [
       // A session that cannot be woken is gone: what it held goes to whoever comes next.
       ctx.sql.run("UPDATE agents SET goneAt = ? WHERE name = ?", [ctx.now, agent.name]);
       endFirstOffer(ctx, agent.name);
-      const claim = endClaim(ctx, agent.name, "gone");
+      const left = endClaims(ctx, agent.name, "gone");
       emit(ctx, {
         type: "agent.gone",
         kind: "agent",
         ref: agent.name,
         project: agent.repo,
-        line: claim?.line ?? null,
+        line: left[0]?.line ?? null,
         summary: `${agent.name} could not be woken, so it is gone: ${input.error}`,
         attrs: {},
       });
