@@ -212,6 +212,7 @@ E · One list boards draw it.
 | `--icon-inline-drop`  | How far below the baseline such an icon starts, so it centres on capitals and figures, not "x"     |
 | `--swatch-width`      | A theme's swatch in a menu, its ground and accent side by side; menu words start past it           |
 | `--tile-width`        | A tile's width before it grows to fill its row: folded sections' tiles, and swatches at half       |
+| `--tile-width-small`  | A choice drawn as a tile, such as where a new line goes, before it grows to share its row          |
 | `--field-narrow`      | A box for one short value, such as a measurement, side by side with others                         |
 | `--text-input-touch`  | Text fields on a touch screen. Below 16px, iOS zooms the page on focus                             |
 

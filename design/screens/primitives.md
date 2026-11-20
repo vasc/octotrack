@@ -126,6 +126,15 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 - Error: cannot fail on its own.
 - Empty: never drawn empty.
 
+### components/ui/Segments.tsx
+
+- Designed in: triage/T-NewLine.dc.html ("Where it goes"), triage/T-Table.dc.html ("Look again")
+- What it shows: its name, then each choice as a radio: tiles sharing the row with what each means under its name, or pills; the one chosen on the soft accent with an accent edge.
+- Changes from today: new.
+- Loading: never loads on its own.
+- Error: cannot fail on its own.
+- Empty: never empty: its owner gives the choices.
+
 ### components/ui/Queue.tsx
 
 - Designed in: triage/T-List-A.dc.html

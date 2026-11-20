@@ -64,17 +64,19 @@ describe("CheckoutForm", () => {
 });
 
 describe("NewLineSheet", () => {
-  test("Table asks first, so it says so", () => {
+  test("Up next says which place in the order the line takes, and Working on that an agent is found now", () => {
     const view = render(
       <NewLineSheet
         repos={[]}
+        upNext={6}
         onAdd={noop}
         onCancel={noop}
         draft={{ title: "", doneWhen: "" }}
         onDraft={noop}
       />,
     );
-    view.getByRole("button", { name: "Table" });
+    view.getByRole("radio", { name: "Up next Waits its turn, 7th in your order" });
+    view.getByRole("radio", { name: "Working on An agent is found for it now" });
   });
 });
 
@@ -102,20 +104,20 @@ describe("NewLineSheet, as drawn", () => {
   const repos = ["HASS", "INFRA", "MEDIA", "PANEL", "TRIP", "OCT"];
   const props = { repos, onAdd: noop, onCancel: noop, draft: { title: "", doneWhen: "" }, onDraft: noop };
 
-  test("repos are chips, four then the rest a press away, with None: it's mine", () => {
+  test("repos are chips, four then the rest a press away, with None, it needs no code", () => {
     const view = render(<NewLineSheet {...props} />);
     view.getByRole("checkbox", { name: "PANEL" });
     expect(view.queryByRole("checkbox", { name: "TRIP" })).toBeNull();
     fireEvent.click(view.getByRole("button", { name: "+ 2 more" }));
     view.getByRole("checkbox", { name: "TRIP" });
-    view.getByRole("checkbox", { name: "None: it's mine" });
+    view.getByRole("checkbox", { name: "None, it needs no code" });
   });
 
   test("says what is still missing while it cannot be added, and that it saves as typed", () => {
     const view = render(<NewLineSheet {...props} draft={{ title: "Backups", doneWhen: "" }} />);
     view.getByText("Still needs: done when, and a repo or None.");
-    view.getByText("Saved as you type, so closing loses nothing.");
-    expect(view.getByLabelText("What it is").getAttribute("placeholder")).toBe(
+    view.getByText("Kept as a draft if you close it.");
+    expect(view.getByLabelText("Title").getAttribute("placeholder")).toBe(
       "Back up the Home Assistant host nightly",
     );
   });
@@ -123,7 +125,7 @@ describe("NewLineSheet, as drawn", () => {
   test("what is typed goes to its draft", () => {
     const onDraft = mock((_draft: { title: string; doneWhen: string }) => {});
     const view = render(<NewLineSheet {...props} onDraft={onDraft} />);
-    fireEvent.change(view.getByLabelText("What it is"), { target: { value: "Backups" } });
+    fireEvent.change(view.getByLabelText("Title"), { target: { value: "Backups" } });
     expect(onDraft).toHaveBeenCalledWith({ title: "Backups", doneWhen: "" });
   });
 });
@@ -317,7 +319,7 @@ describe("NewLineSheet, its repos and its draft", () => {
   test("while the repos load, says so, and None stays usable", () => {
     const view = render(<NewLineSheet {...props} reposStatus={<p>Loading the repos…</p>} />);
     view.getByText("Loading the repos…");
-    view.getByRole("checkbox", { name: "None: it's mine" });
+    view.getByRole("checkbox", { name: "None, it needs no code" });
   });
 
   test("words not kept on the tracker say so", () => {

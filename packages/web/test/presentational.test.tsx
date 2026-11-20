@@ -899,7 +899,7 @@ describe("lines of work", () => {
     expect(onOwn).toHaveBeenCalledWith("L-1");
     fireEvent.click(view.getByRole("button", { name: "Table it" }));
     const sheet = within(view.getByRole("dialog", { name: "Table Sendspin enclosure" }));
-    fireEvent.change(sheet.getByLabelText("Why it waits · optional"), { target: { value: "Later" } });
+    fireEvent.change(sheet.getByLabelText("Why"), { target: { value: "Later" } });
     fireEvent.click(sheet.getByRole("button", { name: "Table it" }));
     expect(onTable).toHaveBeenCalledWith("L-1", "Later", null);
     expect(view.queryByRole("dialog")).toBeNull();
@@ -1378,7 +1378,7 @@ describe("tabling and a line's own choices", () => {
     const table = view.getByRole("button", { name: "Table it" });
     fireEvent.click(table);
     expect(onTable).toHaveBeenCalledWith(null, null);
-    fireEvent.change(view.getByLabelText("Why it waits · optional"), {
+    fireEvent.change(view.getByLabelText("Why"), {
       target: { value: "  After the move  " },
     });
     fireEvent.click(table);
@@ -1387,21 +1387,35 @@ describe("tabling and a line's own choices", () => {
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
 
-  test("TableForm says what tabling does to what the line holds and to its agents, and asks when to look again", () => {
+  test("TableForm says what happens: what the line holds, who winds down, that its plan stays, and when it comes back", () => {
+    const now = Date.parse("2026-11-20T12:00:00Z");
     const view = render(
       <TableForm
         title="Podcast cleanup"
         held={{ questions: 2, tasks: 0 }}
         owner="mediarr"
+        now={now}
         onTable={() => {}}
         onCancel={() => {}}
       />,
     );
     const sheet = within(view.getByRole("dialog", { name: "Table Podcast cleanup" }));
-    sheet.getByRole("heading", { name: "Table Podcast cleanup" });
-    expect(document.activeElement).toBe(sheet.getByLabelText("Why it waits · optional"));
-    sheet.getByText("Tabling holds 2 questions until it starts again; mediarr winds down.");
-    expect(sheet.getByLabelText("Look again on · optional").getAttribute("type")).toBe("date");
+    sheet.getByText("Set it aside, out of Working on, until you look again.");
+    expect(document.activeElement).toBe(sheet.getByLabelText("Why"));
+    const happens = within(sheet.getByRole("region", { name: "What happens" }));
+    happens.getByText(
+      "mediarr winds down, and it holds 2 questions until it starts again. Its plan and history stay.",
+    );
+    fireEvent.click(sheet.getByRole("radio", { name: "In a week" }));
+    happens.getByText(
+      /Its plan and history stay; on .* 27 Nov it comes back to you to start or table again\./,
+    );
+    sheet.getByText("You can undo it for a few seconds.");
+  });
+
+  test("TableForm with no agent on the line says nothing winds down", () => {
+    const view = render(<TableForm title="Trip" onTable={() => {}} onCancel={() => {}} />);
+    view.getByText("No agent is on it, so nothing winds down. Its plan and history stay.");
   });
 
   test("LineActions offers the moves each state allows, the rare ones under More, Done at once", () => {
@@ -1620,13 +1634,21 @@ describe("saying something to a line", () => {
     expect(onNote).toHaveBeenCalledWith("Scan receipts");
   });
 
-  test("TableForm sends a look-again date when one is given", () => {
+  test("TableForm sends a look-again date: a week or a month on, or a day picked", () => {
     const onTable = mock((_reason: string, _lookAgainAt: string | null) => {});
-    const view = render(<TableForm title="Trip" onTable={onTable} onCancel={() => {}} />);
-    fireEvent.change(view.getByLabelText("Why it waits · optional"), { target: { value: "Winter" } });
-    fireEvent.change(view.getByLabelText("Look again on · optional"), { target: { value: "2027-03-01" } });
+    const now = Date.parse("2026-11-20T12:00:00Z");
+    const view = render(<TableForm title="Trip" now={now} onTable={onTable} onCancel={() => {}} />);
+    fireEvent.change(view.getByLabelText("Why"), { target: { value: "Winter" } });
+    // No date unless one is chosen: no field for it either.
+    expect(view.getByRole("radio", { name: "No date" })).toHaveProperty("checked", true);
+    expect(view.queryByLabelText("Look again on")).toBeNull();
+    fireEvent.click(view.getByRole("radio", { name: "In a month" }));
     fireEvent.click(view.getByRole("button", { name: "Table it" }));
-    expect(onTable).toHaveBeenCalledWith("Winter", "2027-03-01");
+    expect(onTable).toHaveBeenLastCalledWith("Winter", "2026-12-20");
+    fireEvent.click(view.getByRole("radio", { name: "On a date" }));
+    fireEvent.change(view.getByLabelText("Look again on"), { target: { value: "2027-03-01" } });
+    fireEvent.click(view.getByRole("button", { name: "Table it" }));
+    expect(onTable).toHaveBeenLastCalledWith("Winter", "2027-03-01");
   });
 });
 
@@ -2263,7 +2285,7 @@ describe("LineStepIn", () => {
     expect(h.own).toHaveBeenCalledWith("L-1");
     fireEvent.click(failing.getByRole("button", { name: "Table it" }));
     const sheet = within(failing.getByRole("dialog", { name: "Table Sendspin enclosure" }));
-    fireEvent.change(sheet.getByLabelText("Why it waits · optional"), {
+    fireEvent.change(sheet.getByLabelText("Why"), {
       target: { value: "After the move" },
     });
     fireEvent.click(sheet.getByRole("button", { name: "Table it" }));

@@ -35,6 +35,7 @@ gives an element a class or an inline style, and on a class in `ui.css` that is 
 | `Toast`        | A choice waiting to take effect, or one that failed, with Undo or Dismiss; `Toasts` holds them over the foot of every page                                                                                                 |
 | `Pairs`        | Names and values in two columns; `Columns` two columns on a wide screen; `Stack` things one under another                                                                                                                  |
 | `Notice`       | A sheet that says where things stand for the page: a heading, a few words, a command, the one thing to do                                                                                                                  |
+| `Segments`     | One choice of a few, all in view, as radio tiles with what each means, or as pills: where a new line goes, when to look again                                                                                              |
 | `Chips`        | Choices that can each be on or off, as pills that wrap: the first few, then the rest a press away                                                                                                                          |
 | `Labelled`     | One fact on its own: a small grey label stacked over its sentence, such as Done when                                                                                                                                       |
 | `Callout`      | A few words set apart on a soft ground in a tone: what an agent recommends, why to step in                                                                                                                                 |
@@ -134,7 +135,7 @@ properties and appear on the `/design` specimen; **structural** ones load data a
 | `KeyHelp`          | Pure       | The keys, as a `Sheet`                                                                                                                             |
 | `RecordAnswers`    | Structural | Record answers, behind r                                                                                                                           |
 | `PushToggle`       | Structural | Buzz this device, or how buzzing stands                                                                                                            |
-| `NewLineSheet`     | Pure       | New line, as a `Sheet`: what it is, done when, its repos or that it is yours; up next, start, or table                                             |
+| `NewLineSheet`     | Pure       | New line, as a `Sheet`: its title, done when, the repos it works in or none; where it goes, Up next or Working on; Add line                        |
 | `TableForm`        | Pure       | Tabling, as a `Sheet`: why it waits, when to look again, what it holds and who winds down                                                          |
 | `PromoteSheet`     | Pure       | Making a branch its own line, as a `Sheet`: title, done when, what moves; up next or start it                                                      |
 | `BranchEditSheet`  | Pure       | Changing a branch, as a `Sheet`: its title and its steps, one per line                                                                             |

@@ -99,6 +99,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <NewLineSheet
             repos={newLine.repos}
             repoNames={newLine.repoNames}
+            upNext={newLine.upNext}
             notSaved={newLine.notSaved}
             reposStatus={
               newLine.reposLoading ? (

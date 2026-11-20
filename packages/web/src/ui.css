@@ -2713,3 +2713,85 @@
     font-size: var(--text-title);
   }
 }
+
+/* ---------- Segments: one choice of a few, all in view ---------- */
+
+.ui-segments {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ui-segments legend {
+  padding: 0 0 var(--space-2);
+}
+
+.ui-segments-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/* With what each means said, the choices are tiles that share the row. */
+.ui-segments-row[data-described="true"] {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--tile-width-small), 1fr));
+  gap: var(--space-4);
+}
+
+.ui-segment {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--control-height);
+  padding: 0 var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.ui-segments-row[data-described="true"] .ui-segment {
+  align-items: flex-start;
+  padding: var(--space-5) var(--space-6);
+  border-radius: var(--radius-tile);
+}
+
+.ui-segment[data-checked="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.ui-segment input {
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.ui-segments-row[data-described="true"] .ui-segment input {
+  margin-top: var(--space-2);
+}
+
+.ui-segment-words {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.ui-segment-label {
+  font-weight: var(--weight-medium);
+  color: var(--ink);
+}
+
+.ui-segments-row[data-described="true"] .ui-segment-label {
+  font-weight: var(--weight-semibold);
+}
+
+.ui-segment-description {
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+}

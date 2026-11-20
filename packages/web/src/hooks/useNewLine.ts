@@ -27,6 +27,7 @@ function parse(text: string): NewLineDraft {
  */
 export function useNewLine() {
   const projects = useOpQuery(contracts.projectList, {});
+  const home = useOpQuery(contracts.homeShow, {});
   const choices = useChoices();
   const draft = useDraft(DRAFT_KEY);
   const repos = useMemo(() => (projects.data ?? []).map((card) => card.project.ref), [projects.data]);
@@ -38,6 +39,8 @@ export function useNewLine() {
     repos,
     /** Each repo's name by its key, which a repo leads with: "Meals", then "MEALS" small. */
     repoNames,
+    /** How many lines are up next already. */
+    upNext: home.data?.upNext.length ?? 0,
     /** The repos are still loading, or could not load. */
     reposLoading: projects.isPending,
     reposError: projects.error,
@@ -53,11 +56,7 @@ export function useNewLine() {
           choices.make(
             contracts.lineAdd.name,
             line,
-            line.where === "working"
-              ? `Starting ${line.title}`
-              : line.where === "tabled"
-                ? `Tabling ${line.title}`
-                : `Adding ${line.title} to up next`,
+            line.where === "working" ? `Starting ${line.title}` : `Adding ${line.title} to up next`,
             DRAFT_KEY,
           ),
         ),

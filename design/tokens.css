@@ -171,6 +171,8 @@
   --swatch-width: calc(var(--space-5) * 2 + var(--space-1));
   /* A tile's width before it grows to fill its row: tiles of folded sections, swatches at half. */
   --tile-width: 300px;
+  /* A choice drawn as a tile, such as where a new line goes, before it grows to share its row. */
+  --tile-width-small: 180px;
   /* A box for one short value, such as a measurement, side by side with others. */
   --field-narrow: calc(var(--control-height) * 4);
   --text-input-touch: 16px;

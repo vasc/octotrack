@@ -8,21 +8,21 @@ closed; the page behind does not react to keys. On a phone it rises from the bot
 
 ### components/lines/NewLineSheet.tsx
 
-- Designed in: Sheets.dc.html, states A, B
-- What it shows: "New line" and Cancel; "What it is" (placeholder "Back up the Home Assistant host nightly"), "Done when", "Repos" as checkable chips by key (four, then "+ 11 more") and "None: it's mine"; "Saved as you type, so closing loses nothing."; then "Add to up next", "Start", "Table". Table goes to the Table sheet's fields as a second step.
-- Changes from today: the words are kept as a draft, so closing loses nothing; repos are chips that wrap instead of a list of rows, and long lists fold after four ("+ 11 more"); Table asks for its reason as a second step, with no ellipsis, as no button that asks first has one; while the actions are off, the words under them say what is missing; focus stays in the sheet.
-- Loading: the repo list loads from the tracker; follows the Primitives pattern: "Loading…" in the Repos list, with "None: it's mine" usable.
-- Error: adding is a choice that waits with Undo, so a refusal is said in the Undo bar, and the words stay in the draft until the line is added. A repo list that cannot load follows the Primitives pattern in the Repos list, with Try again. A draft not saved: "Not saved: the tracker did not answer. Kept here; saves when it is back."
-- Empty: until a title, a done when and a repo (or None) are given, the three actions are off and the words under them say which is missing. No repos: only "None: it's mine".
+- Designed in: triage/T-NewLine.dc.html, triage/T-NewLine-Phone.dc.html; Sheets.dc.html, states A, B
+- What it shows: "New line", "A thread of work, and how you will know it is done." and its cross; "Title" (placeholder "Back up the Home Assistant host nightly"); "Done when"; "Repos it works in" as chips leading with the repo's name, its key small after it ("Meals MEALS"), four then "+ 11 more", and "None, it needs no code" apart; "Where it goes": Up next ("Waits its turn, 7th in your order") or Working on ("An agent is found for it now"); then "Add line" and "Kept as a draft if you close it."
+- Changes from today: one Add line after choosing where it goes, instead of three buttons; tabling a line that is not yet one is gone, as the drawing has it, since a line is tabled from its own page; repos lead with their names.
+- Loading: the repo list loads from the tracker; follows the Primitives pattern: "Loading…" in the Repos list, with "None, it needs no code" usable.
+- Error: adding is a choice that waits with Undo, so a refusal is said in the Undo bar, and the words stay in the draft until the line is added. A repo list that cannot load follows the Primitives pattern, with Try again.
+- Empty: until a title, a done when and a repo (or None) are given, Add line is off and the words beside it say which is missing. No repos: only "None, it needs no code".
 
 ### components/lines/TableForm.tsx
 
-- Designed in: Sheets.dc.html, states B, G
-- What it shows: "Table Buzz speed follow-ups" and Cancel; "Why it waits · optional"; "Look again on · optional"; "Tabling holds 1 question and 2 tasks until it starts again; buzz winds down."; "Table it".
-- Changes from today: the date says it is optional; the consequence is one sentence (today "Holds 1 question and 2 tasks · panel-widgets winds down").
+- Designed in: triage/T-Table.dc.html; Sheets.dc.html, states B, G
+- What it shows: "Table South Tyrol trip", "Set it aside, out of Working on, until you look again." and its cross; "Why"; "Look again": In a week, In a month, On a date (which shows the day to pick), No date; "What happens": "No agent is on it, so nothing winds down. Its plan and history stay; on Mon 1 Feb it comes back to you to start or table again."; then "Table it" and "You can undo it for a few seconds."
+- Changes from today: the day to look again is a week, a month, a day picked or none, rather than a bare date field; what happens is said before it is done, the day it comes back included.
 - Loading: never loads on its own: given what the line holds by its opener; tabling waits with Undo from the Undo bar, so there is no busy word in the sheet.
-- Error: tabling it waits with Undo like every choice; a request the tracker never took, or a refusal when it takes effect, is said in the Undo bar ("Did not happen: …") with Dismiss; the sheet closes as the choice is made.
-- Empty: with no reason typed it tables all the same, and the line says "No reason given"; with nothing held and no owner, the consequence sentence is left out.
+- Error: tabling waits with Undo like every choice; a request the tracker never took, or a refusal when it takes effect, is said in the Undo bar with Dismiss.
+- Empty: with no reason typed it tables all the same; with nothing held and no owner, what happens says nothing winds down.
 
 ### components/lines/PromoteSheet.tsx
 

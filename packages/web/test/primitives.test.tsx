@@ -108,7 +108,7 @@ describe("Field while typed in", () => {
 });
 
 describe("Sheet", () => {
-  test("is a dialog over the whole page, named by its title, that Cancel and Esc close", () => {
+  test("is a dialog over the whole page, named by its title, that its cross and Esc close", () => {
     const onClose = mock(() => {});
     const view = render(
       <Sheet title="New line" onClose={onClose}>
@@ -132,15 +132,17 @@ function DraftedNewLine({ repos, onAdd }: { repos: readonly string[]; onAdd(line
 }
 
 describe("NewLineSheet", () => {
-  test("asks what it is, when it is done and its repos, and adds it to up next, starts it or tables it", () => {
+  test("asks its title, when it is done and the repos it works in, and where it goes, then Add line", () => {
     const onAdd = mock((_line: unknown) => {});
     const view = render(<DraftedNewLine repos={["PANEL", "OCT"]} onAdd={onAdd} />);
     const sheet = within(view.getByRole("dialog", { name: "New line" }));
-    const add = sheet.getByRole("button", { name: "Add to up next" });
+    const add = sheet.getByRole("button", { name: "Add line" });
     expect(add.hasAttribute("disabled")).toBe(true);
-    fireEvent.change(sheet.getByLabelText("What it is"), { target: { value: "Wall mount" } });
+    fireEvent.change(sheet.getByLabelText("Title"), { target: { value: "Wall mount" } });
     fireEvent.change(sheet.getByLabelText("Done when"), { target: { value: "It hangs flush" } });
     fireEvent.click(sheet.getByRole("checkbox", { name: "PANEL" }));
+    // Up next is where it goes unless Working on is chosen.
+    expect(sheet.getByRole("radio", { name: /^Up next/ })).toHaveProperty("checked", true);
     fireEvent.click(add);
     expect(onAdd).toHaveBeenCalledWith({
       title: "Wall mount",
@@ -150,14 +152,15 @@ describe("NewLineSheet", () => {
     });
   });
 
-  test("a line that is the developer's own needs no repo", () => {
+  test("a line that needs no code is the developer's own, and Working on starts it", () => {
     const onAdd = mock((_line: unknown) => {});
     const view = render(<DraftedNewLine repos={["PANEL"]} onAdd={onAdd} />);
     const sheet = within(view.getByRole("dialog", { name: "New line" }));
-    fireEvent.change(sheet.getByLabelText("What it is"), { target: { value: "Taxes" } });
+    fireEvent.change(sheet.getByLabelText("Title"), { target: { value: "Taxes" } });
     fireEvent.change(sheet.getByLabelText("Done when"), { target: { value: "Filed" } });
-    fireEvent.click(sheet.getByRole("checkbox", { name: "None: it's mine" }));
-    fireEvent.click(sheet.getByRole("button", { name: "Start" }));
+    fireEvent.click(sheet.getByRole("checkbox", { name: "None, it needs no code" }));
+    fireEvent.click(sheet.getByRole("radio", { name: /^Working on/ }));
+    fireEvent.click(sheet.getByRole("button", { name: "Add line" }));
     expect(onAdd).toHaveBeenCalledWith({ title: "Taxes", doneWhen: "Filed", repos: [], where: "working" });
   });
 });

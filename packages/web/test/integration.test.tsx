@@ -904,7 +904,7 @@ describe("lines of work", () => {
     await view.findByRole("heading", { name: "Sendspin enclosure", level: 1 });
     fireEvent.click(await view.findByRole("button", { name: "Table" }));
     const tabling = within(await view.findByRole("dialog", { name: "Table Sendspin enclosure" }));
-    fireEvent.change(tabling.getByLabelText("Why it waits · optional"), {
+    fireEvent.change(tabling.getByLabelText("Why"), {
       target: { value: "Waiting on the board" },
     });
     fireEvent.click(tabling.getByRole("button", { name: "Table it" }));
@@ -916,16 +916,16 @@ describe("lines of work", () => {
 
     fireEvent.click(view.getByRole("button", { name: "New line" }));
     const card = within(await view.findByRole("dialog", { name: "New line" }));
-    fireEvent.change(card.getByLabelText("What it is"), { target: { value: "Garden sensor" } });
+    fireEvent.change(card.getByLabelText("Title"), { target: { value: "Garden sensor" } });
     fireEvent.change(card.getByLabelText("Done when"), { target: { value: "Readings arrive hourly." } });
     // Nothing is added until it has a repo, or is the developer's own.
-    expect(card.getByRole("button", { name: "Add to up next" }).hasAttribute("disabled")).toBe(true);
+    expect(card.getByRole("button", { name: "Add line" }).hasAttribute("disabled")).toBe(true);
     fireEvent.click(
-      await within(card.getByRole("group", { name: "Repos" })).findByRole("checkbox", {
+      await within(card.getByRole("group", { name: "Repos it works in" })).findByRole("checkbox", {
         name: "Octotrack OCT",
       }),
     );
-    fireEvent.click(card.getByRole("button", { name: "Add to up next" }));
+    fireEvent.click(card.getByRole("button", { name: "Add line" }));
     await gone(() => view.queryByRole("dialog", { name: "New line" }));
     await answerNow(view);
     await within(view.getByRole("region", { name: "Up next" })).findByRole("button", {
@@ -1115,7 +1115,7 @@ describe("lines of work", () => {
       const panel = within(await view.findByRole("complementary", { name: "L-1" }));
       fireEvent.click(await panel.findByRole("button", { name: "Table" }));
       const tabling = within(await view.findByRole("dialog", { name: "Table Sendspin enclosure" }));
-      fireEvent.change(tabling.getByLabelText("Why it waits · optional"), {
+      fireEvent.change(tabling.getByLabelText("Why"), {
         target: { value: "Waiting on boards" },
       });
       fireEvent.click(tabling.getByRole("button", { name: "Table it" }));
@@ -1933,10 +1933,11 @@ describe("lines of work", () => {
       const panel = within(await view.findByRole("complementary", { name: "L-1" }));
       fireEvent.click(await panel.findByRole("button", { name: "Table" }));
       const tabling = within(await view.findByRole("dialog", { name: "Table Sendspin enclosure" }));
-      fireEvent.change(tabling.getByLabelText("Why it waits · optional"), {
+      fireEvent.change(tabling.getByLabelText("Why"), {
         target: { value: "After the move" },
       });
-      fireEvent.change(tabling.getByLabelText("Look again on · optional"), {
+      fireEvent.click(tabling.getByRole("radio", { name: "On a date" }));
+      fireEvent.change(tabling.getByLabelText("Look again on"), {
         target: { value: "2027-02-01" },
       });
       fireEvent.click(tabling.getByRole("button", { name: "Table it" }));
@@ -2147,7 +2148,7 @@ describe("lines of work", () => {
       const stepIn = within(await view.findByRole("group", { name: "Step in on Nobody's line" }));
       fireEvent.click(stepIn.getByRole("button", { name: "Table it" }));
       const tabling = within(await view.findByRole("dialog", { name: "Table Nobody's line" }));
-      fireEvent.change(tabling.getByLabelText("Why it waits · optional"), {
+      fireEvent.change(tabling.getByLabelText("Why"), {
         target: { value: "Not this month" },
       });
       fireEvent.click(tabling.getByRole("button", { name: "Table it" }));
