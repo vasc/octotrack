@@ -72,7 +72,7 @@ mislignment".
    decided that a highlight is blue only in a theme whose own colour is blue (`bun test design` enforces it), and the
    developer uses eight themes in light and dark; so what the drawings colour blue takes each theme's accent, and what
    needs you takes its attention colour. The rule that screens compose primitives and never style themselves stays,
-   so the new looks are new primitives (`Triage`, `Card`, `Progress`, `FilterRail`, `NextList`, `PeekLink`, `Cleared`)
+   so the new looks are new primitives (`Triage`, `Card`, `Queue`, `FilterRail`, `NextList`, `PeekLink`, `Cleared`)
    in `ui/`. _Trade-off:_ in Paper the selection is ink, not the drawings' blue; every theme reads as itself.
 8. **I'm at leaves the bar.** It is not in the drawings, and the live install has never used it (no places, never
    set). The CLI's `place` and `at` stay. The "on the go" idea the developer described is not designed yet, so nothing
@@ -91,6 +91,18 @@ mislignment".
 10. **Tests:** integration tests first for each slice's behaviour (what the rail counts, which item opens, Later,
     Undo, a peek opening and stacking), then presentational tests for each new pure component, then the code. Old tests
     for what changes are rewritten to the new design, never deleted to make things pass.
+
+## After building: every item on the page
+
+With For you live on the real tracker, the developer said: "this might need a bit more rethinking, I need all those 66
+to show up in the page". Two layouts were drawn with their real proposals (T-List-A, one list with the open item in
+place; T-List-B, the list beside the open card), and they chose "A: one list".
+
+So For you is one list beside the rail: every entry the view holds, a row each, the one you are on opened in place
+as the card. The Next column and the progress strip are gone, since the list shows what comes next and where you are
+("22 of 64 open"). _My decision:_ a proposal's row carries its agent's recommended move when that move needs nothing
+more (Start or Up next), so many proposals are placed without opening each; Table and Fold ask for a reason or a line,
+so they stay in the open card.
 
 ## Done when
 

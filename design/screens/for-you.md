@@ -8,8 +8,8 @@ question), `T-Task.dc.html`, `T-Accept.dc.html` (an urgent proposal), `T-StepIn.
 ### components/foryou/ForYouPage.tsx
 
 - Designed in: triage/Main.dc.html, T-Task, T-Accept, T-StepIn, T-OwnWords, T-Undo, T-Done, T-Peek-Line
-- What it shows: the rail of views on the left, the one entry open in the middle, Next on the right; a peek folds the rail and Next and moves the card left. On a phone (triage/T-Task-Phone, T-Peek-Phone) the views are a row that scrolls sideways over the card, Next steps away, and a peek rises from the bottom over the dimmed page.
-- Changes from today: new. It replaces the bar's counts, which jumped between items on Lines; Later sends an item to the bottom of the list.
+- What it shows: the rail of views on the left; beside it, the view's name and "22 of 64 open", then every entry it holds as one list, the one you are on opened in place as the card, the rest one row each (triage/T-List-A). A peek folds the rail and moves the list left. On a phone (triage/T-Task-Phone, T-Peek-Phone) the views are a row that scrolls sideways over the card, Next steps away, and a peek rises from the bottom over the dimmed page.
+- Changes from today: new. It replaces the bar's counts, which jumped between items on Lines; Later sends an item to the bottom of the list; with many waiting, all of them show at once, as the developer asked: "I need all those 66 to show up in the page".
 - Loading: "Loading what waits on you" in the middle, the rail's counts at zero.
 - Error: the tracker not answering on first load: the notice with Try now, as Lines has it.
 - Empty: ForYouEmpty.
@@ -26,7 +26,7 @@ question), `T-Task.dc.html`, `T-Accept.dc.html` (an urgent proposal), `T-StepIn.
 ### components/foryou/ForYouCard.tsx
 
 - Designed in: triage/Main.dc.html, T-Task
-- What it shows: "To answer · 1 of 3" and its strip, then the card: the line it is on, which peeks in place, and where the line stands ("step 2 of 4, Print the base"); then the entry.
+- What it shows: in place in the list, lifted and edged in the accent: the line it is on, which peeks in place, and where the line stands ("step 2 of 4, Print the base"); then the entry. Opened, it scrolls into view.
 - Changes from today: new.
 - Loading: drawn only once the list has loaded.
 - Error: cannot fail on its own.
@@ -50,14 +50,14 @@ question), `T-Task.dc.html`, `T-Accept.dc.html` (an urgent proposal), `T-StepIn.
 - Error: cannot fail on its own: a move that fails is said in the Undo bar.
 - Empty: with no line to fold into, Fold is left out.
 
-### components/foryou/ForYouNext.tsx
+### components/foryou/ForYouListRow.tsx
 
-- Designed in: triage/Main.dc.html, T-Task
-- What it shows: "NEXT", the next two entries as tiles (where, title, what is recommended), then "Then 4 to do, 2 to accept and 2 to step in."
+- Designed in: triage/T-List-A.dc.html
+- What it shows: its number, "Proposed line" (or Question, Task, Step in), its title, where it sits, what is recommended; a press opens it in place; a proposal whose agent recommends Start or Up next carries that move as a button.
 - Changes from today: new.
-- Loading: drawn only once the list has loaded.
-- Error: cannot fail on its own.
-- Empty: nothing after the open one and nothing in other views: not drawn.
+- Loading: a move pressed shows "Moving…" while it waits with Undo.
+- Error: a move that fails is said in the Undo bar.
+- Empty: never drawn without an entry.
 
 ### components/foryou/ForYouEmpty.tsx
 

@@ -196,13 +196,13 @@ export function entryText(entry: Entry): { where: string; title: string; note: s
       return { where: `${line} · new done when`, title: `A new done when for ${line}`, note: null };
     case "proposal":
       return {
-        where: `Proposed line · ${entry.ref}`,
+        where: [entry.ref, ...(entry.line?.repos ?? [])].join(" · "),
         title: entry.line?.title ?? entry.ref,
-        note: entry.line?.proposedBy === null || entry.line === null ? null : `From ${entry.line.proposedBy}`,
+        note: entry.line?.proposedBy == null ? null : `From ${entry.line.proposedBy}`,
       };
     case "stepin":
       return {
-        where: `${line} · step in`,
+        where: entry.line?.ref ?? "",
         title: line,
         note: `No agent: ${STEP_IN_SHORT[entry.item.stepKind]}`,
       };

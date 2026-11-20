@@ -133,7 +133,6 @@ item on For you steps up to 17 and 32, as the Triage drawings set it, since it i
 | `--space-12`   | Between sections of home                                 |
 | `--space-14`   | Padding around an empty state                            |
 | `--space-16`   | The page's side margins                                  |
-| `--space-20`   | The open item's card padding on For you                  |
 | `--space-24`   | For you's room above its three columns                   |
 | `--space-28`   | Between For you's rail, card and Next                    |
 | `--space-32`   | The room left at the end of a scroll                     |
@@ -162,6 +161,7 @@ Only what floats over content gets a shadow. Everything else is separated by a l
 | ---------------------- | ----------------------------------------------------------------------------------- |
 | `--shadow-popover`     | The filter's suggestions, the Undo bar                                              |
 | `--shadow-panel`       | A line, task or issue opened over the right of the page                             |
+| `--shadow-card-open`   | The open item among the rows of its list, edged in the accent and lifted            |
 | `--shadow-card`        | The open item's card on For you, lifted a little from the page                      |
 | `--shadow-tile`        | A tile's edge: the page you are on in the bar, the view you are in, an item in Next |
 | `--shadow-tile-hover`  | That edge under the pointer, a step darker                                          |
@@ -200,7 +200,7 @@ E · One list boards draw it.
 | `--bar-height`        | The bar's height, which a peek starts under                                                        |
 | `--peek-head`         | A peek's head row: the way back, where it sits, its own page, Close                                |
 | `--card-width`        | For you's open item at most                                                                        |
-| `--next-column`       | For you's Next column                                                                              |
+| `--queue-width`       | For you's list of everything a view holds, beside the rail                                         |
 | `--page-width-narrow` | A page of reading in one column: the log                                                           |
 | `--touch-target`      | The least height of anything tapped on a touch screen                                              |
 | `--sheet-width`       | A sheet's width on a wide screen                                                                   |

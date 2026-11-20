@@ -81,7 +81,6 @@
   --space-12: calc(var(--space-unit) * 12);
   --space-14: calc(var(--space-unit) * 14);
   --space-16: calc(var(--space-unit) * 16);
-  --space-20: calc(var(--space-unit) * 20);
   --space-24: calc(var(--space-unit) * 24);
   --space-28: calc(var(--space-unit) * 28);
   --space-32: calc(var(--space-unit) * 32);
@@ -107,6 +106,8 @@
   --shadow-tile-hover: 0 0 0 1px var(--line-strong);
   /* A peek opened from another: the one under it shows as an edge to its left, with its hairline. */
   --shadow-stack: calc(-1 * var(--space-12)) 0 0 0 var(--surface-2), calc(-1 * var(--space-12) - 1px) 0 0 0 var(--line);
+  /* The open item among the rows of its list: edged in the accent and lifted. */
+  --shadow-card-open: 0 0 0 1.5px var(--accent), 0 12px 32px -12px rgb(0 0 0 / 0.18);
   /* The open item's card, lifted a little from the page. */
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.06), 0 12px 32px -12px rgb(0 0 0 / 0.12);
   /* What dims everything around a peek on a phone. */
@@ -143,7 +144,8 @@
   /* For you: the rail of views, the open item and Next, side by side. */
   --rail-column: 200px;
   --card-width: 720px;
-  --next-column: 280px;
+  /* For you's list of everything a view holds, beside the rail. */
+  --queue-width: 860px;
   /* A peek over the right of the page, and how far the open item sits from the left while one is open. */
   --peek-width: 560px;
   /* A line on a page of its own: how wide it gets, and the column beside its plan. */

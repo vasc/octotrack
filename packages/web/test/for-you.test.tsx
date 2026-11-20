@@ -70,6 +70,12 @@ const card = (view: Pick<RenderResult, "getByRole">) => view.getByRole("region",
 const opened = (view: Pick<RenderResult, "getByRole">, name: string) =>
   waitFor(() => within(card(view)).getByRole("heading", { name }));
 
+/** The items a view lists, top to bottom, the open one among them: each by its title. */
+const listed = (view: Pick<RenderResult, "getByRole">, name: string) =>
+  within(view.getByRole("region", { name }))
+    .getAllByRole("article")
+    .map((item) => item.getAttribute("aria-label"));
+
 /** The rail's views, by name. */
 const rail = (view: Pick<RenderResult, "getByRole">) =>
   within(view.getByRole("navigation", { name: "Waiting on you" }));
@@ -82,7 +88,7 @@ beforeEach(() => {
 });
 
 describe("For you", () => {
-  test("opening Octotrack shows For you: the rail with its counts, one item open, and what comes next", async () => {
+  test("opening Octotrack shows For you: the rail with its counts, and every item listed, the first open in place", async () => {
     twoLines();
     ask("Which board?", "octo.1");
     ask("Which day?", "digest.1");
@@ -90,16 +96,15 @@ describe("For you", () => {
     const view = renderApp(<App />);
     const open = within(await waitFor(() => card(view)));
     await open.findByRole("heading", { name: "Which board?" });
-    open.getByText("All · 1 of 3");
+    view.getByRole("heading", { name: "All", level: 1 });
+    view.getByText("1 of 3 open");
     rail(view).getByRole("link", { name: "All, 3" });
     rail(view).getByRole("link", { name: "To answer, 2" });
     rail(view).getByRole("link", { name: "To do, 1" });
     expect(rail(view).getByRole("link", { name: "All, 3" }).getAttribute("aria-current")).toBe("page");
-    // Only the open one is drawn in full; the next two wait beside it.
+    // Every one is listed, in the order of lines; only the open one is drawn in full.
+    expect(listed(view, "All")).toEqual(["Which board?", "Weigh it", "Which day?"]);
     expect(view.queryByRole("heading", { name: "Which day?" })).toBeNull();
-    const next = within(view.getByRole("region", { name: "Next" }));
-    next.getByRole("link", { name: /Which day\?/ });
-    next.getByRole("link", { name: /Weigh it/ });
     // It names its line, which opens in place.
     open.getByRole("link", { name: "Sendspin enclosure" });
   });
@@ -131,7 +136,7 @@ describe("For you", () => {
     fireEvent.click(await waitFor(() => rail(view).getByRole("link", { name: "To do, 1" })));
     await waitFor(() => expect(window.location.pathname).toBe("/for-you/to-do"));
     await opened(view, "Weigh it");
-    within(card(view)).getByText("To do · 1 of 1");
+    view.getByText("1 of 1 open");
     expect(rail(view).getByRole("link", { name: "To do, 1" }).getAttribute("aria-current")).toBe("page");
   });
 
@@ -144,7 +149,7 @@ describe("For you", () => {
     fireEvent.keyDown(window, { key: "j" });
     await opened(view, "Which day?");
     expect(new URLSearchParams(window.location.search).get("item")).toBe("D-2");
-    within(card(view)).getByText("All · 2 of 2");
+    view.getByText("2 of 2 open");
     fireEvent.keyDown(window, { key: "k" });
     await opened(view, "Which board?");
   });
@@ -161,9 +166,9 @@ describe("For you", () => {
     await opened(view, "Which day?");
     // Once its Undo has run out, it is last.
     await answerNow(view);
-    await within(card(view)).findByText("To answer · 1 of 2");
+    await view.findByText("1 of 2 open");
     // Put off, it still waits on you, last.
-    within(view.getByRole("region", { name: "Next" })).getByRole("link", { name: /Which board\?/ });
+    expect(listed(view, "To answer")).toEqual(["Which day?", "Which board?"]);
   });
 
   test("an answer takes its question away and the next one opens where it was", async () => {
@@ -175,17 +180,36 @@ describe("For you", () => {
     fireEvent.keyDown(window, { key: "1" });
     await answerNow(view);
     await opened(view, "Which day?");
-    within(card(view)).getByText("All · 1 of 1");
+    view.getByText("1 of 1 open");
   });
 
-  test("an item from the Next column opens in the middle", async () => {
+  test("an item in the list opens in place, and the one open before closes to its row", async () => {
     twoLines();
     ask("Which board?", "octo.1");
     ask("Which day?", "digest.1");
     const view = renderApp(<App />);
-    const next = within(await waitFor(() => view.getByRole("region", { name: "Next" })));
-    fireEvent.click(await next.findByRole("link", { name: /Which day\?/ }));
+    await opened(view, "Which board?");
+    fireEvent.click(
+      within(view.getByRole("region", { name: "All" })).getByRole("button", { name: "Which day?" }),
+    );
     await opened(view, "Which day?");
+    expect(view.queryByRole("heading", { name: "Which board?" })).toBeNull();
+    expect(listed(view, "All")).toEqual(["Which board?", "Which day?"]);
+  });
+
+  test("a proposal's row carries its agent's recommended move, so many are placed without opening each", async () => {
+    for (const title of ["Wall mount", "Garden feed"]) {
+      server.act(
+        c.linePropose,
+        { title, doneWhen: "It works.", recommendation: "up_next", why: "It is next." },
+        "panel-agent",
+      );
+    }
+    navigate("/for-you/to-accept");
+    const view = renderApp(<App />);
+    await opened(view, "Wall mount");
+    fireEvent.click(view.getByRole("button", { name: "Up next Garden feed" }));
+    await view.findByText(/^Moving Garden feed to up next/);
   });
 
   test("a notification's item opens, whichever view it is in", async () => {

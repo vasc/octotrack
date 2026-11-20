@@ -1306,12 +1306,14 @@ page of https://claude.ai/artifact/JSt9awRkVko2hzaKCy5ayF, kept in `design/canva
 The developer could not see what came next or keep a place, and Later did not visibly send anything anywhere.
 
 **What was built.** For you is the page at `/`, with Lines at `/lines`. A rail lists the views (All, Urgent, To answer,
-To do, To accept, To step in) with their counts; each is its own address, `/for-you/to-answer`. One entry is open in the
-middle, on a card, under "To answer · 1 of 3"; Next names the two after it and what the other views hold. `j` and `k`
+To do, To accept, To step in) with their counts; each is its own address, `/for-you/to-answer`. Beside it, every entry
+the view holds is one list, the one you are on opened in place as a card, the rest a row each; a proposal's row carries
+its agent's recommended move when it needs nothing more. Asked to see all of them at once ("I need all those 66 to
+show up in the page"), the developer chose this over a list beside the card. `j` and `k`
 move, the open entry is in the address as `?item=`, and when it is answered the one after it opens in its place. The
 order is the developer's order of lines, urgent first, proposals after the working lines, questions on no line last;
 Later sends an item to the bottom of the whole list, the last put off last. A line named on the card peeks in place:
-the rail and Next fold away and the card moves left, so the card and the peek are both whole.
+the rail folds away and the list moves left, so the list and the peek are both whole.
 
 **Decisions.** The bar is one row: Lines, For you with how much waits, New line, and More, which holds the Log, Agents,
 the appearance and the keys, since the Log and Agents are used less. I'm at leaves the bar: it was never used, and the

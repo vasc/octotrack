@@ -10,11 +10,12 @@ import { RecordAnswers } from "../home/RecordAnswers.tsx";
 import { StartSheet } from "../home/StartSheet.tsx";
 import { NotAnswering } from "../home/NotAnswering.tsx";
 import { LoadingState } from "../ui/states.tsx";
+import { Queue } from "../ui/Queue.tsx";
 import { Triage } from "../ui/Triage.tsx";
 import { ForYouCard } from "./ForYouCard.tsx";
 import { ForYouEmpty } from "./ForYouEmpty.tsx";
 import { ForYouEntry } from "./ForYouEntry.tsx";
-import { ForYouNext } from "./ForYouNext.tsx";
+import { ForYouListRow } from "./ForYouListRow.tsx";
 import { ForYouRail } from "./ForYouRail.tsx";
 
 const NO_COUNTS: Readonly<Record<Filter, number>> = {
@@ -27,9 +28,9 @@ const NO_COUNTS: Readonly<Record<Filter, number>> = {
 };
 
 /**
- * For you: what waits on the developer, one at a time. The rail picks a view; the one entry open sits in the middle
- * with its moves; what comes next waits beside it. A line named on the card peeks in place, and the page folds its
- * rail and Next so the card and the peek are both whole.
+ * For you: everything that waits on the developer, as one list beside the rail of views, the entry they are on opened
+ * in place with its moves and the rest one row each. A line named on the card peeks in place, and the page folds its
+ * rail so the list and the peek are both whole.
  */
 export function ForYouPage({ filter }: { filter: Filter }) {
   const h = useHome();
@@ -65,21 +66,7 @@ export function ForYouPage({ filter }: { filter: Filter }) {
   return (
     <>
       {recording ? <RecordAnswers onClose={() => setRecording(false)} /> : null}
-      <Triage
-        folded={peek !== null}
-        rail={<ForYouRail counts={counts} filter={filter} />}
-        next={
-          open === null || view.counts === null ? null : (
-            <ForYouNext
-              entries={view.entries}
-              index={view.index}
-              filter={filter}
-              counts={view.counts}
-              onOpen={view.go}
-            />
-          )
-        }
-      >
+      <Triage folded={peek !== null} rail={<ForYouRail counts={counts} filter={filter} />}>
         {home === undefined ? (
           h.home.error === null ? (
             <LoadingState label="Loading what waits on you" />
@@ -102,26 +89,37 @@ export function ForYouPage({ filter }: { filter: Filter }) {
             }
           />
         ) : (
-          <ForYouCard
-            key={open.ref}
-            entry={open}
-            view={name}
-            at={view.index + 1}
-            of={view.entries.length}
-            urgent={filter === "urgent"}
-            step={step}
-            peeking={open.line !== null && peek === open.line.ref}
-            onPeek={(line) => openEntity(line)}
-          >
-            <ForYouEntry
-              entry={open}
-              home={home}
-              h={h}
-              armed={armed}
-              onPutOff={view.putOff}
-              onStarting={setStarting}
-            />
-          </ForYouCard>
+          <Queue title={name} subtitle={`${view.index + 1} of ${view.entries.length} open`}>
+            {view.entries.map((entry, index) =>
+              entry === open ? (
+                <ForYouCard
+                  key={entry.ref}
+                  entry={entry}
+                  step={step}
+                  peeking={entry.line !== null && peek === entry.line.ref}
+                  onPeek={(line) => openEntity(line)}
+                >
+                  <ForYouEntry
+                    entry={entry}
+                    home={home}
+                    h={h}
+                    armed={armed}
+                    onPutOff={view.putOff}
+                    onStarting={setStarting}
+                  />
+                </ForYouCard>
+              ) : (
+                <ForYouListRow
+                  key={entry.ref}
+                  entry={entry}
+                  number={index + 1}
+                  busy={h.held.has(entry.ref)}
+                  onOpen={view.go}
+                  onMove={(ref, move) => (move === "start" ? h.start(ref) : h.queue(ref))}
+                />
+              ),
+            )}
+          </Queue>
         )}
       </Triage>
       {startingLine === undefined ? null : (

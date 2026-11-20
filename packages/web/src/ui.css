@@ -2244,7 +2244,7 @@
 /* The rail, the open item and Next, side by side and centred; a peek folds the outer two and moves the middle left. */
 .ui-triage {
   display: grid;
-  grid-template-columns: var(--rail-column) minmax(0, var(--card-width)) var(--next-column);
+  grid-template-columns: var(--rail-column) minmax(0, var(--queue-width));
   justify-content: center;
   align-items: start;
   gap: var(--space-28);
@@ -2257,7 +2257,7 @@
   padding-left: var(--peek-offset);
 }
 
-.ui-triage[data-folded="true"] :is(.ui-triage-rail, .ui-triage-next) {
+.ui-triage[data-folded="true"] .ui-triage-rail {
   display: none;
 }
 
@@ -2265,22 +2265,23 @@
   min-width: 0;
 }
 
-.ui-card-column {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-10);
-  min-width: 0;
+/* The views stay beside a long list as it scrolls. */
+.ui-triage-rail {
+  position: sticky;
+  top: calc(var(--bar-height) + var(--space-12));
 }
 
-/* The open item: the page's one lifted sheet, its title said large. */
+/* The open item: lifted among the rows of its list, edged in the accent, its title said large. */
 .ui-card {
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
-  padding: var(--space-20);
-  border-radius: var(--radius-card);
+  margin: var(--space-3);
+  padding: var(--space-14) var(--space-14);
+  border-radius: var(--radius-tile);
   background: var(--surface);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-card-open);
+  scroll-margin: var(--space-32);
 }
 
 .ui-card .ui-item {
@@ -2311,36 +2312,44 @@
   border-radius: var(--radius-tile);
 }
 
-/* Where you are in a view: its words, then a segment per item, yours filled. */
-.ui-progress {
+/* Everything a view holds: its name and where you are, then one sheet of rows, the open one lifted among them. */
+.ui-queue {
   display: flex;
-  align-items: center;
-  gap: var(--space-8);
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
 }
 
-.ui-progress-words {
-  flex: none;
-  font-size: var(--text-sm);
+.ui-queue-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-6);
+}
+
+.ui-queue-title {
+  margin: 0;
+  font-size: var(--text-heading);
   font-weight: var(--weight-semibold);
-  color: var(--ink-2);
+  letter-spacing: -0.01em;
 }
 
-.ui-progress-strip {
-  display: grid;
-  flex: 1;
-  grid-auto-columns: minmax(0, 1fr);
-  grid-auto-flow: column;
-  gap: var(--space-2);
+.ui-queue-subtitle {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--ink-3);
 }
 
-.ui-progress-segment {
-  height: var(--space-2);
-  border-radius: var(--radius-pill);
-  background: var(--line);
+.ui-queue-list {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-tile);
 }
 
-.ui-progress-segment[data-current="true"] {
-  background: var(--tone, var(--accent));
+.ui-queue-list > .ui-row + .ui-row {
+  border-top: 1px solid var(--line-faint);
 }
 
 /* The views of what waits on you, the one you are in on a raised tile. */
@@ -2657,12 +2666,12 @@
     padding: var(--space-8) var(--space-6) var(--space-32);
   }
 
-  .ui-triage-next {
-    display: none;
-  }
-
   .ui-triage[data-folded="true"] {
     padding-left: var(--space-6);
+  }
+
+  .ui-triage-rail {
+    position: static;
   }
 
   .ui-filter-rail {

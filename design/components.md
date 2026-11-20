@@ -45,11 +45,11 @@ gives an element a class or an inline style, and on a class in `ui.css` that is 
 | `RefText`      | Running text in which every ref is a `RefLink`                                                                                                                                                                             |
 | `TimeAgo`      | `now`, `5m`, `3h`, `2d`, then a date; the full time under the pointer                                                                                                                                                      |
 | `Keys`         | A key or chord as the Keys sheet lists it, with Return, the arrows and Option as icons                                                                                                                                     |
-| `Triage`       | For you's page: the rail of views, the open item, Next; folded to the item alone, moved left, while a peek is open                                                                                                         |
-| `Card`         | The one item open on For you, on a lifted sheet of its own, its title said large; what is above it, such as `Progress`, sits over it                                                                                       |
-| `Progress`     | Where you are in a view: its name and "2 of 4", and a segment per item with yours filled; no strip past twelve                                                                                                             |
+| `Triage`       | For you's page: the rail of views and the list; folded to the list alone, moved left, while a peek is open                                                                                                                 |
+| `Card`         | The one item open on For you, lifted among the rows of its list and edged in the accent, its title said large                                                                                                              |
+| `Queue`        | Everything a view holds as one list: its name and where you are over it, a row each, the open one in place                                                                                                                 |
 | `FilterRail`   | The views of what waits on you, one under another with their counts, the one you are in raised; real links                                                                                                                 |
-| `NextList`     | What comes after the open item: a tile each, then a closing sentence                                                                                                                                                       |
+| `NextList`     | Items named as tiles, each a link that opens it, then a closing sentence: what is for you on a line's page                                                                                                                 |
 | `PeekLink`     | Words naming something that opens in place beside what you are doing, a real link to its own page; tinted while its peek is open                                                                                           |
 | `DetailPage`   | One thing on a page of its own: crumbs, its title, lead and facts with its moves, then a lifted sheet and a column beside it                                                                                               |
 | `Waits`        | What waits on a line, a pill at its row's end that leads there: "5 for you", "Step in"                                                                                                                                     |
@@ -84,15 +84,15 @@ properties and appear on the `/design` specimen; **structural** ones load data a
 
 ### For you: `foryou/`
 
-| Component      | Kind       | What it is                                                                                                      |
-| -------------- | ---------- | --------------------------------------------------------------------------------------------------------------- |
-| `ForYouPage`   | Structural | For you, at `/` and `/for-you/…`: the rail, the one entry open, Next; the keys; folds while a peek is open      |
-| `ForYouRail`   | Pure       | The views as a `FilterRail`, each with its count                                                                |
-| `ForYouCard`   | Pure       | The open entry in a `Card` under its `Progress`: the line it is on, which peeks, then the entry                 |
-| `ForYouEntry`  | Structural | What the open entry holds, by kind: a question, a task, a proposal, a case for done or a new done when, Step in |
-| `ProposalItem` | Pure       | A proposed line opened: who proposed it, done when and why now, then its moves numbered, the recommended first  |
-| `ForYouNext`   | Pure       | The next two entries as a `NextList`, then what the other views hold                                            |
-| `ForYouEmpty`  | Pure       | A view with nothing in it, as `Cleared`: who is at work and where the next ask comes from, or the next view     |
+| Component       | Kind                                                                                                          | What it is                                                                                                           |
+| --------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `ForYouPage`    | Structural                                                                                                    | For you, at `/` and `/for-you/…`: the rail, then every entry as one list, the one you are on open in place; the keys |
+| `ForYouRail`    | Pure                                                                                                          | The views as a `FilterRail`, each with its count                                                                     |
+| `ForYouCard`    | Pure                                                                                                          | The open entry in a `Card`, in place in its list: the line it is on, which peeks, then the entry; scrolled into view |
+| `ForYouEntry`   | Structural                                                                                                    | What the open entry holds, by kind: a question, a task, a proposal, a case for done or a new done when, Step in      |
+| `ProposalItem`  | Pure                                                                                                          | A proposed line opened: who proposed it, done when and why now, then its moves numbered, the recommended first       |
+| `ForYouListRow` | An entry not open, one row: number, what it is, title, where it sits; a proposal carries its recommended move |
+| `ForYouEmpty`   | Pure                                                                                                          | A view with nothing in it, as `Cleared`: who is at work and where the next ask comes from, or the next view          |
 
 ### Lines: `home/` and `lines/`
 

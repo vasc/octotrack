@@ -186,6 +186,7 @@ These changed how the product looks, slightly. All of them are visible at `/desi
 - **The UI does not explain itself.** Sentences telling the developer how the product works (what tabling does, how
   owners are found, what a box accepts) are gone from the screens; the docs and `octo guide` say it once. What stays
   are names, facts and actions.
-- **For you, one at a time (D16).** What waits on the developer is its own page, one entry open on a card, the views
-  on a rail, what comes next beside it; the bar's counts are gone. A line named on the card peeks in place, and the
-  page folds its rail and Next so the card and the peek are both whole. Drawn as Triage, in `canvas/triage/`.
+- **For you, every item in one list (D16).** What waits on the developer is its own page: the views on a rail, and
+  beside it everything the view holds as one list, the item they are on opened in place as a card. The bar's counts
+  are gone. A line named on the card peeks in place, and the page folds its rail so the list and the peek are both
+  whole. Drawn as Triage, in `canvas/triage/` (T-List-A for the list).

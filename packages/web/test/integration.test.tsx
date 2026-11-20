@@ -1306,12 +1306,14 @@ describe("lines of work", () => {
     server.act(c.decisionAsk, { title: "Which plug?", context: "The case is open.", options }, "octo.1");
     navigate("/");
     const view = renderApp(<App />);
-    await view.findByRole("article", { name: "Which board?" });
+    await view.findByRole("heading", { name: "Which board?" });
     fireEvent.keyDown(window, { key: "j" });
-    await view.findByRole("article", { name: "Which plug?" });
-    await gone(() => view.queryByRole("article", { name: "Which board?" }));
+    await view.findByRole("heading", { name: "Which plug?" });
+    // The one left closes to its row in the list.
+    await gone(() => view.queryByRole("heading", { name: "Which board?" }));
+    view.getByRole("button", { name: "Which board?" });
     fireEvent.keyDown(window, { key: "k" });
-    await view.findByRole("article", { name: "Which board?" });
+    await view.findByRole("heading", { name: "Which board?" });
   });
 
   describe("the log, by what was seen", () => {
