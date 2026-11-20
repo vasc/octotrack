@@ -53,15 +53,7 @@ export function LinesGallery() {
           onPalette={() => {}}
           onMode={() => {}}
           path="/"
-          counts={[
-            { key: "toAnswer", label: "to answer", count: 4 },
-            { key: "toDo", label: "to do", count: 3 },
-            { key: "toAccept", label: "to accept", count: 1 },
-            { key: "toStepIn", label: "to step in", count: 1 },
-          ]}
-          places={["the bench", "the Mac"]}
-          at={null}
-          onAt={NOOP}
+          waiting={11}
           onNewLine={NOOP}
           onKeys={NOOP}
         />

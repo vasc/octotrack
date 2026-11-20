@@ -169,6 +169,7 @@ export function MenuAction({
   disabled = false,
   autoFocus = false,
   choice,
+  trailing,
   children,
 }: {
   onSelect(): void;
@@ -177,6 +178,8 @@ export function MenuAction({
   autoFocus?: boolean;
   /** The number key that presses it while the menu is open. */
   choice?: number;
+  /** A quiet word at its end, such as the theme in force or its key. */
+  trailing?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -191,6 +194,7 @@ export function MenuAction({
       onClick={onSelect}
     >
       {children}
+      {trailing === undefined ? null : <span className="ui-menu-trailing">{trailing}</span>}
     </button>
   );
 }

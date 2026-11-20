@@ -45,6 +45,13 @@ gives an element a class or an inline style, and on a class in `ui.css` that is 
 | `RefText`      | Running text in which every ref is a `RefLink`                                                                                                                                                                             |
 | `TimeAgo`      | `now`, `5m`, `3h`, `2d`, then a date; the full time under the pointer                                                                                                                                                      |
 | `Keys`         | A key or chord as the Keys sheet lists it, with Return, the arrows and Option as icons                                                                                                                                     |
+| `Triage`       | For you's page: the rail of views, the open item, Next; folded to the item alone, moved left, while a peek is open                                                                                                         |
+| `Card`         | The one item open on For you, on a lifted sheet of its own, its title said large; what is above it, such as `Progress`, sits over it                                                                                       |
+| `Progress`     | Where you are in a view: its name and "2 of 4", and a segment per item with yours filled; no strip past twelve                                                                                                             |
+| `FilterRail`   | The views of what waits on you, one under another with their counts, the one you are in raised; real links                                                                                                                 |
+| `NextList`     | What comes after the open item: a tile each, then a closing sentence                                                                                                                                                       |
+| `PeekLink`     | Words naming something that opens in place beside what you are doing, a real link to its own page; tinted while its peek is open                                                                                           |
+| `Cleared`      | Nothing left in a view: a check, what is true, a few words on what comes, where to go instead                                                                                                                              |
 | `Rail`         | A branch of a plan on a rail under the row it forks from, a group named for the branch                                                                                                                                     |
 | `Icon`         | Every icon, from Lucide, drawn in the text's colour; no font character stands in for one                                                                                                                                   |
 | `states`       | `LoadingState`, `EmptyState` (with the command that would change it) and `ErrorState`                                                                                                                                      |
@@ -60,19 +67,30 @@ properties and appear on the `/design` specimen; **structural** ones load data a
 
 ### The frame: `layout/`
 
-| Component        | Kind       | What it is                                                                                                                 |
-| ---------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `AppShell`       | Structural | The bar, the page, an opened ref in a `Side`, New line as a sheet over any page, and the keys every page shares            |
-| `TopBar`         | Pure       | `AppBar`: the name (home), Log and Agents beside it, what waits (urgent first), I'm at, New line, the theme, keys or pages |
-| `AtMenu`         | Pure       | I'm at, a `Menu` of the developer's places                                                                                 |
-| `AppearanceMenu` | Pure       | The theme and mode, a `Menu` of eight themes in their own colours and three modes                                          |
-| `PagesMenu`      | Pure       | Lines, Log and Agents behind one icon, on a phone                                                                          |
-| `UndoBar`        | Pure       | `Toasts`: each choice waiting, with Undo and, for a line's owner, Pause the line instead; failed ones with Dismiss         |
-| `NotFoundPage`   | Pure       | An address that leads nowhere: what lives here instead, and Go to Lines                                                    |
-| `PendingChoices` | Structural | The Undo bar on every page, with u undoing the newest                                                                      |
-| `AppStrips`      | Pure       | What is true of the whole app, under the bar: not live with Try now, a new version with Load it now                        |
-| `PartBoundary`   | Structural | Catches a bug in one part of the page, so the rest keeps working                                                           |
-| `PartFailed`     | Pure       | A part that broke: a bug, not your data; drafts kept; the error to report and Reload                                       |
+| Component        | Kind       | What it is                                                                                                         |
+| ---------------- | ---------- | ------------------------------------------------------------------------------------------------------------------ |
+| `AppShell`       | Structural | The bar, the page, an opened ref in a `Side`, New line as a sheet over any page, and the keys every page shares    |
+| `TopBar`         | Pure       | `AppBar`, one row: the name, Lines, For you with how much waits, then New line and More                            |
+| `MoreMenu`       | Pure       | What is used less, behind one button: the Log, Agents, Appearance (the themes in its place) and the keys           |
+| `AppearanceMenu` | Pure       | The theme and mode in `MoreMenu`: eight themes in their own colours and three modes                                |
+| `UndoBar`        | Pure       | `Toasts`: each choice waiting, with Undo and, for a line's owner, Pause the line instead; failed ones with Dismiss |
+| `NotFoundPage`   | Pure       | An address that leads nowhere: what lives here instead, and Go to Lines                                            |
+| `PendingChoices` | Structural | The Undo bar on every page, with u undoing the newest                                                              |
+| `AppStrips`      | Pure       | What is true of the whole app, under the bar: not live with Try now, a new version with Load it now                |
+| `PartBoundary`   | Structural | Catches a bug in one part of the page, so the rest keeps working                                                   |
+| `PartFailed`     | Pure       | A part that broke: a bug, not your data; drafts kept; the error to report and Reload                               |
+
+### For you: `foryou/`
+
+| Component      | Kind       | What it is                                                                                                      |
+| -------------- | ---------- | --------------------------------------------------------------------------------------------------------------- |
+| `ForYouPage`   | Structural | For you, at `/` and `/for-you/…`: the rail, the one entry open, Next; the keys; folds while a peek is open      |
+| `ForYouRail`   | Pure       | The views as a `FilterRail`, each with its count                                                                |
+| `ForYouCard`   | Pure       | The open entry in a `Card` under its `Progress`: the line it is on, which peeks, then the entry                 |
+| `ForYouEntry`  | Structural | What the open entry holds, by kind: a question, a task, a proposal, a case for done or a new done when, Step in |
+| `ProposalItem` | Pure       | A proposed line opened: who proposed it, done when and why now, then its moves numbered, the recommended first  |
+| `ForYouNext`   | Pure       | The next two entries as a `NextList`, then what the other views hold                                            |
+| `ForYouEmpty`  | Pure       | A view with nothing in it, as `Cleared`: who is at work and where the next ask comes from, or the next view     |
 
 ### Lines: `home/` and `lines/`
 

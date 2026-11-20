@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Triage, New line, phone</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2F45C6;text-decoration:none}a:hover{color:#1F2F94}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; background: #F2F3F5; color: #14161B; font-family: 'Inter Tight', Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.5; overflow: hidden">
+
+<div aria-hidden="true" style="display: flex; flex-direction: column; gap: 12px; padding: 72px 16px">
+<span style="font-size: 26px; font-weight: 600">Lines</span>
+<span style="height: 88px; border-radius: 14px; background: #FFFFFF"></span>
+<span style="height: 88px; border-radius: 14px; background: #FFFFFF"></span>
+</div>
+<div style="position: absolute; inset: 0; background: rgba(20, 22, 27, 0.32)"></div>
+
+<section role="dialog" aria-modal="true" aria-labelledby="nlp-title" style="position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; gap: 18px; padding: 10px 20px 28px; border-radius: 20px 20px 0 0; background: #FFFFFF; box-shadow: 0 -12px 40px -12px rgba(20, 22, 27, 0.35)">
+<span aria-hidden="true" style="align-self: center; width: 40px; height: 5px; border-radius: 3px; background: #D9DDE4"></span>
+<div style="display: flex; align-items: center; justify-content: space-between">
+<h2 id="nlp-title" style="margin: 0; font-size: 20px; font-weight: 600">New line</h2>
+<button type="button" style="height: 44px; padding: 0 4px; border: 0; background: none; font: inherit; color: #2F45C6; font-weight: 500">Cancel</button>
+</div>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600">Title
+<input value="Kitchen light dims at night" style="height: 48px; padding: 0 14px; border: 1.5px solid #2F45C6; border-radius: 10px; font: inherit; font-size: 16px; font-weight: 500; outline: none">
+</label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600">Done when
+<textarea rows="3" style="padding: 12px 14px; border: 1.5px solid #D9DDE4; border-radius: 10px; font: inherit; font-size: 16px; font-weight: 400; line-height: 1.45; resize: none; outline: none">After 22:00 the kitchen light comes on at 20% and nobody touches a switch.</textarea>
+</label>
+<fieldset style="display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; border: 0">
+<legend style="padding: 0 0 8px; font-size: 14px; font-weight: 600">Repos</legend>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<button type="button" aria-pressed="true" style="height: 36px; padding: 0 14px; border: 0; border-radius: 18px; background: #14161B; color: #FFFFFF; font: inherit; font-size: 14px; display: inline-flex; align-items: center; gap: 6px">Home panel<span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #A9AEB9">PANEL</span></button>
+<button type="button" aria-pressed="false" style="height: 36px; padding: 0 14px; border: 1px solid #D9DDE4; border-radius: 18px; background: #FFFFFF; font: inherit; font-size: 14px; display: inline-flex; align-items: center; gap: 6px">Meals<span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6E7480">MEALS</span></button>
+<button type="button" aria-pressed="false" style="height: 36px; padding: 0 14px; border: 1px solid #D9DDE4; border-radius: 18px; background: #FFFFFF; font: inherit; font-size: 14px; display: inline-flex; align-items: center; gap: 6px">Trips<span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6E7480">TRIP</span></button>
+</div>
+</fieldset>
+<div role="radiogroup" aria-label="Where it goes" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 12px; background: #F2F3F5">
+<button type="button" role="radio" aria-checked="true" style="height: 40px; border: 0; border-radius: 9px; background: #FFFFFF; font: inherit; font-weight: 600; box-shadow: 0 1px 2px rgba(20, 22, 27, 0.1)">Up next</button>
+<button type="button" role="radio" aria-checked="false" style="height: 40px; border: 0; border-radius: 9px; background: none; font: inherit; color: #474D59">Working on</button>
+</div>
+<button type="submit" style="height: 52px; border: 0; border-radius: 12px; background: #2F45C6; color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 600">Add line</button>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

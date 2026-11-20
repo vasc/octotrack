@@ -103,13 +103,16 @@ and `--tone-mark`, and badges, glyphs and feed marks all read those. Add a tone 
 | `--text-md`         | Body. Nearly everything                                                                             |
 | `--text-lg`         | Running text in a summary or an outcome form                                                        |
 | `--text-heading`    | Working on, and a page's own title                                                                  |
+| `--text-display`    | The open item's title on For you: what it is, said large, the one thing on the page                 |
+| `--text-lead`       | The sentence under that title: its situation or what to do                                          |
 | `--weight-regular`  | Body                                                                                                |
 | `--weight-medium`   | Navigation, counts beside a heading                                                                 |
 | `--weight-semibold` | Titles, the counts in the bar                                                                       |
 | `--leading-body`    | Running text                                                                                        |
 | `--leading-tight`   | Titles that may wrap                                                                                |
 
-Hierarchy comes from weight and color first, then size. The scale follows the E · One list boards: 12 to 20.
+Hierarchy comes from weight and color first, then size. The scale follows the E · One list boards: 12 to 20; the open
+item on For you steps up to 17 and 32, as the Triage drawings set it, since it is the one thing on the page.
 
 ## Space
 
@@ -129,6 +132,9 @@ Hierarchy comes from weight and color first, then size. The scale follows the E 
 | `--space-12`   | Between sections of home                                 |
 | `--space-14`   | Padding around an empty state                            |
 | `--space-16`   | The page's side margins                                  |
+| `--space-20`   | The open item's card padding on For you                  |
+| `--space-24`   | For you's room above its three columns                   |
+| `--space-28`   | Between For you's rail, card and Next                    |
 | `--space-32`   | The room left at the end of a scroll                     |
 
 The names are multiples of the unit: `--space-4` is four units.
@@ -144,6 +150,8 @@ The names are multiples of the unit: `--space-4` is four units.
 | `--radius-xl`    | Line cards, the Up next card, proposals                                                                 |
 | `--radius-pill`  | Pills: the header counts, a group read as one thing                                                     |
 | `--radius-inner` | A sheet's corner inside its 1px edge: the first and last rows take it, so a highlight follows the curve |
+| `--radius-card`  | The open item's card on For you                                                                         |
+| `--radius-tile`  | Tiles beside and inside it: an item in Next, an answer in the card                                      |
 
 ## Elevation
 
@@ -153,6 +161,9 @@ Only what floats over content gets a shadow. Everything else is separated by a l
 | ---------------------- | ----------------------------------------------------------------------------------- |
 | `--shadow-popover`     | The filter's suggestions, the Undo bar                                              |
 | `--shadow-panel`       | A line, task or issue opened over the right of the page                             |
+| `--shadow-card`        | The open item's card on For you, lifted a little from the page                      |
+| `--shadow-tile`        | A tile's edge: the page you are on in the bar, the view you are in, an item in Next |
+| `--shadow-tile-hover`  | That edge under the pointer, a step darker                                          |
 | `--shadow-sheet`       | A sheet lifted over the page and its bar                                            |
 | `--scrim`              | What dims the page and its bar behind a sheet                                       |
 | `--shadow-focus`       | The halo round a focused control                                                    |
@@ -177,8 +188,11 @@ E · One list boards draw it.
 
 | Token                 | Use for                                                                                            |
 | --------------------- | -------------------------------------------------------------------------------------------------- |
-| `--page-width`        | How wide the bar's content and the page get                                                        |
-| `--panel-width`       | A line, task or issue opened over the page                                                         |
+| `--peek-width`        | A line, task or issue opened over the right of the page: a peek beside what you are doing          |
+| `--peek-offset`       | How far For you's card sits from the left while a peek is open, so the card and the peek are whole |
+| `--rail-column`       | For you's rail of views                                                                            |
+| `--card-width`        | For you's open item at most                                                                        |
+| `--next-column`       | For you's Next column                                                                              |
 | `--page-width-narrow` | A page of reading in one column: the log                                                           |
 | `--touch-target`      | The least height of anything tapped on a touch screen                                              |
 | `--sheet-width`       | A sheet's width on a wide screen                                                                   |

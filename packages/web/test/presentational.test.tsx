@@ -1,13 +1,13 @@
+import type { Mode, Palette } from "../src/lib/appearance.ts";
 import { navigate } from "../src/lib/router.ts";
 import { OutcomeFields } from "../src/components/home/OutcomeFields.tsx";
 import { Loaded } from "../src/components/ui/Loaded.tsx";
 import { TaskFrees } from "../src/components/entity/TaskFrees.tsx";
 import { TaskClosed } from "../src/components/home/TaskClosed.tsx";
-import { AppearanceMenu } from "../src/components/layout/AppearanceMenu.tsx";
 import type { TaskOutcome } from "../src/lib/tasks.ts";
 import { beforeEach, describe, expect, mock, test } from "bun:test";
 import { useState } from "react";
-import { act, fireEvent, render, renderHook, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, renderHook, waitFor, within } from "@testing-library/react";
 import { useReloadOnNewBuild } from "../src/hooks/useReloadOnNewBuild.ts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BatchPanelView } from "../src/components/decisions/BatchPanelView.tsx";
@@ -50,7 +50,7 @@ import { TellBox } from "../src/components/entity/TellBox.tsx";
 import { TableForm } from "../src/components/lines/TableForm.tsx";
 import { LinePrs } from "../src/components/lines/LinePrs.tsx";
 import { TopBar } from "../src/components/layout/TopBar.tsx";
-import { PagesMenu } from "../src/components/layout/PagesMenu.tsx";
+import { MoreMenu } from "../src/components/layout/MoreMenu.tsx";
 import { UndoBar } from "../src/components/layout/UndoBar.tsx";
 import { SyncFailures } from "../src/components/prs/SyncFailures.tsx";
 import { Markdown } from "../src/components/ui/Markdown.tsx";
@@ -555,139 +555,83 @@ describe("DriftItem", () => {
 });
 
 describe("TopBar", () => {
-  const counts = [
-    { key: "toAnswer" as const, label: "to answer", count: 4 },
-    { key: "toAccept" as const, label: "to accept", count: 1 },
-    { key: "toStepIn" as const, label: "to step in", count: 1 },
-  ];
-
-  test("puts Lines first: the name opens it, and Log and Agents are quieter places beside it", () => {
-    const onAt = mock((_place: string | null) => {});
-    const onNewLine = mock(() => {});
-    const view = render(
+  const bar = (path: string, waiting: number | null, onNewLine = () => {}) =>
+    render(
       <TopBar
         appearance={{ palette: "paper", mode: "system" }}
         onPalette={() => {}}
         onMode={() => {}}
-        path="/log"
-        counts={counts}
-        places={["the bench", "the Mac"]}
-        at={null}
-        onAt={onAt}
+        path={path}
+        waiting={waiting}
         onNewLine={onNewLine}
         onKeys={() => {}}
       />,
     );
+
+  test("one row: the name, Lines, For you with how much waits, then New line and More", () => {
+    const onNewLine = mock(() => {});
+    const view = bar("/", 11, onNewLine);
     const nav = within(view.getByRole("navigation", { name: "Main" }));
-    expect(nav.getByRole("link", { name: "Octotrack" }).getAttribute("href")).toBe("/");
-    expect(nav.getAllByRole("link").map((link) => link.textContent)).toEqual(["Octotrack", "Log", "Agents"]);
-    expect(nav.getByRole("link", { name: "Log" }).getAttribute("aria-current")).toBe("page");
-    expect(nav.getByRole("link", { name: "Octotrack" }).getAttribute("aria-current")).toBeNull();
-    expect(view.getByRole("link", { name: "4 to answer" }).getAttribute("href")).toBe("/?next=toAnswer");
-    expect(view.getByRole("link", { name: "1 to step in" }).getAttribute("href")).toBe("/?next=toStepIn");
-    expect(view.queryByRole("combobox")).toBeNull();
-    fireEvent.click(view.getByRole("button", { name: "I'm at: All places" }));
-    const menu = within(view.getByRole("menu", { name: "I'm at" }));
-    expect(menu.getByRole("menuitemradio", { name: "All places" }).getAttribute("aria-checked")).toBe("true");
-    fireEvent.click(menu.getByRole("menuitemradio", { name: "the Mac" }));
-    expect(onAt).toHaveBeenCalledWith("the Mac");
-    expect(view.queryByRole("menu")).toBeNull();
+    expect(nav.getAllByRole("link").map((link) => link.textContent)).toEqual([
+      "Octotrack",
+      "Lines",
+      "For you11",
+    ]);
+    const forYou = nav.getByRole("link", { name: "For you, 11 waiting" });
+    expect(forYou.getAttribute("href")).toBe("/");
+    expect(forYou.getAttribute("aria-current")).toBe("page");
+    expect(nav.getByRole("link", { name: "Lines" }).getAttribute("aria-current")).toBeNull();
+    // The Log and Agents are used less: they wait in More, not in the bar.
+    expect(nav.queryByRole("link", { name: "Log" })).toBeNull();
     fireEvent.click(view.getByRole("button", { name: "New line" }));
     expect(onNewLine).toHaveBeenCalledTimes(1);
   });
 
-  test("on a phone, the pages wait behind one quiet menu instead of a bar of equal tabs", () => {
+  test("Lines marks itself on a line's own page too, and For you on each of its views", () => {
+    expect(bar("/lines/L-2", 3).getByRole("link", { name: "Lines" }).getAttribute("aria-current")).toBe(
+      "page",
+    );
+    cleanup();
+    expect(
+      bar("/for-you/to-do", 3).getByRole("link", { name: "For you, 3 waiting" }).getAttribute("aria-current"),
+    ).toBe("page");
+  });
+
+  test("nothing waiting draws no count, and while it loads For you is named alone", () => {
+    const none = bar("/lines", 0);
+    expect(none.getByRole("link", { name: "For you, 0 waiting" }).textContent).toBe("For you");
+    cleanup();
+    bar("/lines", null).getByRole("link", { name: "For you" });
+  });
+
+  test("More holds the Log, Agents, the appearance with its themes one step in, and the keys", () => {
     const go = mock((_to: string) => {});
+    const onKeys = mock(() => {});
     const view = render(
-      <PagesMenu
-        path="/"
+      <MoreMenu
         onGo={go}
-        appearance={{ palette: "paper", mode: "system" }}
+        onKeys={onKeys}
+        appearance={{ palette: "nord", mode: "dark" }}
         onPalette={() => {}}
         onMode={() => {}}
       />,
     );
-    fireEvent.click(view.getByRole("button", { name: "Pages: Lines" }));
-    const menu = within(view.getByRole("menu", { name: "Pages" }));
-    // The check before the page you are on is drawn for the eye only; the items name themselves.
-    expect(menu.getAllByRole("menuitemradio").map((item) => item.textContent)).toEqual([
-      "Lines",
+    fireEvent.click(view.getByRole("button", { name: "More" }));
+    const menu = within(view.getByRole("menu", { name: "More" }));
+    expect(menu.getAllByRole("menuitem").map((item) => item.textContent)).toEqual([
       "Log",
       "Agents",
+      "AppearanceNord",
+      "Keyboard shortcuts?",
     ]);
-    expect(menu.getByRole("menuitemradio", { name: "Lines" }).getAttribute("aria-checked")).toBe("true");
-    fireEvent.click(menu.getByRole("menuitemradio", { name: "Agents" }));
+    fireEvent.click(menu.getByRole("menuitem", { name: /^Appearance/ }));
+    within(view.getByRole("menu", { name: "More" })).getByRole("menuitemradio", { name: "Nord" });
+    fireEvent.click(within(view.getByRole("menu", { name: "More" })).getByRole("menuitem", { name: "More" }));
+    fireEvent.click(
+      within(view.getByRole("menu", { name: "More" })).getByRole("menuitem", { name: "Agents" }),
+    );
     expect(go).toHaveBeenCalledWith("/agents");
     expect(view.queryByRole("menu")).toBeNull();
-  });
-
-  test("draws the counts as one group of number and words, with urgent apart in front of it", () => {
-    const view = render(
-      <TopBar
-        appearance={{ palette: "paper", mode: "system" }}
-        onPalette={() => {}}
-        onMode={() => {}}
-        path="/"
-        counts={[{ key: "urgent" as const, label: "urgent", count: 1 }, ...counts]}
-        places={[]}
-        at={null}
-        onAt={() => {}}
-        onNewLine={() => {}}
-        onKeys={() => {}}
-      />,
-    );
-    const status = view.getByRole("status", { name: "Waiting on you" });
-    expect(
-      within(status)
-        .getAllByRole("link")
-        .map((link) => link.getAttribute("href")),
-    ).toEqual(["/?next=urgent", "/?next=toAnswer", "/?next=toAccept", "/?next=toStepIn"]);
-    const urgent = within(status).getByRole("link", { name: "1 urgent" });
-    expect(urgent.getAttribute("data-urgent")).toBe("true");
-    // Its mark is Status's for urgent, the triangle, never colour alone.
-    expect(iconsIn(urgent)).toEqual(["alert"]);
-    // The number is its own piece, in ink, before the quieter words.
-    expect(urgent.querySelector("b")?.textContent).toBe("1");
-    expect(within(status).getByRole("link", { name: "4 to answer" }).getAttribute("data-urgent")).toBeNull();
-  });
-
-  test("never names the page twice: on Lines, the name is the way home and marks the page", () => {
-    const view = render(
-      <TopBar
-        appearance={{ palette: "paper", mode: "system" }}
-        onPalette={() => {}}
-        onMode={() => {}}
-        path="/"
-        counts={counts}
-        places={[]}
-        at={null}
-        onAt={() => {}}
-        onNewLine={() => {}}
-        onKeys={() => {}}
-      />,
-    );
-    const bar = view.getByRole("banner");
-    expect((bar.textContent ?? "").split("Lines").length - 1).toBeLessThanOrEqual(1);
-    expect(within(bar).getByRole("link", { name: "Octotrack" }).getAttribute("aria-current")).toBe("page");
-  });
-
-  test("leaves out I'm at when the developer has no places, and the counts when nothing waits", () => {
-    const view = render(
-      <TopBar
-        appearance={{ palette: "paper", mode: "system" }}
-        onPalette={() => {}}
-        onMode={() => {}}
-        path="/"
-        counts={[]}
-        places={[]}
-        at={null}
-        onAt={() => {}}
-        onNewLine={() => {}}
-        onKeys={() => {}}
-      />,
-    );
-    expect(view.queryByRole("button", { name: /I'm at/ })).toBeNull();
-    expect(view.queryByRole("status", { name: "Waiting on you" })).toBeNull();
   });
 });
 
@@ -2905,19 +2849,36 @@ describe("TaskClosed", () => {
   });
 });
 
-describe("AppearanceMenu", () => {
+describe("Appearance, in More", () => {
+  const more = (
+    appearance: { palette: Palette; mode: Mode },
+    onPalette = (_palette: string) => {},
+    onMode = (_mode: string) => {},
+  ) =>
+    render(
+      <div>
+        <MoreMenu
+          onGo={() => {}}
+          onKeys={() => {}}
+          appearance={appearance}
+          onPalette={onPalette}
+          onMode={onMode}
+        />
+        <button type="button">Elsewhere</button>
+      </div>,
+    );
+  /** More opened, then its Appearance: the themes and modes in the menu's place. */
+  const themes = (view: ReturnType<typeof render>, theme: string) => {
+    fireEvent.click(view.getByRole("button", { name: "More" }));
+    fireEvent.click(view.getByRole("menuitem", { name: new RegExp(`^Appearance.*${theme}`) }));
+    return within(view.getByRole("menu", { name: "More" }));
+  };
+
   test("offers the eight themes and the mode, each previewed, the current ones checked", () => {
     const onPalette = mock((_palette: string) => {});
     const onMode = mock((_mode: string) => {});
-    const view = render(
-      <AppearanceMenu
-        appearance={{ palette: "gruvbox", mode: "system" }}
-        onPalette={onPalette}
-        onMode={onMode}
-      />,
-    );
-    fireEvent.click(view.getByRole("button", { name: "Appearance: Gruvbox, as the system" }));
-    const menu = within(view.getByRole("menu", { name: "Appearance" }));
+    const view = more({ palette: "gruvbox", mode: "system" }, onPalette, onMode);
+    const menu = themes(view, "Gruvbox");
     // The check before the ones in force is drawn for the eye only; the items name themselves.
     expect(menu.getAllByRole("menuitemradio").map((item) => item.textContent)).toEqual([
       "Paper",
@@ -2942,24 +2903,14 @@ describe("AppearanceMenu", () => {
     ).not.toBeNull();
     fireEvent.click(menu.getByRole("menuitemradio", { name: "Nord" }));
     expect(onPalette).toHaveBeenCalledWith("nord");
-    fireEvent.click(view.getByRole("button", { name: "Appearance: Gruvbox, as the system" }));
-    fireEvent.click(
-      within(view.getByRole("menu", { name: "Appearance" })).getByRole("menuitemradio", { name: "Dark" }),
-    );
+    fireEvent.click(themes(view, "Gruvbox").getByRole("menuitemradio", { name: "Dark" }));
     expect(onMode).toHaveBeenCalledWith("dark");
   });
 
   test("a tap on a theme in Safari, which gives a tapped button no focus, still picks it", () => {
     const onPalette = mock((_palette: string) => {});
-    const view = render(
-      <AppearanceMenu
-        appearance={{ palette: "paper", mode: "system" }}
-        onPalette={onPalette}
-        onMode={() => {}}
-      />,
-    );
-    fireEvent.click(view.getByRole("button", { name: "Appearance: Paper, as the system" }));
-    const menu = within(view.getByRole("menu", { name: "Appearance" }));
+    const view = more({ palette: "paper", mode: "system" }, onPalette);
+    const menu = themes(view, "Paper");
     const forest = menu.getByRole("menuitemradio", { name: "Everforest" });
     // Safari: the item that had focus loses it, and nothing receives it, before the tap's click arrives.
     fireEvent.pointerDown(forest);
@@ -2969,26 +2920,15 @@ describe("AppearanceMenu", () => {
   });
 
   test("a tap outside the menu, or focus moving out of it, closes it", () => {
-    const view = render(
-      <div>
-        <AppearanceMenu
-          appearance={{ palette: "paper", mode: "system" }}
-          onPalette={() => {}}
-          onMode={() => {}}
-        />
-        <button type="button">Elsewhere</button>
-      </div>,
-    );
-    const open = () =>
-      fireEvent.click(view.getByRole("button", { name: "Appearance: Paper, as the system" }));
-    open();
+    const view = more({ palette: "paper", mode: "system" });
+    themes(view, "Paper");
     fireEvent.pointerDown(view.getByRole("button", { name: "Elsewhere" }));
-    expect(view.queryByRole("menu", { name: "Appearance" })).toBeNull();
-    open();
+    expect(view.queryByRole("menu", { name: "More" })).toBeNull();
+    themes(view, "Paper");
     fireEvent.blur(view.getByRole("menuitemradio", { name: "Paper" }), {
       relatedTarget: view.getByRole("button", { name: "Elsewhere" }),
     });
-    expect(view.queryByRole("menu", { name: "Appearance" })).toBeNull();
+    expect(view.queryByRole("menu", { name: "More" })).toBeNull();
   });
 });
 

@@ -1,5 +1,5 @@
 import { type Appearance, MODES, type Mode, PALETTES, type Palette } from "../../lib/appearance.ts";
-import { Menu, MenuGroup, MenuItem, Swatch } from "../ui/Menu.tsx";
+import { MenuGroup, MenuItem, Swatch } from "../ui/Menu.tsx";
 
 interface AppearanceProps {
   appearance: Appearance;
@@ -7,20 +7,7 @@ interface AppearanceProps {
   onMode(mode: Mode): void;
 }
 
-/** The theme and the mode, behind one icon in the bar: the eight themes, each in its own colours, then the mode. */
-export function AppearanceMenu({ appearance, onPalette, onMode }: AppearanceProps) {
-  const theme = PALETTES.find((palette) => palette.id === appearance.palette)?.name ?? "Paper";
-  const mode = MODES.find((candidate) => candidate.id === appearance.mode)?.name ?? "As the system";
-  return (
-    <Menu label={`Appearance: ${theme}, ${mode.toLowerCase()}`} icon="appearance" menuLabel="Appearance">
-      {(close) => (
-        <AppearanceChoices appearance={appearance} onPalette={onPalette} onMode={onMode} close={close} />
-      )}
-    </Menu>
-  );
-}
-
-/** The choices themselves, Theme then Mode, the ones in force ticked: in their own menu, or inside Pages on a phone. */
+/** The theme and the mode, Theme then Mode, the ones in force ticked: the eight themes each in its own colours. */
 export function AppearanceChoices({
   appearance,
   onPalette,

@@ -7,6 +7,7 @@ import { usePanelFocus } from "../../hooks/usePanelFocus.ts";
 import { useReloadOnNewBuild } from "../../hooks/useReloadOnNewBuild.ts";
 import { useSeen } from "../../hooks/useSeen.ts";
 import { useTopBar } from "../../hooks/useTopBar.ts";
+import { filterAt } from "../../lib/forYou.ts";
 import { backEntity, closeEntity, navigate, setParams, useRoute } from "../../lib/router.ts";
 import { useNewLine } from "../../hooks/useNewLine.ts";
 import { NewLineSheet } from "../lines/NewLineSheet.tsx";
@@ -19,7 +20,6 @@ import { AppStrips } from "./AppStrips.tsx";
 import { PartBoundary } from "./PartBoundary.tsx";
 import { PendingChoices } from "./PendingChoices.tsx";
 import { TopBar } from "./TopBar.tsx";
-import { failureText } from "../../lib/failure.ts";
 
 /**
  * Every page: the bar, the page, and whatever ref is open, as a panel over the right of the page so the list keeps its
@@ -38,32 +38,21 @@ export function AppShell({ children }: { children: ReactNode }) {
   const openKeys = useCallback(() => setKeysOpen(true), []);
   const closeKeys = useCallback(() => setKeysOpen(false), []);
   const entity = params.get("ref");
-  // The picker is the browser's to focus; g p reaches it through its element.
-  const atPicker = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLElement>(null);
   const newLine = useNewLine();
   const adding = params.get("new") === "1";
   usePanelFocus(panel, entity);
-  const { at, setAt } = bar;
   const keys = useMemo((): HotkeyMap => {
-    // Esc closes what is on top: the key list, then a panel (back to the one it was opened from, if any), then the
-    // place the developer said they are at.
-    const closeTop = keysOpen
-      ? closeKeys
-      : entity !== null
-        ? backEntity
-        : at !== null
-          ? () => setAt(null)
-          : null;
+    // Esc closes what is on top: the key list, then a panel (back to the one it was opened from, if any).
+    const closeTop = keysOpen ? closeKeys : entity !== null ? backEntity : null;
     // With the key list open, only what closes it acts: a stray key behind it costs nothing (D14).
     if (keysOpen) return { "?": closeKeys, ...(closeTop === null ? {} : { Escape: closeTop }) };
     return {
       "?": openKeys,
-      "g p": () => atPicker.current?.focus(),
       ...(path === "/log" ? {} : { "/": () => navigate("/log?find=1") }),
       ...(closeTop === null ? {} : { Escape: closeTop }),
     };
-  }, [entity, keysOpen, openKeys, closeKeys, at, setAt, path]);
+  }, [entity, keysOpen, openKeys, closeKeys, path]);
   // The key list is a sheet the shell opens, so while it is open the keys that close it act over it; every other
   // shell key stands down under a sheet, as the page's do.
   useHotkeys(keys, { overSheets: keysOpen });
@@ -71,16 +60,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     <>
       <TopBar
         path={path}
-        counts={bar.counts}
-        places={bar.places}
-        at={bar.at}
-        onAt={bar.setAt}
+        waiting={bar.waiting}
         onNewLine={() => setParams({ new: "1" })}
         onKeys={openKeys}
-        atRef={atPicker}
-        atBusy={bar.atBusy}
-        atFailed={bar.error === null ? undefined : failureText(bar.error).text}
-        onRetryPlaces={bar.placesError === null ? undefined : bar.retryPlaces}
         appearance={look.appearance}
         onPalette={look.setPalette}
         onMode={look.setMode}
@@ -93,7 +75,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             newVersion={build.waiting}
             onLoadNow={build.loadNow}
           />
-          {keysOpen ? <KeyHelp onClose={closeKeys} onLines={path === "/" || path === "/lines"} /> : null}
+          {keysOpen ? (
+            <KeyHelp onClose={closeKeys} onLines={path === "/lines" || filterAt(path) !== null} />
+          ) : null}
           <PartBoundary>
             {isPending ? (
               <LoadingState label="Loading the page" />

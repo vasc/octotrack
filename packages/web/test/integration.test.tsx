@@ -84,7 +84,7 @@ beforeEach(() => {
 });
 
 describe("questions on home", () => {
-  beforeEach(() => navigate("/"));
+  beforeEach(() => navigate("/lines"));
 
   test("the Undo bar stays usable above an open sheet: it is drawn outside the page the sheet makes inert", async () => {
     seedDecision();
@@ -172,13 +172,13 @@ describe("questions on home", () => {
 
   test("with the key list open, / goes nowhere; with a panel open, r records nothing behind it", async () => {
     const decision = seedDecision();
-    navigate("/");
+    navigate("/lines");
     const view = renderApp(<App />);
     await view.findByRole("heading", { name: "Which queue?" });
     fireEvent.keyDown(window, { key: "?" });
     await view.findByRole("dialog", { name: "Keys" });
     fireEvent.keyDown(document.activeElement ?? window, { key: "/" });
-    expect(window.location.pathname).toBe("/");
+    expect(window.location.pathname).toBe("/lines");
     fireEvent.keyDown(window, { key: "Escape" });
     await gone(() => view.queryByRole("dialog", { name: "Keys" }));
     act(() => navigate(`/?ref=${decision.ref}`));
@@ -441,13 +441,13 @@ describe("live updates, with nothing but the server's own notifications", () => 
     server = startTestServer({ live: true });
     server.act(c.projectCreate, { key: "OCT", name: "Octotrack" });
     seedLine();
-    navigate("/");
+    navigate("/lines");
     const view = renderApp(<App />);
     await view.findByRole("article", { name: "Enclosure" });
     const issue = server.act(c.issueCreate, { project: "OCT", title: "Base", line: "L-1" }, "octo.1");
     server.act(c.decisionAsk, { title: "Asked by an agent", context: "Context.", options }, "octo.1");
     await view.findByRole("heading", { name: "Asked by an agent" });
-    await view.findByRole("link", { name: "1 to answer" });
+    await view.findByRole("link", { name: "For you, 1 waiting" });
     server.act(
       c.prUpsert,
       {
@@ -487,7 +487,7 @@ describe("live updates, with nothing but the server's own notifications", () => 
 
   test("a change landing between the first load and the stream connecting is not lost", async () => {
     seedLine();
-    navigate("/");
+    navigate("/lines");
     const view = renderApp(<App />);
     await view.findByRole("article", { name: "Enclosure" });
     server.act(c.decisionAsk, { title: "Slipped through the gap", context: "C.", options }, "octo.1");
@@ -500,7 +500,7 @@ describe("live updates, with nothing but the server's own notifications", () => 
 
   test("a lost connection says what is shown and that answers wait, until it is back; Try now reconnects", async () => {
     seedLine();
-    navigate("/");
+    navigate("/lines");
     const view = renderApp(<App />);
     await view.findByRole("article", { name: "Enclosure" });
     const source = FakeEventSource.instances[0];
@@ -523,7 +523,7 @@ describe("live updates, with nothing but the server's own notifications", () => 
 
   test("a hidden tab gives up its connection and catches up when it comes back", async () => {
     seedLine();
-    navigate("/");
+    navigate("/lines");
     const view = renderApp(<App />);
     await view.findByRole("article", { name: "Enclosure" });
     expect(FakeEventSource.instances).toHaveLength(1);
@@ -540,7 +540,7 @@ describe("live updates, with nothing but the server's own notifications", () => 
 
   test("a push from the stream brings in new work without reloading", async () => {
     seedLine();
-    navigate("/");
+    navigate("/lines");
     const view = renderApp(<App />);
     await view.findByRole("article", { name: "Enclosure" });
     const source = FakeEventSource.instances[0];
@@ -576,7 +576,7 @@ describe("decisions out of band", () => {
   test("Record answers, behind r on home, records many and keeps the rows that failed", async () => {
     const first = seedDecision({ title: "First" });
     const second = seedDecision({ title: "Second" });
-    navigate("/");
+    navigate("/lines");
     const view = renderApp(<App />);
     await view.findByRole("heading", { name: "First" });
     fireEvent.keyDown(window, { key: "r" });
@@ -605,7 +605,7 @@ describe("decisions out of band", () => {
 
   test("Record answers takes the cursor, keeps what is typed as a draft, and closes on Esc", async () => {
     const first = seedDecision({ title: "First" });
-    navigate("/");
+    navigate("/lines");
     const view = renderApp(<App />);
     await view.findByRole("heading", { name: "First" });
     fireEvent.keyDown(window, { key: "r" });
@@ -1037,7 +1037,7 @@ describe("lines of work", () => {
 
     test("Can't do it closes a task with why, and the line's agent hears it", async () => {
       const task = withTask();
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const opened = within(await view.findByRole("article", { name: "Measure the grip" }));
       fireEvent.click(opened.getByRole("button", { name: "Can't do it" }));
@@ -1065,7 +1065,7 @@ describe("lines of work", () => {
         { title: "Measure the board", place: "the bench", outcome: "In mm", fields: ["Length", "Holes"] },
         "octo.1",
       );
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const opened = within(await view.findByRole("article", { name: "Measure the board" }));
       fireEvent.change(opened.getByLabelText("Length"), { target: { value: "41" } });
@@ -1083,7 +1083,7 @@ describe("lines of work", () => {
 
     test("undoing a task's Done keeps what was typed", async () => {
       withTask();
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const opened = within(await view.findByRole("article", { name: "Measure the grip" }));
       fireEvent.change(opened.getByLabelText("Five numbers"), { target: { value: "41, 38, 12" } });
@@ -1095,7 +1095,7 @@ describe("lines of work", () => {
 
     test("the Undo bar's live region is there before the first choice, so that one is announced too", async () => {
       seedLines();
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       await view.findByRole("region", { name: "Working on" });
       const live = view
@@ -1108,7 +1108,7 @@ describe("lines of work", () => {
 
     test("a choice that fails when it takes effect says why in the Undo bar, until dismissed", async () => {
       const asked = seedDecision();
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       await view.findByRole("heading", { name: "Which queue?" });
       fireEvent.click(view.getByRole("button", { name: /Redis/ }));
@@ -1128,7 +1128,7 @@ describe("lines of work", () => {
 
     test("Fold into folds a proposal into the line chosen, by button", async () => {
       const proposal = seedLines();
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const proposed = within(await view.findByRole("region", { name: "Proposed" }));
       proposalMove(proposed, "Fold", "Wall mount");
@@ -1410,7 +1410,7 @@ describe("lines of work", () => {
     }
     const selected = (element: HTMLElement) => focusOf(element);
 
-    test("g then u goes to the urgent question, and undoes nothing", async () => {
+    test("on For you, g then u goes to Urgent with the urgent question open, and undoes nothing", async () => {
       onLine();
       const board = server.act(
         c.decisionAsk,
@@ -1424,15 +1424,17 @@ describe("lines of work", () => {
       );
       navigate(`/?focus=${board.ref}`);
       const view = renderApp(<App />);
-      await view.findByRole("article", { name: "Which plug?" });
+      await view.findByRole("heading", { name: "Which plug?" });
       fireEvent.keyDown(window, { key: "g" });
       fireEvent.keyDown(window, { key: "u" });
-      await waitFor(() => expect(focusOf(view.getByRole("article", { name: "Order now?" }))).toBe("true"));
+      await waitFor(() => expect(window.location.pathname).toBe("/for-you/urgent"));
+      await view.findByRole("heading", { name: "Order now?" });
+      expect(server.tracker.call(c.choiceList, {}, asDeveloper)).toEqual([]);
     });
 
     test("Shift J steps to the next line, even one with nothing for the developer", async () => {
       onLine();
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       await view.findByRole("article", { name: "Which board?" });
       fireEvent.keyDown(window, { key: "J", shiftKey: true });
@@ -1454,7 +1456,7 @@ describe("lines of work", () => {
 
     test("only the focused item is marked, by its border and the j and k hint beside it, never a word", async () => {
       onLine();
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const question = await view.findByRole("article", { name: "Which board?" });
       expect(question.closest("[aria-current='true']")).not.toBeNull();
@@ -1464,7 +1466,7 @@ describe("lines of work", () => {
 
     test("a proposal's number keys do nothing more while its choice waits", async () => {
       seedLines();
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const card = await view.findByRole("article", { name: "Wall mount" });
       fireEvent.focus(card);
@@ -1480,7 +1482,7 @@ describe("lines of work", () => {
 
     test("o or Enter opens the focused item's line, and t opens it at Tell, with the cursor in the box", async () => {
       onLine();
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       await view.findByRole("article", { name: "Which board?" });
       fireEvent.keyDown(window, { key: "o" });
@@ -1499,7 +1501,7 @@ describe("lines of work", () => {
 
     test("w opens the focused question's own words, with the cursor in the box", async () => {
       onLine();
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       await view.findByRole("article", { name: "Which board?" });
       fireEvent.keyDown(window, { key: "w" });
@@ -1507,27 +1509,9 @@ describe("lines of work", () => {
       expect(document.activeElement).toBe(box);
     });
 
-    test("g p goes to where I'm at, and Esc leaves the place", async () => {
-      onLine();
-      server.tracker.call(c.placeAdd, { name: "the bench" }, asDeveloper);
-      navigate("/");
-      const view = renderApp(<App />);
-      await view.findByRole("article", { name: "Which board?" });
-      fireEvent.keyDown(window, { key: "g" });
-      fireEvent.keyDown(window, { key: "p" });
-      const picker = view.getByRole("button", { name: "I'm at: All places" });
-      expect(document.activeElement).toBe(picker);
-      fireEvent.click(picker);
-      fireEvent.click(view.getByRole("menuitemradio", { name: "the bench" }));
-      await view.findByRole("article", { name: "At the bench" });
-      (document.activeElement instanceof HTMLElement ? document.activeElement : picker).blur();
-      fireEvent.keyDown(window, { key: "Escape" });
-      await gone(() => view.queryByRole("article", { name: "At the bench" }));
-    });
-
     test("/ goes to the log's search from any page", async () => {
       onLine();
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       await view.findByRole("article", { name: "Which board?" });
       fireEvent.keyDown(window, { key: "/" });
@@ -1537,7 +1521,7 @@ describe("lines of work", () => {
 
     test("alt and the arrows move the focused item's line", async () => {
       onLine();
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       await view.findByRole("article", { name: "Which board?" });
       fireEvent.keyDown(window, { key: "ArrowDown", altKey: true });
@@ -1559,7 +1543,7 @@ describe("lines of work", () => {
         { title: "Weigh it", place: "the bench", outcome: "Grams" },
         "octo.1",
       );
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const card = await view.findByRole("article", { name: "Weigh it" });
       expect(selected(card)).toBe("true");
@@ -1569,7 +1553,7 @@ describe("lines of work", () => {
 
     test("? lists every key, and r opens Record answers", async () => {
       onLine();
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       await view.findByRole("article", { name: "Which board?" });
       fireEvent.keyDown(window, { key: "?" });
@@ -1585,75 +1569,6 @@ describe("lines of work", () => {
   describe("home's header and sections", () => {
     const options = [{ key: "a", label: "Yes", description: "Go ahead." }];
 
-    test("each count opens the first such item in focus order", async () => {
-      seedLines();
-      server.act(c.agentRegister, { repo: "OCT" }, "octo.1");
-      server.act(c.lineTake, { ref: "L-1" }, "octo.1");
-      server.tracker.call(c.placeAdd, { name: "the bench" }, asDeveloper);
-      server.act(c.decisionAsk, { title: "Which board?", context: "Context.", options }, "octo.1");
-      server.act(c.taskFile, { title: "Weigh it", place: "the bench", outcome: "Grams" }, "octo.1");
-      navigate("/");
-      const view = renderApp(<App />);
-      await view.findByRole("article", { name: "Which board?" });
-      fireEvent.click(view.getByRole("link", { name: "1 to do" }));
-      await view.findByRole("article", { name: "Weigh it" });
-      fireEvent.click(view.getByRole("link", { name: "1 to accept" }));
-      await waitFor(() => expect(focusOf(view.getByRole("article", { name: "Wall mount" }))).toBe("true"));
-    });
-
-    test("a count clicked again goes back to its item, after focus moved away", async () => {
-      seedLines();
-      server.act(c.agentRegister, { repo: "OCT" }, "octo.1");
-      server.act(c.lineTake, { ref: "L-1" }, "octo.1");
-      server.tracker.call(c.placeAdd, { name: "the bench" }, asDeveloper);
-      server.act(c.decisionAsk, { title: "Which board?", context: "Context.", options }, "octo.1");
-      server.act(c.taskFile, { title: "Weigh it", place: "the bench", outcome: "Grams" }, "octo.1");
-      navigate("/");
-      const view = renderApp(<App />);
-      await view.findByRole("article", { name: "Which board?" });
-      fireEvent.click(view.getByRole("link", { name: "1 to do" }));
-      await view.findByRole("article", { name: "Weigh it" });
-      fireEvent.keyDown(window, { key: "k" });
-      await view.findByRole("article", { name: "Which board?" });
-      fireEvent.click(view.getByRole("link", { name: "1 to do" }));
-      await view.findByRole("article", { name: "Weigh it" });
-    });
-
-    test("each press of a count goes on to the next such item, from the one in focus, and round again", async () => {
-      seedLines();
-      server.act(
-        c.linePropose,
-        { title: "Garden feed", doneWhen: "It loads.", recommendation: "up_next", why: "It broke." },
-        "panel-agent",
-      );
-      navigate("/");
-      const view = renderApp(<App />);
-      const count = await view.findByRole("link", { name: "2 to accept" });
-      const focusedOn = (name: string) =>
-        waitFor(() => expect(focusOf(view.getByRole("article", { name }))).toBe("true"));
-      // Focus starts on the first proposal, so a count that went to the first such item would do nothing at all.
-      await focusedOn("Wall mount");
-      // From the one in focus, a press moves on, on a phone where there are no keys to move with, and round again.
-      fireEvent.click(count);
-      await focusedOn("Garden feed");
-      fireEvent.click(view.getByRole("link", { name: "2 to accept" }));
-      await focusedOn("Wall mount");
-    });
-
-    test("a count pressed on another page goes to the first item it counts", async () => {
-      seedLines();
-      server.act(
-        c.linePropose,
-        { title: "Garden feed", doneWhen: "It loads.", recommendation: "up_next", why: "It broke." },
-        "panel-agent",
-      );
-      navigate("/log");
-      const view = renderApp(<App />);
-      fireEvent.click(await view.findByRole("link", { name: "2 to accept" }));
-      await waitFor(() => expect(focusOf(view.getByRole("article", { name: "Wall mount" }))).toBe("true"));
-      expect(window.location.search).toBe("");
-    });
-
     test("past six working lines, the header says what spreading thin costs", async () => {
       for (const index of [1, 2, 3, 4, 5, 6, 7]) {
         server.tracker.call(
@@ -1662,7 +1577,7 @@ describe("lines of work", () => {
           asDeveloper,
         );
       }
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const working = within(await view.findByRole("region", { name: "Working on" }));
       working.getByText("7 with no owner");
@@ -1670,7 +1585,7 @@ describe("lines of work", () => {
 
     test("a line's handle moves it to the top", async () => {
       seedLines();
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       fireEvent.click(await view.findByRole("button", { name: "Move Weekly digest" }));
       fireEvent.click(view.getByRole("menuitem", { name: "Move to top" }));
@@ -1695,7 +1610,7 @@ describe("lines of work", () => {
         );
       }
       server.act(c.prReadyToMerge, { ref: "acme/panel#15", why: "Printed and fits." }, "octo.1");
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const line = within(await view.findByRole("article", { name: "Sendspin enclosure" }));
       const named = () => line.getAllByRole("article").map((row) => row.getAttribute("aria-label"));
@@ -1719,7 +1634,7 @@ describe("lines of work", () => {
         { title: "Shopping list", doneWhen: "Shared.", where: "up_next" },
         asDeveloper,
       );
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const working = within(await view.findByRole("region", { name: "Working on" }));
       const sendspin = working.getByRole("article", { name: "Sendspin enclosure" });
@@ -1776,7 +1691,7 @@ describe("lines of work", () => {
 
     test("a press anywhere on a line that is not one of its controls opens it", async () => {
       seedLines();
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const working = within(await view.findByRole("region", { name: "Working on" }));
       // Its handle is a control: pressed, it opens its moves, not the line.
@@ -1792,7 +1707,7 @@ describe("lines of work", () => {
 
     test("a line is dragged by its handle before another, or sent to up next from its menu", async () => {
       seedLines();
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const working = within(await view.findByRole("region", { name: "Working on" }));
       // Dragged with a pointer, as a mouse, a finger or a pen does. The test page has no layout, so what lies under the
@@ -1844,7 +1759,7 @@ describe("lines of work", () => {
         },
         "panel-agent",
       );
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const proposed = within(await view.findByRole("region", { name: "Proposed" }));
       const cards = proposed.getAllByRole("article");
@@ -1865,7 +1780,7 @@ describe("lines of work", () => {
         asDeveloper,
       );
       server.later(1);
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const note = within(await view.findByRole("group", { name: "Step in on Capped" }));
       fireEvent.click(note.getByRole("button", { name: "Start one anyway" }));
@@ -1898,7 +1813,7 @@ describe("lines of work", () => {
         );
         server.tracker.call(c.runnerRetry, { line: "L-1" }, asDeveloper);
       }
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const note = within(await view.findByRole("group", { name: "Step in on No clone" }));
       fireEvent.click(note.getByRole("button", { name: "Set its checkout" }));
@@ -1934,10 +1849,10 @@ describe("lines of work", () => {
         { line: queued.ref, title: "Check the wall", place: "the bench", outcome: "Studs" },
         "octo.2",
       );
-      navigate("/");
+      // Said with `octo at`: the bar no longer carries a place picker.
+      server.tracker.call(c.at, { place: "the bench" }, asDeveloper);
+      navigate("/lines");
       const view = renderApp(<App />);
-      fireEvent.click(await view.findByRole("button", { name: "I'm at: All places" }));
-      fireEvent.click(view.getByRole("menuitemradio", { name: "the bench" }));
       const at = within(await view.findByRole("article", { name: "At the bench" }));
       at.getByText(/^ends by itself in \d+h$/);
       const line = within(view.getByRole("article", { name: "Sendspin enclosure" }));
@@ -1992,7 +1907,7 @@ describe("lines of work", () => {
       server.act(c.agentRegister, { repo: "OCT" }, "octo.2");
       server.act(c.lineTake, { ref: queued.ref }, "octo.2");
       server.act(c.decisionAsk, { title: "Which wall?", context: "Context.", options }, "octo.2");
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const upNext = within(await view.findByRole("region", { name: "Up next" }));
       fireEvent.click(upNext.getByRole("button", { name: "Start Mount" }));
@@ -2015,7 +1930,7 @@ describe("lines of work", () => {
       server.act(c.agentRegister, { repo: "OCT" }, "octo.2");
       server.act(c.lineTake, { ref: queued.ref }, "octo.2");
       server.act(c.decisionAsk, { title: "Which wall?", context: "Context.", options }, "octo.2");
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const upNext = within(await view.findByRole("region", { name: "Up next" }));
       fireEvent.click(upNext.getByRole("button", { name: "Start Mount" }));
@@ -2147,7 +2062,7 @@ describe("lines of work", () => {
         { line: mine.ref, title: "Scan the receipts" },
         asDeveloper,
       );
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const opened = within(await view.findByRole("article", { name: "Scan the receipts" }));
       fireEvent.click(opened.getByRole("button", { name: "Done" }));
@@ -2206,7 +2121,7 @@ describe("lines of work", () => {
 
     test("Not urgent sends an urgent question back to its line, and its agent hears it", async () => {
       const question = asked({ urgent: "costs_money" });
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const card = within(await view.findByRole("article", { name: "Order now?" }));
       fireEvent.click(card.getByRole("button", { name: "Not urgent" }));
@@ -2220,7 +2135,7 @@ describe("lines of work", () => {
 
     test("Later waits with Undo like any choice", async () => {
       const question = asked();
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const card = within(await view.findByRole("article", { name: "Order now?" }));
       fireEvent.click(card.getByRole("button", { name: "Later" }));
@@ -2258,7 +2173,7 @@ describe("lines of work", () => {
 
     test("a case for done is the line's first item, and Done ends the line", async () => {
       proposed();
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const card = within(await view.findByRole("article", { name: "Sendspin enclosure is done?" }));
       fireEvent.click(card.getByRole("button", { name: "Done" }));
@@ -2270,7 +2185,7 @@ describe("lines of work", () => {
 
     test("Not yet sends what is missing to the line's owner", async () => {
       proposed();
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const card = within(await view.findByRole("article", { name: "Sendspin enclosure is done?" }));
       fireEvent.click(card.getByRole("button", { name: "Not yet" }));
@@ -2297,7 +2212,7 @@ describe("lines of work", () => {
     test("asks the developer about a line no agent took, and I'll own it makes it theirs", async () => {
       const line = unowned();
       server.later(1);
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const stepIn = within(await view.findByRole("group", { name: "Step in on Nobody's line" }));
       fireEvent.click(stepIn.getByRole("button", { name: "I'll own it" }));
@@ -2310,7 +2225,7 @@ describe("lines of work", () => {
     test("Table it tables the line with the reason given", async () => {
       const line = unowned();
       server.later(1);
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const stepIn = within(await view.findByRole("group", { name: "Step in on Nobody's line" }));
       fireEvent.click(stepIn.getByRole("button", { name: "Table it" }));
@@ -2330,7 +2245,7 @@ describe("lines of work", () => {
     test("number keys act on Step in only while it has focus, and once while its choice waits", async () => {
       const line = unowned();
       server.later(1);
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const stepIn = await view.findByRole("group", { name: "Step in on Nobody's line" });
       fireEvent.focus(stepIn);
@@ -2362,7 +2277,7 @@ describe("lines of work", () => {
         asDeveloper,
       );
       server.later(1);
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       await view.findByRole("article", { name: "Measure" });
       expect(view.queryByRole("group", { name: "Step in on Nobody's line" })).toBeNull();
@@ -2388,7 +2303,7 @@ describe("lines of work", () => {
       onLine();
       server.act(c.decisionAsk, { title: "Which board?", context: "Printed.", options }, "octo.1");
       server.act(c.decisionAsk, { title: "Which plug?", context: "Side.", options }, "octo.1");
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       await view.findByRole("article", { name: "Which board?" });
       fireEvent.keyDown(window, { key: "j" });
@@ -2407,7 +2322,7 @@ describe("lines of work", () => {
         "octo.1",
       );
       server.act(c.decisionAsk, { title: "Which plug?", context: "Side.", options }, "octo.1");
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const plug = await view.findByRole("button", { name: "Open D-2" });
       // A press takes the browser's focus as it goes down; Which board? stays open until the press ends, or the page
@@ -2430,7 +2345,7 @@ describe("lines of work", () => {
         "octo.1",
       );
       server.act(c.decisionAsk, { title: "Which plug?", context: "Side.", options }, "octo.1");
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const plug = await view.findByRole("button", { name: "Open D-2" });
       fireEvent.pointerDown(plug, { pointerId: 1, button: 0, pointerType: "touch" });
@@ -2451,7 +2366,7 @@ describe("lines of work", () => {
         "octo.1",
       );
       server.act(c.decisionAsk, { title: "Which plug?", context: "Side.", options }, "octo.1");
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const plug = await view.findByRole("button", { name: "Open D-2" });
       fireEvent.pointerDown(plug, { pointerId: 1, button: 2 });
@@ -2469,7 +2384,7 @@ describe("lines of work", () => {
         "octo.1",
       );
       server.act(c.decisionAsk, { title: "Which plug?", context: "Side.", options }, "octo.1");
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const plug = await view.findByRole("button", { name: "Open D-2" });
       // The test page has no layout: Which plug? sits 160 pixels higher once Which board? folds to a row above it.
@@ -2504,7 +2419,7 @@ describe("lines of work", () => {
       onLine();
       server.act(c.decisionAsk, { title: "Which board?", context: "Printed.", options }, "octo.1");
       server.act(c.decisionAsk, { title: "Which plug?", context: "Side.", options }, "octo.1");
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       await view.findByRole("article", { name: "Which board?" });
       fireEvent.keyDown(window, { key: "j" });
@@ -2521,7 +2436,7 @@ describe("lines of work", () => {
 
     test("o opens a line's panel with the browser's focus in it, and Esc brings focus back to the line", async () => {
       onLine();
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       await view.findByRole("region", { name: "Working on" });
       // Home's focus starts on the proposal below the lines; K walks back to one.
@@ -2541,7 +2456,7 @@ describe("lines of work", () => {
     test("from a line itself, j goes to the next thing for you after it, and k to the one before", async () => {
       onLine();
       server.act(c.decisionAsk, { title: "Which board?", context: "Printed.", options }, "octo.1");
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       await view.findByRole("article", { name: "Which board?" });
       fireEvent.keyDown(window, { key: "J", shiftKey: true });
@@ -2559,7 +2474,7 @@ describe("lines of work", () => {
       onLine();
       server.act(c.decisionAsk, { title: "Which board?", context: "Printed.", options }, "octo.1");
       server.act(c.decisionAsk, { title: "Which plug?", context: "Side.", options }, "octo.1");
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       await view.findByRole("article", { name: "Which board?" });
       fireEvent.keyDown(window, { key: "l" });
@@ -2606,7 +2521,7 @@ describe("lines of work", () => {
         { title: "Which board?", context: "The base is printed.", options },
         "octo.1",
       );
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       await view.findByRole("article", { name: "Which board?" });
       server.act(
@@ -2627,7 +2542,7 @@ describe("lines of work", () => {
         { title: "Which board?", context: "The base is printed.", options },
         "octo.1",
       );
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       await view.findByRole("article", { name: "Which board?" });
       fireEvent.keyDown(window, { key: "1" });
@@ -2652,7 +2567,7 @@ describe("lines of work", () => {
         { title: "Order now?", context: "Stock runs out.", options, urgent: "time_boxed" },
         "octo.1",
       );
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       fireEvent.click(await view.findByRole("button", { name: `Open ${board.ref}` }));
       await waitFor(() => expect(selected(view, "Which board?")).toBe("true"));
@@ -2786,7 +2701,7 @@ describe("lines of work", () => {
 
     test("a task's named outcomes and note are one draft, which closing the task deletes", async () => {
       const task = measuring();
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const opened = within(await view.findByRole("article", { name: "Measure the board" }));
       fireEvent.change(opened.getByLabelText("Length"), { target: { value: "41" } });
@@ -2805,7 +2720,7 @@ describe("lines of work", () => {
 
     test("Undo keeps a task's named outcomes in their boxes", async () => {
       measuring();
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const opened = within(await view.findByRole("article", { name: "Measure the board" }));
       fireEvent.change(opened.getByLabelText("Length"), { target: { value: "41" } });
@@ -2836,7 +2751,7 @@ describe("lines of work", () => {
         },
       });
       try {
-        navigate("/");
+        navigate("/lines");
         const view = renderApp(<App />);
         const opened = within(await view.findByRole("article", { name: "Measure the board" }));
         fireEvent.change(opened.getByLabelText("Holes"), { target: { value: "38" } });
@@ -2857,7 +2772,7 @@ describe("lines of work", () => {
     test("a draft written as plain words, before named outcomes, is read as the note", async () => {
       const task = measuring();
       server.tracker.call(c.draftSave, { key: `task:${task.ref}`, text: "41 by 38, roughly" }, asDeveloper);
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const opened = within(await view.findByRole("article", { name: "Measure the board" }));
       await waitFor(() => expect(opened.getByLabelText("Note")).toHaveProperty("value", "41 by 38, roughly"));
@@ -2868,7 +2783,7 @@ describe("lines of work", () => {
       server = startTestServer({ live: true });
       server.act(c.projectCreate, { key: "OCT", name: "Octotrack" });
       const task = measuring();
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const opened = within(await view.findByRole("article", { name: "Measure the board" }));
       const text = JSON.stringify({ values: { Length: "41", Holes: "38" }, note: "" });
@@ -2905,7 +2820,7 @@ describe("lines of work", () => {
     server.act(c.agentRegister, { repo: "OCT" }, "octo.1");
     server.act(c.lineTake, { ref: "L-1" }, "octo.1");
     server.act(c.planSet, { line: "L-1", steps: ["Model the opening", "Print"] }, "octo.1");
-    navigate("/");
+    navigate("/lines");
     const view = renderApp(<App />);
     const calm = within(await view.findByRole("region", { name: "Nothing needs you" }));
     calm.getByText("1 agent working");
@@ -2918,12 +2833,14 @@ describe("lines of work", () => {
     ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
-  test("home is the list of lines, at the root, with the log one link away", async () => {
+  test("Lines is one link away from the root, and the log is in More", async () => {
     seedLines();
     navigate("/");
     const view = renderApp(<App />);
+    fireEvent.click(await view.findByRole("link", { name: "Lines" }));
     await view.findByRole("region", { name: "Working on" });
-    fireEvent.click(view.getByRole("link", { name: "Log" }));
+    fireEvent.click(view.getByRole("button", { name: "More" }));
+    fireEvent.click(view.getByRole("menuitem", { name: "Log" }));
     await view.findByRole("heading", { name: "Log" });
   });
 
@@ -2933,7 +2850,7 @@ describe("lines of work", () => {
       { title: "Wall mount", doneWhen: "It hangs.", recommendation: "up_next", why: "The base is final." },
       "panel-agent",
     );
-    navigate("/");
+    navigate("/lines");
     const view = renderApp(<App />);
     fireEvent.click(await view.findByRole("button", { name: "Accept 1 recommendation" }));
     await answerNow(view);
@@ -3010,7 +2927,7 @@ describe("lines of work", () => {
         server.act(c.lineTake, { ref: `L-${index + 1}` }, agent);
         server.act(c.decisionAsk, { title: `${title} question`, context: "Context.", options }, agent);
       }
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const third = within(await view.findByRole("article", { name: "Third" }));
       within(view.getByRole("article", { name: "Second" })).getByRole("button", { name: "Open D-2" });
@@ -3037,7 +2954,7 @@ describe("lines of work", () => {
       const options = [{ key: "a", label: "Yes", description: "Go ahead." }];
       server.act(c.decisionAsk, { title: "An old question", context: "Context.", options }, "octo.9");
       server.act(c.decisionAsk, { title: "Another old one", context: "Context.", options }, "octo.9");
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const tile = within(await view.findByRole("region", { name: "On no line" }));
       expect(tile.getByRole("button", { name: /^On no line 2/ }).getAttribute("aria-expanded")).toBe("false");
@@ -3061,7 +2978,7 @@ describe("lines of work", () => {
     });
     try {
       seedLines();
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const upNext = within(await view.findByRole("region", { name: "Up next" }));
       upNext.getByText("Nothing is up next");
@@ -3186,7 +3103,7 @@ describe("lines of work", () => {
 
     test("a task opened on home says what it frees and the step it holds up, as in its panel", async () => {
       const { issue } = withIssue();
-      navigate("/");
+      navigate("/lines");
       const view = renderApp(<App />);
       const opened = within(await view.findByRole("article", { name: "Measure the grip" }));
       await opened.findByText("holds up step 1, Settle the board");
@@ -3320,11 +3237,15 @@ describe("lines of work", () => {
 describe("appearance", () => {
   test("a theme and a mode picked apply to the whole page and are kept on this device", async () => {
     localStorage.removeItem("octotrack.appearance");
-    navigate("/");
+    navigate("/lines");
     const view = renderApp(<App />);
-    fireEvent.click(await view.findByRole("button", { name: "Appearance: Paper, as the system" }));
+    const appearance = async () => {
+      fireEvent.click(await view.findByRole("button", { name: "More" }));
+      fireEvent.click(view.getByRole("menuitem", { name: /^Appearance/ }));
+    };
+    await appearance();
     fireEvent.click(view.getByRole("menuitemradio", { name: "Nord" }));
-    fireEvent.click(view.getByRole("button", { name: "Appearance: Nord, as the system" }));
+    await appearance();
     fireEvent.click(view.getByRole("menuitemradio", { name: "Dark" }));
     await waitFor(() => expect(document.documentElement.getAttribute("data-palette")).toBe("nord"));
     expect(document.documentElement.getAttribute("data-mode")).toBe("dark");

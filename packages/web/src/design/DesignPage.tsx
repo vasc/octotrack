@@ -4,6 +4,7 @@ import { Button } from "../components/ui/Button.tsx";
 import { setParams, useRoute } from "../lib/router.ts";
 import { ActivityGallery } from "./ActivityGallery.tsx";
 import { DecisionGallery } from "./DecisionGallery.tsx";
+import { ForYouGallery } from "./ForYouGallery.tsx";
 import { FoundationsGallery } from "./FoundationsGallery.tsx";
 import { LinesGallery } from "./LinesGallery.tsx";
 import { PrimitivesGallery } from "./PrimitivesGallery.tsx";
@@ -49,6 +50,7 @@ export function DesignPage() {
             <FoundationsGallery tokens={tokens} />
             <StatusGallery />
             <DecisionGallery />
+            <ForYouGallery />
             <LinesGallery />
             <ActivityGallery />
           </div>

@@ -108,6 +108,69 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 - Error: cannot fail on its own.
 - Empty: never empty: it always names a key.
 
+### components/ui/Triage.tsx
+
+- Designed in: triage/Main.dc.html, triage/T-Peek-Line.dc.html
+- What it shows: three columns, centred: the rail (200), the open item (up to 720), Next (280), 56 apart; while a peek is open, the item alone, 80 from the left.
+- Changes from today: new.
+- Loading: never loads on its own.
+- Error: cannot fail on its own.
+- Empty: an empty column takes its room and shows nothing.
+
+### components/ui/Card.tsx
+
+- Designed in: triage/Main.dc.html
+- What it shows: what sits above it (Progress), then the one item on a lifted sheet: 40 padding, 16 corners, its title at 32 and the sentence under it at 17.
+- Changes from today: new.
+- Loading: never loads on its own.
+- Error: cannot fail on its own.
+- Empty: never drawn empty.
+
+### components/ui/Progress.tsx
+
+- Designed in: triage/Main.dc.html, T-Accept (urgent)
+- What it shows: "To answer · 1 of 3", then a segment per item, the open one filled; in the warning tone on Urgent; past twelve, the words alone.
+- Changes from today: new.
+- Loading: never loads on its own.
+- Error: cannot fail on its own.
+- Empty: never drawn without an item.
+
+### components/ui/FilterRail.tsx
+
+- Designed in: triage/Main.dc.html
+- What it shows: a small capitals label, then each view and its count, the one you are in raised on a tile.
+- Changes from today: new.
+- Loading: never loads on its own: its owner gives the counts.
+- Error: cannot fail on its own.
+- Empty: a view with nothing in it shows 0.
+
+### components/ui/NextList.tsx
+
+- Designed in: triage/Main.dc.html
+- What it shows: "NEXT", a tile per item (where, title, one more fact), then a closing sentence.
+- Changes from today: new.
+- Loading: never loads on its own.
+- Error: cannot fail on its own.
+- Empty: no items: the label and the closing sentence.
+
+### components/ui/PeekLink.tsx
+
+- Designed in: triage/T-Peek-Line.dc.html, triage/T-Peek-PR.dc.html
+- What it shows: words in the link colour; tinted, with its peek open.
+- Changes from today: new.
+- Loading: never loads on its own.
+- Error: cannot fail on its own.
+- Empty: never empty.
+
+### components/ui/Cleared.tsx
+
+- Designed in: triage/T-Done.dc.html
+- What it shows: a check in a soft circle, the heading, a few words, then where to go instead, centred on a card.
+- Changes from today: new.
+- Loading: never loads on its own.
+- Error: cannot fail on its own.
+- Empty: this is an empty state.
+
 ### components/ui/Rail.tsx
 
 - Designed in: Plan-Tree.dc.html, A

@@ -55,6 +55,9 @@
   --text-md: 14px;
   --text-lg: 15px;
   --text-heading: 20px;
+  /* The open item on For you: what it is, said large, and the sentence under it. */
+  --text-display: 32px;
+  --text-lead: 17px;
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
@@ -76,6 +79,9 @@
   --space-12: calc(var(--space-unit) * 12);
   --space-14: calc(var(--space-unit) * 14);
   --space-16: calc(var(--space-unit) * 16);
+  --space-20: calc(var(--space-unit) * 20);
+  --space-24: calc(var(--space-unit) * 24);
+  --space-28: calc(var(--space-unit) * 28);
   --space-32: calc(var(--space-unit) * 32);
 
   /* Shape: buttons, items, cards and panels, from smallest to largest. */
@@ -87,10 +93,18 @@
   --radius-xl: 8px;
   --radius-pill: 999px;
   --radius-inner: calc(var(--radius-lg) - 1px);
+  /* The open item's card on For you, and the tiles beside it. */
+  --radius-card: 16px;
+  --radius-tile: 12px;
 
   /* Elevation: only for what floats over content. Everything else is separated by a line. */
   --shadow-popover: 0 6px 20px rgb(0 0 0 / 0.14);
   --shadow-panel: -12px 0 40px rgb(0 0 0 / 0.08);
+  /* A tile's edge: the page you are on in the bar, the view you are in, an item in Next; darker under the pointer. */
+  --shadow-tile: 0 0 0 1px var(--line);
+  --shadow-tile-hover: 0 0 0 1px var(--line-strong);
+  /* The open item's card, lifted a little from the page. */
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.06), 0 12px 32px -12px rgb(0 0 0 / 0.12);
   /* A sheet lifted over the page. */
   --shadow-sheet: 0 16px 48px rgb(0 0 0 / 0.18);
   /* What dims the page and its bar behind a sheet. */
@@ -119,9 +133,14 @@
   --z-undo: 50;
 
   /* Layout */
-  --page-width: 1180px;
   --page-width-narrow: 900px;
-  --panel-width: 820px;
+  /* For you: the rail of views, the open item and Next, side by side. */
+  --rail-column: 200px;
+  --card-width: 720px;
+  --next-column: 280px;
+  /* A peek over the right of the page, and how far the open item sits from the left while one is open. */
+  --peek-width: 560px;
+  --peek-offset: calc(var(--space-unit) * 40);
   --touch-target: 44px;
   /* A sheet's width on a wide screen. */
   --sheet-width: 480px;

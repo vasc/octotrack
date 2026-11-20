@@ -21,12 +21,18 @@ export function BarLink({
   href,
   current,
   brand = false,
+  count,
+  label,
   onGo,
   children,
 }: {
   href: string;
   current: boolean;
   brand?: boolean;
+  /** How many wait there, after its name; left out at zero. */
+  count?: number | undefined;
+  /** Its name for a screen reader, when the count needs saying in words. */
+  label?: string | undefined;
   onGo(href: string): void;
   children: ReactNode;
 }) {
@@ -35,6 +41,7 @@ export function BarLink({
       className="ui-bar-link"
       data-brand={brand ? "true" : undefined}
       href={href}
+      aria-label={label}
       aria-current={current ? "page" : undefined}
       onClick={(event) => {
         if (event.metaKey || event.ctrlKey) return;
@@ -43,6 +50,7 @@ export function BarLink({
       }}
     >
       {children}
+      {count === undefined || count === 0 ? null : <span className="ui-bar-count">{count}</span>}
     </a>
   );
 }

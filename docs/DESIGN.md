@@ -1294,6 +1294,30 @@ Everything below is my design, with its reasons.
   gains the branch it came from. `issues.step` holds a step id. The migration gives every existing step an id on the
   critical path and moves each issue's position to that id; nothing else changes for plans without branches.
 
+## D16. For you: what waits on you, one at a time
+
+**What the developer said:** "right now pressing that jumps around semi randomly, it would be good to desing a feed that
+shows those actions in order, especially that when I press later it goes to the bottom of the feed"; of ten directions,
+"triage is the way"; "if im in for you and I want to peek at the line, I should be able to click a link and see it
+without jumping to another screen"; and of the folding page, "the moving left is a great choice". Drawn on the Triage
+page of https://claude.ai/artifact/JSt9awRkVko2hzaKCy5ayF, kept in `design/canvas/triage/`.
+
+**The problem.** Lines held every item in place, and the bar's counts jumped to the next one somewhere down the page.
+The developer could not see what came next or keep a place, and Later did not visibly send anything anywhere.
+
+**What was built.** For you is the page at `/`, with Lines at `/lines`. A rail lists the views (All, Urgent, To answer,
+To do, To accept, To step in) with their counts; each is its own address, `/for-you/to-answer`. One entry is open in the
+middle, on a card, under "To answer · 1 of 3"; Next names the two after it and what the other views hold. `j` and `k`
+move, the open entry is in the address as `?item=`, and when it is answered the one after it opens in its place. The
+order is the developer's order of lines, urgent first, proposals after the working lines, questions on no line last;
+Later sends an item to the bottom of the whole list, the last put off last. A line named on the card peeks in place:
+the rail and Next fold away and the card moves left, so the card and the peek are both whole.
+
+**Decisions.** The bar is one row: Lines, For you with how much waits, New line, and More, which holds the Log, Agents,
+the appearance and the keys, since the Log and Agents are used less. I'm at leaves the bar: it was never used, and the
+CLI keeps `place` and `at`. The drawings' layout, type and spacing became tokens; colour stays each theme's own, since
+the language allows a blue highlight only in a theme whose colour is blue. The plan is in `docs/plans/triage.md`.
+
 ## Data model
 
 Everything is addressed by a **ref**: `L-4` (line of work), `OCT` (repo, stored as a project), `OCT-12` (issue or

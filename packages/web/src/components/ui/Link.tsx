@@ -10,6 +10,7 @@ export function Link({
   href,
   external = false,
   onGo,
+  label,
   children,
 }: {
   href: string;
@@ -17,12 +18,15 @@ export function Link({
   external?: boolean;
   /** A page here: followed in place, unless Cmd or Ctrl asks for a new tab. */
   onGo?: (href: string) => void;
+  /** Its name for a screen reader, when the words alone do not say it. */
+  label?: string;
   children: ReactNode;
 }) {
   return (
     <a
       className="ui-link"
       href={href}
+      aria-label={label}
       {...(external ? { target: "_blank", rel: "noreferrer" } : {})}
       onClick={(event) => {
         if (onGo === undefined || event.metaKey || event.ctrlKey) return;

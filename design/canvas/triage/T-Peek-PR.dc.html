@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Triage, peek at a pull request</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2F45C6;text-decoration:none}a:hover{color:#1F2F94}
+</style>
+</helmet>
+<div style="position: relative; min-height: 1000px; background: #F2F3F5; color: #14161B; font-family: 'Inter Tight', Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.5; overflow: hidden">
+
+<header style="display: flex; align-items: center; gap: 32px; height: 56px; padding: 0 32px; border-bottom: 1px solid #E3E6EB">
+<a href="#" style="display: flex; align-items: center; gap: 10px; color: #14161B; font-weight: 600; letter-spacing: -0.01em"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8.2 2.8h7.6l5.4 5.4v7.6l-5.4 5.4H8.2l-5.4-5.4V8.2z"></path><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"></circle></svg>Octotrack</a>
+<nav aria-label="Pages" style="display: flex; gap: 4px">
+<a href="#" style="display: flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 8px; color: #5A606C; font-weight: 500">Lines</a>
+<a href="#" aria-current="page" style="display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border-radius: 8px; background: #FFFFFF; color: #14161B; font-weight: 600; box-shadow: 0 1px 2px rgba(20, 22, 27, 0.08), 0 0 0 1px #E3E6EB">For you<span style="display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 10px; background: #FFF1DB; color: #8A4A00; font-size: 12px; font-weight: 700">11</span></a>
+</nav>
+<div style="display: flex; align-items: center; gap: 8px; margin-left: auto">
+<button type="button" style="display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; border: 0; border-radius: 8px; background: #14161B; color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 600"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>New line</button>
+<button type="button" aria-label="More: Log, Agents, appearance, keys" style="display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid #E3E6EB; border-radius: 8px; background: #FFFFFF; color: #474D59"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg></button>
+</div>
+</header>
+
+<main style="display: flex; flex-direction: column; gap: 20px; width: 720px; margin-left: 80px; padding: 48px 0 64px">
+<div style="display: flex; align-items: center; gap: 16px">
+<span style="font-size: 13px; font-weight: 600; color: #474D59; white-space: nowrap">To do · 2 of 4</span>
+<div aria-hidden="true" style="flex: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px"><span style="height: 4px; border-radius: 2px; background: #D9DDE4"></span><span style="height: 4px; border-radius: 2px; background: #2F45C6"></span><span style="height: 4px; border-radius: 2px; background: #D9DDE4"></span><span style="height: 4px; border-radius: 2px; background: #D9DDE4"></span></div>
+</div>
+<article style="display: flex; flex-direction: column; gap: 28px; padding: 40px; border-radius: 16px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(20, 22, 27, 0.06), 0 12px 32px -12px rgba(20, 22, 27, 0.12)">
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; color: #6E7480">
+<a href="#" style="font-weight: 600">Sendspin enclosure</a><span aria-hidden="true">·</span><span>PANEL-1</span><span aria-hidden="true">·</span><span>at the bench</span><span aria-hidden="true">·</span><span>you filed it 5 days ago</span>
+</div>
+<h1 style="margin: 0; font-size: 32px; line-height: 1.2; font-weight: 600; letter-spacing: -0.02em">Measure the board and its holes</h1>
+<p style="margin: 0; font-size: 17px; color: #474D59">In mm, with calipers on the real parts.</p>
+<p style="display: flex; align-items: center; gap: 8px; margin: 4px 0 0; padding: 10px 14px; border-radius: 10px; background: #F6F7F9; font-size: 14px; color: #474D59"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg><span>Waits on <a href="#" aria-expanded="true" style="padding: 1px 6px; margin: 0 -2px; border-radius: 6px; background: #E9ECFB; color: #1F2F94; font-weight: 600">PANEL-2, merge vasc/homepanel#14</a>: the board to measure is in that print.</span></p>
+</div>
+<form style="display: flex; flex-direction: column; gap: 16px">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #6E7480">What to send back</span>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600">Length
+<span style="display: flex; align-items: center; height: 44px; padding: 0 12px; border: 1.5px solid #D9DDE4; border-radius: 10px; background: #FFFFFF"><input value="86.2" aria-label="Length" style="flex: 1; min-width: 0; border: 0; font: inherit; font-weight: 500; outline: none"><span style="color: #6E7480; font-weight: 500">mm</span></span>
+</label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600">Holes
+<span style="display: flex; align-items: center; height: 44px; padding: 0 12px; border: 1.5px solid #D9DDE4; border-radius: 10px; background: #FFFFFF"><input aria-label="Holes" placeholder="Spacing and size" style="flex: 1; min-width: 0; border: 0; font: inherit; font-weight: 400; outline: none"></span>
+</label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600">USB-C grip
+<span style="display: flex; align-items: center; height: 44px; padding: 0 12px; border: 1.5px solid #D9DDE4; border-radius: 10px; background: #FFFFFF"><input aria-label="USB-C grip" placeholder="Does the plug hold?" style="flex: 1; min-width: 0; border: 0; font: inherit; font-weight: 400; outline: none"></span>
+</label>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 4px">
+<button type="submit" disabled style="height: 38px; padding: 0 16px; border: 0; border-radius: 8px; background: #DDE1E8; color: #6E7480; font: inherit; font-size: 14px; font-weight: 600">Done</button>
+<button type="button" style="height: 38px; padding: 0 14px; border: 1px solid #E3E6EB; border-radius: 8px; background: #FFFFFF; font: inherit; font-size: 14px; font-weight: 500; color: #14161B">Can't do it</button>
+<button type="button" style="height: 38px; padding: 0 14px; border: 1px solid #E3E6EB; border-radius: 8px; background: #FFFFFF; font: inherit; font-size: 14px; font-weight: 500; color: #14161B">Reply</button>
+<span style="margin-left: auto; font-size: 13px; color: #6E7480">Your 86.2 stays while you look</span>
+</div>
+</form>
+</article>
+</main>
+
+<aside role="dialog" aria-label="Pull request vasc/homepanel#14" style="position: absolute; top: 56px; right: 0; bottom: 0; width: 560px; box-sizing: border-box; display: flex; flex-direction: column; background: #FFFFFF; border-left: 1px solid #E3E6EB; box-shadow: -24px 0 48px -24px rgba(20, 22, 27, 0.25)">
+<div style="display: flex; align-items: center; gap: 8px; height: 52px; padding: 0 16px 0 28px; border-bottom: 1px solid #EEF0F3; font-size: 13px; color: #6E7480">
+<span style="font-weight: 600; color: #474D59">Pull request</span><span aria-hidden="true">·</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px">vasc/homepanel#14</span>
+<a href="#" style="margin-left: auto; display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border-radius: 8px; font-weight: 500">Open on GitHub<svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"></path></svg></a>
+<button type="button" aria-label="Close, Esc" style="display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 8px; background: #F2F3F5; color: #474D59"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 24px; padding: 24px 28px; overflow: hidden">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h2 style="margin: 0; font-size: 24px; line-height: 1.2; font-weight: 600; letter-spacing: -0.02em">Print the base at 26 mm</h2>
+<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; color: #6E7480"><span style="display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 11px; background: #E6F4EC; color: #1F7A4D; font-weight: 600"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>Ready to merge</span>panel-widgets opened it yesterday · <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px">base-26mm</span> into <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px">main</span></span>
+</div>
+
+<section aria-label="Why it is ready" style="display: flex; flex-direction: column; gap: 8px">
+<h3 style="margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #6E7480">Why panel-widgets says it is ready</h3>
+<p style="margin: 0; color: #14161B">The base prints flat at 26 mm and the short board sits on its posts. The lid and the USB-C cut-out come in #15, so this one can go in alone.</p>
+</section>
+
+<section aria-label="Checks" style="display: flex; flex-direction: column; gap: 8px">
+<h3 style="margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #6E7480">Checks · 3 of 3 pass</h3>
+<div style="display: flex; flex-direction: column; border-radius: 12px; box-shadow: 0 0 0 1px #E3E6EB">
+<div style="display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid #EEF0F3"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1F7A4D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg><span>Render the STL</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #6E7480">41s</span></div>
+<div style="display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid #EEF0F3"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1F7A4D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg><span>Wall thickness at least 2 mm</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #6E7480">3s</span></div>
+<div style="display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 14px"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1F7A4D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg><span>Board fits the posts</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #6E7480">2s</span></div>
+</div>
+</section>
+
+<section aria-label="Changes" style="display: flex; flex-direction: column; gap: 8px">
+<h3 style="margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #6E7480">Changes · 3 files</h3>
+<ul style="display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #474D59">
+<li style="display: flex; justify-content: space-between; gap: 12px"><span>case/base.scad</span><span><span style="color: #1F7A4D">+48</span> <span style="color: #6E7480">−12</span></span></li>
+<li style="display: flex; justify-content: space-between; gap: 12px"><span>case/params.scad</span><span><span style="color: #1F7A4D">+3</span> <span style="color: #6E7480">−1</span></span></li>
+<li style="display: flex; justify-content: space-between; gap: 12px"><span>case/README.md</span><span><span style="color: #1F7A4D">+6</span> <span style="color: #6E7480">−0</span></span></li>
+</ul>
+</section>
+
+<section aria-label="In Octotrack" style="display: flex; flex-direction: column; gap: 8px">
+<h3 style="margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #6E7480">In Octotrack</h3>
+<div style="display: flex; flex-direction: column; border-radius: 12px; box-shadow: 0 0 0 1px #E3E6EB">
+<a href="#" style="display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 10px; align-items: baseline; padding: 11px 14px; border-bottom: 1px solid #EEF0F3; color: #14161B"><span style="font-size: 13px; color: #474D59; font-weight: 600">Line</span><span>Sendspin enclosure <span style="color: #6E7480">· step 2, Print the base</span></span></a>
+<a href="#" style="display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 10px; align-items: baseline; padding: 11px 14px; color: #14161B"><span style="font-size: 13px; color: #474D59; font-weight: 600">Task</span><span>PANEL-2, merge it <span style="color: #6E7480">· next for you</span></span></a>
+</div>
+</section>
+</div>
+
+<div style="display: flex; align-items: center; gap: 8px; margin: auto 28px 24px; padding-top: 16px; border-top: 1px solid #EEF0F3">
+<span style="font-size: 13px; color: #474D59">Merged it on GitHub?</span>
+<button type="button" style="margin-left: auto; height: 36px; padding: 0 14px; border: 0; border-radius: 8px; background: #14161B; color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 600">Mark PANEL-2 done</button>
+</div>
+</aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
