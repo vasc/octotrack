@@ -190,3 +190,9 @@ These changed how the product looks, slightly. All of them are visible at `/desi
   beside it everything the view holds as one list, the item they are on opened in place as a card. The bar's counts
   are gone. A line named on the card peeks in place, and the page folds its rail so the list and the peek are both
   whole. Drawn as Triage, in `canvas/triage/` (T-List-A for the list).
+- **The mark is Lanes.** Two octagonal lanes, each open on a different side, round a solid octagon: the octagon the
+  bar already used, made into a target that is also a track. Chosen from thirteen marks over two rounds, octagon
+  bullseyes and 8-track players, on the canvas https://claude.ai/artifact/C7JEuCEW3mZkBkAHH2PS5n, kept in
+  `canvas/icon/`; the developer said "lets go with a5 as drawn". In the bar it is one colour, the text's, drawn on
+  Lucide's grid beside the other icons (`Icon.tsx`); the app icon, the installable PNGs and the favicon draw it ivory
+  on near-black with an amber centre, the colours the app icon already had.

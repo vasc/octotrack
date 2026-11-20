@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Circle,
+  createLucideIcon,
   Contrast,
   CornerDownLeft,
   Ellipsis,
@@ -19,7 +20,6 @@ import {
   MapPin,
   Menu,
   Minus,
-  Octagon,
   Option,
   Plus,
   Square,
@@ -27,7 +27,39 @@ import {
   X,
 } from "lucide-react";
 
-/** Each icon the dashboard draws, from Lucide, and whether its shape is filled in. */
+/**
+ * Octotrack's own mark, drawn on Lucide's 24 grid so it sits beside the other icons at their size and weight: two
+ * octagonal lanes, each open on a different side, round a solid octagon. design/log.md says why.
+ */
+const Lanes = createLucideIcon("OctotrackLanes", [
+  [
+    "polyline",
+    {
+      points: "21.75,7.96 21.75,16.04 16.04,21.75 7.96,21.75 2.25,16.04 2.25,7.96 7.96,2.25 16.04,2.25",
+      strokeWidth: "1.8",
+      key: "outer",
+    },
+  ],
+  [
+    "polyline",
+    {
+      points: "6,14.49 6,9.52 9.52,6 14.49,6 18,9.52 18,14.49 14.49,18 9.52,18",
+      strokeWidth: "1.8",
+      key: "inner",
+    },
+  ],
+  [
+    "polygon",
+    {
+      points: "14.55,13.06 13.06,14.55 10.95,14.55 9.45,13.06 9.45,10.95 10.95,9.45 13.06,9.45 14.55,10.95",
+      fill: "currentColor",
+      stroke: "none",
+      key: "centre",
+    },
+  ],
+]);
+
+/** Each icon the dashboard draws, from Lucide or drawn the same way, and whether its shape is filled in. */
 const ICONS = {
   plus: { shape: Plus },
   pin: { shape: MapPin },
@@ -37,7 +69,7 @@ const ICONS = {
   pages: { shape: Menu },
   more: { shape: Ellipsis },
   /** Octotrack's own mark, beside its name in the bar. */
-  mark: { shape: Octagon },
+  mark: { shape: Lanes },
   appearance: { shape: Contrast },
   /** Done, passing, merged, chosen. */
   check: { shape: Check },

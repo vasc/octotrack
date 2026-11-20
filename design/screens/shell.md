@@ -23,7 +23,7 @@ the canvas at https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 
 - Designed in: triage/Main.dc.html, triage/T-Lines.dc.html, triage/T-More.dc.html
 - What it shows: one row: "Octotrack"; Lines; For you with how much waits on you in a pill; then "+ New line" and More ("[more]").
-- Changes from today: the counts, I'm at, the theme and the keys leave the bar; Log and Agents move into More; the page you are on is raised on a tile instead of underlined. The name has Octotrack's octagon mark before it; on a phone the word gives way to Lines and For you, the mark stays, and New line is its plus alone (triage/T-Task-Phone). More stays on a phone, though the phone drawings leave it out, since the Log and Agents are reached nowhere else.
+- Changes from today: the counts, I'm at, the theme and the keys leave the bar; Log and Agents move into More; the page you are on is raised on a tile instead of underlined. The name has Octotrack's Lanes mark before it; on a phone the word gives way to Lines and For you, the mark stays, and New line is its plus alone (triage/T-Task-Phone). More stays on a phone, though the phone drawings leave it out, since the Log and Agents are reached nowhere else.
 - Loading: For you is named alone while what waits loads.
 - Error: if what waits cannot load, For you is named alone, and For you's page says why.
 - Empty: nothing waiting: For you has no pill.

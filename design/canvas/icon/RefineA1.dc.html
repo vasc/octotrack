@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A1 Rings, refined</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.dark{background:#161614;color:#f3efe6;--accent:#e8890c}
+.light{background:#f4f1ea;color:#1b1b19;--accent:#d97706}
+.mono{color:#1b1b19;--accent:#1b1b19}
+.barlight{background:#ffffff;color:#1f2328;--accent:#1f2328;border:1px solid #d0d7de}
+.bardark{background:#0d1117;color:#e6edf3;--accent:#e6edf3;border:1px solid #30363d}
+</style>
+</helmet>
+<div style="width: 1180px; height: 1120px; box-sizing: border-box; padding: 48px 56px; background: #fbfaf7; color: #1b1b19; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column">
+<svg width="0" height="0" style="position: absolute" aria-hidden="true">
+<defs>
+<symbol id="r-a1-0" viewBox="0 0 48 48"><path d="M43.5,32.08 L32.08,43.5 L15.92,43.5 L4.5,32.08 L4.5,15.92 L15.92,4.5 L32.08,4.5 L43.5,15.92 Z" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linejoin="round"></path><path d="M36,28.97 L28.97,36 L19.03,36 L12,28.97 L12,19.03 L19.03,12 L28.97,12 L36,19.03 Z" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linejoin="round"></path><path d="M29.1,26.11 L26.11,29.1 L21.89,29.1 L18.9,26.11 L18.9,21.89 L21.89,18.9 L26.11,18.9 L29.1,21.89 Z" fill="var(--accent)"></path></symbol>
+<symbol id="r-a1-1" viewBox="0 0 48 48"><path d="M44,32.28 L32.28,44 L15.72,44 L4,32.28 L4,15.72 L15.72,4 L32.28,4 L44,15.72 Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"></path><path d="M36.4,29.14 L29.14,36.4 L18.86,36.4 L11.6,29.14 L11.6,18.86 L18.86,11.6 L29.14,11.6 L36.4,18.86 Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"></path><path d="M30.6,26.73 L26.73,30.6 L21.27,30.6 L17.4,26.73 L17.4,21.27 L21.27,17.4 L26.73,17.4 L30.6,21.27 Z" fill="var(--accent)"></path></symbol>
+<symbol id="r-a1-2" viewBox="0 0 48 48"><path d="M44,29.08 Q44,32.28 41.74,34.55 L34.55,41.74 Q32.28,44 29.08,44 L18.92,44 Q15.72,44 13.45,41.74 L6.26,34.55 Q4,32.28 4,29.08 L4,18.92 Q4,15.72 6.26,13.45 L13.45,6.26 Q15.72,4 18.92,4 L29.08,4 Q32.28,4 34.55,6.26 L41.74,13.45 Q44,15.72 44,18.92 Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"></path><path d="M36.4,27.14 Q36.4,29.14 34.99,30.55 L30.55,34.99 Q29.14,36.4 27.14,36.4 L20.86,36.4 Q18.86,36.4 17.45,34.99 L13.01,30.55 Q11.6,29.14 11.6,27.14 L11.6,20.86 Q11.6,18.86 13.01,17.45 L17.45,13.01 Q18.86,11.6 20.86,11.6 L27.14,11.6 Q29.14,11.6 30.55,13.01 L34.99,17.45 Q36.4,18.86 36.4,20.86 Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"></path><path d="M30.6,25.13 Q30.6,26.73 29.47,27.87 L27.87,29.47 Q26.73,30.6 25.13,30.6 L22.87,30.6 Q21.27,30.6 20.13,29.47 L18.53,27.87 Q17.4,26.73 17.4,25.13 L17.4,22.87 Q17.4,21.27 18.53,20.13 L20.13,18.53 Q21.27,17.4 22.87,17.4 L25.13,17.4 Q26.73,17.4 27.87,18.53 L29.47,20.13 Q30.6,21.27 30.6,22.87 Z" fill="var(--accent)"></path></symbol>
+<symbol id="r-a1-3" viewBox="0 0 48 48"><path d="M43.4,32.04 L32.04,43.4 L15.96,43.4 L4.6,32.04 L4.6,15.96 L15.96,4.6 L32.04,4.6 L43.4,15.96 Z" fill="none" stroke="currentColor" stroke-width="5.4" stroke-linejoin="round"></path><path d="M35.6,28.8 L28.8,35.6 L19.2,35.6 L12.4,28.8 L12.4,19.2 L19.2,12.4 L28.8,12.4 L35.6,19.2 Z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"></path><path d="M30,26.49 L26.49,30 L21.51,30 L18,26.49 L18,21.51 L21.51,18 L26.49,18 L30,21.51 Z" fill="var(--accent)"></path></symbol>
+<symbol id="r-a1-4" viewBox="0 0 48 48"><path d="M44,32.28 L32.28,44 L15.72,44 L4,32.28 L4,15.72 L15.72,4 L32.28,4 L44,15.72 Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"></path><path d="M36.4,29.14 L29.14,36.4 L18.86,36.4 L11.6,29.14 L11.6,18.86 L18.86,11.6 L29.14,11.6 L36.4,18.86 Z" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linejoin="round"></path><path d="M29.6,26.32 L26.32,29.6 L21.68,29.6 L18.4,26.32 L18.4,21.68 L21.68,18.4 L26.32,18.4 L29.6,21.68 Z" fill="currentColor"></path></symbol>
+<symbol id="r-a1-5" viewBox="0 0 48 48"><path d="M44.6,32.53 L32.53,44.6 L15.47,44.6 L3.4,32.53 L3.4,15.47 L15.47,3.4 L32.53,3.4 L44.6,15.47 Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"></path><path d="M38.6,30.05 L30.05,38.6 L17.95,38.6 L9.4,30.05 L9.4,17.95 L17.95,9.4 L30.05,9.4 L38.6,17.95 Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"></path><path d="M32.6,27.56 L27.56,32.6 L20.44,32.6 L15.4,27.56 L15.4,20.44 L20.44,15.4 L27.56,15.4 L32.6,20.44 Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"></path><path d="M27.4,25.41 L25.41,27.4 L22.59,27.4 L20.6,25.41 L20.6,22.59 L22.59,20.6 L25.41,20.6 L27.4,22.59 Z" fill="var(--accent)"></path></symbol>
+</defs>
+</svg>
+<div style="display: flex; flex-direction: column; gap: 6px; padding-bottom: 24px; border-bottom: 1px solid #d9d5cc">
+<h1 style="margin: 0; font-size: 30px; font-weight: 700; letter-spacing: -0.01em">A1 Rings, refined</h1>
+<p style="margin: 0; font-size: 15px; color: #5c5a54">The plain target, varied in rhythm, weight, corners and where the accent sits. The first row is the first round's, for comparison.</p>
+</div>
+<sc-for list="{{marks}}" as="item" hint-placeholder-count="6">
+<div style="display: flex; align-items: center; gap: 22px; height: 150px; border-bottom: 1px solid #e6e2d9">
+<div style="width: 210px; display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 15px; font-weight: 600">{{item.name}}</div>
+<div style="font-size: 13px; line-height: 1.4; color: #5c5a54">{{item.idea}}</div>
+</div>
+<div class="dark" style="width: 120px; height: 120px; border-radius: 27px; display: flex; align-items: center; justify-content: center"><svg width="80" height="80" role="img" aria-label="{{item.name}}, dark"><use href="#{{item.id}}"></use></svg></div>
+<div class="light" style="width: 120px; height: 120px; border-radius: 27px; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 0 1px #e3ddd0"><svg width="80" height="80" role="img" aria-label="{{item.name}}, light"><use href="#{{item.id}}"></use></svg></div>
+<div style="display: flex; align-items: flex-end; gap: 12px">
+<div class="dark" style="width: 60px; height: 60px; border-radius: 13px; display: flex; align-items: center; justify-content: center"><svg width="40" height="40" aria-hidden="true"><use href="#{{item.id}}"></use></svg></div>
+<div class="dark" style="width: 32px; height: 32px; border-radius: 7px; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" aria-hidden="true"><use href="#{{item.id}}"></use></svg></div>
+<div class="dark" style="width: 16px; height: 16px; border-radius: 4px; display: flex; align-items: center; justify-content: center"><svg width="12" height="12" aria-hidden="true"><use href="#{{item.id}}"></use></svg></div>
+<div class="mono" style="display: flex; align-items: flex-end; gap: 12px; padding-left: 8px">
+<svg width="32" height="32" aria-hidden="true"><use href="#{{item.id}}"></use></svg>
+<svg width="16" height="16" aria-hidden="true"><use href="#{{item.id}}"></use></svg>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; margin-left: auto">
+<div class="barlight" style="display: flex; align-items: center; gap: 7px; height: 36px; padding: 0 12px; border-radius: 6px; font-size: 13px; font-weight: 600"><svg width="16" height="16" aria-hidden="true"><use href="#{{item.id}}"></use></svg>Octotrack<span style="font-weight: 400; opacity: 0.7; margin-left: 14px">Lines</span><span style="font-weight: 400; opacity: 0.7; margin-left: 10px">For you</span></div>
+<div class="bardark" style="display: flex; align-items: center; gap: 7px; height: 36px; padding: 0 12px; border-radius: 6px; font-size: 13px; font-weight: 600"><svg width="16" height="16" aria-hidden="true"><use href="#{{item.id}}"></use></svg>Octotrack<span style="font-weight: 400; opacity: 0.7; margin-left: 14px">Lines</span><span style="font-weight: 400; opacity: 0.7; margin-left: 10px">For you</span></div>
+</div>
+</div>
+</sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1180,"height":1120}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      marks: [
+        { id: 'r-a1-0', name: 'A1 · As drawn', idea: 'The first round’s Rings, for comparison.' },
+        { id: 'r-a1-1', name: 'A1.1 · Even', idea: 'Ring, gap and centre on one rhythm, like a real target, with a larger centre.' },
+        { id: 'r-a1-2', name: 'A1.2 · Soft', idea: 'The same rhythm with rounded corners: friendlier, still clearly eight-sided.' },
+        { id: 'r-a1-3', name: 'A1.3 · Weighted', idea: 'A heavy outer ring and a light inner one, so the eye goes to the centre.' },
+        { id: 'r-a1-4', name: 'A1.4 · Accent ring', idea: 'The inner ring takes the accent and the centre stays ink.' },
+        { id: 'r-a1-5', name: 'A1.5 · Three rings', idea: 'One more ring: more of a target, at the cost of 16 px.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -3,6 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fireEvent, render } from "@testing-library/react";
 import { StatusBadge } from "../src/components/ui/Badge.tsx";
+import { Icon } from "../src/components/ui/Icon.tsx";
 import { Link } from "../src/components/ui/Link.tsx";
 import { Panel } from "../src/components/ui/Panel.tsx";
 import { markOf } from "../src/lib/format.ts";
@@ -33,6 +34,30 @@ describe("icons", () => {
         ),
     );
     expect(offenders).toEqual([]);
+  });
+
+  test("Octotrack's own mark is two octagonal lanes, each open on a different side, round a solid octagon", () => {
+    const view = render(<Icon name="mark" />);
+    const mark = view.container.querySelector("svg[data-icon='mark']");
+    if (mark === null) throw new Error("no mark drawn");
+    const corners = (shape: Element) => (shape.getAttribute("points") ?? "").trim().split(/\s+/);
+    const lanes = [...mark.querySelectorAll("polyline")];
+    expect(lanes.map((lane) => corners(lane).length)).toEqual([8, 8]);
+    // A lane is open on the side between its last corner and its first; the two openings face different ways.
+    const facing = (lane: Element) => {
+      const points = corners(lane).map((corner) => corner.split(",").map(Number));
+      const first = points.at(0);
+      const last = points.at(-1);
+      if (first === undefined || last === undefined) throw new Error("a lane with no corners");
+      const [x1 = 0, y1 = 0] = first;
+      const [x2 = 0, y2 = 0] = last;
+      return Math.round((Math.atan2((y1 + y2) / 2 - 12, (x1 + x2) / 2 - 12) * 180) / Math.PI);
+    };
+    expect(new Set(lanes.map(facing)).size).toBe(2);
+    const centre = [...mark.querySelectorAll("polygon")];
+    expect(centre.map((shape) => [corners(shape).length, shape.getAttribute("fill")])).toEqual([
+      [8, "currentColor"],
+    ]);
   });
 
   test("a state's mark is an icon, in its tone, never read out", () => {
