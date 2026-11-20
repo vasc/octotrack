@@ -193,6 +193,8 @@ E · One list boards draw it.
 | `--peek-width`        | A line, task or issue opened over the right of the page: a peek beside what you are doing          |
 | `--peek-offset`       | How far For you's card sits from the left while a peek is open, so the card and the peek are whole |
 | `--rail-column`       | For you's rail of views                                                                            |
+| `--detail-width`      | A line on a page of its own, at most                                                               |
+| `--detail-aside`      | The column beside its plan: what is for you there, its summary, what happened                      |
 | `--bar-height`        | The bar's height, which a peek starts under                                                        |
 | `--peek-head`         | A peek's head row: the way back, where it sits, its own page, Close                                |
 | `--card-width`        | For you's open item at most                                                                        |

@@ -162,6 +162,15 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 - Error: cannot fail on its own.
 - Empty: never empty.
 
+### components/ui/DetailPage.tsx
+
+- Designed in: triage/T-Line.dc.html
+- What it shows: crumbs, the title at 32, its lead and facts with its moves beside them; then a lifted sheet and, beside it, a 340 column; one column on a phone.
+- Changes from today: new.
+- Loading: never loads on its own: its owner draws its loading state in a Page.
+- Error: cannot fail on its own.
+- Empty: no column beside: the sheet takes the width.
+
 ### components/ui/Cleared.tsx
 
 - Designed in: triage/T-Done.dc.html

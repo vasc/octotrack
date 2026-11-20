@@ -177,3 +177,75 @@ owner, then Tell. A section with nothing in it says why in one sentence instead 
 - Loading: the draft loads from the tracker; follows the Primitives pattern: the box stays usable.
 - Error: a draft not saved: "Not saved: the tracker did not answer. Kept here; saves when it is back." Sending it waits with Undo like every choice; a request the tracker never took, or a refusal when it takes effect, is said in the Undo bar ("Did not happen: …") with Dismiss; the words stay in the draft until it takes effect.
 - Empty: the button reads Nudge.
+
+### components/lines/LinePage.tsx
+
+- Designed in: triage/T-Line.dc.html
+- What it shows: "Lines / Working on, 1"; the title at 32, its headline, its facts; its moves at the right; then on a lifted sheet done when, what is out of date, the plan, pull requests, the owner and Tell; beside it For you here, the summary and what is new since it.
+- Changes from today: new: a line had only its panel; the panel is now a peek with "Open the full page".
+- Loading: a line Lines already knows draws at once; else "Loading L-1".
+- Error: could not load, with Try again; a ref that is no line: "No line L-404", why, and a search of the Log for it.
+- Empty: a line with no plan says so in the plan, as the panel does.
+
+### components/lines/LineForYouHere.tsx
+
+- Designed in: triage/T-Line.dc.html
+- What it shows: "FOR YOU HERE", a tile per item (where, title, one more fact), each opening on For you at that item.
+- Changes from today: new.
+- Loading: drawn once Lines has loaded.
+- Error: cannot fail on its own.
+- Empty: nothing for you on the line: not drawn.
+
+### components/entity/LineFacts.tsx
+
+- Designed in: Line.dc.html; triage/T-Line.dc.html
+- What it shows: "Working on · L-1 · MEALS", or "Proposed by ttube, 2d ago", or "Done · closed 14:20"; "yours" on a line the developer owns.
+- Changes from today: split out of LinePanelHead, so the peek and the page say it the same way.
+- Loading: never loads on its own.
+- Error: cannot fail on its own.
+- Empty: never empty: a line always has a state and a ref.
+
+### components/entity/LineStanding.tsx
+
+- Designed in: Line.dc.html; Line-States.dc.html, states A–F
+- What it shows: tabled, why it waits and when to look again; the branch it grew from; "Done when" over its sentence; a proposal's recommendation; then its moves.
+- Changes from today: split out of LinePanelHead.
+- Loading: never loads on its own.
+- Error: cannot fail on its own.
+- Empty: a line with nothing but its done when shows only that.
+
+### components/entity/LineMoves.tsx
+
+- Designed in: Line-States.dc.html, states A–F; triage/T-Line.dc.html
+- What it shows: Step in with its reason and the fix that fits; else the moves by state (Done, Move to up next, Table, More); Start opens the Start sheet on a line that waited.
+- Changes from today: split out of LinePanelItem, so the peek and the page move a line the same way.
+- Loading: the moves show their busy state while a choice waits with Undo.
+- Error: a move that fails is said in the Undo bar.
+- Empty: a closed line has no moves.
+
+### components/entity/LinePlan.tsx
+
+- Designed in: Plan-Tree.dc.html; triage/T-Line.dc.html
+- What it shows: the plan as a tree, with Change and Make it its own line as sheets.
+- Changes from today: split out of LinePanelItem.
+- Loading: "Loading the plan", in place.
+- Error: could not load the plan, with Try again; out of date after a failed refresh.
+- Empty: a line with no plan: "No plan yet".
+
+### components/entity/LineSince.tsx
+
+- Designed in: Line.dc.html; triage/T-Line.dc.html
+- What it shows: what happened since the summary, and the line in the Log.
+- Changes from today: split out of LinePanelItem.
+- Loading: "Loading what happened", in place.
+- Error: could not load, with Try again.
+- Empty: "Nothing you have not seen."
+
+### components/entity/LineTell.tsx
+
+- Designed in: Line.dc.html; Line-States.dc.html, state E
+- What it shows: Tell its owner on a working line; on a line the developer owns, add a task or a note.
+- Changes from today: split out of LinePanelItem.
+- Loading: a message on its way shows the box's busy state.
+- Error: a draft the server could not keep says so until a save works.
+- Empty: a closed line, or one waiting, has no Tell.

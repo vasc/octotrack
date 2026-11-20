@@ -13,7 +13,7 @@ the canvas at https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
   - Lost the connection after loading (F): a strip under the bar on every page, never a dialog: "Not live. Showing what was true at 14:20; reconnecting. Answers you give wait until it is back." with Try now (today "Not live: reconnecting").
   - A new version installed while open (G): "A new version of Octotrack is installed. It loads when you next switch to this tab; your drafts are kept." with Load it now (today nothing is said).
   - A part of the page that breaks (G on Shell): "This part of the page failed / A bug in the dashboard, not your data. Your drafts are kept on the tracker. Reloading usually clears it; if not, the error below is what to report." with the error and Reload, caught per area so a broken panel leaves Lines working (today the whole app goes blank).
-  - An address that leads nowhere (F on Shell): "Nothing lives at {path}", then "The dashboard has three pages: Lines, the Log and Agents. Anything you open by its ref, like L-24, opens over the page you are on." and Go to Lines.
+  - An address that leads nowhere (F on Shell): "Nothing lives at {path}", then "The dashboard has For you and Lines, with the Log and Agents in More. Anything you open by its ref, like L-24, opens beside the page you are on." and Go to Lines.
   - Notes and errors sit in the page's gutter (today they are unstyled).
 - Loading: first load (Home-States D): the bar at once and the page drawn as outlines, never a blank page.
 - Error: the tracker not answering on first load (Home-States E): "The tracker is not answering / Nothing answered at 127.0.0.1:4747. Any octo command starts it again; this page tries again every 30 seconds." with `octo server status` and Try now. Raw error text never shows; a reply it cannot read becomes "The tracker sent something this page does not understand. Reload." (Primitives). The server's own pages stay plain text (H): "The dashboard is not built into this octo. Run: bun run build, then build/octo install".
@@ -76,7 +76,7 @@ the canvas at https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 ### components/layout/NotFoundPage.tsx
 
 - Designed in: Shell.dc.html, state F
-- What it shows: "Nothing lives at {path}", that the dashboard has three pages and that refs open over the page you are on, and Go to Lines.
+- What it shows: "Nothing lives at {path}", that the dashboard has For you and Lines, with the Log and Agents in More, and that refs open beside the page you are on, and Go to Lines.
 - Changes from today: new; the address that led nowhere was one sentence with no way back.
 - Loading: never loads on its own.
 - Error: cannot fail on its own.

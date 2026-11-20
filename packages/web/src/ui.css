@@ -2525,3 +2525,112 @@
   background: var(--accent-soft);
   text-decoration: none;
 }
+
+/* ---------- DetailPage: one thing on a page of its own ---------- */
+
+.ui-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+  max-width: var(--detail-width);
+  margin: 0 auto;
+  padding: var(--space-16) var(--space-16) var(--space-32);
+}
+
+.ui-detail-crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--ink-3);
+}
+
+.ui-detail-crumb {
+  display: inline-flex;
+  gap: var(--space-3);
+}
+
+.ui-detail-crumb a {
+  color: var(--ink-2);
+  text-decoration: none;
+}
+
+.ui-detail-crumb a:hover {
+  color: var(--ink);
+}
+
+.ui-detail-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-8) var(--space-16);
+}
+
+.ui-detail-name {
+  display: flex;
+  flex: 1 1 var(--card-width);
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.ui-detail-title {
+  margin: 0;
+  font-size: var(--text-display);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.ui-detail-lead {
+  font-size: var(--text-lead);
+  color: var(--ink-2);
+}
+
+.ui-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/* What it holds on a lifted sheet; beside it, what goes with it. */
+.ui-detail-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--detail-aside);
+  align-items: start;
+  gap: var(--space-16);
+}
+
+.ui-detail-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-width: 0;
+  padding: var(--space-14);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.ui-detail-aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-14);
+  min-width: 0;
+}
+
+@media (max-width: 720px) {
+  .ui-detail {
+    padding: var(--space-8) var(--space-8) var(--space-32);
+  }
+
+  .ui-detail-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ui-detail-main {
+    padding: var(--space-8);
+  }
+}

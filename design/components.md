@@ -51,6 +51,7 @@ gives an element a class or an inline style, and on a class in `ui.css` that is 
 | `FilterRail`   | The views of what waits on you, one under another with their counts, the one you are in raised; real links                                                                                                                 |
 | `NextList`     | What comes after the open item: a tile each, then a closing sentence                                                                                                                                                       |
 | `PeekLink`     | Words naming something that opens in place beside what you are doing, a real link to its own page; tinted while its peek is open                                                                                           |
+| `DetailPage`   | One thing on a page of its own: crumbs, its title, lead and facts with its moves, then a lifted sheet and a column beside it                                                                                               |
 | `Cleared`      | Nothing left in a view: a check, what is true, a few words on what comes, where to go instead                                                                                                                              |
 | `Rail`         | A branch of a plan on a rail under the row it forks from, a group named for the branch                                                                                                                                     |
 | `Icon`         | Every icon, from Lucide, drawn in the text's colour; no font character stands in for one                                                                                                                                   |
@@ -96,6 +97,8 @@ properties and appear on the `/design` specimen; **structural** ones load data a
 
 | Component          | Kind       | What it is                                                                                                                                         |
 | ------------------ | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LinePage`         | Structural | A line on a page of its own, at `/lines/L-1`: its standing and moves, plan, and what is for you beside it                                          |
+| `LineForYouHere`   | Pure       | What waits on the developer on one line, as a `NextList` opening each on For you                                                                   |
 | `HomePage`         | Structural | Every line in the developer's order, with what each needs in place; the keys                                                                       |
 | `WorkingSection`   | Structural | Working on: a `Section` holding one `List` of lines                                                                                                |
 | `WorkingLine`      | Pure       | A working line as one `Row`: its number (the handle), title, facts, headline, its answers, and under it what it needs                              |
@@ -191,7 +194,13 @@ properties and appear on the `/design` specimen; **structural** ones load data a
 | `EntityCrumbs`     | Pure       | Where an item sits: its ref, its kind, its state                                                         |
 | `EntityBody`       | Pure       | What an item says, by its kind: `Pairs` and its body                                                     |
 | `LinePanelItem`    | Structural | A line opened: its head and choices, summary, what it needs, drift, plan, what is new, owner, Tell       |
-| `LinePanelHead`    | Pure       | The line's `Panel`: where it is, its title, done when, its choices                                       |
+| `LinePanelHead`    | Pure       | The line's `Panel`: where it is, its title, done when, its choices, and Open the full page               |
+| `LineFacts`        | Pure       | Where a line stands in `Facts`: its state, who proposed it or how it closed, yours, its ref and repos    |
+| `LineStanding`     | Pure       | Under a line's title: why it waits, the branch it grew from, done when, the recommendation, its moves    |
+| `LineMoves`        | Structural | A line's moves: Step in when nobody can take it, else its moves, Start through the Start sheet           |
+| `LinePlan`         | Structural | Its plan as a tree, with the sheets that change a branch or make it its own line                         |
+| `LineSince`        | Structural | What happened since its summary, and the line in the Log                                                 |
+| `LineTell`         | Structural | Tell its owner, or on a line the developer owns, add a task or a note                                    |
 | `LineActions`      | Pure       | A line's choices by its state, and More for Drop and Fold                                                |
 | `SummaryBox`       | Pure       | Its headline and summary, and when it was written                                                        |
 | `PanelForYou`      | Structural | What the line needs, the first open                                                                      |

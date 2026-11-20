@@ -97,7 +97,7 @@ describe("For you", () => {
     expect(rail(view).getByRole("link", { name: "All, 3" }).getAttribute("aria-current")).toBe("page");
     // Only the open one is drawn in full; the next two wait beside it.
     expect(view.queryByRole("heading", { name: "Which day?" })).toBeNull();
-    const next = within(view.getByRole("complementary", { name: "Next" }));
+    const next = within(view.getByRole("region", { name: "Next" }));
     next.getByRole("link", { name: /Which day\?/ });
     next.getByRole("link", { name: /Weigh it/ });
     // It names its line, which opens in place.
@@ -163,7 +163,7 @@ describe("For you", () => {
     await answerNow(view);
     await within(card(view)).findByText("To answer · 1 of 2");
     // Put off, it still waits on you, last.
-    within(view.getByRole("complementary", { name: "Next" })).getByRole("link", { name: /Which board\?/ });
+    within(view.getByRole("region", { name: "Next" })).getByRole("link", { name: /Which board\?/ });
   });
 
   test("an answer takes its question away and the next one opens where it was", async () => {
@@ -183,7 +183,7 @@ describe("For you", () => {
     ask("Which board?", "octo.1");
     ask("Which day?", "digest.1");
     const view = renderApp(<App />);
-    const next = within(await waitFor(() => view.getByRole("complementary", { name: "Next" })));
+    const next = within(await waitFor(() => view.getByRole("region", { name: "Next" })));
     fireEvent.click(await next.findByRole("link", { name: /Which day\?/ }));
     await opened(view, "Which day?");
   });
@@ -266,10 +266,13 @@ describe("For you", () => {
     await gone(() => view.queryByRole("complementary", { name: "L-1" }));
   });
 
-  test("an address under For you that is no view leads nowhere", async () => {
+  test("an address under For you that is no view leads nowhere, and Go to Lines goes to Lines", async () => {
     navigate("/for-you/everything");
     const view = renderApp(<App />);
     await view.findByText(/Nothing lives at/);
+    view.getByText(/For you and Lines, with the Log and Agents in More/);
+    fireEvent.click(view.getByRole("button", { name: "Go to Lines" }));
+    await waitFor(() => expect(window.location.pathname).toBe("/lines"));
   });
 
   test("Lines lives at its own address", async () => {

@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { AgentsPage } from "./components/agents/AgentsPage.tsx";
 import { FeedPage } from "./components/feed/FeedPage.tsx";
 import { ForYouPage } from "./components/foryou/ForYouPage.tsx";
+import { LinePage } from "./components/lines/LinePage.tsx";
 import { AppShell } from "./components/layout/AppShell.tsx";
 import { HomePage } from "./components/home/HomePage.tsx";
 import { LoadingState } from "./components/ui/states.tsx";
@@ -17,6 +18,8 @@ const DesignPage = lazy(() =>
 function Page({ path }: { path: string }) {
   const filter = filterAt(path);
   if (filter !== null) return <ForYouPage filter={filter} />;
+  const line = /^\/lines\/(L-\d+)$/.exec(path)?.[1];
+  if (line !== undefined) return <LinePage lineRef={line} />;
   switch (path) {
     case "/lines":
       return <HomePage />;

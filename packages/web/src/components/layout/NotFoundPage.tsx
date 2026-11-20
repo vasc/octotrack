@@ -10,13 +10,13 @@ export function NotFoundPage({ path }: { path: string }) {
       <Notice
         title={`Nothing lives at ${path}`}
         action={
-          <Button variant="primary" onClick={() => navigate("/")}>
+          <Button variant="primary" onClick={() => navigate("/lines")}>
             Go to Lines
           </Button>
         }
       >
-        The dashboard has three pages: Lines, the Log and Agents. Anything you open by its ref, like L-24,
-        opens over the page you are on.
+        The dashboard has For you and Lines, with the Log and Agents in More. Anything you open by its ref,
+        like L-24, opens beside the page you are on.
       </Notice>
     </Page>
   );

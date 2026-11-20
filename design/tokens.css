@@ -144,6 +144,9 @@
   --next-column: 280px;
   /* A peek over the right of the page, and how far the open item sits from the left while one is open. */
   --peek-width: 560px;
+  /* A line on a page of its own: how wide it gets, and the column beside its plan. */
+  --detail-width: 1180px;
+  --detail-aside: 340px;
   --peek-offset: calc(var(--space-unit) * 40);
   /* The bar's height, which a peek starts under, and a peek's own head row. */
   --bar-height: calc(var(--control-height) + var(--space-12));

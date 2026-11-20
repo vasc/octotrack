@@ -26,7 +26,7 @@ export function NextList({
   after?: ReactNode;
 }) {
   return (
-    <aside className="ui-next" aria-label={label}>
+    <section className="ui-next" aria-label={label}>
       <span className="ui-next-label" aria-hidden="true">
         {label}
       </span>
@@ -49,6 +49,6 @@ export function NextList({
         </a>
       ))}
       {after === undefined ? null : <p className="ui-next-after">{after}</p>}
-    </aside>
+    </section>
   );
 }
