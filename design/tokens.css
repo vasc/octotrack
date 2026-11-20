@@ -58,6 +58,8 @@
   /* The open item on For you: what it is, said large, and the sentence under it. */
   --text-display: 32px;
   --text-lead: 17px;
+  /* A peek's own title, smaller than the item it was opened from. */
+  --text-title: 24px;
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
@@ -103,6 +105,8 @@
   /* A tile's edge: the page you are on in the bar, the view you are in, an item in Next; darker under the pointer. */
   --shadow-tile: 0 0 0 1px var(--line);
   --shadow-tile-hover: 0 0 0 1px var(--line-strong);
+  /* A peek opened from another: the one under it shows as an edge to its left, with its hairline. */
+  --shadow-stack: calc(-1 * var(--space-12)) 0 0 0 var(--surface-2), calc(-1 * var(--space-12) - 1px) 0 0 0 var(--line);
   /* The open item's card, lifted a little from the page. */
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.06), 0 12px 32px -12px rgb(0 0 0 / 0.12);
   /* A sheet lifted over the page. */
@@ -141,6 +145,9 @@
   /* A peek over the right of the page, and how far the open item sits from the left while one is open. */
   --peek-width: 560px;
   --peek-offset: calc(var(--space-unit) * 40);
+  /* The bar's height, which a peek starts under, and a peek's own head row. */
+  --bar-height: calc(var(--control-height) + var(--space-12));
+  --peek-head: calc(var(--control-height) + var(--space-10));
   --touch-target: 44px;
   /* A sheet's width on a wide screen. */
   --sheet-width: 480px;

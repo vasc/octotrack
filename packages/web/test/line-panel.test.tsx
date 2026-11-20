@@ -97,15 +97,32 @@ describe("the line's head", () => {
 });
 
 describe("the panel", () => {
-  test("Close shuts it, and opened from another panel Back is its own button", () => {
+  test("Close shuts it, and opened from another peek the way back names that one", () => {
     const onClose = mock(() => {});
     const onBack = mock(() => {});
-    const view = render(<Panel title="L-1" onClose={onClose} back={{ label: "L-57", onBack }} />);
-    fireEvent.click(view.getByRole("button", { name: "Back to L-57" }));
+    const view = render(
+      <Panel title="L-1" onClose={onClose} back={{ label: "Sendspin enclosure", onBack }} />,
+    );
+    const back = view.getByRole("button", { name: "Back to Sendspin enclosure" });
+    expect(back.textContent).toBe("Sendspin enclosure");
+    fireEvent.click(back);
     expect(onBack).toHaveBeenCalledTimes(1);
-    fireEvent.click(view.getByRole("button", { name: "Close" }));
+    // Close is the cross alone, named for a screen reader.
+    const close = view.getByRole("button", { name: "Close" });
+    expect(iconsIn(close)).toEqual(["cross"]);
+    fireEvent.click(close);
     expect(onClose).toHaveBeenCalledTimes(1);
-    expect(view.getByRole("button", { name: "Close" }).textContent).toBe("Close");
+  });
+
+  test("a peek with a page of its own offers it, as a link that Cmd opens in a new tab", () => {
+    const onGo = mock((_href: string) => {});
+    const view = render(
+      <Panel title="Sendspin enclosure" onClose={() => {}} page={{ href: "/lines/L-2", onGo }} />,
+    );
+    const page = view.getByRole("link", { name: "Open the full page" });
+    expect(page.getAttribute("href")).toBe("/lines/L-2");
+    fireEvent.click(page);
+    expect(onGo).toHaveBeenCalledWith("/lines/L-2");
   });
 });
 

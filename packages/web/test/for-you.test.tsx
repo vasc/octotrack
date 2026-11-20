@@ -53,6 +53,16 @@ const ask = (title: string, agent: string) =>
     agent,
   );
 
+/**
+ * Waits for an element to go away. Not expect(...).toBeNull() inside waitFor: when that fails, formatting a whole DOM
+ * node into the message takes so long that it starves the event loop and the wait times out for the wrong reason.
+ */
+async function gone(query: () => Element | null): Promise<void> {
+  await waitFor(() => {
+    if (query() !== null) throw new Error("Still on screen");
+  });
+}
+
 /** The card open in the middle of the page. */
 const card = (view: Pick<RenderResult, "getByRole">) => view.getByRole("region", { name: "Open now" });
 
@@ -229,6 +239,31 @@ describe("For you", () => {
     await view.findByRole("heading", { name: "Nothing to answer" });
     fireEvent.click(view.getByRole("link", { name: "To do, 1 waiting" }));
     await opened(view, "Weigh it");
+  });
+
+  test("the line on the card peeks in place, and a peek opened from it stacks with its way back named", async () => {
+    twoLines();
+    ask("Which board?", "octo.1");
+    ask("Which case?", "octo.1");
+    const view = renderApp(<App />);
+    await opened(view, "Which board?");
+    const line = within(card(view)).getByRole("link", { name: "Sendspin enclosure" });
+    expect(line.getAttribute("href")).toBe("/lines/L-1");
+    fireEvent.click(line);
+    const peek = within(await view.findByRole("complementary", { name: "L-1" }));
+    await peek.findByRole("heading", { name: "Sendspin enclosure", level: 1 });
+    // The card stays, open on the same question, its line marked as the one peeked at.
+    await opened(view, "Which board?");
+    expect(
+      within(card(view)).getByRole("link", { name: "Sendspin enclosure" }).getAttribute("aria-expanded"),
+    ).toBe("true");
+    fireEvent.click(await peek.findByRole("button", { name: "D-2" }));
+    const stacked = await view.findByRole("complementary", { name: "D-2" });
+    expect(stacked.getAttribute("data-stacked")).toBe("true");
+    fireEvent.click(await within(stacked).findByRole("button", { name: "Back to Sendspin enclosure" }));
+    await view.findByRole("complementary", { name: "L-1" });
+    fireEvent.keyDown(window, { key: "Escape" });
+    await gone(() => view.queryByRole("complementary", { name: "L-1" }));
   });
 
   test("an address under For you that is no view leads nowhere", async () => {

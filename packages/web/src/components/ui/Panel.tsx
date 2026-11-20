@@ -1,13 +1,15 @@
 import { type ReactNode, type Ref, useRef } from "react";
 import { useCloseOnOutsideTap } from "../../hooks/useCloseOnOutsideTap.ts";
 import { Only } from "./AppBar.tsx";
-import { Button } from "./Button.tsx";
+import { Button, IconButton } from "./Button.tsx";
 import { Icon } from "./Icon.tsx";
+import { Link } from "./Link.tsx";
 
 /**
- * An item opened by its ref, over the right of the page so the list keeps its place behind it; the whole screen on a
- * phone. Where it sits, small and grey, then Back to the panel it was opened from and Close, which always shuts it, and
- * on a phone is the way back to the page under it ("Lines", after a back arrow); then its title and its sections.
+ * An item opened by its ref, a peek over the right of the page beside what you are doing; the whole screen on a phone.
+ * Its head is one row: the way back to the peek it was opened from, where it sits, small and grey, its own page when it
+ * has one, and Close, which always shuts it; on a phone Close is the way back to the page under it ("Lines", after a
+ * back arrow). Then its title and its sections.
  */
 export function Panel({
   crumbs,
@@ -15,16 +17,19 @@ export function Panel({
   onClose,
   back,
   under = "Lines",
+  page,
   head,
   children,
 }: {
   crumbs?: ReactNode;
   title?: ReactNode;
   onClose(): void;
-  /** Opened from another panel: the ref it came from, and the way back to it. */
+  /** Opened from another peek: what that one is, and the way back to it. */
   back?: { label: string; onBack(): void } | undefined;
   /** The page it opens over, which its way back names on a phone. */
   under?: string;
+  /** Its own page, for all of it: "Open the full page". */
+  page?: { href: string; onGo(href: string): void } | undefined;
   /** What belongs with the title, such as what finishes it and its moves; a hairline then sets the sections apart. */
   head?: ReactNode;
   children?: ReactNode;
@@ -32,15 +37,27 @@ export function Panel({
   return (
     <div className="ui-panel">
       <header className="ui-panel-head">
-        <div className="ui-panel-crumbs">{crumbs}</div>
         {back === undefined ? null : (
-          <Button onClick={back.onBack}>
+          <button
+            type="button"
+            className="ui-panel-back"
+            onClick={back.onBack}
+            aria-label={`Back to ${back.label}`}
+          >
             <Icon name="back" />
-            Back to {back.label}
-          </Button>
+            {back.label}
+          </button>
+        )}
+        <div className="ui-panel-crumbs">{crumbs}</div>
+        {page === undefined ? null : (
+          <Only on="wide">
+            <Link href={page.href} onGo={page.onGo}>
+              Open the full page
+            </Link>
+          </Only>
         )}
         <Only on="wide">
-          <Button onClick={onClose}>Close</Button>
+          <IconButton icon="cross" label="Close" onClick={onClose} />
         </Only>
         <Only on="phone">
           <Button onClick={onClose}>
@@ -70,11 +87,14 @@ const PART_OF_IT = ".ui-sheet-layer, .ui-toasts, .ui-menu-list";
 export function Side({
   label,
   ref,
+  stacked = false,
   onClose,
   children,
 }: {
   label: string;
   ref?: Ref<HTMLElement>;
+  /** Opened from another peek, which shows as an edge to its left, the way back to it. */
+  stacked?: boolean;
   onClose(): void;
   children: ReactNode;
 }) {
@@ -84,6 +104,7 @@ export function Side({
     <aside
       className="ui-side"
       aria-label={label}
+      data-stacked={stacked ? "true" : undefined}
       ref={(element) => {
         own.current = element;
         if (typeof ref === "function") ref(element);

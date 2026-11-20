@@ -105,6 +105,7 @@ and `--tone-mark`, and badges, glyphs and feed marks all read those. Add a tone 
 | `--text-heading`    | Working on, and a page's own title                                                                  |
 | `--text-display`    | The open item's title on For you: what it is, said large, the one thing on the page                 |
 | `--text-lead`       | The sentence under that title: its situation or what to do                                          |
+| `--text-title`      | A peek's own title, smaller than the item it was opened from                                        |
 | `--weight-regular`  | Body                                                                                                |
 | `--weight-medium`   | Navigation, counts beside a heading                                                                 |
 | `--weight-semibold` | Titles, the counts in the bar                                                                       |
@@ -164,6 +165,7 @@ Only what floats over content gets a shadow. Everything else is separated by a l
 | `--shadow-card`        | The open item's card on For you, lifted a little from the page                      |
 | `--shadow-tile`        | A tile's edge: the page you are on in the bar, the view you are in, an item in Next |
 | `--shadow-tile-hover`  | That edge under the pointer, a step darker                                          |
+| `--shadow-stack`       | A peek opened from another: the one under it, an edge to its left                   |
 | `--shadow-sheet`       | A sheet lifted over the page and its bar                                            |
 | `--scrim`              | What dims the page and its bar behind a sheet                                       |
 | `--shadow-focus`       | The halo round a focused control                                                    |
@@ -191,6 +193,8 @@ E · One list boards draw it.
 | `--peek-width`        | A line, task or issue opened over the right of the page: a peek beside what you are doing          |
 | `--peek-offset`       | How far For you's card sits from the left while a peek is open, so the card and the peek are whole |
 | `--rail-column`       | For you's rail of views                                                                            |
+| `--bar-height`        | The bar's height, which a peek starts under                                                        |
+| `--peek-head`         | A peek's head row: the way back, where it sits, its own page, Close                                |
 | `--card-width`        | For you's open item at most                                                                        |
 | `--next-column`       | For you's Next column                                                                              |
 | `--page-width-narrow` | A page of reading in one column: the log                                                           |

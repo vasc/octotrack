@@ -75,21 +75,11 @@ export function ProposalItem({
       ? { key: "drop", label: "Drop it", description: "It was a line; it is closed, its history kept." }
       : { key: "reject", label: "Not a line", description: "Turned down; its agent is told." },
   ];
-  // The recommended move comes first, with its reason inside it.
+  // The recommended move comes first; its reason is said once, as Why now.
   const ordered = [
     ...moves.filter((move) => move.key === recommended),
     ...moves.filter((move) => move.key !== recommended),
-  ].map((move) =>
-    move.key === recommended
-      ? {
-          ...move,
-          recommended: true,
-          ...(line.recommendationWhy === null
-            ? {}
-            : { why: <Markdown text={line.recommendationWhy} inline /> }),
-        }
-      : move,
-  );
+  ].map((move) => (move.key === recommended ? { ...move, recommended: true } : move));
   const pick = (key: string) => {
     switch (key) {
       case "start":

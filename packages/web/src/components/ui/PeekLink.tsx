@@ -21,6 +21,7 @@ export function PeekLink({
       className="ui-peek-link"
       href={href}
       data-open={open ? "true" : undefined}
+      aria-expanded={open}
       onClick={(event) => {
         if (event.metaKey || event.ctrlKey) return;
         event.preventDefault();

@@ -4,6 +4,7 @@ import type { Drift, Line } from "@octotrack/core/schemas";
 import { useState } from "react";
 import { useChoices } from "../../hooks/useChoices.ts";
 import { useDraft } from "../../hooks/useDraft.ts";
+import { useBackTo } from "../../hooks/useBackTo.ts";
 import { useHome } from "../../hooks/useHome.ts";
 import { useLineChoices } from "../../hooks/useLineChoices.ts";
 import { useMarkSeen } from "../../hooks/useMarkSeen.ts";
@@ -11,7 +12,7 @@ import { useOpQuery } from "../../hooks/useOp.ts";
 import { failureText } from "../../lib/failure.ts";
 import { forYouCounts, issuesOnBranch } from "../../lib/lines.ts";
 import { moreSinceSummary } from "../../lib/log.ts";
-import { backEntity, pageUnder, useRoute } from "../../lib/router.ts";
+import { pageUnder, useRoute } from "../../lib/router.ts";
 import { LineStepIn } from "../home/LineStepIn.tsx";
 import { StartSheet } from "../home/StartSheet.tsx";
 import { Loaded, StaleNote } from "../ui/Loaded.tsx";
@@ -72,8 +73,8 @@ export function LinePanelItem({
   const params = route.params;
   // Opened with t from home: straight to Tell.
   const telling = params.get("act") === "tell";
-  // Opened from another panel: Back returns there.
-  const from = params.get("from");
+  // Opened from another peek: Back returns there.
+  const back = useBackTo();
   const home = h.home.data;
   const crew = home?.crews[line.ref];
   const owner = crew?.owner?.name ?? null;
@@ -96,7 +97,7 @@ export function LinePanelItem({
       line={line}
       repos={line.repos.map(h.repoName)}
       held={forYouCounts(forYou)}
-      back={from === null ? undefined : { label: from, onBack: backEntity }}
+      back={back}
       branchOf={shown.data?.branchOf ?? null}
       actions={
         stepIn !== null && details !== undefined && details.stepInKind !== null ? (

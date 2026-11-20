@@ -90,7 +90,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <PendingChoices />
         </main>
         {entity === null ? null : (
-          <Side label={entity} ref={panel} onClose={closeEntity}>
+          <Side label={entity} ref={panel} stacked={params.get("from") !== null} onClose={closeEntity}>
             <PartBoundary key={entity}>
               <EntityPanel entityRef={entity} />
             </PartBoundary>

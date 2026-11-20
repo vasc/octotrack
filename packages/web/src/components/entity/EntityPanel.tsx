@@ -1,6 +1,6 @@
 import { contracts } from "@octotrack/core/contracts";
 import { useOpQuery } from "../../hooks/useOp.ts";
-import { backEntity, closeEntity, pageUnder, useRoute } from "../../lib/router.ts";
+import { closeEntity, pageUnder, useRoute } from "../../lib/router.ts";
 import { StaleNote } from "../ui/Loaded.tsx";
 import { Panel } from "../ui/Panel.tsx";
 import { ErrorState, LoadingState } from "../ui/states.tsx";
@@ -12,6 +12,7 @@ import { LinePanelItem } from "./LinePanelItem.tsx";
 import { LinkList } from "./LinkList.tsx";
 import { OpenDrift } from "./OpenDrift.tsx";
 import { UpdatesSection } from "./UpdatesSection.tsx";
+import { useBackTo } from "../../hooks/useBackTo.ts";
 import { useHome } from "../../hooks/useHome.ts";
 import { homeLines } from "../../lib/lines.ts";
 import { ApiError } from "../../api/client.ts";
@@ -23,8 +24,8 @@ export function EntityPanel({ entityRef }: { entityRef: string }) {
   const detail = useOpQuery(contracts.entityShow, { ref: entityRef });
   const route = useRoute();
   const under = pageUnder(route.path);
-  // Opened from another panel: Back returns there.
-  const from = route.params.get("from");
+  // Opened from another peek: Back returns there.
+  const back = useBackTo();
   const h = useHome();
   const failures = useBootstrap().data?.syncFailures ?? [];
   const lines = homeLines(h.home.data);
@@ -93,7 +94,7 @@ export function EntityPanel({ entityRef }: { entityRef: string }) {
       title={summary.title}
       onClose={closeEntity}
       under={under}
-      back={from === null ? undefined : { label: from, onBack: backEntity }}
+      back={back}
     >
       {stale === null ? null : <StaleNote at={detail.dataUpdatedAt} what={summary.ref} onRetry={retry} />}
       <EntityBody entity={entity} links={links} lines={lines} syncFailures={failures} />
