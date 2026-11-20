@@ -130,6 +130,8 @@
 .ui-pairs .ui-icon {
   width: var(--icon-inline-size);
   height: var(--icon-inline-size);
+  /* Centred on the capitals and figures: middle would centre it on the lowercase letters, hanging below "1 urgent". */
+  vertical-align: var(--icon-inline-drop);
 }
 
 .ui-link .ui-icon {

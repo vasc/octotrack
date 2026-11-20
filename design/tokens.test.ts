@@ -301,6 +301,18 @@ describe("the page scrolls as one", () => {
   });
 });
 
+describe("icons sit level with the words beside them", () => {
+  const css = stylesCss.replace(/\/\*[\s\S]*?\*\//g, "");
+
+  test("an icon in running words is centred on the capitals and figures, not on the lowercase letters", () => {
+    // vertical-align: middle centres an icon on the lowercase letters, so beside "1 urgent" or "Step in." it hangs
+    // below the baseline. Dropped by the token instead, an icon as tall as the words centres on their capitals.
+    const rule = /\.ui-mark \.ui-icon,[^{]*\{([^}]*)\}/.exec(css)?.[1] ?? "";
+    expect(rule).toContain("vertical-align: var(--icon-inline-drop)");
+    expect(/--icon-inline-drop: (-?[\d.]+)em;/.exec(rootBlock)?.[1]).toBe("-0.14");
+  });
+});
+
 describe("a finger can use it", () => {
   const css = stylesCss.replace(/\/\*[\s\S]*?\*\//g, "");
   const coarse = /@media \(pointer: coarse\) \{([\s\S]*?)\n\}/.exec(css)?.[1] ?? "";

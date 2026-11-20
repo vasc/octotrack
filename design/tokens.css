@@ -128,6 +128,8 @@
   --control-height: 32px;
   --icon-size: 16px;
   --icon-inline-size: 1em;
+  /* How far an icon in running words drops below the baseline, so it centres on the capitals and figures. */
+  --icon-inline-drop: -0.14em;
   --keys-column: 72px;
   --rail-width: 2px;
   /* A theme's swatch in a menu: its ground and its accent, side by side. */

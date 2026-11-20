@@ -187,6 +187,7 @@ E · One list boards draw it.
 | `--keys-column`       | The keys' column in the Keys sheet, one width for every group, so their meanings line up           |
 | `--rail-width`        | The rail a plan branch hangs on, under the step it forks from: the tree drawn as plainly as a list |
 | `--icon-inline-size`  | An icon inside running words, as tall as they are: a state's mark, a link's arrow, a key           |
+| `--icon-inline-drop`  | How far below the baseline such an icon starts, so it centres on capitals and figures, not "x"     |
 | `--swatch-width`      | A theme's swatch in a menu, its ground and accent side by side; menu words start past it           |
 | `--tile-width`        | A tile's width before it grows to fill its row: folded sections' tiles, and swatches at half       |
 | `--field-narrow`      | A box for one short value, such as a measurement, side by side with others                         |
