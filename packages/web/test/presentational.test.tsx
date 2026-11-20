@@ -46,6 +46,7 @@ import { OwnWorkBox } from "../src/components/entity/OwnWorkBox.tsx";
 import { TellBox } from "../src/components/entity/TellBox.tsx";
 import { TableForm } from "../src/components/lines/TableForm.tsx";
 import { NewLineSheet } from "../src/components/lines/NewLineSheet.tsx";
+import { ProposalItem } from "../src/components/foryou/ProposalItem.tsx";
 import { LinePrs } from "../src/components/lines/LinePrs.tsx";
 import { TopBar } from "../src/components/layout/TopBar.tsx";
 import { MoreMenu } from "../src/components/layout/MoreMenu.tsx";
@@ -617,6 +618,27 @@ describe("TopBar", () => {
     );
     expect(go).toHaveBeenCalledWith("/agents");
     expect(view.queryByRole("menu")).toBeNull();
+  });
+});
+
+describe("ProposalItem", () => {
+  test("a proposal with no done when, as old ideas have, leaves the label out", () => {
+    const view = render(
+      <ProposalItem
+        line={line({ state: "proposed", doneWhen: "" })}
+        foldTargets={[]}
+        lastUpNext={null}
+        origin={null}
+        busy={false}
+        onStart={() => {}}
+        onQueue={() => {}}
+        onTable={() => {}}
+        onFold={() => {}}
+        onReject={() => {}}
+        onDrop={() => {}}
+      />,
+    );
+    expect(view.queryByText("Done when")).toBeNull();
   });
 });
 

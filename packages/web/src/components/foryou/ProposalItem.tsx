@@ -151,7 +151,10 @@ export function ProposalItem({
     >
       <Pairs
         pairs={[
-          ["Done when", <Markdown key="done" text={line.doneWhen} inline />],
+          [
+            "Done when",
+            line.doneWhen.trim() === "" ? null : <Markdown key="done" text={line.doneWhen} inline />,
+          ],
           [
             fromTable ? "Tabled" : "Why now",
             fromTable ? (
