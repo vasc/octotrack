@@ -15,7 +15,7 @@ owner, then Tell. A section with nothing in it says why in one sentence instead 
   - Owner shows for every live line, saying who will own it when there is none yet (today it shows only while working).
   - Done or dropped (F): says when it closed, and offers Start, Up next, Table and More like any line not being worked on; its plan keeps its menus.
   - Working with no owner (D): the step-in sentence and its actions sit at the head, not in the owner's note.
-  - Phone (J): the panel is the whole screen, "[back] Lines" replaces Close, actions full width.
+  - Phone (triage/T-Peek-Phone): the peek rises from the bottom over the dimmed page, with the same head as on a wide screen (its page and the cross); actions full width.
 - Loading: the head comes from Lines at once; only the slow parts wait, drawn as outlines of their rows (G); "Loading the plan…" is said to screen readers only. While Lines itself is still loading, Owner and For you follow the Primitives pattern ("Loading…" in that section) instead of showing "no owner".
 - Error: one part failed (H): said in that part, "Could not load the plan. The tracker did not answer." with Try again; the rest still works. The plan last loaded stays drawn below it under "As it was at 14:20". Not found (I): "No line L-312 / No line was ever made with that ref; check it for a typo. Lines that were done, dropped or folded still open at their ref." with Close (a folded or dropped line keeps its ref, so only a ref never made lands here). Failed moves, tells and adds are said where they were made (see LineActions, TellBox, OwnWorkBox).
 - Empty: never empty: a line always has a head; each empty section says why in one sentence.
@@ -26,8 +26,8 @@ owner, then Tell. A section with nothing in it says why in one sentence instead 
 - What it shows: crumbs (state and place in order, ref, repo), Close, the title, "Done when" over its sentence, then the line's moves.
 - Changes from today:
   - Crumbs read "Up next · L-3 · LimbicAI/hydra": the state, no position (the number on its home row already shows that) (today "Up next · Line 3 of 10 · L-3 · hydra"); owned lines add "yours" (E); the repo is its GitHub name.
-  - Close carries no key hint (Esc is in the Keys sheet); on a phone it is "[back] Lines" (J).
-  - Opened from another panel (Panels F): "[back] Back to L-57" beside Close; Esc and Back go one step back, Close shuts the panel (today Close goes back).
+  - Close is a cross with no key hint (Esc is in the Keys sheet), on every width; "Open the full page" before it leads to the line's own page.
+  - Opened from another peek (triage/T-Peek-Stack): the way back is named by what that one is, "[back] Sendspin enclosure", and the one under it shows as an edge to its left; Esc and the way back go one step back, Close shuts the peek.
   - Proposed (B): "Proposed by ttube, 2d ago · L-59 · TTUBE", then "Recommended: start it." with its reason, above the moves.
   - Tabled (C): "Waits for", "Look again" and "Held: 1 question, 2 tasks, released when it starts" at the top.
   - Done (F): "Done · closed Tue 14:02 · L-19". Who closed it is not drawn: the tracker does not record it on the line.

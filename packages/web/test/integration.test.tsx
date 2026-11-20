@@ -1486,6 +1486,7 @@ describe("lines of work", () => {
       );
       fireEvent.keyDown(window, { key: "o" });
       await waitFor(() => expect(window.location.pathname).toBe("/lines/L-1"));
+      await view.findByRole("heading", { name: "Sendspin enclosure", level: 1 });
     });
 
     test("number keys pick a focused task's choices in the order drawn", async () => {
@@ -1573,7 +1574,7 @@ describe("lines of work", () => {
         expect(named()).toEqual(["Ready to merge: Print the lid", "Pull request: Print the base"]),
       );
       page.getByText("Printed and fits.");
-      navigate("/?ref=L-1");
+      act(() => navigate("/?ref=L-1"));
       const panel = within(await view.findByRole("complementary", { name: "L-1" }));
       const prs = within(await panel.findByRole("region", { name: "Pull requests" }));
       expect(prs.getAllByRole("article").map((row) => row.getAttribute("aria-label"))).toEqual([

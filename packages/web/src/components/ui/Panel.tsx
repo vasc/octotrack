@@ -64,7 +64,8 @@ export function Panel({
 const PART_OF_IT = ".ui-sheet-layer, .ui-toasts, .ui-menu-list";
 
 /**
- * Where a panel sits, over the right of the page, its full height whether it is loaded, loading or failed. A press on
+ * Where a peek sits, over the right of the page under the bar, its full height whether it is loaded, loading or failed;
+ * from the bottom on a phone. A press on
  * the page beside it closes it, as a tap outside closes a sheet; one that ends in no click, such as a finger scrolling
  * the page, does not. A press on another item in the list still opens that one.
  */

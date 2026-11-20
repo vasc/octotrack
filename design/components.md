@@ -115,10 +115,10 @@ properties and appear on the `/design` specimen; **structural** ones load data a
 | `TaskClosed`       | Pure       | A closed task: how and when, and what was sent back                                                                                                |
 | `LineProposalCard` | Pure       | A case that the line is done, or a changed done when: Done or Not yet, Accept or Keep current                                                      |
 | `StepIn`           | Pure       | A line no agent took: why, and the action that fits, filled, with Table it and I'll own it                                                         |
-| `LineStepIn`       | Pure       | A working line's Step in, or at a place one row saying why                                                                                         |
+| `LineStepIn`       | Pure       | A working line's Step in: why, and the action that fits                                                                                            |
 | `CheckoutForm`     | Pure       | Set its checkout: a path, Set, Cancel                                                                                                              |
 | `SpreadThin`       | Pure       | Past six working lines, the cost in two facts                                                                                                      |
-| `WaitingSections`  | Structural | Up next, Proposed, Tabled and Done lately; folds on a phone or at a place; the Start sheet                                                         |
+| `WaitingSections`  | Structural | Up next, Proposed, Tabled and Done lately; folds on a phone; the Start sheet                                                                       |
 | `UpNextRow`        | Pure       | A line up next as a `Row`: its number, what it holds, how scoped, done when, Start                                                                 |
 | `QuietRow`         | Pure       | A tabled or finished line: why it waits, when to look again, Up next and Start                                                                     |
 | `ProposalCard`     | Pure       | A proposal as a `Row`: its ref, repos and proposer, what is recommended and why, then that move and Other                                          |

@@ -21,8 +21,8 @@ import { PendingChoices } from "./PendingChoices.tsx";
 import { TopBar } from "./TopBar.tsx";
 
 /**
- * Every page: the bar, the page, and whatever ref is open, as a panel over the right of the page so the list keeps its
- * place behind it.
+ * Every page: the bar, the page, and whatever ref is open, as a peek over the right of the page beside what you are
+ * doing; New line as a dialog over any page; the keys every page shares.
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const { path, params } = useRoute();

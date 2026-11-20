@@ -11,7 +11,7 @@ what it is, what you do, other ways out.
 - Designed in: Items.dc.html, states A, C, E, F; Main.dc.html (a question)
 - What it shows: the focused item opened in full: a question (DecisionCardItem), a task (TaskItem), a proposed done or a changed done when (LineProposalCard).
 - Changes from today: none of its own; each kind changes as its own section says.
-- Loading: never loads on its own: given its item by LineForYouItem or PanelForYou.
+- Loading: never loads on its own: given its item by For you's entry or PanelForYou.
 - Error: cannot fail on its own; each kind says its own failures in place.
 - Empty: never empty: it exists only for an item.
 

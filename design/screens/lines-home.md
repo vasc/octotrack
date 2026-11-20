@@ -1,10 +1,9 @@
 # Lines (home)
 
-The home screen: every line in the developer's order, with what each needs from them in place. Designed on
-`Home-FirstRun.dc.html` (nothing placed yet), `Home.dc.html` (in daily use) and `Home-States.dc.html` (states A to I:
-empty tracker, nothing needs you, at a place, first load, tracker not answering, lost connection, new version, a move
-failed, phone), with the question opened under its line on `Main.dc.html`, in the canvas at
-https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
+Lines, at `/lines`: every line in the developer's order, each saying how much waits on them there, which they answer
+on For you. Designed on `triage/T-Lines.dc.html`, with the states still drawn on `Home-FirstRun.dc.html` (nothing placed
+yet) and `Home-States.dc.html` (empty tracker, first load, tracker not answering, lost connection, new version, a move
+failed, phone), in the canvas at https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 
 ### components/home/HomePage.tsx
 
@@ -17,7 +16,7 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
   - Phone (I): Up next folds to "Up next 3 · Finish removing the H1 switch and 2 more".
 - Loading: first load (D): the bar at once, rows drawn as outlines, "Working on" over the outlines; "Loading your lines…" is for screen readers only.
 - Error: the tracker not answering on first load (E): "The tracker is not answering / Nothing answered at 127.0.0.1:4747. Any octo command starts it again; this page tries again every 30 seconds." with the command `octo server status` and Try now. After loading, a lost connection is AppShell's strip (F); a failed move is said next to the line (H).
-- Empty: no lines and no proposals (A) is FirstRun's empty state; nothing waiting is NothingNeedsYou (B).
+- Empty: no lines and no proposals (A) is FirstRun's empty state; with nothing being worked on, Working on says so.
 
 ### components/home/FirstRun.tsx
 
@@ -84,10 +83,10 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 
 ### components/home/LineStepIn.tsx
 
-- Designed in: Items.dc.html, state G; Line-States.dc.html, state D; More-States.dc.html, state J (folded at a place)
-- What it shows: on a line nobody can take, StepIn's sentence and its action; at a place, folded to one row with the short reason.
-- Changes from today: as StepIn; folded at a place it is one row, "[triangle] Step in · {short reason}", that opens it in place (More-States J).
-- Loading: never loads on its own: given the line by WorkingSection.
+- Designed in: Items.dc.html, state G; Line-States.dc.html, state D; triage/T-StepIn.dc.html
+- What it shows: on a line nobody can take, StepIn's sentence and its action, on For you's card and at the head of the line.
+- Changes from today: as StepIn.
+- Loading: never loads on its own: given the line by For you or the line's moves.
 - Error: cannot fail on its own; StepIn's actions report their own failures.
 - Empty: renders nothing when the line needs no step-in.
 
@@ -95,7 +94,7 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 
 - Designed in: Home.dc.html; Home-FirstRun.dc.html; Home-States.dc.html, states C, I
 - What it shows: "Up next 3"; "Proposed 2" in ink like every section heading, each proposal's advice as "Recommends Start: …" in ink; then the folds "Tabled 4 · Labyrinth level editor, Matter binding backend and 2 more · 1 question held [forward]" and "Done lately 1 · Fix the Dinis reminder [forward]", one under the other.
-- Changes from today: the Tabled summary ends with what it holds ("· 1 question held", today "· N questions and N tasks held"); at a place Up next, Proposed and Tabled fold shut.
+- Changes from today: the Tabled summary ends with what it holds ("· 1 question held", today "· N questions and N tasks held").
 - Loading: never loads on its own: given the lines by HomePage.
 - Error: cannot fail on its own.
 - Empty: follows the Primitives pattern: an empty Up next says so in one sentence under its heading, on a phone too (today the phone shows nothing); empty Proposed, Tabled and Done lately are left out.

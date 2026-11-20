@@ -5,9 +5,9 @@ import { IconButton } from "./Button.tsx";
 
 /**
  * A task of its own, over the whole page: the page and its bar dim behind it, so none of their actions seem to apply.
- * Its title, a few words on what it is for and a cross that cancels it at the top, its content, and its actions at the
- * foot. A phone draws it from the bottom; a wide
- * screen as a panel in the middle. Esc and a tap outside close it, as Cancel does.
+ * Its title, a few words on what it is for and a cross that closes it at the top, its content, and its actions at the
+ * foot. A phone draws it from the bottom; a wide screen as a dialog in the middle. Esc and a tap outside close it, as
+ * the cross does.
  */
 export function Sheet({
   title,
@@ -22,7 +22,7 @@ export function Sheet({
   /** A few words under the title saying what it is for. */
   subtitle?: string;
   onClose(): void;
-  /** What the button at the top says: Cancel for a sheet that does something, Close for one that only shows. */
+  /** The cross's name for a screen reader: Cancel for a sheet that does something, Close for one that only shows. */
   closeLabel?: "Cancel" | "Close";
   children: ReactNode;
   actions?: ReactNode;

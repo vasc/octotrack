@@ -519,6 +519,7 @@ Decisions made from that:
   is there a bottom menu with them at the same level". They are not: Lines is the app, the Log is catch-up reading and
   Agents a roster opened now and then. _Decided:_ the name Octotrack opens Lines; the Log and Agents are quiet words
   beside it on a wide screen and wait behind one pages menu on a phone; there is no bar of equal tabs anywhere.
+  _Superseded by D16:_ the bar is Lines and For you, with the Log and Agents in More on every width.
 - **Focus is a tint, with the keys beside it, not a word.** (Superseded in part above: the border became a tint.) The developer, looking at the built home: "focused text on
   lines is unnecessary, reminding about j an k shortcuts to the side would be better, in a subtle way". The word
   Focused, which the boards draw over the focused item, is gone; the item keeps its border, in the theme's accent, and out in the margin
@@ -897,7 +898,9 @@ Everything below is a design decision made from that, with its reasoning.
   on (a done service, say), which then sits at the top with Start first; either needs a reason from a fixed set
   (time-boxed, costs money, something broken); the developer can send it back with Not urgent, which is noted in the
   line's log so a habit shows.
-- **The home screen is one list.** Each working line shows its owner ("owner meals, asleep"), its summary's headline,
+- **The home screen is one list.** _Superseded by D16:_ what waits on the developer is answered on For you, one list
+  of every item with the open one in place, and Lines shows each line as one row with how much waits there; the header
+  counts are gone. What follows is how it was. Each working line shows its owner ("owner meals, asleep"), its summary's headline,
   its plan step ("step 3 of 4, settle board and opening", taken from the plan, written by no one) and the first thing
   waiting on the developer, with the rest one row away ("+2 more for you"); only the focused item opens fully, with what
   each option does and, directly under the options, the reason for the recommendation. That keeps five lines on about

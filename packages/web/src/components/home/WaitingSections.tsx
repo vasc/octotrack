@@ -36,7 +36,7 @@ export function WaitingSections({
   focus: string | null;
   /** The waiting line whose Start sheet is open. */
   starting: string | null;
-  /** On a phone, or at a place, up next and proposals fold too. */
+  /** On a phone, up next and proposals fold too. */
   narrow?: boolean;
   /** A line's number, which drags it or opens its moves. */
   handle(

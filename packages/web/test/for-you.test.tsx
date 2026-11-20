@@ -173,6 +173,33 @@ describe("For you", () => {
     expect(listed(view, "To answer")).toEqual(["Which day?", "Which board?"]);
   });
 
+  test("Later on the last item still waiting keeps it open, and Undo of a Later brings it back where it was", async () => {
+    twoLines();
+    ask("Which board?", "octo.1");
+    const view = renderApp(<App />);
+    await opened(view, "Which board?");
+    fireEvent.click(within(card(view)).getByRole("button", { name: "Later" }));
+    // Nothing else waits, so it stays open, its Later waiting with Undo.
+    fireEvent.click(await view.findByRole("button", { name: "Undo" }));
+    await gone(() => view.queryByRole("button", { name: "Undo" }));
+    await opened(view, "Which board?");
+    expect(server.tracker.call(c.decisionList, {}, asDeveloper)[0]?.postponedAt).toBeNull();
+  });
+
+  test("Undo of an answer brings the question back open, where it was", async () => {
+    twoLines();
+    ask("Which board?", "octo.1");
+    ask("Which day?", "digest.1");
+    const view = renderApp(<App />);
+    await opened(view, "Which board?");
+    fireEvent.keyDown(window, { key: "1" });
+    // Answered, it waits with Undo, and the next one opens meanwhile.
+    await opened(view, "Which day?");
+    fireEvent.click(await view.findByRole("button", { name: "Undo" }));
+    await opened(view, "Which board?");
+    expect(new URLSearchParams(window.location.search).get("item")).toBe("D-1");
+  });
+
   test("an answer takes its question away and the next one opens where it was", async () => {
     twoLines();
     ask("Which board?", "octo.1");
@@ -310,6 +337,8 @@ describe("For you", () => {
     const also = within(await peek.findByRole("region", { name: "Also for you here" }));
     also.getByRole("button", { name: "Open D-2" });
     expect(also.queryByRole("button", { name: "Open D-1" })).toBeNull();
+    // The page folds its rail away, so the list and the peek are both whole.
+    expect(card(view).closest("[data-folded]")?.getAttribute("data-folded")).toBe("true");
     // The card stays, open on the same question, its line marked as the one peeked at.
     await opened(view, "Which board?");
     expect(
