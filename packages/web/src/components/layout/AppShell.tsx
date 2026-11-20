@@ -7,7 +7,6 @@ import { usePanelFocus } from "../../hooks/usePanelFocus.ts";
 import { useReloadOnNewBuild } from "../../hooks/useReloadOnNewBuild.ts";
 import { useSeen } from "../../hooks/useSeen.ts";
 import { useTopBar } from "../../hooks/useTopBar.ts";
-import { filterAt } from "../../lib/forYou.ts";
 import { backEntity, closeEntity, navigate, setParams, useRoute } from "../../lib/router.ts";
 import { useNewLine } from "../../hooks/useNewLine.ts";
 import { NewLineSheet } from "../lines/NewLineSheet.tsx";
@@ -75,9 +74,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             newVersion={build.waiting}
             onLoadNow={build.loadNow}
           />
-          {keysOpen ? (
-            <KeyHelp onClose={closeKeys} onLines={path === "/lines" || filterAt(path) !== null} />
-          ) : null}
+          {keysOpen ? <KeyHelp onClose={closeKeys} /> : null}
           <PartBoundary>
             {isPending ? (
               <LoadingState label="Loading the page" />
@@ -99,6 +96,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {adding ? (
           <NewLineSheet
             repos={newLine.repos}
+            repoNames={newLine.repoNames}
             notSaved={newLine.notSaved}
             reposStatus={
               newLine.reposLoading ? (

@@ -1,15 +1,17 @@
 import { type ReactNode, type Ref, useEffect, useId, useRef } from "react";
 import { holdKeysForSheet, InSheetProvider } from "../../hooks/useHotkeys.ts";
 import { createPortal } from "react-dom";
-import { Button } from "./Button.tsx";
+import { IconButton } from "./Button.tsx";
 
 /**
  * A task of its own, over the whole page: the page and its bar dim behind it, so none of their actions seem to apply.
- * Its title and Cancel at the top, its content, and its actions at the foot. A phone draws it from the bottom; a wide
+ * Its title, a few words on what it is for and a cross that cancels it at the top, its content, and its actions at the
+ * foot. A phone draws it from the bottom; a wide
  * screen as a panel in the middle. Esc and a tap outside close it, as Cancel does.
  */
 export function Sheet({
   title,
+  subtitle,
   onClose,
   closeLabel = "Cancel",
   children,
@@ -17,6 +19,8 @@ export function Sheet({
   ref,
 }: {
   title: string;
+  /** A few words under the title saying what it is for. */
+  subtitle?: string;
   onClose(): void;
   /** What the button at the top says: Cancel for a sheet that does something, Close for one that only shows. */
   closeLabel?: "Cancel" | "Close";
@@ -62,10 +66,11 @@ export function Sheet({
         }}
       >
         <header className="ui-sheet-head">
-          <h2 id={heading}>{title}</h2>
-          <Button variant="quiet" onClick={onClose}>
-            {closeLabel}
-          </Button>
+          <div className="ui-sheet-name">
+            <h2 id={heading}>{title}</h2>
+            {subtitle === undefined ? null : <p className="ui-sheet-subtitle">{subtitle}</p>}
+          </div>
+          <IconButton icon="cross" label={closeLabel} onClick={onClose} />
         </header>
         <InSheetProvider value>
           <div className="ui-sheet-body">{children}</div>

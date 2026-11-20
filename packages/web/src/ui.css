@@ -847,6 +847,13 @@
   color: var(--ink-3);
 }
 
+/* A chip's short code after its name: a repo's key, small and quieter, so the name leads. */
+.ui-chip-note {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+}
+
 /* A quiet word at a menu item's end: the theme in force, a key. */
 .ui-menu-trailing {
   margin-left: auto;
@@ -1337,46 +1344,61 @@
 .ui-sheet {
   position: absolute;
   left: 50%;
-  top: 12vh;
+  top: 10vh;
   width: min(var(--sheet-width), 100%);
-  max-height: 76vh;
+  max-height: 80vh;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   background: var(--surface);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-card);
   box-shadow: var(--shadow-sheet);
 }
 
 .ui-sheet-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: var(--space-5) var(--space-5) var(--space-3) var(--row-inset);
+  gap: var(--space-8);
+  padding: var(--space-12) var(--space-8) var(--space-4) var(--space-12);
+}
+
+.ui-sheet-name {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
 }
 
 .ui-sheet-head h2 {
   margin: 0;
-  font-size: var(--text-lg);
+  font-size: var(--text-heading);
   font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.01em;
+}
+
+.ui-sheet-subtitle {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--ink-3);
 }
 
 .ui-sheet-body {
   display: flex;
   flex-direction: column;
-  gap: var(--space-8);
-  padding: var(--space-3) var(--row-inset) var(--space-8);
+  gap: var(--space-10);
+  padding: var(--space-6) var(--space-12) var(--space-10);
   overflow-y: auto;
 }
 
 .ui-sheet-foot {
-  padding: var(--space-5) var(--row-inset);
-  border-top: 1px solid var(--line);
+  padding: 0 var(--space-12) var(--space-12);
 }
 
 /* Inside a sheet a list is no box of its own: its rows run edge to edge, their text in line with the fields. */
 .ui-sheet-body .ui-list {
-  margin-inline: calc(-1 * var(--row-inset));
+  margin-inline: calc(-1 * var(--space-12));
   border: 0;
   border-block: 1px solid var(--line);
   border-radius: var(--radius-none);

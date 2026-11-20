@@ -153,7 +153,7 @@
   --peek-head: calc(var(--control-height) + var(--space-10));
   --touch-target: 44px;
   /* A sheet's width on a wide screen. */
-  --sheet-width: 480px;
+  --sheet-width: 540px;
   --control-height: 32px;
   --icon-size: 16px;
   --icon-inline-size: 1em;

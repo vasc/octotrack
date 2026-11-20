@@ -41,6 +41,7 @@ function missing(title: string, doneWhen: string, repoChosen: boolean): string |
  */
 export function NewLineSheet({
   repos,
+  repoNames = {},
   draft,
   onDraft,
   onAdd,
@@ -49,6 +50,8 @@ export function NewLineSheet({
   notSaved = false,
 }: {
   repos: readonly string[];
+  /** Each repo's name by its key: a chip leads with the name, its key after it, small. */
+  repoNames?: Readonly<Record<string, string>>;
   /** The repos are loading or failed: said in the Repos list, with "None: it's mine" still usable. */
   reposStatus?: ReactNode;
   /** The words typed are not kept on the tracker yet. */
@@ -105,7 +108,12 @@ export function NewLineSheet({
     </Actions>
   );
   return (
-    <Sheet title="New line" onClose={onCancel} actions={actions}>
+    <Sheet
+      title="New line"
+      subtitle="A thread of work, and how you will know it is done."
+      onClose={onCancel}
+      actions={actions}
+    >
       {tabling ? (
         <>
           <Field label="Why it waits" value={reason} onChange={setReason} autoFocus />
@@ -126,7 +134,8 @@ export function NewLineSheet({
             chips={[
               ...repos.map((repo) => ({
                 key: repo,
-                label: repo,
+                label: repoNames[repo] ?? repo,
+                ...(repoNames[repo] === undefined || repoNames[repo] === repo ? {} : { note: repo }),
                 checked: !mine && picked.includes(repo),
                 onToggle: () => {
                   setMine(false);

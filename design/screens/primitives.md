@@ -361,12 +361,12 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 
 ### components/ui/Sheet.tsx
 
-- Designed in: Sheets.dc.html, states A–G
-- What it shows: a title that says what it does with Cancel, the fields, then the actions at the foot, main one first; from the bottom on a phone.
+- Designed in: triage/T-NewLine.dc.html, T-Table.dc.html, T-Keys.dc.html; Sheets.dc.html, states A–G
+- What it shows: in the middle of a wide screen, 540 wide with 16 corners: its title at 20, a few words on what it is for, and a cross that cancels it; the fields, then the actions at the foot, main one first; from the bottom on a phone.
 - Changes from today: it takes the focus and keeps it until closed, and the page behind does not react to keys; the Undo bar sits above it; a failure is said above its foot with the words kept ("Not added: …").
 - Loading: never loads on its own: its owner says what loads inside it ("Loading what waited for it…").
 - Error: the owner's failure above the foot.
-- Empty: never empty: it always has its title and Cancel.
+- Empty: never empty: it always has its title and its cross.
 
 ### components/ui/TextBox.tsx
 

@@ -105,9 +105,9 @@ closed; the page behind does not react to keys. On a phone it rises from the bot
 
 ### components/home/KeyHelp.tsx
 
-- Designed in: Sheets.dc.html, state F
-- What it shows: "Keys" and Close; two groups. Moving: `j k` next, previous item; `J K` next, previous line; `o [Return]` open the line; `g u` urgent question; `/` search the log; `esc` close, go back. Acting: `1–9` pick a numbered choice; `w` answer in your words; `l` later; `u` undo; `t` tell the owner; `[Option][up][down]` move the line; `g p` I'm at; `r` record answers.
-- Changes from today: grouped into Moving and Acting; Cancel becomes Close; wording ("answer in your words", "tell the owner", "search the log", "close, go back"); opened from the Log or Agents, keys that only act on Lines say "on Lines"; not offered on touch screens.
+- Designed in: triage/T-Keys.dc.html; Sheets.dc.html, state F
+- What it shows: "Keys" and Close; three groups. On For you: `j k` next, previous item; `1–9` pick a numbered choice; `w` answer in your own words; `l` later: to the bottom; `o [Return]` peek at its line; `t` tell its line's owner; `g u` the urgent ones; `r` record answers given elsewhere. On Lines: `j k` next, previous line; `o [Return]` open its page; `t` tell its owner; `[Option][up][down]` move it in your order. Anywhere: `u` undo the last choice; `/` search the log; `?` these keys; `esc` close, go back.
+- Changes from today: grouped by page, since For you and Lines have keys of their own; `J K` and `g p` are gone with the old Lines and I'm at; opened from More, or with `?`; not offered on touch screens.
 - Loading: never loads on its own: the list is fixed.
 - Error: cannot fail on its own.
 - Empty: never empty: the list is fixed.

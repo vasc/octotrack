@@ -79,25 +79,22 @@ describe("NewLineSheet", () => {
 });
 
 describe("KeyHelp", () => {
-  test("groups the keys into moving and acting, and closes with Close", () => {
+  test("lists the keys page by page, For you's, Lines', then everywhere's, and closes with Close", () => {
     const view = render(<KeyHelp onClose={noop} />);
     const sheet = within(view.getByRole("dialog", { name: "Keys" }));
-    sheet.getByText("Moving");
-    sheet.getByText("Acting");
-    sheet.getByText("answer in your words");
-    sheet.getByText("tell the owner");
+    expect(sheet.getAllByRole("heading", { level: 2 }).map((heading) => heading.textContent)).toEqual([
+      "Keys",
+      "On For you",
+      "On Lines",
+      "Anywhere",
+    ]);
+    sheet.getByText("answer in your own words");
+    sheet.getByText("later: to the bottom");
+    sheet.getByText("move it in your order");
     sheet.getByText("search the log");
     sheet.getByRole("button", { name: "Close" });
-  });
-
-  test("opened from another page, keys that act only on Lines say so", () => {
-    const sheet = within(
-      render(<KeyHelp onClose={noop} onLines={false} />).getByRole("dialog", { name: "Keys" }),
-    );
-    sheet.getByText("next, previous item on Lines");
-    sheet.getByText("tell the owner on Lines");
-    sheet.getByText("close, go back");
-    sheet.getByText("undo");
+    // I'm at and stepping between lines with Shift are gone with the old Lines.
+    expect(sheet.queryByText("I'm at")).toBeNull();
   });
 });
 

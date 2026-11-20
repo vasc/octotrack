@@ -30,8 +30,14 @@ export function useNewLine() {
   const choices = useChoices();
   const draft = useDraft(DRAFT_KEY);
   const repos = useMemo(() => (projects.data ?? []).map((card) => card.project.ref), [projects.data]);
+  const repoNames = useMemo(
+    () => Object.fromEntries((projects.data ?? []).map((card) => [card.project.ref, card.project.name])),
+    [projects.data],
+  );
   return {
     repos,
+    /** Each repo's name by its key, which a repo leads with: "Meals", then "MEALS" small. */
+    repoNames,
     /** The repos are still loading, or could not load. */
     reposLoading: projects.isPending,
     reposError: projects.error,

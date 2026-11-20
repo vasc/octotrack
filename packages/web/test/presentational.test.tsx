@@ -37,7 +37,7 @@ import { FeedList } from "../src/components/feed/FeedList.tsx";
 import { UnseenLog } from "../src/components/feed/UnseenLog.tsx";
 import { AnswerStatus } from "../src/components/home/AnswerStatus.tsx";
 import { ForYouItem } from "../src/components/home/ForYouItem.tsx";
-import { HOME_KEYS, KeyHelp } from "../src/components/home/KeyHelp.tsx";
+import { ALL_KEYS, KeyHelp } from "../src/components/home/KeyHelp.tsx";
 import { SinceSummary } from "../src/components/entity/SinceSummary.tsx";
 import { FilterBar } from "../src/components/feed/FilterBar.tsx";
 import type { Suggestion } from "../src/hooks/useSuggestions.ts";
@@ -45,6 +45,7 @@ import { LineActions } from "../src/components/entity/LineActions.tsx";
 import { OwnWorkBox } from "../src/components/entity/OwnWorkBox.tsx";
 import { TellBox } from "../src/components/entity/TellBox.tsx";
 import { TableForm } from "../src/components/lines/TableForm.tsx";
+import { NewLineSheet } from "../src/components/lines/NewLineSheet.tsx";
 import { LinePrs } from "../src/components/lines/LinePrs.tsx";
 import { TopBar } from "../src/components/layout/TopBar.tsx";
 import { MoreMenu } from "../src/components/layout/MoreMenu.tsx";
@@ -616,6 +617,26 @@ describe("TopBar", () => {
     );
     expect(go).toHaveBeenCalledWith("/agents");
     expect(view.queryByRole("menu")).toBeNull();
+  });
+});
+
+describe("New line's repos", () => {
+  test("each leads with its name, its key after it small, and the key alone when it has no other name", () => {
+    const view = render(
+      <NewLineSheet
+        repos={["MEALS", "OCT"]}
+        repoNames={{ MEALS: "Meals" }}
+        draft={{ title: "", doneWhen: "" }}
+        onDraft={() => {}}
+        onAdd={() => {}}
+        onCancel={() => {}}
+      />,
+    );
+    view.getByRole("checkbox", { name: "Meals MEALS" });
+    view.getByRole("checkbox", { name: "OCT" });
+    view.getByText("A thread of work, and how you will know it is done.");
+    // The cross at the top cancels, named for a screen reader.
+    expect(iconsIn(view.getByRole("button", { name: "Cancel" }))).toEqual(["cross"]);
   });
 });
 
@@ -1574,9 +1595,9 @@ describe("KeyHelp and ForYouItem", () => {
     const onClose = mock(() => {});
     const view = render(<KeyHelp onClose={onClose} />);
     const keys = view.getAllByRole("term").map((term) => term.textContent);
-    expect(keys).toEqual(HOME_KEYS.map(([key]) => key));
+    expect(keys).toEqual(ALL_KEYS.map(([key]) => key));
     expect(keys).toContain("w");
-    expect(keys).toContain("g p");
+    expect(keys).not.toContain("g p");
     const sheet = view.getByRole("dialog", { name: "Keys" });
     fireEvent.click(within(sheet).getByRole("button", { name: "Close" }));
     expect(onClose).toHaveBeenCalledTimes(1);

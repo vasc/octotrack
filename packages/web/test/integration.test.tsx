@@ -921,7 +921,9 @@ describe("lines of work", () => {
     // Nothing is added until it has a repo, or is the developer's own.
     expect(card.getByRole("button", { name: "Add to up next" }).hasAttribute("disabled")).toBe(true);
     fireEvent.click(
-      await within(card.getByRole("group", { name: "Repos" })).findByRole("checkbox", { name: "OCT" }),
+      await within(card.getByRole("group", { name: "Repos" })).findByRole("checkbox", {
+        name: "Octotrack OCT",
+      }),
     );
     fireEvent.click(card.getByRole("button", { name: "Add to up next" }));
     await gone(() => view.queryByRole("dialog", { name: "New line" }));

@@ -7,6 +7,8 @@ export interface Chip {
   onToggle(): void;
   /** Set apart from the rest, as "None: it's mine" is from the repos. */
   apart?: boolean;
+  /** A short code after its name, in small monospace, such as a repo's key. */
+  note?: string;
 }
 
 /**
@@ -58,6 +60,7 @@ function ChipBox({ chip }: { chip: Chip }) {
     >
       <input type="checkbox" checked={chip.checked} onChange={chip.onToggle} />
       {chip.label}
+      {chip.note === undefined ? null : <span className="ui-chip-note">{chip.note}</span>}
     </label>
   );
 }
