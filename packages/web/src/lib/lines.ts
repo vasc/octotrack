@@ -211,3 +211,15 @@ export function branchOfText(details: LineHome | undefined): string | null {
   if (branchOf === null) return null;
   return `branch of ${branchOf.line}${branchOf.holdsUp === null ? "" : `, holds up its step ${branchOf.holdsUp}`}`;
 }
+
+/**
+ * How much waits on the developer on a working line, in a word or two for its row: "2 questions", "1 task for you", or
+ * "5 for you" when it is a mix; null when nothing does.
+ */
+export function waitsText(forYou: readonly ForYou[]): string | null {
+  if (forYou.length === 0) return null;
+  const n = forYou.length;
+  if (forYou.every((item) => item.kind === "question")) return `${n} question${n === 1 ? "" : "s"}`;
+  if (forYou.every((item) => item.kind === "task")) return `${n} task${n === 1 ? "" : "s"} for you`;
+  return `${n} for you`;
+}

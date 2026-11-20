@@ -38,9 +38,6 @@ import { UnseenLog } from "../src/components/feed/UnseenLog.tsx";
 import { AnswerStatus } from "../src/components/home/AnswerStatus.tsx";
 import { ForYouItem } from "../src/components/home/ForYouItem.tsx";
 import { HOME_KEYS, KeyHelp } from "../src/components/home/KeyHelp.tsx";
-import { NothingNeedsYou } from "../src/components/home/NothingNeedsYou.tsx";
-import { AtSection } from "../src/components/home/AtSection.tsx";
-import { foldedText } from "../src/components/home/FoldedItems.tsx";
 import { SinceSummary } from "../src/components/entity/SinceSummary.tsx";
 import { FilterBar } from "../src/components/feed/FilterBar.tsx";
 import type { Suggestion } from "../src/hooks/useSuggestions.ts";
@@ -61,26 +58,13 @@ import { EventList } from "../src/components/entity/EventList.tsx";
 import { Pairs } from "../src/components/ui/Pairs.tsx";
 import { LinkList } from "../src/components/entity/LinkList.tsx";
 import { PullRequestBox } from "../src/components/entity/PullRequestBox.tsx";
-import { AtPlaceItems } from "../src/components/home/AtPlaceItems.tsx";
-import { AtUpNext } from "../src/components/home/AtUpNext.tsx";
 import { CheckoutForm } from "../src/components/home/CheckoutForm.tsx";
 import { FoldPicker } from "../src/components/home/FoldPicker.tsx";
-import { LineForYou } from "../src/components/home/LineForYou.tsx";
 import { LineStepIn } from "../src/components/home/LineStepIn.tsx";
-import { MoreForYou } from "../src/components/home/MoreForYou.tsx";
 import { NotKept } from "../src/components/ui/NotKept.tsx";
 import { ApiError } from "../src/api/client.ts";
 import type { HomeActions } from "../src/hooks/useHome.ts";
-import { refOf } from "../src/lib/focus.ts";
-import type {
-  EntitySummary,
-  ForYou,
-  Issue,
-  LineCrew,
-  LineHome,
-  StepInKind,
-  Link,
-} from "@octotrack/core/schemas";
+import type { EntitySummary, LineCrew, LineHome, StepInKind, Link } from "@octotrack/core/schemas";
 import {
   decision,
   decisionCard,
@@ -703,16 +687,15 @@ describe("lines of work", () => {
           forYou: [{ kind: "question", card: card() }],
           waitingOnYou: true,
         })}
-      >
-        <p>child</p>
-      </WorkingLine>,
+      />,
     );
     const article = within(view.getByRole("article", { name: "Sendspin enclosure" }));
     article.getByText(/panel, asleep/);
     article.getByText(/waiting on you/);
     article.getByText(/step 3 of 4, settle board and opening/);
     article.getByText("Printed; the short board fits.");
-    article.getByText("child");
+    // What waits there is a pill that leads to For you, not the items themselves.
+    article.getByRole("link", { name: "1 question" });
   });
 
   test("LineMeta says waiting on you only when all the line's work waits on you, else agents on it", () => {
@@ -1586,41 +1569,6 @@ describe("saying something to a line", () => {
   });
 });
 
-describe("I'm at a place", () => {
-  test("AtSection says where, when it ends by itself, with Leave", () => {
-    const onLeave = mock(() => {});
-    const now = Date.parse("2026-11-14T09:00:00.000Z");
-    const view = render(
-      <AtSection
-        at={{ place: "the bench", until: "2026-11-14T13:00:00.000Z", tasks: [] }}
-        now={now}
-        onLeave={onLeave}
-      />,
-    );
-    const place = within(view.getByRole("article", { name: "At the bench" }));
-    place.getByText("At the bench");
-    place.getByText("ends by itself in 4h");
-    fireEvent.click(place.getByRole("button", { name: "Leave" }));
-    expect(onLeave).toHaveBeenCalledTimes(1);
-  });
-
-  test("foldedText counts what a folded line holds, tasks by their place", () => {
-    const task = (ref: string, place: string | null) => ({
-      kind: "task" as const,
-      task: issue({ ref, place }),
-      frees: null,
-    });
-    expect(
-      foldedText([
-        { kind: "question", card: decisionCard() },
-        task("PANEL-1", "the Mac"),
-        task("PANEL-2", "the Mac"),
-        task("PANEL-3", null),
-      ]),
-    ).toBe("1 question · 2 tasks at the Mac · 1 task");
-  });
-});
-
 describe("KeyHelp and ForYouItem", () => {
   test("KeyHelp lists every key in the board's words, and closes", () => {
     const onClose = mock(() => {});
@@ -1666,24 +1614,6 @@ describe("KeyHelp and ForYouItem", () => {
     within(open.getByRole("group", { name: "Question D-7, Which?" })).getByRole("article", {
       name: "Which?",
     });
-  });
-});
-
-describe("NothingNeedsYou", () => {
-  test("is the calm state: says nothing needs you, who is working, and where the next ask likely comes from", () => {
-    const view = render(
-      <NothingNeedsYou working={3} next={{ title: "Sendspin enclosure", step: "model the opening" }} />,
-    );
-    const calm = within(view.getByRole("region", { name: "Nothing needs you" }));
-    calm.getByText("Nothing needs you");
-    calm.getByText("3 agents working");
-    calm.getByText(/the next ask likely comes from Sendspin enclosure, model the opening/);
-  });
-
-  test("says so plainly when no agent is working and no line has a next step", () => {
-    const view = render(<NothingNeedsYou working={0} next={null} />);
-    view.getByText("no agents working");
-    expect(view.queryByText(/next ask/)).toBeNull();
   });
 });
 
@@ -2068,29 +1998,6 @@ describe("SinceSummary", () => {
   });
 });
 
-/** Every choice home makes, as mocks a test can check; home itself is a query that never ran. */
-/** How LineForYou and AtPlaceItems are told to draw an item: a line naming it, so a test can see which were drawn. */
-function drawn(forYou: ForYou) {
-  return <p key={refOf(forYou)}>Drawn {refOf(forYou)}</p>;
-}
-
-const forYouQuestion = {
-  kind: "question" as const,
-  card: decisionCard({ decision: decision({ ref: "D-7", title: "Which?" }) }),
-};
-const forYouTask = (overrides: Parameters<typeof issue>[0]) => ({
-  kind: "task" as const,
-  task: issue(overrides),
-  frees: null,
-});
-const forYouDone = {
-  kind: "done" as const,
-  line: "L-1",
-  text: "The case holds the board.",
-  by: "agent-a",
-  doneWhen: "A printed case holds the board.",
-};
-
 describe("PullRequestBox", () => {
   test("says it is loading, or why it could not load, instead of None yet", () => {
     const loading = render(<PullRequestBox prs={[]} loading />);
@@ -2209,81 +2116,6 @@ describe("CheckoutForm", () => {
     fireEvent.click(view.getByRole("button", { name: "Cancel" }));
     expect(onCancel).toHaveBeenCalledTimes(1);
     expect(onSet).not.toHaveBeenCalled();
-  });
-});
-
-describe("MoreForYou", () => {
-  test("says what one more item is, a task by its place", () => {
-    const say = (items: ForYou[]) => render(<MoreForYou items={items} onShow={() => {}} />);
-    say([forYouTask({ ref: "PANEL-2", place: "the Mac" })]).getByRole("button", {
-      name: "1 more for you: a task at the Mac",
-    });
-    say([forYouTask({ ref: "PANEL-3" })]).getByRole("button", { name: "1 more for you: a task" });
-    say([forYouQuestion]).getByRole("button", { name: "1 more for you: a question" });
-    say([forYouDone]).getByRole("button", { name: "1 more for you: a proposal" });
-  });
-
-  test("counts several by kind, and shows them when pressed", () => {
-    const onShow = mock(() => {});
-    const view = render(
-      <MoreForYou
-        items={[
-          forYouQuestion,
-          forYouTask({ ref: "PANEL-2" }),
-          forYouTask({ ref: "PANEL-3", place: "the Mac" }),
-          forYouDone,
-        ]}
-        onShow={onShow}
-      />,
-    );
-    fireEvent.click(
-      view.getByRole("button", { name: "4 more for you: 1 question and 2 tasks and 1 proposal" }),
-    );
-    expect(onShow).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe("AtUpNext", () => {
-  const drawTask = (task: Issue) => <article aria-label={task.title}>Task {task.ref}</article>;
-  const asked = new Date(Date.now() - 2 * 3_600_000 - 60_000).toISOString();
-  const tasks = [
-    issue({
-      ref: "OCT-5",
-      title: "Find the drill",
-      line: "L-2",
-      place: "the shed",
-      outcome: "Where it is",
-      createdAt: asked,
-    }),
-    issue({
-      ref: "OCT-6",
-      title: "Sweep the shed",
-      line: "L-9",
-      place: "the shed",
-      outcome: "",
-      createdAt: asked,
-    }),
-  ];
-  const lines = [line({ ref: "L-1", title: "Wall mount" }), line({ ref: "L-2", title: "Shelf" })];
-
-  test("is nothing without tasks", () => {
-    const view = render(<AtUpNext tasks={[]} lines={lines} firstNumber={3} focus={null} task={drawTask} />);
-    expect(view.container.textContent).toBe("");
-  });
-
-  test("names each task's up-next line by its number, how long it has waited, and opens it", () => {
-    const view = render(
-      <AtUpNext tasks={tasks} lines={lines} firstNumber={3} focus="OCT-6" task={drawTask} />,
-    );
-    const section = view.getByRole("region", { name: "Here, from up next" });
-    within(section).getByRole("heading", { name: "Here, from up next 2" });
-    // Each task's up-next line by its number, then how long it has waited; a line not up next is left out.
-    within(section).getByText("4 · Shelf · asked 2h ago");
-    within(section).getByText("asked 2h ago");
-    const drill = within(section).getByRole("article", { name: "Find the drill" });
-    const sweep = within(section).getByRole("article", { name: "Sweep the shed" });
-    expect(drill.closest("[data-focus-ref]")?.hasAttribute("aria-current")).toBe(false);
-    expect(sweep.closest("[data-focus-ref]")?.getAttribute("aria-current")).toBe("true");
   });
 });
 
@@ -2408,134 +2240,6 @@ describe("LineStepIn", () => {
     const focused = render(<LineStepIn {...stepIn({ h, kind: "failing", folded: true, focused: true })} />);
     const group = focused.getByRole("group", { name: "Step in on Sendspin enclosure" });
     expect(group.getAttribute("aria-current")).toBe("true");
-  });
-});
-
-describe("LineForYou", () => {
-  const items: ForYou[] = [
-    forYouQuestion,
-    forYouTask({ ref: "PANEL-2", place: "the Mac" }),
-    forYouTask({ ref: "PANEL-3", place: "the Mac" }),
-  ];
-  const props = {
-    forYou: items,
-    folded: false,
-    open: false,
-    item: drawn,
-    onFocus: () => {},
-    onShowMore: () => {},
-  };
-
-  test("is nothing when nothing waits on the developer", () => {
-    expect(render(<LineForYou {...props} forYou={[]} />).container.textContent).toBe("");
-  });
-
-  test("opens the first item and puts the rest one row away, which shows them", () => {
-    const onShowMore = mock(() => {});
-    const view = render(<LineForYou {...props} onShowMore={onShowMore} />);
-    view.getByText("Drawn D-7");
-    expect(view.queryByText("Drawn PANEL-2")).toBeNull();
-    fireEvent.click(view.getByRole("button", { name: "2 more for you: 2 tasks" }));
-    expect(onShowMore).toHaveBeenCalledTimes(1);
-  });
-
-  test("with the rest shown, draws every item and no row", () => {
-    const view = render(<LineForYou {...props} open />);
-    expect(view.getAllByText(/^Drawn /).map((row) => row.textContent)).toEqual([
-      "Drawn D-7",
-      "Drawn PANEL-2",
-      "Drawn PANEL-3",
-    ]);
-    expect(view.queryByRole("button")).toBeNull();
-  });
-
-  test("with one item, has no more row", () => {
-    const view = render(<LineForYou {...props} forYou={[forYouQuestion]} />);
-    view.getByText("Drawn D-7");
-    expect(view.queryByRole("button")).toBeNull();
-  });
-
-  test("folded, is one short row naming the first and how many more, which moves focus to it", () => {
-    const onFocus = mock((_ref: string) => {});
-    const view = render(<LineForYou {...props} folded onFocus={onFocus} />);
-    expect(view.queryByText(/^Drawn /)).toBeNull();
-    view.getByText("Question");
-    view.getByText("Which?");
-    view.getByText("and 2 more");
-    fireEvent.click(view.getByRole("button", { name: "Open D-7" }));
-    expect(onFocus).toHaveBeenCalledWith("D-7");
-  });
-});
-
-describe("AtPlaceItems", () => {
-  const drawTask = (task: Issue) => <article aria-label={task.title}>Task {task.ref}</article>;
-  const here = forYouTask({
-    ref: "PANEL-1",
-    title: "Measure the grip",
-    place: "the bench",
-    outcome: "Five numbers",
-  });
-  const items: ForYou[] = [
-    forYouQuestion,
-    here,
-    forYouTask({ ref: "PANEL-2", place: "the Mac" }),
-    forYouDone,
-  ];
-
-  test("opens the place's tasks and folds everything else into one sentence that opens the first", () => {
-    const onFocus = mock((_ref: string) => {});
-    const view = render(
-      <AtPlaceItems
-        forYou={items}
-        at="the bench"
-        focus={null}
-        task={drawTask}
-        item={drawn}
-        onFocus={onFocus}
-      />,
-    );
-    const task = view.getByRole("article", { name: "Measure the grip" });
-    expect(task.closest("[data-focus-ref]")?.getAttribute("data-focus-ref")).toBe("PANEL-1");
-    expect(task.closest("[data-focus-ref]")?.hasAttribute("aria-current")).toBe(false);
-    expect(view.queryByText(/^Drawn /)).toBeNull();
-    fireEvent.click(
-      view.getByRole("button", { name: "Also on this line: 1 question · 1 task at the Mac · 1 proposal" }),
-    );
-    expect(onFocus).toHaveBeenCalledWith("D-7");
-  });
-
-  test("draws the item with focus through item, and leaves it out of the folded sentence", () => {
-    const onFocus = mock((_ref: string) => {});
-    const view = render(
-      <AtPlaceItems
-        forYou={items}
-        at="the bench"
-        focus="D-7"
-        task={drawTask}
-        item={drawn}
-        onFocus={onFocus}
-      />,
-    );
-    view.getByText("Drawn D-7");
-    view.getByRole("article", { name: "Measure the grip" });
-    fireEvent.click(view.getByRole("button", { name: "Also on this line: 1 task at the Mac · 1 proposal" }));
-    expect(onFocus).toHaveBeenCalledWith("PANEL-2");
-  });
-
-  test("marks the place's task current when it has focus, with nothing else folded away", () => {
-    const view = render(
-      <AtPlaceItems
-        forYou={[here]}
-        at="the bench"
-        focus="PANEL-1"
-        task={drawTask}
-        item={drawn}
-        onFocus={() => {}}
-      />,
-    );
-    const task = view.getByRole("article", { name: "Measure the grip" });
-    expect(task.closest("[data-focus-ref]")?.getAttribute("aria-current")).toBe("true");
-    expect(view.queryByRole("button")).toBeNull();
   });
 });
 

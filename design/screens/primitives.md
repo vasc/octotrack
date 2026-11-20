@@ -171,6 +171,15 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 - Error: cannot fail on its own.
 - Empty: no column beside: the sheet takes the width.
 
+### components/ui/Waits.tsx
+
+- Designed in: triage/T-Lines.dc.html
+- What it shows: "5 for you" on the soft colour for what needs you, "Step in" on the warning tone, at a row's end; a link, so Cmd opens it in a new tab.
+- Changes from today: new.
+- Loading: never loads on its own.
+- Error: cannot fail on its own.
+- Empty: nothing waits: not drawn.
+
 ### components/ui/Cleared.tsx
 
 - Designed in: triage/T-Done.dc.html

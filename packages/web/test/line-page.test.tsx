@@ -49,7 +49,9 @@ describe("a line's own page", () => {
     expect(question.getAttribute("href")).toBe("/?item=D-1");
     forYou.getByRole("link", { name: /Try the mockup on the phone/ });
     expect(
-      within(view.getByRole("banner")).getByRole("link", { name: "Lines" }).getAttribute("aria-current"),
+      within(view.getByRole("navigation", { name: "Main" }))
+        .getByRole("link", { name: "Lines" })
+        .getAttribute("aria-current"),
     ).toBe("page");
   });
 

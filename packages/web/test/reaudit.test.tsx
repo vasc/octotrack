@@ -2,8 +2,6 @@ import { describe, expect, mock, test } from "bun:test";
 import { fireEvent, render, renderHook, within } from "@testing-library/react";
 import { BatchPanelView } from "../src/components/decisions/BatchPanelView.tsx";
 import { DriftAnswer } from "../src/components/drift/DriftAnswer.tsx";
-import { AtPlaceItems } from "../src/components/home/AtPlaceItems.tsx";
-import { AtSection } from "../src/components/home/AtSection.tsx";
 import { CheckoutForm } from "../src/components/home/CheckoutForm.tsx";
 import { ProposalChoices } from "../src/components/home/ProposalChoices.tsx";
 import { StepIn } from "../src/components/home/StepIn.tsx";
@@ -149,15 +147,6 @@ describe("FirstRun", () => {
   });
 });
 
-describe("AtPlaceItems", () => {
-  test("with nothing to draw, draws no empty box", () => {
-    const { container } = render(
-      <AtPlaceItems forYou={[]} at="home" focus={null} task={() => null} item={() => null} onFocus={noop} />,
-    );
-    expect(container.innerHTML).toBe("");
-  });
-});
-
 describe("OwnerBox", () => {
   test("with the step-in in the head, does not offer I'll own it a second time", () => {
     const view = render(
@@ -286,15 +275,7 @@ describe("busy words where a choice waits", () => {
     expect(view.getByRole("button", { name: /Other/ }).hasAttribute("disabled")).toBe(true);
   });
 
-  test("Leave says Leaving…, Set says Setting…, Done says Sending…", () => {
-    render(
-      <AtSection
-        at={{ place: "home", until: "2026-11-16T15:00:00Z", tasks: [] }}
-        now={0}
-        onLeave={noop}
-        busy
-      />,
-    ).getByRole("button", { name: "Leaving…" });
+  test("Set says Setting…, Done says Sending…", () => {
     render(<CheckoutForm repo="hydra" onSet={noop} onCancel={noop} busy />).getByRole("button", {
       name: "Setting…",
     });

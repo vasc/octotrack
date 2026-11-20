@@ -1,23 +1,17 @@
 import { describe, expect, mock, test } from "bun:test";
 import type { ForYou, LineHome } from "@octotrack/core/schemas";
 import { fireEvent, render, within } from "@testing-library/react";
-import { AtSection } from "../src/components/home/AtSection.tsx";
 import { FirstRun } from "../src/components/home/FirstRun.tsx";
-import { FoldedItems } from "../src/components/home/FoldedItems.tsx";
 import { LineHandle } from "../src/components/home/LineHandle.tsx";
 import { LineMeta } from "../src/components/home/LineMeta.tsx";
-import { MoreForYou } from "../src/components/home/MoreForYou.tsx";
-import { NothingNeedsYou } from "../src/components/home/NothingNeedsYou.tsx";
 import { NotAnswering } from "../src/components/home/NotAnswering.tsx";
 import { ProposalCard } from "../src/components/home/ProposalCard.tsx";
 import { ProposalGroups } from "../src/components/home/ProposalGroups.tsx";
 import { QuietRow } from "../src/components/home/QuietRow.tsx";
 import { UpNextRow } from "../src/components/home/UpNextRow.tsx";
 import { WorkingLine } from "../src/components/home/WorkingLine.tsx";
-import { decisionCard, issue, line, lineHome } from "../src/design/fixtures.ts";
+import { decision, decisionCard, issue, line, lineHome } from "../src/design/fixtures.ts";
 import { iconsIn, whole } from "./harness.tsx";
-
-const NOW = Date.parse("2026-11-16T12:00:00Z");
 
 function details(overrides: Partial<LineHome> = {}): LineHome {
   return lineHome(overrides);
@@ -56,42 +50,6 @@ describe("FirstRun", () => {
   });
 });
 
-describe("NothingNeedsYou", () => {
-  test("says where the next ask likely comes from", () => {
-    const view = render(
-      <NothingNeedsYou working={2} next={{ title: "Mac mini keeps enough free disk", step: "step 2" }} />,
-    );
-    view.getByText("Nothing needs you");
-    view.getByText(/the next ask likely comes from Mac mini keeps enough free disk, step 2/);
-  });
-});
-
-describe("AtSection", () => {
-  test("says the place ends by itself", () => {
-    const view = render(
-      <AtSection
-        at={{ place: "home", until: "2026-11-16T15:00:00Z", tasks: [] }}
-        now={NOW}
-        onLeave={() => {}}
-      />,
-    );
-    view.getByText("At home");
-    view.getByText(/ends by itself in 3h/);
-  });
-});
-
-describe("what a line holds, folded", () => {
-  test("FoldedItems says it is also on this line", () => {
-    const view = render(<FoldedItems items={[question]} onOpen={() => {}} />);
-    view.getByText("Also on this line: 1 question");
-  });
-
-  test("MoreForYou says what more is for you", () => {
-    const view = render(<MoreForYou items={[task("home")]} onShow={() => {}} />);
-    view.getByText("1 more for you: a task at home");
-  });
-});
-
 describe("LineMeta", () => {
   test("names the owner bare, with how it is", () => {
     const view = render(
@@ -113,6 +71,39 @@ describe("WorkingLine", () => {
     );
     view.getByText("Docker disk capped at 60 GB.");
     expect(view.queryByText(/changes since/)).toBeNull();
+  });
+});
+
+describe("WorkingLine, what waits there", () => {
+  test("says how much waits on you, leading to For you at the first of it, and Step in, leading to it", () => {
+    const view = render(
+      <WorkingLine
+        line={line({ ref: "L-2", title: "Sendspin enclosure" })}
+        details={details({
+          stepIn: true,
+          forYou: [
+            { kind: "question", card: decisionCard({ decision: decision({ ref: "D-4" }) }) },
+            task(null),
+          ],
+        })}
+      />,
+    );
+    expect(view.getByRole("link", { name: "2 for you" }).getAttribute("href")).toBe("/?item=D-4");
+    expect(view.getByRole("link", { name: "Step in" }).getAttribute("href")).toBe(
+      "/for-you/to-step-in?item=stepin%3AL-2",
+    );
+  });
+
+  test("names what waits by kind when it is all one kind, and says nothing when nothing does", () => {
+    const questions = render(
+      <WorkingLine line={line()} details={details({ forYou: [question, question] })} />,
+    );
+    questions.getByRole("link", { name: "2 questions" });
+    questions.unmount();
+    const tasks = render(<WorkingLine line={line()} details={details({ forYou: [task("home")] })} />);
+    tasks.getByRole("link", { name: "1 task for you" });
+    tasks.unmount();
+    expect(render(<WorkingLine line={line()} details={details()} />).queryByRole("link")).toBeNull();
   });
 });
 
@@ -141,9 +132,7 @@ describe("UpNextRow", () => {
       <WorkingLine
         line={line()}
         details={details({ branchOf: { ...branchOf, holdsUp: null }, branchesOpen: 2 })}
-      >
-        {null}
-      </WorkingLine>,
+      />,
     );
     working.getByText("branch of L-1");
     working.getByText("2 branches open");
@@ -155,9 +144,7 @@ describe("UpNextRow", () => {
         details={details({
           step: { position: 3, of: 4, title: "Hang it", waitsOn: ["2a", "L-12"], stalledOn: ["L-12"] },
         })}
-      >
-        {null}
-      </WorkingLine>,
+      />,
     );
     const waits = stalled.getByText("waits on 2a and L-12, tabled");
     expect(waits.closest("[data-tone='stuck']")).not.toBeNull();
@@ -338,15 +325,6 @@ describe("QuietRow", () => {
       <QuietRow line={line({ state: "tabled", tabledReason: "the play-test first", lookAgainAt: null })} />,
     );
     view.getByText("the play-test first");
-  });
-});
-
-describe("a line folded on a phone", () => {
-  test("is one row, its title and facts, without its headline", () => {
-    const view = render(
-      <WorkingLine line={line({ headline: "Docker disk capped at 60 GB." })} fold="phone" />,
-    );
-    expect(view.queryByText("Docker disk capped at 60 GB.")).toBeNull();
   });
 });
 

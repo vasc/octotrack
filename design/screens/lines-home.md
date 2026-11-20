@@ -8,12 +8,13 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 
 ### components/home/HomePage.tsx
 
-- Designed in: Home-FirstRun.dc.html; Home.dc.html; Home-States.dc.html, states A–I; Main.dc.html
-- What it shows: Urgent, Working on, Up next, Proposed, then the Tabled and Done lately folds; at a place, that place's banner first. On first run the proposals grouped by what their agents recommend.
+- Designed in: triage/T-Lines.dc.html; Home-FirstRun.dc.html; Home-States.dc.html, states A–I
+- What it shows: "Lines" and "4 working on · 2 up next · 2 proposed · 1 tabled"; Working on, each line one row with what waits there as a pill; Up next, Proposed, then the Tabled and Done lately folds. Questions and tasks are on For you, not here. On first run the proposals grouped by what their agents recommend.
 - Changes from today:
   - First run (Home-FirstRun) groups proposals under "Recommended to start", "Recommended for up next", "Recommended to table", "Recommended to fold into another" and "No recommendation", each folded to a sentence: what the placement means where that says more than a sample ("Old milestones and ideas from before lines existed."), else its first title and how many more; the first group is open with "Show 6 more", the rest are folded with "Show" and a sample ("Includes Put the Telegram CLI on a safe footing, and 25 more.").
   - Failures of moves are said beside the line that moved (H), not at the top of the page.
-  - Phone (I): lines from the third on fold to one row each, and Up next folds to "Up next 3 · Finish removing the H1 switch and 2 more".
+  - A line opens on its own page; j and k move between lines, o opens one, Alt with the arrows moves it.
+  - Phone (I): Up next folds to "Up next 3 · Finish removing the H1 switch and 2 more".
 - Loading: first load (D): the bar at once, rows drawn as outlines, "Working on" over the outlines; "Loading your lines…" is for screen readers only.
 - Error: the tracker not answering on first load (E): "The tracker is not answering / Nothing answered at 127.0.0.1:4747. Any octo command starts it again; this page tries again every 30 seconds." with the command `octo server status` and Try now. After loading, a lost connection is AppShell's strip (F); a failed move is said next to the line (H).
 - Empty: no lines and no proposals (A) is FirstRun's empty state; nothing waiting is NothingNeedsYou (B).
@@ -27,15 +28,6 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 - Error: Accept it waits with Undo like every choice; a request the tracker never took, or a refusal when it takes effect, is said in the Undo bar ("Did not happen: …") with Dismiss.
 - Empty: no proposals (A): "No lines yet / Add one with New line, or point an agent at the guide: it proposes lines for its repo, and they arrive here to place." with `octo guide` and a New line button.
 
-### components/home/NothingNeedsYou.tsx
-
-- Designed in: Home-States.dc.html, state B
-- What it shows: "Nothing needs you" then "2 agents working · the next ask likely comes from Mac mini keeps enough free disk, step 2"; the lines follow as usual and the bar shows no counts.
-- Changes from today: "next ask likely on {title}" becomes "the next ask likely comes from {title}, {step}".
-- Loading: never loads on its own: given the counts by HomePage.
-- Error: cannot fail on its own.
-- Empty: it is itself the empty state for "nothing waiting"; with no line working the second fact is left out.
-
 ### components/home/NotAnswering.tsx
 
 - Designed in: Home-States.dc.html, state E
@@ -44,51 +36,6 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 - Loading: never loads on its own: Try now asks again.
 - Error: it is itself the error.
 - Empty: never empty.
-
-### components/home/AtSection.tsx
-
-- Designed in: Home-States.dc.html, state C
-- What it shows: "At home · ends by itself in 3h" and Leave.
-- Changes from today: "ends in 3h" becomes "ends by itself in 3h".
-- Loading: Leave shows its busy word while it runs (Primitives Button: "Leaving…").
-- Error: Leave is sent at once and says Leaving… meanwhile; a request that fails is said in the Undo bar with Dismiss.
-- Empty: never empty: shown only while at a place.
-
-### components/home/AtPlaceItems.tsx
-
-- Designed in: Home-States.dc.html, state C
-- What it shows: under each line at a place, that place's tasks open ("Task · TRIP-2 · at home / Call Hotel Jasmin about a third bed"), then the rest folded to one row.
-- Changes from today: none beyond FoldedItems' words.
-- Loading: never loads on its own: given its items by WorkingSection.
-- Error: cannot fail on its own; each task's failures are its own.
-- Empty: a line with nothing at the place shows only FoldedItems' row; with no items at all nothing is drawn (today an empty box).
-
-### components/home/FoldedItems.tsx
-
-- Designed in: Home-States.dc.html, state C
-- What it shows: one quiet row: "Also on this line: 1 question".
-- Changes from today: prefixed "Also on this line:" (today the bare counts "1 question").
-- Loading: never loads on its own: given the items by AtPlaceItems.
-- Error: cannot fail on its own.
-- Empty: nothing folded renders nothing.
-
-### components/home/AtUpNext.tsx
-
-- Designed in: More-States.dc.html, state A
-- What it shows: at a place, that place's tasks whose lines are up next, each under its line's number and title, open with its choices.
-- Changes from today: none drawn; follows state C's task rows and the Primitives pattern.
-- Loading: never loads on its own: given its tasks by HomePage.
-- Error: cannot fail on its own; each task's failures are its own.
-- Empty: no such tasks renders nothing.
-
-### components/home/QuestionList.tsx
-
-- Designed in: Home.dc.html (Urgent); Question-States.dc.html, state B; More-States.dc.html, state C (On no line)
-- What it shows: "Urgent" with its count, first on the page, each question a row; the focused one opens in place.
-- Changes from today: the urgent row names the line it is on ("Something broken · on 1 · The home worker fetches new videos again · D-75"). "On no line" is not drawn; it follows the same rows.
-- Loading: never loads on its own: given its questions by HomePage.
-- Error: cannot fail on its own; each question's failures are its own (Question-States E).
-- Empty: no questions renders nothing.
 
 ### components/home/WorkingSection.tsx
 
@@ -134,33 +81,6 @@ https://claude.ai/artifact/5K8LVERx26A5pNU1s6PGRU.
 - Loading: never loads on its own: given the line by WorkingLine.
 - Error: cannot fail on its own.
 - Empty: no facts renders nothing.
-
-### components/home/LineForYou.tsx
-
-- Designed in: Main.dc.html; Home.dc.html (line 2); Home-States.dc.html, state I
-- What it shows: the first thing waiting on you under the line, then "1 more for you: a task at home".
-- Changes from today: on a phone, a line folded past the second keeps its first item as a short row ("Question · Which South Tyrol base?", with "and N more") instead of folding to "{N} for you"; the first two lines open their items as wider screens do.
-- Loading: never loads on its own: given its items by WorkingSection.
-- Error: cannot fail on its own.
-- Empty: nothing for you renders nothing.
-
-### components/home/LineForYouItem.tsx
-
-- Designed in: Main.dc.html; Question-States.dc.html, state A
-- What it shows: a row that opens in place while it has focus (Main: the question opened under its line, ringed) One press opens it: focus moves when the press ends, not as it goes down, so nothing folds under the pointer mid-press; and when the item open above it folds, the page scrolls so the one pressed stays where it was on the screen.
-- Changes from today: the focused item is tinted with the grey edge inside it (Primitives Row; the halo is for controls, not rows).
-- Loading: never loads on its own: given its item by LineForYou.
-- Error: cannot fail on its own; the opened item's failures are its own.
-- Empty: never empty: it exists only for an item.
-
-### components/home/MoreForYou.tsx
-
-- Designed in: Main.dc.html; Home.dc.html (line 2)
-- What it shows: "1 more for you: a task at home".
-- Changes from today: "1 more: a task at home" becomes "1 more for you: a task at home".
-- Loading: never loads on its own.
-- Error: cannot fail on its own.
-- Empty: nothing more renders nothing.
 
 ### components/home/LineStepIn.tsx
 

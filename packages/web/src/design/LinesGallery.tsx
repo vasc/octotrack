@@ -23,7 +23,16 @@ import { List } from "../components/ui/List.tsx";
 import { Markdown } from "../components/ui/Markdown.tsx";
 import { TextBox } from "../components/ui/TextBox.tsx";
 import { DesignSection, Example, SheetExample } from "./Example.tsx";
-import { decision, decisionCard, issue, line, pendingChoice, planBranch, planStep } from "./fixtures.ts";
+import {
+  decision,
+  decisionCard,
+  issue,
+  line,
+  pendingChoice,
+  planBranch,
+  planStep,
+  lineHome,
+} from "./fixtures.ts";
 
 const NOOP = () => {};
 const QUESTION = decisionCard({
@@ -108,16 +117,7 @@ export function LinesGallery() {
               ],
               prs: [],
             }}
-          >
-            <List>
-              <ForYouRow
-                item={{ kind: "question", card: QUESTION }}
-                label="Question D-34"
-                focused={false}
-                onOpen={NOOP}
-              />
-            </List>
-          </WorkingLine>
+          />
         </List>
       </Example>
       <Example label="A task, one row, and opened">
@@ -243,16 +243,16 @@ export function LinesGallery() {
             handle={<LineHandle title="South Tyrol trip" number={5} canMoveUp canMoveDown onMove={NOOP} />}
             line={line({ title: "South Tyrol trip" })}
             crew={{ owner: null, helpers: [], scoper: null, search: { step: 3, since: "" } }}
-          >
-            <StepIn
-              line={line({ title: "South Tyrol trip" })}
-              reason="trips.2, started for it, exited at once: the agent command is not logged in. Octotrack tries again by itself, less often each time."
-              onRetry={NOOP}
-              onOwn={NOOP}
-              onTable={NOOP}
-            />
-          </WorkingLine>
+            details={lineHome({ stepIn: true, stepInReason: "No agent took it.", stepInKind: "failing" })}
+          />
         </List>
+        <StepIn
+          line={line({ title: "South Tyrol trip" })}
+          reason="trips.2, started for it, exited at once: the agent command is not logged in. Octotrack tries again by itself, less often each time."
+          onRetry={NOOP}
+          onOwn={NOOP}
+          onTable={NOOP}
+        />
       </Example>
       <Example label="Up next">
         <List>

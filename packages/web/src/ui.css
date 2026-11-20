@@ -2634,3 +2634,22 @@
     padding: var(--space-8);
   }
 }
+
+/* What waits on a line, at its row's end: a pill in its tone that leads there. */
+.ui-waits {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--space-11);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--tone-soft);
+  color: var(--tone);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.ui-waits:hover {
+  box-shadow: var(--shadow-tile);
+}

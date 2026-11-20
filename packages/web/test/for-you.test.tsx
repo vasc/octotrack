@@ -281,7 +281,9 @@ describe("For you", () => {
     const view = renderApp(<App />);
     await view.findByRole("region", { name: "Working on" });
     expect(
-      within(view.getByRole("banner")).getByRole("link", { name: "Lines" }).getAttribute("aria-current"),
+      within(view.getByRole("navigation", { name: "Main" }))
+        .getByRole("link", { name: "Lines" })
+        .getAttribute("aria-current"),
     ).toBe("page");
   });
 });
