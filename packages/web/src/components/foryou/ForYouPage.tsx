@@ -95,7 +95,11 @@ export function ForYouPage({ filter }: { filter: Filter }) {
             }
           />
         ) : (
-          <Queue title={name} subtitle={`${view.index + 1} of ${view.entries.length} open`}>
+          <Queue
+            title={name}
+            subtitle={`${view.index + 1} of ${view.entries.length} open`}
+            hint="j k to move, the number keys to choose"
+          >
             {view.entries.map((entry, index) =>
               entry === open ? (
                 <ForYouCard
@@ -111,6 +115,7 @@ export function ForYouPage({ filter }: { filter: Filter }) {
                     h={h}
                     armed={armed}
                     onMoveOn={view.moveOn}
+                    view={filter}
                     onStarting={setStarting}
                   />
                 </ForYouCard>
@@ -135,6 +140,7 @@ export function ForYouPage({ filter }: { filter: Filter }) {
           onStart={(started) => {
             h.start(started);
             setStarting(null);
+            view.moveOn(started);
           }}
           onCancel={() => setStarting(null)}
           armed={peek === null}

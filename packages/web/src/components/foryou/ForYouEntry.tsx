@@ -1,7 +1,7 @@
 import type { HomeView } from "@octotrack/core/schemas";
 import type { HomeActions } from "../../hooks/useHome.ts";
 import { focusLabel } from "../../lib/focus.ts";
-import type { Entry } from "../../lib/forYou.ts";
+import type { Entry, Filter } from "../../lib/forYou.ts";
 import { branchOfText } from "../../lib/lines.ts";
 import { ForYouItem } from "../home/ForYouItem.tsx";
 import { LineStepIn } from "../home/LineStepIn.tsx";
@@ -21,6 +21,7 @@ export function ForYouEntry({
   armed,
   onMoveOn,
   onStarting,
+  view,
 }: {
   entry: Entry;
   home: HomeView;
@@ -31,6 +32,8 @@ export function ForYouEntry({
   onMoveOn(ref: string): void;
   /** A tabled line back to look at starts through the Start sheet, since it may hold questions and tasks. */
   onStarting(ref: string): void;
+  /** The view it is open in, so an urgent proposal can name the other view it is in. */
+  view: Filter;
 }) {
   const { item, line } = entry;
   const moving =
@@ -53,6 +56,7 @@ export function ForYouEntry({
             table: moving(h.table),
             retry: moving(h.retry),
             anyway: moving(h.anyway),
+            setCheckout: moving(h.setCheckout),
           }}
         />
       );
@@ -71,6 +75,7 @@ export function ForYouEntry({
             onFold={moving(h.fold)}
             onReject={moving(h.reject)}
             onDrop={moving(h.drop)}
+            alsoIn={view === "urgent" ? "To accept" : view === "toAccept" ? "Urgent" : null}
           />
         </Focusable>
       );

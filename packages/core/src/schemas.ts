@@ -946,7 +946,6 @@ export const LineHome = z.object({
 });
 export type LineHome = z.infer<typeof LineHome>;
 
-/** The home screen: every line, in the developer's order, section by section. */
 /** How the local runner is set up on this machine, as it last reported. */
 export const RunnerStatus = z.object({ configured: z.boolean(), cap: z.number().int(), dryRun: z.boolean() });
 export type RunnerStatus = z.infer<typeof RunnerStatus>;
@@ -955,6 +954,7 @@ export type RunnerStatus = z.infer<typeof RunnerStatus>;
 export const AtView = z.object({ place: z.string(), until: z.string(), tasks: z.array(Issue) });
 export type AtView = z.infer<typeof AtView>;
 
+/** What the dashboard is drawn from: every line, in the developer's order, section by section, and what each holds. */
 export const HomeView = z.object({
   runner: RunnerStatus,
   at: AtView.nullable(),

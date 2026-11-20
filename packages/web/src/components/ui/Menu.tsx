@@ -139,10 +139,13 @@ export function MenuNote({ children }: { children: ReactNode }) {
 export function MenuItem({
   checked,
   onSelect,
+  trailing,
   children,
 }: {
   checked: boolean;
   onSelect(): void;
+  /** A quiet word at its end, such as a view's count. */
+  trailing?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -159,6 +162,7 @@ export function MenuItem({
         {checked ? <Icon name="check" /> : null}
       </span>
       {children}
+      {trailing === undefined ? null : <span className="ui-menu-trailing">{trailing}</span>}
     </button>
   );
 }

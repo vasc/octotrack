@@ -44,7 +44,7 @@ export function FilterRail({
       </Only>
       <Only on="phone">
         <Menu
-          label={`${label}: ${shown === undefined ? "" : `${shown.label}, ${shown.count}`}`}
+          label={shown === undefined ? label : `${label}: ${shown.label}, ${shown.count}`}
           text={shown === undefined ? label : `${shown.label} ${shown.count}`}
           menuLabel={label}
           align="start"
@@ -54,13 +54,13 @@ export function FilterRail({
               <MenuItem
                 key={view.key}
                 checked={view.key === current}
+                trailing={view.count}
                 onSelect={() => {
                   close();
                   onGo(view.href);
                 }}
               >
                 {view.label}
-                <span className="ui-menu-trailing">{view.count}</span>
               </MenuItem>
             ))
           }
@@ -87,7 +87,6 @@ function RailLink({
       href={view.href}
       aria-label={`${view.label}, ${view.count}`}
       aria-current={current ? "page" : undefined}
-      data-empty={view.count === 0 ? "true" : undefined}
       onClick={(event) => {
         if (event.metaKey || event.ctrlKey) return;
         event.preventDefault();

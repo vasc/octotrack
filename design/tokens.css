@@ -58,6 +58,9 @@
   /* The open item on For you: what it is, said large, and the sentence under it. */
   --text-display: 32px;
   --text-lead: 17px;
+  /* The open item's title among the rows of For you's list, and the list's own name over it. */
+  --text-card: 26px;
+  --text-list: 22px;
   /* A peek's own title, smaller than the item it was opened from. */
   --text-title: 24px;
   --weight-regular: 400;
@@ -101,7 +104,7 @@
   /* Elevation: only for what floats over content. Everything else is separated by a line. */
   --shadow-popover: 0 6px 20px rgb(0 0 0 / 0.14);
   --shadow-panel: -12px 0 40px rgb(0 0 0 / 0.08);
-  /* A tile's edge: the page you are on in the bar, the view you are in, an item in Next; darker under the pointer. */
+  /* A tile's edge: the page you are on in the bar, the view you are in, a tile for an item; darker under the pointer. */
   --shadow-tile: 0 0 0 1px var(--line);
   --shadow-tile-hover: 0 0 0 1px var(--line-strong);
   /* A peek opened from another: the one under it shows as an edge to its left, with its hairline. */
@@ -141,13 +144,15 @@
 
   /* Layout */
   --page-width-narrow: 900px;
-  /* For you: the rail of views, the open item and Next, side by side. */
+  /* For you: the rail of views beside its list; the list beside a peek, and a line's own page, at most this wide. */
   --rail-column: 200px;
   --card-width: 720px;
   /* For you's list of everything a view holds, beside the rail. */
   --queue-width: 860px;
   /* A peek over the right of the page, and how far the open item sits from the left while one is open. */
   --peek-width: 560px;
+  /* At most this much of a narrower screen goes to a peek, so the list beside it keeps room to be read. */
+  --peek-share: 50vw;
   /* A line on a page of its own: how wide it gets, and the column beside its plan. */
   --detail-width: 1180px;
   --detail-aside: 340px;

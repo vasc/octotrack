@@ -1,5 +1,6 @@
 import type { Entry } from "../../lib/forYou.ts";
 import { entryText } from "../../lib/forYou.ts";
+import { URGENT_REASON } from "../../lib/lines.ts";
 import { Button } from "../ui/Button.tsx";
 import { Row } from "../ui/Row.tsx";
 
@@ -52,13 +53,18 @@ export function ForYouListRow({
     (line.recommendation === "start" || line.recommendation === "up_next")
       ? line.recommendation
       : null;
-  const stuck =
-    entry.item.kind === "stepin" || (entry.item.kind === "proposal" && line?.urgentReason != null);
+  const urgent =
+    entry.item.kind === "question"
+      ? entry.item.card.decision.urgentReason
+      : entry.item.kind === "proposal"
+        ? (line?.urgentReason ?? null)
+        : null;
+  const stuck = entry.item.kind === "stepin" || urgent !== null;
   return (
     <Row
       label={title}
       lead={String(number)}
-      kind={kindOf(entry)}
+      kind={urgent === null ? kindOf(entry) : URGENT_REASON[urgent]}
       tone={stuck ? "stuck" : "needs"}
       title={title}
       facts={where}

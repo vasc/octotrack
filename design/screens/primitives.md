@@ -20,12 +20,12 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 
 ### components/ui/AppBar.tsx
 
-- Designed in: Shell.dc.html, state A; Home-States.dc.html, state I
-- What it shows: the name and pages, what waits on you, then the controls.
-- Changes from today: the current page is bold and underlined (today ink colour only); counts and page links get 44 px targets on touch (Refs, links, keys, counts); the urgent count's mark follows Status ("[triangle] urgent").
-- Loading: never loads on its own: TopBar leaves the counts out while loading.
+- Designed in: triage/Main.dc.html, triage/T-Task-Phone.dc.html; Shell.dc.html, state A
+- What it shows: the octagon mark and "Octotrack", then the pages as tabs (BarLink), the one you are on raised on a tile, For you with a pill saying how much waits; then the controls. On a phone the word gives way and the mark stays; page links get 44 px targets on touch.
+- Changes from today: one row; pages are tabs, not bold underlined words; the counts row is gone, as For you says how much waits.
+- Loading: never loads on its own: For you is named alone while what waits loads.
 - Error: cannot fail on its own.
-- Empty: no counts: the counts area is left out.
+- Empty: nothing waiting: For you has no pill.
 
 ### components/ui/Badge.tsx
 

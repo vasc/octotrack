@@ -15,6 +15,7 @@ import {
   toneOf,
 } from "../src/lib/format.ts";
 import { focusLabel } from "../src/lib/focus.ts";
+import { moreNotes } from "../src/hooks/useTopBar.ts";
 import {
   forYouCounts,
   heldOnTabled,
@@ -508,5 +509,13 @@ describe("scanningText", () => {
   test("says how far back a search with nothing yet has looked", () => {
     expect(scanningText(500)).toBe("Nothing in the last 500 events yet; searching older ones…");
     expect(scanningText(10000)).toBe("Nothing in the last 10,000 events yet; searching older ones…");
+  });
+});
+
+describe("moreNotes", () => {
+  test("says how much is unseen, with a plus past what was counted, and how many agents work; nothing at zero", () => {
+    expect(moreNotes(3, false, 1)).toEqual({ logNote: "3 unseen", agentsNote: "1 working" });
+    expect(moreNotes(100, true, 0)).toEqual({ logNote: "100+ unseen", agentsNote: null });
+    expect(moreNotes(0, false, 2)).toEqual({ logNote: null, agentsNote: "2 working" });
   });
 });

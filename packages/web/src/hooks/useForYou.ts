@@ -63,13 +63,13 @@ export function useForYou(
     const next = nextFilter(counts, filter);
     if (next !== null) navigate(forYouPath(next), true);
   }, [entries, counts, filter]);
-  // The item moved on from, and once its choice is seen waiting, which choice that is.
-  const [left, setLeft] = useState<{ ref: string; choice: number | null } | null>(null);
+  // The items moved on from while their choices wait with Undo, each with its choice once it is seen waiting.
+  const [left, setLeft] = useState<readonly { ref: string; choice: number | null }[]>([]);
   const undone = useSyncExternalStore(UNDONE.subscribe, UNDONE.all);
   // Answered, done or put off: it waits with Undo, or goes to the bottom, and the one after it opens in its place.
   const moveOn = useCallback(
     (ref: string) => {
-      setLeft({ ref, choice: null });
+      setLeft((before) => [...before.filter((item) => item.ref !== ref), { ref, choice: null }]);
       const at = entries.findIndex((entry) => entry.ref === ref);
       const after = [...entries.slice(at + 1), ...entries.slice(0, Math.max(at, 0))].find(
         (entry) => entry.ref !== ref && entry.laterAt === null,
@@ -78,19 +78,25 @@ export function useForYou(
     },
     [entries],
   );
-  // Its choice undone, the item opens again where it was left; taken effect or failed, nothing reopens. The choices are
+  // A choice undone, its item opens again where it was left; taken effect or failed, nothing reopens. The choices are
   // the server's, outside React, so an effect follows them.
   useEffect(() => {
-    if (left === null) return;
-    if (left.choice === null) {
-      const waiting = choices.find((choice) => choice.state === "pending" && standsFor(choice, left.ref));
-      if (waiting !== undefined) setLeft({ ref: left.ref, choice: waiting.id });
-      return;
-    }
-    const state = choices.find((choice) => choice.id === left.choice)?.state;
-    if (state === "pending") return;
-    setLeft(null);
-    if (undone.has(left.choice)) setParams({ item: left.ref, focus: null }, true);
+    if (left.length === 0) return;
+    let reopen: string | null = null;
+    const still = left.flatMap((item) => {
+      if (item.choice === null) {
+        const waiting = choices.find((choice) => choice.state === "pending" && standsFor(choice, item.ref));
+        return [{ ref: item.ref, choice: waiting?.id ?? null }];
+      }
+      const state = choices.find((choice) => choice.id === item.choice)?.state;
+      if (state === "pending") return [item];
+      if (undone.has(item.choice)) reopen = item.ref;
+      return [];
+    });
+    const changed =
+      still.length !== left.length || still.some((item, index) => item.choice !== left[index]?.choice);
+    if (changed) setLeft(still);
+    if (reopen !== null) setParams({ item: reopen, focus: null }, true);
   }, [left, choices, undone]);
   return { entries, counts, open, index, go, step, moveOn };
 }

@@ -200,6 +200,117 @@ describe("For you", () => {
     expect(new URLSearchParams(window.location.search).get("item")).toBe("D-1");
   });
 
+  test("Undo reopens the item it undoes, though another was answered after it", async () => {
+    twoLines();
+    ask("Which board?", "octo.1");
+    ask("Which day?", "digest.1");
+    ask("Which case?", "octo.1");
+    const view = renderApp(<App />);
+    await opened(view, "Which board?");
+    fireEvent.keyDown(window, { key: "1" });
+    await opened(view, "Which case?");
+    fireEvent.keyDown(window, { key: "1" });
+    await opened(view, "Which day?");
+    // Both wait with Undo, the newest first; undoing the older one reopens it, not the one answered after it.
+    const undos = await view.findAllByRole("button", { name: "Undo" });
+    expect(undos).toHaveLength(2);
+    const older = undos[1];
+    if (older === undefined) throw new Error("No Undo for the first answer");
+    fireEvent.click(older);
+    await opened(view, "Which board?");
+    expect(
+      server.tracker
+        .call(c.choiceList, {}, asDeveloper)
+        .filter((choice) => choice.state === "pending")
+        .map((choice) => choice.ref),
+    ).toEqual(["D-3"]);
+  });
+
+  test("a Step in's checkout, set from the card, moves on like any choice", async () => {
+    const asServer = { actor: "octotrack", channel: "cli", system: true } as const;
+    server.tracker.call(c.runnerReport, { configured: true, cap: 1, dryRun: false }, asServer);
+    server.tracker.call(
+      c.lineAdd,
+      { title: "No clone", doneWhen: "Done.", repos: ["OCT"], where: "working" },
+      asDeveloper,
+    );
+    server.act(
+      c.linePropose,
+      {
+        title: "Wall mount",
+        doneWhen: "It hangs flush.",
+        recommendation: "up_next",
+        why: "The base is final.",
+      },
+      "panel-agent",
+    );
+    server.later(1);
+    for (const _ of [1, 2]) {
+      const started = server.tracker.call(c.runnerStart, { line: "L-1", repo: "OCT" }, asServer);
+      server.tracker.call(
+        c.runnerExited,
+        { name: started.name, code: 1, output: "OCT has no checkout", cause: "checkout" },
+        asServer,
+      );
+      server.tracker.call(c.runnerRetry, { line: "L-1" }, asDeveloper);
+    }
+    const view = renderApp(<App />);
+    const note = within(await view.findByRole("group", { name: "Step in on No clone" }));
+    fireEvent.click(note.getByRole("button", { name: "Set its checkout" }));
+    fireEvent.change(note.getByLabelText("Checkout of OCT"), { target: { value: "/code/octotrack" } });
+    fireEvent.click(note.getByRole("button", { name: "Set" }));
+    await opened(view, "Wall mount");
+  });
+
+  test("a proposal back from tabled starts through its Start sheet, and the list moves on", async () => {
+    server.tracker.call(
+      c.lineAdd,
+      {
+        title: "Podcast cleanup",
+        doneWhen: "Old episodes gone.",
+        repos: ["OCT"],
+        where: "tabled",
+        reason: "The disk is not tight",
+        lookAgainAt: new Date().toISOString().slice(0, 10),
+      },
+      asDeveloper,
+    );
+    // Its day to look again has come: the tracker's sweep puts it back under Proposed.
+    server.tracker.sweep();
+    server.act(
+      c.linePropose,
+      {
+        title: "Wall mount",
+        doneWhen: "It hangs flush.",
+        recommendation: "up_next",
+        why: "The base is final.",
+      },
+      "panel-agent",
+    );
+    navigate("/for-you/to-accept");
+    const view = renderApp(<App />);
+    await opened(view, "Podcast cleanup");
+    fireEvent.click(within(card(view)).getByRole("button", { name: "Start it now" }));
+    const sheet = within(await view.findByRole("dialog", { name: "Start Podcast cleanup" }));
+    fireEvent.click(await sheet.findByRole("button", { name: "Start" }));
+    await opened(view, "Wall mount");
+  });
+
+  test("More says how much is unseen in the Log and how many agents are working", async () => {
+    twoLines();
+    ask("Which board?", "octo.1");
+    const view = renderApp(<App />);
+    await opened(view, "Which board?");
+    fireEvent.click(view.getByRole("button", { name: "More" }));
+    const menu = within(view.getByRole("menu", { name: "More" }));
+    await waitFor(() =>
+      expect(menu.getByRole("menuitem", { name: /^Agents/ }).textContent).toBe("Agents2 working"),
+    );
+    await waitFor(() =>
+      expect(menu.getByRole("menuitem", { name: /^Log/ }).textContent).toMatch(/^Log\d+ unseen$/),
+    );
+  });
+
   test("an answer takes its question away and the next one opens where it was", async () => {
     twoLines();
     ask("Which board?", "octo.1");

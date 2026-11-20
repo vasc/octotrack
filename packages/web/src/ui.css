@@ -1620,7 +1620,7 @@
   right: 0;
   bottom: 0;
   z-index: var(--z-panel);
-  width: min(var(--peek-width), 100%);
+  width: min(var(--peek-width), var(--peek-share));
   overflow-y: auto;
   background: var(--surface);
   border-left: 1px solid var(--line);
@@ -1760,6 +1760,7 @@
   /* A peek on a phone rises from the bottom over the dimmed page, which shows above it. */
   .ui-side {
     top: var(--peek-top-phone);
+    width: 100%;
     border-left: 0;
     border-radius: var(--radius-card) var(--radius-card) var(--radius-none) var(--radius-none);
     box-shadow: var(--shadow-scrim);
@@ -2240,9 +2241,9 @@
   white-space: nowrap;
 }
 
-/* ---------- For you: Triage, Card, Progress, FilterRail, NextList ---------- */
+/* ---------- For you: Triage, Card, Queue, FilterRail, NextList ---------- */
 
-/* The rail, the open item and Next, side by side and centred; a peek folds the outer two and moves the middle left. */
+/* The rail and the list, side by side and centred; a peek folds the rail and moves the list left, clear of it. */
 .ui-triage {
   display: grid;
   grid-template-columns: var(--rail-column) minmax(0, var(--queue-width));
@@ -2257,7 +2258,7 @@
   grid-template-columns: minmax(0, var(--card-width));
   justify-content: start;
   padding-left: var(--peek-offset);
-  padding-right: calc(var(--peek-width) + var(--space-16));
+  padding-right: calc(min(var(--peek-width), var(--peek-share)) + var(--space-16));
 }
 
 .ui-triage[data-folded="true"] .ui-triage-rail {
@@ -2301,7 +2302,7 @@
 }
 
 .ui-card .ui-item-title {
-  font-size: var(--text-display);
+  font-size: var(--text-card);
   letter-spacing: -0.02em;
 }
 
@@ -2337,7 +2338,7 @@
 
 .ui-queue-title {
   margin: 0;
-  font-size: var(--text-heading);
+  font-size: var(--text-list);
   font-weight: var(--weight-semibold);
   letter-spacing: -0.01em;
 }
@@ -2672,7 +2673,7 @@
 
 /* For you and its peeks on a phone, after the rules they change. */
 @media (max-width: 720px) {
-  /* For you on a phone: the open item takes the width, under the rail as a row of views; Next steps away. */
+  /* For you on a phone: the list takes the width, under the views as one menu. */
   .ui-triage {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-8);

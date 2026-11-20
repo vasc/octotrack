@@ -29,6 +29,7 @@ export function ProposalItem({
   onFold,
   onReject,
   onDrop,
+  alsoIn = null,
 }: {
   line: Line;
   /** Lines it could fold into: those still open. */
@@ -45,6 +46,8 @@ export function ProposalItem({
   onFold(ref: string, into: string): void;
   onReject(ref: string): void;
   onDrop(ref: string): void;
+  /** The other view an urgent proposal is in, named where it is open: Urgent's in To accept, and the other way. */
+  alsoIn?: string | null;
 }) {
   const [mode, setMode] = useState<"table" | "fold" | null>(null);
   const [picked, setPicked] = useState<Move | null>(null);
@@ -147,8 +150,8 @@ export function ProposalItem({
         ) : (
           <>
             <Options options={ordered} onPick={pick} chosen={busy ? (picked ?? undefined) : undefined} />
-            {line.urgentReason === null ? null : (
-              <Note>It is also in To accept: placing it here takes it out of both.</Note>
+            {alsoIn === null ? null : (
+              <Note>It is also in {alsoIn}: placing it here takes it out of both.</Note>
             )}
           </>
         )

@@ -17,11 +17,20 @@ export function useTopBar() {
   const data = home.data;
   const waiting = useMemo(() => (data === undefined ? null : entriesOf(data, "all").length), [data]);
   const working = data === undefined ? 0 : runningAgents(data);
-  const events = unseen.data?.events.length ?? 0;
-  const more = unseen.data?.nextBefore != null;
   return {
     waiting,
-    logNote: events === 0 ? null : `${events}${more ? "+" : ""} unseen`,
+    ...moreNotes(unseen.data?.events.length ?? 0, unseen.data?.nextBefore != null, working),
+  };
+}
+
+/** What More says beside the Log and Agents: how much is unseen, "100+" past what was counted, and who is working. */
+export function moreNotes(
+  unseen: number,
+  more: boolean,
+  working: number,
+): { logNote: string | null; agentsNote: string | null } {
+  return {
+    logNote: unseen === 0 ? null : `${unseen}${more ? "+" : ""} unseen`,
     agentsNote: working === 0 ? null : `${working} working`,
   };
 }

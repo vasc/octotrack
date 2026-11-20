@@ -105,6 +105,8 @@ and `--tone-mark`, and badges, glyphs and feed marks all read those. Add a tone 
 | `--text-heading`    | Working on, and a page's own title                                                                  |
 | `--text-display`    | The open item's title on For you: what it is, said large, the one thing on the page                 |
 | `--text-lead`       | The sentence under that title: its situation or what to do                                          |
+| `--text-card`       | The open item's title among the rows of For you's list                                              |
+| `--text-list`       | For you's list's own name, over its rows                                                            |
 | `--text-title`      | A peek's own title, smaller than the item it was opened from                                        |
 | `--weight-regular`  | Body                                                                                                |
 | `--weight-medium`   | Navigation, counts beside a heading                                                                 |
@@ -134,7 +136,7 @@ item on For you steps up to 17 and 32, as the Triage drawings set it, since it i
 | `--space-14`   | Padding around an empty state                            |
 | `--space-16`   | The page's side margins                                  |
 | `--space-24`   | For you's room above its three columns                   |
-| `--space-28`   | Between For you's rail, card and Next                    |
+| `--space-28`   | Between For you's rail and its list                      |
 | `--space-32`   | The room left at the end of a scroll                     |
 
 The names are multiples of the unit: `--space-4` is four units.
@@ -151,38 +153,38 @@ The names are multiples of the unit: `--space-4` is four units.
 | `--radius-pill`  | Pills: the header counts, a group read as one thing                                                     |
 | `--radius-inner` | A sheet's corner inside its 1px edge: the first and last rows take it, so a highlight follows the curve |
 | `--radius-card`  | The open item's card on For you                                                                         |
-| `--radius-tile`  | Tiles beside and inside it: an item in Next, an answer in the card                                      |
+| `--radius-tile`  | Tiles beside and inside it: an item for you on a line's page, an answer in the card, the open card      |
 
 ## Elevation
 
 Only what floats over content gets a shadow. Everything else is separated by a line.
 
-| Token                  | Use for                                                                             |
-| ---------------------- | ----------------------------------------------------------------------------------- |
-| `--shadow-popover`     | The filter's suggestions, the Undo bar                                              |
-| `--shadow-panel`       | A line, task or issue opened over the right of the page                             |
-| `--shadow-card-open`   | The open item among the rows of its list, edged in the accent and lifted            |
-| `--shadow-card`        | The open item's card on For you, lifted a little from the page                      |
-| `--shadow-tile`        | A tile's edge: the page you are on in the bar, the view you are in, an item in Next |
-| `--shadow-tile-hover`  | That edge under the pointer, a step darker                                          |
-| `--shadow-scrim`       | What dims everything around a peek on a phone                                       |
-| `--shadow-stack`       | A peek opened from another: the one under it, an edge to its left                   |
-| `--shadow-sheet`       | A sheet lifted over the page and its bar                                            |
-| `--scrim`              | What dims the page and its bar behind a sheet                                       |
-| `--shadow-focus`       | The halo round a focused control                                                    |
-| `--shadow-focus-inset` | The grey edge drawn inside a focused row, item or menu item                         |
-| `--shadow-drop-before` | The rule along a line's top edge where a dragged line would land before it          |
-| `--shadow-drop-after`  | The rule along a line's bottom edge where a dragged line would land after it        |
-| `--shadow-pressed`     | A filled button held down: a step darker                                            |
-| `--focus-halo`         | The soft halo round a focused control, outside its grey edge                        |
-| `--row-inset`          | How far a sheet's rows sit from its edges: their text and focus tint line up on it  |
-| `--lead-width`         | A row's first column, its number in an order: every title in a list starts after it |
-| `--lead-width-wide`    | The first column when it holds a time or a date, as the Log's rows do               |
-| `--opacity-hover`      | A filled button under the pointer                                                   |
-| `--z-popover`          | Above the page                                                                      |
-| `--z-panel`            | Above popovers                                                                      |
-| `--z-undo`             | Above everything, an open sheet included: a choice made there shows its Undo        |
-| `--z-sheet`            | A sheet, over everything, the bar included                                          |
+| Token                  | Use for                                                                                |
+| ---------------------- | -------------------------------------------------------------------------------------- |
+| `--shadow-popover`     | The filter's suggestions, the Undo bar                                                 |
+| `--shadow-panel`       | A line, task or issue opened over the right of the page                                |
+| `--shadow-card-open`   | The open item among the rows of its list, edged in the accent and lifted               |
+| `--shadow-card`        | The open item's card on For you, lifted a little from the page                         |
+| `--shadow-tile`        | A tile's edge: the page you are on in the bar, the view you are in, a tile for an item |
+| `--shadow-tile-hover`  | That edge under the pointer, a step darker                                             |
+| `--shadow-scrim`       | What dims everything around a peek on a phone                                          |
+| `--shadow-stack`       | A peek opened from another: the one under it, an edge to its left                      |
+| `--shadow-sheet`       | A sheet lifted over the page and its bar                                               |
+| `--scrim`              | What dims the page and its bar behind a sheet                                          |
+| `--shadow-focus`       | The halo round a focused control                                                       |
+| `--shadow-focus-inset` | The grey edge drawn inside a focused row, item or menu item                            |
+| `--shadow-drop-before` | The rule along a line's top edge where a dragged line would land before it             |
+| `--shadow-drop-after`  | The rule along a line's bottom edge where a dragged line would land after it           |
+| `--shadow-pressed`     | A filled button held down: a step darker                                               |
+| `--focus-halo`         | The soft halo round a focused control, outside its grey edge                           |
+| `--row-inset`          | How far a sheet's rows sit from its edges: their text and focus tint line up on it     |
+| `--lead-width`         | A row's first column, its number in an order: every title in a list starts after it    |
+| `--lead-width-wide`    | The first column when it holds a time or a date, as the Log's rows do                  |
+| `--opacity-hover`      | A filled button under the pointer                                                      |
+| `--z-popover`          | Above the page                                                                         |
+| `--z-panel`            | Above popovers                                                                         |
+| `--z-undo`             | Above everything, an open sheet included: a choice made there shows its Undo           |
+| `--z-sheet`            | A sheet, over everything, the bar included                                             |
 
 ## Layout
 
@@ -192,6 +194,7 @@ E · One list boards draw it.
 | Token                 | Use for                                                                                            |
 | --------------------- | -------------------------------------------------------------------------------------------------- |
 | `--peek-width`        | A line, task or issue opened over the right of the page: a peek beside what you are doing          |
+| `--peek-share`        | At most this much of a narrower screen goes to a peek, so the list beside it keeps room            |
 | `--peek-offset`       | How far For you's card sits from the left while a peek is open, so the card and the peek are whole |
 | `--rail-column`       | For you's rail of views                                                                            |
 | `--detail-width`      | A line on a page of its own, at most                                                               |
@@ -199,7 +202,7 @@ E · One list boards draw it.
 | `--peek-top-phone`    | Where a peek starts on a phone: the page it was opened from still shows above it                   |
 | `--bar-height`        | The bar's height, which a peek starts under                                                        |
 | `--peek-head`         | A peek's head row: the way back, where it sits, its own page, Close                                |
-| `--card-width`        | For you's open item at most                                                                        |
+| `--card-width`        | For you's list beside a peek, and a line's title and lead on its own page, at most                 |
 | `--queue-width`       | For you's list of everything a view holds, beside the rail                                         |
 | `--page-width-narrow` | A page of reading in one column: the log                                                           |
 | `--touch-target`      | The least height of anything tapped on a touch screen                                              |

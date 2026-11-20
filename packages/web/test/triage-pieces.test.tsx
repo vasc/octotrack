@@ -84,6 +84,27 @@ describe("FilterRail and ForYouRail", () => {
     expect(onGo).toHaveBeenCalledWith("/for-you/urgent");
   });
 
+  test("on a phone the views are one menu, named by the view you are in, each with its count", () => {
+    const onGo = mock((_href: string) => {});
+    const view = render(
+      <FilterRail
+        label="Waiting on you"
+        current="toDo"
+        onGo={onGo}
+        views={[
+          { key: "urgent", label: "Urgent", count: 1, href: "/for-you/urgent", urgent: true },
+          { key: "toDo", label: "To do", count: 4, href: "/for-you/to-do" },
+        ]}
+      />,
+    );
+    fireEvent.click(view.getByRole("button", { name: "Waiting on you: To do, 4" }));
+    const menu = within(view.getByRole("menu", { name: "Waiting on you" }));
+    expect(menu.getByRole("menuitemradio", { name: /^To do/ }).getAttribute("aria-checked")).toBe("true");
+    expect(menu.getByRole("menuitemradio", { name: /^To do/ }).textContent).toBe("To do4");
+    fireEvent.click(menu.getByRole("menuitemradio", { name: /^Urgent/ }));
+    expect(onGo).toHaveBeenCalledWith("/for-you/urgent");
+  });
+
   test("For you's rail lists every view at its own address, in order", () => {
     const view = render(
       <ForYouRail
@@ -333,6 +354,22 @@ describe("ForYouCard, ForYouListRow and ForYouEmpty", () => {
     );
     fireEvent.click(row.getByRole("button", { name: "Up next Widgets redesign" }));
     expect(onMove).toHaveBeenCalledWith("L-6", "up_next");
+  });
+
+  test("an urgent question's row says why it is urgent, in the stuck tone", () => {
+    const urgent: Entry = {
+      ref: "D-9",
+      line: null,
+      item: {
+        kind: "question",
+        card: decisionCard({
+          decision: decision({ ref: "D-9", title: "Order now?", urgentReason: "costs_money" }),
+        }),
+      },
+      laterAt: null,
+    };
+    const view = render(<ForYouListRow entry={urgent} number={1} busy={false} onOpen={noop} onMove={noop} />);
+    expect(view.getByText("Costs money").closest("[data-tone]")?.getAttribute("data-tone")).toBe("stuck");
   });
 
   test("a proposal recommended to table carries no button: tabling asks why", () => {

@@ -13,7 +13,7 @@ gives an element a class or an inline style, and on a class in `ui.css` that is 
 
 | Component      | What it is                                                                                                                                                                                                                 |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `AppBar`       | The one bar over every page: the name and the pages, what waits (`Counts`, `Count`), and the actions. `BarLink` is a page in it; `Only` shows something only on a phone or only wider                                      |
+| `AppBar`       | The one bar over every page: the mark and the name, the pages, and the actions. `BarLink` is a page in it, with a pill of how much waits there; `Only` shows something only on a phone, wider, or with a keyboard          |
 | `Page`         | A page under the bar: its title and, beside it, what acts on the whole page. Lines hides its title                                                                                                                         |
 | `Section`      | A part of a page or a panel: a small title, its count, and what acts on all of it at the right                                                                                                                             |
 | `Fold`         | A section folded to one row: title, count, a few names; opened, its rows. Held open while one of its items has focus                                                                                                       |
