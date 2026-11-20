@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { Only } from "./AppBar.tsx";
+import { Menu, MenuItem } from "./Menu.tsx";
 
 export interface RailView {
   key: string;
@@ -11,7 +13,8 @@ export interface RailView {
 
 /**
  * The views of what waits on you, one under another with their counts, the one you are in marked: real links, so Back
- * and a new tab work.
+ * and a new tab work. On a phone, where there is no room beside the list, they are one menu named by the view you are
+ * in, "To do 4".
  */
 export function FilterRail({
   label,
@@ -24,17 +27,46 @@ export function FilterRail({
   current: string;
   onGo(href: string): void;
 }) {
+  const shown = views.find((view) => view.key === current);
   return (
-    <nav className="ui-filter-rail" aria-label={label}>
-      <span className="ui-filter-rail-label" aria-hidden="true">
-        {label}
-      </span>
-      {views.map((view) => (
-        <RailLink key={view.key} view={view} current={view.key === current} onGo={onGo}>
-          {view.label}
-        </RailLink>
-      ))}
-    </nav>
+    <>
+      <Only on="wide">
+        <nav className="ui-filter-rail" aria-label={label}>
+          <span className="ui-filter-rail-label" aria-hidden="true">
+            {label}
+          </span>
+          {views.map((view) => (
+            <RailLink key={view.key} view={view} current={view.key === current} onGo={onGo}>
+              {view.label}
+            </RailLink>
+          ))}
+        </nav>
+      </Only>
+      <Only on="phone">
+        <Menu
+          label={`${label}: ${shown === undefined ? "" : `${shown.label}, ${shown.count}`}`}
+          text={shown === undefined ? label : `${shown.label} ${shown.count}`}
+          menuLabel={label}
+          align="start"
+        >
+          {(close) =>
+            views.map((view) => (
+              <MenuItem
+                key={view.key}
+                checked={view.key === current}
+                onSelect={() => {
+                  close();
+                  onGo(view.href);
+                }}
+              >
+                {view.label}
+                <span className="ui-menu-trailing">{view.count}</span>
+              </MenuItem>
+            ))
+          }
+        </Menu>
+      </Only>
+    </>
   );
 }
 

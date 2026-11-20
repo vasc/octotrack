@@ -19,6 +19,7 @@ import {
   MapPin,
   Menu,
   Minus,
+  Octagon,
   Option,
   Plus,
   Square,
@@ -35,6 +36,8 @@ const ICONS = {
   chevron: { shape: ChevronDown },
   pages: { shape: Menu },
   more: { shape: Ellipsis },
+  /** Octotrack's own mark, beside its name in the bar. */
+  mark: { shape: Octagon },
   appearance: { shape: Contrast },
   /** Done, passing, merged, chosen. */
   check: { shape: Check },

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Icon } from "./Icon.tsx";
 
 /** The one bar over every page: the name and the pages, then the actions at its end. */
 export function AppBar({ nav, actions }: { nav: ReactNode; actions: ReactNode }) {
@@ -47,7 +48,14 @@ export function BarLink({
         onGo(href);
       }}
     >
-      {children}
+      {brand ? (
+        <>
+          <Icon name="mark" />
+          <span className="ui-bar-brand-name">{children}</span>
+        </>
+      ) : (
+        children
+      )}
       {count === undefined || count === 0 ? null : <span className="ui-bar-count">{count}</span>}
     </a>
   );

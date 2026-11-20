@@ -1574,6 +1574,7 @@
 }
 
 .ui-bar-link[data-brand="true"] {
+  gap: var(--space-4);
   margin-right: var(--space-10);
   padding: 0;
   font-weight: var(--weight-semibold);
@@ -1751,8 +1752,8 @@
     padding: 0 var(--space-4) 0 var(--space-6);
   }
 
-  /* On a phone the name gives way to the pages: Lines and For you keep their words. */
-  .ui-bar-link[data-brand="true"] {
+  /* On a phone the name gives way to the pages: its mark stays, Lines and For you keep their words. */
+  .ui-bar-brand-name {
     display: none;
   }
 
@@ -2643,6 +2644,11 @@
   .ui-detail-main {
     padding: var(--space-8);
   }
+
+  /* On a phone what is for you on the line, its summary and what happened come first, over its plan. */
+  .ui-detail-aside {
+    order: -1;
+  }
 }
 
 /* What waits on a line, at its row's end: a pill in its tone that leads there. */
@@ -2679,28 +2685,6 @@
 
   .ui-triage-rail {
     position: static;
-  }
-
-  .ui-filter-rail {
-    flex-direction: row;
-    gap: var(--space-2);
-    margin-inline: calc(-1 * var(--space-6));
-    padding-inline: var(--space-6);
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-
-  .ui-filter-rail-label {
-    display: none;
-  }
-
-  .ui-filter-rail-link {
-    flex: none;
-    gap: var(--space-4);
-  }
-
-  .ui-filter-rail-link[data-empty="true"]:not([aria-current="page"]) {
-    display: none;
   }
 
   .ui-card,

@@ -147,7 +147,7 @@ load and cannot fail on their own; where they draw a state for their owner, it i
 ### components/ui/FilterRail.tsx
 
 - Designed in: triage/Main.dc.html
-- What it shows: a small capitals label, then each view and its count, the one you are in raised on a tile.
+- What it shows: a small capitals label, then each view and its count, the one you are in raised on a tile; on a phone, one menu named by the view you are in ("To answer 3"), the views and their counts in it.
 - Changes from today: new.
 - Loading: never loads on its own: its owner gives the counts.
 - Error: cannot fail on its own.

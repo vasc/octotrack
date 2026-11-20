@@ -181,7 +181,7 @@ owner, then Tell. A section with nothing in it says why in one sentence instead 
 ### components/lines/LinePage.tsx
 
 - Designed in: triage/T-Line.dc.html
-- What it shows: "Lines / Working on, 1"; the title at 32, its headline, its facts; its moves at the right; then on a lifted sheet done when, what is out of date, the plan, pull requests, the owner and Tell; beside it For you here, the summary and what is new since it.
+- What it shows: "Lines / Working on, 1"; the title at 32, its headline, its facts; its moves at the right; then on a lifted sheet done when, what is out of date, the plan, pull requests, the owner and Tell; beside it For you here, the summary and what is new since it. On a phone (triage/T-Line-Phone) one column, For you here, the summary and what is new before the plan; its moves stay under its title rather than at the foot, where a long plan would push them out of reach.
 - Changes from today: new: a line had only its panel; the panel is now a peek with "Open the full page".
 - Loading: a line Lines already knows draws at once; else "Loading L-1".
 - Error: could not load, with Try again; a ref that is no line: "No line L-404", why, and a search of the Log for it.
