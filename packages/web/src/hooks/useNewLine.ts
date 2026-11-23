@@ -1,0 +1,64 @@
+import { contracts } from "@octotrack/core/contracts";
+import { useMemo } from "react";
+import { z } from "zod";
+import type { NewLine, NewLineDraft } from "../components/lines/NewLineSheet.tsx";
+import { useChoices } from "./useChoices.ts";
+import { useDraft } from "./useDraft.ts";
+import { useOpQuery } from "./useOp.ts";
+
+/** The draft New line keeps on the tracker, so closing the sheet or changing device loses nothing. */
+const DRAFT_KEY = "new-line";
+
+const Stored = z.object({ title: z.string(), doneWhen: z.string() });
+
+function parse(text: string): NewLineDraft {
+  if (text === "") return { title: "", doneWhen: "" };
+  try {
+    const parsed = Stored.safeParse(JSON.parse(text));
+    return parsed.success ? parsed.data : { title: text, doneWhen: "" };
+  } catch {
+    return { title: text, doneWhen: "" };
+  }
+}
+
+/**
+ * What New line needs, from any page: the repos to pick from, its draft as it is typed, and adding the line as a choice
+ * that waits with Undo, which deletes the draft once it takes effect.
+ */
+export function useNewLine() {
+  const projects = useOpQuery(contracts.projectList, {});
+  const home = useOpQuery(contracts.homeShow, {});
+  const choices = useChoices();
+  const draft = useDraft(DRAFT_KEY);
+  const repos = useMemo(() => (projects.data ?? []).map((card) => card.project.ref), [projects.data]);
+  const repoNames = useMemo(
+    () => Object.fromEntries((projects.data ?? []).map((card) => [card.project.ref, card.project.name])),
+    [projects.data],
+  );
+  return {
+    repos,
+    /** Each repo's name by its key, which a repo leads with: "Meals", then "MEALS" small. */
+    repoNames,
+    /** How many lines are up next already. */
+    upNext: home.data?.upNext.length ?? 0,
+    /** The repos are still loading, or could not load. */
+    reposLoading: projects.isPending,
+    reposError: projects.error,
+    retryRepos: () => void projects.refetch(),
+    draft: parse(draft.value),
+    notSaved: draft.error !== null,
+    setDraft: (next: NewLineDraft) =>
+      next.title === "" && next.doneWhen === "" ? draft.clear() : draft.change(JSON.stringify(next)),
+    add: (line: NewLine) =>
+      void draft
+        .flush()
+        .then(() =>
+          choices.make(
+            contracts.lineAdd.name,
+            line,
+            line.where === "working" ? `Starting ${line.title}` : `Adding ${line.title} to up next`,
+            DRAFT_KEY,
+          ),
+        ),
+  };
+}

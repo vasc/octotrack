@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Triage, keyboard shortcuts</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2F45C6;text-decoration:none}a:hover{color:#1F2F94}
+</style>
+</helmet>
+<div style="position: relative; min-height: 1000px; background: #F2F3F5; color: #14161B; font-family: 'Inter Tight', Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.5; overflow: hidden">
+
+<div aria-hidden="true">
+<header style="display: flex; align-items: center; gap: 32px; height: 56px; padding: 0 32px; border-bottom: 1px solid #E3E6EB">
+<span style="display: flex; align-items: center; gap: 10px; font-weight: 600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8.2 2.8h7.6l5.4 5.4v7.6l-5.4 5.4H8.2l-5.4-5.4V8.2z"></path><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"></circle></svg>Octotrack</span>
+</header>
+<div style="max-width: 720px; margin: 0 auto; padding: 96px 32px; display: flex; flex-direction: column; gap: 16px">
+<span style="height: 420px; border-radius: 16px; background: #FFFFFF"></span>
+</div>
+</div>
+
+<div style="position: absolute; inset: 0; background: rgba(20, 22, 27, 0.32)"></div>
+
+<section role="dialog" aria-modal="true" aria-labelledby="k-title" style="position: absolute; left: 50%; top: 96px; transform: translateX(-50%); width: 760px; max-width: calc(100% - 32px); box-sizing: border-box; display: flex; flex-direction: column; gap: 24px; padding: 32px 36px; border-radius: 18px; background: #FFFFFF; box-shadow: 0 24px 64px -16px rgba(20, 22, 27, 0.4)">
+<div style="display: flex; align-items: center; justify-content: space-between">
+<h2 id="k-title" style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em">Keys</h2>
+<span style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #6E7480"><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 1px 7px; border-radius: 5px; border: 1px solid #D9DDE4; background: #F7F8FA; color: #14161B">esc</kbd>close</span>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 40px">
+<section aria-label="Moving" style="display: flex; flex-direction: column; gap: 10px">
+<h3 style="margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #6E7480">Moving</h3>
+<dl style="display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px 14px; margin: 0; align-items: center">
+<dt style="display: flex; gap: 4px"><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 2px 7px; border-radius: 5px; border: 1px solid #D9DDE4; border-bottom-width: 2px; background: #F7F8FA">j</kbd><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 2px 7px; border-radius: 5px; border: 1px solid #D9DDE4; border-bottom-width: 2px; background: #F7F8FA">k</kbd></dt><dd style="margin: 0">Next, previous item</dd>
+<dt style="display: flex; gap: 4px"><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 2px 7px; border-radius: 5px; border: 1px solid #D9DDE4; border-bottom-width: 2px; background: #F7F8FA">J</kbd><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 2px 7px; border-radius: 5px; border: 1px solid #D9DDE4; border-bottom-width: 2px; background: #F7F8FA">K</kbd></dt><dd style="margin: 0">Next, previous line</dd>
+<dt style="display: flex; gap: 4px"><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 2px 7px; border-radius: 5px; border: 1px solid #D9DDE4; border-bottom-width: 2px; background: #F7F8FA">g</kbd><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 2px 7px; border-radius: 5px; border: 1px solid #D9DDE4; border-bottom-width: 2px; background: #F7F8FA">u</kbd></dt><dd style="margin: 0">The urgent item</dd>
+<dt style="display: flex; gap: 4px"><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 2px 7px; border-radius: 5px; border: 1px solid #D9DDE4; border-bottom-width: 2px; background: #F7F8FA">o</kbd><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 2px 7px; border-radius: 5px; border: 1px solid #D9DDE4; border-bottom-width: 2px; background: #F7F8FA">↵</kbd></dt><dd style="margin: 0">Open its line</dd>
+<dt><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 2px 7px; border-radius: 5px; border: 1px solid #D9DDE4; border-bottom-width: 2px; background: #F7F8FA">/</kbd></dt><dd style="margin: 0">Search the Log</dd>
+</dl>
+</section>
+
+<section aria-label="Answering" style="display: flex; flex-direction: column; gap: 10px">
+<h3 style="margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #6E7480">Answering</h3>
+<dl style="display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px 14px; margin: 0; align-items: center">
+<dt><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 2px 7px; border-radius: 5px; border: 1px solid #D9DDE4; border-bottom-width: 2px; background: #F7F8FA">1–9</kbd></dt><dd style="margin: 0">Pick a numbered choice</dd>
+<dt><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 2px 7px; border-radius: 5px; border: 1px solid #D9DDE4; border-bottom-width: 2px; background: #F7F8FA">w</kbd></dt><dd style="margin: 0">Answer in your own words</dd>
+<dt><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 2px 7px; border-radius: 5px; border: 1px solid #D9DDE4; border-bottom-width: 2px; background: #F7F8FA">l</kbd></dt><dd style="margin: 0">Later: to the bottom</dd>
+<dt><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 2px 7px; border-radius: 5px; border: 1px solid #D9DDE4; border-bottom-width: 2px; background: #F7F8FA">u</kbd></dt><dd style="margin: 0">Undo the last answer</dd>
+<dt><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 2px 7px; border-radius: 5px; border: 1px solid #D9DDE4; border-bottom-width: 2px; background: #F7F8FA">r</kbd></dt><dd style="margin: 0">Record answers given elsewhere</dd>
+</dl>
+</section>
+
+<section aria-label="Lines" style="display: flex; flex-direction: column; gap: 10px">
+<h3 style="margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #6E7480">Lines</h3>
+<dl style="display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px 14px; margin: 0; align-items: center">
+<dt><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 2px 7px; border-radius: 5px; border: 1px solid #D9DDE4; border-bottom-width: 2px; background: #F7F8FA">t</kbd></dt><dd style="margin: 0">Tell its owner</dd>
+<dt style="display: flex; gap: 4px"><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 2px 7px; border-radius: 5px; border: 1px solid #D9DDE4; border-bottom-width: 2px; background: #F7F8FA">⌥</kbd><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 2px 7px; border-radius: 5px; border: 1px solid #D9DDE4; border-bottom-width: 2px; background: #F7F8FA">↑↓</kbd></dt><dd style="margin: 0">Move the line in your order</dd>
+</dl>
+</section>
+
+<section aria-label="Anywhere" style="display: flex; flex-direction: column; gap: 10px">
+<h3 style="margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #6E7480">Anywhere</h3>
+<dl style="display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px 14px; margin: 0; align-items: center">
+<dt><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 2px 7px; border-radius: 5px; border: 1px solid #D9DDE4; border-bottom-width: 2px; background: #F7F8FA">?</kbd></dt><dd style="margin: 0">These keys</dd>
+<dt><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 2px 7px; border-radius: 5px; border: 1px solid #D9DDE4; border-bottom-width: 2px; background: #F7F8FA">esc</kbd></dt><dd style="margin: 0">Close, go back</dd>
+</dl>
+</section>
+</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

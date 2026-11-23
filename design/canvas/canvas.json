@@ -1,0 +1,180 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-11-16T12:20:00Z"
+  },
+  "title": "Octotrack: every screen",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "Question-States.dc.html": {
+      "x": 960,
+      "y": 400,
+      "w": 1760,
+      "h": 2400,
+      "title": "Question · every other state"
+    },
+    "Line-States.dc.html": {
+      "x": 960,
+      "y": 3420,
+      "w": 1760,
+      "h": 3300,
+      "title": "Line · every other state"
+    },
+    "Home-FirstRun.dc.html": {
+      "x": 0,
+      "y": 7200,
+      "w": 1280,
+      "h": 1150,
+      "title": "Lines · nothing placed yet (your tracker today)",
+      "expand": "fill"
+    },
+    "Home-States.dc.html": {
+      "x": 2720,
+      "y": 7200,
+      "w": 1760,
+      "h": 1600,
+      "title": "Lines · every other state"
+    },
+    "Items.dc.html": {
+      "x": 0,
+      "y": 9500,
+      "w": 1760,
+      "h": 2000,
+      "title": "Tasks, done proposals, step in, answers"
+    },
+    "Sheets.dc.html": {
+      "x": 1840,
+      "y": 9500,
+      "w": 1760,
+      "h": 1800,
+      "title": "Every sheet: new line, table, start, fold, record answers, keys"
+    },
+    "Panels.dc.html": {
+      "x": 0,
+      "y": 12000,
+      "w": 1760,
+      "h": 1600,
+      "title": "Issue, pull request, drift, repo, old refs, opened"
+    },
+    "Log.dc.html": {
+      "x": 1840,
+      "y": 12000,
+      "w": 1760,
+      "h": 1400,
+      "title": "Log, and every state"
+    },
+    "Agents.dc.html": {
+      "x": 3680,
+      "y": 12000,
+      "w": 1760,
+      "h": 1000,
+      "title": "Agents, and every state"
+    },
+    "Shell.dc.html": {
+      "x": 0,
+      "y": 14000,
+      "w": 1760,
+      "h": 1400,
+      "title": "The bar, its menus, Undo, 404, a crash, the server's own pages"
+    },
+    "Primitives.dc.html": {
+      "x": 1840,
+      "y": 14000,
+      "w": 1760,
+      "h": 1500,
+      "title": "Every primitive in every interaction state"
+    },
+    "More-States.dc.html": {
+      "x": 3680,
+      "y": 14000,
+      "w": 1760,
+      "h": 1400,
+      "title": "The remaining parts: here from up next, spread thin, on no line, folds opened, Other menu, read-only options, connections, updates, what it frees"
+    },
+    "Plan-Tree.dc.html": {
+      "x": 2800,
+      "y": 3420,
+      "w": 1760,
+      "h": 2600,
+      "title": "Line · a plan's branches: their More, made a line, edge cases, on Lines, from the CLI"
+    }
+  },
+  "order": [
+    "Question-States.dc.html",
+    "Line-States.dc.html",
+    "Plan-Tree.dc.html",
+    "Home-FirstRun.dc.html",
+    "Home-States.dc.html",
+    "Items.dc.html",
+    "Sheets.dc.html",
+    "Panels.dc.html",
+    "Log.dc.html",
+    "Agents.dc.html",
+    "Shell.dc.html",
+    "Primitives.dc.html",
+    "More-States.dc.html"
+  ],
+  "notes": {
+    "t-shell": {
+      "x": 0,
+      "y": 13700,
+      "kind": "title1",
+      "maxW": 5440,
+      "text": "Around every page, and the parts everything is built from"
+    },
+    "t-pages": {
+      "x": 0,
+      "y": 11700,
+      "kind": "title1",
+      "maxW": 5440,
+      "text": "Other panels, the Log and Agents"
+    },
+    "t-items": {
+      "x": 0,
+      "y": 9200,
+      "kind": "title1",
+      "maxW": 3600,
+      "text": "What comes to you, and the sheets"
+    },
+    "t-home": {
+      "x": 0,
+      "y": 6900,
+      "kind": "title1",
+      "maxW": 4480,
+      "text": "Lines: the home screen"
+    },
+    "t-line": {
+      "x": 0,
+      "y": 3020,
+      "kind": "title1",
+      "maxW": 4560,
+      "text": "Line: one line of work, opened"
+    },
+    "t-question": {
+      "x": 0,
+      "y": 0,
+      "kind": "title1",
+      "maxW": 2720,
+      "text": "Question: one thing only you can answer"
+    },
+    "s-question": {
+      "x": 0,
+      "y": 140,
+      "w": 880,
+      "fill": "gray",
+      "text": "Three zones, always in this order: what is asked (read), your answer (decide), other ways out (own words, later). A hairline and space separate reading from deciding. Each option is a real control: its number sits on the label's baseline, at the label's size. The reason for the recommendation lives inside the recommended option."
+    },
+    "t-note": {
+      "x": 0,
+      "y": -300,
+      "kind": "title1",
+      "maxW": 4560,
+      "text": "The states the Triage boards do not draw. Every screen itself is drawn in design/canvas/triage/."
+    }
+  },
+  "designSystems": []
+}

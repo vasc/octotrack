@@ -1,0 +1,43 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "includes": ["**", "!**/dist", "!**/node_modules", "!**/*.css", "!design/canvas"]
+  },
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 110
+  },
+  "linter": {
+    "rules": {
+      "preset": "recommended",
+      "style": {
+        "noNonNullAssertion": "error"
+      },
+      "suspicious": {
+        "noExplicitAny": "error"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["packages/cli/src/**"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": { "level": "error", "options": { "allow": [] } }
+          }
+        }
+      }
+    }
+  ],
+  "assist": {
+    "enabled": false
+  },
+  "plugins": ["./scripts/no-casts.grit"]
+}

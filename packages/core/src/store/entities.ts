@@ -1,0 +1,316 @@
+import { z } from "zod";
+import { notFound } from "../errors.ts";
+import { kindOfRef, normalizeRef, parseRepoPrRef } from "../refs.ts";
+import type {
+  Decision,
+  Drift,
+  EntityKind,
+  EntitySummary,
+  Idea,
+  Issue,
+  Line,
+  Milestone,
+  Project,
+  PullRequest,
+  StatusUpdate,
+} from "../schemas.ts";
+import { one, rows, type Ctx } from "./context.ts";
+import {
+  DecisionRow,
+  DriftRow,
+  IdeaRow,
+  IssueRow,
+  LineRepoRow,
+  LineRow,
+  MilestoneRow,
+  PrRow,
+  ProjectRow,
+  StatusUpdateRow,
+} from "./rows.ts";
+
+export type AnyEntity =
+  | { kind: "line"; value: Line }
+  | { kind: "project"; value: Project }
+  | { kind: "issue"; value: Issue }
+  | { kind: "decision"; value: Decision }
+  | { kind: "pr"; value: PullRequest }
+  | { kind: "milestone"; value: Milestone }
+  | { kind: "idea"; value: Idea }
+  | { kind: "update"; value: StatusUpdate }
+  | { kind: "drift"; value: Drift };
+
+/** The line something belongs to: a line itself, or the line an issue or a question is on. */
+export function lineOfEntity(entity: AnyEntity): string | null {
+  switch (entity.kind) {
+    case "line":
+      return entity.value.ref;
+    case "issue":
+    case "decision":
+      return entity.value.line;
+    default:
+      return null;
+  }
+}
+
+const LineOfRow = z.object({ line: z.string() });
+
+/**
+ * A pull request's line: that of the first issue it implements that is on one, as its events name it. Its checks,
+ * reviews and conflicts are work on that line (D14).
+ */
+export function lineOfPr(ctx: Ctx, pr: string): string | null {
+  return (
+    one(
+      ctx,
+      LineOfRow,
+      `SELECT i.line AS line FROM links l JOIN issues i ON i.ref = l.toRef
+       WHERE l.fromRef = ? AND l.rel = 'implements' AND i.line IS NOT NULL ORDER BY l.createdAt, l.toRef LIMIT 1`,
+      [pr],
+    )?.line ?? null
+  );
+}
+
+/** The line something concerns: its own line, or for a pull request, the line of the work it implements. */
+export function lineConcerned(ctx: Ctx, entity: AnyEntity): string | null {
+  return entity.kind === "pr" ? lineOfPr(ctx, entity.value.ref) : lineOfEntity(entity);
+}
+
+export function reposOf(ctx: Ctx, line: string): string[] {
+  return rows(ctx, LineRepoRow, "SELECT line, repo FROM line_repos WHERE line = ? ORDER BY position", [
+    line,
+  ]).map((row) => row.repo);
+}
+export function getLine(ctx: Ctx, ref: string): Line | null {
+  const row = one(ctx, LineRow, "SELECT * FROM lines WHERE ref = ?", [ref]);
+  return row === null ? null : { ...row, repos: reposOf(ctx, row.ref) };
+}
+export function requireLine(ctx: Ctx, rawRef: string): Line {
+  const value = getLine(ctx, normalizeRef(rawRef));
+  if (value === null) throw notFound(rawRef);
+  return value;
+}
+/** Every line, with its repos, in one pass. */
+export function allLines(ctx: Ctx, where = "", params: readonly (string | number | null)[] = []): Line[] {
+  const repos = new Map<string, string[]>();
+  for (const row of rows(ctx, LineRepoRow, "SELECT line, repo FROM line_repos ORDER BY position")) {
+    repos.set(row.line, [...(repos.get(row.line) ?? []), row.repo]);
+  }
+  return rows(ctx, LineRow, `SELECT * FROM lines ${where} ORDER BY rank`, params).map((row) => ({
+    ...row,
+    repos: repos.get(row.ref) ?? [],
+  }));
+}
+
+export function getProject(ctx: Ctx, ref: string): Project | null {
+  return one(ctx, ProjectRow, "SELECT * FROM projects WHERE ref = ?", [ref]);
+}
+export function getIssue(ctx: Ctx, ref: string): Issue | null {
+  return one(ctx, IssueRow, "SELECT * FROM issues WHERE ref = ?", [ref]);
+}
+export function getDecision(ctx: Ctx, ref: string): Decision | null {
+  return one(ctx, DecisionRow, "SELECT * FROM decisions WHERE ref = ?", [ref]);
+}
+export function getPr(ctx: Ctx, ref: string): PullRequest | null {
+  return one(ctx, PrRow, "SELECT * FROM prs WHERE ref = ?", [ref]);
+}
+export function getPrByNumber(ctx: Ctx, repo: string, number: number): PullRequest | null {
+  return one(ctx, PrRow, "SELECT * FROM prs WHERE repo = ? AND number = ?", [repo, number]);
+}
+export function getMilestone(ctx: Ctx, ref: string): Milestone | null {
+  return one(ctx, MilestoneRow, "SELECT * FROM milestones WHERE ref = ?", [ref]);
+}
+export function getIdea(ctx: Ctx, ref: string): Idea | null {
+  return one(ctx, IdeaRow, "SELECT * FROM ideas WHERE ref = ?", [ref]);
+}
+export function getUpdate(ctx: Ctx, ref: string): StatusUpdate | null {
+  return one(ctx, StatusUpdateRow, "SELECT * FROM updates WHERE ref = ?", [ref]);
+}
+export function getDrift(ctx: Ctx, ref: string): Drift | null {
+  return one(ctx, DriftRow, "SELECT * FROM drifts WHERE ref = ?", [ref]);
+}
+
+function loadByKind(ctx: Ctx, kind: EntityKind, ref: string): AnyEntity | null {
+  switch (kind) {
+    case "line": {
+      const value = getLine(ctx, ref);
+      return value && { kind, value };
+    }
+    case "project": {
+      const value = getProject(ctx, ref);
+      return value && { kind, value };
+    }
+    case "issue": {
+      const value = getIssue(ctx, ref);
+      return value && { kind, value };
+    }
+    case "decision": {
+      const value = getDecision(ctx, ref);
+      return value && { kind, value };
+    }
+    case "pr": {
+      const value = getPr(ctx, ref);
+      return value && { kind, value };
+    }
+    case "milestone": {
+      const value = getMilestone(ctx, ref);
+      return value && { kind, value };
+    }
+    case "idea": {
+      const value = getIdea(ctx, ref);
+      return value && { kind, value };
+    }
+    case "update": {
+      const value = getUpdate(ctx, ref);
+      return value && { kind, value };
+    }
+    case "drift": {
+      const value = getDrift(ctx, ref);
+      return value && { kind, value };
+    }
+  }
+}
+
+export function findEntity(ctx: Ctx, rawRef: string): AnyEntity | null {
+  const repoPr = parseRepoPrRef(rawRef);
+  if (repoPr !== null) {
+    const value = getPrByNumber(ctx, repoPr.repo, repoPr.number);
+    return value && { kind: "pr", value };
+  }
+  const ref = normalizeRef(rawRef);
+  const kind = kindOfRef(ref);
+  if (kind === "milestone" || kind === "idea") {
+    // Ideas and milestones became proposed lines: their old refs open the line they became.
+    const became = one(ctx, LineRow, "SELECT * FROM lines WHERE fromRef = ?", [ref]);
+    if (became !== null) return { kind: "line", value: { ...became, repos: reposOf(ctx, became.ref) } };
+  }
+  return kind === null ? null : loadByKind(ctx, kind, ref);
+}
+
+export function requireEntity(ctx: Ctx, rawRef: string): AnyEntity {
+  const entity = findEntity(ctx, rawRef);
+  if (entity === null) throw notFound(rawRef);
+  return entity;
+}
+
+/** Accepts every spelling of a ref and returns the canonical one, or throws when nothing exists there. */
+export function resolveRef(ctx: Ctx, rawRef: string): string {
+  return requireEntity(ctx, rawRef).value.ref;
+}
+
+export function requireProject(ctx: Ctx, rawRef: string): Project {
+  const value = getProject(ctx, normalizeRef(rawRef));
+  if (value === null) throw notFound(rawRef);
+  return value;
+}
+export function requireIssue(ctx: Ctx, rawRef: string): Issue {
+  const value = getIssue(ctx, normalizeRef(rawRef));
+  if (value === null) throw notFound(rawRef);
+  return value;
+}
+export function requireDecision(ctx: Ctx, rawRef: string): Decision {
+  const value = getDecision(ctx, normalizeRef(rawRef));
+  if (value === null) throw notFound(rawRef);
+  return value;
+}
+export function requireMilestone(ctx: Ctx, rawRef: string): Milestone {
+  const value = getMilestone(ctx, normalizeRef(rawRef));
+  if (value === null) throw notFound(rawRef);
+  return value;
+}
+export function requireIdea(ctx: Ctx, rawRef: string): Idea {
+  const value = getIdea(ctx, normalizeRef(rawRef));
+  if (value === null) throw notFound(rawRef);
+  return value;
+}
+
+export function summarize(entity: AnyEntity): EntitySummary {
+  const base = {
+    kind: entity.kind,
+    ref: entity.value.ref,
+    version: entity.value.version,
+    updatedAt: entity.value.updatedAt,
+  };
+  switch (entity.kind) {
+    case "line":
+      return {
+        ...base,
+        title: entity.value.title,
+        status: entity.value.state,
+        project: entity.value.repos[0] ?? null,
+        priority: null,
+        assignee: null,
+      };
+    case "project":
+      return {
+        ...base,
+        title: entity.value.name,
+        status: entity.value.status,
+        project: entity.value.ref,
+        priority: null,
+        assignee: null,
+      };
+    case "issue":
+      return {
+        ...base,
+        title: entity.value.title,
+        status: entity.value.status,
+        project: entity.value.project,
+        priority: entity.value.priority,
+        assignee: entity.value.assignee,
+      };
+    case "decision":
+      return {
+        ...base,
+        title: entity.value.title,
+        status: entity.value.status,
+        project: entity.value.project,
+        priority: entity.value.priority,
+        assignee: entity.value.requestedBy,
+      };
+    case "pr":
+      return {
+        ...base,
+        title: entity.value.title,
+        status: entity.value.state,
+        project: entity.value.project,
+        priority: null,
+        assignee: entity.value.author,
+      };
+    case "milestone":
+      return {
+        ...base,
+        title: entity.value.title,
+        status: entity.value.status,
+        project: entity.value.project,
+        priority: null,
+        assignee: null,
+      };
+    case "idea":
+      return {
+        ...base,
+        title: entity.value.title,
+        status: entity.value.status,
+        project: entity.value.project,
+        priority: null,
+        assignee: null,
+      };
+    case "update":
+      return {
+        ...base,
+        title: entity.value.body.split("\n")[0] ?? "",
+        status: entity.value.level,
+        project: entity.value.project,
+        priority: null,
+        assignee: entity.value.actor,
+      };
+    case "drift":
+      return {
+        ...base,
+        title: entity.value.message,
+        status: entity.value.status,
+        project: entity.value.project,
+        priority: null,
+        assignee: entity.value.assignee,
+      };
+  }
+}

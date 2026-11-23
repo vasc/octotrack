@@ -1,0 +1,15 @@
+# Working on Octotrack
+
+- Run `bun run check` before calling anything done: types, lint, and both test suites.
+- A new capability starts as a contract in `packages/core/src/contracts.ts` and a handler in `packages/core/src/ops/`, then
+  gets a CLI command in `packages/cli/src/commands/` that lists it in `ops`. A test fails if an operation has no command.
+- `packages/core` must not import anything tied to a runtime. A test enforces this.
+- Dashboard tests run separately with their own DOM preload: `bun run --cwd packages/web test`.
+- Inside `waitFor`, do not use `expect(element).toBeNull()`. See the `gone` helper in
+  `packages/web/test/integration.test.tsx` for why.
+- Design decisions and their reasoning live in `docs/DESIGN.md`. Update it when one changes.
+- The live install is one compiled file. A change reaches it only through `bun run build && build/octo install`, which
+  rehearses the migration first and backs the database up when the schema moves; `octo rollback` undoes the last
+  install. Nothing in the repo is tied to one operating system or one agent tool.
+- The design language lives in `design/`. Dashboard styles take values from `design/tokens.css`, and `bun test design`
+  enforces it. Read `design/README.md` before changing how anything looks.

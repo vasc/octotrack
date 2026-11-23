@@ -1,0 +1,62 @@
+/*
+ * The page itself: the ground, the type, and the focus ring. Everything drawn on it is a primitive, styled in ui.css;
+ * values come from design/tokens.css: see design/README.md.
+ */
+@import "../../../design/tokens.css";
+
+* {
+  box-sizing: border-box;
+}
+
+/* No fixed height: the page grows with what is on it, so the sticky bar stays at the top the whole way down. */
+html,
+body {
+  margin: 0;
+}
+
+/* The theme's ground behind the whole page, past the fold too, and its accent in the browser's own controls. */
+:root {
+  background: var(--bg);
+  accent-color: var(--accent);
+  caret-color: var(--accent);
+  /* A tap on a phone flashes the accent, not the browser's own blue-grey. */
+  -webkit-tap-highlight-color: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: var(--text-md) / var(--leading-body) var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+:focus-visible {
+  outline: 1px solid var(--ink-3);
+  outline-offset: 0;
+  box-shadow: var(--shadow-focus);
+}

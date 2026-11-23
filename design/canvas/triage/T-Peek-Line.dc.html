@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Triage, peek at the line</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2F45C6;text-decoration:none}a:hover{color:#1F2F94}
+</style>
+</helmet>
+<div style="position: relative; min-height: 1000px; background: #F2F3F5; color: #14161B; font-family: 'Inter Tight', Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.5; overflow: hidden">
+
+<header style="display: flex; align-items: center; gap: 32px; height: 56px; padding: 0 32px; border-bottom: 1px solid #E3E6EB">
+<a href="#" style="display: flex; align-items: center; gap: 10px; color: #14161B; font-weight: 600; letter-spacing: -0.01em"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8.2 2.8h7.6l5.4 5.4v7.6l-5.4 5.4H8.2l-5.4-5.4V8.2z"></path><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"></circle></svg>Octotrack</a>
+<nav aria-label="Pages" style="display: flex; gap: 4px">
+<a href="#" style="display: flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 8px; color: #5A606C; font-weight: 500">Lines</a>
+<a href="#" aria-current="page" style="display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border-radius: 8px; background: #FFFFFF; color: #14161B; font-weight: 600; box-shadow: 0 1px 2px rgba(20, 22, 27, 0.08), 0 0 0 1px #E3E6EB">For you<span style="display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 10px; background: #FFF1DB; color: #8A4A00; font-size: 12px; font-weight: 700">11</span></a>
+</nav>
+<div style="display: flex; align-items: center; gap: 8px; margin-left: auto">
+<button type="button" style="display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; border: 0; border-radius: 8px; background: #14161B; color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 600"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>New line</button>
+<button type="button" aria-label="More: Log, Agents, appearance, keys" style="display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid #E3E6EB; border-radius: 8px; background: #FFFFFF; color: #474D59"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg></button>
+</div>
+</header>
+
+<main style="display: flex; flex-direction: column; gap: 20px; width: 720px; margin-left: 80px; padding: 48px 0 64px">
+<div style="display: flex; align-items: baseline; gap: 12px"><h1 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em">To answer</h1><span style="font-size: 14px; color: #6E7480">1 of 3 open</span></div>
+<div style="display: flex; flex-direction: column; border-radius: 14px; background: #FFFFFF; box-shadow: 0 0 0 1px #E3E6EB">
+<article aria-current="true" style="display: flex; flex-direction: column; gap: 26px; margin: 6px; padding: 28px 30px; border-radius: 12px; background: #FFFFFF; box-shadow: 0 0 0 1.5px #2F45C6, 0 12px 32px -12px rgba(20, 22, 27, 0.18)">
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; color: #6E7480">
+<a href="#" aria-expanded="true" style="display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; margin: -1px -2px; border-radius: 6px; background: #E9ECFB; color: #1F2F94; font-weight: 600">Speaker enclosure<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></a><span aria-hidden="true">·</span><span>step 2 of 4, Print the base</span><span aria-hidden="true">·</span><span>panel-widgets asked 2h ago</span>
+</div>
+<h2 style="margin: 0; font-size: 26px; line-height: 1.2; font-weight: 600; letter-spacing: -0.02em">Which filament for the final print?</h2>
+<p style="margin: 0; font-size: 17px; color: #474D59">The test print in PLA warped near the USB-C cut-out after a day on the radiator shelf.</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<button type="button" style="display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 16px; align-items: start; padding: 18px 20px; border: 1.5px solid #2F45C6; border-radius: 12px; background: #F2F4FE; text-align: left; font: inherit; color: inherit">
+<span style="display: grid; place-items: center; width: 28px; height: 28px; border-radius: 7px; background: #2F45C6; color: #FFFFFF; font-family: 'JetBrains Mono', monospace; font-size: 13px">1</span>
+<span style="display: flex; flex-direction: column; gap: 4px"><span style="display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600">PETG<span style="font-size: 12px; font-weight: 600; color: #2F45C6">Recommended</span></span><span style="color: #474D59">Holds its shape near the radiator; slightly stringier.</span><span style="color: #474D59"><b style="color: #14161B; font-weight: 600">Why:</b> the shelf sits above a radiator.</span></span>
+</button>
+<button type="button" style="display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 16px; align-items: start; padding: 18px 20px; border: 1.5px solid #E3E6EB; border-radius: 12px; background: #FFFFFF; text-align: left; font: inherit; color: inherit">
+<span style="display: grid; place-items: center; width: 28px; height: 28px; border-radius: 7px; background: #EEF0F3; color: #474D59; font-family: 'JetBrains Mono', monospace; font-size: 13px">2</span>
+<span style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 16px; font-weight: 600">PLA again</span><span style="color: #474D59">Prints cleanest, but may warp again.</span></span>
+</button>
+</div>
+<div style="display: flex; gap: 8px">
+<button type="button" style="height: 36px; padding: 0 14px; border: 1px solid #E3E6EB; border-radius: 8px; background: #FFFFFF; font: inherit; font-size: 14px; font-weight: 500">In my own words</button>
+<button type="button" style="height: 36px; padding: 0 14px; border: 1px solid #E3E6EB; border-radius: 8px; background: #FFFFFF; font: inherit; font-size: 14px; font-weight: 500">Later</button>
+<span style="margin-left: auto; align-self: center; font-size: 13px; color: #6E7480">1 2 still answer while the line is open</span>
+</div>
+</article>
+<a href="#" style="display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 12px; align-items: center; min-height: 56px; padding: 8px 16px 8px 18px; color: #14161B"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8A909B">2</span><span style="display: flex; flex-direction: column; min-width: 0"><span style="font-weight: 500">Should the lid snap on or screw down?</span><span style="font-size: 13px; color: #6E7480"><span style="color: #2F45C6; font-weight: 600">Question</span> · Speaker enclosure · D-5</span></span></a>
+</div>
+</main>
+
+<aside role="dialog" aria-label="Speaker enclosure" style="position: absolute; top: 56px; right: 0; bottom: 0; width: 560px; box-sizing: border-box; display: flex; flex-direction: column; background: #FFFFFF; border-left: 1px solid #E3E6EB; box-shadow: -24px 0 48px -24px rgba(20, 22, 27, 0.25)">
+<div style="display: flex; align-items: center; gap: 8px; height: 52px; padding: 0 16px 0 28px; border-bottom: 1px solid #EEF0F3; font-size: 13px; color: #6E7480">
+<span style="font-weight: 600; color: #474D59">Line</span><span aria-hidden="true">·</span><span>L-2 · Working on, 3</span>
+<a href="#" style="margin-left: auto; display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border-radius: 8px; font-weight: 500">Open the full page<svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"></path></svg></a>
+<button type="button" aria-label="Close, Esc" style="display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 8px; background: #F2F3F5; color: #474D59"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 24px; padding: 24px 28px; overflow: hidden">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h2 style="margin: 0; font-size: 24px; line-height: 1.2; font-weight: 600; letter-spacing: -0.02em">Speaker enclosure</h2>
+<p style="margin: 0; color: #474D59">Printed; the short board fits. One answer and one measurement from the final print.</p>
+<span style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #6E7480"><span aria-hidden="true" style="flex: none; width: 7px; height: 7px; border-radius: 50%; background: #2F9E6B"></span>panel-widgets is working on step 2, Print the base</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 10px; background: #F6F7F9">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #6E7480">Done when</span>
+<span>A printed case holds the board and takes the USB-C plug.</span>
+</div>
+
+<section aria-label="Also for you here" style="display: flex; flex-direction: column; gap: 8px">
+<h3 style="margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #6E7480">Also for you here · 4</h3>
+<div style="display: flex; flex-direction: column; border-radius: 12px; box-shadow: 0 0 0 1px #E3E6EB">
+<a href="#" style="display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 10px; align-items: baseline; padding: 11px 14px; border-bottom: 1px solid #EEF0F3; color: #14161B"><span style="font-size: 13px; color: #2F45C6; font-weight: 600">Question</span><span>Should the lid snap on or screw down?</span></a>
+<a href="#" style="display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 10px; align-items: baseline; padding: 11px 14px; border-bottom: 1px solid #EEF0F3; color: #14161B"><span style="font-size: 13px; color: #474D59; font-weight: 600">Task</span><span>Measure the board and its holes <span style="color: #6E7480">· at the bench</span></span></a>
+<a href="#" style="display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 10px; align-items: baseline; padding: 11px 14px; border-bottom: 1px solid #EEF0F3; color: #14161B"><span style="font-size: 13px; color: #474D59; font-weight: 600">Task</span><span>Merge acme/homepanel#14</span></a>
+<a href="#" style="display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 10px; align-items: baseline; padding: 11px 14px; color: #14161B"><span style="font-size: 13px; color: #474D59; font-weight: 600">Task</span><span>Log in to the VPN on the build server</span></a>
+</div>
+</section>
+
+<section aria-label="Pull requests" style="display: flex; flex-direction: column; gap: 8px">
+<h3 style="margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #6E7480">Pull requests · 3</h3>
+<div style="display: flex; flex-direction: column; border-radius: 12px; box-shadow: 0 0 0 1px #E3E6EB">
+<a href="#" style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: baseline; padding: 11px 14px; border-bottom: 1px solid #EEF0F3; color: #14161B"><span>Print the base at 26 mm <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #6E7480">#14</span></span><span style="font-size: 13px; font-weight: 600; color: #1F7A4D">Ready to merge</span></a>
+<a href="#" style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: baseline; padding: 11px 14px; border-bottom: 1px solid #EEF0F3; color: #14161B"><span>Lid with a USB-C cut-out <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #6E7480">#15</span></span><span style="font-size: 13px; color: #6E7480">checks running</span></a>
+<a href="#" style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: baseline; padding: 11px 14px; color: #14161B"><span>Try a thinner lid <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #6E7480">#16</span></span><span style="font-size: 13px; color: #6E7480">draft</span></a>
+</div>
+</section>
+
+<section aria-label="Recent" style="display: flex; flex-direction: column; gap: 8px">
+<h3 style="margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #6E7480">Recent</h3>
+<ul style="display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; font-size: 14px; color: #474D59">
+<li><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #6E7480">15:21</span> · panel-widgets asked D-4, D-5 and D-6</li>
+<li><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #6E7480">Yest.</span> · said #14 is ready to merge; opened #15 and #16</li>
+</ul>
+</section>
+</div>
+
+<label style="display: flex; align-items: center; gap: 10px; margin: auto 28px 24px; height: 46px; padding: 0 6px 0 16px; border-radius: 12px; box-shadow: 0 0 0 1px #D9DDE4">
+<input aria-label="Tell panel-widgets" placeholder="Tell panel-widgets something" style="flex: 1; min-width: 0; border: 0; font: inherit; color: #14161B; outline: none">
+<button type="button" style="height: 34px; padding: 0 12px; border: 0; border-radius: 8px; background: #2F45C6; color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 600">Tell</button>
+</label>
+</aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

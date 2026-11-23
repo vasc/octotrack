@@ -1,0 +1,108 @@
+import type { FeedEvent, Line } from "@octotrack/core/schemas";
+import { Actions } from "../ui/Actions.tsx";
+import { Button } from "../ui/Button.tsx";
+import { List } from "../ui/List.tsx";
+import { Note } from "../ui/Note.tsx";
+import { Section } from "../ui/Section.tsx";
+import { Notice } from "../ui/Notice.tsx";
+import { LineLog } from "./LineLog.tsx";
+import { LogRow } from "./LogRow.tsx";
+import { LooseSection } from "./LooseSection.tsx";
+
+/**
+ * Rule breaks, and work that reached a line after it was told to stop: always shown, at the top, whatever is filtered
+ * or left out.
+ */
+const REFUSED: ReadonlySet<string> = new Set([
+  "write.refused",
+  "agent.would_stop",
+  "agent.stopped",
+  "pr.after_wind_down",
+]);
+
+/** Lines whose changes wait until asked for: up next and tabled are quiet. Every other line is shown. */
+const QUIET: ReadonlySet<Line["state"]> = new Set(["up_next", "tabled"]);
+
+/**
+ * What the developer has not seen, as Log.dc.html draws it: rule breaks at the top, then line by line in their order, each
+ * change a row, with checks and drift confirmations folded into one sentence. Up-next and tabled lines are left out
+ * unless asked for.
+ */
+export function UnseenLog({
+  events,
+  lines,
+  linesLoading = false,
+  linesFailed = false,
+  includeWaiting,
+  onShowWaiting,
+}: {
+  events: readonly FeedEvent[];
+  /** Every line, in the developer's order. */
+  lines: readonly Line[];
+  /** The lines are still loading: until they do, every change is filed under Elsewhere, which is said. */
+  linesLoading?: boolean;
+  /** The lines could not load: every change is filed under Elsewhere, which is said. */
+  linesFailed?: boolean;
+  includeWaiting: boolean;
+  onShowWaiting(): void;
+}) {
+  const refused = events.filter((event) => REFUSED.has(event.type));
+  // A line shows only when something changed on it that the developer has not seen: "nothing new" on each would bury
+  // the rest.
+  const changed = new Set(events.map((event) => event.line));
+  const shown = lines
+    .filter((line) => includeWaiting || !QUIET.has(line.state))
+    .filter((line) => changed.has(line.ref));
+  const waiting = lines.filter((line) => QUIET.has(line.state));
+  const known = new Set(lines.map((line) => line.ref));
+  const loose = events.filter((event) => event.line === null && !REFUSED.has(event.type));
+  // A line this page does not list, such as one ended a while ago: its changes still show, never dropped.
+  const elsewhere = events.filter(
+    (event) => event.line !== null && !known.has(event.line) && !REFUSED.has(event.type),
+  );
+  const leftOut = includeWaiting
+    ? 0
+    : events.filter((event) => !REFUSED.has(event.type) && waiting.some((line) => line.ref === event.line))
+        .length;
+  const sheet = shown.length > 0 || loose.length > 0 || elsewhere.length > 0;
+  return (
+    <>
+      {linesLoading ? <Note>Loading your lines…</Note> : null}
+      {linesFailed ? <Note>Could not load your lines, so every change is under Elsewhere.</Note> : null}
+      {refused.length === 0 ? null : (
+        <Section title="Rule breaks">
+          <List>
+            {refused.map((event) => (
+              <LogRow key={event.seq} event={event} />
+            ))}
+          </List>
+        </Section>
+      )}
+      {sheet ? (
+        <List>
+          {shown.map((line) => (
+            <LineLog
+              key={line.ref}
+              line={line}
+              events={events.filter((event) => event.line === line.ref && !REFUSED.has(event.type))}
+            />
+          ))}
+          <LooseSection title="On no line" events={loose} />
+          <LooseSection title="Elsewhere" events={elsewhere} />
+        </List>
+      ) : refused.length === 0 ? (
+        <Notice title="Nothing new">
+          You have seen everything on your lines. Search to look further back.
+        </Notice>
+      ) : null}
+      {includeWaiting || leftOut === 0 ? null : (
+        <Actions>
+          <Note>Up next and tabled lines are left out.</Note>
+          <Button variant="quiet" onClick={onShowWaiting}>
+            Include them
+          </Button>
+        </Actions>
+      )}
+    </>
+  );
+}

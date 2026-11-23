@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A line's plan as a tree</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1f2328;text-decoration:none}a:hover{text-decoration:underline}
+</style>
+</helmet>
+<div style="width: 1760px; min-height: 2600px; box-sizing: border-box; padding: 32px; background: #f5f6f8; color: #1f2328; font-family: Inter, -apple-system, system-ui, sans-serif; font-size: 14px; line-height: 20px; display: flex; gap: 48px; align-items: flex-start">
+
+<div style="flex: 0 0 820px; display: flex; flex-direction: column; gap: 36px">
+
+<section style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">A · A branch's More: what can be done to it</h2>
+<div style="display: flex; gap: 16px; align-items: flex-start">
+<div role="menu" aria-label="Branch 2a" style="width: 280px; background: #ffffff; border: 1px solid #d8dde3; border-radius: 6px; box-shadow: 0 6px 20px rgb(0 0 0 / 0.14); padding: 4px; font-size: 13px">
+<div style="padding: 6px 8px 2px 32px; font-size: 12px; font-weight: 600; color: #59636e">Holds up</div>
+<div role="menuitemradio" aria-checked="true" style="display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 8px; align-items: center; padding: 6px 8px; border-radius: 4px; background: #eaeef2"><span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 1em; height: 1em; vertical-align: middle; flex: none" aria-hidden="true" focusable="false" data-icon="check"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Step 3, Final print</span></div>
+<div role="menuitemradio" aria-checked="false" style="display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 8px; padding: 6px 8px"><span></span><span>Step 4, Hang it in the hallway</span></div>
+<div role="menuitemradio" aria-checked="false" style="display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 8px; padding: 6px 8px"><span></span><span>Nothing</span></div>
+<div style="padding: 6px 8px 2px 32px; font-size: 12px; font-weight: 600; color: #59636e; border-top: 1px solid #eef1f4; margin-top: 4px">This branch</div>
+<div role="menuitem" style="padding: 6px 8px 6px 32px">Rename or change its steps…</div>
+<div role="menuitem" style="padding: 6px 8px 6px 32px">Make it its own line…</div>
+<div role="menuitem" style="padding: 6px 8px 6px 32px">Remove the branch</div>
+</div>
+<p style="margin: 0; font-size: 12px; color: #59636e; max-width: 46ch">Holds up lists the later steps of the sequence it forks from, and Nothing; picking one takes effect at once. Remove waits with Undo, like a line's moves; its issues go back onto step 2, the step it forked from. Rename or change its steps opens a sheet with its title and its steps, one per line. Owners do all of this from the CLI.</p>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">B · Make a branch its own line: the developer places it, up next or started; an agent's becomes a proposal</h2>
+<div role="dialog" aria-label="Make 3a its own line" style="width: 520px; background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; box-shadow: 0 12px 32px rgb(0 0 0 / 0.16); display: flex; flex-direction: column">
+<div style="padding: 16px 20px 0; display: flex; justify-content: space-between; align-items: center"><h3 style="margin: 0; font-size: 15px; font-weight: 600">Make 3a its own line</h3><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 10px; border: 0; border-radius: 6px; background: transparent">Cancel</button></div>
+<div style="padding: 12px 20px 16px; display: flex; flex-direction: column; gap: 14px">
+<p style="margin: 0; font-size: 13px; color: #59636e">Its steps and 2 issues move to the new line. Here it stays as a row that opens it, still holding up step 4 until that line is done.</p>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 500">Title<input type="text" value="Wall bracket" style="font: inherit; font-weight: 400; height: 36px; padding: 0 10px; border: 1px solid #8c959f; border-radius: 6px; box-shadow: 0 0 0 3px #e1e5ea"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 500">Done when<textarea rows="1" style="font: inherit; font-weight: 400; padding: 8px 10px; border: 1px solid #d8dde3; border-radius: 6px; resize: none">A bracket screwed to the hallway wall holds the case level.</textarea></label>
+</div>
+<div style="padding: 12px 20px; border-top: 1px solid #eef1f4; display: flex; gap: 8px"><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Make it a line, up next</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Start it now</button></div>
+</div>
+<p style="margin: 0; font-size: 12px; color: #59636e">The title comes from the branch and takes the focus; done when is asked for, as for every line. Both choices wait with Undo, like a line's moves. An owner runs <code style="font-family: 'JetBrains Mono', monospace">octo plan promote L-2 3a --done-when "…"</code>: that proposes the line, recommended for up next, and it lands with the other proposals, still holding up step 4.</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">C · Edge cases</h2>
+<ul style="margin: 0; padding: 0; list-style: none; background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; overflow: hidden; font-size: 13px">
+<li style="padding: 10px 16px; border-bottom: 1px solid #eef1f4; display: flex; flex-direction: column; gap: 4px"><span><b style="font-weight: 600">Done on a step that still waits.</b> Picking Done on step 3 while 2a is open:</span><span style="color: #9a6700">Not changed: Step 3 waits on 2a, Order the USB-C breakout. Finish what it waits on, or set that branch to hold nothing up.</span></li>
+<li style="padding: 10px 16px; border-bottom: 1px solid #eef1f4; display: flex; flex-direction: column; gap: 4px"><span><b style="font-weight: 600">The branch's line is tabled.</b> Step 4 reads:</span><span><span style="color: #59636e"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 1em; height: 1em; vertical-align: middle; flex: none" aria-hidden="true" focusable="false" data-icon="ring"><circle cx="12" cy="12" r="10"></circle></svg></span> 4  Hang it in the hallway <span style="font-size: 12px; color: #9a6700">· waits on L-12, tabled</span></span><span style="color: #59636e">so the stall shows on the plan. Dropped, or turned down as not a line, L-12 ends 3a: step 4 no longer waits on it, and its work went with that line.</span></li>
+<li style="padding: 10px 16px; border-bottom: 1px solid #eef1f4; display: flex; flex-direction: column; gap: 4px"><span><b style="font-weight: 600">The branch's line is done.</b> 3a is ticked, and step 4 no longer waits.</span></li>
+<li style="padding: 10px 16px; display: flex; flex-direction: column; gap: 4px"><span><b style="font-weight: 600">No branches.</b> The plan looks exactly as it does today; the aside drops "branches open".</span></li>
+</ul>
+</section>
+</div>
+
+<div style="flex: 1; display: flex; flex-direction: column; gap: 36px">
+
+<section style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">D · The new line, opened: where it came from, at the head</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 20px 24px; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: 12px; color: #59636e"><span>Up next</span><span>·</span><span style="font-family: 'JetBrains Mono', monospace">L-12</span><span>·</span><span>acme/homepanel</span></div>
+<h3 style="margin: 0; font-size: 18px; font-weight: 600">Wall bracket</h3>
+<span style="font-size: 13px; color: #424a53"><span style="color: #59636e"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 1em; height: 1em; vertical-align: middle; flex: none" aria-hidden="true" focusable="false" data-icon="branch"><path d="M15 6a9 9 0 0 0-9 9V3"></path><circle cx="18" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle></svg></span> Branch 3a of <a href="#" style="text-decoration: underline; text-decoration-color: #c3cad3; text-underline-offset: 3px"><span style="font-family: 'JetBrains Mono', monospace">L-2</span> Speaker enclosure</a>; holds up its step 4, Hang it in the hallway.</span>
+<span style="font-size: 13px"><b style="font-weight: 600">Done when</b> A bracket screwed to the hallway wall holds the case level.</span>
+</div>
+<p style="margin: 0; font-size: 12px; color: #59636e">It is a line like any other: its own place in the order, its own owner, summary and plan, which may have branches of its own.</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">E · On Lines: the step, how many branches are open, what the step waits on</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; overflow: hidden">
+<div style="padding: 12px 20px; border-bottom: 1px solid #eef1f4; display: flex; flex-direction: column; gap: 2px"><a href="#" style="font-weight: 600">Speaker enclosure</a><span style="font-size: 13px; color: #59636e">owner panel, asleep · step 2 of 4, Print and test-fit · 2 branches open</span></div>
+<div style="padding: 12px 20px; display: flex; flex-direction: column; gap: 2px"><a href="#" style="font-weight: 600">Wall bracket</a><span style="font-size: 13px; color: #59636e"><span style="font-family: 'JetBrains Mono', monospace">L-12</span> · branch of L-2, holds up its step 4 · no owner until it starts</span></div>
+</div>
+<p style="margin: 0; font-size: 12px; color: #59636e">When the current step waits on an open branch, its facts end "waits on 2a"; when it waits on another line, "waits on L-12", so a stall shows from home.</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">F · From the CLI</h2>
+<pre style="margin: 0; background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 16px 20px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 19px; color: #1f2328; white-space: pre">$ octo plan show L-2
+L-2 Speaker enclosure · step 2 of 4 · 2 branches open
+  1     done   Model the base
+  2     doing  Print and test-fit                 PANEL-4
+  2a           Order the USB-C breakout           holds up 3
+  2a.1  done   Pick a board
+  2a.2  todo   Order it and wait for delivery     task: order from Mouser
+  3     todo   Final print                        waits on 2a
+  3a           Wall bracket                       L-12 up next, holds up 4
+  4     todo   Hang it in the hallway             waits on L-12
+  4a           Photos for the README              holds nothing up
+  4a.1  todo   Take the photos
+
+$ octo plan branch L-2 --from 2 --holds-up 3 "Order the USB-C breakout" "Pick a board" "Order it and wait for delivery"
+$ octo plan step L-2 2a.2 done
+$ octo issue create "Solder the header" --repo PANEL --line L-2 --step 2a.2
+$ octo plan promote L-2 3a --done-when "A bracket screwed to the hallway wall holds the case level."</pre>
+<p style="margin: 0; font-size: 12px; color: #59636e"><code style="font-family: 'JetBrains Mono', monospace">plan set</code> still writes the critical path: a step whose words stay keeps its status, issues and branches. <code style="font-family: 'JetBrains Mono', monospace">plan edit-branch</code> and <code style="font-family: 'JetBrains Mono', monospace">plan remove-branch</code> change and remove a branch.</p>
+</section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1760,"height":2600}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

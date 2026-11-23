@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sheets</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1f2328;text-decoration:none}a:hover{text-decoration:underline}
+</style>
+</helmet>
+<div style="width: 1760px; min-height: 3000px; box-sizing: border-box; padding: 32px; background: #f5f6f8; color: #1f2328; font-family: Inter, -apple-system, system-ui, sans-serif; font-size: 14px; line-height: 20px; columns: 3; column-gap: 40px">
+
+<p style="column-span: all; margin: 0 0 32px; padding: 10px 14px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff; font-size: 13px; color: #424a53">Every sheet: a title that says what it does, the fields, then the actions at the foot with the main one first. Cancel and Esc always close it. A sheet takes the focus and keeps it until closed; the page behind does not react to keys. On a phone it rises from the bottom, 44 px targets.</p>
+
+<section style="display: flex; flex-direction: column; gap: 10px; break-inside: avoid; margin: 0 0 40px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">A · New line</h2>
+<div role="dialog" aria-label="New line" style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; box-shadow: 0 16px 48px rgb(0 0 0 / 0.18); display: flex; flex-direction: column">
+<div style="padding: 16px 20px; border-bottom: 1px solid #eef1f4; display: flex; justify-content: space-between; align-items: center"><span style="font-size: 15px; font-weight: 600">New line</span><button type="button" style="font: inherit; font-size: 13px; background: transparent; border: 0; color: #424a53">Cancel</button></div>
+<div style="padding: 16px 20px; display: flex; flex-direction: column; gap: 14px">
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 500">What it is<input type="text" value="Back up the database host nightly" style="font: inherit; font-weight: 400; height: 32px; box-sizing: border-box; border: 1px solid #6e7781; border-radius: 6px; box-shadow: 0 0 0 3px #e1e5ea; padding: 0 10px"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 500">Done when<textarea rows="2" style="font: inherit; font-weight: 400; border: 1px solid #d8dde3; border-radius: 6px; padding: 8px 10px">A backup from last night restores on a spare SD card.</textarea></label>
+<fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 6px"><legend style="font-size: 13px; font-weight: 500; padding: 0 0 4px">Repos</legend>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<label style="display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px solid #8c959f; border-radius: 999px; font-size: 13px; background: #eaeef2"><input type="checkbox" checked> HOME</label>
+<label style="display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px solid #d8dde3; border-radius: 999px; font-size: 13px"><input type="checkbox"> INFRA</label>
+<label style="display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px solid #d8dde3; border-radius: 999px; font-size: 13px"><input type="checkbox"> MEDIA</label>
+<label style="display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px solid #d8dde3; border-radius: 999px; font-size: 13px"><input type="checkbox"> PANEL</label>
+<span style="font-size: 13px; color: #59636e; align-self: center">+ 11 more</span>
+<label style="display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px dashed #c3cad3; border-radius: 999px; font-size: 13px"><input type="checkbox"> None: it's mine</label>
+</div></fieldset>
+<span style="font-size: 12px; color: #59636e">Saved as you type, so closing loses nothing.</span>
+</div>
+<div style="padding: 12px 20px; border-top: 1px solid #eef1f4; display: flex; flex-wrap: wrap; gap: 8px"><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Add to up next</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Start</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Table…</button></div>
+</div>
+<p style="margin: 0; font-size: 12px; color: #59636e">Until a title, a done when and a repo (or None) are given, the three actions are off and a line under them says which is missing. If adding fails, the sheet stays open with “Not added: …” above its foot, words intact.</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px; break-inside: avoid; margin: 0 0 40px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">B · Table a line (and New line's second step)</h2>
+<div role="dialog" aria-label="Table" style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; box-shadow: 0 16px 48px rgb(0 0 0 / 0.18); display: flex; flex-direction: column">
+<div style="padding: 16px 20px; border-bottom: 1px solid #eef1f4; display: flex; justify-content: space-between; align-items: center"><span style="font-size: 15px; font-weight: 600">Table Buzz speed follow-ups</span><button type="button" style="font: inherit; font-size: 13px; background: transparent; border: 0; color: #424a53">Cancel</button></div>
+<div style="padding: 16px 20px; display: flex; flex-direction: column; gap: 14px">
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 500">Why it waits<textarea rows="2" style="font: inherit; font-weight: 400; border: 1px solid #6e7781; border-radius: 6px; box-shadow: 0 0 0 3px #e1e5ea; padding: 8px 10px">Nothing else waits on it.</textarea></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 500; width: 220px"><span>Look again on <span style="font-weight: 400; color: #59636e">· optional</span></span><input type="date" style="font: inherit; font-weight: 400; height: 32px; box-sizing: border-box; border: 1px solid #d8dde3; border-radius: 6px; padding: 0 10px"></label>
+<p style="margin: 0; font-size: 13px; color: #424a53; padding: 8px 12px; background: #f9fafb; border-radius: 6px">Tabling holds 1 question and 2 tasks until it starts again; buzz winds down.</p>
+</div>
+<div style="padding: 12px 20px; border-top: 1px solid #eef1f4; display: flex; gap: 8px"><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Table it</button></div>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px; break-inside: avoid; margin: 0 0 40px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">C · Start: what waited for the line, answered before it starts</h2>
+<div role="dialog" aria-label="Start" style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; box-shadow: 0 16px 48px rgb(0 0 0 / 0.18); display: flex; flex-direction: column">
+<div style="padding: 16px 20px; border-bottom: 1px solid #eef1f4; display: flex; justify-content: space-between; align-items: center"><span style="font-size: 15px; font-weight: 600">Start Maze level editor</span><button type="button" style="font: inherit; font-size: 13px; background: transparent; border: 0; color: #424a53">Cancel</button></div>
+<div style="padding: 16px 20px; display: flex; flex-direction: column; gap: 14px">
+<p style="margin: 0; font-size: 13px; color: #424a53">1 question waited for it. Answer it now, or start and it reaches you on the line.</p>
+<div style="border: 1px solid #d8dde3; border-radius: 6px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px"><span style="font-size: 12px; color: #59636e"><span style="color: #8250df; font-weight: 600">Question</span> · D-42</span><span style="font-weight: 600">Tiles or free placement for walls?</span><div style="display: flex; flex-direction: column; gap: 6px"><div style="display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 10px; border: 1px solid #c297ff; background: #fbefff; border-radius: 6px; padding: 8px 12px"><span style="color: #8250df">1</span><span style="font-weight: 600">Tiles <span style="font-size: 12px; color: #8250df">Recommended</span></span></div><div style="display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 10px; border: 1px solid #d8dde3; border-radius: 6px; padding: 8px 12px"><span style="color: #59636e">2</span><span style="font-weight: 600">Free placement</span></div></div></div>
+<div style="font-size: 13px; display: flex; flex-direction: column; gap: 4px"><span style="font-weight: 600">Tasks, once it starts</span><span style="color: #424a53">MAZE-2 Print a test tile at the desk</span></div>
+</div>
+<div style="padding: 12px 20px; border-top: 1px solid #eef1f4; display: flex; gap: 8px"><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Start</button></div>
+</div>
+<p style="margin: 0; font-size: 12px; color: #59636e">Illustrative question. Nothing waited: “Nothing waited for it” and Start. Loading: “Loading what waited for it…”, Start on. Failed to load: “Could not load what waited for it. Start anyway, or try again.” with both buttons.</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px; break-inside: avoid; margin: 0 0 40px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">D · Fold into another line</h2>
+<div role="dialog" aria-label="Fold" style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; box-shadow: 0 16px 48px rgb(0 0 0 / 0.18); display: flex; flex-direction: column">
+<div style="padding: 16px 20px; border-bottom: 1px solid #eef1f4; display: flex; justify-content: space-between; align-items: center"><span style="font-size: 15px; font-weight: 600">Fold Two streams per fetch into…</span><button type="button" style="font: inherit; font-size: 13px; background: transparent; border: 0; color: #424a53">Cancel</button></div>
+<div style="padding: 12px 20px; display: flex; flex-direction: column; gap: 6px">
+<input type="search" placeholder="Find a line" style="font: inherit; height: 32px; box-sizing: border-box; border: 1px solid #d8dde3; border-radius: 6px; padding: 0 10px; margin-bottom: 4px">
+<button type="button" style="font: inherit; text-align: left; border: 1px solid #c297ff; background: #fbefff; border-radius: 6px; padding: 8px 12px; display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 10px"><span style="color: #8250df">1</span><span><b>The home worker fetches new videos again</b> <span style="font-size: 12px; color: #8250df">its agent's pick</span></span></button>
+<button type="button" style="font: inherit; text-align: left; border: 1px solid #d8dde3; background: #ffffff; border-radius: 6px; padding: 8px 12px; display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 10px"><span style="color: #59636e">2</span><span style="font-weight: 600">Buzz speed follow-ups</span></button>
+</div>
+</div>
+<p style="margin: 0; font-size: 12px; color: #59636e">No line to fold into: Fold into is not offered at all.</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px; break-inside: avoid; margin: 0 0 40px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">E · Record answers given elsewhere</h2>
+<div role="dialog" aria-label="Record answers" style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; box-shadow: 0 16px 48px rgb(0 0 0 / 0.18); display: flex; flex-direction: column">
+<div style="padding: 16px 20px; border-bottom: 1px solid #eef1f4; display: flex; justify-content: space-between; align-items: center"><span style="font-size: 15px; font-weight: 600">Record answers</span><button type="button" style="font: inherit; font-size: 13px; background: transparent; border: 0; color: #424a53">Cancel</button></div>
+<div style="padding: 16px 20px; display: flex; flex-direction: column; gap: 10px">
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 500">One per row: the question, the option, a note if you like<textarea rows="4" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; border: 1px solid #6e7781; border-radius: 6px; box-shadow: 0 0 0 3px #e1e5ea; padding: 8px 10px">D-65 b agreed with the family on the call
+D-20 uninstall
+D-75 fast start</textarea></label>
+<div role="alert" style="font-size: 13px; padding: 8px 12px; background: #ffebe9; border-radius: 6px"><b style="color: #cf222e">Row 3 is not understood:</b> D-75 has no option “fast start”. Its options are a, b, c, d.</div>
+<ul style="margin: 0; padding: 0; list-style: none; font-size: 13px; border: 1px solid #eef1f4; border-radius: 6px"><li style="padding: 6px 12px; border-bottom: 1px solid #eef1f4"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px">D-65</span> ✓ recorded</li><li style="padding: 6px 12px"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px">D-20</span> <span style="color: #cf222e">✗ already answered on 7 Nov</span></li></ul>
+</div>
+<div style="padding: 12px 20px; border-top: 1px solid #eef1f4; display: flex; gap: 8px"><button type="button" disabled style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 14px; border: 1px solid #e1e5ea; border-radius: 6px; background: #f1f3f5; color: #8c959f">Record 2</button><span style="font-size: 12px; color: #59636e; align-self: center">Fix row 3 first</span></div>
+</div>
+<p style="margin: 0; font-size: 12px; color: #59636e">Illustrative results. Empty: the box, a disabled “Record”, and the format shown as its placeholder. While sending: “Recording…”.</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px; break-inside: avoid; margin: 0 0 40px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">F · Keys</h2>
+<div role="dialog" aria-label="Keys" style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; box-shadow: 0 16px 48px rgb(0 0 0 / 0.18); display: flex; flex-direction: column">
+<div style="padding: 16px 20px; border-bottom: 1px solid #eef1f4; display: flex; justify-content: space-between; align-items: center"><span style="font-size: 15px; font-weight: 600">Keys</span><button type="button" style="font: inherit; font-size: 13px; background: transparent; border: 0; color: #424a53">Close</button></div>
+<div style="padding: 12px 20px 16px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; font-size: 13px">
+<dl style="margin: 0; display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 6px 10px; align-content: start"><dt style="grid-column: 1 / -1; font-size: 12px; font-weight: 600; color: #59636e">Moving</dt><dt><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px">j k</kbd></dt><dd style="margin: 0">next, previous item</dd><dt><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px">J K</kbd></dt><dd style="margin: 0">next, previous line</dd><dt><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px">o ↵</kbd></dt><dd style="margin: 0">open the line</dd><dt><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px">g u</kbd></dt><dd style="margin: 0">urgent question</dd><dt><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px">/</kbd></dt><dd style="margin: 0">search the log</dd><dt><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px">esc</kbd></dt><dd style="margin: 0">close, go back</dd></dl>
+<dl style="margin: 0; display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 6px 10px; align-content: start"><dt style="grid-column: 1 / -1; font-size: 12px; font-weight: 600; color: #59636e">Acting</dt><dt><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px">1–9</kbd></dt><dd style="margin: 0">pick a numbered choice</dd><dt><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px">w</kbd></dt><dd style="margin: 0">answer in your words</dd><dt><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px">l</kbd></dt><dd style="margin: 0">later</dd><dt><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px">u</kbd></dt><dd style="margin: 0">undo</dd><dt><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px">t</kbd></dt><dd style="margin: 0">tell the owner</dd><dt><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px">⌥↑↓</kbd></dt><dd style="margin: 0">move the line</dd><dt><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px">g p</kbd></dt><dd style="margin: 0">I'm at</dd><dt><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px">r</kbd></dt><dd style="margin: 0">record answers</dd></dl>
+</div>
+</div>
+<p style="margin: 0; font-size: 12px; color: #59636e">Keys that only act on Lines say so when opened from the Log or Agents: “on Lines”. Not offered on touch screens.</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px; break-inside: avoid; margin: 0 0 40px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">G · Phone: a sheet rises from the bottom</h2>
+<div style="width: 390px; height: 560px; box-sizing: border-box; border: 1px solid #d8dde3; border-radius: 12px; overflow: hidden; background: rgb(0 0 0 / 0.32); display: flex; flex-direction: column; justify-content: flex-end">
+<div style="background: #ffffff; border-radius: 12px 12px 0 0; display: flex; flex-direction: column">
+<div style="padding: 12px 16px; border-bottom: 1px solid #eef1f4; display: flex; justify-content: space-between; align-items: center"><span style="font-size: 16px; font-weight: 600">Table Buzz speed follow-ups</span><button type="button" style="font: inherit; min-height: 44px; background: transparent; border: 0; color: #424a53">Cancel</button></div>
+<div style="padding: 16px; display: flex; flex-direction: column; gap: 12px"><label style="display: flex; flex-direction: column; gap: 4px; font-size: 14px; font-weight: 500">Why it waits<textarea rows="3" style="font: inherit; font-size: 16px; font-weight: 400; border: 1px solid #d8dde3; border-radius: 6px; padding: 8px 10px"></textarea></label></div>
+<div style="padding: 12px 16px 28px; border-top: 1px solid #eef1f4"><button type="button" style="width: 100%; font: inherit; font-weight: 600; min-height: 44px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Table it</button></div>
+</div>
+</div>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1760,"height":3000}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

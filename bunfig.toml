@@ -1,0 +1,3 @@
+[test]
+# The dashboard tests need a DOM, so they run separately with their own preload. See the "test" script.
+pathIgnorePatterns = ["packages/web/**"]

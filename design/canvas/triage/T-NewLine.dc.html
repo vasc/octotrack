@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Triage, New line</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2F45C6;text-decoration:none}a:hover{color:#1F2F94}
+</style>
+</helmet>
+<div style="position: relative; min-height: 1000px; background: #F2F3F5; color: #14161B; font-family: 'Inter Tight', Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.5; overflow: hidden">
+
+<div aria-hidden="true">
+<header style="display: flex; align-items: center; gap: 32px; height: 56px; padding: 0 32px; border-bottom: 1px solid #E3E6EB">
+<span style="display: flex; align-items: center; gap: 10px; font-weight: 600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8.2 2.8h7.6l5.4 5.4v7.6l-5.4 5.4H8.2l-5.4-5.4V8.2z"></path><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"></circle></svg>Octotrack</span>
+<span style="display: flex; gap: 4px"><span style="height: 32px; padding: 0 12px; line-height: 32px; border-radius: 8px; background: #FFFFFF; font-weight: 600">Lines</span><span style="height: 32px; padding: 0 12px; line-height: 32px; color: #5A606C">For you 11</span></span>
+</header>
+<div style="max-width: 880px; margin: 0 auto; padding: 48px 32px; display: flex; flex-direction: column; gap: 16px">
+<span style="font-size: 32px; font-weight: 600">Lines</span>
+<span style="height: 96px; border-radius: 16px; background: #FFFFFF"></span>
+<span style="height: 96px; border-radius: 16px; background: #FFFFFF"></span>
+<span style="height: 96px; border-radius: 16px; background: #FFFFFF"></span>
+</div>
+</div>
+
+<div style="position: absolute; inset: 0; background: rgba(20, 22, 27, 0.32)"></div>
+
+<section role="dialog" aria-modal="true" aria-labelledby="nl-title" style="position: absolute; left: 50%; top: 112px; transform: translateX(-50%); width: 560px; max-width: calc(100% - 32px); box-sizing: border-box; display: flex; flex-direction: column; gap: 24px; padding: 32px; border-radius: 18px; background: #FFFFFF; box-shadow: 0 24px 64px -16px rgba(20, 22, 27, 0.4)">
+<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h2 id="nl-title" style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em">New line</h2>
+<span style="color: #6E7480">A thread of work, and how you will know it is done.</span>
+</div>
+<button type="button" aria-label="Close" style="display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 8px; background: #F2F3F5; color: #474D59"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+</div>
+
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600">Title
+<input value="Kitchen light dims at night" style="height: 44px; padding: 0 14px; border: 1.5px solid #2F45C6; border-radius: 10px; font: inherit; font-size: 16px; font-weight: 500; color: #14161B; outline: none">
+</label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600">Done when
+<textarea rows="2" placeholder="What is true once this line is finished" style="padding: 12px 14px; border: 1.5px solid #D9DDE4; border-radius: 10px; font: inherit; font-size: 16px; font-weight: 400; line-height: 1.45; color: #14161B; resize: vertical; outline: none">After 22:00 the kitchen light comes on at 20% and nobody touches a switch.</textarea>
+</label>
+
+<fieldset style="display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; border: 0">
+<legend style="padding: 0 0 8px; font-size: 14px; font-weight: 600">Repos it works in</legend>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<button type="button" aria-pressed="true" style="display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 0; border-radius: 16px; background: #14161B; color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 500">Home panel<span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #A9AEB9">PANEL</span><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+<button type="button" aria-pressed="false" style="height: 32px; padding: 0 12px; border: 1px solid #D9DDE4; border-radius: 16px; background: #FFFFFF; font: inherit; font-size: 14px; color: #14161B; display: inline-flex; align-items: center; gap: 6px">Meals<span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6E7480">MEALS</span></button>
+<button type="button" aria-pressed="false" style="height: 32px; padding: 0 12px; border: 1px solid #D9DDE4; border-radius: 16px; background: #FFFFFF; font: inherit; font-size: 14px; color: #14161B; display: inline-flex; align-items: center; gap: 6px">Trips<span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6E7480">TRIP</span></button>
+<button type="button" style="height: 32px; padding: 0 12px; border: 1px dashed #C9CFE0; border-radius: 16px; background: none; font: inherit; font-size: 14px; color: #474D59">None, it needs no code</button>
+</div>
+</fieldset>
+
+<fieldset style="display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; border: 0">
+<legend style="padding: 0 0 8px; font-size: 14px; font-weight: 600">Where it goes</legend>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+<label style="display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 1.5px solid #2F45C6; border-radius: 12px; background: #F2F4FE; font-weight: 600"><span style="display: flex; align-items: center; gap: 8px"><input type="radio" name="where" checked style="margin: 0; accent-color: #2F45C6">Up next</span><span style="padding-left: 21px; font-size: 13px; font-weight: 400; color: #474D59">Waits its turn, 7th in your order</span></label>
+<label style="display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 1.5px solid #E3E6EB; border-radius: 12px; font-weight: 600"><span style="display: flex; align-items: center; gap: 8px"><input type="radio" name="where" style="margin: 0; accent-color: #2F45C6">Working on</span><span style="padding-left: 21px; font-size: 13px; font-weight: 400; color: #474D59">An agent is found for it now</span></label>
+</div>
+</fieldset>
+
+<div style="display: flex; align-items: center; gap: 8px; padding-top: 4px">
+<button type="submit" style="height: 40px; padding: 0 18px; border: 0; border-radius: 9px; background: #2F45C6; color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 600">Add line</button>
+<button type="button" style="height: 40px; padding: 0 16px; border: 1px solid #E3E6EB; border-radius: 9px; background: #FFFFFF; font: inherit; font-size: 15px; font-weight: 500">Cancel</button>
+<span style="margin-left: auto; font-size: 13px; color: #6E7480">Kept as a draft if you close it</span>
+</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

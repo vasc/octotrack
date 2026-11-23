@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lines, every other state</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1f2328;text-decoration:none}a:hover{text-decoration:underline}
+</style>
+</helmet>
+<div style="width: 1760px; min-height: 2600px; box-sizing: border-box; padding: 32px; background: #f5f6f8; color: #1f2328; font-family: Inter, -apple-system, system-ui, sans-serif; font-size: 14px; line-height: 20px; columns: 2; column-gap: 48px">
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">A · Empty tracker: no lines and no proposals, says how to fill it</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 28px 32px; display: flex; flex-direction: column; gap: 12px; max-width: 640px">
+<h3 style="margin: 0; font-size: 16px; font-weight: 600">No lines yet</h3>
+<p style="margin: 0; color: #424a53">Add one with New line, or point an agent at the guide: it proposes lines for its repo, and they arrive here to place.</p>
+<pre style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 12px; background: #f9fafb; border: 1px solid #eef1f4; border-radius: 6px; padding: 10px 12px">octo guide</pre>
+<div><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">+ New line</button></div>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">B · Nothing needs you: plain, then who is working and where the next ask may come from</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 16px 20px; display: flex; flex-direction: column; gap: 4px">
+<span style="font-weight: 600">Nothing needs you</span>
+<span style="font-size: 13px; color: #59636e">2 agents working · the next ask likely comes from build server keeps enough free disk, step 2</span>
+</div>
+<p style="margin: 0; font-size: 12px; color: #59636e">The lines follow as usual underneath; the bar shows no counts.</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">C · At a place: that place's tasks open first, the rest folds to one row per line</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 12px 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px">
+<span><span style="font-weight: 600">At home</span> <span style="font-size: 13px; color: #59636e">· ends by itself in 3h</span></span>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Leave</button>
+</div>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 14px 20px; display: flex; flex-direction: column; gap: 10px">
+<a href="#" style="font-weight: 600">2 · Team offsite: pick the venue and book everything</a>
+<div style="margin-left: 0; border: 1px solid #c297ff; background: #fbefff; border-radius: 6px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; color: #59636e"><span style="color: #8250df; font-weight: 600">Task</span> · TRIP-2 · at home</span><span style="font-weight: 600">Call Hotel Jasmin about a third bed</span></div>
+<span style="font-size: 13px; color: #59636e">Also on this line: 1 question</span>
+</div>
+<p style="margin: 0; font-size: 12px; color: #59636e">Illustrative task. Up next, Proposed and Tabled fold shut while at a place.</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">D · First load: the bar at once, rows as outlines for the moment it takes</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 16px 20px; display: flex; flex-direction: column; gap: 14px">
+<span style="font-weight: 600">Working on</span>
+<span style="height: 14px; width: 60%; background: #eef1f4; border-radius: 4px"></span>
+<span style="height: 14px; width: 48%; background: #eef1f4; border-radius: 4px"></span>
+<span style="height: 14px; width: 54%; background: #eef1f4; border-radius: 4px"></span>
+<span role="status" style="font-size: 12px; color: #59636e">Loading your lines…</span>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">E · The tracker is not answering on first load: what happened, what to run</h2>
+<div role="alert" style="background: #ffffff; border: 1px solid #ffcecb; border-radius: 8px; padding: 20px 24px; display: flex; flex-direction: column; gap: 10px">
+<span style="font-weight: 600; color: #cf222e">The tracker is not answering</span>
+<p style="margin: 0; color: #424a53">Nothing answered at 127.0.0.1:4747. Any octo command starts it again; this page tries again every 30 seconds.</p>
+<pre style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 12px; background: #f9fafb; border: 1px solid #eef1f4; border-radius: 6px; padding: 10px 12px">octo server status</pre>
+<div><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Try now</button></div>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">F · Lost the connection after loading: the page stays, marked not live</h2>
+<div style="background: #fff8c5; border: 1px solid #f2cc60; border-radius: 6px; padding: 8px 14px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: 13px"><span><span style="font-weight: 600; color: #9a6700">Not live.</span> Showing what was true at 14:20; reconnecting. Answers you give wait until it is back.</span><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; background: transparent; border: 0; text-decoration: underline">Try now</button></div>
+<p style="margin: 0; font-size: 12px; color: #59636e">A strip under the bar on every page, never a dialog.</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">G · New version installed while the page was open</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 6px; padding: 8px 8px 8px 14px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px"><span>A new version of Octotrack is installed. It loads when you next switch to this tab; your drafts are kept.</span><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Load it now</button></div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">H · A move failed: said next to what moved, and the move is undone</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; overflow: hidden">
+<div style="display: grid; grid-template-columns: 24px minmax(0, 1fr); column-gap: 12px; padding: 12px 20px; border-bottom: 1px solid #eef1f4"><span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #59636e; text-align: right">2</span><span style="font-weight: 600">Team offsite: pick the venue and book everything</span></div>
+<div role="alert" style="padding: 8px 20px 8px 56px; background: #ffebe9; font-size: 13px"><span style="font-weight: 600; color: #cf222e">Not moved.</span> The tracker did not answer; it is back where it was.</div>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">I · Phone: the bar folds, counts under it, lines from the third on fold</h2>
+<div style="width: 390px; box-sizing: border-box; background: #f5f6f8; border: 1px solid #d8dde3; border-radius: 12px; overflow: hidden">
+<header style="background: #ffffff; border-bottom: 1px solid #d8dde3; padding: 0 12px; display: flex; flex-direction: column">
+<div style="display: flex; align-items: center; justify-content: space-between; min-height: 52px"><span style="font-weight: 600; font-size: 15px">Octotrack</span><span style="display: flex; gap: 6px"><button type="button" aria-label="New line" style="font: inherit; width: 44px; height: 44px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff; font-size: 18px">+</button><button type="button" aria-label="Pages" style="font: inherit; width: 44px; height: 44px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">☰</button></span></div>
+<div style="display: flex; gap: 4px; padding: 0 0 10px; overflow-x: auto"><a href="#" style="white-space: nowrap; font-size: 13px; padding: 4px 10px; border-radius: 999px; background: #fff8c5"><b style="color: #9a6700">1</b> urgent</a><a href="#" style="white-space: nowrap; font-size: 13px; padding: 4px 10px; border-radius: 999px; background: #fbefff"><b style="color: #8250df">2</b> to answer</a><a href="#" style="white-space: nowrap; font-size: 13px; padding: 4px 10px; border-radius: 999px; background: #fbefff"><b style="color: #8250df">1</b> to do</a></div>
+</header>
+<div style="padding: 16px 12px; display: flex; flex-direction: column; gap: 12px">
+<span style="font-weight: 600">Working on <span style="font-weight: 400; color: #59636e">3</span></span>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px"><span style="font-weight: 600">1 · The home worker fetches new videos again</span><span style="font-size: 13px; color: #59636e">video-agent, running · waiting on you</span></div>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px"><span style="font-weight: 600">2 · Team offsite: pick the base and book</span><span style="font-size: 13px; color: #59636e">travel-agent, asleep · waiting on you</span><button type="button" style="font: inherit; text-align: left; min-height: 44px; border: 1px solid #c297ff; background: #fbefff; border-radius: 6px; padding: 8px 12px">Question · Which venue?</button></div>
+<button type="button" style="font: inherit; text-align: left; min-height: 44px; background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 10px 14px">3 · build server keeps enough free disk <span style="color: #59636e">· agents on it</span></button>
+<button type="button" style="font: inherit; text-align: left; min-height: 44px; background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 10px 14px"><b>Up next</b> <span style="color: #59636e">3 · Finish removing the H1 switch and 2 more</span></button>
+</div>
+</div>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1760,"height":2600}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

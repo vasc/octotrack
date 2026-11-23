@@ -1,0 +1,459 @@
+/*
+ * The source of truth for how Octotrack looks. The dashboard imports this file, so a change here is a change in the
+ * product. Open /design on a running server to see the result on real components, in both themes.
+ *
+ * Each color is one line: light-dark(light value, dark value). `bun test design` checks contrast after any change.
+ * What each token means, and when to use it, is in foundations.md.
+ */
+
+/* Paper is the page's own theme, and also a palette an element can set, as its swatch in the menu does. */
+[data-palette="paper"], :root {
+  color-scheme: light dark;
+
+  /* Ground: the page and what sits on it, from furthest back to nearest. */
+  --bg: light-dark(#f5f6f8, #0d1117);
+  --surface: light-dark(#ffffff, #151b23);
+  --surface-2: light-dark(#f9fafb, #1c232c);
+  --line: light-dark(#d8dde3, #30363d);
+  --line-faint: light-dark(#eef1f4, #21262d);
+  --line-strong: light-dark(#c3cad3, #3d444d);
+
+  /* Ink: text, from most to least important. All three must stay readable at the smallest size. */
+  --ink: light-dark(#1f2328, #f0f6fc);
+  --ink-2: light-dark(#424a53, #c9d1d9);
+  --ink-3: light-dark(#59636e, #9198a1);
+
+  /* Accent: the theme's own colour, for what the developer is acting on: the primary button, the page they are on,
+     focus, links, the chosen item. */
+  --accent: light-dark(#1f2328, #e6edf3);
+  --accent-soft: light-dark(#eaeef2, #262c36);
+  /* What reads on a filled accent. */
+  --on-accent: light-dark(#ffffff, #0d1117);
+
+  /* Attention: means "this needs you": questions and tasks. Nothing else may use it, or it stops meaning anything. */
+  --attention: light-dark(#8250df, #ab7df8);
+  --attention-soft: light-dark(#fbefff, #271f3d);
+  --attention-line: light-dark(#c297ff, #6e4cad);
+
+  /* Status: says how a thing stands. Never the only signal: always paired with a word or a glyph. */
+  --good: light-dark(#1a7f37, #3fb950);
+  --good-soft: light-dark(#dafbe1, #13291b);
+  /* Bad is also Step in: a line no agent could be found for. */
+  --bad: light-dark(#cf222e, #f85149);
+  --bad-soft: light-dark(#ffebe9, #33191b);
+  --warn: light-dark(#9a6700, #d29922);
+  --warn-soft: light-dark(#fff8c5, #2e250e);
+  /* Info is what agents propose, waiting for your yes: in the theme's own colour. */
+  --info: light-dark(#1f2328, #e6edf3);
+  --info-soft: light-dark(#eaeef2, #262c36);
+
+  /* Type: Inter where it is installed, else the system's own face, because a web font is a wait. */
+  --font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-md: 14px;
+  --text-lg: 15px;
+  --text-heading: 20px;
+  /* The open item on For you: what it is, said large, and the sentence under it. */
+  --text-display: 32px;
+  --text-lead: 17px;
+  /* The open item's title among the rows of For you's list, and the list's own name over it. */
+  --text-card: 26px;
+  --text-list: 22px;
+  /* A peek's own title, smaller than the item it was opened from. */
+  --text-title: 24px;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --leading-tight: 1.3;
+  --leading-body: 1.5;
+
+  /* Space: multiples of one unit. Change --space-unit to make the whole product denser or roomier. */
+  --space-unit: 2px;
+  --space-1: var(--space-unit);
+  --space-2: calc(var(--space-unit) * 2);
+  --space-3: calc(var(--space-unit) * 3);
+  --space-4: calc(var(--space-unit) * 4);
+  --space-5: calc(var(--space-unit) * 5);
+  --space-6: calc(var(--space-unit) * 6);
+  --space-7: calc(var(--space-unit) * 7);
+  --space-8: calc(var(--space-unit) * 8);
+  --space-10: calc(var(--space-unit) * 10);
+  --space-11: calc(var(--space-unit) * 11);
+  --space-12: calc(var(--space-unit) * 12);
+  --space-14: calc(var(--space-unit) * 14);
+  --space-16: calc(var(--space-unit) * 16);
+  --space-24: calc(var(--space-unit) * 24);
+  --space-28: calc(var(--space-unit) * 28);
+  --space-32: calc(var(--space-unit) * 32);
+
+  /* Shape: buttons, items, cards and panels, from smallest to largest. */
+  /* A row that reaches its sheet's edges, whose tint must meet them square. */
+  --radius-none: 0;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 8px;
+  --radius-pill: 999px;
+  --radius-inner: calc(var(--radius-lg) - 1px);
+  /* The open item's card on For you, and the tiles beside it. */
+  --radius-card: 16px;
+  --radius-tile: 12px;
+
+  /* Elevation: only for what floats over content. Everything else is separated by a line. */
+  --shadow-popover: 0 6px 20px rgb(0 0 0 / 0.14);
+  --shadow-panel: -12px 0 40px rgb(0 0 0 / 0.08);
+  /* A tile's edge: the page you are on in the bar, the view you are in, a tile for an item; darker under the pointer. */
+  --shadow-tile: 0 0 0 1px var(--line);
+  --shadow-tile-hover: 0 0 0 1px var(--line-strong);
+  /* A peek opened from another: the one under it shows as an edge to its left, with its hairline. */
+  --shadow-stack: calc(-1 * var(--space-12)) 0 0 0 var(--surface-2), calc(-1 * var(--space-12) - 1px) 0 0 0 var(--line);
+  /* The open item among the rows of its list: edged in the colour for what needs you, and lifted. */
+  --shadow-card-open: 0 0 0 1.5px var(--attention), 0 12px 32px -12px rgb(0 0 0 / 0.18);
+  /* The open item's card, lifted a little from the page. */
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.06), 0 12px 32px -12px rgb(0 0 0 / 0.12);
+  /* What dims everything around a peek on a phone. */
+  --shadow-scrim: 0 0 0 100vmax var(--scrim);
+  /* A sheet lifted over the page. */
+  --shadow-sheet: 0 16px 48px rgb(0 0 0 / 0.18);
+  /* What dims the page and its bar behind a sheet. */
+  --scrim: rgb(0 0 0 / 0.32);
+  /* Focus: a soft halo outside a control; the grey edge drawn inside an item the keys act on; pressed, a step darker. */
+  --shadow-focus: 0 0 0 var(--focus-halo) var(--accent-soft);
+  --shadow-focus-inset: inset 0 0 0 1px var(--ink-3);
+  --shadow-drop-before: inset 0 2px 0 var(--accent);
+  --shadow-drop-after: inset 0 -2px 0 var(--accent);
+  --shadow-pressed: inset 0 0 0 100vmax var(--scrim);
+  /* The soft halo round a focused control, outside its grey edge. */
+  --focus-halo: 3px;
+  /* How far a sheet's rows sit in from its edges: their text, and the tint that shows focus, line up on it. */
+  --row-inset: var(--space-8);
+  /* A row's narrow first column: its number in an order, or its handle. */
+  --lead-width: var(--space-12);
+  /* A wider first column, for a time or a date. */
+  --lead-width-wide: var(--space-32);
+  /* A filled button under the pointer. */
+  --opacity-hover: 0.88;
+  --z-popover: 10;
+  --z-panel: 20;
+  /* A sheet sits over everything, the bar included. */
+  --z-sheet: 40;
+  /* Choices waiting with Undo, over everything, an open sheet included: one made in a sheet shows its Undo. */
+  --z-undo: 50;
+
+  /* Layout */
+  --page-width-narrow: 900px;
+  /* For you: the rail of views beside its list; the list beside a peek, and a line's own page, at most this wide. */
+  --rail-column: 200px;
+  --card-width: 720px;
+  /* For you's list of everything a view holds, beside the rail. */
+  --queue-width: 860px;
+  /* A peek over the right of the page, and how far the open item sits from the left while one is open. */
+  --peek-width: 560px;
+  /* At most this much of a narrower screen goes to a peek, so the list beside it keeps room to be read. */
+  --peek-share: 50vw;
+  /* A line on a page of its own: how wide it gets, and the column beside its plan. */
+  --detail-width: 1180px;
+  --detail-aside: 340px;
+  --peek-offset: calc(var(--space-unit) * 40);
+  /* On a phone a peek rises from the bottom, the page it was opened from still showing above it. */
+  --peek-top-phone: 22vh;
+  /* The bar's height, which a peek starts under, and a peek's own head row. */
+  --bar-height: calc(var(--control-height) + var(--space-12));
+  --peek-head: calc(var(--control-height) + var(--space-10));
+  --touch-target: 44px;
+  /* A sheet's width on a wide screen. */
+  --sheet-width: 540px;
+  /* A sheet that holds two columns side by side, such as the Keys sheet. */
+  --sheet-width-wide: 760px;
+  /* A key cap's lower edge, a step thicker than its sides so it reads as a key. */
+  --key-edge: 2px;
+  --control-height: 32px;
+  --icon-size: 16px;
+  --icon-inline-size: 1em;
+  /* How far an icon in running words drops below the baseline, so it centres on the capitals and figures. */
+  --icon-inline-drop: -0.14em;
+  --keys-column: 96px;
+  --rail-width: 2px;
+  /* A plan step's round mark (triage/T-Line), and a branch step's smaller one. */
+  --step-mark: 22px;
+  --step-mark-small: 16px;
+  /* The ring of the step being worked on now, thicker than a step still to come. */
+  --step-ring-now: 2.5px;
+  /* How tall the elbow a branch hangs on is: down to the middle of its first line. */
+  --elbow-height: 12px;
+  /* A theme's swatch in a menu: its ground and its accent, side by side. */
+  --swatch-width: calc(var(--space-5) * 2 + var(--space-1));
+  /* A tile's width before it grows to fill its row: tiles of folded sections, swatches at half. */
+  --tile-width: 300px;
+  /* A choice drawn as a tile, such as where a new line goes, before it grows to share its row. */
+  --tile-width-small: 180px;
+  /* A box for one short value, such as a measurement, side by side with others. */
+  --field-narrow: calc(var(--control-height) * 4);
+  --text-input-touch: 16px;
+}
+
+/*
+ * A tone is one concept used by badges, marks and glyphs alike. Each component reads --tone, --tone-soft and --tone-mark
+ * and falls back to neutral, so a new tone only has to be added here.
+ */
+[data-tone="neutral"] {
+  --tone: initial;
+  --tone-soft: initial;
+  --tone-mark: initial;
+}
+
+[data-tone="good"] {
+  --tone: var(--good);
+  --tone-soft: var(--good-soft);
+  --tone-mark: var(--good);
+}
+
+[data-tone="bad"] {
+  --tone: var(--bad);
+  --tone-soft: var(--bad-soft);
+  --tone-mark: var(--bad);
+}
+
+/* A phone is held further away and tapped, so reading text steps up. Spacing stays, and targets grow on their own. */
+@media (pointer: coarse) {
+  :root {
+    --text-xs: 12px;
+    --text-sm: 13px;
+    --text-md: 15px;
+    --text-lg: 15px;
+  }
+}
+
+[data-tone="warn"] {
+  --tone: var(--warn);
+  --tone-soft: var(--warn-soft);
+  --tone-mark: var(--warn);
+}
+
+[data-tone="info"] {
+  --tone: var(--info);
+  --tone-soft: var(--info-soft);
+  --tone-mark: var(--info);
+}
+
+[data-tone="attention"] {
+  --tone: var(--attention);
+  --tone-soft: var(--attention-soft);
+  --tone-mark: var(--attention-line);
+}
+
+/*
+ * Themes: eight, each in light and dark. Paper is :root above, a quiet neutral of our own. Six are well-loved editor
+ * palettes, each keeping its own grounds, inks and hues, darkened by hand only where a colour must read as text on a
+ * light ground. High contrast is for sun or low vision. Every value is picked by hand, the tints and lines too; none
+ * is mixed or generated. A palette is set on the page, or on any element to preview it there, and the mode follows
+ * the system unless the developer picks one. `bun test design` checks every pairing in every theme and both modes.
+ */
+/* Solarized, Ethan Schoonover's palette: base3 cream by day, base03 by night; blue is its own colour, magenta needs you. */
+[data-palette="solarized"] {
+  --bg: light-dark(#eee8d5, #002b36);
+  --surface: light-dark(#fdf6e3, #073642);
+  --surface-2: light-dark(#f7f1dd, #0b3f4c);
+  --line: light-dark(#d9d2bd, #194954);
+  --line-faint: light-dark(#efe8d3, #0f414d);
+  --line-strong: light-dark(#c9c1aa, #2a5862);
+  --ink: light-dark(#073642, #eee8d5);
+  --ink-2: light-dark(#2f4c55, #c5cbc4);
+  --ink-3: light-dark(#4f656d, #9fadad);
+  --accent: light-dark(#1b6aa5, #6db3e6);
+  --accent-soft: light-dark(#dde8ef, #0a3f53);
+  --on-accent: light-dark(#fdf6e3, #002b36);
+  --attention: light-dark(#b0256b, #ec7aab);
+  --attention-soft: light-dark(#f6dfe8, #3d2233);
+  --attention-line: light-dark(#e09bb8, #8a3e66);
+  --good: light-dark(#5c6b00, #9ab300);
+  --good-soft: light-dark(#ecebc6, #29361a);
+  --bad: light-dark(#b8231e, #f47c76);
+  --bad-soft: light-dark(#f8e0d2, #3d2226);
+  --warn: light-dark(#7d6000, #d4a419);
+  --warn-soft: light-dark(#f3e8bd, #3a3214);
+  --info: light-dark(#1b6aa5, #6db3e6);
+  --info-soft: light-dark(#dde8ef, #0a3f53);
+}
+
+/* Gruvbox, Pavel Pertsev's retro palette: cream by day, warm charcoal by night; its faded blue is its own colour, purple needs you. */
+[data-palette="gruvbox"] {
+  --bg: light-dark(#f2e5bc, #1d2021);
+  --surface: light-dark(#fbf1c7, #282828);
+  --surface-2: light-dark(#f9f5d7, #32302f);
+  --line: light-dark(#d5c4a1, #3c3836);
+  --line-faint: light-dark(#ebdbb2, #32302f);
+  --line-strong: light-dark(#bdae93, #504945);
+  --ink: light-dark(#282828, #ebdbb2);
+  --ink-2: light-dark(#3c3836, #d5c4a1);
+  --ink-3: light-dark(#5d544c, #a89984);
+  --accent: light-dark(#076678, #83a598);
+  --accent-soft: light-dark(#d9e6e8, #2c3634);
+  --on-accent: light-dark(#fbf1c7, #282828);
+  --attention: light-dark(#8f3f71, #d3869b);
+  --attention-soft: light-dark(#efdbe8, #3d2f34);
+  --attention-line: light-dark(#c48aa8, #7f5466);
+  --good: light-dark(#5f5b0b, #b8bb26);
+  --good-soft: light-dark(#ebe5b0, #343619);
+  --bad: light-dark(#9d0006, #fd6b55);
+  --bad-soft: light-dark(#f6d8d2, #3a1e1c);
+  --warn: light-dark(#82540e, #fabd2f);
+  --warn-soft: light-dark(#f5e1a6, #3f351c);
+  --info: light-dark(#076678, #83a598);
+  --info-soft: light-dark(#d9e6e8, #2c3634);
+}
+
+/* Catppuccin: Latte by day, Mocha by night; mauve is its own colour, peach needs you. */
+[data-palette="catppuccin"] {
+  --bg: light-dark(#e6e9ef, #181825);
+  --surface: light-dark(#eff1f5, #1e1e2e);
+  --surface-2: light-dark(#f5f6f9, #262637);
+  --line: light-dark(#ccd0da, #313244);
+  --line-faint: light-dark(#dce0e8, #262637);
+  --line-strong: light-dark(#bcc0cc, #45475a);
+  --ink: light-dark(#3c3f58, #cdd6f4);
+  --ink-2: light-dark(#4c4f69, #bac2de);
+  --ink-3: light-dark(#5c5f77, #a6adc8);
+  --accent: light-dark(#7a2ee0, #cba6f7);
+  --accent-soft: light-dark(#e4daf7, #352d4b);
+  --on-accent: light-dark(#eff1f5, #1e1e2e);
+  --attention: light-dark(#a8440a, #fab387);
+  --attention-soft: light-dark(#f4e0d4, #3d3028);
+  --attention-line: light-dark(#d6936e, #8e6a5a);
+  --good: light-dark(#2a7019, #a6e3a1);
+  --good-soft: light-dark(#d9ead3, #283829);
+  --bad: light-dark(#c00d33, #f38ba8);
+  --bad-soft: light-dark(#f3d6db, #3c2530);
+  --warn: light-dark(#88570c, #f9e2af);
+  --warn-soft: light-dark(#f2e6cf, #38352f);
+  --info: light-dark(#7a2ee0, #cba6f7);
+  --info-soft: light-dark(#e4daf7, #352d4b);
+}
+
+/* Rosé Pine: Dawn by day, the main palette by night; pine is its own colour, iris needs you. */
+[data-palette="rosepine"] {
+  --bg: light-dark(#f4ede8, #191724);
+  --surface: light-dark(#fffaf3, #1f1d2e);
+  --surface-2: light-dark(#faf4ed, #26233a);
+  --line: light-dark(#dfdad9, #403d52);
+  --line-faint: light-dark(#f2e9e1, #2a283e);
+  --line-strong: light-dark(#cecacd, #524f67);
+  --ink: light-dark(#464261, #e0def4);
+  --ink-2: light-dark(#575279, #c9c5e3);
+  --ink-3: light-dark(#625e80, #a6a2c2);
+  --accent: light-dark(#286983, #9ccfd8);
+  --accent-soft: light-dark(#dde9eb, #24363f);
+  --on-accent: light-dark(#fffaf3, #191724);
+  --attention: light-dark(#7748b0, #c4a7e7);
+  --attention-soft: light-dark(#ece1f3, #322b46);
+  --attention-line: light-dark(#b79ad8, #8f78b5);
+  --good: light-dark(#3f7444, #9fd3a2);
+  --good-soft: light-dark(#e2ecdf, #243326);
+  --bad: light-dark(#a8475f, #eb6f92);
+  --bad-soft: light-dark(#f6e2e3, #36202a);
+  --warn: light-dark(#8f5b12, #f6c177);
+  --warn-soft: light-dark(#f8e9d4, #362d28);
+  --info: light-dark(#286983, #9ccfd8);
+  --info-soft: light-dark(#dde9eb, #24363f);
+}
+
+/* Nord, Arctic Ice Studio's palette: snow storm by day, polar night by night; frost is its own colour, aurora purple needs you. */
+[data-palette="nord"] {
+  --bg: light-dark(#e5e9f0, #2e3440);
+  --surface: light-dark(#eceff4, #3b4252);
+  --surface-2: light-dark(#f3f5f8, #3f4758);
+  --line: light-dark(#d3d9e3, #4c566a);
+  --line-faint: light-dark(#e1e6ee, #414857);
+  --line-strong: light-dark(#c4cbd8, #5a647a);
+  --ink: light-dark(#2e3440, #eceff4);
+  --ink-2: light-dark(#3b4252, #e0e5ec);
+  --ink-3: light-dark(#4c566a, #c3cad6);
+  --accent: light-dark(#40618c, #88c0d0);
+  --accent-soft: light-dark(#d6e0ec, #344756);
+  --on-accent: light-dark(#eceff4, #2e3440);
+  --attention: light-dark(#7a4690, #d3b2ce);
+  --attention-soft: light-dark(#e8dcee, #4a3d4b);
+  --attention-line: light-dark(#b48ead, #a184a8);
+  --good: light-dark(#4c6b33, #b4d19b);
+  --good-soft: light-dark(#dce5d6, #3f4a3a);
+  --bad: light-dark(#a03d46, #efa3a9);
+  --bad-soft: light-dark(#ecd8dc, #45373e);
+  --warn: light-dark(#7c5f1b, #ebcb8b);
+  --warn-soft: light-dark(#ece3cf, #474436);
+  --info: light-dark(#40618c, #88c0d0);
+  --info-soft: light-dark(#d6e0ec, #344756);
+}
+
+/* Everforest, sainnhe's palette: parchment by day, green-grey by night; its green is its own colour, purple needs you. */
+[data-palette="everforest"] {
+  --bg: light-dark(#f4f0d9, #272e33);
+  --surface: light-dark(#fdf6e3, #2d353b);
+  --surface-2: light-dark(#faf5df, #343f44);
+  --line: light-dark(#e0dcc7, #414b50);
+  --line-faint: light-dark(#efebd4, #343f44);
+  --line-strong: light-dark(#cfcab2, #4f585e);
+  --ink: light-dark(#3d484d, #d3c6aa);
+  --ink-2: light-dark(#4c585e, #c4b89d);
+  --ink-3: light-dark(#5c6a72, #a5ad9f);
+  --accent: light-dark(#566500, #a7c080);
+  --accent-soft: light-dark(#e9edcd, #3c4433);
+  --on-accent: light-dark(#fdf6e3, #2d353b);
+  --attention: light-dark(#a3428a, #d699b6);
+  --attention-soft: light-dark(#f5e1ec, #45363f);
+  --attention-line: light-dark(#d79ac4, #b07f9c);
+  --good: light-dark(#2b7656, #83c092);
+  --good-soft: light-dark(#dcefe4, #2e4436);
+  --bad: light-dark(#b83633, #e67e80);
+  --bad-soft: light-dark(#fbe3da, #42302f);
+  --warn: light-dark(#7f5c00, #dbbc7f);
+  --warn-soft: light-dark(#faedcd, #423f36);
+  --info: light-dark(#566500, #a7c080);
+  --info-soft: light-dark(#e9edcd, #3c4433);
+}
+
+/* High contrast: black on white and white on black, for sun or for low vision. */
+[data-palette="contrast"] {
+  --bg: light-dark(#ffffff, #000000);
+  --surface: light-dark(#ffffff, #000000);
+  --surface-2: light-dark(#f0f0f0, #121212);
+  --line: light-dark(#767676, #8c8c8c);
+  --line-faint: light-dark(#cccccc, #3d3d3d);
+  --line-strong: light-dark(#4d4d4d, #b3b3b3);
+  --ink: light-dark(#000000, #ffffff);
+  --ink-2: light-dark(#262626, #e0e0e0);
+  --ink-3: light-dark(#3d3d3d, #c2c2c2);
+  --accent: light-dark(#0000cc, #00ffff);
+  --accent-soft: light-dark(#dedef8, #003333);
+  --on-accent: light-dark(#ffffff, #000000);
+  --attention: light-dark(#8000a0, #ffff00);
+  --attention-soft: light-dark(#eedef3, #333300);
+  --attention-line: light-dark(#c080d0, #737300);
+  --good: light-dark(#006b00, #00ff66);
+  --good-soft: light-dark(#deecde, #003314);
+  --bad: light-dark(#b00000, #ff6b6b);
+  --bad-soft: light-dark(#f5dede, #331515);
+  --warn: light-dark(#6b4500, #ffb000);
+  --warn-soft: light-dark(#eee8de, #332300);
+  --info: light-dark(#0000cc, #00ffff);
+  --info-soft: light-dark(#dedef8, #003333);
+}
+
+/* The mode the developer picked, over the system's. */
+[data-mode="light"] {
+  color-scheme: light;
+}
+
+[data-mode="dark"] {
+  color-scheme: dark;
+}
+
+/* Forces a theme on part of a page, which is how /design shows both at once. */
+[data-theme="light"] {
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+}

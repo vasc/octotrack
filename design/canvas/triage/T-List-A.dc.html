@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Triage, every item in one list</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2F45C6;text-decoration:none}
+</style>
+</helmet>
+<div style="min-height: 1000px; height: 1000px; overflow: hidden; background: #F2F3F5; color: #14161B; font-family: 'Inter Tight', Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.5">
+<header style="display: flex; align-items: center; gap: 32px; height: 56px; padding: 0 32px; border-bottom: 1px solid #E3E6EB">
+<a href="#" style="display: flex; align-items: center; gap: 10px; color: #14161B; font-weight: 600; letter-spacing: -0.01em"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8.2 2.8h7.6l5.4 5.4v7.6l-5.4 5.4H8.2l-5.4-5.4V8.2z"></path><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"></circle></svg>Octotrack</a>
+<nav aria-label="Pages" style="display: flex; gap: 4px">
+<a href="#" style="display: flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 8px; color: #5A606C; font-weight: 500">Lines</a>
+<a href="#" aria-current="page" style="display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border-radius: 8px; background: #FFFFFF; color: #14161B; font-weight: 600; box-shadow: 0 1px 2px rgba(20, 22, 27, 0.08), 0 0 0 1px #E3E6EB">For you<span style="display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 10px; background: #FFF1DB; color: #8A4A00; font-size: 12px; font-weight: 700">64</span></a>
+</nav>
+<div style="display: flex; align-items: center; gap: 8px; margin-left: auto">
+<button type="button" style="display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; border: 0; border-radius: 8px; background: #14161B; color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 600"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>New line</button>
+<button type="button" aria-label="More" style="display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid #E3E6EB; border-radius: 8px; background: #FFFFFF; color: #474D59"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg></button>
+</div>
+</header>
+<main style="display: grid; grid-template-columns: 200px minmax(0, 860px); justify-content: center; align-items: start; gap: 56px; padding: 32px 32px 0">
+<nav aria-label="Waiting on you" style="display: flex; flex-direction: column; gap: 2px">
+<span style="padding: 0 12px 10px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #6E7480">Waiting on you</span>
+<a href="#" style="display: flex; justify-content: space-between; height: 36px; align-items: center; padding: 0 12px; border-radius: 8px; color: #474D59">All<span style="color: #8A909B">64</span></a>
+<a href="#" style="display: flex; justify-content: space-between; height: 36px; align-items: center; padding: 0 12px; border-radius: 8px; color: #8A909B">Urgent<span style="color: #8A909B">0</span></a>
+<a href="#" style="display: flex; justify-content: space-between; height: 36px; align-items: center; padding: 0 12px; border-radius: 8px; color: #8A909B">To answer<span style="color: #8A909B">0</span></a>
+<a href="#" style="display: flex; justify-content: space-between; height: 36px; align-items: center; padding: 0 12px; border-radius: 8px; color: #8A909B">To do<span style="color: #8A909B">0</span></a>
+<a href="#" aria-current="page" style="display: flex; justify-content: space-between; height: 36px; align-items: center; padding: 0 12px; border-radius: 8px; background: #FFFFFF; color: #14161B; font-weight: 600; box-shadow: 0 0 0 1px #E3E6EB">To accept<span>64</span></a>
+<a href="#" style="display: flex; justify-content: space-between; height: 36px; align-items: center; padding: 0 12px; border-radius: 8px; color: #8A909B">To step in<span style="color: #8A909B">0</span></a>
+</nav>
+
+<section aria-label="To accept" style="display: flex; flex-direction: column; gap: 12px; min-width: 0">
+<div style="display: flex; align-items: baseline; gap: 12px">
+<h1 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em">To accept</h1>
+<span style="font-size: 14px; color: #6E7480">64 proposed lines · 22 of 64 open · j k to move, the number keys to place</span>
+</div>
+<div style="display: flex; flex-direction: column; border-radius: 14px; background: #FFFFFF; box-shadow: 0 0 0 1px #E3E6EB">
+<a href="#" style="display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: 56px; padding: 8px 16px 8px 18px; border-bottom: 1px solid #EEF0F3; color: #14161B">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8A909B">19</span>
+<span style="display: flex; flex-direction: column; min-width: 0"><span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Show each kind&#x27;s own name in the world</span><span style="font-size: 13px; color: #6E7480; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">recommends Up next · game-agent · GAME</span></span>
+<button type="button" style="flex: none; height: 30px; padding: 0 12px; border: 1px solid #E3E6EB; border-radius: 8px; background: #FFFFFF; font: inherit; font-size: 13px; font-weight: 500; color: #14161B">Up next</button>
+</a>
+<a href="#" style="display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: 56px; padding: 8px 16px 8px 18px; border-bottom: 1px solid #EEF0F3; color: #14161B">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8A909B">20</span>
+<span style="display: flex; flex-direction: column; min-width: 0"><span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Ride a tamed Eon</span><span style="font-size: 13px; color: #6E7480; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">recommends Up next · game-agent · GAME</span></span>
+<button type="button" style="flex: none; height: 30px; padding: 0 12px; border: 1px solid #E3E6EB; border-radius: 8px; background: #FFFFFF; font: inherit; font-size: 13px; font-weight: 500; color: #14161B">Up next</button>
+</a>
+<a href="#" style="display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: 56px; padding: 8px 16px 8px 18px;  color: #14161B">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8A909B">21</span>
+<span style="display: flex; flex-direction: column; min-width: 0"><span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Set the collapse limit from a timed game at the table</span><span style="font-size: 13px; color: #6E7480; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">recommends Up next · maze-agent · MAZE</span></span>
+<button type="button" style="flex: none; height: 30px; padding: 0 12px; border: 1px solid #E3E6EB; border-radius: 8px; background: #FFFFFF; font: inherit; font-size: 13px; font-weight: 500; color: #14161B">Up next</button>
+</a>
+<article aria-current="true" style="display: flex; flex-direction: column; gap: 18px; margin: 6px; padding: 26px 28px; border-radius: 12px; background: #FFFFFF; box-shadow: 0 0 0 1.5px #2F45C6, 0 12px 32px -12px rgba(20, 22, 27, 0.18)">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 13px; color: #6E7480"><span style="color: #2F45C6; font-weight: 600">Proposed line</span> · L-24 · TRIP · travel-agent</span>
+<h2 style="margin: 0; font-size: 26px; line-height: 1.2; font-weight: 600; letter-spacing: -0.02em">Team offsite: pick the venue and book everything</h2>
+<span style="color: #474D59"><b style="color: #14161B; font-weight: 600">Done when</b> The venue is chosen and in the plan, and all 12 items of &#x27;Team offsite - May&#x27; are booked and marked booked there with their real prices</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px">
+<button type="button" style="display: flex; flex-direction: column; gap: 2px; padding: 12px; border: 1.5px solid #2F45C6; border-radius: 10px; background: #F2F4FE; text-align: left; font: inherit; color: inherit"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #2F45C6">1</span><span style="font-weight: 600">Start it now</span><span style="font-size: 13px; color: #6E7480">Joins Working on</span></button>
+<button type="button" style="display: flex; flex-direction: column; gap: 2px; padding: 12px; border: 1.5px solid #E3E6EB; border-radius: 10px; background: #FFFFFF; text-align: left; font: inherit; color: inherit"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8A909B">2</span><span style="font-weight: 600">Up next</span><span style="font-size: 13px; color: #6E7480">Waits its turn</span></button>
+<button type="button" style="display: flex; flex-direction: column; gap: 2px; padding: 12px; border: 1.5px solid #E3E6EB; border-radius: 10px; background: #FFFFFF; text-align: left; font: inherit; color: inherit"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8A909B">3</span><span style="font-weight: 600">Fold into…</span><span style="font-size: 13px; color: #6E7480">Part of a line</span></button>
+<button type="button" style="display: flex; flex-direction: column; gap: 2px; padding: 12px; border: 1.5px solid #E3E6EB; border-radius: 10px; background: #FFFFFF; text-align: left; font: inherit; color: inherit"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8A909B">4</span><span style="font-weight: 600">Table it…</span><span style="font-size: 13px; color: #6E7480">Set aside</span></button>
+<button type="button" style="display: flex; flex-direction: column; gap: 2px; padding: 12px; border: 1.5px solid #E3E6EB; border-radius: 10px; background: #FFFFFF; text-align: left; font: inherit; color: inherit"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8A909B">5</span><span style="font-weight: 600">Not a line</span><span style="font-size: 13px; color: #6E7480">Turned down</span></button>
+</div>
+</article>
+<a href="#" style="display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: 56px; padding: 8px 16px 8px 18px; border-bottom: 1px solid #EEF0F3; color: #14161B">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8A909B">23</span>
+<span style="display: flex; flex-direction: column; min-width: 0"><span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Multi-commit PR groups in git-stack: attach, --commit ranges, reconcile</span><span style="font-size: 13px; color: #6E7480; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">recommends Up next · stack · STACK</span></span>
+<button type="button" style="flex: none; height: 30px; padding: 0 12px; border: 1px solid #E3E6EB; border-radius: 8px; background: #FFFFFF; font: inherit; font-size: 13px; font-weight: 500; color: #14161B">Up next</button>
+</a>
+<a href="#" style="display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: 56px; padding: 8px 16px 8px 18px; border-bottom: 1px solid #EEF0F3; color: #14161B">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8A909B">24</span>
+<span style="display: flex; flex-direction: column; min-width: 0"><span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Bring the planner&#x27;s design in line with what shipped</span><span style="font-size: 13px; color: #6E7480; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">recommends Table · travel-agent · TRIP</span></span>
+<button type="button" style="flex: none; height: 30px; padding: 0 12px; border: 1px solid #E3E6EB; border-radius: 8px; background: #FFFFFF; font: inherit; font-size: 13px; font-weight: 500; color: #14161B">Table</button>
+</a>
+<a href="#" style="display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: 56px; padding: 8px 16px 8px 18px; border-bottom: 1px solid #EEF0F3; color: #14161B">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8A909B">25</span>
+<span style="display: flex; flex-direction: column; min-width: 0"><span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Design the Lines screen with the developer, then build it</span><span style="font-size: 13px; color: #6E7480; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">recommends Start · octotrack-builder · OCT</span></span>
+<button type="button" style="flex: none; height: 30px; padding: 0 12px; border: 1px solid #E3E6EB; border-radius: 8px; background: #FFFFFF; font: inherit; font-size: 13px; font-weight: 500; color: #14161B">Start</button>
+</a>
+<a href="#" style="display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: 56px; padding: 8px 16px 8px 18px; border-bottom: 1px solid #EEF0F3; color: #14161B">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8A909B">26</span>
+<span style="display: flex; flex-direction: column; min-width: 0"><span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Design the Log with the developer, then build it</span><span style="font-size: 13px; color: #6E7480; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">recommends Up next · octotrack-builder · OCT</span></span>
+<button type="button" style="flex: none; height: 30px; padding: 0 12px; border: 1px solid #E3E6EB; border-radius: 8px; background: #FFFFFF; font: inherit; font-size: 13px; font-weight: 500; color: #14161B">Up next</button>
+</a>
+<a href="#" style="display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: 56px; padding: 8px 16px 8px 18px; border-bottom: 1px solid #EEF0F3; color: #14161B">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8A909B">27</span>
+<span style="display: flex; flex-direction: column; min-width: 0"><span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Design the Agents page with the developer, then build it</span><span style="font-size: 13px; color: #6E7480; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">recommends Up next · octotrack-builder · OCT</span></span>
+<button type="button" style="flex: none; height: 30px; padding: 0 12px; border: 1px solid #E3E6EB; border-radius: 8px; background: #FFFFFF; font: inherit; font-size: 13px; font-weight: 500; color: #14161B">Up next</button>
+</a>
+<a href="#" style="display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: 56px; padding: 8px 16px 8px 18px;  color: #14161B">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8A909B">28</span>
+<span style="display: flex; flex-direction: column; min-width: 0"><span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Finish removing the old office switch from the home server</span><span style="font-size: 13px; color: #6E7480; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">recommends Start · home-agent · HOME</span></span>
+<button type="button" style="flex: none; height: 30px; padding: 0 12px; border: 1px solid #E3E6EB; border-radius: 8px; background: #FFFFFF; font: inherit; font-size: 13px; font-weight: 500; color: #14161B">Start</button>
+</a>
+<div style="padding: 14px 18px; border-top: 1px solid #EEF0F3; font-size: 14px; color: #6E7480">36 more below, in the same order</div>
+</div>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

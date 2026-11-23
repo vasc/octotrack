@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Primitives, every state</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1f2328;text-decoration:none}
+</style>
+</helmet>
+<div style="width: 1760px; min-height: 2400px; box-sizing: border-box; padding: 32px; background: #f5f6f8; color: #1f2328; font-family: Inter, -apple-system, system-ui, sans-serif; font-size: 14px; line-height: 20px; columns: 2; column-gap: 48px">
+
+<p style="column-span: all; margin: 0 0 32px; padding: 10px 14px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff; font-size: 13px; color: #424a53">One focus treatment everywhere: a grey edge with a soft halo outside the element, keyboard only. One selected treatment: the accent-soft fill. Pressed darkens one step. Disabled is one look for every kind of button, primary, plain, quiet or icon: a pale grey fill, a faint edge and grey text, never just faded; it says why next to it when the reason is not obvious. Every control is at least 32 px tall on a pointer, 44 px on touch.</p>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 44px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">Button · primary, plain, quiet, icon × default, hover, focus, pressed, disabled, busy</h2>
+<div style="display: grid; grid-template-columns: 72px repeat(6, minmax(0, 1fr)); gap: 10px 8px; align-items: center; font-size: 12px; color: #59636e">
+<span></span><span>default</span><span>hover</span><span>focus</span><span>pressed</span><span>disabled</span><span>busy</span>
+<span>primary</span>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Start</button>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; border: 1px solid #32383f; border-radius: 6px; background: #32383f; color: #ffffff">Start</button>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff; box-shadow: 0 0 0 2px #f5f6f8, 0 0 0 3px #6e7781, 0 0 0 6px #e1e5ea">Start</button>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; border: 1px solid #000000; border-radius: 6px; background: #000000; color: #ffffff">Start</button>
+<button type="button" disabled style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; border: 1px solid #e1e5ea; border-radius: 6px; background: #f1f3f5; color: #8c959f">Start</button>
+<button type="button" aria-busy="true" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Starting…</button>
+<span>plain</span>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Table</button>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; border: 1px solid #c3cad3; border-radius: 6px; background: #f9fafb">Table</button>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; border: 1px solid #6e7781; border-radius: 6px; background: #ffffff; box-shadow: 0 0 0 3px #e1e5ea">Table</button>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; border: 1px solid #c3cad3; border-radius: 6px; background: #eaeef2">Table</button>
+<button type="button" disabled style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; border: 1px solid #e1e5ea; border-radius: 6px; background: #f1f3f5; color: #8c959f">Table</button>
+<button type="button" aria-busy="true" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Tabling…</button>
+<span>quiet</span>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; border: 0; border-radius: 6px; background: transparent; color: #424a53">Cancel</button>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; border: 0; border-radius: 6px; background: #eef1f4; color: #1f2328">Cancel</button>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; border: 0; border-radius: 6px; background: transparent; color: #424a53; box-shadow: 0 0 0 1px #6e7781, 0 0 0 4px #e1e5ea">Cancel</button>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; border: 0; border-radius: 6px; background: #d8dde3; color: #1f2328">Cancel</button>
+<button type="button" disabled style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; border: 1px solid #e1e5ea; border-radius: 6px; background: #f1f3f5; color: #8c959f">Cancel</button>
+<span></span>
+<span>icon</span>
+<button type="button" aria-label="More" style="font: inherit; width: 32px; height: 32px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">⋯</button>
+<button type="button" aria-label="More" style="font: inherit; width: 32px; height: 32px; border: 1px solid #c3cad3; border-radius: 6px; background: #f9fafb">⋯</button>
+<button type="button" aria-label="More" style="font: inherit; width: 32px; height: 32px; border: 1px solid #6e7781; border-radius: 6px; background: #ffffff; box-shadow: 0 0 0 3px #e1e5ea">⋯</button>
+<button type="button" aria-label="More, open" aria-expanded="true" style="font: inherit; width: 32px; height: 32px; border: 1px solid #8c959f; border-radius: 6px; background: #eaeef2">⋯</button>
+<button type="button" aria-label="More" disabled style="font: inherit; width: 32px; height: 32px; border: 1px solid #e1e5ea; border-radius: 6px; background: #f1f3f5; color: #8c959f; font-weight: 500">⋯</button>
+<span></span>
+</div>
+<p style="margin: 0; font-size: 12px; color: #59636e">The icon button's 4th column is its open state: a menu it opened is showing. Busy keeps the width and swaps the verb for its -ing form.</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 44px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">Field · empty, focus, filled, invalid, disabled, not saved</h2>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 500">Why it waits<input type="text" placeholder="A reason" style="font: inherit; font-weight: 400; height: 32px; box-sizing: border-box; border: 1px solid #d8dde3; border-radius: 6px; padding: 0 10px"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 500">Why it waits<input type="text" style="font: inherit; font-weight: 400; height: 32px; box-sizing: border-box; border: 1px solid #6e7781; border-radius: 6px; padding: 0 10px; box-shadow: 0 0 0 3px #e1e5ea"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 500">Why it waits<input type="text" value="Nothing else waits on it" style="font: inherit; font-weight: 400; height: 32px; box-sizing: border-box; border: 1px solid #d8dde3; border-radius: 6px; padding: 0 10px"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 500">Checkout of hydra<input type="text" value="code/hydra" aria-invalid="true" style="font: inherit; font-weight: 400; height: 32px; box-sizing: border-box; border: 1px solid #cf222e; border-radius: 6px; padding: 0 10px"><span style="font-size: 12px; font-weight: 400; color: #cf222e">A full path, starting with /</span></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 500; color: #59636e">Why it waits<input type="text" disabled value="Nothing else waits on it" style="font: inherit; font-weight: 400; height: 32px; box-sizing: border-box; border: 1px solid #eef1f4; border-radius: 6px; padding: 0 10px; background: #f9fafb; color: #59636e"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 500">Note<input type="text" value="Called the hotel" style="font: inherit; font-weight: 400; height: 32px; box-sizing: border-box; border: 1px solid #d8dde3; border-radius: 6px; padding: 0 10px"><span style="font-size: 12px; font-weight: 400; color: #9a6700">Not saved: the tracker did not answer. Kept here; saves when it is back.</span></label>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 44px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">Choice (an option to pick) · default, hover, focus, recommended, chosen, unavailable</h2>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: grid; grid-template-columns: 20px minmax(0, 1fr) 96px; column-gap: 12px; align-items: baseline; border: 1px solid #d8dde3; border-radius: 6px; padding: 10px 14px; background: #ffffff"><span style="color: #59636e">1</span><span style="font-weight: 600">Raise the cap</span><span style="font-size: 12px; color: #59636e">default</span></div>
+<div style="display: grid; grid-template-columns: 20px minmax(0, 1fr) 96px; column-gap: 12px; align-items: baseline; border: 1px solid #c3cad3; border-radius: 6px; padding: 10px 14px; background: #f9fafb"><span style="color: #59636e">1</span><span style="font-weight: 600">Raise the cap</span><span style="font-size: 12px; color: #59636e">hover</span></div>
+<div style="display: grid; grid-template-columns: 20px minmax(0, 1fr) 96px; column-gap: 12px; align-items: baseline; border: 1px solid #6e7781; border-radius: 6px; padding: 10px 14px; background: #ffffff; box-shadow: 0 0 0 3px #e1e5ea"><span style="color: #59636e">1</span><span style="font-weight: 600">Raise the cap</span><span style="font-size: 12px; color: #59636e">focus</span></div>
+<div style="display: grid; grid-template-columns: 20px minmax(0, 1fr) 96px; column-gap: 12px; align-items: baseline; border: 1px solid #c297ff; border-radius: 6px; padding: 10px 14px; background: #fbefff"><span style="color: #8250df">2</span><span><b>Keep the cap at the venue</b> <span style="font-size: 12px; font-weight: 600; color: #8250df">Recommended</span></span><span style="font-size: 12px; color: #59636e">recommended</span></div>
+<div style="display: grid; grid-template-columns: 20px minmax(0, 1fr) 96px; column-gap: 12px; align-items: baseline; border: 1px solid #8c959f; border-radius: 6px; padding: 10px 14px; background: #f6f8fa"><span style="font-weight: 600">✓</span><span style="font-weight: 600">Keep the cap at the venue</span><span style="font-size: 12px; color: #59636e">chosen</span></div>
+<div style="display: grid; grid-template-columns: 20px minmax(0, 1fr) 96px; column-gap: 12px; align-items: baseline; border: 1px solid #eef1f4; border-radius: 6px; padding: 10px 14px; background: #f9fafb; color: #59636e"><span>3</span><span>Villa Groff</span><span style="font-size: 12px">another chosen</span></div>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 44px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">Row (in a list) · default, hover, focused item, opens a panel</h2>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; overflow: hidden">
+<div style="display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; column-gap: 12px; padding: 12px 16px; border-bottom: 1px solid #eef1f4"><span style="color: #59636e; font-size: 13px">4</span><span><b>Finish removing the office H1 switch</b><br><span style="font-size: 13px; color: #59636e">2 steps scoped</span></span><span style="font-size: 12px; color: #59636e">default</span></div>
+<div style="display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; column-gap: 12px; padding: 12px 16px; border-bottom: 1px solid #eef1f4; background: #f9fafb"><span style="color: #59636e; font-size: 13px">5</span><span><b>Put the chat CLI on a safe footing</b><br><span style="font-size: 13px; color: #59636e">not scoped</span></span><span style="font-size: 12px; color: #59636e">hover</span></div>
+<div style="display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; column-gap: 12px; padding: 12px 16px; border-bottom: 1px solid #eef1f4; background: #f1f3f5; box-shadow: inset 0 0 0 1px #6e7781"><span style="color: #1f2328; font-size: 13px; font-weight: 600">6</span><span><b>Public tunnel off for good</b><br><span style="font-size: 13px; color: #59636e">1 step scoped</span></span><span style="font-size: 12px; color: #59636e">focused (j/k)</span></div>
+<div style="display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; column-gap: 12px; padding: 12px 16px; align-items: center"><span></span><span><b>build server keeps enough free disk</b></span><span style="color: #59636e">›</span></div>
+</div>
+<p style="margin: 0; font-size: 12px; color: #59636e">The focused item is the one the keys act on: the fill plus the same grey edge as every focus, drawn inside the row so it never overlaps its neighbours; it reads without colour, and nothing ever gets a coloured side bar. A row that opens something ends in ›.</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 44px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">Fold · closed, open, held open while an item inside has focus</h2>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 12px 16px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px"><span><b>Tabled</b> <span style="color: #59636e">4 · Maze level editor and 3 more</span></span><span style="color: #59636e">›</span></div>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; overflow: hidden"><div style="padding: 12px 16px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; border-bottom: 1px solid #eef1f4"><span><b>Tabled</b> <span style="color: #59636e">4</span></span><span style="color: #59636e">⌄</span></div><div style="padding: 10px 16px; font-size: 13px; color: #59636e">…its rows…</div></div>
+<div style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 12px 16px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px"><span><b>Tabled</b> <span style="color: #59636e">4</span></span><span style="font-size: 12px; color: #59636e">stays open while you are in it</span></div>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 44px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">Status: always a glyph and a word</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13px">
+<span><span style="color: #8250df">●</span> needs you</span><span><span style="color: #9a6700">▲</span> urgent, stuck, step in</span><span><span style="color: #1a7f37">✓</span> done, passing, merged</span><span><span style="color: #cf222e">✗</span> failing, conflict, refused</span><span><span style="color: #59636e">◐</span> running, in progress</span><span><span style="color: #59636e">○</span> quiet, next, not started</span><span><span style="color: #59636e">–</span> dropped, closed, withdrawn</span>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 44px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">Messages in place · loading, empty, not saved, stale, failed with retry</h2>
+<div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px">
+<span role="status" style="color: #59636e">Loading the plan…</span>
+<span style="color: #59636e">No summary yet. Its owner writes one once the line starts.</span>
+<span style="color: #9a6700">Not saved: the tracker did not answer. Kept here; saves when it is back.</span>
+<span style="color: #9a6700">As of 14:20; could not refresh.</span>
+<div role="alert" style="border: 1px solid #ffcecb; background: #ffebe9; border-radius: 6px; padding: 8px 8px 8px 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px"><span><b style="color: #cf222e">Could not load the plan.</b> The tracker did not answer.</span><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Try again</button></div>
+</div>
+<p style="margin: 0; font-size: 12px; color: #59636e">A failure shows the tracker's own hint when it sends one, as the line under the message. Raw error text (a parse error, a schema mismatch) never shows; it becomes “The tracker sent something this page does not understand. Reload.”</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 44px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">Refs, links, keys, counts</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; font-size: 13px">
+<a href="#" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; text-decoration: underline; text-decoration-color: #c3cad3; text-underline-offset: 3px">D-65</a>
+<a href="#" style="text-decoration: underline; text-decoration-color: #c3cad3; text-underline-offset: 3px">This line in the log →</a>
+<a href="#" style="text-decoration: underline; text-decoration-color: #c3cad3; text-underline-offset: 3px">acme/stack#4 ↗</a>
+<kbd style="font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 1px 5px; border: 1px solid #d8dde3; border-bottom-width: 2px; border-radius: 4px; background: #ffffff">esc</kbd>
+<a href="#" style="font-size: 13px; padding: 2px 10px; border-radius: 999px; background: #fbefff"><b style="color: #8250df">2</b> to answer</a>
+</div>
+<p style="margin: 0; font-size: 12px; color: #59636e">Links in text are underlined in a light rule that darkens on hover; → stays in the app, ↗ leaves it. On touch every ref and link gets a 44 px hit area without changing its look.</p>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 44px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">Dark: the same set, checked for contrast</h2>
+<div style="background: #0d1117; border-radius: 8px; padding: 16px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #e6edf3; border-radius: 6px; background: #e6edf3; color: #0d1117">Start</button>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #30363d; border-radius: 6px; background: #151b23; color: #f0f6fc">Table</button>
+<button type="button" disabled style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #262c36; border-radius: 6px; background: #161b22; color: #6e7681">Disabled</button>
+<span style="font-size: 13px; color: #ab7df8">● needs you</span><span style="font-size: 13px; color: #3fb950">✓ passing</span><span style="font-size: 13px; color: #f85149">✗ failing</span>
+<input type="text" value="Focused field" style="font: inherit; font-size: 13px; height: 32px; box-sizing: border-box; border: 1px solid #e6edf3; border-radius: 6px; padding: 0 10px; background: #151b23; color: #f0f6fc; box-shadow: 0 0 0 1px #e6edf3">
+</div>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1760,"height":2400}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

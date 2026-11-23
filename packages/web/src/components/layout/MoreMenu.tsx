@@ -1,0 +1,91 @@
+import { useState } from "react";
+import type { Appearance, Mode, Palette } from "../../lib/appearance.ts";
+import { PALETTES } from "../../lib/appearance.ts";
+import { Only } from "../ui/AppBar.tsx";
+import { Icon } from "../ui/Icon.tsx";
+import { Menu, MenuAction } from "../ui/Menu.tsx";
+import { AppearanceChoices } from "./AppearanceMenu.tsx";
+
+interface MoreMenuProps {
+  onGo(to: string): void;
+  /** How much is unseen in the Log, in a few words, or nothing. */
+  logNote?: string | null;
+  /** How many agents are working, in a few words, or nothing. */
+  agentsNote?: string | null;
+  onKeys(): void;
+  appearance: Appearance;
+  onPalette(palette: Palette): void;
+  onMode(mode: Mode): void;
+}
+
+/**
+ * What is used less, behind one button at the end of the bar (triage/T-More): the Log, Agents, the appearance, and the
+ * keys, each after its icon. Appearance
+ * shows the themes and modes in the menu's place, with the way back above them.
+ */
+export function MoreMenu(props: MoreMenuProps) {
+  return (
+    <Menu label="More" icon="more" menuLabel="More">
+      {(close) => <MoreChoices close={close} {...props} />}
+    </Menu>
+  );
+}
+
+function MoreChoices({
+  close,
+  onGo,
+  onKeys,
+  appearance,
+  onPalette,
+  onMode,
+  logNote = null,
+  agentsNote = null,
+}: MoreMenuProps & { close(): void }) {
+  // Which of the two the open menu shows is this menu's own; it starts over each time the menu opens.
+  const [showing, setShowing] = useState<"more" | "appearance">("more");
+  if (showing === "appearance") {
+    return (
+      <>
+        <MenuAction onSelect={() => setShowing("more")}>
+          <Icon name="back" />
+          More
+        </MenuAction>
+        <AppearanceChoices appearance={appearance} onPalette={onPalette} onMode={onMode} close={close} />
+      </>
+    );
+  }
+  const theme = PALETTES.find((palette) => palette.id === appearance.palette)?.name ?? "Paper";
+  const go = (to: string) => () => {
+    close();
+    onGo(to);
+  };
+  return (
+    <>
+      <MenuAction onSelect={go("/log")} {...(logNote === null ? {} : { trailing: logNote })}>
+        <Icon name="log" />
+        Log
+      </MenuAction>
+      <MenuAction onSelect={go("/agents")} {...(agentsNote === null ? {} : { trailing: agentsNote })}>
+        <Icon name="agents" />
+        Agents
+      </MenuAction>
+      <MenuAction onSelect={() => setShowing("appearance")} trailing={theme}>
+        <Icon name="appearance" />
+        Appearance
+      </MenuAction>
+      {/* The keys are offered wherever there is a keyboard to press them, whatever the width. */}
+      <Only on="keyboard">
+        <MenuAction
+          onSelect={() => {
+            close();
+            onKeys();
+          }}
+          trailing="?"
+        >
+          <Icon name="keyboard" />
+          Keyboard shortcuts
+        </MenuAction>
+      </Only>
+    </>
+  );
+}

@@ -1,0 +1,21 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-20T12:00:00Z" },
+  "title": "Octotrack icon",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1180, "h": 1380, "title": "Octagon bullseye" },
+    "EightTrack.dc.html": { "x": 1260, "y": 0, "w": 1180, "h": 1080, "title": "8-track player" },
+    "Lineup.dc.html": { "x": 0, "y": 1500, "w": 2440, "h": 440, "title": "All of them side by side" },
+    "RefineA1.dc.html": { "x": 0, "y": 2340, "w": 1180, "h": 1120, "title": "A1 Rings, refined" },
+    "RefineA5.dc.html": { "x": 1260, "y": 2340, "w": 1180, "h": 1120, "title": "A5 Lanes, refined" },
+    "RefineB1.dc.html": { "x": 0, "y": 3580, "w": 1180, "h": 1120, "title": "B1 Octo 8, refined" },
+    "RefineB5.dc.html": { "x": 1260, "y": 3580, "w": 1180, "h": 1280, "title": "B5 Eight tracks, refined" }
+  },
+  "order": ["Main.dc.html", "EightTrack.dc.html", "Lineup.dc.html", "RefineA1.dc.html", "RefineA5.dc.html", "RefineB1.dc.html", "RefineB5.dc.html"],
+  "notes": {
+    "round2": { "x": 0, "y": 2100, "text": "Second round: A1, A5, B1 and B5", "kind": "title1", "maxW": 2440 }
+  },
+  "designSystems": []
+}

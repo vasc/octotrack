@@ -1,0 +1,127 @@
+import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
+import { useAppearance } from "../../hooks/useAppearance.ts";
+import { useBootstrap } from "../../hooks/useBootstrap.ts";
+import { type HotkeyMap, KeysHeldProvider, useHotkeys } from "../../hooks/useHotkeys.ts";
+import { useLiveUpdates } from "../../hooks/useLiveUpdates.ts";
+import { usePanelFocus } from "../../hooks/usePanelFocus.ts";
+import { useReloadOnNewBuild } from "../../hooks/useReloadOnNewBuild.ts";
+import { useSeen } from "../../hooks/useSeen.ts";
+import { useTopBar } from "../../hooks/useTopBar.ts";
+import { backEntity, closeEntity, navigate, setParams, useRoute } from "../../lib/router.ts";
+import { useNewLine } from "../../hooks/useNewLine.ts";
+import { NewLineSheet } from "../lines/NewLineSheet.tsx";
+import { Side } from "../ui/Panel.tsx";
+import { EntityPanel } from "../entity/EntityPanel.tsx";
+import { KeyHelp } from "../home/KeyHelp.tsx";
+import { NotAnswering } from "../home/NotAnswering.tsx";
+import { ErrorState, LoadingState } from "../ui/states.tsx";
+import { AppStrips } from "./AppStrips.tsx";
+import { PartBoundary } from "./PartBoundary.tsx";
+import { PendingChoices } from "./PendingChoices.tsx";
+import { TopBar } from "./TopBar.tsx";
+
+/**
+ * Every page: the bar, the page, and whatever ref is open, as a peek over the right of the page beside what you are
+ * doing; New line as a dialog over any page; the keys every page shares.
+ */
+export function AppShell({ children }: { children: ReactNode }) {
+  const { path, params } = useRoute();
+  const { data, error, isPending, refetch } = useBootstrap();
+  // A tab left open, as on a phone, picks up a deploy when it comes back into view.
+  const build = useReloadOnNewBuild();
+  const bar = useTopBar();
+  const look = useAppearance();
+  const live = useLiveUpdates();
+  useSeen();
+  const [keysOpen, setKeysOpen] = useState(false);
+  const openKeys = useCallback(() => setKeysOpen(true), []);
+  const closeKeys = useCallback(() => setKeysOpen(false), []);
+  const entity = params.get("ref");
+  const panel = useRef<HTMLElement>(null);
+  const newLine = useNewLine();
+  const adding = params.get("new") === "1";
+  usePanelFocus(panel, entity);
+  const keys = useMemo((): HotkeyMap => {
+    // Esc closes what is on top: the key list, then a panel (back to the one it was opened from, if any).
+    const closeTop = keysOpen ? closeKeys : entity !== null ? backEntity : null;
+    // With the key list open, only what closes it acts: a stray key behind it costs nothing (D14).
+    if (keysOpen) return { "?": closeKeys, ...(closeTop === null ? {} : { Escape: closeTop }) };
+    return {
+      "?": openKeys,
+      ...(path === "/log" ? {} : { "/": () => navigate("/log?find=1") }),
+      ...(closeTop === null ? {} : { Escape: closeTop }),
+    };
+  }, [entity, keysOpen, openKeys, closeKeys, path]);
+  // The key list is a sheet the shell opens, so while it is open the keys that close it act over it; every other
+  // shell key stands down under a sheet, as the page's do.
+  useHotkeys(keys, { overSheets: keysOpen });
+  return (
+    <>
+      <TopBar
+        path={path}
+        waiting={bar.waiting}
+        logNote={bar.logNote}
+        agentsNote={bar.agentsNote}
+        onNewLine={() => setParams({ new: "1" })}
+        onKeys={openKeys}
+        appearance={look.appearance}
+        onPalette={look.setPalette}
+        onMode={look.setMode}
+      />
+      <KeysHeldProvider value={keysOpen}>
+        <main>
+          <AppStrips
+            offlineSince={live.state === "offline" ? live.offlineSince : null}
+            onReconnect={live.reconnect}
+            newVersion={build.waiting}
+            onLoadNow={build.loadNow}
+          />
+          {keysOpen ? <KeyHelp onClose={closeKeys} /> : null}
+          <PartBoundary>
+            {isPending ? (
+              <LoadingState label="Loading the page" />
+            ) : error !== null && data === undefined ? (
+              <NotAnswering host={window.location.host} onRetry={() => void refetch()} />
+            ) : (
+              children
+            )}
+          </PartBoundary>
+          <PendingChoices />
+        </main>
+        {entity === null ? null : (
+          <Side label={entity} ref={panel} stacked={params.get("from") !== null} onClose={closeEntity}>
+            <PartBoundary key={entity}>
+              <EntityPanel entityRef={entity} />
+            </PartBoundary>
+          </Side>
+        )}
+        {adding ? (
+          <NewLineSheet
+            repos={newLine.repos}
+            repoNames={newLine.repoNames}
+            upNext={newLine.upNext}
+            notSaved={newLine.notSaved}
+            reposStatus={
+              newLine.reposLoading ? (
+                <LoadingState label="Loading the repos" />
+              ) : newLine.reposError === null ? undefined : (
+                <ErrorState
+                  title="Could not load the repos."
+                  error={newLine.reposError}
+                  onRetry={newLine.retryRepos}
+                />
+              )
+            }
+            draft={newLine.draft}
+            onDraft={newLine.setDraft}
+            onAdd={(line) => {
+              newLine.add(line);
+              setParams({ new: null });
+            }}
+            onCancel={() => setParams({ new: null })}
+          />
+        ) : null}
+      </KeysHeldProvider>
+    </>
+  );
+}

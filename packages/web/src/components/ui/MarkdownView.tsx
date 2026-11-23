@@ -1,0 +1,46 @@
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { Icon } from "./Icon.tsx";
+
+/** What a sentence may hold: emphasis, code and links, never blocks such as headings or lists. */
+const INLINE = ["p", "strong", "em", "del", "code", "a"];
+
+/**
+ * Markdown as React elements: no HTML in the text is ever rendered as HTML, so whatever an agent writes cannot inject
+ * anything. Links leaving the dashboard open in a new tab and say so with an outward arrow icon; those to a page here with an arrow. Inline text keeps only
+ * what fits in a sentence;
+ * without links, for text inside something that is itself clicked, such as an option.
+ */
+export default function MarkdownView({
+  text,
+  inline = false,
+  links = true,
+}: {
+  text: string;
+  inline?: boolean;
+  links?: boolean;
+}) {
+  const allowed = links ? INLINE : INLINE.filter((element) => element !== "a");
+  const view = (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      {...(inline ? { allowedElements: allowed, unwrapDisallowed: true } : {})}
+      components={{
+        a: ({ href, children }) => {
+          // A link to a page here stays in this tab, with an arrow; anywhere else opens a new one, with an outward arrow.
+          const inside = href !== undefined && (href.startsWith("/") || href.startsWith("#"));
+          return (
+            <a className="ui-link" href={href} {...(inside ? {} : { target: "_blank", rel: "noreferrer" })}>
+              {children}
+              <Icon name={inside ? "arrow" : "external"} />
+            </a>
+          );
+        },
+        ...(inline ? { p: ({ children }) => <>{children}</> } : {}),
+      }}
+    >
+      {text}
+    </ReactMarkdown>
+  );
+  return inline ? <span className="ui-prose-inline">{view}</span> : <div className="ui-prose">{view}</div>;
+}

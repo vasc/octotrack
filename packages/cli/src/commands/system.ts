@@ -1,0 +1,499 @@
+import { wakeAdaptersPath } from "@octotrack/server/paths";
+import { writeFileSync } from "node:fs";
+import { BatchOp, contracts as c, type Counts } from "@octotrack/core";
+import { DEFAULT_PORT, serverLogPath, serverStoppedPath, serverUrl, startServer } from "@octotrack/server";
+import { z } from "zod";
+import { UsageError } from "../args.ts";
+import { ConnectionError, RemoteError } from "../client.ts";
+import type { Command } from "../command.ts";
+import { agentGuide } from "../guide.ts";
+import { loadWakeAdapters } from "@octotrack/server/wake-adapters";
+import * as r from "../render.ts";
+import { seedDemo } from "../seed.ts";
+import { compact } from "./shared.ts";
+import { print, printError } from "../write.ts";
+
+const STRING = { type: "string" } as const;
+const EXIT_UNREACHABLE = 3;
+
+export const Health = z.object({
+  ok: z.boolean(),
+  cursor: z.number(),
+  pid: z.number().nullable(),
+  schema: z.number().optional(),
+  build: z.string().optional(),
+});
+const OpList = z.object({
+  data: z.array(z.object({ name: z.string(), summary: z.string(), mutates: z.boolean() })),
+});
+const OpDetail = z.object({ data: z.unknown() });
+
+function renderCounts(counts: Counts): string {
+  const attention = (value: number, label: string) =>
+    value > 0 ? r.yellow(`${value} ${label}`) : r.dim(`0 ${label}`);
+  return [
+    attention(counts.openDecisions, counts.openDecisions === 1 ? "decision open" : "decisions open"),
+    attention(counts.openDrift, "drift"),
+    attention(counts.failingPrs, counts.failingPrs === 1 ? "PR failing" : "PRs failing"),
+    `${counts.openPrs} ${counts.openPrs === 1 ? "PR" : "PRs"} open`,
+    `${counts.activeIssues} ${counts.activeIssues === 1 ? "issue" : "issues"} active`,
+    attention(counts.blockedIssues, "blocked"),
+    attention(counts.waitingWatches, counts.waitingWatches === 1 ? "agent waiting" : "agents waiting"),
+  ].join("  ");
+}
+
+/** The command that opens a URL in the default browser, on whatever system this runs. */
+export function opener(url: string, platform: NodeJS.Platform = process.platform): string[] {
+  if (platform === "darwin") return ["open", url];
+  if (platform === "win32") return ["cmd", "/c", "start", "", url];
+  return ["xdg-open", url];
+}
+
+export const systemCommands: Command[] = [
+  {
+    path: ["status"],
+    summary: "One screen: what needs the developer, and how things stand",
+    ops: [c.dashboardBootstrap.name],
+    async run({ client, out }) {
+      const outcome = await client.call(c.dashboardBootstrap, {});
+      const { counts, queue, prs, watches, syncFailures } = outcome.data;
+      out.result(outcome, () =>
+        [
+          renderCounts(counts),
+          ...syncFailures.map((failure) => r.red(`PR status is stale for ${failure.repo}: ${failure.error}`)),
+          "",
+          r.bold("Decisions"),
+          r.renderQueue(queue.slice(0, 10)),
+          "",
+          r.bold("Pull requests"),
+          r.renderPrs(
+            prs.filter((card) => card.pr.state === "open" || card.pr.state === "draft").slice(0, 10),
+          ),
+          ...(watches.length > 0 ? ["", r.bold("Agents waiting"), r.renderWatches(watches)] : []),
+        ].join("\n"),
+      );
+    },
+  },
+  {
+    path: ["next"],
+    summary: "What this agent should do now",
+    options: {
+      for: { ...STRING, description: "Ask on behalf of another agent" },
+      repo: { ...STRING, short: "p", aliases: ["project"], description: "Only this repo" },
+      limit: { ...STRING, description: "How many items per section" },
+    },
+    ops: [c.next.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(
+        c.next,
+        compact({ agent: args.str("for"), project: args.str("repo"), limit: args.int("limit") }),
+      );
+      out.result(outcome, () => r.renderNext(outcome.data));
+    },
+  },
+  {
+    path: ["agent", "list"],
+    summary: "Every agent: its state, repo, line and role, and its last command",
+    ops: [c.agentList.name],
+    async run({ client, out }) {
+      const outcome = await client.call(c.agentList, {});
+      out.result(outcome, () => r.renderAgents(outcome.data));
+    },
+  },
+  {
+    path: ["agent", "register"],
+    summary:
+      "Say how to wake you, or that you cannot be woken, and which repo you serve if your checkout does not say",
+    options: {
+      wake: { ...STRING, description: "Your wake address, <adapter>:<address>, such as screen:octo-panel" },
+      "no-wake": {
+        type: "boolean",
+        description: "You cannot be woken: you hear things on your next command",
+      },
+      repo: {
+        ...STRING,
+        description: "The repo you serve, when your checkout's remote is not a tracked GitHub repo",
+      },
+    },
+    examples: ["octo agent register --wake screen:octo-panel", "octo agent register --no-wake --repo GARDEN"],
+    ops: [c.agentRegister.name],
+    async run({ client, out }, args) {
+      const wake = args.flag("no-wake") ? null : args.str("wake");
+      const outcome = await client.call(c.agentRegister, compact({ wake, repo: args.str("repo") }));
+      out.result(outcome, () => r.renderAgents([outcome.data]));
+    },
+  },
+  {
+    path: ["choice", "list"],
+    summary: "The developer's choices still waiting to take effect, each with its Undo window",
+    ops: [c.choiceList.name],
+    async run({ client, out }) {
+      const outcome = await client.call(c.choiceList, {});
+      out.result(outcome, () =>
+        outcome.data.length === 0
+          ? r.dim("Nothing waiting.")
+          : r.table(
+              outcome.data.map((choice) => [
+                String(choice.id),
+                choice.summary,
+                `at ${choice.dueAt.slice(11, 19)}`,
+              ]),
+            ),
+      );
+    },
+  },
+  {
+    path: ["choice", "make"],
+    usage: "<op>",
+    summary:
+      "Make a choice that waits a few seconds with Undo (the developer). The dashboard does this for you",
+    options: {
+      input: { ...STRING, description: "The operation's input, as JSON" },
+      summary: { ...STRING, description: "What the choice is, in words (required)" },
+      delay: { ...STRING, description: "How long it waits, in milliseconds. Default 5000" },
+    },
+    ops: [c.choiceMake.name],
+    async run({ client, out }, args) {
+      const summary = args.str("summary");
+      if (summary === undefined) throw new UsageError("Missing --summary");
+      const outcome = await client.call(
+        c.choiceMake,
+        compact({
+          op: args.requirePositional(0, "op"),
+          input: JSON.parse(args.str("input") ?? "{}"),
+          summary,
+          delayMs: args.int("delay"),
+        }),
+      );
+      out.result(
+        outcome,
+        () =>
+          `${outcome.data.summary}: takes effect at ${outcome.data.dueAt}. Undo: octo choice undo ${outcome.data.id}`,
+      );
+    },
+  },
+  {
+    path: ["choice", "undo"],
+    usage: "<id>",
+    summary: "Undo a choice still waiting",
+    ops: [c.choiceUndo.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(c.choiceUndo, { id: Number(args.requirePositional(0, "id")) });
+      out.result(outcome, () => `Undone: ${outcome.data.summary}`);
+    },
+  },
+  {
+    path: ["choice", "now"],
+    usage: "<id>",
+    summary: "Apply a waiting choice at once",
+    ops: [c.choiceNow.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(c.choiceNow, { id: Number(args.requirePositional(0, "id")) });
+      out.result(outcome, () =>
+        outcome.data.state === "failed"
+          ? `Failed: ${outcome.data.error ?? ""}`
+          : `Done: ${outcome.data.summary}`,
+      );
+    },
+  },
+  {
+    path: ["draft", "save"],
+    usage: "<key> [text]",
+    summary: "Keep a half-written answer or note; no text clears it",
+    ops: [c.draftSave.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(c.draftSave, {
+        key: args.requirePositional(0, "key"),
+        text: args.positionals.slice(1).join(" "),
+      });
+      out.result(outcome, () => (outcome.data.text === null ? "Cleared." : "Kept."));
+    },
+  },
+  {
+    path: ["draft", "get"],
+    usage: "<key>",
+    summary: "Read a kept draft",
+    ops: [c.draftGet.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(c.draftGet, { key: args.requirePositional(0, "key") });
+      out.result(outcome, () => outcome.data.text ?? r.dim("No draft."));
+    },
+  },
+  {
+    path: ["agent", "wakes"],
+    summary: "Asleep agents with something waiting, and how each is woken. The server wakes them itself",
+    ops: [c.agentWakes.name],
+    async run({ client, out }) {
+      const outcome = await client.call(c.agentWakes, {});
+      out.result(outcome, () =>
+        outcome.data.length === 0
+          ? r.dim("Nobody to wake.")
+          : r.table(outcome.data.map((wake) => [r.bold(wake.agent), wake.address, wake.message])),
+      );
+    },
+  },
+  {
+    path: ["agent", "waking"],
+    summary:
+      "Wakes whose end is not recorded yet, with their process and whether the agent was stopped. The server settles them",
+    ops: [c.agentWaking.name],
+    async run({ client, out }) {
+      const outcome = await client.call(c.agentWaking, {});
+      out.result(outcome, () =>
+        outcome.data.length === 0
+          ? r.dim("No wake is running.")
+          : r.table(
+              outcome.data.map((wake) => [
+                r.bold(wake.agent),
+                wake.pid === null ? "not spawned yet" : `pid ${wake.pid}`,
+                `since ${wake.since}`,
+                wake.stopped ? "stopped" : "",
+              ]),
+            ),
+      );
+    },
+  },
+  {
+    path: ["agent", "woken"],
+    usage: "<name>",
+    summary: "Record that an agent was woken, or with --error that it could not be, which makes it gone",
+    options: { error: { ...STRING, description: "Why the wake failed" } },
+    ops: [c.agentWoken.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(
+        c.agentWoken,
+        compact({ name: args.requirePositional(0, "name"), error: args.str("error") }),
+      );
+      out.result(outcome, () => r.renderAgents([outcome.data]));
+    },
+  },
+  {
+    path: ["agent", "stop"],
+    usage: "<name>",
+    summary: "Stop an agent: its claims end and its writes are refused until lifted",
+    options: { reason: { ...STRING, description: "Why, which the agent is told" } },
+    ops: [c.agentStop.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(
+        c.agentStop,
+        compact({ name: args.requirePositional(0, "name"), reason: args.str("reason") }),
+      );
+      out.result(outcome, () => `${r.bold(outcome.data.name)} stopped.`);
+    },
+  },
+  {
+    path: ["agent", "release"],
+    usage: "<name>",
+    summary: "End an agent's claims, such as one that went quiet: on every line it is on, or the one given",
+    options: { line: { type: "string", description: "Only this line" } },
+    examples: ["octo agent release panel.2 --me", "octo agent release panel.2 --line L-7 --me"],
+    ops: [c.agentRelease.name],
+    async run({ client, out }, args) {
+      const line = args.str("line");
+      const outcome = await client.call(c.agentRelease, {
+        name: args.requirePositional(0, "name"),
+        ...(line === undefined ? {} : { line }),
+      });
+      out.result(
+        outcome,
+        () =>
+          `${r.bold(outcome.data.name)} released${line === undefined ? "" : ` from ${line}`}; a line it owned looks for an owner.`,
+      );
+    },
+  },
+  {
+    path: ["agent", "lift"],
+    usage: "<name>",
+    summary: "Lift an agent's stop",
+    ops: [c.agentLift.name],
+    async run({ client, out }, args) {
+      const outcome = await client.call(c.agentLift, { name: args.requirePositional(0, "name") });
+      out.result(outcome, () => `${r.bold(outcome.data.name)} may write again.`);
+    },
+  },
+  {
+    path: ["agent", "note"],
+    usage: "<text>",
+    summary: "Say what this agent is working on, shown in the dashboard",
+    options: { clear: { type: "boolean", description: "Remove the note" } },
+    ops: [c.agentNote.name],
+    async run({ client, out }, args) {
+      const note = args.flag("clear") ? null : args.requirePositional(0, "text");
+      const outcome = await client.call(c.agentNote, { note });
+      out.result(outcome, () => `${outcome.data.name}: ${outcome.data.note ?? "(no note)"}`);
+    },
+  },
+  {
+    path: ["fields"],
+    summary: "List the query language fields",
+    ops: [c.systemFields.name],
+    async run({ client, out }) {
+      const outcome = await client.call(c.systemFields, {});
+      out.result(outcome, () =>
+        r.table(outcome.data.map((field) => [r.bold(field.name), field.description])),
+      );
+    },
+  },
+  {
+    path: ["ops"],
+    usage: "[name]",
+    summary: "List every operation, or show one with its input and output schemas",
+    ops: [],
+    async run({ client, out }, args) {
+      const name = args.positionals[0];
+      if (name === undefined) {
+        const { data } = OpList.parse(await client.get("/api/ops"));
+        out.data(data, () =>
+          r.table(data.map((op) => [r.bold(op.name), op.mutates ? "write" : r.dim("read"), op.summary])),
+        );
+        return 0;
+      }
+      const { data } = OpDetail.parse(await client.get(`/api/ops/${name}`));
+      out.data(data, () => JSON.stringify(data, null, 2));
+      return 0;
+    },
+  },
+  {
+    path: ["op"],
+    usage: "<name>",
+    summary: "Run any operation with JSON input. Reaches everything",
+    options: {
+      input: { ...STRING, short: "i", description: "JSON input. Without it, read from stdin when piped" },
+    },
+    examples: [`octo op issue.update --input '{"refs":["OCT-1"],"status":"done"}'`],
+    ops: [],
+    async run({ client, out }, args) {
+      const name = args.requirePositional(0, "name");
+      const inline = args.str("input");
+      const text = inline ?? (process.stdin.isTTY ? "{}" : await Bun.stdin.text());
+      const input: unknown = JSON.parse(text.trim() === "" ? "{}" : text);
+      const outcome = await client.op(name, input);
+      out.result(outcome, () => JSON.stringify(outcome.data, null, 2));
+    },
+  },
+  {
+    path: ["batch"],
+    summary: "Run many operations in one call: JSON array or one op per line, from stdin or a file",
+    options: {
+      file: { ...STRING, short: "f", description: "Read from this file instead of stdin" },
+      "keep-going": { type: "boolean", description: "Each op stands alone. Default: all or nothing" },
+    },
+    examples: [
+      `echo '[{"op":"issue.create","as":"a","input":{"project":"OCT","title":"One"}},{"op":"update.post","input":{"body":"Started","target":"$a.ref"}}]' | octo batch`,
+    ],
+    ops: [],
+    async run({ client, out }, args) {
+      const file = args.str("file");
+      const text = (file === undefined ? await Bun.stdin.text() : await Bun.file(file).text()).trim();
+      if (text === "") throw new UsageError("Nothing to run. Pipe in a JSON array of {op, input, as}");
+      const raw: unknown = text.startsWith("[")
+        ? JSON.parse(text)
+        : text
+            .split("\n")
+            .filter((line) => line.trim() !== "")
+            .map((line): unknown => JSON.parse(line));
+      const ops = z.array(BatchOp).parse(raw);
+      const result = await client.batch({ ops, atomic: !args.flag("keep-going") });
+      out.line(result, () =>
+        result.results
+          .map((item) => {
+            if (item.ok) return `${r.green("ok")} ${item.op}`;
+            return `${item.error?.code === "rolled_back" ? r.dim("rolled back") : r.red("failed")} ${item.op}: ${item.error?.message ?? ""}`;
+          })
+          .join("\n"),
+      );
+      if (!out.json) {
+        const notice = r.renderDriftNotice(result.driftOpened);
+        if (notice !== "") printError(notice);
+      }
+      return result.ok ? 0 : 1;
+    },
+  },
+  {
+    path: ["guide"],
+    summary: "The agent playbook. Point agents at this, or paste it into their instructions",
+    ops: [],
+    async run() {
+      print(agentGuide(loadWakeAdapters(wakeAdaptersPath())));
+    },
+  },
+  {
+    path: ["serve"],
+    summary: "Run the server in the foreground. Other commands start it on demand",
+    options: { port: { ...STRING, description: `Port, default ${DEFAULT_PORT}` } },
+    ops: [],
+    async run(_ctx, args) {
+      const port = args.int("port") ?? DEFAULT_PORT;
+      const server = startServer(port);
+      print(`Octotrack on ${server.url}`);
+      await new Promise(() => {});
+    },
+  },
+  {
+    path: ["server", "status"],
+    summary: "Is the server up?",
+    ops: [],
+    async run({ client, out }) {
+      try {
+        const health = Health.parse(await client.withoutAutoStart().get("/api/health"));
+        out.data(
+          { ...health, up: true, url: client.baseUrl, log: serverLogPath() },
+          () =>
+            `Up at ${client.baseUrl}, pid ${health.pid ?? "?"}, cursor ${health.cursor}, schema ${health.schema ?? "?"}, build ${health.build ?? "?"}.`,
+        );
+        return 0;
+      } catch (error) {
+        if (!(error instanceof ConnectionError)) throw error;
+        out.data({ up: false, url: client.baseUrl }, () => `Down. Any command but this one starts it.`);
+        return EXIT_UNREACHABLE;
+      }
+    },
+  },
+  {
+    path: ["server", "stop"],
+    summary: "Stop the background server. The next command starts it again",
+    ops: [],
+    async run({ client, out }) {
+      // Waiting agents restart a dead server, which is not what someone stopping it wants.
+      writeFileSync(serverStoppedPath(), "");
+      try {
+        const health = Health.parse(await client.withoutAutoStart().get("/api/health"));
+        if (health.pid !== null) process.kill(health.pid, "SIGTERM");
+        out.data({ stopped: health.pid }, () => `Stopped pid ${health.pid ?? "?"}.`);
+      } catch (error) {
+        if (!(error instanceof ConnectionError)) throw error;
+        out.data({ stopped: null }, () => "It was not running.");
+      }
+    },
+  },
+  {
+    path: ["open"],
+    summary: "Open the dashboard in the browser",
+    ops: [],
+    async run({ client, out }) {
+      Health.parse(await client.get("/api/health"));
+      Bun.spawn(opener(serverUrl()), { stdout: "ignore", stderr: "ignore" }).unref();
+      out.data({ url: serverUrl() }, () => serverUrl());
+    },
+  },
+  {
+    path: ["seed", "demo"],
+    summary: "Fill an empty tracker with made-up projects, to try the dashboard",
+    ops: [],
+    async run({ client, out }) {
+      const projects = await client.call(c.projectList, {});
+      if (projects.data.length > 0) {
+        throw new RemoteError({
+          code: "conflict",
+          message: "This tracker already has projects, so the demo data was not added",
+          hint: "Point OCTO_HOME and OCTO_URL at a scratch location to try the demo.",
+        });
+      }
+      const created = await seedDemo(client);
+      out.data(
+        created,
+        () => `Created ${created.decisions} decisions, ${created.issues} issues and ${created.prs} PRs.`,
+      );
+    },
+  },
+];

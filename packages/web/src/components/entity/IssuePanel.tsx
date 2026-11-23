@@ -1,0 +1,169 @@
+import { contracts } from "@octotrack/core/contracts";
+import type { EntityDetail, Issue } from "@octotrack/core/schemas";
+import { Fragment } from "react";
+import { useBackTo } from "../../hooks/useBackTo.ts";
+import { useHome } from "../../hooks/useHome.ts";
+import { useIssueTell } from "../../hooks/useIssueTell.ts";
+import { useOpQuery } from "../../hooks/useOp.ts";
+import { capitalized, humanize } from "../../lib/format.ts";
+import { issueLinks } from "../../lib/links.ts";
+import { closeEntity, openEntity } from "../../lib/router.ts";
+import { howClosed, isTask } from "../../lib/tasks.ts";
+import { TaskClosed } from "../home/TaskClosed.tsx";
+import { TaskItem } from "../home/TaskItem.tsx";
+import { Facts } from "../ui/Facts.tsx";
+import { StaleNote } from "../ui/Loaded.tsx";
+import { Markdown } from "../ui/Markdown.tsx";
+import { NotKept } from "../ui/NotKept.tsx";
+import { Code, Note } from "../ui/Note.tsx";
+import { Stack } from "../ui/Pairs.tsx";
+import { Panel } from "../ui/Panel.tsx";
+import { RefLink, TextLink } from "../ui/RefLink.tsx";
+import { EventList } from "./EventList.tsx";
+import { OpenDrift } from "./OpenDrift.tsx";
+import { PullRequestBox } from "./PullRequestBox.tsx";
+import { TaskFrees } from "./TaskFrees.tsx";
+import { TellBox } from "./TellBox.tsx";
+import { Icon } from "../ui/Icon.tsx";
+
+/**
+ * A task or an issue opened in place, as Panels.dc.html draws it. A task: what it is, what to send back, and what it frees.
+ * An issue: what it is, its pull requests with their checks, what happened lately, and Tell whoever holds it.
+ */
+export function IssuePanel({
+  issue,
+  detail,
+  stale = null,
+  staleAt,
+  onRetry,
+}: {
+  issue: Issue;
+  detail: EntityDetail;
+  /** Why the panel could not refresh, once it had loaded: what it shows may be out of date. */
+  stale?: Error | null;
+  /** When what is shown was last loaded, for a stale panel to say. */
+  staleAt?: number;
+  /** Loads it again, after a refresh that failed. */
+  onRetry?: () => void;
+}) {
+  const h = useHome();
+  // Opened from another panel: Back returns there, and Close shuts the panel.
+  const back = useBackTo();
+  const prs = useOpQuery(contracts.prList, { query: `linked:${issue.ref} kind:pr` });
+  const tell = useIssueTell(issue);
+  const line = issue.line === null ? null : h.lineOf(issue.line);
+  const task = isTask(issue);
+  const open = issue.status !== "done" && issue.status !== "cancelled";
+  const { frees, waitsOn } = issueLinks(issue.ref, detail.links);
+  // A Tell about an issue reaches whoever holds it, else the line's owner, as the server delivers it.
+  const owner = issue.line === null ? null : (h.home.data?.crews[issue.line]?.owner?.name ?? null);
+  const tellTo =
+    issue.assignee !== null
+      ? `${issue.assignee}, who holds ${issue.ref}`
+      : owner === null
+        ? null
+        : `${owner}, who owns ${issue.line ?? ""}`;
+  const freed = detail.linked.filter((item) => frees.includes(item.ref));
+  return (
+    <Panel
+      crumbs={
+        <nav aria-label="Where this is">
+          {issue.line === null ? null : (
+            <>
+              <Code>{issue.line}</Code>{" "}
+              {line === null ? (
+                h.home.isPending ? (
+                  "…"
+                ) : null
+              ) : (
+                <TextLink onClick={() => openEntity(line.ref)}>{line.title}</TextLink>
+              )}
+              <Icon name="forward" />
+            </>
+          )}
+          <Code>{issue.ref}</Code>
+        </nav>
+      }
+      {...(task ? {} : { title: issue.title })}
+      onClose={closeEntity}
+      back={back}
+    >
+      {stale === null ? null : <StaleNote at={staleAt} what={issue.ref} onRetry={onRetry} />}
+      {task ? (
+        open ? (
+          <TaskItem
+            task={issue}
+            frees={freed[0] === undefined ? null : { ref: freed[0].ref, title: freed[0].title }}
+            onDone={h.taskDone}
+            onCant={h.taskCant}
+          />
+        ) : (
+          <TaskClosed task={issue} closed={howClosed(detail.history)} />
+        )
+      ) : (
+        <Stack>
+          <Facts>
+            {capitalized(humanize(issue.status))}
+            {issue.assignee === null ? "nobody holds it" : `held by ${issue.assignee}`}
+            <Code>{h.repoName(issue.project)}</Code>
+            {waitsOn.length === 0 ? null : <RefList label="waiting on" refs={waitsOn} />}
+            {frees.length === 0 ? null : <RefList label="holds up" refs={frees} />}
+          </Facts>
+          {issue.body === "" ? null : <Markdown text={issue.body} />}
+          {waitsOn.some((ref) => /^D-\d+$/.test(ref)) ? (
+            <Note>
+              It waits on you: answer{" "}
+              {waitsOn
+                .filter((ref) => /^D-\d+$/.test(ref))
+                .map((ref) => (
+                  <RefLink key={ref} value={ref} />
+                ))}{" "}
+              first.
+            </Note>
+          ) : null}
+        </Stack>
+      )}
+      {task ? (
+        <TaskFrees freed={freed} />
+      ) : (
+        <>
+          <PullRequestBox
+            prs={(prs.data ?? []).map((card) => card.pr)}
+            loading={prs.isPending}
+            error={prs.error}
+            onRetry={() => void prs.refetch()}
+          />
+          <EventList title="Activity" events={detail.history} />
+          {issue.line === null ? null : (
+            <TellBox
+              line={issue.line}
+              to={tellTo}
+              loading={h.home.isPending}
+              words={tell.draft.value}
+              sending={tell.sending}
+              onWords={tell.draft.change}
+              onSend={tell.send}
+            />
+          )}
+        </>
+      )}
+      <OpenDrift drift={detail.drift} />
+      <NotKept unsaved={tell.draft.error !== null} />
+    </Panel>
+  );
+}
+
+/** Refs after a few words, such as what an issue waits on. */
+function RefList({ label, refs }: { label: string; refs: readonly string[] }) {
+  return (
+    <>
+      {label}
+      {refs.map((ref) => (
+        <Fragment key={ref}>
+          {" "}
+          <RefLink value={ref} />
+        </Fragment>
+      ))}
+    </>
+  );
+}

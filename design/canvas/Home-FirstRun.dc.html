@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lines, nothing placed yet</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1f2328;text-decoration:none}a:hover{text-decoration:underline}
+</style>
+</helmet>
+<div style="min-height: 1500px; background: #f5f6f8; color: #1f2328; font-family: Inter, -apple-system, system-ui, sans-serif; font-size: 14px; line-height: 20px">
+
+<header style="background: #ffffff; border-bottom: 1px solid #d8dde3">
+<div style="max-width: 1180px; margin: 0 auto; padding: 0 32px; min-height: 52px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px">
+<nav aria-label="Main" style="display: flex; align-items: center; gap: 20px">
+<a href="#" aria-current="page" style="font-weight: 600; font-size: 15px">Octotrack</a>
+<a href="#" style="font-size: 13px; color: #424a53">Log</a>
+<a href="#" style="font-size: 13px; color: #424a53">Agents</a>
+</nav>
+<nav aria-label="Waiting on you" style="display: flex; flex-wrap: wrap; gap: 4px">
+<a href="#" style="font-size: 13px; padding: 2px 10px; border-radius: 999px; background: #fbefff; color: #1f2328"><b style="color: #8250df">67</b> to accept</a>
+</nav>
+<div style="margin-left: auto; display: flex; align-items: center; gap: 8px">
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 12px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">+ New line</button>
+<button type="button" aria-label="Appearance" style="font: inherit; height: 32px; width: 32px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff; color: #424a53">◐</button>
+<button type="button" aria-label="Keyboard shortcuts" style="font: inherit; font-family: 'JetBrains Mono', monospace; font-size: 12px; height: 32px; width: 32px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff; color: #424a53">?</button>
+</div>
+</div>
+</header>
+
+<main style="max-width: 1180px; margin: 0 auto; padding: 28px 32px 64px; display: flex; flex-direction: column; gap: 32px">
+<h1 style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Lines</h1>
+
+<section aria-labelledby="h-first" style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 20px 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 32px">
+<div style="display: flex; flex-direction: column; gap: 4px; max-width: 70ch">
+<h2 id="h-first" style="margin: 0; font-size: 16px; line-height: 22px; font-weight: 600">Nothing is placed yet</h2>
+<p style="margin: 0; color: #424a53">Your agents proposed 67 lines. 51 carry a recommendation: 10 to start, 26 for up next, 14 to table and 1 to fold. 16 have none.</p>
+</div>
+<button type="button" style="font: inherit; font-size: 14px; font-weight: 600; height: 40px; padding: 0 18px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Accept 51 recommendations</button>
+</section>
+
+<section aria-labelledby="h-start" style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px">
+<h2 id="h-start" style="margin: 0; font-size: 15px; font-weight: 600">Recommended to start <span style="font-weight: 400; color: #59636e">10</span></h2>
+</div>
+<ul style="margin: 0; padding: 0; list-style: none; background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; overflow: hidden">
+
+<li style="padding: 14px 20px; border-bottom: 1px solid #eef1f4; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 24px; align-items: start">
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+<a href="#" style="font-weight: 600">The home worker fetches new videos again without YouTube refusing it</a>
+<span style="font-size: 12px; color: #59636e"><span style="font-family: 'JetBrains Mono', monospace">L-59</span> · VIDEO · proposed by video-agent</span>
+<p style="margin: 2px 0 0; font-size: 13px; color: #424a53; max-width: 80ch">YouTube refused the home worker again on 14 Nov; every new video a child presses since is refused, only cached ones play.</p>
+</div>
+<div style="display: flex; gap: 6px"><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Start</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 10px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Other ▾</button></div>
+</li>
+
+<li style="padding: 14px 20px; border-bottom: 1px solid #eef1f4; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 24px; align-items: start">
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+<a href="#" style="font-weight: 600">Team offsite: pick the venue and book everything</a>
+<span style="font-size: 12px; color: #59636e"><span style="font-family: 'JetBrains Mono', monospace">L-24</span> · TRIP · proposed by travel-agent</span>
+<p style="margin: 2px 0 0; font-size: 13px; color: #424a53; max-width: 80ch">The offsite starts 12 May; rooms nearby are already selling out and nothing of the 12 items is booked yet.</p>
+</div>
+<div style="display: flex; gap: 6px"><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Start</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 10px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Other ▾</button></div>
+</li>
+
+<li style="padding: 14px 20px; border-bottom: 1px solid #eef1f4; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 24px; align-items: start">
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+<a href="#" style="font-weight: 600">build server keeps enough free disk for deploys</a>
+<span style="font-size: 12px; color: #59636e"><span style="font-family: 'JetBrains Mono', monospace">L-46</span> · OPS · proposed by ops-agent</span>
+<p style="margin: 2px 0 0; font-size: 13px; color: #424a53; max-width: 80ch">The data volume is at 93% (15 GB free); when it fills, deploys fail for every service on the mini.</p>
+</div>
+<div style="display: flex; gap: 6px"><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Start</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 10px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Other ▾</button></div>
+</li>
+
+<li style="padding: 14px 20px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 24px; align-items: start">
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+<a href="#" style="font-weight: 600">Finish removing the old office switch from the home server</a>
+<span style="font-size: 12px; color: #59636e"><span style="font-family: 'JetBrains Mono', monospace">L-30</span> · HOME · proposed by home-agent</span>
+<p style="margin: 2px 0 0; font-size: 13px; color: #424a53; max-width: 80ch">Until the leftover package file is removed from the host, bin/deploy refuses to run, so nothing else in this repo can be deployed.</p>
+</div>
+<div style="display: flex; gap: 6px"><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Start</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 10px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Other ▾</button></div>
+</li>
+</ul>
+<button type="button" style="align-self: flex-start; font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff; cursor: pointer">Show 6 more</button>
+</section>
+
+<section aria-labelledby="h-next" style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px">
+<h2 id="h-next" style="margin: 0; font-size: 15px; font-weight: 600">Recommended for up next <span style="font-weight: 400; color: #59636e">26</span></h2>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Show</button>
+</div>
+<p style="margin: 0; font-size: 13px; color: #59636e">Includes Put the chat CLI on a safe footing, and 25 more.</p>
+</section>
+
+<section aria-labelledby="h-table" style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px">
+<h2 id="h-table" style="margin: 0; font-size: 15px; font-weight: 600">Recommended to table <span style="font-weight: 400; color: #59636e">14</span></h2>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Show</button>
+</div>
+<p style="margin: 0; font-size: 13px; color: #59636e">Includes Buzz speed follow-ups, and 13 more.</p>
+</section>
+
+<section aria-labelledby="h-fold" style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px">
+<h2 id="h-fold" style="margin: 0; font-size: 15px; font-weight: 600">Recommended to fold into another <span style="font-weight: 400; color: #59636e">1</span></h2>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Show</button>
+</div>
+<p style="margin: 0; font-size: 13px; color: #59636e">One line its agent found is part of another line's work.</p>
+</section>
+
+<section aria-labelledby="h-none" style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px">
+<h2 id="h-none" style="margin: 0; font-size: 15px; font-weight: 600">No recommendation <span style="font-weight: 400; color: #59636e">16</span></h2>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Show</button>
+</div>
+<p style="margin: 0; font-size: 13px; color: #59636e">Old milestones and ideas from before lines existed.</p>
+</section>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1500}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

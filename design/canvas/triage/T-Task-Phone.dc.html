@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Triage, a task, phone</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2F45C6;text-decoration:none}a:hover{color:#1F2F94}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: #F2F3F5; color: #14161B; font-family: 'Inter Tight', Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.5; overflow: hidden">
+
+<header style="display: flex; align-items: center; gap: 4px; height: 56px; padding: 0 12px 0 16px; border-bottom: 1px solid #E3E6EB; flex: none">
+<a href="#" aria-label="Octotrack" style="display: grid; place-items: center; width: 36px; height: 36px; margin-right: 4px; color: #14161B"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8.2 2.8h7.6l5.4 5.4v7.6l-5.4 5.4H8.2l-5.4-5.4V8.2z"></path><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"></circle></svg></a>
+<a href="#" style="display: flex; align-items: center; height: 36px; padding: 0 12px; border-radius: 8px; color: #5A606C; font-weight: 500">Lines</a>
+<a href="#" aria-current="page" style="display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 8px; background: #FFFFFF; font-weight: 600; box-shadow: 0 0 0 1px #E3E6EB; color: #14161B">For you<span style="display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 10px; background: #FFF1DB; color: #8A4A00; font-size: 12px; font-weight: 700">11</span></a>
+<button type="button" aria-label="New line" style="display: grid; place-items: center; width: 44px; height: 44px; margin-left: auto; border: 0; border-radius: 10px; background: #14161B; color: #FFFFFF"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+</header>
+
+<div style="display: flex; flex-direction: column; gap: 14px; padding: 16px 16px 0; flex: 1; min-height: 0">
+<div style="display: flex; align-items: center; gap: 12px">
+<button type="button" style="display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border: 1px solid #E3E6EB; border-radius: 8px; background: #FFFFFF; font: inherit; font-size: 14px; font-weight: 600">To do<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></button>
+<span style="font-size: 13px; color: #6E7480; white-space: nowrap">2 of 4 open</span>
+</div>
+
+<div style="display: flex; flex-direction: column; border-radius: 16px; background: #FFFFFF; box-shadow: 0 0 0 1px #E3E6EB">
+<a href="#" style="display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 10px; align-items: center; min-height: 56px; padding: 8px 14px; border-bottom: 1px solid #EEF0F3; color: #14161B"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8A909B">1</span><span style="display: flex; flex-direction: column; min-width: 0"><span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Try the mockup on the phone</span><span style="font-size: 13px; color: #6E7480; white-space: nowrap; overflow: hidden; text-overflow: ellipsis"><span style="color: #2F45C6; font-weight: 600">Task</span> · One plan, one meal · at the Mac</span></span></a><article aria-current="true" style="display: flex; flex-direction: column; gap: 18px; margin: 4px; padding: 20px 18px; border-radius: 13px; background: #FFFFFF; box-shadow: 0 0 0 1.5px #2F45C6, 0 12px 32px -12px rgba(20, 22, 27, 0.18)">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 13px; color: #6E7480"><a href="#" style="font-weight: 600">Speaker enclosure</a> · at the bench</span>
+<h1 style="margin: 0; font-size: 24px; line-height: 1.22; font-weight: 600; letter-spacing: -0.02em">Measure the board and its holes</h1>
+<span style="color: #474D59">In mm, with calipers on the real parts.</span>
+</div>
+<form style="display: flex; flex-direction: column; gap: 12px">
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600">Length
+<span style="display: flex; align-items: center; height: 48px; padding: 0 14px; border: 1.5px solid #2F45C6; border-radius: 10px"><input value="86.2" aria-label="Length" style="flex: 1; min-width: 0; border: 0; font: inherit; font-size: 16px; font-weight: 500; outline: none"><span style="color: #6E7480; font-weight: 500">mm</span></span>
+</label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600">Holes
+<input aria-label="Holes" placeholder="Spacing and size" style="height: 48px; padding: 0 14px; border: 1.5px solid #D9DDE4; border-radius: 10px; font: inherit; font-size: 16px; font-weight: 400; outline: none">
+</label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600">USB-C grip
+<input aria-label="USB-C grip" placeholder="Does the plug hold?" style="height: 48px; padding: 0 14px; border: 1.5px solid #D9DDE4; border-radius: 10px; font: inherit; font-size: 16px; font-weight: 400; outline: none">
+</label>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding-top: 4px">
+<button type="submit" disabled style="height: 44px; border: 0; border-radius: 10px; background: #DDE1E8; color: #6E7480; font: inherit; font-weight: 600">Done</button>
+<button type="button" style="height: 44px; border: 1px solid #E3E6EB; border-radius: 10px; background: #FFFFFF; font: inherit; font-weight: 500">Can't do it</button>
+<button type="button" style="height: 44px; border: 1px solid #E3E6EB; border-radius: 10px; background: #FFFFFF; font: inherit; font-weight: 500">Reply</button>
+</div>
+</form>
+</article>
+<a href="#" style="display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 10px; align-items: center; min-height: 56px; padding: 8px 14px; color: #14161B"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8A909B">3</span><span style="display: flex; flex-direction: column; min-width: 0"><span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Merge acme/homepanel#14</span><span style="font-size: 13px; color: #6E7480; white-space: nowrap; overflow: hidden; text-overflow: ellipsis"><span style="color: #2F45C6; font-weight: 600">Task</span> · Speaker enclosure · PANEL-2</span></span></a>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

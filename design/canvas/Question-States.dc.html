@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Question, every state</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1f2328;text-decoration:none}a:hover{text-decoration:underline}
+</style>
+</helmet>
+<div style="width: 1760px; min-height: 2400px; box-sizing: border-box; padding: 32px; background: #f5f6f8; color: #1f2328; font-family: Inter, -apple-system, system-ui, sans-serif; font-size: 14px; line-height: 20px; columns: 2; column-gap: 48px">
+
+<!-- A · Not focused -->
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">A · Not focused: one row on its line</h2>
+<button type="button" style="font: inherit; color: inherit; text-align: left; cursor: pointer; background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 12px 16px; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 16px; align-items: center">
+<span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+<span style="font-size: 12px; line-height: 16px; color: #59636e"><span style="color: #8250df; font-weight: 600">Question</span> · D-65</span>
+<span style="font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Which venue for the three offsite nights?</span>
+<span style="font-size: 13px; color: #424a53">Recommended: Keep the cap at the venue: Hotel Jasmin</span>
+</span>
+<span aria-hidden="true" style="color: #59636e; font-size: 16px">›</span>
+</button>
+</section>
+
+<!-- B · Urgent -->
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">B · Urgent: shown first on Lines, says why it is urgent, can be sent back</h2>
+<article style="background: #ffffff; border: 1px solid #6e7781; border-radius: 8px; box-shadow: 0 0 0 3px #e1e5ea; padding: 20px 24px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; line-height: 16px; color: #59636e"><span style="color: #9a6700; font-weight: 600">Urgent · something broken</span><span>L-59 Home worker</span><span style="font-family: 'JetBrains Mono', monospace">D-75</span><span>asked by video-agent</span><span>3h</span></div>
+<h3 style="margin: 0; font-size: 16px; line-height: 22px; font-weight: 600">How should the home worker pace its fetches before it asks YouTube again?</h3>
+<p style="margin: 0; max-width: 66ch; color: #424a53; line-height: 22px">YouTube has refused the home worker (mini) since 14 Nov at 18:49 UTC: a fetch got HTTP 403, so every video not already cached is refused when a child presses it. Reading at a player's pace is built and switched off on mini; full speed is the main thing left that a person's player does not do.</p>
+</div>
+<div style="border-top: 1px solid #eef1f4; padding-top: 20px; display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 12px; line-height: 16px; font-weight: 600; color: #59636e">Your answer</div>
+<div style="display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 12px; align-items: baseline; border: 1px solid #c297ff; background: #fbefff; border-radius: 6px; padding: 11px 14px"><span style="color: #8250df; font-weight: 500">1</span><span style="display: flex; flex-direction: column; gap: 2px"><span><span style="font-weight: 600">Fast start, then paced, with skipping</span> <span style="font-size: 12px; font-weight: 600; color: #8250df">Recommended</span></span><span style="font-size: 13px; line-height: 19px; color: #424a53">The first two minutes come at full speed, the rest at four times its bitrate; both apps let a child skip within what has arrived.</span></span></div>
+<div style="display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 12px; align-items: baseline; border: 1px solid #d8dde3; border-radius: 6px; padding: 11px 14px"><span style="color: #59636e; font-weight: 500">2</span><span style="font-weight: 600">Fast start, full speed to where it was left</span></div>
+<div style="display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 12px; align-items: baseline; border: 1px solid #d8dde3; border-radius: 6px; padding: 11px 14px"><span style="color: #59636e; font-weight: 500">3</span><span style="font-weight: 600">Pace as built</span></div>
+<div style="display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 12px; align-items: baseline; border: 1px solid #d8dde3; border-radius: 6px; padding: 11px 14px"><span style="color: #59636e; font-weight: 500">4</span><span style="font-weight: 600">Do not pace</span></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">In my own words</button>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Later</button>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Not urgent</button>
+</div>
+</article>
+</section>
+
+<!-- C · Answered, waiting with Undo -->
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">C · Answered: the pick is marked, the rest steps back, Undo is right here</h2>
+<article style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 20px 24px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 12px; line-height: 16px; color: #59636e"><span style="color: #8250df; font-weight: 600">Question</span> · D-65 · asked by travel-agent · 2d</div>
+<h3 style="margin: 0; font-size: 16px; line-height: 22px; font-weight: 600">Which venue for the three offsite nights (12 – 15 May)?</h3>
+</div>
+<div style="border-top: 1px solid #eef1f4; padding-top: 20px; display: flex; flex-direction: column; gap: 8px">
+<div style="display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 12px; align-items: baseline; border: 1px solid #d8dde3; border-radius: 6px; padding: 11px 14px; opacity: 0.5"><span style="color: #59636e">1</span><span style="font-weight: 600">Raise the cap: Hotel Stiegl Scala, Bolzano</span></div>
+<div style="display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 12px; align-items: baseline; border: 1px solid #8c959f; border-radius: 6px; padding: 11px 14px; background: #f6f8fa"><span style="font-weight: 600">✓</span><span style="font-weight: 600">Keep the cap at the venue: Hotel Jasmin</span></div>
+<div style="display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 12px; align-items: baseline; border: 1px solid #d8dde3; border-radius: 6px; padding: 11px 14px; opacity: 0.5"><span style="color: #59636e">3</span><span style="font-weight: 600">Keep the cap and the beds: Villa Groff, Auer</span></div>
+</div>
+<div role="status" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; background: #f9fafb; border: 1px solid #eef1f4; border-radius: 6px; padding: 8px 8px 8px 14px">
+<span style="font-size: 13px; color: #424a53">Sending to travel-agent in 4 s</span>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Undo</button>
+</div>
+</article>
+</section>
+
+<!-- D · In my own words -->
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">D · In my own words: the box replaces the options, saved as you type</h2>
+<article style="background: #ffffff; border: 1px solid #6e7781; border-radius: 8px; box-shadow: 0 0 0 3px #e1e5ea; padding: 20px 24px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 12px; line-height: 16px; color: #59636e"><span style="color: #8250df; font-weight: 600">Question</span> · D-65 · asked by travel-agent · 2d</div>
+<h3 style="margin: 0; font-size: 16px; line-height: 22px; font-weight: 600">Which venue for the three offsite nights (12 – 15 May)?</h3>
+</div>
+<div style="border-top: 1px solid #eef1f4; padding-top: 20px; display: flex; flex-direction: column; gap: 8px">
+<label for="own" style="font-size: 12px; line-height: 16px; font-weight: 600; color: #59636e">Your answer, in your own words</label>
+<textarea id="own" rows="4" style="font: inherit; color: inherit; resize: vertical; border: 1px solid #6e7781; border-radius: 6px; box-shadow: 0 0 0 3px #e1e5ea; padding: 10px 12px; line-height: 22px">Call Jasmin first about a third bed. If they can't, book Villa Groff.</textarea>
+<span style="font-size: 12px; color: #59636e">Saved as you type, on every device</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #1f2328; border-radius: 6px; background: #1f2328; color: #ffffff">Send</button>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Back to the options</button>
+</div>
+</article>
+</section>
+
+<!-- E · Could not send -->
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">E · Could not send: said where it happened, the pick kept, one way forward</h2>
+<article style="background: #ffffff; border: 1px solid #6e7781; border-radius: 8px; box-shadow: 0 0 0 3px #e1e5ea; padding: 20px 24px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 12px; line-height: 16px; color: #59636e"><span style="color: #8250df; font-weight: 600">Question</span> · D-65 · asked by travel-agent · 2d</div>
+<h3 style="margin: 0; font-size: 16px; line-height: 22px; font-weight: 600">Which venue for the three offsite nights (12 – 15 May)?</h3>
+</div>
+<div style="border-top: 1px solid #eef1f4; padding-top: 20px; display: flex; flex-direction: column; gap: 8px">
+<div style="display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 12px; align-items: baseline; border: 1px solid #8c959f; border-radius: 6px; padding: 11px 14px; background: #f6f8fa"><span style="font-weight: 600">2</span><span style="font-weight: 600">Keep the cap at the venue: Hotel Jasmin</span></div>
+</div>
+<div role="alert" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; background: #ffebe9; border: 1px solid #ffcecb; border-radius: 6px; padding: 8px 8px 8px 14px">
+<span style="font-size: 13px; color: #1f2328"><span style="font-weight: 600; color: #cf222e">Not sent.</span> The tracker did not answer. Your pick is kept.</span>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Send again</button>
+</div>
+</article>
+</section>
+
+<!-- F · Later -->
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">F · Put off till later: marked, sinks below the rest, one press to bring back</h2>
+<button type="button" style="font: inherit; color: inherit; text-align: left; background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 12px 16px; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 16px; align-items: center">
+<span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+<span style="font-size: 12px; line-height: 16px; color: #59636e"><span style="font-weight: 600">Later</span> · D-65 · put off 1h ago</span>
+<span style="font-weight: 600; color: #424a53">Which venue for the three offsite nights?</span>
+</span>
+<span style="font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; display: inline-flex; align-items: center">Bring back</span>
+</button>
+</section>
+
+<!-- G · No recommendation -->
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">G · No recommendation: every option equal, and it says so</h2>
+<article style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 20px 24px; display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 12px; line-height: 16px; font-weight: 600; color: #59636e">Your answer <span style="font-weight: 400">· travel-agent makes no recommendation</span></div>
+<div style="display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 12px; align-items: baseline; border: 1px solid #d8dde3; border-radius: 6px; padding: 11px 14px"><span style="color: #59636e; font-weight: 500">1</span><span style="font-weight: 600">Raise the cap: Hotel Stiegl Scala, Bolzano</span></div>
+<div style="display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 12px; align-items: baseline; border: 1px solid #d8dde3; border-radius: 6px; padding: 11px 14px"><span style="color: #59636e; font-weight: 500">2</span><span style="font-weight: 600">Keep the cap at the venue: Hotel Jasmin</span></div>
+</article>
+</section>
+
+<!-- H · No options -->
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">H · No options: an open question, so the box is already open</h2>
+<article style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 20px 24px; display: flex; flex-direction: column; gap: 8px">
+<label for="open-q" style="font-size: 12px; line-height: 16px; font-weight: 600; color: #59636e">Your answer</label>
+<textarea id="open-q" rows="3" placeholder="Write your answer" style="font: inherit; color: inherit; border: 1px solid #d8dde3; border-radius: 6px; padding: 10px 12px; line-height: 22px"></textarea>
+<div style="display: flex; gap: 8px"><button type="button" disabled style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 14px; border: 1px solid #e1e5ea; border-radius: 6px; background: #f1f3f5; color: #8c959f">Send</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Later</button></div>
+</article>
+</section>
+
+<!-- I · Held -->
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">I · Held: opened by its ref, not answerable yet, says why and when</h2>
+<article style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 12px; line-height: 16px; color: #59636e"><span style="font-weight: 600">Held</span> · D-65 · asked by travel-agent · 9d</div>
+<h3 style="margin: 0; font-size: 16px; line-height: 22px; font-weight: 600">Which venue for the three offsite nights (12 – 15 May)?</h3>
+<p style="margin: 0; font-size: 13px; color: #424a53">Held until <a href="#" style="font-weight: 600">L-24 Team offsite</a> starts. It is proposed; start it to answer this.</p>
+</div>
+<div style="display: flex; gap: 8px"><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 32px; padding: 0 14px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Open L-24</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Withdraw</button></div>
+</article>
+</section>
+
+<!-- J · Answered and closed -->
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">J · Answered: what was chosen, by whom, what became of it</h2>
+<article style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 12px; line-height: 16px; color: #59636e"><span style="color: #1a7f37; font-weight: 600">Answered</span> · D-20 · by you on the dashboard · 7 Nov</div>
+<h3 style="margin: 0; font-size: 16px; line-height: 22px; font-weight: 600">Uninstall the Homebrew VPN CLI on the laptop?</h3>
+</div>
+<dl style="margin: 0; display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 6px 16px; font-size: 13px">
+<dt style="color: #59636e">Answer</dt><dd style="margin: 0; font-weight: 600">Uninstall it</dd>
+<dt style="color: #59636e">Then</dt><dd style="margin: 0">Picked up by funnel-session; not reported as carried out yet</dd>
+</dl>
+<div><button type="button" style="font: inherit; font-size: 13px; font-weight: 500; height: 32px; padding: 0 12px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Change answer</button></div>
+</article>
+</section>
+
+<!-- K · Phone -->
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">K · Phone: no key numbers, every target 44 px, options full width</h2>
+<div style="width: 390px; background: #f5f6f8; border: 1px solid #d8dde3; border-radius: 12px; padding: 16px; box-sizing: border-box">
+<article style="background: #ffffff; border: 1px solid #d8dde3; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="font-size: 12px; line-height: 16px; color: #59636e"><span style="color: #8250df; font-weight: 600">Question</span> · D-65 · 2d</div>
+<h3 style="margin: 0; font-size: 16px; line-height: 22px; font-weight: 600">Which venue for the three offsite nights?</h3>
+<p style="margin: 0; color: #424a53; font-size: 15px; line-height: 22px">One requirement has to give: budget, a walkable town, or two real beds.</p>
+</div>
+<div style="border-top: 1px solid #eef1f4; padding-top: 16px; display: flex; flex-direction: column; gap: 8px">
+<button type="button" style="font: inherit; color: inherit; text-align: left; min-height: 44px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff; padding: 11px 14px; font-weight: 600">Raise the cap: Stiegl Scala</button>
+<button type="button" style="font: inherit; color: inherit; text-align: left; min-height: 44px; border: 1px solid #c297ff; border-radius: 6px; background: #fbefff; padding: 11px 14px; display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">Keep the cap at the venue: Jasmin</span><span style="font-size: 12px; font-weight: 600; color: #8250df">Recommended</span></button>
+<button type="button" style="font: inherit; color: inherit; text-align: left; min-height: 44px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff; padding: 11px 14px; font-weight: 600">Keep cap and beds: Villa Groff</button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+<button type="button" style="font: inherit; font-size: 14px; font-weight: 500; min-height: 44px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Own words</button>
+<button type="button" style="font: inherit; font-size: 14px; font-weight: 500; min-height: 44px; border: 1px solid #d8dde3; border-radius: 6px; background: #ffffff">Later</button>
+</div>
+</article>
+</div>
+</section>
+
+<!-- L · Dark -->
+<section style="display: flex; flex-direction: column; gap: 12px; break-inside: avoid; margin: 0 0 48px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #59636e">L · Dark mode, same structure</h2>
+<div style="background: #0d1117; border-radius: 12px; padding: 20px">
+<article style="background: #151b23; border: 1px solid #848d97; border-radius: 8px; box-shadow: 0 0 0 3px #2a313c; padding: 20px 24px; display: flex; flex-direction: column; gap: 20px; color: #f0f6fc">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 12px; line-height: 16px; color: #9198a1"><span style="color: #ab7df8; font-weight: 600">Question</span> · D-65 · asked by travel-agent · 2d</div>
+<h3 style="margin: 0; font-size: 16px; line-height: 22px; font-weight: 600">Which venue for the three offsite nights (12 – 15 May)?</h3>
+</div>
+<div style="border-top: 1px solid #21262d; padding-top: 20px; display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 12px; font-weight: 600; color: #9198a1">Your answer</div>
+<div style="display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 12px; align-items: baseline; border: 1px solid #30363d; border-radius: 6px; padding: 11px 14px"><span style="color: #9198a1; font-weight: 500">1</span><span style="font-weight: 600">Raise the cap: Hotel Stiegl Scala, Bolzano</span></div>
+<div style="display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 12px; align-items: baseline; border: 1px solid #6e4cad; background: #271f3d; border-radius: 6px; padding: 11px 14px"><span style="color: #ab7df8; font-weight: 500">2</span><span><span style="font-weight: 600">Keep the cap at the venue: Hotel Jasmin</span> <span style="font-size: 12px; font-weight: 600; color: #ab7df8">Recommended</span></span></div>
+<div style="display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 12px; align-items: baseline; border: 1px solid #30363d; border-radius: 6px; padding: 11px 14px"><span style="color: #9198a1; font-weight: 500">3</span><span style="font-weight: 600">Keep the cap and the beds: Villa Groff, Auer</span></div>
+</div>
+</article>
+</div>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1760,"height":2400}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

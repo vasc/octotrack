@@ -1,0 +1,12 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.DS_Store
+*.db
+*.db-wal
+*.db-shm
+.demo/
+build/
+.demo-lines/
+.claude/
+marketing/

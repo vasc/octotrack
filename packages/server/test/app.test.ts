@@ -1,0 +1,350 @@
+import { beforeEach, describe, expect, test } from "bun:test";
+import {
+  BatchResult,
+  type Bootstrap,
+  contracts as c,
+  Hub,
+  OpEnvelope,
+  SCHEMA_VERSION,
+  Tracker,
+  WatchWaitResponse,
+} from "@octotrack/core";
+import type { Hono } from "hono";
+import { z } from "zod";
+import { createApp } from "../src/app.ts";
+import { openSqlite } from "../src/sqlite.ts";
+
+const BASE = "http://127.0.0.1:4747";
+const AS_AGENT = { "x-octo-actor": "agent-a" };
+let tracker: Tracker;
+let app: Hono;
+
+async function post(path: string, body: unknown, headers: Record<string, string> = {}) {
+  return app.request(`${BASE}${path}`, {
+    method: "POST",
+    headers: { "content-type": "application/json", ...headers },
+    body: JSON.stringify(body),
+  });
+}
+
+async function op(name: string, input: unknown, actor = "agent-a") {
+  const response = await post(`/api/ops/${name}`, { input }, { "x-octo-actor": actor });
+  return { status: response.status, body: OpEnvelope.parse(await response.json()) };
+}
+
+beforeEach(() => {
+  tracker = new Tracker(openSqlite(":memory:"));
+  app = createApp({ tracker, hub: new Hub(tracker), keepaliveMs: 20 });
+});
+
+describe("operations over HTTP", () => {
+  test("runs an op and reports who did it", async () => {
+    const created = await op("project.create", { key: "OCT", name: "Octotrack" }, "agent-z");
+    expect(created.status).toBe(200);
+    expect(created.body.ok).toBe(true);
+    const feed = tracker.call(c.feedList, {}, { actor: "x", channel: "cli" });
+    expect(feed.events[0]?.actor).toBe("agent-z");
+  });
+
+  test("returns drift the write caused", async () => {
+    await op("project.create", { key: "OCT", name: "Octotrack" });
+    const asked = await op("decision.ask", { title: "Q", project: "OCT" });
+    expect(asked.body.ok).toBe(true);
+    const resolved = await op("decision.resolve", { ref: "D-1", note: "yes" });
+    expect(resolved.body.ok && resolved.body.driftOpened.map((drift) => drift.rule)).toEqual([
+      "decision-project-sync",
+    ]);
+  });
+
+  test.each([
+    ["unknown op", "nope.nope", {}, 404, "unknown_op"],
+    ["bad input", "project.create", { key: "OCT" }, 400, "invalid_input"],
+    ["unknown input field", "project.create", { key: "OCT", name: "x", typo: 1 }, 400, "invalid_input"],
+    ["missing ref", "entity.show", { ref: "OCT-1" }, 404, "not_found"],
+    ["bad query", "feed.list", { query: "nope:1" }, 400, "invalid_query"],
+  ])("maps %s to a status and a code", async (_label, name, input, status, code) => {
+    const result = await op(name, input);
+    expect(result.status).toBe(status);
+    expect(result.body.ok === false && result.body.error.code).toBe(code);
+  });
+
+  test("the dashboard channel is recorded on decisions", async () => {
+    await op("decision.ask", { title: "Q" });
+    const response = await post(
+      "/api/ops/decision.resolve",
+      { input: { ref: "D-1", note: "yes" } },
+      { "x-octo-channel": "dashboard" },
+    );
+    const body = OpEnvelope.parse(await response.json());
+    expect(body.ok && c.decisionResolve.output.parse(body.data)).toMatchObject({
+      channel: "dashboard",
+      decidedBy: "dev",
+    });
+  });
+
+  test("lists operations with their input schemas", async () => {
+    const response = await app.request(`${BASE}/api/ops`);
+    const body = z
+      .object({ data: z.array(z.object({ name: z.string(), input: z.unknown() })) })
+      .parse(await response.json());
+    expect(body.data.map((item) => item.name)).toContain("decision.resolve");
+    const one = await app.request(`${BASE}/api/ops/decision.resolve`);
+    expect(one.status).toBe(200);
+  });
+
+  test("batches over HTTP", async () => {
+    await op("project.create", { key: "OCT", name: "Octotrack" });
+    const response = await post(
+      "/api/batch",
+      {
+        ops: [
+          { op: "issue.create", as: "i", input: { project: "OCT", title: "One" } },
+          { op: "update.post", input: { body: "Started", target: "$i.ref" } },
+        ],
+      },
+      AS_AGENT,
+    );
+    const body = BatchResult.parse(await response.json());
+    expect(body.ok).toBe(true);
+    expect(body.results).toHaveLength(2);
+  });
+});
+
+describe("protection without authentication", () => {
+  test("refuses a foreign Host header, which stops DNS rebinding", async () => {
+    const response = await app.request("http://evil.example/api/health", {
+      headers: { host: "evil.example" },
+    });
+    expect(response.status).toBe(403);
+  });
+
+  test("accepts loopback hosts with a port", async () => {
+    for (const host of ["127.0.0.1:4747", "localhost:4747", "[::1]:4747"]) {
+      const response = await app.request(`${BASE}/api/health`, { headers: { host } });
+      expect(response.status).toBe(200);
+    }
+  });
+
+  test("refuses a POST that a web page could send without a preflight", async () => {
+    const response = await app.request(`${BASE}/api/ops/decision.resolve`, {
+      method: "POST",
+      headers: { "content-type": "text/plain" },
+      body: JSON.stringify({ input: { ref: "D-1", note: "pwned" } }),
+    });
+    expect(response.status).toBe(415);
+  });
+
+  test("sends no CORS headers", async () => {
+    const response = await app.request(`${BASE}/api/health`, { headers: { origin: "https://evil.example" } });
+    expect(response.headers.get("access-control-allow-origin")).toBeNull();
+  });
+});
+
+describe("watch long poll", () => {
+  async function createWatch(query: string) {
+    const created = await op("watch.create", {
+      spec: { clauses: [{ type: "state", query }] },
+    });
+    if (!created.body.ok) throw new Error("watch.create failed");
+    return c.watchCreate.output.parse(created.body.data).ref;
+  }
+
+  test("returns at once when already satisfied", async () => {
+    await op("decision.ask", { title: "Q" });
+    await op("decision.resolve", { ref: "D-1", note: "yes" });
+    const ref = await createWatch("ref:D-1 status:decided");
+    const response = await post("/api/watch/wait", { refs: [ref], holdMs: 5000 }, AS_AGENT);
+    expect(WatchWaitResponse.parse(await response.json()).fired).toBe(true);
+  });
+
+  test("hangs until a write satisfies it", async () => {
+    await op("decision.ask", { title: "Q" });
+    const ref = await createWatch("ref:D-1 status:decided");
+    const started = Date.now();
+    const pending = post("/api/watch/wait", { refs: [ref], holdMs: 5000 }, AS_AGENT).then(async (response) =>
+      WatchWaitResponse.parse(await response.json()),
+    );
+    await Bun.sleep(30);
+    await op("decision.resolve", { ref: "D-1", note: "yes" });
+    const result = await pending;
+    expect(result.fired).toBe(true);
+    expect(Date.now() - started).toBeLessThan(2000);
+  });
+
+  test("gives back a not-fired response when the hold ends, for the client to poll again", async () => {
+    await op("decision.ask", { title: "Q" });
+    const ref = await createWatch("ref:D-1 status:decided");
+    const response = await post("/api/watch/wait", { refs: [ref], holdMs: 20 }, AS_AGENT);
+    expect(WatchWaitResponse.parse(await response.json()).fired).toBe(false);
+  });
+
+  test("errors on an unknown watch", async () => {
+    const response = await post("/api/watch/wait", { refs: ["W-99"], holdMs: 10 }, AS_AGENT);
+    expect(response.status).toBe(404);
+  });
+});
+
+describe("bootstrap and stream", () => {
+  test("bootstrap is a GET with everything for first paint", async () => {
+    await op("project.create", { key: "OCT", name: "Octotrack" });
+    await op("decision.ask", { title: "Q", project: "OCT", priority: "urgent" });
+    await op("pr.upsert", { repo: "a/b", number: 1, title: "PR", state: "open", checks: "failing" });
+    const response = await app.request(`${BASE}/api/bootstrap`);
+    const envelope = OpEnvelope.parse(await response.json());
+    const data: Bootstrap | false = envelope.ok && c.dashboardBootstrap.output.parse(envelope.data);
+    if (data === false) throw new Error("bootstrap failed");
+    expect(data.counts).toMatchObject({ openDecisions: 1, openPrs: 1, failingPrs: 1 });
+    expect(data.queue[0]?.decision.ref).toBe("D-1");
+    expect(data.prs[0]?.attention).toContain("checks failing");
+    expect(data.views[0]?.name).toBe("Feed");
+    expect(data.feed.events.length).toBeGreaterThan(0);
+  });
+
+  test("the stream replays what was missed, then pushes new changes", async () => {
+    const before = tracker.cursor();
+    await op("decision.ask", { title: "Missed" });
+    const response = await app.request(`${BASE}/api/stream?since=${before}`);
+    const reader = response.body?.getReader();
+    if (reader === undefined) throw new Error("no stream");
+    const decoder = new TextDecoder();
+    let received = "";
+    const deadline = Date.now() + 2000;
+    let wrote = false;
+    while (Date.now() < deadline && !received.includes("Second")) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      received += decoder.decode(value);
+      if (received.includes("Missed") && !wrote) {
+        wrote = true;
+        await op("decision.ask", { title: "Second" });
+      }
+    }
+    await reader.cancel();
+    expect(received).toContain("event: hello");
+    expect(received).toContain("Missed");
+    expect(received).toContain("Second");
+  });
+});
+
+describe("drafts on the stream", () => {
+  test("a draft save reaches other devices as a draft notice naming its key, not as a change", async () => {
+    const response = await app.request(`${BASE}/api/stream`);
+    const reader = response.body?.getReader();
+    if (reader === undefined) throw new Error("no stream");
+    const decoder = new TextDecoder();
+    let received = "";
+    const deadline = Date.now() + 2000;
+    let wrote = false;
+    while (Date.now() < deadline && !received.includes("event: draft")) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      received += decoder.decode(value);
+      if (received.includes("event: hello") && !wrote) {
+        wrote = true;
+        await post(
+          "/api/ops/draft.save",
+          { input: { key: "tell:L-1", text: "Black" } },
+          { "x-octo-developer": "1" },
+        );
+      }
+    }
+    await reader.cancel();
+    expect(received).toContain("event: draft");
+    expect(received).toContain('"key":"tell:L-1"');
+    expect(received).not.toContain("event: change");
+    expect(received).not.toContain("Black");
+  });
+});
+
+describe("static fallbacks", () => {
+  test("says how to build when the dashboard is missing", async () => {
+    const response = await app.request(`${BASE}/`);
+    expect(response.status).toBe(503);
+    expect(await response.text()).toContain("bun run build");
+  });
+
+  test("unknown API paths are JSON, not the dashboard", async () => {
+    const response = await app.request(`${BASE}/api/nope`);
+    expect(response.status).toBe(404);
+    expect(OpEnvelope.parse(await response.json()).ok).toBe(false);
+  });
+});
+
+describe("knowing which build answers", () => {
+  test("health says the schema version and the build, and every answer carries the build", async () => {
+    const built = createApp({ tracker, hub: new Hub(tracker), build: "abc123" });
+    const response = await built.request(`${BASE}/api/health`);
+    expect(response.headers.get("x-octo-build")).toBe("abc123");
+    const health = z.object({ schema: z.number(), build: z.string() }).parse(await response.json());
+    expect(health).toEqual({ schema: SCHEMA_VERSION, build: "abc123" });
+    const failed = await built.request(`${BASE}/api/ops/nothing.here`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{}",
+    });
+    expect(failed.headers.get("x-octo-build")).toBe("abc123");
+  });
+
+  test("an agent moves a line itself; only what belongs to the developer's own screen is refused with 403", async () => {
+    await op("project.create", { key: "OCT", name: "Octotrack" });
+    const added = await post(
+      "/api/ops/line.propose",
+      { input: { title: "Wall mount", doneWhen: "It hangs.", recommendation: "start", why: "Ready." } },
+      { "x-octo-actor": "panel" },
+    );
+    expect(added.status).toBe(200);
+    const started = await post("/api/ops/line.start", { input: { ref: "L-1" } }, { "x-octo-actor": "panel" });
+    expect(started.status).toBe(200);
+    const relayed = await post(
+      "/api/ops/line.queue",
+      { input: { ref: "L-1" } },
+      { "x-octo-actor": "panel", "x-octo-said": encodeURIComponent("put it up next") },
+    );
+    expect(relayed.status).toBe(200);
+    const seen = await post("/api/ops/seen", { input: {} }, { "x-octo-actor": "panel" });
+    expect(seen.status).toBe(403);
+    const developer = await post("/api/ops/seen", { input: {} }, { "x-octo-developer": "1" });
+    expect(developer.status).toBe(200);
+  });
+});
+
+describe("who is calling", () => {
+  test("a write with no agent name is refused, a read with none is answered", async () => {
+    await op("project.create", { key: "OCT", name: "Octotrack" });
+    const write = await post("/api/ops/issue.create", { input: { project: "OCT", title: "Who?" } });
+    expect(write.status).toBe(400);
+    expect(await write.text()).toContain("set your agent name");
+    const read = await post("/api/ops/issue.list", { input: {} });
+    expect(read.status).toBe(200);
+  });
+
+  test("a call with no name from a checkout one agent uses is that agent, and hears its notices", async () => {
+    await op("project.create", { key: "OCT", name: "Octotrack" });
+    const checkout = { "x-octo-checkout": encodeURIComponent("/src/octotrack") };
+    await post("/api/ops/agent.note", { input: { note: "here" } }, { ...AS_AGENT, ...checkout });
+    await post("/api/ops/agent.stop", { input: { name: "agent-a" } }, { "x-octo-developer": "1" });
+    const response = await post("/api/ops/agent.list", { input: {} }, checkout);
+    const body = z.object({ notices: z.array(z.object({ kind: z.string() })) }).parse(await response.json());
+    expect(body.notices.map((notice) => notice.kind)).toEqual(["stop"]);
+  });
+});
+
+describe("a call that names an agent is never the developer", () => {
+  test("whatever developer or dashboard headers it carries", async () => {
+    const claims: Record<string, string>[] = [
+      { "x-octo-actor": "mallory", "x-octo-developer": "1" },
+      { "x-octo-actor": "mallory", "x-octo-channel": "dashboard" },
+    ];
+    // Marking things seen is the developer's own: a call naming an agent never passes as them.
+    for (const headers of claims) {
+      const response = await post("/api/ops/seen", { input: {} }, headers);
+      expect(response.status).toBe(403);
+    }
+    const asDeveloper = await post(
+      "/api/ops/seen",
+      { input: {} },
+      { "x-octo-actor": "dev", "x-octo-developer": "1" },
+    );
+    expect(asDeveloper.status).toBe(200);
+  });
+});

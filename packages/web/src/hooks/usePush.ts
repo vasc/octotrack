@@ -1,0 +1,111 @@
+import { contracts } from "@octotrack/core/contracts";
+import { PushSubscription } from "@octotrack/core/schemas";
+import { useEffect, useState } from "react";
+import { z } from "zod";
+import { callOp } from "../api/client.ts";
+import { failureText } from "../lib/failure.ts";
+
+export type PushState = "unsupported" | "off" | "on" | "blocked" | "dismissed" | "no-key" | "turning-on";
+
+const KeyResponse = z.object({ publicKey: z.string().nullable() });
+
+/** The server's public key, as the Push API wants it: bytes, from URL-safe base64. */
+function keyBytes(base64: string): Uint8Array<ArrayBuffer> {
+  const padded = `${base64}${"=".repeat((4 - (base64.length % 4)) % 4)}`
+    .replaceAll("-", "+")
+    .replaceAll("_", "/");
+  const raw = atob(padded);
+  const bytes = new Uint8Array(new ArrayBuffer(raw.length));
+  for (let index = 0; index < raw.length; index += 1) bytes[index] = raw.charCodeAt(index);
+  return bytes;
+}
+
+function supported(): boolean {
+  return typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window;
+}
+
+/** Permission alone is not a subscription: it stays off until the browser is seen to hold one. */
+function initialState(): PushState {
+  if (!supported()) return "unsupported";
+  return Notification.permission === "denied" ? "blocked" : "off";
+}
+
+/** Why buzzing could not be set up, in words for the page: the browser's own refusals are not the tracker's. */
+function pushFailure(failure: unknown): string {
+  if (typeof DOMException !== "undefined" && failure instanceof DOMException) {
+    return "The browser would not set up notifications here.";
+  }
+  return failure instanceof Error
+    ? failureText(failure).text
+    : "The browser would not set up notifications here.";
+}
+
+/** Whether this browser buzzes for urgent questions and the top lines, and how to turn that on. */
+export function usePush() {
+  const [state, setState] = useState<PushState>(initialState);
+  const [error, setError] = useState<string | null>(null);
+  // The browser's own subscription, brought into the page once: on only if it holds one, and the server is told of it
+  // again in case it lost it.
+  useEffect(() => {
+    if (!supported() || Notification.permission !== "granted") return;
+    let live = true;
+    const check = async () => {
+      const registration = await navigator.serviceWorker.getRegistration("/sw.js");
+      const subscription = await registration?.pushManager.getSubscription();
+      if (!live || subscription === null || subscription === undefined) return;
+      await callOp(contracts.pushSubscribe, PushSubscription.parse(subscription.toJSON()));
+      if (live) setState("on");
+    };
+    check().catch((failure: unknown) => {
+      if (live) setError(pushFailure(failure));
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
+  return {
+    state,
+    error,
+    async turnOn() {
+      setState("turning-on");
+      setError(null);
+      try {
+        const key = KeyResponse.parse(await (await fetch("/api/push/key")).json()).publicKey;
+        if (key === null) {
+          setState("no-key");
+          return;
+        }
+        const permission = await Notification.requestPermission();
+        if (permission !== "granted") {
+          setState(permission === "denied" ? "blocked" : "dismissed");
+          return;
+        }
+        const registration = await navigator.serviceWorker.register("/sw.js");
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: keyBytes(key),
+        });
+        await callOp(contracts.pushSubscribe, PushSubscription.parse(subscription.toJSON()));
+        setState("on");
+      } catch (failure) {
+        setError(pushFailure(failure));
+        setState("off");
+      }
+    },
+    /** Stops buzzing this browser: its subscription is dropped here and on the server. */
+    async turnOff() {
+      setError(null);
+      try {
+        const registration = await navigator.serviceWorker.getRegistration("/sw.js");
+        const subscription = await registration?.pushManager.getSubscription();
+        if (subscription !== null && subscription !== undefined) {
+          await callOp(contracts.pushUnsubscribe, { endpoint: subscription.endpoint });
+          await subscription.unsubscribe();
+        }
+        setState("off");
+      } catch (failure) {
+        setError(pushFailure(failure));
+      }
+    },
+  };
+}
