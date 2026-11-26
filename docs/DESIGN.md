@@ -1378,6 +1378,40 @@ _No permissions:_ asking never blocks the agent ("No permissions over the work" 
 choosing to ask. The `approval` kind stops being accepted for new questions, the guide sends agents to `request`, and
 the open `approval` questions are re-asked as requests by their agents.
 
+## D19. Proposed, not built: connecting another computer
+
+**What the developer asked for:** "I want to run a cli from another machine into the machine that runs the server", and
+"something more like authorizing a tv app than api keys". Drawn in the Triage canvas, page 3 (`C-*`). Everything below
+is proposed and waits on the developer's agreement.
+
+**The problem.** The CLI only talks to a server on its own machine, and D10 lets anything on the tailnet that reaches the
+server through `tailscale serve` in without a check. Copying a key by hand to each computer is what the developer does
+not want.
+
+**Proposed: a code, typed where you already are.** On the other computer `octo connect <address>` asks the server to let
+it in and prints an 8-character code (letters and digits, no look-alikes), a link and a QR square, then waits for up to
+10 minutes. The developer lets it in from anything already connected: For you on the server's machine (the request sits
+in To accept), a connected phone that scans the square, or `octo computers allow <code>` in a terminal there. Letting it
+in needs the code typed (or scanned); the server keeps only a hash of it, so neither the page nor `octo computers` can
+show it. _Why:_ typing the code proves the computer asking is the one in front of the developer, so a request someone
+else started on the tailnet cannot be let in by a careless click. The request closes after five wrong codes. Once in,
+the computer keeps a token in its own `~/.octotrack`, every `octo` command there (agents' too) goes to that server and
+never starts a local one, and `octo disconnect` undoes it. Only the developer can let a computer in, never an agent.
+More › Computers lists what is asking and what is connected, with Rename and Disconnect; disconnecting takes effect on
+the computer's next command, which says so.
+
+**The server's own machine is connected from the start**, as the root of trust: its loopback dashboard and terminal can
+let others in.
+
+**Browsers connect the same way.** A browser that reaches the server by its tailnet name and is not connected shows its
+own code instead of the dashboard. _Why:_ locking the CLI while the dashboard stays open over the tailnet would protect
+nothing. This supersedes D10's "no auth" for anything not on the server's own machine; the Host check and the JSON
+content type stay. _Trade-off:_ the phone has to connect once after the change.
+
+- **One level of access.** A connected computer can do what the developer can; there is no read-only level.
+- **Not covered: waking agents on another computer.** Wakes run commands on the server's machine (D12), so agents on a
+  connected computer can call `octo` but cannot be woken yet; that needs its own design.
+
 ## Data model
 
 Everything is addressed by a **ref**: `L-4` (line of work), `OCT` (repo, stored as a project), `OCT-12` (issue or
